@@ -1,0 +1,117 @@
+package tw.util;
+
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dialog.ModalityType;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.Window;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.RootPaneContainer;
+import javax.swing.border.LineBorder;
+
+public class UI {
+
+	private static final Object COMMAND_CANCEL = "cancel";
+
+	public static Component h(int i) { return Box.createHorizontalStrut( i); }
+	public static Component v(int i) { return Box.createVerticalStrut( i); }
+
+	public static void addActionOnEscape(final RootPaneContainer rootPaneContainer, final ActionListener action) {
+		rootPaneContainer.getRootPane().getActionMap().put( COMMAND_CANCEL, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				action.actionPerformed(e);
+				S.out( "esc pressed");
+			}
+		});
+		
+		rootPaneContainer.getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
+				KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),  COMMAND_CANCEL);
+	}
+
+    static public void centerOnScreen( Window window) {
+        // this functions centers the window in the middle
+        // if the screen
+
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = toolkit.getScreenSize();
+
+        int x = (screenSize.width - window.getWidth() ) / 2;
+        int y = (screenSize.height - window.getHeight() ) / 2;
+        window.setLocation( x, y);
+    }
+    
+    static public void centerOnOwner( Window window) {
+        Window owner = window.getOwner();
+        if( owner == null) {
+            return;
+        }
+        centerOnWindow(window, owner);
+    }
+    
+    static public void centerOnWindow( Window windowToCenter, Window anchorWindow) {
+        windowToCenter.setLocationRelativeTo(anchorWindow);
+    }
+
+	public static void disposeOnEsc(final JFrame frame) {
+		addActionOnEscape(frame, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				frame.dispose();
+			}
+		});
+	}
+
+	public static void quick( Window parent, String str) {
+		JPanel p = new JPanel( new FlowLayout( FlowLayout.CENTER, 10, 10));
+		p.setBorder( new LineBorder( Color.black) );
+		p.add( new JLabel( str) );
+		p.setBackground( Color.yellow);
+
+		final JDialog d = new JDialog(parent, ModalityType.MODELESS);
+		d.setUndecorated(true);
+		d.add( p);
+		d.pack();
+		UI.centerOnOwner( d);
+		d.setVisible( true);
+
+		new Thread() {
+			public void run() {
+				S.sleep( 750);
+				d.dispose();
+			}
+		}.start();
+	}
+	
+	public static double getDub(JTextField field) {
+		return S.parseDouble2( field.getText() );
+	}
+	
+	public static class Hourglass {
+		private Cursor m_current;
+		private JFrame m_frame;
+
+		public Hourglass(JFrame f) {
+			m_frame = f;
+			m_current = f.getCursor();
+			f.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		}
+		
+		public void restore() {
+			m_frame.setCursor(m_current);
+		}
+	}
+}
