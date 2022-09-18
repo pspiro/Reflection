@@ -70,7 +70,6 @@ public class ClickHandler {
     }
 
     private static boolean accept(MouseEvent event) {
-        Object source = event.getSource();
         if (event.getSource() instanceof JTable) {
             JTable table = (JTable)event.getSource();
             return table.rowAtPoint(event.getPoint()) == m_point.x && 

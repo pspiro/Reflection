@@ -86,9 +86,6 @@ public class TestErrors extends TestCase {
 	
 	
 	
-	public static void main(String[] args) {
-		Result result = JUnitCore.runClasses(TestErrors.class);
-	}
 
 	static Config config = new Config();
 	
@@ -123,6 +120,7 @@ public class TestErrors extends TestCase {
 		return cli.readJsonMap();
 	}
 
+	@SuppressWarnings("deprecation")
 	void testExchHours() throws RefException {
 		String str = "20220807:CLOSED;"
 				+ "20220916:0900-20220916:16:00;"

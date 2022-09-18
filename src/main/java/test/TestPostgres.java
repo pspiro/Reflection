@@ -113,7 +113,6 @@ public class TestPostgres {
 	}
 	
 	void insert() throws SQLException {
-		String sql = "insert into people values ('don', 42, 'nowhere')";
 		con.insert( "people", "peter", 53, "pinecliff");
 		S.out( "inserted one");
 		

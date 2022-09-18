@@ -34,7 +34,6 @@ import javax.swing.plaf.metal.MetalCheckBoxUI;
 import javax.swing.plaf.metal.MetalComboBoxUI;
 import javax.swing.plaf.metal.MetalLabelUI;
 import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 

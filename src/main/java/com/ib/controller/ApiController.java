@@ -58,8 +58,6 @@ import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
-import tw.util.S;
-
 public class ApiController implements EWrapper {
 	private ApiConnection m_client;
 	private final ILogger m_outLogger;

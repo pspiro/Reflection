@@ -1,21 +1,10 @@
 package test;
 
-import static test.TestErrors.sendData;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Date;
-import java.util.HashMap;
-
-import org.json.simple.JSONObject;
 
 import junit.framework.TestCase;
-import reflection.MySqlConnection;
-import reflection.RefCode;
 import reflection.RefException;
 import reflection.Util;
-import tw.util.S;
-import static test.TestConfig.*;
 
 public class TestOne extends TestCase {
 	public void testExchHours() throws RefException {

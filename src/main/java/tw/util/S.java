@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JOptionPane;
@@ -57,7 +56,6 @@ public class S {
 	public static long DAY = 1000*60*60*24;
 //	public static String TODAY = dateAsStr( System.currentTimeMillis() );
 //	public static String YESTERDAY = dateAsStr( System.currentTimeMillis() - DAY);
-	private static Timer m_timer;
 	//private static String m_tempDir;
 	private static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy/MM/dd");
 	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "HH:mm:ss.SSS");

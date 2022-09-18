@@ -45,7 +45,6 @@ public class MyHttpServer implements HttpHandler {
 
 	/** Handle HTTP msg */
 	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
-		String uri = exch.getRequestURI().toString().toLowerCase();
 		
 		try {
 			if ("GET".equals(exch.getRequestMethod() ) ) {

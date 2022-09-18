@@ -9,12 +9,8 @@ import org.junit.runner.Result;
 
 import junit.framework.TestCase;
 import reflection.RefCode;
-import tw.util.S;
 
 public class TestOrder extends TestCase {
-	public static void main(String[] args) {
-		Result result = JUnitCore.runClasses(TestWhatIf.class);
-	}
 
 	// missing cryptoId
 	public void testOrder1() throws Exception {

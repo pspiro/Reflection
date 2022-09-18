@@ -2,7 +2,6 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map.Entry;
 
 import org.json.simple.JSONObject;
@@ -129,7 +128,6 @@ public class Config {
 	public Json toJson() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		
-		JSONObject whole = new JSONObject();
 		for (Field field : Config.class.getDeclaredFields() ) {
 			list.add( field.getName() );
 			list.add( field.get( this) );

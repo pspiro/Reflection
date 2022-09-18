@@ -4,11 +4,7 @@
 package tw.util;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,8 +13,6 @@ import java.util.HashSet;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.border.Border;
 
 public class HtmlButton extends JLabel {
 	static Color light = new Color( 220, 220, 220);
@@ -162,21 +156,5 @@ public class HtmlButton extends JLabel {
 	
 	static String bold( String str) {
 		return String.format( "<html><b>%s</html>", str);
-	}
-	
-	public static void main(String[] args) {
-		HashSet<HtmlRadioButton> set = new HashSet<HtmlRadioButton>();
-		HtmlRadioButton b1 = new HtmlRadioButton( "one", set);
-		HtmlRadioButton b2 = new HtmlRadioButton( "two", set);
-		
-		JPanel p = new JPanel();
-		p.add( b1);
-		p.add( b2);
-		
-		JFrame f = new JFrame();
-		f.add( p);
-		f.setSize( 200, 200);
-		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		f.show();
 	}
 }

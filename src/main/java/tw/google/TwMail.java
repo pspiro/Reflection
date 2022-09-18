@@ -20,7 +20,6 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.Gmail.Users.Messages;
 import com.google.api.services.gmail.Gmail.Users.Messages.Get;
 import com.google.api.services.gmail.model.Label;
-import com.google.api.services.gmail.model.ListLabelsResponse;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
 import com.google.api.services.gmail.model.MessagePart;
@@ -71,7 +70,6 @@ public class TwMail {
 	}
 	
 	private void showLabels() throws Exception {
-		ArrayList<Message> newMsgs = new ArrayList<Message>();
 
 		com.google.api.services.gmail.Gmail.Users.Labels.List list = m_gmail.users().labels().list(userId);
 		List<Label> labels = list.execute().getLabels();

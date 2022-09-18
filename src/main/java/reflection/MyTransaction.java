@@ -371,7 +371,7 @@ class MyTransaction {
 				// explain why there are no prices which should never happen otherwise
 				Prices prices = m_main.m_priceMap.get( contract.conid() );
 				require( prices != null, RefCode.REJECTED, "Prices are not available");
-				prices.checkOrderPrice( order, orderPrice, m_main.m_config);
+				prices.checkOrderPrice( order, orderPrice, Main.m_config);
 				
 				// if the user submitted a fractional quantity and it got rounded down to zero, approve the transaction; this is a risk! pas 
 				if (quantity == 0) {
