@@ -9,11 +9,11 @@
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
-					<!-- archive>
-					<manifest>
-						<mainClass>com.sohamkamani.App</mainClass>
-					</manifest>
-					</archive-->
+					<archive>
+						<manifest>
+							<mainClass>reflection.Main</mainClass>
+						</manifest>
+					</archive>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
