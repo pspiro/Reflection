@@ -139,7 +139,7 @@ public class Grep {
     
     /** Get list of strings separated by AND. */
     public static String[] getStrings( String find) {
-        ArrayList list = new ArrayList();
+        ArrayList<String> list = new ArrayList<String>();
     
         while( true) {
             int i = find.indexOf( AND);

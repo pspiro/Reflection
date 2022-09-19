@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Timer;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JOptionPane;
@@ -51,7 +50,6 @@ public class S {
 	static final char COMMA = ',';
 	public static final double SMALL = -Double.MAX_VALUE;
 	public static final Random RND = new Random( System.currentTimeMillis() );
-	private static final char Q = '"';
 	private static final String NONE = "<none>";
 	public static long DAY = 1000*60*60*24;
 //	public static String TODAY = dateAsStr( System.currentTimeMillis() );
@@ -808,6 +806,7 @@ public class S {
 	}
 
 	/** @param endsWith is case-insensitive; we need this to avoid tmp files created in the downloads folder. */
+	@SuppressWarnings("unchecked")
 	public static void watchFolder( String folder, String endsWith, LinkedBlockingQueue<Path> queue) throws Exception {
 		Path dir = new File( folder).toPath();
 		WatchService watcher = FileSystems.getDefault().newWatchService();        		

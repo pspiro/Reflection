@@ -4,9 +4,6 @@ import static test.TestErrors.sendData;
 
 import java.util.HashMap;
 
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-
 import junit.framework.TestCase;
 import reflection.RefCode;
 

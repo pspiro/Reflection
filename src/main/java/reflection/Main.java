@@ -128,6 +128,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	// let it fall back to read from a flatfile if this fails. pas
+	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows() ) {

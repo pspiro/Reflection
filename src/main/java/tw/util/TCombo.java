@@ -15,6 +15,7 @@ public class TCombo<T> extends JComboBox {
 		return getSelectedItem() == null ? null : getSelectedItem().toString();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override public T getSelectedItem() {
 		return (T)super.getSelectedItem();
 	}

@@ -16,7 +16,7 @@ public class TestPostgres {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
-			new TestPostgres().createConfig(); //run();
+			new TestPostgres().createTrades();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -25,7 +25,7 @@ public class TestPostgres {
 	}
 	
 	void createProfit() throws SQLException {
-		String sql = "create table profit ("
+		String sql = "create table profit ("   // in Java 13 you have text blocks, you wouldn't need all the + "
 				+ "crypto_id varchar(32)"
 				+ "wallet_id varchar(32)"
 				+ "region varchar(32)"

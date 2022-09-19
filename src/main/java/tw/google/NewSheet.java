@@ -6,14 +6,19 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.google.api.services.sheets.v4.Sheets.Spreadsheets;
+import com.google.api.services.sheets.v4.model.AddSheetRequest;
 import com.google.api.services.sheets.v4.model.AppendValuesResponse;
+import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateValuesRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateValuesResponse;
+import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.Sheet;
+import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
+import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;
 import tw.util.S;
@@ -76,6 +81,16 @@ public class NewSheet {
 			m_name = spreadsheet.getProperties().getTitle();
 		}
 		
+		/** This method works but the tab is not accessible. You would have to force it to re-read
+		 *  the list of sheets somehow. */
+		public void createTab(String name) throws Exception {
+			List<Request> requests = new ArrayList<>();
+			requests.add(new Request().setAddSheet(new AddSheetRequest().setProperties(new SheetProperties().setTitle(name))));
+			
+			BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
+			sheets().batchUpdate(id(), body).execute();
+		}
+
 		public Tab getTab( String name) throws Exception {
 			for (Sheet tab : m_spreadsheet.getSheets() ) {
 				if (tab.getProperties().getTitle().compareToIgnoreCase( name) == 0) {
@@ -174,12 +189,6 @@ public class NewSheet {
 				m_sheet = sheet;
 				m_name = sheet.getProperties().getTitle();
 				
-				for (int i = 0; i < rows(); i++) {
-					for (int c = 0; c < cols(); c++) {
-						
-					}
-				}
-
 				// build map of column header to zero-based index
 				// remove spaces in the header names
 				int cc = 0;
@@ -266,8 +275,9 @@ public class NewSheet {
 			public String[] getHeaderRow() throws Exception {
 				if (m_headerRow == null) {
 					List<List<Object>> rows = Book.this.getRows( m_name,  1, cols(), "FORMULA");
-					if (rows.size() == 0) {
-						throw new MyException( "Error: no header row on tab %s", m_name);
+					if (rows == null || rows.size() == 0) {
+						S.out( "Warning: no header row on tab %s", m_name);
+						return new String[0];
 					}
 					
 					int i = 0;
@@ -433,6 +443,16 @@ public class NewSheet {
 					setValue( tag, "'" + val);
 				}
 				
+				public ListEntry addValue(String val) {
+					if (val != null) {
+						m_row.add( val);
+					}
+					else {
+						m_row.add( "");  // if you don't add a string, the columns can get out of sync
+					}
+					return this;
+				}
+				
 				public ListEntry setValue(String tag, String val) throws MyException {
 					int i = getIndex( tag);
 
@@ -478,4 +498,5 @@ public class NewSheet {
 		}
 		return String.valueOf( (char)('A' - 1 + col) );
 	}
+
 }

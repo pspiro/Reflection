@@ -3,9 +3,6 @@ package test;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.junit.runner.JUnitCore;
-import org.junit.runner.Result;
-
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.Main;
