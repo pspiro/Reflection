@@ -5,7 +5,7 @@ import java.util.HashMap;
 import reflection.MyTransaction.MsgType;
 import tw.util.S;
 
-class ParamMap extends HashMap<String, String> {
+public class ParamMap extends HashMap<String, String> {
 	
 	/** Returns lower case, interned string. */
 	String getParam(String tag) {
