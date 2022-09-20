@@ -15,11 +15,11 @@ public class ApiHandler implements IConnectionHandler, ILogger { // move IConnec
 	}
 	
 	@Override public void connected() {
-		m_main.m_mgr.onConnected();
+		m_main.m_connMgr.onConnected();
 	}
 
 	@Override public void disconnected() {
-		m_main.m_mgr.onDisconnected();
+		m_main.m_connMgr.onDisconnected();
 	}
 
 	@Override public void error(Exception e) {

@@ -14,7 +14,6 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
 public class Config {
-	private final String logFile = String.format( "reflection.%s.log", Util.today() );
 	
 	// user experience parameters
 	private double maxBuyAmt = 15000; // max buy amt in dollars
@@ -71,7 +70,6 @@ public class Config {
 	public int apiClientId() { return apiClientId; }
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
-	public String logFile() { return logFile; }
 
 	public Config() { }
 	

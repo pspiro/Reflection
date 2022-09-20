@@ -333,17 +333,17 @@ public class FileUtilities {
 //        return done;
 //    }
 //
-//    static public boolean createDir( String str) {
-//        // this function creates a directory
-//    
-//        File file = new File( str);
-//        if( file.exists() && file.isDirectory() ) {
-//            return true;
-//        }
-//        return file.mkdirs();
-//    }
-//
-    static public boolean exists( String str) {
+    public static boolean createDir( String str) {
+        // this function creates a directory
+    
+        File file = new File( str);
+        if( file.exists() && file.isDirectory() ) {
+            return true;
+        }
+        return file.mkdirs();
+    }
+
+    public static boolean exists( String str) {
         // this function returns true if a file or
         // directory with the specified name exists
         return new File( str).exists();
@@ -353,14 +353,14 @@ public class FileUtilities {
 		return append( f1.getAbsolutePath(), f2);
 	}
     
-    static public String append(String s1, String s2) {
+    public static String append(String s1, String s2) {
 		return s1.length() > 0 && s1.charAt( s1.length() - 1) == '\\'
 				? (s1 + s2) : (s1 + "\\" + s2);
 	}
 
 	
 //
-//    static public boolean deleteFile( String str) {
+//    public static boolean deleteFile( String str) {
 //        // this functions deletes the specified file
 //    
 //        File file = new File( str);
@@ -370,7 +370,7 @@ public class FileUtilities {
 //        return false;
 //    }
 //
-//    static public boolean deleteFileIfOlder( String str, long dateInMls) {
+//    public static boolean deleteFileIfOlder( String str, long dateInMls) {
 //        // this functions deletes the specified file if the file is older than the past in date
 //    
 //        File file = new File( str);
@@ -380,7 +380,7 @@ public class FileUtilities {
 //        return false;
 //    }
 //
-//    static public boolean renameFile( String fromName, String toName) {
+//    public static boolean renameFile( String fromName, String toName) {
 //        // this functions renames the specified file, with delete if necessary
 //        // if file toName already exists
 //    

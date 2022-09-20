@@ -9,6 +9,10 @@ public class RefException extends Exception {
 		super( String.format( first, params) );
 		m_code = code;
 	}
+	
+	@Override public String toString() {
+		return m_code + " " + getMessage();
+	}
 
 	public Json toJson() {
 		return Util.toJsonMsg( "code", m_code, "text", getMessage() );

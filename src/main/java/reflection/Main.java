@@ -3,6 +3,7 @@ package reflection;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,6 +29,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.util.FileUtilities;
 import tw.util.OStream;
 import tw.util.S;
 
@@ -47,7 +49,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	final HashMap<Integer,Prices> m_priceMap = new HashMap<Integer,Prices>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet
 	private final ApiHandler m_apiHandler = new ApiHandler(this);
-	protected final ConnectionMgr m_mgr = new ConnectionMgr( m_controller);
+	protected final ConnectionMgr m_connMgr = new ConnectionMgr( m_controller);
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
 	// is there some way to find out? pas
@@ -92,7 +94,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			e.printStackTrace();
 			m_config.readFromSpreadsheet("Safe Config");
 		}
-		m_log = new OStream( Main.m_config.logFile(), true);
+
+		// create log file folder and open log file
+		resetLogFile();
+		log( LogType.RESTART, "");
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
@@ -115,7 +120,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_controller = new ApiController( m_apiHandler, m_apiHandler, m_apiHandler);
 		m_controller.handleExecutions( this);
 		S.out( "Connecting to TWS on %s:%s", m_config.twsHost(), m_config.twsPort() );
-		m_mgr.connect( m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
+		m_connMgr.connect( m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -192,7 +197,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		/** Connected and ready to start placing orders. */
 		synchronized void onConnected() {
-			S.out( "Connected to TWS");
+			log( LogType.CONNECTION, "Connected to TWS");
 			ibConnection(true); // we have to assume it's connected since we don't know for sure
 			stopTimer();
 			
@@ -206,7 +211,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		synchronized void onDisconnected() {
 			if (m_timer == null) {
-				S.out( "Disconnected from TWS");
+				log( LogType.CONNECTION, "Disconnected from TWS");
 				m_priceMap.clear();  // clear out all market data since those prices are now stale
 				startTimer();
 			}
@@ -274,8 +279,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}	
 
 	/** Write to the log file. Don't throw any exception. */
-	static void log( LogType type, String text, Object... params) {
+	static int date;
+	
+	static synchronized void log( LogType type, String text, Object... params) {
 		try {
+			// if date has changed since last log msg, close the log file and create a new one
+			if (date != 0 && date != new Date().getDate() ) {
+				resetLogFile();
+				date = new Date().getDate();
+			}
 			String str = String.format( "%s %s %s", Util.now(), type, String.format( text, params) );
 			S.out( str.substring(16) );
 			m_log.writeln( str);
@@ -284,6 +296,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			e.printStackTrace();
 		}
 	}
+
+	private static void resetLogFile() {
+		try {
+			if (m_log != null) {
+				m_log.close();
+			}
+			FileUtilities.createDir( "log");
+			m_log = new OStream( String.format( "log/reflection.%s.log", Util.today() ) );			
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 
 	static class Pair {
 		String m_key;

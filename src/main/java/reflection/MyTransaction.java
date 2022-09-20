@@ -59,8 +59,8 @@ class MyTransaction {
 			handle2();
 		}
 		catch( RefException e) {   // error in parameters sent from client
-			S.out( "RefException " + e.getMessage() );
-			log( LogType.ERROR, e.getMessage() );
+			S.out( "RefException " + e);
+			log( LogType.ERROR, e.toString() );
 			respond( e.toJson() );  
 		}
 		catch( Exception e) {    // unexpected error
@@ -445,8 +445,7 @@ class MyTransaction {
 			
 			@Override public void handle(int errorCode, String errorMsg) {
 				wrap( () -> {
-					S.out( "  order error  id=%s  code=%s  text=%s", order.orderId(), errorCode, errorMsg);
-					// NOTE that this code is duplicated in what-if handler
+					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", order.orderId(), errorCode, errorMsg);  
 					
 					// if some shares were filled, let orderStatus or timeout handle it 
 					if (shares.nonZero() ) {
@@ -480,26 +479,31 @@ class MyTransaction {
 	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
 		if (!m_responded) {
 			if (timeout) {
-				log( LogType.ERROR, "Order %s-%s timed out with %s shares filled", order.orderId(), order.cryptoId(), shares );
+				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled", order.orderId(), order.cryptoId(), shares );
 			}
 
-			LogType logType;
 			
 			if (shares.isZero() ) {
-				logType = LogType.REJECTED;
-				respond( code, RefCode.REJECTED, text, timeout ? "Order timed out" : "Reason unknown");
-			}
-			else if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
-				logType = LogType.FILLED;
-				respond( code, RefCode.OK, "filled", shares);
+				String msg = timeout ? "Order timed out" : "Reason unknown";
+				respond( code, RefCode.REJECTED, text, msg);
+				log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
+						order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
 			}
 			else {
-				logType = LogType.PARTIAL_FILL;
-				respond( code, RefCode.PARTIAL_FILL, "filled", shares);
-			}
+				LogType logType;
 
-			double filledPrice = 0; // fix this. pas
-			log( logType, "orderid=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s  fillPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice(), filledPrice);
+				if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
+					logType = LogType.FILLED;
+					respond( code, RefCode.OK, "filled", shares);
+				}
+				else {
+					logType = LogType.PARTIAL_FILL;
+					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
+				}
+				
+				double filledPrice = 0; // fix this. pas
+				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s  fillPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice(), filledPrice);
+			}
 		}
 	}
 	
