@@ -80,8 +80,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 
 	private void run(String tabName) throws Exception {
-		S.out( "Starting application");	
-		
+		// create log file folder and open log file
+		resetLogFile();
+		log( LogType.RESTART, "");
+
 		// read config settings from google sheet; if it fails, fall back to 
 		// safe config settings which are known to work
 		try {
@@ -94,10 +96,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			e.printStackTrace();
 			m_config.readFromSpreadsheet("Safe Config");
 		}
-
-		// create log file folder and open log file
-		resetLogFile();
-		log( LogType.RESTART, "");
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
@@ -301,9 +299,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		try {
 			if (m_log != null) {
 				m_log.close();
+				m_log = null;
 			}
+			String fname = String.format( "log/reflection.%s.log", Util.today() );
+			S.out( "Resetting log to %s", fname);
+
 			FileUtilities.createDir( "log");
-			m_log = new OStream( String.format( "log/reflection.%s.log", Util.today() ) );			
+			m_log = new OStream( fname);			
 		}
 		catch( Exception e) {
 			e.printStackTrace();

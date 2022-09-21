@@ -11,4 +11,5 @@ public enum LogType {
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
 	CONNECTION,
+	TERMINATE,
 }

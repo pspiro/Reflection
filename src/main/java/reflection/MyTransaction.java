@@ -32,7 +32,7 @@ import tw.util.S;
 
 class MyTransaction {
 	enum MsgType {
-		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, getConnectionStatus;
+		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, getConnectionStatus, terminate;
 
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -59,7 +59,6 @@ class MyTransaction {
 			handle2();
 		}
 		catch( RefException e) {   // error in parameters sent from client
-			S.out( "RefException " + e);
 			log( LogType.ERROR, e.toString() );
 			respond( e.toJson() );  
 		}
@@ -162,7 +161,15 @@ class MyTransaction {
 			case pushBackendConfig:
 				pushBackendConfig();
 				break;
+			case terminate:
+				terminate();
+				break;
 		}
+	}
+	
+	private void terminate() {
+		log( LogType.TERMINATE, "");
+		System.exit( 0);
 	}
 
 	/** Top-level message handler */ 
