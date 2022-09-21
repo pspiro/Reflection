@@ -185,11 +185,8 @@ public class S {
 	}
 
 	public static void out( Object str) {
-		System.out.print( timeFmt.format( new Date() ) );
-		System.out.print( " "); 
-		System.out.print( Thread.currentThread().getId() );
-		System.out.print( "  ");
-		System.out.println( str);
+		System.out.println( String.format( "%s %2s %s", 
+				timeFmt.format( new Date() ), Thread.currentThread().getId(), str) );  
 	}
 
 	/** @deprecated */

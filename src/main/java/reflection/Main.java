@@ -287,7 +287,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				date = new Date().getDate();
 			}
 			String str = String.format( "%s %s %s", Util.now(), type, String.format( text, params) );
-			S.out( str.substring(16) );
+			S.out( str.substring(13) );
 			m_log.writeln( str);
 		}
 		catch( Exception e) {
