@@ -4,7 +4,15 @@
   <artifactId>Reflection</artifactId>
   <version>0.0.2</version>
 
-	<build>	  
+	<build>
+		<resources>
+			<!-- turn on macro substitution in the version.txt resource file -->	  
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>	
+
 		<plugins>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -29,6 +37,10 @@
 	<properties>
 	    <maven.compiler.target>1.8</maven.compiler.target>
 	    <maven.compiler.source>1.8</maven.compiler.source>
+	    
+	    <!-- set timestamp equal to current date/time; will be substituted in resources/version.txt file -->
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 	</properties>
 	
 	<dependencies>

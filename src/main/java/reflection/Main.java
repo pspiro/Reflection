@@ -82,7 +82,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private void run(String tabName) throws Exception {
 		// create log file folder and open log file
 		resetLogFile();
-		log( LogType.RESTART, "");
+		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
 		// read config settings from google sheet; if it fails, fall back to 
 		// safe config settings which are known to work
@@ -297,12 +297,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	private static void resetLogFile() {
 		try {
+			String fname = String.format( "logs/reflection.%s.log", Util.today() );
+			
 			if (m_log != null) {
 				m_log.close();
 				m_log = null;
+				S.out( "Resetting log to %s", fname);
 			}
-			String fname = String.format( "logs/reflection.%s.log", Util.today() );
-			S.out( "Resetting log to %s", fname);
 
 			FileUtilities.createDir( "logs");
 			m_log = new OStream( fname);			
@@ -357,7 +358,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		log( LogType.COMMISSION, "%s %s %s %s",
 				rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
 	}
-
 }
 
 

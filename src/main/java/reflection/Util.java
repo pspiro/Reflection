@@ -1,5 +1,7 @@
 package reflection;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -153,5 +155,10 @@ public class Util {
 			return false;
 		}
 	}
-}
 
+	static String readResource(Class cls, String filename) throws IOException {
+        InputStream is = cls.getClassLoader().getResourceAsStream(filename);
+        byte[] data = new byte[100];
+        return new String( data, 0, is.read(data, 0, data.length) );
+	}
+}
