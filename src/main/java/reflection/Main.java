@@ -301,10 +301,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				m_log.close();
 				m_log = null;
 			}
-			String fname = String.format( "log/reflection.%s.log", Util.today() );
+			String fname = String.format( "logs/reflection.%s.log", Util.today() );
 			S.out( "Resetting log to %s", fname);
 
-			FileUtilities.createDir( "log");
+			FileUtilities.createDir( "logs");
 			m_log = new OStream( fname);			
 		}
 		catch( Exception e) {
