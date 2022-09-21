@@ -12,4 +12,7 @@ public enum LogType {
 	ORDER_TIMEOUT,
 	CONNECTION,
 	TERMINATE,
+	CHECK,			// check order (what-if)
+	ORDER,			// received order
+	SUBMIT
 }

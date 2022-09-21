@@ -779,6 +779,16 @@ public class Order {
 	}
 	
 	public String wallet() { return m_wallet; }
+
+	public String getOrderLog(Contract contract) {
+		return String.format( "wallet=%s  cryptoid=%s  %s",
+				m_wallet, m_cryptoId, getCheckLog(contract) );
+	}
+
+	public String getCheckLog(Contract contract) {
+		return String.format( "%s %s %s (%s) at %s",
+				m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
+	}
     
     
 

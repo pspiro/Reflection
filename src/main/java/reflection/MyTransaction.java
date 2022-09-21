@@ -385,9 +385,11 @@ class MyTransaction {
 					respond( code, RefCode.OK);
 				}
 				else if (whatIf) {
+					log( LogType.CHECK, order.getCheckLog(contract) );
 					submitWhatIf(  contract, order);
 				}
 				else {
+					log( LogType.ORDER, order.getOrderLog(contract) );
 					submitOrder(  contract, order);
 				}
 			});
@@ -397,8 +399,6 @@ class MyTransaction {
 	private void submitWhatIf( Contract contract, final Order order) throws RefException {
 		// check trading hours first since it is a nicer error message
 		
-		S.out( "Submitting checkorder for conid %s", contract.conid() );
-
 		// submit what-if order
 		m_main.m_controller.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderState(OrderState orderState) {
@@ -474,8 +474,9 @@ class MyTransaction {
 			}
 		});
 		
-		S.out( "Submitting order  id=%s  cryptoid=%s  conid=%s", order.orderId(), order.cryptoId(), contract.conid() ); // pas
-
+		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
+				order.wallet(), order.cryptoId(), order.orderId() );
+		
 		// use a higher timeout here; it should never happen since we use IOC. pas
 		// order timeout is a special case because there could have been a partial fill
 		setTimer( Main.m_config.orderTimeout(), () -> respondToOrder( order, shares, true, OrderStatus.Unknown) );
