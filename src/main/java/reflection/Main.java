@@ -78,10 +78,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-
 	private void run(String tabName) throws Exception {
 		// create log file folder and open log file
-		resetLogFile();
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
 		// read config settings from google sheet; if it fails, fall back to 
@@ -282,7 +280,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	static synchronized void log( LogType type, String text, Object... params) {
 		try {
 			// if date has changed since last log msg, close the log file and create a new one
-			if (date != 0 && date != new Date().getDate() ) {
+			if (date != new Date().getDate() ) {
 				resetLogFile();
 				date = new Date().getDate();
 			}
