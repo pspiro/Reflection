@@ -399,6 +399,12 @@ class MyTransaction {
 	private void submitWhatIf( Contract contract, final Order order) throws RefException {
 		// check trading hours first since it is a nicer error message
 		
+		// simulated trading?
+		if (Main.simulate() ) {
+			respond( code, RefCode.OK);
+			return;
+		}
+		
 		// submit what-if order
 		m_main.m_controller.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderState(OrderState orderState) {
@@ -429,8 +435,14 @@ class MyTransaction {
 	}
 
 	private void submitOrder( Contract contract, Order order) throws RefException {
-
 		ModifiableDecimal shares = new ModifiableDecimal();
+
+		// simulated trading?
+		if (Main.simulate() ) {
+			shares.value = order.totalQuantity(); 
+			respondToOrder( order, shares, false, OrderStatus.Unknown);
+			return;
+		}
 		
 		m_main.m_controller.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,

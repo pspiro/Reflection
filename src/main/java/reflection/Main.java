@@ -55,6 +55,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// is there some way to find out? pas
 	boolean m_ibConnection = true; // is this needed? note that we assume it's connected at first but we don't know for sure
 	private static OStream m_log; // log file for requests and responses
+	private static boolean m_simulate;
+	
+	static boolean simulate() { return m_simulate; }
 
 	JSONArray stocks() { return m_stocks; }
 
@@ -63,11 +66,21 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			//S.out( "received null msg " + exch.getHttpContext().getPath() );
 		}
 	};
-
+	
 	public static void main(String[] args) {
 		try {
-			String tabName = args.length == 0 ? "Config" : args[0];
-			new Main().run( tabName);
+			String configTab = "Config";
+			for (String arg : args) {
+				if (arg.equals( "simulated")) {
+					m_simulate = true;
+					S.out( "Running in simulated mode");
+				}
+				else {
+					configTab = arg;
+				}
+			}
+			
+			new Main().run( configTab);
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
@@ -257,6 +270,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			contract.exchange( exchange);
 
 			final Prices c = getOrCreatePrices( conid);
+			
+			// simulation mode?
+			if (simulate() ) {
+				c.tick( TickType.BID, 53.14, null);
+				c.tick( TickType.ASK, 53.42, null);
+				continue;
+			}
 
 			m_controller.reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
@@ -267,6 +287,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				}
 			});
 		}
+		
 	}
 
 	public void ibConnection(boolean connected) {

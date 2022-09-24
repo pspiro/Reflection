@@ -34,6 +34,11 @@ public class Util {
 		@return true if we are currently inside of the hours. 
 	 * @throws RefException */
 	static boolean inside( int conid, String hours) throws RefException {
+		// simulated trading? always return true
+		if (Main.simulate() ) {
+			return true;
+		}
+		
 		return inside( new Date(), conid, hours);
 	}
 	
