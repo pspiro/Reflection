@@ -55,18 +55,7 @@ class MyTransaction {
 	}
 
 	void handle() {
-		try {
-			handle2();
-		}
-		catch( RefException e) {   // error in parameters sent from client
-			log( LogType.ERROR, e.toString() );
-			respond( e.toJson() );  
-		}
-		catch( Exception e) {    // unexpected error
-			e.printStackTrace();
-			log( LogType.ERROR, e.getMessage() );
-			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
-		}
+		wrap( () -> handle2() );
 	}
 	
 	// you could encapsulate all these methods in MyExchange. pas
@@ -298,6 +287,10 @@ class MyTransaction {
 		for (Integer conid : m_main.m_priceMap.keySet() ) {
 			Prices prices = m_main.m_priceMap.get(conid);
 			if (prices.hasSomePrice() ) {
+				if (Main.simulate() ) {
+					prices.adjustPrices();
+				}
+
 				JSONObject single = new JSONObject();
 				single.put( "bid", prices.bid() );
 				single.put( "ask", prices.ask() );
@@ -588,35 +581,29 @@ class MyTransaction {
 			runnable.run();
 		}
 		catch( RefException e) {
-			respond( e.toJson() );
+			boolean responded = respond( e.toJson() );
+			
+			// display log except for timeouts where we have already responded
+			if (responded || e.code() != RefCode.TIMED_OUT) {
+				log( LogType.ERROR, e.toString() );
+			}
 		}
 		catch( Exception e) {
-			respond( RefCode.UNKNOWN, e.getMessage() );
+			log( LogType.ERROR, e.getMessage() );
+			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
 		}
 	}
 	
 	interface RefRunnable {
-		void run() throws RefException; 
+		void run() throws Exception; 
 	}
 
 	void setTimer( long ms, RefRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas
 			@Override public void run() {
-				try {
-					runnable.run();
-				}
-				catch( RefException e) {
-					boolean responded = respond( e.toJson() );
-
-					// print warning for timeout; should never happen
-					if (responded && e.code() == RefCode.TIMED_OUT) {
-						S.out( "WARNING: timed out " + e.getMessage() );
-					}
-				}
-				finally {
-					timer.cancel();
-				}
+				wrap( runnable);
+				timer.cancel();
 			}
 		}, ms);
 	}
