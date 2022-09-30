@@ -2,11 +2,14 @@ package test;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 
+import junit.framework.TestCase;
+import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
-public class TestPostgres {
+public class TestPostgres extends TestCase {
 	static String dbUrl = "jdbc:postgresql://localhost:5432/reflection";
 	static String dbUser = "postgres";
 	static String dbPassword = "1359";
@@ -121,5 +124,45 @@ public class TestPostgres {
 			S.out( "name=%s  age=%s  address=%s",
 					rs.getString(1), rs.getInt(2), rs.getString(3) );
 		}		
+	}
+	
+	/** Hitting the remote RefAPI server takes .31 seconds.
+	 *  Hitting RefAPI on localhost is .001 seconds. */
+	public void testQueryConfigHttp() throws Exception {
+		S.out( "Query config from RefAPI server");
+		S.out( System.currentTimeMillis() );
+		for (int i = 0; i < 100; i++) {
+			String data = "{ 'msg': 'getconfig' }";
+			HashMap<String, Object> res = TestErrors.sendData(data);
+			//S.out( res);
+		}
+		S.out( System.currentTimeMillis() );
+	}
+
+	public void testReadconfigSpreadsheet() {
+		try {
+			Config config = new Config();
+			config.readFromSpreadsheet("Config");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/** On my PC it is taking .16 seconds to hit the config table. */
+	public void testQueryConfigDb() throws SQLException {
+		try {
+			con.connect(dbUrl, dbUser, dbPassword);
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		S.out( "Query database");
+		S.out( System.currentTimeMillis() );
+		for (int i = 0; i < 1; i++) {
+			ResultSet rs = con.query( "SELECT * from config");
+			
+		}
+		S.out( System.currentTimeMillis() );
 	}
 }
