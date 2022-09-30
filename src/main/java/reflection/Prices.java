@@ -50,11 +50,11 @@ class Prices {
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
 		if (order.action() == Action.BUY) {
 			Main.require( validAsk(), RefCode.NO_PRICES, "No ask price");
-			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, "Order price is too low");
+			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, "\"Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order");  // this is displayed to user
 		}
 		else {
 			Main.require( validBid(), RefCode.NO_PRICES, "No bid price");
-			Main.require( orderPrice <= m_bid, RefCode.INVALID_PRICE, "Order price is too high");
+			Main.require( orderPrice <= m_bid, RefCode.INVALID_PRICE, "\"Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order");  // this is displayed to user
 		}
 	}
 

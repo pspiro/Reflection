@@ -24,6 +24,10 @@ public enum OrderStatus {
         }
         return Unknown;
     }
+
+    public boolean isCanceled() {
+    	return this == ApiCancelled || this == PendingCancel || this == Cancelled;
+    }    
     
 	public boolean isActive() {
 		return this == PreSubmitted || this == PendingCancel || this == Submitted || this == PendingSubmit;

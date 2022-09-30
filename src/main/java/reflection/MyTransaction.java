@@ -329,7 +329,7 @@ class MyTransaction {
 
 		double amt = price * quantity;
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
-		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "Order quantity of %s exceed max order quantity of %s", amt, maxAmt);
+		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 
 		String wallet = null;
 		String cryptoId = null;
@@ -487,7 +487,12 @@ class MyTransaction {
 	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
 		if (!m_responded) {
 			if (timeout) {
-				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled", order.orderId(), order.cryptoId(), shares );
+				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
+				
+				if (!status.isComplete() && !status.isCanceled() ) {
+					S.out( "Canceling order %s", order.orderId() );
+					m_main.m_controller.cancelOrder( order.orderId(), "", null);
+				}
 			}
 
 			

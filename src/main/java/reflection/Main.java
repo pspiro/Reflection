@@ -115,7 +115,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// connect to TWS  // change this to have a connection manager
 		m_controller = new ApiController( m_apiHandler, m_apiHandler, m_apiHandler);
 		m_controller.handleExecutions( this);
-		S.out( "Connecting to TWS on %s:%s", m_config.twsHost(), m_config.twsPort() );
+		S.out( "Connecting to TWS on %s:%s with client id %s", m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
 		m_connMgr.connect( m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
 	}
 
@@ -323,25 +323,42 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
-		Object[] values = {
-			exec.time(),
-			exec.orderId(),
-			exec.side(), 
-			exec.shares().toDouble(),
-			contract.symbol(),
-			exec.price(), 
-			exec.permId(), 
-			exec.cumQty(), 
-			contract.conid(),
-			exec.exchange(), 
-			exec.avgPrice(),
-			exec.orderRef(),
-			tradeKey
-		};
+		// WARNING: you cannot change the order of these
+		Object[] dbValues = {
+				exec.time(),
+				exec.orderId(),
+				exec.side(), 
+				exec.shares().toDouble(),
+				contract.symbol(),
+				exec.price(), 
+				exec.permId(), 
+				exec.cumQty(), 
+				contract.conid(),
+				exec.exchange(), 
+				exec.avgPrice(),
+				exec.orderRef(),
+				tradeKey
+			};
+
+		Object[] msgValues = {
+				exec.orderId(),
+				exec.side(), 
+				exec.shares().toDouble(),
+				contract.symbol(),
+				contract.conid(),
+				exec.price(), 
+				exec.exchange(),
+				
+				exec.permId(), 
+				exec.cumQty(), 
+				exec.avgPrice(),
+				exec.orderRef(),
+				tradeKey
+			};
 
 		try {
-			log( LogType.TRADE, "%s %s %s %s %s %s %s %s %s %s %s %s %s", values);
-			m_database.insert( "trades", values);
+			log( LogType.TRADE, "id=%s  %s %s shares of %s (%s) at %s on %s  %s %s %s %s %s", msgValues);
+			m_database.insert( "trades", dbValues);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

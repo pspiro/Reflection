@@ -103,9 +103,8 @@ public class Config {
 		this.orderTimeout = tab.getInt( "orderTimeout");
 		this.timeout = tab.getInt( "timeout");
 		
-		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
-		require( sellSpread > 0 && sellSpread < .05, "sellSpread");
+		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
 		require( minSellSpread > 0 && minSellSpread < .05 && minSellSpread < sellSpread, "minSellSpread");
 		require( maxBuyAmt > 0 && maxBuyAmt < 100000, "maxBuyAmt");
