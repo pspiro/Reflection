@@ -1,5 +1,7 @@
 package reflection;
 
+import java.util.Random;
+
 import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.TickType;
@@ -90,5 +92,18 @@ class Prices {
 
 	public double ask() {
 		return m_ask;
+	}
+
+	
+	/** This is called only when simulating prices and trading, never in production.
+	 *  Adjust the prices up or down by from .0001 to 0015 
+	 *  This should cause some orders to be rejected. */
+	static Random rnd = new Random();
+	public void adjustPrices() {
+		double adj = (rnd.nextInt(15) + 1) / 10000.0;
+		double adj2 = rnd.nextBoolean() ? 1 + adj : 1 - adj;
+		
+		m_bid *= adj2;
+		m_ask *= adj2; 
 	}
 }
