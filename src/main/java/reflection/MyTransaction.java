@@ -269,7 +269,7 @@ class MyTransaction {
 		int conid = m_map.getRequiredInt( "conid");
 
 		Prices prices = m_main.m_priceMap.get( conid);
-		require(prices != null && prices.hasSomePrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
+		require(prices != null && prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
 		respond( prices.toJson(conid) );

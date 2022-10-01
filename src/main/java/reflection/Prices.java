@@ -73,18 +73,18 @@ class Prices {
 
 	public Json toJson(int conid) throws RefException {
 		Main.require( m_bidSize !=null && m_askSize != null, RefCode.INVALID_PRICE, "conid %s has null sizes", conid); 
-		return Util.toJsonMsg("bid", m_bid, "bidSize", m_bidSize.toInteger(), "ask", m_ask, "askSize", m_askSize.toInteger() );
+		return Util.toJsonMsg("bid", anyBid(), "bidSize", m_bidSize.toInteger(), "ask", anyAsk(), "askSize", m_askSize.toInteger() );
 //		return Util.toJsonMsg("bid", m_bid, "ask", m_ask);
 	}
 	
 	/** Used for display on the Watch List */
 	double anyBid() {
-		return validBid() ? m_bid : validLast() ? m_last - .02 : 0;
+		return validBid() ? m_bid : validLast() ? m_last - .05 : 0;
 	}
 
 	/** Used for display on the Watch List */
 	double anyAsk() {
-		return validAsk() ? m_ask : validLast() ? m_last + .02 : 0;
+		return validAsk() ? m_ask : validLast() ? m_last + .05 : 0;
 	}
 
 	boolean validLast() {
