@@ -84,24 +84,13 @@ public class TestErrors extends TestCase {
 	
 	
 
-	static Config config = new Config();
-	
-	static {
-		try {
-			config.readFromSpreadsheet("Config");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 	
 	static String prod = "34.148.125.2";
 	static String local = "localhost";
 	
-	static String host = prod;
+	static String host = local; //prod;
 	
 	static MyHttpClient cli() throws Exception {
-		if (config.mode() == Main.Mode.production) throw new Exception();
-		
 		return new MyHttpClient( host, 8383);
 	}
 	
