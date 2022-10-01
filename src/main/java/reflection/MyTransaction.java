@@ -272,7 +272,7 @@ class MyTransaction {
 		require(prices != null && prices.hasSomePrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
-		respond( prices.toJson() );
+		respond( prices.toJson(conid) );
 	}
 	
 	/** Top-level method. */
@@ -594,7 +594,7 @@ class MyTransaction {
 			}
 		}
 		catch( Exception e) {
-			log( LogType.ERROR, e.getMessage() );
+			log( LogType.ERROR, S.notNull( e.getMessage() ) );
 			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
 		}
 	}

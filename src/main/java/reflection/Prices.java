@@ -60,8 +60,10 @@ class Prices {
 		}
 	}
 
-	public Json toJson() {
-		return Util.toJsonMsg("bid", m_bid, "bidSize", m_bidSize.toInteger(), "ask", m_ask, "askSize", m_askSize.toInteger() );
+	public Json toJson(int conid) throws RefException {
+//		Main.require( m_bidSize !=null && m_askSize != null, RefCode.INVALID_PRICE, "conid %s has null sizes", conid); 
+//		return Util.toJsonMsg("bid", m_bid, "bidSize", m_bidSize.toInteger(), "ask", m_ask, "askSize", m_askSize.toInteger() );
+		return Util.toJsonMsg("bid", m_bid, "ask", m_ask);
 	}
 
 	public boolean hasSomePrice() {
@@ -99,11 +101,14 @@ class Prices {
 	 *  Adjust the prices up or down by from .0001 to 0015 
 	 *  This should cause some orders to be rejected. */
 	static Random rnd = new Random();
+	static Decimal defSize = Decimal.get( 100.0);
 	public void adjustPrices() {
 		double adj = (rnd.nextInt(15) + 1) / 10000.0;
 		double adj2 = rnd.nextBoolean() ? 1 + adj : 1 - adj;
 		
 		m_bid *= adj2;
-		m_ask *= adj2; 
+		m_ask *= adj2;
+		m_bidSize = defSize;
+		m_askSize = defSize;
 	}
 }
