@@ -292,14 +292,18 @@ class MyTransaction {
 				}
 
 				JSONObject single = new JSONObject();
-				single.put( "bid", prices.anyBid() );
-				single.put( "ask", prices.anyAsk() );
+				single.put( "bid", round( prices.anyBid() ) );
+				single.put( "ask", round( prices.anyAsk() ) );
 
 				whole.put( String.valueOf( conid), single); 
 			}
 		}
 
 		respond( new Json( whole) );
+	}
+
+	private double round(double val) {
+		return Math.round( val * 100) / 100.;
 	}
 
 	/** Top-level method. */
