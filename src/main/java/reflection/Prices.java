@@ -12,20 +12,31 @@ import tw.util.S;
 class Prices {
 	private double m_bid;
 	private double m_ask;
-	private Decimal m_bidSize;
+	private double m_last;
+	private double m_close;
+	private Decimal m_bidSize;  // not being used for anything
 	private Decimal m_askSize;
+
+	public double bid() { return m_bid; }
+	public double ask() { return m_ask; }
 
 	public void tick(TickType tickType, double price, Decimal size) {
 		switch( tickType) {
+			case CLOSE:
+			case DELAYED_CLOSE:
+				m_close = price; break;
+			case LAST:
+			case DELAYED_LAST:
+				m_last = price; break;
 			case BID:
 			case DELAYED_BID:
 				m_bid = price; break;
-			case BID_SIZE:
-			case DELAYED_BID_SIZE:
-				m_bidSize = size; break;
 			case ASK:
 			case DELAYED_ASK:
 				m_ask = price; break;
+			case BID_SIZE:
+			case DELAYED_BID_SIZE:
+				m_bidSize = size; break;
 			case ASK_SIZE:
 			case DELAYED_ASK_SIZE:
 				m_askSize = size; break;
@@ -61,13 +72,31 @@ class Prices {
 	}
 
 	public Json toJson(int conid) throws RefException {
-//		Main.require( m_bidSize !=null && m_askSize != null, RefCode.INVALID_PRICE, "conid %s has null sizes", conid); 
-//		return Util.toJsonMsg("bid", m_bid, "bidSize", m_bidSize.toInteger(), "ask", m_ask, "askSize", m_askSize.toInteger() );
-		return Util.toJsonMsg("bid", m_bid, "ask", m_ask);
+		Main.require( m_bidSize !=null && m_askSize != null, RefCode.INVALID_PRICE, "conid %s has null sizes", conid); 
+		return Util.toJsonMsg("bid", m_bid, "bidSize", m_bidSize.toInteger(), "ask", m_ask, "askSize", m_askSize.toInteger() );
+//		return Util.toJsonMsg("bid", m_bid, "ask", m_ask);
+	}
+	
+	/** Used for display on the Watch List */
+	double anyBid() {
+		return validBid() ? m_bid : validLast() ? m_last - .02 : 0;
 	}
 
+	/** Used for display on the Watch List */
+	double anyAsk() {
+		return validAsk() ? m_ask : validLast() ? m_last + .02 : 0;
+	}
+
+	boolean validLast() {
+		return m_last > 0;
+	}
+	
 	public boolean hasSomePrice() {
 		return validBid() || validAsk();
+	}
+
+	public boolean hasAnyPrice() {
+		return validBid() || validAsk() || validLast();
 	}
 
 	public double midpoint() {
@@ -88,13 +117,6 @@ class Prices {
 		return S.fmt3( midpoint() );
 	}
 
-	public double bid() {
-		return m_bid;
-	}
-
-	public double ask() {
-		return m_ask;
-	}
 
 	
 	/** This is called only when simulating prices and trading, never in production.
@@ -108,7 +130,13 @@ class Prices {
 		
 		m_bid *= adj2;
 		m_ask *= adj2;
-		m_bidSize = defSize;
-		m_askSize = defSize;
+	}
+
+	/** Called in simulated mode only. */
+	public void setInitialPrices() {
+		tick( TickType.BID, 53.14, null);
+		tick( TickType.ASK, 53.42, null);
+		tick( TickType.BID_SIZE, 0., Decimal.get( 100) );
+		tick( TickType.ASK_SIZE, 0., Decimal.get( 100) );
 	}
 }

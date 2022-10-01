@@ -273,8 +273,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			
 			// simulation mode?
 			if (simulate() ) {
-				c.tick( TickType.BID, 53.14, null);
-				c.tick( TickType.ASK, 53.42, null);
+				c.setInitialPrices();
 				continue;
 			}
 

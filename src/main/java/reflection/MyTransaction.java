@@ -286,14 +286,14 @@ class MyTransaction {
 		
 		for (Integer conid : m_main.m_priceMap.keySet() ) {
 			Prices prices = m_main.m_priceMap.get(conid);
-			if (prices.hasSomePrice() ) {
+			if (prices.hasAnyPrice() ) {
 				if (Main.simulate() ) {
 					prices.adjustPrices();
 				}
 
 				JSONObject single = new JSONObject();
-				single.put( "bid", prices.bid() );
-				single.put( "ask", prices.ask() );
+				single.put( "bid", prices.anyBid() );
+				single.put( "ask", prices.anyAsk() );
 
 				whole.put( String.valueOf( conid), single); 
 			}
