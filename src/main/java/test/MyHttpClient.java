@@ -13,6 +13,12 @@ import tw.util.S;
 
 class MyHttpClient {
 	private Socket m_socket;
+	
+	public static void main(String[] args) throws Exception {
+		MyHttpClient cli = new MyHttpClient( "192.168.1.11", 80);
+		cli.get( "hello");
+		S.out( cli.readAll() );
+	}
 
 	MyHttpClient( String host, int port) throws Exception {
 		m_socket = new Socket( host, port);
@@ -66,18 +72,24 @@ class MyHttpClient {
 		return new String( ar);
 	}
 	
-	void send( String data) throws Exception {
+	void post( String data) throws Exception {
 		String contLen = String.format( "Content-length: %s\r\n", data.length() );
 
-		/*
-		GET / HTTP/1.1
-		 */
 		StringBuilder sb = new StringBuilder();
 		sb.append( "POST / HTTP/1.1\r\n");
 		sb.append( contLen);
 		sb.append( "\r\n");
 		sb.append( data);
 		
+		write( sb.toString() );
+	}
+
+	// this doesn't work. pas
+	void get( String data) throws Exception {
+		StringBuilder sb = new StringBuilder();
+		sb.append( "GET /" + data + " HTTP/1.1\r\n");
+		sb.append( "\r\n");
+
 		write( sb.toString() );
 	}
 }

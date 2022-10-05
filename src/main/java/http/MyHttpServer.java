@@ -1,40 +1,27 @@
 package http;
 
 
-import java.net.BindException;
-
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-
-import reflection.ParamMap;
 import tw.util.S;
 
-public class MyHttpServer implements HttpHandler {
-	
-	public static void main(String[] args) {
-		try {
-			int port = 8484; //Integer.valueOf( System.getenv("PORT") );
-			Transaction.listen( new MyHttpServer(), port);
-		}
-		catch( BindException e) {
-			S.out( "The application is already running");
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+public class MyHttpServer {
 
-	@Override public synchronized void handle(HttpExchange exch) {
-		try {
-			handle( exch, Transaction.getMap( exch) );
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	// this is so fucking weird. it works when run from command prompt, but
+	// when run from eclipse you can't connect from browser using external ip 
+	// http://69.119.189.87  but you can use 192.168.1.11; from dos prompt you
+	// can use either. pas
+	public static void main(String[] args) {
+		String host = args[0];
+		int port = Integer.valueOf( args[1]);
+		S.out( "listening on %s:%s", host, port);
+
+		SimpleTransaction.listen( host, port, trans -> {
+			try {
+				String str = trans.getRequest();
+				S.out( str);
+				trans.respond( "OK");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
 	}
-		
-	private void handle(HttpExchange exch, ParamMap map) {
-		Transaction.respond( exch, map.toString() );
-	}
-	
-		
 }
