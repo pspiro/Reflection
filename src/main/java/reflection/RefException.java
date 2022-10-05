@@ -1,12 +1,14 @@
 package reflection;
 
+import tw.util.S;
+
 public class RefException extends Exception {
 	private RefCode m_code;
 
 	public RefCode code() { return m_code; }
 
 	public RefException( RefCode code, String first, Object... params) {  // my text is the detail message
-		super( String.format( first, params) );
+		super( String.format( S.notNull( first), params) );
 		m_code = code;
 	}
 	

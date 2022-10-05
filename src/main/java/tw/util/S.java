@@ -158,7 +158,7 @@ public class S {
 				params[i] = NONE;
 			}
 		}
-		return String.format( string, params);
+		return String.format( notNull( string), params);
 	}
 
 	public static void out( String str, Object... params) {
@@ -614,7 +614,7 @@ public class S {
 	}
 
 	public static void inform(Component parent, String message, Object... params) {
-		JOptionPane.showMessageDialog( parent, String.format( message, params) );
+		JOptionPane.showMessageDialog( parent, String.format( notNull( message), params) );
 	}
 
 	public static List<String> list(String... strings) {
