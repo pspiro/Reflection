@@ -88,7 +88,7 @@ public class TestErrors extends TestCase {
 	static String prod = "34.148.125.2";
 	static String local = "localhost";
 	
-	static String host = local; //prod;
+	static String host = prod;
 	
 	static MyHttpClient cli() throws Exception {
 		return new MyHttpClient( host, 8383);
@@ -96,7 +96,7 @@ public class TestErrors extends TestCase {
 	
 	static HashMap<String, Object> sendData( String data) throws Exception {
 		MyHttpClient cli = cli();
-		cli.send( data.replaceAll( "\\'", "\"") );
+		cli.post( data.replaceAll( "\\'", "\"") );
 		return cli.readJsonMap();
 	}
 	
