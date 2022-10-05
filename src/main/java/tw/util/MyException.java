@@ -4,6 +4,6 @@ public class MyException extends Exception {  // move this to lib. pas
 	int m_code;
 	
 	public MyException( String first, Object... params) {
-		super( String.format( first, params) );
+		super( String.format( S.notNull( first), params) );
 	}
 }
