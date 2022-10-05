@@ -9,7 +9,10 @@ import com.ib.client.Types.Action;
 
 import tw.util.S;
 
-class Prices {
+public class Prices {
+	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
+	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
+	
 	private double m_bid;
 	private double m_ask;
 	private double m_last;
@@ -63,11 +66,11 @@ class Prices {
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
 		if (order.action() == Action.BUY) {
 			Main.require( validAsk(), RefCode.NO_PRICES, "No ask price");
-			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, "\"Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order");  // this is displayed to user
+			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, TOO_LOW);  // this is displayed to user
 		}
 		else {
 			Main.require( validBid(), RefCode.NO_PRICES, "No bid price");
-			Main.require( orderPrice <= m_bid, RefCode.INVALID_PRICE, "\"Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order");  // this is displayed to user
+			Main.require( orderPrice <= m_bid, RefCode.INVALID_PRICE, TOO_HIGH);  // this is displayed to user
 		}
 	}
 
