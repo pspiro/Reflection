@@ -5,7 +5,9 @@ import static test.TestErrors.sendData;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
+import reflection.Prices;
 import reflection.RefCode;
+import tw.util.S;
 
 public class TestOrder extends TestCase {
 
@@ -35,8 +37,20 @@ public class TestOrder extends TestCase {
 		HashMap<String, Object> map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
+		S.out( code + " " + text);
+		S.out( RefCode.INVALID_PRICE + " " + Prices.TOO_LOW);
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
-		assertEquals( "Order price is too low", text);
+		assertEquals( Prices.TOO_LOW, text);
+	}
+	
+	// sell order price to high
+	public void testOrder35() throws Exception {
+		String data = orderData( 1, "SELL", "pricetoohigh");
+		HashMap<String, Object> map = sendData( data);
+		String code = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		assertEquals( RefCode.INVALID_PRICE.toString(), code);
+		assertEquals( Prices.TOO_HIGH, text);
 	}
 	
 	// reject order; price too high; IB won't accept it
@@ -89,7 +103,7 @@ public class TestOrder extends TestCase {
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '133', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '122', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
@@ -122,5 +136,5 @@ public class TestOrder extends TestCase {
 	}
 	
 	// current stock price
-	static double curPrice = 127.22;  // you can query for this
+	static double curPrice = 121;  // you can query for this
 }

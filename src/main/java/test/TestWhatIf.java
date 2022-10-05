@@ -5,6 +5,7 @@ import static test.TestErrors.sendData;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
+import reflection.Prices;
 import reflection.RefCode;
 
 public class TestWhatIf extends TestCase {
@@ -77,7 +78,7 @@ public class TestWhatIf extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_PRICE.toString(), ret);
-		assertEquals( "Order price is too low", text);
+		assertEquals( Prices.TOO_LOW, text);
 	}
 
 
