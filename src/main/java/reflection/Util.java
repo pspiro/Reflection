@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.json.simple.JSONObject;
 
 import com.ib.client.Decimal;
+
+import tw.util.S;
 
 public class Util {
 	static SimpleDateFormat fmt = new SimpleDateFormat( "HH:mm:ss.SSS");
@@ -33,22 +36,32 @@ public class Util {
 		20220809:0930-20220809:1600
 		@return true if we are currently inside of the hours. 
 	 * @throws RefException */
-	static boolean inside( int conid, String hours) throws RefException {
+	static boolean inside( int conid, String hours, String timeZoneId) throws RefException {
 		// simulated trading? always return true
 		if (Main.simulate() ) {
 			return true;
 		}
 		
-		return inside( new Date(), conid, hours);
+		return inside( new Date(), conid, hours, timeZoneId);
 	}
 	
 	/** These are broken out to facilitate testing. */
-	public static boolean inside( Date now, int conid, String hours) throws RefException {
+	public static boolean inside( Date now, int conid, String hours, String timeZoneIdIn) throws RefException {
 		Main.require (hours != null, RefCode.UNKNOWN, "Null trading hours for %s", conid);
 
 		try {
-			// put current date/time in same format as received from server
-			//Date now = new Date();
+			String timeZoneId = S.isNotNull( timeZoneIdIn) ? timeZoneIdIn : "America/New_York";
+			TimeZone zone = TimeZone.getTimeZone(timeZoneId);
+			Main.require( zone != null, RefCode.UNKNOWN, "Invalid time zone id %s", timeZoneId);
+
+			SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
+			yyyymmdd.setTimeZone(zone);
+
+			SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
+			hhmm.setTimeZone( zone);			
+			
+			// put current date/time in same format and time zone as received from server
+			// Date now = new Date();
 			String curDateTime = String.format( "%s:%s", yyyymmdd.format( now), hhmm.format( now) );  
 			
 			String[] sessions = hours.split( ";");
@@ -166,4 +179,5 @@ public class Util {
         byte[] data = new byte[100];
         return new String( data, 0, is.read(data, 0, data.length) );
 	}
+	
 }

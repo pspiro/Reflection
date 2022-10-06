@@ -103,7 +103,7 @@ public class TestOrder extends TestCase {
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '122', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '124', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
@@ -136,5 +136,5 @@ public class TestOrder extends TestCase {
 	}
 	
 	// current stock price
-	static double curPrice = 121;  // you can query for this
+	static double curPrice = 122.36;  // you can query for this
 }

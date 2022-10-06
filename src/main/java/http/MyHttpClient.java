@@ -1,4 +1,4 @@
-package test;
+package http;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -11,34 +11,34 @@ import org.json.simple.parser.JSONParser;
 import tw.util.IStream;
 import tw.util.S;
 
-class MyHttpClient {
+public class MyHttpClient {
 	private Socket m_socket;
 	
 	public static void main(String[] args) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "192.168.1.11", 80);
 		cli.get( "hello");
-		S.out( cli.readAll() );
+		S.out( cli.readString() );
 	}
 
-	MyHttpClient( String host, int port) throws Exception {
+	public MyHttpClient( String host, int port) throws Exception {
 		m_socket = new Socket( host, port);
 	}
 	
-	void writeFile( String filename) throws Exception {
+	public void writeFile( String filename) throws Exception {
 		IStream is = new IStream( filename);
 		write( is.readAll() );
 	}
 	
-	void write( String str) throws Exception {
+	public void write( String str) throws Exception {
 		write( str.getBytes() );
 	}
 	
-	void write( byte[] bytes) throws Exception {
+	public void write( byte[] bytes) throws Exception {
 		m_socket.getOutputStream().write( bytes);
 	}
 
-	HashMap<String,Object> readJsonMap() throws Exception {
-		JSONObject jsonObject = readJson();
+	public HashMap<String,Object> readJsonMap() throws Exception {
+		JSONObject jsonObject = readJsonObject();
 
 		HashMap<String,Object> map = new HashMap<String,Object>();
         for (Object key : jsonObject.keySet() ) {
@@ -48,11 +48,11 @@ class MyHttpClient {
         return map;
 	}
 
-	JSONObject readJson() throws Exception {
-		return (JSONObject)new JSONParser().parse( readAll() );
+	public JSONObject readJsonObject() throws Exception {
+		return (JSONObject)new JSONParser().parse( readString() );
 	}
 	
-	String readAll() throws Exception {
+	public String readString() throws Exception {
 		BufferedReader br = new BufferedReader( new InputStreamReader( m_socket.getInputStream() ) );
 
 		// build map of headers until a blank line is read
@@ -72,7 +72,7 @@ class MyHttpClient {
 		return new String( ar);
 	}
 	
-	void post( String data) throws Exception {
+	public void post( String data) throws Exception {
 		String contLen = String.format( "Content-length: %s\r\n", data.length() );
 
 		StringBuilder sb = new StringBuilder();
@@ -84,8 +84,8 @@ class MyHttpClient {
 		write( sb.toString() );
 	}
 
-	// this doesn't work. pas
-	void get( String data) throws Exception {
+	// this doesn't work. pas needs ?
+	public void get( String data) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "GET /" + data + " HTTP/1.1\r\n");
 		sb.append( "\r\n");

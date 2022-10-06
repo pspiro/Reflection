@@ -47,7 +47,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	ApiController m_controller;
 	final HashMap<Integer,Prices> m_priceMap = new HashMap<Integer,Prices>(); // prices could be moved into the Stock object; no need for two separate maps  pas
-	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet
+	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final ApiHandler m_apiHandler = new ApiHandler(this);
 	protected final ConnectionMgr m_connMgr = new ConnectionMgr( m_controller);
 
@@ -391,6 +391,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
 		log( LogType.COMMISSION, "%s %s %s %s",
 				rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
+	}
+
+	public String getExchange(int conid) {
+		return conid == 44652000 ? "NSE" : "SMART";
 	}
 }
 

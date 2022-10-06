@@ -221,6 +221,11 @@ class MyTransaction {
 				JSONArray whole = new JSONArray();
 				
 				for (ContractDetails deets : list) {
+					JSONObject tradingHours = new JSONObject();
+					tradingHours.put( "tradingHours", deets.tradingHours() );
+					tradingHours.put( "liquidHours", deets.liquidHours() );
+					tradingHours.put( "timeZone", deets.timeZoneId() );
+
 					JSONObject obj = new JSONObject();
 					obj.put( "symbol", deets.contract().symbol() );
 					obj.put( "conid", deets.conid() );
@@ -228,6 +233,7 @@ class MyTransaction {
 					obj.put( "prim_exchange", deets.contract().primaryExch() );
 					obj.put( "currency", deets.contract().currency() );
 					obj.put( "name", deets.longName() );
+					obj.put( "tradingHours", tradingHours);
 
 					whole.add( obj);
 				}
@@ -249,7 +255,7 @@ class MyTransaction {
 		S.out( "Returning trading hours for %s", conid);
 		Contract contract = new Contract();
 		contract.conid( conid);
-		contract.exchange( "SMART");
+		contract.exchange( m_main.getExchange( conid) );
 
 		m_main.m_controller.reqContractDetails(contract, list -> processHours( conid, list) );
 		
@@ -262,10 +268,10 @@ class MyTransaction {
 			
 			ContractDetails deets = list.get(0);
 
-			if (inside( deets.conid(), deets.liquidHours() ) ) {
+			if (inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ) {
 				respond( "hours", "liquid");
 			}
-			else if (inside( deets.conid(), deets.tradingHours() ) ) {
+			else if (inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ) ) {
 				respond( "hours", "illiquid");
 			}
 			else {
@@ -359,7 +365,7 @@ class MyTransaction {
 		
 		Contract contract = new Contract();
 		contract.conid( conid);
-		contract.exchange( "SMART");
+		contract.exchange( m_main.getExchange( conid) );
 
 		Order order = new Order();
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
@@ -379,8 +385,8 @@ class MyTransaction {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
 				ContractDetails deets = list.get(0);
-				require( inside( deets.conid(), deets.liquidHours() ) ||
-							  inside( deets.conid(), deets.tradingHours() ), RefCode.EXCHANGE_CLOSED, "Exchange is closed");
+				require( inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
+				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, "Exchange is closed");
 
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 
@@ -646,6 +652,7 @@ class MyTransaction {
 			return Decimal.isValidNotZeroValue(value);
 		}
 	};
+	
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
