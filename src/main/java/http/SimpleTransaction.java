@@ -14,9 +14,9 @@ import org.json.simple.parser.JSONParser;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import reflection.Main;
 import reflection.ParamMap;
 import reflection.RefCode;
 import reflection.RefException;
@@ -73,14 +73,14 @@ class SimpleTransaction {
 		return "";
 	}
 	
-	static ParamMap getMap(HttpExchange exchange) throws Exception {
-		String uri = exchange.getRequestURI().toString().toLowerCase();
+	ParamMap getMap() throws Exception {
+		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
 		ParamMap map = new ParamMap();
 
-		if ("GET".equals(exchange.getRequestMethod() ) ) {
-			S.out( "Received GET request %s %s", uri, exchange.getHttpContext().getPath() ); 
+		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
+			S.out( "Received GET request %s %s", uri, m_exchange.getHttpContext().getPath() ); 
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
 			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present");
@@ -98,7 +98,7 @@ class SimpleTransaction {
 		// POST request
 		else {
 			try {
-	            Reader reader = new InputStreamReader( exchange.getRequestBody() );
+	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            
 				JSONParser parser = new JSONParser();
 	            JSONObject jsonObject = (JSONObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
@@ -121,6 +121,15 @@ class SimpleTransaction {
 		}
 		
 		return map;
+	}	
+
+	
+	MyJsonObj getJson() throws Exception {
+		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "Must be post");
+		S.out( "received POST w/ len %s", m_exchange.getRequestHeaders().getFirst("content-length") );
+
+		Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
+        return new MyJsonObj( new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	}	
 
 	/** Only respond once for each request
