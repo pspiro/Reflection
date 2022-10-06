@@ -5,7 +5,7 @@ import org.json.simple.JSONObject;
 
 public class Json {
 
-	private final String m_str;
+	private String m_str;
 
 	public long length() { return m_str.length(); }
 	public byte[] getBytes() { return m_str.getBytes(); }
@@ -24,5 +24,11 @@ public class Json {
 	
 	public String getLog() {
 		return Util.flatten( m_str);
+	}
+
+	/** If this is an array of objects, it will put them one on each line for easier reading. */
+	public Json fmtArray() {
+		m_str = m_str.replaceAll( ",\\{", ",\n{");
+		return this;
 	}
 }

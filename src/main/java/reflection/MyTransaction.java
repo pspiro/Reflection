@@ -1,8 +1,8 @@
 package reflection;
 
-import static reflection.Util.inside;
 import static reflection.Main.log;
 import static reflection.Main.require;
+import static reflection.Util.inside;
 
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -208,19 +209,30 @@ class MyTransaction {
 
 		S.out( "Returning stock description");
 		Contract contract = new Contract();
-		contract.symbol( m_map.getRequiredParam("symbol").replace( '_', ' ') );
 		contract.secType( SecType.STK);
-		contract.exchange( "SMART");
-		contract.currency( "USD");
+		contract.symbol( m_map.getRequiredParam("symbol").replace( '_', ' ') );
+		contract.exchange( m_map.getParam("exchange") );
+		contract.currency( m_map.getParam("currency") );
 
 		m_main.m_controller.reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.UNKNOWN, "No such stock");
 				
-				ContractDetails deets = list.get(0);
-				Json json = Util.toJsonMsg( "symbol", deets.contract().symbol(),
-						"conid", deets.conid(), "description", deets.longName() );
-				respond( json);
+				JSONArray whole = new JSONArray();
+				
+				for (ContractDetails deets : list) {
+					JSONObject obj = new JSONObject();
+					obj.put( "symbol", deets.contract().symbol() );
+					obj.put( "conid", deets.conid() );
+					obj.put( "exchange", deets.contract().exchange() );
+					obj.put( "prim_exchange", deets.contract().primaryExch() );
+					obj.put( "currency", deets.contract().currency() );
+					obj.put( "name", deets.longName() );
+
+					whole.add( obj);
+				}
+
+				respond( new Json( whole).fmtArray() );
 			});
 		});
 
