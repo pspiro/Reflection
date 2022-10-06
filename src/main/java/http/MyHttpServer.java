@@ -20,13 +20,14 @@ public class MyHttpServer {
 		SimpleTransaction.listen( host, port, transaction -> {
 			try {
 				MyJsonObj msg = transaction.getJson();
+				S.out( msg);
 
-				for (MyJsonObj transfer : msg.getAr( "erc20Transfers") ) {
-		        	String from = transfer.getStr( "from");
-		        	String to = transfer.getStr( "to");
-		        	double val = transfer.getDouble( "valueWithDecimals");
-		        	S.out( "%s %s %s", from, to, val);  // formats w/ two dec.
-		        }
+//				for (MyJsonObj transfer : msg.getAr( "erc20Transfers") ) {
+//		        	String from = transfer.getStr( "from");
+//		        	String to = transfer.getStr( "to");
+//		        	double val = transfer.getDouble( "valueWithDecimals");
+//		        	S.out( "%s %s %s", from, to, val);  // formats w/ two dec.
+//		        }
 				
 				transaction.respond( "OK");
 			} catch (Exception e) {
