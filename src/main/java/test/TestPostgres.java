@@ -19,7 +19,7 @@ public class TestPostgres extends TestCase {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
-			new TestPostgres().createTrades();
+			new TestPostgres().createEvents();
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -27,22 +27,14 @@ public class TestPostgres extends TestCase {
 		S.out( "done");
 	}
 	
-	void createProfit() throws SQLException {
-		String sql = "create table profit ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "crypto_id varchar(32)"
-				+ "wallet_id varchar(32)"
-				+ "region varchar(32)"
-				+ "side varchar(4)"
-				+ "symbol varchar(10)"
-				+ "conid integer"
-				+ "commission double precision,"
-				+ "crypto_qty double precision"
-				+ "crypto_price double precision,"
-				+ "exchange_qty"
-				+ "exchange_price double precision,"
-				+ "profit double precision"
-				+ ")";
+	void createEvents() throws SQLException {
+		con.execute( "drop table events");
 		
+		String sql = "create table events ("   // in Java 13 you have text blocks, you wouldn't need all the + "
+				+ "block integer,"
+				+ "wallet varchar(32),"
+				+ "quantity double precision"
+				+ ")";
 		con.execute( sql);
 	}
 	
