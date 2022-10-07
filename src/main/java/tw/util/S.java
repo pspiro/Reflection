@@ -786,7 +786,7 @@ public class S {
 	
 	public static void main(String[] args) {
 		try {
-			S.out( formatDate( "4-3-2021", yyyymmdd) );
+			S.out( right( "abcde", 2) );
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -852,6 +852,10 @@ public class S {
 		}
 		String str = String.format( "'%s' is not a valid value for enum %s", text, values[0].getClass().getName() );
 		throw new IllegalArgumentException( str);
+	}
+
+	public static String right(String str, int i) {
+		return str.substring( str.length() - i);
 	}
 
 }

@@ -40,18 +40,19 @@ public class MyHttpServer {
 		        }
 				
 				
-//				S.out( "");
-//				S.out( "Logs");
-//		        for (MyJsonObj log : msg.getAr( "logs") ) {
-//		        	String top1 = log.getStr( "topic1");
-//		        	String top2 = log.getStr( "topic2");
-//		        	String data = log.getStr( "data");
-//		        	S.out( "%s %s %s", top1, top2, data);
-//		        }
+				S.out( "");
+				S.out( "Logs");
+		        for (MyJsonObj log : msg.getAr( "logs") ) {
+		        	String from = S.right( log.getStr( "topic1"), 42);
+		        	String to = S.right( log.getStr( "topic2"), 42);
+		        	String val = "data"; //log.getStr( "data");
+		        	S.out( "%s %s %s %s", block, from, to, val);  // formats w/ two dec.		        	
+		        }
 				
 				transaction.respond( "OK");
 			} catch (Exception e) {
 				e.printStackTrace();
+				System.exit( 0);
 			}
 		});
 	}
