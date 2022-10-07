@@ -3,6 +3,7 @@ package http;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.json.simple.JSONObject;
@@ -65,11 +66,39 @@ public class MyHttpClient {
 				map.put( ar[0].toLowerCase().trim(), ar[1].trim() );
 			}
 		}
+
+		// content-length found?
+		String lenStr = map.get( "content-length");
+		if (S.isNotNull( lenStr) ) {
+			int len = Integer.valueOf( lenStr); 
+			char[] ar = new char[len];
+			br.read( ar, 0, len);
+			return new String( ar);
+		}
+
+		// this is technically wrong; chunked code has length
+		// parameters in it, but this will work if there are
+		// no empty lines
+		if ("chunked".equals( map.get( "transfer-encoding") ) ) {
+			StringBuilder sb= new StringBuilder();
+			while (S.isNotNull( (str=br.readLine()))) {
+				sb.append( str);
+				sb.append( "\r\n");
+			}
+			return sb.toString();
+		}
 		
-		int len = Integer.valueOf( map.get( "content-length") );
-		char[] ar = new char[len];
-		br.read( ar, 0, len);
-		return new String( ar);
+		
+		throw new Exception("illprepared");
+
+		// this might work
+		// no content-length found; read until end of stream
+//		StringBuilder sb= new StringBuilder();
+//		char[] ar = new char[1024];
+//		while (br.read(ar) != -1) {
+//			sb.append( ar);
+//		}
+//		return new String( ar);
 	}
 	
 	public void post( String data) throws Exception {
@@ -84,12 +113,31 @@ public class MyHttpClient {
 		write( sb.toString() );
 	}
 
-	// this doesn't work. pas needs ?
+	ArrayList<String> m_headers = new ArrayList<String>();
+
+	public void get() throws Exception {
+		get( "");
+	}
+	
 	public void get( String data) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "GET /" + data + " HTTP/1.1\r\n");
+		for (String header : m_headers) {
+			sb.append( header + "\r\n");
+		}
 		sb.append( "\r\n");
 
+		S.out( "--");
+		S.out( sb);
+		S.out( "--");
 		write( sb.toString() );
+	}
+
+	public void header(String val) {
+		m_headers.add( val);
+	}
+
+	public void header(String key, String val) {
+		m_headers.add( String.format( "%s: %s", key, val) );
 	}
 }
