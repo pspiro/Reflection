@@ -58,7 +58,7 @@ public class MyJsonObj {
 	/** Returns zero for null value. */
 	public int getInt( String key) {
 		String str = getStr( key);
-		return S.isNotNull( str) ? Integer.parseInt( key) : 0;
+		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
 	}
 
 	public void displ() {
