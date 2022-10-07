@@ -5,6 +5,8 @@ import java.util.Iterator;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import tw.util.S;
+
 public class MyJsonObj {
 	/** Array of object only. */
 	public static class MyJsonAr implements Iterable<MyJsonObj> {
@@ -53,8 +55,10 @@ public class MyJsonObj {
 		return (String)m_obj.get( key);
 	}
 	
+	/** Returns zero for null value. */
 	public int getInt( String key) {
-		return Integer.parseInt( key);
+		String str = getStr( key);
+		return S.isNotNull( str) ? Integer.parseInt( key) : 0;
 	}
 
 	public void displ() {
