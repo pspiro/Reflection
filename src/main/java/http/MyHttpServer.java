@@ -15,15 +15,12 @@ public class MyHttpServer {
 	
 	public static void main(String[] args) throws Exception {
 		m_database.connect( "jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");		
-
 		
 		
 		String host = args[0];
 		int port = Integer.valueOf( args[1]);
 		S.out( "listening on %s:%s", host, port);
 		
-		OStream os = new OStream( "stream");
-
 		SimpleTransaction.listen( host, port, transaction -> {
 			try {
 				MyJsonObj msg = transaction.getJson();
@@ -38,8 +35,8 @@ public class MyHttpServer {
 		        	double val = transfer.getDouble( "valueWithDecimals");
 		        	S.out( "%s %s %s %s", block, from, to, val);  // formats w/ two dec.
 
-		        	m_database.execute( String.format( "insert into events values (%s %s %s)", block, from, -val) );
-					m_database.execute( String.format( "insert into events values (%s %s %s)", block, to, val) );
+		        	m_database.execute( String.format( "insert into events values (%s,'%s',%s)", block, from, -val) );
+		        	m_database.execute( String.format( "insert into events values (%s,'%s',%s)", block, to, val) );
 		        }
 				
 				

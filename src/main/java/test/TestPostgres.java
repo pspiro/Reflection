@@ -32,10 +32,19 @@ public class TestPostgres extends TestCase {
 		
 		String sql = "create table events ("   // in Java 13 you have text blocks, you wouldn't need all the + "
 				+ "block integer,"
-				+ "wallet varchar(32),"
+				+ "wallet varchar(42),"
 				+ "quantity double precision"
 				+ ")";
 		con.execute( sql);
+		
+		int block = 15693431;
+		String from = "0x9507c04b10486547584c37bcbd931b2a4fee9a41";
+		String to = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640";
+		double val = 168958.78;
+		
+    	con.execute( String.format( "insert into events values (%s,'%s',%s)", block, from, -val) );
+    	con.execute( String.format( "insert into events values (%s,'%s',%s)", block, to, val) );
+		
 	}
 	
 	void createConfig() throws SQLException {
