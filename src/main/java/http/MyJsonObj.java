@@ -41,12 +41,20 @@ public class MyJsonObj {
 		m_obj = (JSONObject)obj;
 	}
 
-	MyJsonAr getAr(String key) {
+	public MyJsonAr getAr(String key) {
 		return new MyJsonAr( m_obj.get( key) );
 	}
 
-	String getStr(String key) {
+	public MyJsonObj getObj(String key) {
+		return new MyJsonObj( m_obj.get( key) );
+	}
+	
+	public String getStr(String key) {
 		return (String)m_obj.get( key);
+	}
+	
+	public int getInt( String key) {
+		return Integer.parseInt( key);
 	}
 
 	public void displ() {
@@ -56,6 +64,11 @@ public class MyJsonObj {
 	public double getDouble(String key) {
 		return Double.valueOf( getStr( key) );
 	}
+	
+//	@Override public String toString() {
+//		return super.toString();
+//	}
+	
 	private static void display(Object objIn, int level) {
 		if (objIn instanceof JSONObject) {
 			System.out.println( "{");
@@ -83,5 +96,6 @@ public class MyJsonObj {
 		}
 		
 	}
+
 	
 }

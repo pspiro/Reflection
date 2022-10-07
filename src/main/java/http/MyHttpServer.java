@@ -28,16 +28,18 @@ public class MyHttpServer {
 			try {
 				MyJsonObj msg = transaction.getJson();
 				msg.displ();
+				
+				int block = msg.getObj( "block").getInt("number");
 
 				S.out( "ERC20 Transfers");
 				for (MyJsonObj transfer : msg.getAr( "erc20Transfers") ) {
 		        	String from = transfer.getStr( "from");
 		        	String to = transfer.getStr( "to");
 		        	double val = transfer.getDouble( "valueWithDecimals");
-		        	S.out( "%s %s %s", from, to, val);  // formats w/ two dec.
+		        	S.out( "%s %s %s %s", block, from, to, val);  // formats w/ two dec.
 
-//		        	m_database.execute( String.format( "insert into events values (%s %s %s)", block, from, val) );
-//					m_database.execute( String.format( "insert into events values (%s %s %s)", block, to, val) );
+		        	m_database.execute( String.format( "insert into events values (%s %s %s)", block, from, -val) );
+					m_database.execute( String.format( "insert into events values (%s %s %s)", block, to, val) );
 		        }
 				
 				
