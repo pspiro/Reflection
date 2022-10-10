@@ -41,7 +41,7 @@ public class TestConfig extends TestCase {
 		config.readBackendConfig("Config-test");
 	}
 	
-	public void testValidDbConfig() throws SQLException {
+	public void testValidDbConfig() throws Exception {
 		MySqlConnection con = new MySqlConnection();
 		con.connect("jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");
 		ResultSet rs = con.query( "select * from config");

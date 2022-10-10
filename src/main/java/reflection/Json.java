@@ -22,10 +22,10 @@ public class Json {
 		m_str = obj.toJSONString();
 	}
 	
-	public String getLog() {
-		return Util.flatten( m_str);
+	@Override public String toString() {
+		return m_str;
 	}
-
+	
 	/** If this is an array of objects, it will put them one on each line for easier reading. */
 	public Json fmtArray() {
 		m_str = m_str.replaceAll( ",\\{", ",\n{");

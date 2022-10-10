@@ -40,7 +40,7 @@ class SimpleTransaction {
 			HttpServer server = HttpServer.create(new InetSocketAddress(host, port), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
 			server.createContext("/", exch -> handler.handle( new SimpleTransaction( exch) ) ); 
-			server.setExecutor( Executors.newFixedThreadPool(5) );
+			server.setExecutor( Executors.newFixedThreadPool(5) );  // won't be good for wallet server. pas
 			server.start();
 		}
 		catch( BindException e) {

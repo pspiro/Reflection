@@ -20,34 +20,29 @@ public class TestPostgres extends TestCase {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
 			new TestPostgres().createEvents();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		S.out( "done");
 	}
 	
-	void createEvents() throws SQLException {
-		con.execute( "drop table events");
+	void createEvents() throws Exception {
+		con.dropTable("events");
 		
 		String sql = "create table events ("   // in Java 13 you have text blocks, you wouldn't need all the + "
 				+ "block integer,"
+				+ "token varchar(42),"
 				+ "wallet varchar(42),"
-				+ "quantity double precision"
+				+ "quantity double precision,"
+				+ "transhash varchar(66)"
 				+ ")";
 		con.execute( sql);
 		
-		int block = 15693431;
-		String from = "0x9507c04b10486547584c37bcbd931b2a4fee9a41";
-		String to = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640";
-		double val = 168958.78;
-		
-    	con.execute( String.format( "insert into events values (%s,'%s',%s)", block, from, -val) );
-    	con.execute( String.format( "insert into events values (%s,'%s',%s)", block, to, val) );
-		
+		con.execute( "create unique index evidx on events (transhash,wallet);");
 	}
 	
-	void createConfig() throws SQLException {
+	void createConfig() throws Exception {
 		//con.execute( "drop table config");
 		
 		String sql = "create table config ("
@@ -63,6 +58,8 @@ public class TestPostgres extends TestCase {
 				+ "updated_at timestamp"
 				+ ")";
 		con.execute( sql);
+		
+		
 
 		// insert empty row
 		con.execute( "insert into config default values");
@@ -79,7 +76,7 @@ public class TestPostgres extends TestCase {
 		con.execute(sql2);
 	}
 	
-	void createTrades() throws SQLException {
+	void createTrades() throws Exception {
 		//con.execute( "drop table trades");
 		
 		String sql = "create table trades ("
@@ -100,7 +97,7 @@ public class TestPostgres extends TestCase {
 		con.execute( sql);
 	}
 	
-	void createOrders() throws SQLException {
+	void createOrders() throws Exception {
 		String sql = "create table orders ("
 				+ "time timestamptz,"
 				+ "wallet varchar(32),"
@@ -116,7 +113,7 @@ public class TestPostgres extends TestCase {
 		con.execute( sql);
 	}
 	
-	void insert() throws SQLException {
+	void insert() throws Exception {
 		con.insert( "people", "peter", 53, "pinecliff");
 		S.out( "inserted one");
 		
@@ -150,7 +147,7 @@ public class TestPostgres extends TestCase {
 	}
 	
 	/** On my PC it is taking .16 seconds to hit the config table. */
-	public void testQueryConfigDb() throws SQLException {
+	public void testQueryConfigDb() throws Exception {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 		} 

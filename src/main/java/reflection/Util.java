@@ -2,6 +2,8 @@ package reflection;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -120,7 +122,7 @@ public class Util {
 
 	/** Create the whole Json message, including the time.
 	 *  @param strs tag/value pairs */
-	static Json toJsonMsg( Object... strs) {
+	static Json toJsonMsg( Object... strs) { // get rid of this. pas
 		JSONObject obj = new JSONObject();
 		
 		// always start w/ the time
@@ -180,4 +182,44 @@ public class Util {
         return new String( data, 0, is.read(data, 0, data.length) );
 	}
 	
+	/** Convert hex to decimal and then apply # of decimal digits.
+	 *  Could be used to read the transaction size from the logs. */
+	public static double hexToDec(String str, int decDigits) {
+		// strip off 0x
+		if (startsWith( str, "0x") ) {
+			str = str.substring( 2);
+		}
+		
+		BigInteger tot = new BigInteger("0", 16);
+
+		for (int i = str.length() - 1; i >= 0; i--) {
+			int val = Character.digit(str.charAt(i), 16); // convert hex char to integer 0-15
+			if (val != 0) {
+	        	BigInteger mult = new BigInteger( "16").pow( str.length() - i - 1);
+	        	BigInteger dec = new BigInteger(String.valueOf( val)).multiply( mult);
+	        	tot = tot.add( dec);
+			}
+        }
+		
+        BigInteger div = new BigInteger("10").pow( decDigits);
+        BigDecimal ans = new BigDecimal( tot).divide( new BigDecimal( div) );
+        return ans.doubleValue();
+    }
+
+	/** Ignores case! str can be null */
+	public static boolean startsWith(String str, String str2) {
+		return str != null && str.toLowerCase().startsWith( str2.toLowerCase() );
+	}
+
+	public static boolean validToken(String token) {
+		return token.length() == 42 && startsWith( token, "0x");
+	}
+	
+	public static String tab(int level) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < level * 3; i++) {
+			sb.append( " ");
+		}
+		return sb.toString();
+	}
 }

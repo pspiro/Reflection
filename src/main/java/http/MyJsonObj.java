@@ -4,7 +4,10 @@ import java.util.Iterator;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
+import reflection.Util;
 import tw.util.S;
 
 public class MyJsonObj {
@@ -42,6 +45,10 @@ public class MyJsonObj {
 	MyJsonObj( Object obj) {
 		m_obj = (JSONObject)obj;
 	}
+	
+	static MyJsonObj parse( String text) throws ParseException {
+		return new MyJsonObj( new JSONParser().parse( text) );
+	}
 
 	public MyJsonAr getAr(String key) {
 		return new MyJsonAr( m_obj.get( key) );
@@ -51,13 +58,13 @@ public class MyJsonObj {
 		return new MyJsonObj( m_obj.get( key) );
 	}
 	
-	public String getStr(String key) {
+	public String getString(String key) {
 		return (String)m_obj.get( key);
 	}
 	
 	/** Returns zero for null value. */
 	public int getInt( String key) {
-		String str = getStr( key);
+		String str = getString( key);
 		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
 	}
 
@@ -66,7 +73,7 @@ public class MyJsonObj {
 	}
 
 	public double getDouble(String key) {
-		return Double.valueOf( getStr( key) );
+		return Double.valueOf( getString( key) );
 	}
 	
 //	@Override public String toString() {
@@ -81,11 +88,11 @@ public class MyJsonObj {
 			
 			for (Object key : map.keySet() ) {
 				Object val = map.get( key);
-				System.out.print( String.format( "%s%s : ", MyHttpServer.tab( level), key) );
+				System.out.print( String.format( "%s%s : ", Util.tab( level), key) );
 				display( val, level + 1);
 				System.out.println( "");
 			}
-			System.out.println( MyHttpServer.tab( level) + "}");
+			System.out.println( Util.tab( level) + "}");
 		}
 		else if (objIn instanceof JSONArray) {
 			System.out.println( "[");
@@ -93,7 +100,7 @@ public class MyJsonObj {
 			for (Object obj : ar) {
 				display( obj, level + 1);
 			}
-			System.out.println( MyHttpServer.tab( level) + "]");			
+			System.out.println( Util.tab( level) + "]");			
 		}
 		else {
 			System.out.print( objIn);

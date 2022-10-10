@@ -12,6 +12,7 @@ import org.json.simple.parser.JSONParser;
 import tw.util.IStream;
 import tw.util.S;
 
+/** Good for testing, don't use this in production, there are many things not handled. */
 public class MyHttpClient {
 	private Socket m_socket;
 	
