@@ -145,7 +145,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows() ) {
+		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false) ) {
 			JSONObject obj = new JSONObject();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				obj.put( "symbol", row.getValue("Symbol") );
