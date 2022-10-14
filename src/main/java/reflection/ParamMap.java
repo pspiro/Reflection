@@ -49,4 +49,9 @@ public class ParamMap extends HashMap<String, String> {
 			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' has invalid value; valid values are %s", tag, MsgType.allValues() );
 		}
 	}
+
+	public String getLowerCase(String tag) {
+		String str = get(tag);
+		return str == null ? null : str.toLowerCase();
+	}
 }

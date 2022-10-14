@@ -10,9 +10,10 @@ import org.json.simple.parser.ParseException;
 import reflection.Util;
 import tw.util.S;
 
-public class MyJsonObj {
+public class MyJsonObj {  // replace or combine w/ TypedJson
+	
 	/** Array of object only. */
-	public static class MyJsonAr implements Iterable<MyJsonObj> {
+	public static class MyJsonAr implements Iterable<MyJsonObj> { 
 		private JSONArray m_ar;
 		
 		MyJsonAr( Object obj) {
@@ -46,7 +47,7 @@ public class MyJsonObj {
 		m_obj = (JSONObject)obj;
 	}
 	
-	static MyJsonObj parse( String text) throws ParseException {
+	public static MyJsonObj parse( String text) throws ParseException {
 		return new MyJsonObj( new JSONParser().parse( text) );
 	}
 
@@ -68,7 +69,7 @@ public class MyJsonObj {
 		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
 	}
 
-	public void displ() {
+	public void display() {
 		display( m_obj, 0);
 	}
 
@@ -80,7 +81,7 @@ public class MyJsonObj {
 //		return super.toString();
 //	}
 	
-	private static void display(Object objIn, int level) {
+	public static void display(Object objIn, int level) {
 		if (objIn instanceof JSONObject) {
 			System.out.println( "{");
 

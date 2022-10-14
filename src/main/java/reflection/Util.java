@@ -210,9 +210,9 @@ public class Util {
 	public static boolean startsWith(String str, String str2) {
 		return str != null && str.toLowerCase().startsWith( str2.toLowerCase() );
 	}
-
+	
 	public static boolean validToken(String token) {
-		return token.length() == 42 && startsWith( token, "0x");
+		return token != null && token.length() == 42 && startsWith( token, "0x");
 	}
 	
 	public static String tab(int level) {
@@ -221,5 +221,10 @@ public class Util {
 			sb.append( " ");
 		}
 		return sb.toString();
+	}
+	
+	/** Execute the runnable in a new thread. */
+	public static void execute( Runnable runnable) {
+		new Thread(runnable).start();
 	}
 }

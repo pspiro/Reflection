@@ -11,10 +11,21 @@ public class GTable extends HashMap<String,String> {
 	private Tab m_tab;
 	private String m_col1;
 	private String m_col2;
+	private boolean m_caseSensitive; // applies to the tags
 	
+	public GTable() throws Exception {
+	}
+
+	/** @param lowerCase if set to true, tags will be converted to lower case 
+	 *         get() could be made to use it as well */
 	public GTable( String sheetId, String tabName, String col1, String col2) throws Exception {
+		this( sheetId, tabName, col1, col2, true);
+	}
+	
+	public GTable( String sheetId, String tabName, String col1, String col2, boolean caseSensitive) throws Exception {
 		m_col1 = col1;
 		m_col2 = col2;
+		m_caseSensitive = caseSensitive;
 		
 		m_tab = NewSheet.getTab( sheetId, tabName);
 		
@@ -23,9 +34,13 @@ public class GTable extends HashMap<String,String> {
 			String tag = row.getValue( m_col1);
 			String val = row.getValue( m_col2);
 			if (tag != null && val != null) {
-				super.put( tag, val);
+				super.put( m_caseSensitive ? tag : tag.toLowerCase(), val);
 			}
 		}
+	}
+	
+	@Override public String get(Object key) {
+		return super.get( m_caseSensitive ? key : ((String)key).toLowerCase() );
 	}
 	
 	public double getDouble(String tag) throws Exception {

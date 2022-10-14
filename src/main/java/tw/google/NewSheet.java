@@ -482,6 +482,13 @@ public class NewSheet {
 				public boolean hasTag(String tag) {
 					return m_map.get( tag) != null;
 				}
+
+				/** Returns zero for null value. 
+				 * @throws MyException */
+				public int getInt(String tag) throws MyException {
+					String val = getValue( tag);
+					return S.isNotNull( val) ? Integer.valueOf( val) : 0; 
+				}
 			}
 
 		}

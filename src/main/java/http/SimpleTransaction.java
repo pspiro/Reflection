@@ -22,7 +22,7 @@ import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
 
-class SimpleTransaction {
+public class SimpleTransaction {
 	interface MyHttpHandler {
 		void handle( SimpleTransaction trans);
 	}
@@ -52,7 +52,7 @@ class SimpleTransaction {
 	}
 
 	// now write a getJsonRequest
-	String getRequest() throws Exception {
+	public String getRequest() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
@@ -62,7 +62,8 @@ class SimpleTransaction {
 			return parts.length > 1 ? parts[1] : "";
 		}
 		
-		// POST request		
+		// POST request
+		S.out( "Received POST event");
 		Headers headers = m_exchange.getRequestHeaders();
 		String len = headers.getFirst("content-length");
 		if (len != null) {
@@ -73,7 +74,7 @@ class SimpleTransaction {
 		return "";
 	}
 	
-	ParamMap getMap() throws Exception {
+	public ParamMap getMap() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
@@ -122,9 +123,8 @@ class SimpleTransaction {
 		
 		return map;
 	}	
-
 	
-	MyJsonObj getJson() throws Exception {
+	public MyJsonObj getJson() throws Exception {
 		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "Must be post");
 		S.out( "received POST w/ len %s", m_exchange.getRequestHeaders().getFirst("content-length") );
 
@@ -134,7 +134,7 @@ class SimpleTransaction {
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
-	void respond( String response) {
+	public void respond( String response) {
 		try {
 			OutputStream outputStream = m_exchange.getResponseBody();
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");

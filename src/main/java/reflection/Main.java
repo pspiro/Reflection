@@ -150,7 +150,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				obj.put( "symbol", row.getValue("Symbol") );
 				obj.put( "conid", row.getValue("Conid") );
-				obj.put( "smartcontractid", row.getValue("SmartContractID") );
+				obj.put( "smartcontractid", row.getValue("TokenAddress") );
 				obj.put( "description", row.getValue("Description") );
 				obj.put( "type", row.getValue("Type") );
 				obj.put( "exchange", row.getValue("Exchange") );
