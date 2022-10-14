@@ -40,7 +40,7 @@ public class Util {
 	 * @throws RefException */
 	static boolean inside( int conid, String hours, String timeZoneId) throws RefException {
 		// simulated trading? always return true
-		if (Main.simulate() ) {
+		if (Main.simulated() ) {
 			return true;
 		}
 		

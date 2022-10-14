@@ -55,9 +55,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// is there some way to find out? pas
 	boolean m_ibConnection = true; // is this needed? note that we assume it's connected at first but we don't know for sure
 	private static OStream m_log; // log file for requests and responses
-	private static boolean m_simulate;
+	private static boolean m_simulated;
 	
-	static boolean simulate() { return m_simulate; }
+	static boolean simulated() { return m_simulated; }
 
 	JSONArray stocks() { return m_stocks; }
 
@@ -72,7 +72,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			String configTab = "Config";
 			for (String arg : args) {
 				if (arg.equals( "simulated")) {
-					m_simulate = true;
+					m_simulated = true;
 					S.out( "Running in simulated mode");
 				}
 				else {
@@ -272,7 +272,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			final Prices c = getOrCreatePrices( conid);
 			
 			// simulation mode?
-			if (simulate() ) {
+			if (simulated() ) {
 				c.setInitialPrices();
 				continue;
 			}

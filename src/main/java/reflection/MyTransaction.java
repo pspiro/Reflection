@@ -305,7 +305,7 @@ class MyTransaction {
 		for (Integer conid : m_main.m_priceMap.keySet() ) {
 			Prices prices = m_main.m_priceMap.get(conid);
 			if (prices.hasAnyPrice() ) {
-				if (Main.simulate() ) {
+				if (Main.simulated() ) {
 					prices.adjustPrices();
 				}
 
@@ -415,7 +415,7 @@ class MyTransaction {
 		// check trading hours first since it is a nicer error message
 		
 		// simulated trading?
-		if (Main.simulate() ) {
+		if (Main.simulated() ) {
 			respond( code, RefCode.OK);
 			return;
 		}
@@ -453,7 +453,7 @@ class MyTransaction {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// simulated trading?
-		if (Main.simulate() ) {
+		if (Main.simulated() ) {
 			shares.value = order.totalQuantity(); 
 			respondToOrder( order, shares, false, OrderStatus.Unknown);
 			return;
