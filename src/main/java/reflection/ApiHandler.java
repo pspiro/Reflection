@@ -7,7 +7,7 @@ import com.ib.controller.ApiController.IConnectionHandler;
 
 import tw.util.S;
 
-public class ApiHandler implements IConnectionHandler, ILogger { // move IConnectionHandler to ConnectionMgr
+public class ApiHandler implements IConnectionHandler { // move IConnectionHandler to ConnectionMgr
 	private Main m_main;
 
 	ApiHandler(Main main) {
@@ -28,10 +28,6 @@ public class ApiHandler implements IConnectionHandler, ILogger { // move IConnec
 
 	@Override public void show(String string) {
 		S.out( "Show: " + string);
-	}
-
-	// disable calls to this method, it's not helpful and wasteful. pas
-	@Override public void log(String string) {
 	}
 
 	@Override public void accountList(List<String> list) {

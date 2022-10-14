@@ -35,7 +35,8 @@ public class TestPostgres extends TestCase {
 				+ "token varchar(42),"
 				+ "wallet varchar(42),"
 				+ "quantity double precision,"
-				+ "transhash varchar(66)"
+				+ "transhash varchar(66),"
+				+ "source varchar(1)"  // source of entry, either Q (query) or S (stream)
 				+ ")";
 		con.execute( sql);
 		

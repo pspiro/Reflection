@@ -84,7 +84,7 @@ public class Auth {
 		scopes.add( "https://www.googleapis.com/auth/gmail.modify");
 		scopes.add( "https://www.googleapis.com/auth/gmail.readonly");
 		scopes.add( "https://www.googleapis.com/auth/gmail.compose");
-		scopes.add( "https://docs.google.com/feeds/");
+		//scopes.add( "https://docs.google.com/feeds/");
 		scopes.add( "https://spreadsheets.google.com/feeds");
 		//scopes.add( "https://www.googleapis.com/auth/calendar");
 		//scopes.add( "https://www.googleapis.com/auth/tasks");

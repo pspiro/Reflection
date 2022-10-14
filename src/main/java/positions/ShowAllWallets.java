@@ -8,15 +8,13 @@ import tw.google.NewSheet;
 import tw.util.S;
 
 /** Show all balances for all wallets. */
-public class ShowAll {
+public class ShowAllWallets {
 	private MySqlConnection m_database = new MySqlConnection();
-	   // replace this with GTable. pas
 
 	public static void main(String[] args) {
 		try {
-			new ShowAll().run();
+			new ShowAllWallets().run();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -27,7 +25,8 @@ public class ShowAll {
 		S.out( "Connecting to database");
 		m_database.connect( "jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");
 		
-		String sql = "select wallet, token, sum(quantity) from events group by wallet, token";
+		S.out( "reading wallets");
+		String sql = "select wallet, token, sum(quantity) from events group by wallet, token order by wallet, token";
 		ResultSet res = m_database.query( sql);
 		while( res.next() ) {
 			String wallet = res.getString(1);

@@ -1,4 +1,4 @@
-package positions;
+package http;
 
 
 import java.io.FileInputStream;
@@ -20,30 +20,14 @@ import com.sun.net.httpserver.HttpsExchange;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 
-import http.SimpleTransaction;
 import tw.util.S;
 
 // to create keystore:
 // keytool -genkeypair -keyalg RSA -alias selfsigned -keystore testkey.jks -storepass password -validity 360 -keysize 2048
 
+/** An https echo server. */
 public class MyHttpsServer {
 
-    public static class MyHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange t) throws IOException {
-            String response = "This is the response";
-            HttpsExchange httpsExchange = (HttpsExchange) t;
-            t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-            t.sendResponseHeaders(200, response.getBytes().length);
-            OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }
-    }
-
-    /**
-     * @param args
-     */
     public static void main(String[] args) throws Exception {
 
         try {
@@ -89,7 +73,6 @@ public class MyHttpsServer {
                     }
                 }
             });
-            httpsServer.createContext("/test", new MyHandler());
 			httpsServer.createContext("/", exch -> handleEvent( new SimpleTransaction( exch) ) );
 			httpsServer.setExecutor(null); // creates a default executor
             httpsServer.start();

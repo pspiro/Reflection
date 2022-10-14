@@ -22,11 +22,14 @@ import tw.util.S;
 
 /** This fetches the event log entries from Moralis. */
 public class EventFetcher {
+	private static final char SRC_QUERY = 'Q';
+	static final char SRC_STREAM = 'S';
+
 	static String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	static String chain = "goerli";  // or eth
 	static int startingBlock = 7710000;
-	static int endingBlock   = 9999999; // this won't last very long, pass a higher number. pas
-	static int limit = 500; // max per page, you can increase this. pas
+	static int endingBlock   = 99999999;
+	static int limit = 500; // max per page, this is the highest allowed
 	
 	private final MoralisServer m_server; // not used? 
 	private final HashMap<String,Stock> m_stockMap;
@@ -67,36 +70,19 @@ public class EventFetcher {
 	}
 	
 	void backfill(int startingBlock) throws Exception {
+		S.out( "Backfilling");
 		for (Stock stock : m_stockMap.values() ) {
 			String symbol = stock.symbol();
 			String token = stock.token();
 			
-			S.out( "Backfilling token %s", symbol);
+			S.out( "  backfilling token %s", symbol);
 			queryEvents( token, startingBlock, endingBlock, null);
 		}
-	}
-	
-	private void backfill(String symbol, String token) throws Exception {
-		S.out( "Backfilling %s %s", symbol, token);
-
-		// i'm not clear if we need to do this query for each token or not. pas 
-		S.out( "  querying database for highest block");
-		ResultSet res = MoralisServer.m_database.query( "select max(block) from events where token = '%s'", token);
-		
-		int start = res.next() && res.getInt(1) > 0 ? res.getInt(1) : startingBlock;  // note that we re-query the last block in case it was partial
-		queryEvents( token, start, endingBlock, null);
+		S.out( "  done backfilling");
 	}
 	
 	void queryEvents( String token, int start, int end, String cursor) throws IOException {
 		String cursorStr = S.isNotNull( cursor) ? "&cursor=" + cursor : "";
-		
-		// create a set of all blocks in this query; the blocks will get removed
-		// as database entries are added for each blocks; any remaining blocks
-		// have no database entries so we would create a null entry
-		HashSet<Integer> blocks = new HashSet<Integer>();  // we're not actually doing this, probably no need. pas
-		for (int i = start; i <= end; i++) {
-			blocks.add( i);
-		}
 		
 		AsyncHttpClient client = new DefaultAsyncHttpClient();
 		String url = String.format( "https://deep-index.moralis.io/api/v2/%s/logs?chain=%s&from_block=%s&to_block=%s&topic0=%s&limit=%s%s",
@@ -115,16 +101,14 @@ public class EventFetcher {
 
 		  			// process events returned to us from our query
 		  			S.out( "  processing %s", token.substring(0,5) );
-		  			String curs = processJson( obj.getResponseBody(), token, blocks);
+		  			String curs = processJson( obj.getResponseBody(), token);
 
 		  			// query had more data that was not returned?
 		  			if (S.isNotNull( curs) ) {
 		  				queryEvents( token, start, end, curs);
 		  			}
 		  			else if (++m_responsesReceived == m_stockMap.size() ) {
-		  				S.out( "Received last response");
-		  				incrementCountersFromDatabase();
-		  				S.out( "Ready to receive queries");
+		  				S.out( "Received last response, ready to receive queries");
 		  			}
 		  		}
 		  		catch (Exception e) {
@@ -134,7 +118,7 @@ public class EventFetcher {
 	}
 
 	
-	static class TypedJson<T> extends JSONObject { // use this everywhere. pas
+		/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */	public static class TypedJson<T> extends JSONObject {
 		@Override public T get(Object key) {
 			return (T)super.get(key);
 		}
@@ -157,24 +141,6 @@ public class EventFetcher {
 		}
 	}
 	
-	private EventFetcher incrementCountersFromDatabase() throws Exception { // must be synchronized with the insert methods. pas
-		S.out( "Incrementing wallets from database");
-		// move this query into the database, I think you can do that
-		String sql = "select wallet, token, sum(quantity) from events group by wallet, token";
-		ResultSet res = MoralisServer.m_database.query( sql);
-		while( res.next() ) {
-			String wallet = res.getString(1);
-			String token = res.getString(2);
-			double val = res.getDouble(3);
-			
-			Stock stock = m_stockMap.get( token);
-			Main.require( stock != null, RefCode.UNKNOWN, "stock not found for %s", token); // add checks for ALL nulls. pas
-
-			increment( wallet, token, val);
-		}
-		return this;
-	}
-	
 	public synchronized void increment(String wallet, String token, double val) {
 		Balances walletMap = getOrCreateBalances( wallet);
 		walletMap.increment( token, val);
@@ -189,7 +155,7 @@ public class EventFetcher {
 		return balances;
 	}
 
-	private String processJson( String json, String token, HashSet<Integer> blocks) {
+	private String processJson( String json, String token) {
 		try {
 			MyJsonObj obj = MyJsonObj.parse( json);
 			//obj.display();
@@ -206,8 +172,7 @@ public class EventFetcher {
 					String hash = event.getString("transaction_hash").toLowerCase();
 				
 					S.out( "%s %s %s %s %s", block, token, from, to, amt);
-					insert( MoralisServer.m_database, block, token, from, to, amt, hash);
-					blocks.remove( block);
+					insert( MoralisServer.m_database, block, token, from, to, amt, hash, SRC_QUERY);
 				}
 			}
 			return obj.getString( "cursor");
@@ -218,16 +183,20 @@ public class EventFetcher {
 	}
 	
 	/** Insert the from and to transactions into the database, and increment the counters */
-	void insert( MySqlConnection db, int block, String token, String from, String to, double val, String hash) throws Exception {
-		insert( db, block, token, from, -val, hash);
-		insert( db, block, token, to, val, hash);
+	void insert( MySqlConnection db, int block, String token, String from, String to, double val, String hash, char source) throws Exception {
+		insert( db, block, token, from, -val, hash, source);
+		insert( db, block, token, to, val, hash, source);
 	}
 	
-	void insert( MySqlConnection db, int block, String token, String wallet, double val, String hash) throws Exception {
+	void insert( MySqlConnection db, int block, String token, String wallet, double val, String hash, char source) throws Exception {
 		try {
 			if (val != 0 && !wallet.equals( PosUtil.nullWallet) ) {
-				db.execute( String.format( "insert into events values (%s,'%s','%s',%s,'%s')", block, token, wallet, val, hash) );
+				String sql = String.format( "insert into events values (%s,'%s','%s',%s,'%s','%s')", block, token, wallet, val, hash, source);
+				db.execute(sql); 
 	        	increment( wallet, token, val); // this won't get called for dup events
+	        	if (wallet.equals("0xb016711702d3302cef6ceb62419abbef5c44450e")) {
+	        		S.out( "Set %s to %s", token, m_walletMap.get(wallet).get(token) );
+	        	}
 			}
 		}
 		catch( PSQLException e) {

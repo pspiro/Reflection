@@ -126,7 +126,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 
 		// connect to TWS  // change this to have a connection manager
-		m_controller = new ApiController( m_apiHandler, m_apiHandler, m_apiHandler);
+		m_controller = new ApiController( m_apiHandler, null, null);
 		m_controller.handleExecutions( this);
 		S.out( "Connecting to TWS on %s:%s with client id %s", m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
 		m_connMgr.connect( m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );

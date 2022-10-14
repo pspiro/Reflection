@@ -20,7 +20,6 @@ import reflection.Util;
 import tw.util.S;
 
 public class MoralisServer {
-
 	// this is so fucking weird. it works when run from command prompt, but
 	// when run from eclipse you can't connect from browser using external ip 
 	// http://69.119.189.87  but you can use 192.168.1.11; from dos prompt you
@@ -68,18 +67,33 @@ public class MoralisServer {
 		m_maxBlock = res.getInt(1);
 		S.out( "  max block is %s", m_maxBlock);
 		
-		m_client = new EventFetcher( this);
-		
-		String host = args[0];
-		int port = Integer.valueOf( args[1]);
+		m_client = new EventFetcher( this); // reads in the stocks
+
+		// read current records
+		readBalancesFromDb();
 		
 		// start listening for new events; wait for a response, they query for the missed events
+		String host = args[0];
+		int port = Integer.valueOf( args[1]);
 		startListening(host, port);
 		
-		m_client.backfill(m_maxBlock);  // FOR TESTING ONLY, REMOVE THIS. pas
+		// m_client.backfill(m_maxBlock);  // FOR TESTING ONLY, REMOVE THIS. pas
 		
 	}
 	
+	private void readBalancesFromDb() throws Exception {
+		S.out( "Reading balances from database");
+		String sql = "select wallet, token, sum(quantity) from events group by wallet, token order by wallet, token";
+		ResultSet res = m_database.query( sql);
+		while( res.next() ) {
+			String wallet = res.getString(1);
+			String token = res.getString(2);
+			double val = res.getDouble(3);   // look up the symbol
+			m_client.increment( wallet, token, val);
+		}
+		S.out( "  done");
+	}
+
 	private void startListening(String host, int port) {
 		try {
 			S.out( "listening on %s:%s", host, port);
@@ -113,7 +127,7 @@ public class MoralisServer {
 	        	String hash = transfer.getString( "transactionHash").toLowerCase();
 	        	S.out( "%s %s %s %s %s", token, block, from, to, val);  // formats w/ two dec.
 
-	        	m_client.insert( m_database, block, token, from, to, val, hash); // i think you can turn off the events to cut down the data. pas
+	        	m_client.insert( m_database, block, token, from, to, val, hash, EventFetcher.SRC_STREAM); // i think you can turn off the events to cut down the data. pas
 	        }
 			
 			S.out( "");
@@ -174,7 +188,7 @@ public class MoralisServer {
 			trans.respond( e.toJson().toString() );
 		}
 		catch( Exception e) {
-			trans.respond( "Error"); // not good. pas
+			trans.respond( "Error: " + e.getMessage() );
 		}
 	}
 }

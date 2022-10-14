@@ -10,6 +10,7 @@ import org.json.simple.parser.ParseException;
 import reflection.Util;
 import tw.util.S;
 
+/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */ 
 public class MyJsonObj {  // replace or combine w/ TypedJson
 	
 	/** Array of object only. */
@@ -96,12 +97,12 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 			System.out.println( Util.tab( level) + "}");
 		}
 		else if (objIn instanceof JSONArray) {
-			System.out.println( "[");
+			System.out.println( "[ ");
 			JSONArray ar = (JSONArray)objIn;
 			for (Object obj : ar) {
 				display( obj, level + 1);
 			}
-			System.out.println( Util.tab( level) + "]");			
+			System.out.print( " ] ");			
 		}
 		else {
 			System.out.print( objIn);
