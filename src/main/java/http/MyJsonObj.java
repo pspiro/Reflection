@@ -17,11 +17,19 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 	public static class MyJsonAr implements Iterable<MyJsonObj> { 
 		private JSONArray m_ar;
 		
+		public static MyJsonAr parse( String text) throws ParseException {
+			return new MyJsonAr( new JSONParser().parse( text) );
+		}
+
 		MyJsonAr( Object obj) {
 			m_ar = (JSONArray)obj;
 		}
 		
-		MyJsonObj get( int i) {
+		@Override public String toString() {  // this class sucks. pas
+			return m_ar.toString();
+		}
+		
+		public MyJsonObj getJsonObj( int i) {
 			return new MyJsonObj( m_ar.get( i) );
 		}
 
@@ -40,11 +48,9 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 		}
 	}
 
-	
-	
 	private JSONObject m_obj;
 	
-	MyJsonObj( Object obj) {
+	public MyJsonObj( Object obj) {
 		m_obj = (JSONObject)obj;
 	}
 	
@@ -60,8 +66,10 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 		return new MyJsonObj( m_obj.get( key) );
 	}
 	
+	/** Converts any object type to string or returns empty string, never null. */
 	public String getString(String key) {
-		return (String)m_obj.get( key);
+		Object val = m_obj.get(key);
+		return val != null ? val.toString() : ""; 
 	}
 	
 	/** Returns zero for null value. */
@@ -70,12 +78,13 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
 	}
 
-	public void display() {
-		display( m_obj, 0);
+	public double getDouble(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
 	}
 
-	public double getDouble(String key) {
-		return Double.valueOf( getString( key) );
+	public void display() {
+		display( m_obj, 0);
 	}
 	
 //	@Override public String toString() {

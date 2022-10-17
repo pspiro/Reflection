@@ -39,6 +39,8 @@ public class MyHttpClient {
 		m_socket.getOutputStream().write( bytes);
 	}
 
+	/** This is redundant and doesn't add anything except the types.
+	 *  @deprecated use readMyJsonObj */
 	public HashMap<String,Object> readJsonMap() throws Exception {
 		JSONObject jsonObject = readJsonObject();
 
@@ -50,6 +52,10 @@ public class MyHttpClient {
         return map;
 	}
 
+	public MyJsonObj readMyJsonObject() throws Exception {
+		return new MyJsonObj( new JSONParser().parse( readString() ) );
+	}
+	
 	public JSONObject readJsonObject() throws Exception {
 		return (JSONObject)new JSONParser().parse( readString() );
 	}
@@ -120,6 +126,7 @@ public class MyHttpClient {
 		get( "");
 	}
 	
+	/** Do not include a / in data */
 	public void get( String data) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "GET /" + data + " HTTP/1.1\r\n");
@@ -128,9 +135,6 @@ public class MyHttpClient {
 		}
 		sb.append( "\r\n");
 
-		S.out( "--");
-		S.out( sb);
-		S.out( "--");
 		write( sb.toString() );
 	}
 

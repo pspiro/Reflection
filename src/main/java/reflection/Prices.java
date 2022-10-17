@@ -60,7 +60,7 @@ public class Prices {
 
 	public String getString() {
 		return String.format( "bid=%s bidSize=%s ask=%s askSize=%s", 
-				m_bid, m_bidSize, m_ask, m_askSize);  // format w/ two dec. pas
+				m_bid, m_bidSize, m_ask, m_askSize);
 	}
 
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {

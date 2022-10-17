@@ -32,6 +32,8 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.FileUtilities;
 import tw.util.OStream;
 import tw.util.S;
+import util.DateLogFile;
+import util.LogType;
 
 public class Main implements HttpHandler, ITradeReportHandler {
 	public enum Mode { 
@@ -52,15 +54,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	protected final ConnectionMgr m_connMgr = new ConnectionMgr( m_controller);
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
-	// is there some way to find out? pas
+	// is there some way to find out?
 	boolean m_ibConnection = true; // is this needed? note that we assume it's connected at first but we don't know for sure
-	private static OStream m_log; // log file for requests and responses
+	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	
 	static boolean simulated() { return m_simulated; }
 
 	JSONArray stocks() { return m_stocks; }
-
+	
 	private HttpHandler nullHandler = new HttpHandler() {
 		@Override public void handle(HttpExchange exch) throws IOException {
 			//S.out( "received null msg " + exch.getHttpContext().getPath() );
@@ -252,7 +254,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return prices;
 	}
 
-	/** Might need to sync this with other API calls.   pas */
+	/** Might need to sync this with other API calls.  */
 	private void requestPrices() throws Exception {
 		S.out( "requesting prices");
 
@@ -294,42 +296,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}	
 
 	/** Write to the log file. Don't throw any exception. */
-	static int date;
 	
-	static synchronized void log( LogType type, String text, Object... params) {
-		try {
-			// if date has changed since last log msg, close the log file and create a new one
-			if (date != new Date().getDate() ) {
-				resetLogFile();
-				date = new Date().getDate();
-			}
-			String str = String.format( "%s %s %s", Util.now(), type, String.format( S.notNull( text), params) );
-			S.out( str.substring(13) );
-			m_log.writeln( str);
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
+	static void log( LogType type, String text, Object... params) {
+		m_log.log( type, text, params);
 	}
-
-	private static void resetLogFile() {
-		try {
-			String fname = String.format( "logs/reflection.%s.log", Util.today() );
-			
-			if (m_log != null) {
-				m_log.close();
-				m_log = null;
-				S.out( "Resetting log to %s", fname);
-			}
-
-			FileUtilities.createDir( "logs");
-			m_log = new OStream( fname);			
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 
 	static class Pair {
 		String m_key;

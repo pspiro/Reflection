@@ -30,6 +30,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import reflection.Main.Mode;
 import tw.util.S;
+import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
@@ -59,7 +60,7 @@ class MyTransaction {
 		wrap( () -> handle2() );
 	}
 	
-	// you could encapsulate all these methods in MyExchange. pas
+	// you could encapsulate all these methods in MyExchange
 
 	void handle2() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
@@ -371,7 +372,7 @@ class MyTransaction {
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
 		order.totalQuantity( Decimal.get( quantity) );
 		order.lmtPrice( orderPrice);
-		order.tif( TimeInForce.IOC);  // we could pass TIF from client. pas
+		order.tif( TimeInForce.IOC);
 		order.whatIf( whatIf);
 		order.transmit( Main.m_config.mode() == Mode.paper);  // don't transmit real orders for now
 		order.outsideRth( true);
@@ -395,7 +396,7 @@ class MyTransaction {
 				require( prices != null, RefCode.REJECTED, "Prices are not available");
 				prices.checkOrderPrice( order, orderPrice, Main.m_config);
 				
-				// if the user submitted a fractional quantity and it got rounded down to zero, approve the transaction; this is a risk! pas 
+				// if the user submitted a fractional quantity and it got rounded down to zero, approve the transaction
 				if (quantity == 0) {
 					respond( code, RefCode.OK);
 				}
@@ -504,7 +505,7 @@ class MyTransaction {
 		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
 				order.wallet(), order.cryptoId(), order.orderId() );
 		
-		// use a higher timeout here; it should never happen since we use IOC. pas
+		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
 		setTimer( Main.m_config.orderTimeout(), () -> respondToOrder( order, shares, true, OrderStatus.Unknown) );
 	}
@@ -541,8 +542,7 @@ class MyTransaction {
 					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
 				}
 				
-				double filledPrice = 0; // fix this. pas
-				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s  fillPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice(), filledPrice);
+				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
 			}
 		}
 	}
@@ -580,29 +580,6 @@ class MyTransaction {
 		return false;
 	}
 
-	/** Use this class to send and wait for two messages simultaneously.
-	 *  It responds when both messages have been processed. */
-	class Multi {  // this is not being used. pas
-		boolean m_rec1;
-		boolean m_rec2;
-		
-		void receivedMsg1() {
-			m_rec1 = true;
-			check();
-		}
-		
-		void receivedMsg2() {
-			m_rec2 = true;
-			check();
-		}
-		
-		void check() {
-			if (m_rec1 && m_rec2) {
-				respond( code, RefCode.OK);
-			}
-		}
-	}
-	
 	void wrap( RefRunnable runnable) {
 		try {
 			runnable.run();

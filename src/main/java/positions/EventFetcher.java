@@ -1,20 +1,17 @@
 package positions;
 
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.util.HashMap;
-import java.util.HashSet;
+import static positions.MoralisServer.chain;
+import static positions.MoralisServer.moralis;
+import static positions.MoralisServer.transferTopic;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
+import java.util.HashMap;
+
 import org.json.simple.JSONObject;
 import org.postgresql.util.PSQLException;
 
 import http.MyJsonObj;
 import http.MyJsonObj.MyJsonAr;
-import reflection.Main;
 import reflection.MySqlConnection;
-import reflection.RefCode;
 import reflection.Util;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -22,18 +19,17 @@ import tw.util.S;
 
 /** This fetches the event log entries from Moralis. */
 public class EventFetcher {
-	private static final char SRC_QUERY = 'Q';
-	static final char SRC_STREAM = 'S';
-
-	static String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-	static String chain = "goerli";  // or eth
+	static final char srcQuery = 'Q';
+	static final char srcStream = 'S';
+	static final char srcMarker = 'M';
+	static final char srcParer = 'P';
+	
 	static int startingBlock = 7710000;
-	static int endingBlock   = 99999999;
-	static int limit = 500; // max per page, this is the highest allowed
+	static int limit = 500; // max per page, 500 is the highest allowed
 	
 	private final MoralisServer m_server; // not used? 
-	private final HashMap<String,Stock> m_stockMap;
 	private int m_responsesReceived;
+	private final HashMap<String,Stock> m_stockMap; // keys are in lower case
 	private TypedJson<Balances> m_walletMap = new TypedJson<Balances>(); // map wallet to token balances
 	
 	
@@ -69,67 +65,51 @@ public class EventFetcher {
 		return stockMap;
 	}
 	
-	void backfill(int startingBlock) throws Exception {
-		S.out( "Backfilling");
+	/** Query missing blocks one contract at a time. */
+	void backfill(int startingBlock, int endingBlock) throws Exception {
+		
 		for (Stock stock : m_stockMap.values() ) {
 			String symbol = stock.symbol();
 			String token = stock.token();
 			
-			S.out( "  backfilling token %s", symbol);
+			S.out( "Backfilling %s from %s to %s", symbol, startingBlock, endingBlock);
 			queryEvents( token, startingBlock, endingBlock, null);
 		}
-		S.out( "  done backfilling");
 	}
 	
-	void queryEvents( String token, int start, int end, String cursor) throws IOException {
+	void queryEvents( String token, int start, int end, String cursor) throws Exception {
 		String cursorStr = S.isNotNull( cursor) ? "&cursor=" + cursor : "";
 		
-		AsyncHttpClient client = new DefaultAsyncHttpClient();
-		String url = String.format( "https://deep-index.moralis.io/api/v2/%s/logs?chain=%s&from_block=%s&to_block=%s&topic0=%s&limit=%s%s",
-				token, chain, start, end, transferTopic, limit, cursorStr);
-		
-		S.out( "  querying Moralis " + url);
-		
-		client.prepare("GET", url)
-		  	.setHeader("accept", "application/json")
-		  	.setHeader("X-API-Key", "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6")
-		  	.execute()
-		  	.toCompletableFuture()
-		  	.thenAccept( obj -> {
-		  		try {
-		  			client.close();
+		String url = String.format( "%s/%s/logs?chain=%s&from_block=%s&to_block=%s&topic0=%s&limit=%s%s",
+				moralis, token, chain, start, end, transferTopic, limit, cursorStr);
 
-		  			// process events returned to us from our query
-		  			S.out( "  processing %s", token.substring(0,5) );
-		  			String curs = processJson( obj.getResponseBody(), token);
+		String response = MoralisServer.querySync( url);
+		// process events returned to us from our query
+		String curs = processEventLog( response, token);
 
-		  			// query had more data that was not returned?
-		  			if (S.isNotNull( curs) ) {
-		  				queryEvents( token, start, end, curs);
-		  			}
-		  			else if (++m_responsesReceived == m_stockMap.size() ) {
-		  				S.out( "Received last response, ready to receive queries");
-		  			}
-		  		}
-		  		catch (Exception e) {
-		  			e.printStackTrace();
-		  		}
-		  	}).join(); // add join here to make it syncronous
+		// query had more data that was not returned?
+		if (S.isNotNull( curs) ) {
+			queryEvents( token, start, end, curs);
+		}
+		else if (++m_responsesReceived == m_stockMap.size() ) {
+			S.out( "  received last response");
+		}
 	}
 
 	
-		/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */	public static class TypedJson<T> extends JSONObject {
+	/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */
+	public static class TypedJson<T> extends JSONObject {
 		@Override public T get(Object key) {
 			return (T)super.get(key);
 		}
 		
 		@SuppressWarnings("unchecked")
-		void putt( String tag, T value) {
+		public void putt( String tag, T value) {
 			put( tag, value);
 		}
 	}
-	
-	/** Map token to balance */
+		
+	/** Map conid to balance */
 	static class Balances extends TypedJson<Double> {
 		double getDouble(String token) {
 			Double val = get(token);
@@ -155,37 +135,33 @@ public class EventFetcher {
 		return balances;
 	}
 
-	private String processJson( String json, String token) {
-		try {
-			MyJsonObj obj = MyJsonObj.parse( json);
-			//obj.display();
+	private String processEventLog( String json, String token) throws Exception {
+		MyJsonObj obj = MyJsonObj.parse( json);
+		
+		MyJsonAr eventLogs = obj.getAr("result");
+		for (MyJsonObj event : eventLogs) {
+			int block = event.getInt( "block_number");
+			String top0 = event.getString("topic0");
 			
-			MyJsonAr eventLogs = obj.getAr("result");
-			for (MyJsonObj event : eventLogs) {
-				int block = event.getInt( "block_number");
-				String top0 = event.getString("topic0");
-				
-				if (top0.equals( transferTopic) ) {
-					String from = PosUtil.formatWallet( event.getString("topic1") );
-					String to = PosUtil.formatWallet( event.getString("topic2") );
-					double amt = Util.hexToDec( event.getString( "data"), 6);
-					String hash = event.getString("transaction_hash").toLowerCase();
-				
-					S.out( "%s %s %s %s %s", block, token, from, to, amt);
-					insert( MoralisServer.m_database, block, token, from, to, amt, hash, SRC_QUERY);
-				}
+			if (top0.equals( transferTopic) ) {
+				String from = PosUtil.formatWallet( event.getString("topic1") );
+				String to = PosUtil.formatWallet( event.getString("topic2") );
+				double amt = Util.hexToDec( event.getString( "data"), 6);
+				String hash = event.getString("transaction_hash").toLowerCase();
+			
+				S.out( "Log: %s %s %s %s %s", block, token, from, to, amt);
+				insert( MoralisServer.m_database, block, token, from, to, amt, hash, srcQuery);
 			}
-			return obj.getString( "cursor");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
 		}
+		return obj.getString( "cursor");
 	}
 	
 	/** Insert the from and to transactions into the database, and increment the counters */
 	void insert( MySqlConnection db, int block, String token, String from, String to, double val, String hash, char source) throws Exception {
-		insert( db, block, token, from, -val, hash, source);
-		insert( db, block, token, to, val, hash, source);
+		if (val != 0. && !from.equals(to) ) { // we have to skip these because due to the index the first one would go but the second one would fail which would mess up the balances
+			insert( db, block, token, from, -val, hash, source);
+			insert( db, block, token, to, val, hash, source);
+		}
 	}
 	
 	void insert( MySqlConnection db, int block, String token, String wallet, double val, String hash, char source) throws Exception {
@@ -194,20 +170,16 @@ public class EventFetcher {
 				String sql = String.format( "insert into events values (%s,'%s','%s',%s,'%s','%s')", block, token, wallet, val, hash, source);
 				db.execute(sql); 
 	        	increment( wallet, token, val); // this won't get called for dup events
-	        	if (wallet.equals("0xb016711702d3302cef6ceb62419abbef5c44450e")) {
-	        		S.out( "Set %s to %s", token, m_walletMap.get(wallet).get(token) );
-	        	}
 			}
 		}
 		catch( PSQLException e) {
 			if ( Util.startsWith( e.getMessage(), "ERROR: duplicate key") ) {
-				S.out( "Duplicate key inserting into events");
+				// S.out( "dup key, not inserted");  eat this, we don't care
 			}
 			else throw e;
 		}
 	}
 	
-
 	
 	String getAllWalletsJson() { 
 		return m_walletMap.toString(); 
@@ -216,67 +188,4 @@ public class EventFetcher {
 	Balances getWalletBalances(String wallet) {
 		return m_walletMap.get( wallet);
 	}
-
-	
 }
-
-// you should peridically query for the current balance and compare to what you have to check for mistakes
-// in fact another possible and simpler approach might be to listen for events and just
-// use that as a queue to then query for the balance since you would know both the
-// wallet and the token. pas
-
-//seriously, this will be much easier. but how to catch up after a crash? you would have to requery all balances. pas
-
-/** Maybe save this for later. This code can fill in missing blocks. */
-/*void rebuild() {
-	
-	S.out( "Reading database");
-	ResultSet res = m_database.query( "select distinct block from events order by block");
-	
-	int last = 0;
-	
-	while (res.next() ) {
-		int block = res.getInt( 1);
-		
-		if (last == 0) {
-			if (block > startingBlock) {
-				query( startingBlock, block - 1); // assume first block is full
-			}
-		}
-		else {
-			if (block > last + 1) {
-				query( last + 1, block - 1);
-			}
-		}
-		last = block;
-	}
-		
-	// no entries in events table? query everything
-	if (last == 0) {
-		query( startingBlock, endingBlock);
-	}
-	else if (last < endingBlock) {
-		query( last + 1, endingBlock);
-	}
-}*/
-/*
-void test() {
-	Balances wallet1 = getOrCreateBalances("wallet1");
-	wallet1.increment( "IBM", 3);
-	wallet1.increment( "GE", 4);
-	wallet1.increment( "IBM", 2);
-
-	Balances wallet2 = getOrCreateBalances("wallet2");
-	wallet2.increment( "IBM", 33);
-	wallet2.increment( "GE", 44);
-	wallet2.increment( "IBM", 22);
-	
-	Balances wallet3 = getOrCreateBalances("wallet1");
-	wallet3.increment( "IBM", 3);
-	wallet3.increment( "GE", 4);
-	wallet3.increment( "IBM", 2);
-
-	MyJsonObj.display( m_walletMap, 0);
-}
-*/
-	// # select wallet, token, sum(quantity) from events group by wallet, token;

@@ -1,4 +1,4 @@
-package reflection;
+package util;
 
 public enum LogType {
 	RESTART,		// application was restarted
@@ -14,5 +14,6 @@ public enum LogType {
 	TERMINATE,
 	CHECK,			// check order (what-if)
 	ORDER,			// received order
-	SUBMIT
+	SUBMIT,
+	WALLET
 }

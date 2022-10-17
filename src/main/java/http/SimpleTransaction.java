@@ -16,6 +16,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import positions.EventFetcher.TypedJson;
 import reflection.Main;
 import reflection.ParamMap;
 import reflection.RefCode;
@@ -84,15 +85,16 @@ public class SimpleTransaction {
 			S.out( "Received GET request %s %s", uri, m_exchange.getHttpContext().getPath() ); 
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
-			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present");
 
-			// build map of tag/value, expecting tag=value&tag=value
-			String[] params = parts[1].split( "&");
-			//map.parseJson( )
-			for (String param : params) {
-				String[] pair = param.split( "=");
-				require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
-				map.put( pair[0], pair[1]);
+			// if map present, build map of tag/value, expecting tag=value&tag=value
+			if (parts.length == 2) {
+				String[] params = parts[1].split( "&");
+				//map.parseJson( )
+				for (String param : params) {
+					String[] pair = param.split( "=");
+					require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
+					map.put( pair[0], pair[1]);
+				}
 			}
 		}
 		
@@ -125,7 +127,7 @@ public class SimpleTransaction {
 	}	
 	
 	public MyJsonObj getJson() throws Exception {
-		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "Must be post");
+		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "GET not supported for this endpoint");
 		S.out( "received POST w/ len %s", m_exchange.getRequestHeaders().getFirst("content-length") );
 
 		Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
@@ -145,6 +147,12 @@ public class SimpleTransaction {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void respondJson(String tag, String val) {
+		TypedJson<String> obj = new TypedJson<String>();
+		obj.putt( tag, val);
+		respond( obj.toString() );
 	}
 
 }

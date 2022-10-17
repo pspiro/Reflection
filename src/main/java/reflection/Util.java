@@ -15,20 +15,9 @@ import com.ib.client.Decimal;
 import tw.util.S;
 
 public class Util {
-	static SimpleDateFormat fmt = new SimpleDateFormat( "HH:mm:ss.SSS");
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
-	static SimpleDateFormat todayFmt = new SimpleDateFormat( "yyyy-MM-dd");
 
-	static String now() { 
-		return fmt.format( new Date() ); 
-	}
-
-	static String today() { 
-		return todayFmt.format( new Date() ); 
-	}
-	
-	
 	public static void main(String[] args) throws RefException {
 	}
 
@@ -124,9 +113,6 @@ public class Util {
 	 *  @param strs tag/value pairs */
 	static Json toJsonMsg( Object... strs) { // get rid of this. pas
 		JSONObject obj = new JSONObject();
-		
-		// always start w/ the time
-		obj.put( "time", now() );
 		
 		Object tag = null;
 		for (Object val : strs) {

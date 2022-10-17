@@ -1,6 +1,6 @@
 package tw.util;
 
-public class MyException extends Exception {  // move this to lib. pas
+public class MyException extends Exception {
 	int m_code;
 	
 	public MyException( String first, Object... params) {
