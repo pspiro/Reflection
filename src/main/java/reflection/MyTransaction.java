@@ -34,7 +34,7 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, getConnectionStatus, terminate;
+		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, pullBackendConfig, getConnectionStatus, terminate;
 
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -152,6 +152,9 @@ class MyTransaction {
 			case pushBackendConfig:
 				pushBackendConfig();
 				break;
+			case pullBackendConfig:
+				pullBackendConfig();
+				break;
 			case terminate:
 				terminate();
 				break;
@@ -167,6 +170,13 @@ class MyTransaction {
 	private void pushBackendConfig() throws Exception {
 		S.out( "Pushing backend config from google sheet to database");
 		Main.m_config.pushBackendConfig( Main.m_database);
+		respond( code, RefCode.OK);
+	}
+
+	/** Top-level message handler */ 
+	private void pullBackendConfig() throws Exception {
+		S.out( "Pulling backend config from database to google sheet");
+		Main.m_config.pullBackendConfig( Main.m_database);
 		respond( code, RefCode.OK);
 	}
 

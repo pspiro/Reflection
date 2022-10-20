@@ -1,6 +1,7 @@
 package reflection;
 
 import java.lang.reflect.Field;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 
@@ -169,7 +170,7 @@ public class Config {
 
 	void pushBackendConfig(MySqlConnection database) throws Exception {
 		// read from google sheet
-		GTable table = new GTable( NewSheet.Reflection, "Backend Config", "Tag", "Value");
+		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
 
 		validateBackendConfig( table);
 
@@ -193,6 +194,20 @@ public class Config {
 		
 		S.out( sql);
 		database.execute( sql.toString() );
+	}
+
+	/** Populate google sheet from database. */
+	void pullBackendConfig(MySqlConnection database) throws Exception {
+		
+		// read from google sheet
+		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
+
+		ResultSet res = database.queryNext( "select * from config");
+		for (int i = 0; i < res.getMetaData().getColumnCount(); i++) {
+			table.put( res.getMetaData().getColumnLabel(i), res.getString(i) );
+		}
+
+		validateBackendConfig( table);
 	}
 
 	private void validateBackendConfig(GTable t) throws Exception {

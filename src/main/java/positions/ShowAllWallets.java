@@ -7,7 +7,7 @@ import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 
-/** Show all balances for all wallets. */
+/** Show all balances for all wallets from database. */
 public class ShowAllWallets {
 	private MySqlConnection m_database = new MySqlConnection();
 

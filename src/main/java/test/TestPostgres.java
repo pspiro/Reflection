@@ -10,7 +10,7 @@ import reflection.MySqlConnection;
 import tw.util.S;
 
 public class TestPostgres extends TestCase {
-	static String dbUrl = "jdbc:postgresql://localhost:5432/reflection";
+	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
 	static String dbUser = "postgres";
 	static String dbPassword = "1359";
 	static MySqlConnection con = new MySqlConnection();
@@ -19,7 +19,9 @@ public class TestPostgres extends TestCase {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
-			new TestPostgres().createEvents();
+			//new TestPostgres().createEvents();
+			new TestPostgres().createTrades();
+			//new TestPostgres().createEvents();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

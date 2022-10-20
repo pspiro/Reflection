@@ -25,6 +25,10 @@ import util.DateLogFile;
 import util.LogType;
 
 public class MoralisServer {
+	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
+	static String dbUser = "postgres";
+	static String dbPassword = "1359";
+
 	private static final int high_block = 2000000000;
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
@@ -67,9 +71,10 @@ public class MoralisServer {
 	void run(String[] args) throws Exception {
 		try {
 			S.out( "Connecting to database");
-			m_database.connect( "jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");
+			m_database.connect(dbUrl, dbUser, dbPassword);
 			
-			m_client = new EventFetcher( this); // reads in the stocks from google sheet
+			// read in the stocks from google sheet			
+			m_client = new EventFetcher( this); 
 			
 			// get current balances for all wallets
 			readBalancesFromDb();

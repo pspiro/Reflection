@@ -11,10 +11,8 @@ import http.MyJsonObj;
 import http.MyJsonObj.MyJsonAr;
 import tw.util.S;
 
-/** This is a client that will query Moralis for the token balances.
- *  It not used for anything but it could be used to periodically check
- *  the balances against what we have in the database, especially
- *  after paring. */
+/** This is a client that will query Moralis for the token balances for each wallet
+ *  and then compares each wallet/token to the value from the Moralis position server. */
 
 public class BalanceClient {
 	public static void main(String[] args) {
@@ -64,7 +62,7 @@ public class BalanceClient {
 				double myBalance = myWallet.getDouble( token);
 				
 				if (match( morBalance, myBalance) ) {
-					//S.out( "%s %s %s matches", wallet, token, morBalance);
+					S.out( "OK %s %s %s", wallet, token, morBalance);
 				}
 				else {
 					S.out( "ERROR: mismatch for %s %s %s %s", wallet, token, morBalance, myBalance);
