@@ -47,7 +47,11 @@ public class MySqlConnection {
 		connection.createStatement().executeUpdate(fullSql);
 	}
 	
+	/** Don't call execute because the sql string could have percent signs in it
+	 *  (e.g. FAQ table. */
 	public void insert( String table, Object... values) throws Exception {
+		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
+
 		StringBuilder valStr = new StringBuilder();
 		
 		for (Object val : values) {
@@ -62,9 +66,9 @@ public class MySqlConnection {
 				valStr.append( "NULL");
 			}
 		}
-		
+
 		String sql = String.format( "insert into %s values (%s)", table, valStr);
-		execute( sql);
+		connection.createStatement().executeUpdate(sql);
 	}
 
 	public void dropTable(String table) throws Exception {

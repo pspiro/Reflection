@@ -168,6 +168,19 @@ public class Config {
 		}
 	}
 
+	/** Populate google sheet from database. */
+	void pullBackendConfig(MySqlConnection database) throws Exception {
+		// read from google sheet
+		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
+
+		ResultSet res = database.queryNext( "select * from system_configurations");
+		for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
+			table.put( res.getMetaData().getColumnLabel(i), res.getString(i) );
+		}
+
+		validateBackendConfig( table);
+	}
+	
 	void pushBackendConfig(MySqlConnection database) throws Exception {
 		// read from google sheet
 		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
@@ -175,7 +188,7 @@ public class Config {
 		validateBackendConfig( table);
 
 		// build the sql string
-		StringBuilder sql = new StringBuilder( "update config set ");
+		StringBuilder sql = new StringBuilder( "update system_configurations set ");
 		boolean first = true;
 		for (Entry<String, String> entry : table.entrySet() ) {
 			String tag = entry.getKey();
@@ -196,24 +209,10 @@ public class Config {
 		database.execute( sql.toString() );
 	}
 
-	/** Populate google sheet from database. */
-	void pullBackendConfig(MySqlConnection database) throws Exception {
-		
-		// read from google sheet
-		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
-
-		ResultSet res = database.queryNext( "select * from config");
-		for (int i = 0; i < res.getMetaData().getColumnCount(); i++) {
-			table.put( res.getMetaData().getColumnLabel(i), res.getString(i) );
-		}
-
-		validateBackendConfig( table);
-	}
-
 	private void validateBackendConfig(GTable t) throws Exception {
 		require( t, "min_order_size", 1, 100); 
-		require( t, "max_order_size", 0, 2000);
-		require( t, "non_kyc_max_order_size", 0, 1000);
+		require( t, "max_order_size", 0, 20000);
+		require( t, "non_kyc_max_order_size", 0, 20000);
 		require( t, "price_refresh_interval", 5, 60);
 		require( t, "commission", 0, 5);
 //		require( t, "buy_commission", 0, 5 );
@@ -232,5 +231,42 @@ public class Config {
 
 	public int threads() {
 		return 10;
+	}
+
+	public void pullFaq(MySqlConnection database) throws Exception {
+		//Tab tab = NewSheet.getTab( NewSheet.Reflection, "FAQ");
+		//ResultSet res = database.query( "select * from frequently_asked_questions");
+		
+		GTable table = new GTable( NewSheet.Reflection, "FAQ", "Question", "Answer");
+
+		ResultSet res = database.query( "select * from frequently_asked_questions");
+		
+		while (res.next() ) {
+			table.put( 
+					res.getString("question"), 
+					res.getString("answer")
+			);
+		}
+	}
+	
+	public void pushFaq(MySqlConnection db) throws Exception {
+		db.startTransaction();
+		
+		db.delete("delete from frequently_asked_questions");
+		
+		int id = 1;
+		
+		Tab tab = NewSheet.getTab( NewSheet.Reflection, "FAQ");
+		for (ListEntry row : tab.fetchRows() ) {
+			String q = row.getValue("Question");
+			String a = row.getValue("Answer");
+			
+			if (S.isNotNull(q) && S.isNotNull(a) ) {
+				db.insert("frequently_asked_questions", id++, q, a, true);
+			}
+		}
+		
+		db.commit();
+		
 	}
 }

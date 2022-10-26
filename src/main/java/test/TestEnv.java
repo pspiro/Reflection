@@ -2,6 +2,6 @@ package test;
 
 public class TestEnv {
 	public static void main(String[] args) {
-		System.out.println( "private key = " + System.getenv("privatekey") );
+		System.out.println( System.getProperty("user.home") );
 	}
 }

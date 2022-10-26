@@ -34,7 +34,7 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, pullBackendConfig, getConnectionStatus, terminate;
+		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, pullBackendConfig, getConnectionStatus, terminate, pullFaq, pushFaq;
 
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -155,6 +155,12 @@ class MyTransaction {
 			case pullBackendConfig:
 				pullBackendConfig();
 				break;
+			case pullFaq:
+				pullFaq();
+				break;
+			case pushFaq:
+				pushFaq();
+				break;
 			case terminate:
 				terminate();
 				break;
@@ -164,6 +170,20 @@ class MyTransaction {
 	private void terminate() {
 		log( LogType.TERMINATE, "");
 		System.exit( 0);
+	}
+
+	/** Top-level message handler */ 
+	private void pushFaq() throws Exception {
+		S.out( "Pushing FAQ");
+		Main.m_config.pushFaq( Main.m_database);
+		respond( code, RefCode.OK);
+	}
+
+	/** Top-level message handler */ 
+	private void pullFaq() throws Exception {
+		S.out( "Pulling FAQ");
+		Main.m_config.pullFaq( Main.m_database);
+		respond( code, RefCode.OK);
 	}
 
 	/** Top-level message handler */ 
@@ -603,6 +623,7 @@ class MyTransaction {
 			}
 		}
 		catch( Exception e) {
+			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
 			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
 		}
