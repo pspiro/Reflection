@@ -59,7 +59,9 @@ public class MySqlConnection {
 				valStr.append(',');
 			}
 			if (val != null) {
-				String str = val instanceof String ? String.format( "'%s'", val) : val.toString(); 
+				String str = val instanceof String 
+						? String.format( "'%s'", ((String)val).replaceAll( "'", "''") )  // double-up the single-quotes 
+						: val.toString(); 
 				valStr.append( str);
 			}
 			else {
