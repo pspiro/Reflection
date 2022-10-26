@@ -1,0 +1,5 @@
+#!/bin/bash
+
+~/kil reflection.Main
+java -cp Reflection-0.0.2-jar-with-dependencies.jar reflection.Main $1 > log.txt &
+tail -f log.txt
