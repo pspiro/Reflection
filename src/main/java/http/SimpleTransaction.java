@@ -16,7 +16,8 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import positions.EventFetcher.TypedJson;
+import json.MyJsonObj;
+import json.TypedJson;
 import reflection.Main;
 import reflection.ParamMap;
 import reflection.RefCode;

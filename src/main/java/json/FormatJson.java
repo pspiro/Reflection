@@ -1,10 +1,8 @@
-package test;
+package json;
 
 import java.util.Scanner;
 
 import org.json.simple.parser.ParseException;
-
-import http.MyJsonObj;
 
 public class FormatJson {
 	public static void main(String[] args) throws ParseException {

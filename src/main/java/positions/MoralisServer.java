@@ -11,8 +11,8 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 
 import com.sun.net.httpserver.HttpServer;
 
-import http.MyJsonObj;
 import http.SimpleTransaction;
+import json.MyJsonObj;
 import positions.EventFetcher.Balances;
 import reflection.Main;
 import reflection.MySqlConnection;
@@ -23,7 +23,9 @@ import reflection.Util;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
+import util.StringHolder;
 
+/** This app keeps the positions of all wallets in memory for fast access. */
 public class MoralisServer {
 	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
 	static String dbUser = "postgres";
@@ -266,10 +268,6 @@ public class MoralisServer {
 		void accept(String t) throws Exception;
 	}
 
-	static class StringHolder {
-		String val;
-	}
-	
 	static String querySync(String url) {
 		StringHolder holder = new StringHolder();
 

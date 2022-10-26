@@ -1,6 +1,4 @@
-package http;
-
-import java.util.Iterator;
+package json;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -13,41 +11,6 @@ import tw.util.S;
 /** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */ 
 public class MyJsonObj {  // replace or combine w/ TypedJson
 	
-	/** Array of object only. */
-	public static class MyJsonAr implements Iterable<MyJsonObj> { 
-		private JSONArray m_ar;
-		
-		public static MyJsonAr parse( String text) throws ParseException {
-			return new MyJsonAr( new JSONParser().parse( text) );
-		}
-
-		MyJsonAr( Object obj) {
-			m_ar = (JSONArray)obj;
-		}
-		
-		@Override public String toString() {  // this class sucks. pas
-			return m_ar.toString();
-		}
-		
-		public MyJsonObj getJsonObj( int i) {
-			return new MyJsonObj( m_ar.get( i) );
-		}
-
-		@Override public Iterator<MyJsonObj> iterator() {
-			return new Iterator<MyJsonObj>() {
-				Iterator<Object> iter = m_ar.iterator();
-				
-				@Override public boolean hasNext() {
-					return iter.hasNext();
-				}
-
-				@Override public MyJsonObj next() {
-					return new MyJsonObj( iter.next() );
-				}
-			};
-		}
-	}
-
 	private JSONObject m_obj;
 	
 	public MyJsonObj( Object obj) {
@@ -108,7 +71,14 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 		else if (objIn instanceof JSONArray) {
 			System.out.println( "[ ");
 			JSONArray ar = (JSONArray)objIn;
+			boolean first = true;
 			for (Object obj : ar) {
+				if (first) {
+					first = false;
+				}
+				else {
+					System.out.print(",");
+				}
 				display( obj, level + 1);
 			}
 			System.out.print( " ] ");			
