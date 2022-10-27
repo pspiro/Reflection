@@ -26,7 +26,7 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import tw.util.S;
 
 public class Auth {
-	private static final String APPLICATION_NAME ="Brisco";
+	private static final String APPLICATION_NAME ="Reflection"; // was Brisco
 	private static FileDataStoreFactory DATA_STORE_FACTORY;
 	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 	private static HttpTransport HTTP_TRANSPORT;
@@ -45,8 +45,9 @@ public class Auth {
 			HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
 			
 			Logger.getLogger(FileDataStoreFactory.class.getName()).setLevel(Level.SEVERE);
-			File DATA_STORE_DIR = new File(System.getProperty("user.home"), ".credentials/calendar-java-quickstart"); // Directory to store user credentials for this application.
-			DATA_STORE_FACTORY = new FileDataStoreFactory(DATA_STORE_DIR);
+//			File dataStoreDir = new File(System.getProperty("user.home"), ".credentials/calendar-java-quickstart"); // Directory to store user credentials for this application.
+			File dataStoreDir = new File(".", ".credentials"); // Directory to store user credentials for this application.
+			DATA_STORE_FACTORY = new FileDataStoreFactory(dataStoreDir);
 		} catch (Throwable t) {
 			t.printStackTrace();
 			System.exit(1);
@@ -81,9 +82,9 @@ public class Auth {
 		// Look here for full list: https://developers.google.com/gmail/api/auth/scopes
 		// !!!NOTE: you must delete the .credentials folder after modifying this list!!!
 		ArrayList<String> scopes = new ArrayList<String>();
-		scopes.add( "https://www.googleapis.com/auth/gmail.modify");
-		scopes.add( "https://www.googleapis.com/auth/gmail.readonly");
-		scopes.add( "https://www.googleapis.com/auth/gmail.compose");
+//		scopes.add( "https://www.googleapis.com/auth/gmail.modify");
+//		scopes.add( "https://www.googleapis.com/auth/gmail.readonly");
+//		scopes.add( "https://www.googleapis.com/auth/gmail.compose");
 		//scopes.add( "https://docs.google.com/feeds/");
 		scopes.add( "https://spreadsheets.google.com/feeds");
 		//scopes.add( "https://www.googleapis.com/auth/calendar");
