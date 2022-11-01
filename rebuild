@@ -1,0 +1,5 @@
+#!/bin/bash
+
+git pull
+mvn package
+./restart $1

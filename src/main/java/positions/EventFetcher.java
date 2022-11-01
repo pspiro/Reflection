@@ -6,11 +6,11 @@ import static positions.MoralisServer.transferTopic;
 
 import java.util.HashMap;
 
-import org.json.simple.JSONObject;
 import org.postgresql.util.PSQLException;
 
-import http.MyJsonObj;
-import http.MyJsonObj.MyJsonAr;
+import json.MyJsonAr;
+import json.MyJsonObj;
+import json.TypedJson;
 import reflection.MySqlConnection;
 import reflection.Util;
 import tw.google.NewSheet;
@@ -97,18 +97,6 @@ public class EventFetcher {
 	}
 
 	
-	/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */
-	public static class TypedJson<T> extends JSONObject {
-		@Override public T get(Object key) {
-			return (T)super.get(key);
-		}
-		
-		@SuppressWarnings("unchecked")
-		public void putt( String tag, T value) {
-			put( tag, value);
-		}
-	}
-		
 	/** Map conid to balance */
 	static class Balances extends TypedJson<Double> {
 		double getDouble(String token) {

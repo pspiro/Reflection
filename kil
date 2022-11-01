@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ "$1" = "" ]; then
+echo "usage: kil <name>"
+else
+
+echo "Killing these processes:"
+ps ax | grep $1 | grep -v grep 
+echo ""
+
+ps ax | grep $1 | grep -v grep | awk '{print $1}' | xargs kill
+
+echo ""
+echo done
+
+fi
