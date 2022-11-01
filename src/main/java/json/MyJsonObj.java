@@ -64,7 +64,7 @@ public class MyJsonObj {  // replace or combine w/ TypedJson
 				Object val = map.get( key);
 				System.out.print( String.format( "%s%s : ", Util.tab( level), key) );
 				display( val, level + 1);
-				System.out.println( "");
+				System.out.println( ", ");
 			}
 			System.out.println( Util.tab( level) + "}");
 		}
