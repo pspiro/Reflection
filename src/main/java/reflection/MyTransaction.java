@@ -404,7 +404,7 @@ class MyTransaction {
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
 		order.whatIf( whatIf);
-		order.transmit( Main.m_config.mode() == Mode.paper);  // don't transmit real orders for now
+		order.transmit( true);
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
 		order.wallet( wallet);
