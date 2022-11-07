@@ -9,11 +9,14 @@ import java.util.HashMap;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import json.MyJsonAr;
 import json.MyJsonObj;
 import tw.util.IStream;
 import tw.util.S;
 
-/** Good for testing, don't use this in production, there are many things not handled. */
+/** Good for testing, don't use this in production, there are many things not handled.
+ *  Use DefaultAsyncHttpClient. In fact, reimplement this as a wrapper of that. 
+ *  the first call to async client is very slow, why so slow to load? */
 public class MyHttpClient {
 	private Socket m_socket;
 	
@@ -54,7 +57,12 @@ public class MyHttpClient {
 	}
 
 	public MyJsonObj readMyJsonObject() throws Exception {
-		return new MyJsonObj( new JSONParser().parse( readString() ) );
+		//return new MyJsonObj( new JSONParser().parse( readString() ) );
+		return MyJsonObj.parse( readString() );
+	}
+	
+	public MyJsonAr readMyJsonArray() throws Exception {
+		return MyJsonAr.parse( readString() );
 	}
 	
 	public JSONObject readJsonObject() throws Exception {

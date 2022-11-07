@@ -109,14 +109,14 @@ public class TestWhatIf extends TestCase {
 	}
 	
 	public void testFracSize()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '129' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '138' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testFracSize2()  throws Exception {  // rounded 
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '129' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '138' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
