@@ -31,6 +31,10 @@ public class SimpleTransaction {
 	
 	private HttpExchange m_exchange;
 	
+	public Headers getHeaders() {
+		return m_exchange.getRequestHeaders();
+	}
+	
 	public SimpleTransaction( HttpExchange exchange) {
 		m_exchange = exchange;
 		;
@@ -52,20 +56,24 @@ public class SimpleTransaction {
 			e.printStackTrace();
 		}
 	}
+	
+	public boolean isPost() {
+		return "POST".equals(m_exchange.getRequestMethod() );
+	}
 
 	// now write a getJsonRequest
 	public String getRequest() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
+		S.out( "Received %s request %s %s", m_exchange.getRequestMethod(), uri, m_exchange.getHttpContext().getPath() ); 
+
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
-			S.out( "Received GET request %s %s", uri, m_exchange.getHttpContext().getPath() ); 
 			String[] parts = uri.split("\\?");
 			return parts.length > 1 ? parts[1] : "";
 		}
 		
 		// POST request
-		S.out( "Received POST event");
 		Headers headers = m_exchange.getRequestHeaders();
 		String len = headers.getFirst("content-length");
 		if (len != null) {
