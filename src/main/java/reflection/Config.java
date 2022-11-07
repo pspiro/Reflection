@@ -39,8 +39,7 @@ public class Config {
 	// program parameters
 	private Mode mode = Mode.paper;  // paper or production
 	private String twsHost = "localhost";  // TWS is listening on this host
-	private int twsPaperPort;  // TWS is listening on this port
-	private int twsProdPort;  // TWS is listening on this port
+	private int twsPort;  // TWS is listening on this port
 	private int apiClientId = 1;  // RefAPI client ID sent to TWS when connecting
 	private String refApiHost = "0.0.0.0"; // host for RefAPI to listen on
 	private int refApiPort = 8383;  // port for RefAPI to listen on
@@ -67,7 +66,7 @@ public class Config {
 
 	public Mode mode() {  return mode;  }
 	public String twsHost() { return twsHost; }
-	public int twsPort() { return mode == Mode.paper ? twsPaperPort : twsProdPort; }
+	public int twsPort() { return twsPort; }
 	public int apiClientId() { return apiClientId; }
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
@@ -88,8 +87,7 @@ public class Config {
 		// program parameters
 		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsHost = tab.get( "twsHost");
-		this.twsPaperPort = tab.getInt( "twsPaperPort");
-		this.twsProdPort = tab.getInt( "twsProductionPort");
+		this.twsPort = tab.getInt( "twsPort");
 		this.apiClientId = tab.getInt( "apiClientId");
 		
 		this.refApiHost = tab.get( "refApiHost");

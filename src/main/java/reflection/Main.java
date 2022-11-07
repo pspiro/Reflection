@@ -68,7 +68,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public static void main(String[] args) {
 		try {
-			String configTab = "Config";
+			String configTab = null;
 			for (String arg : args) {
 				if (arg.equals( "simulated")) {
 					m_simulated = true;
@@ -77,6 +77,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				else {
 					configTab = arg;
 				}
+			}
+			
+			if (S.isNull( configTab) ) {
+				throw new Exception( "You must specify a config tab name");
 			}
 			
 			new Main().run( configTab);
