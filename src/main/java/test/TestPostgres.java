@@ -19,8 +19,9 @@ public class TestPostgres extends TestCase {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
+			new TestPostgres().testQuery();
 			//new TestPostgres().createEvents();
-			new TestPostgres().createTrades();
+			//new TestPostgres().createTrades();
 			//new TestPostgres().createEvents();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -29,6 +30,13 @@ public class TestPostgres extends TestCase {
 		S.out( "done");
 	}
 	
+	private void testQuery() throws Exception {
+		S.out( "start");
+		con.query( "select * from frequently_asked_questions");
+		S.out( "done");
+		
+	}
+
 	void createEvents() throws Exception {
 		con.dropTable("events");
 		
