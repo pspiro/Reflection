@@ -16,9 +16,6 @@ public class TestPostgres {
 			return;
 		}
 
-	void createEvents() throws Exception {
-		con.dropTable("events");
-		
 		String host = args[0];
 		String port = args[1];
 		String db = args[2];
