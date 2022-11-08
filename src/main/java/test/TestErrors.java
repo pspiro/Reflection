@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import http.MyHttpClient;
+import json.MyJsonAr;
 import junit.framework.TestCase;
 import reflection.RefCode;
 import reflection.RefException;
@@ -86,7 +87,7 @@ public class TestErrors extends TestCase {
 	
 
 	
-	static String prod = "34.148.125.2";
+	static String prod = "34.125.38.193";
 	static String local = "localhost";
 	
 	static String host = prod;
@@ -99,6 +100,12 @@ public class TestErrors extends TestCase {
 		MyHttpClient cli = cli();
 		cli.post( data.replaceAll( "\\'", "\"") );
 		return cli.readJsonMap();
+	}
+	
+	static MyJsonAr sendData2( String data) throws Exception {
+		MyHttpClient cli = cli();
+		cli.post( data.replaceAll( "\\'", "\"") );
+		return cli.readMyJsonArray();
 	}
 	
 	static HashMap<String, Object> sendAndReceive( String filename) throws Exception {
