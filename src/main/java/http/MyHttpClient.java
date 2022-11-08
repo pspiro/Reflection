@@ -9,6 +9,7 @@ import java.util.HashMap;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import json.MyJsonAr;
 import json.MyJsonObj;
 import tw.util.IStream;
 import tw.util.S;
@@ -55,6 +56,10 @@ public class MyHttpClient {
 
 	public MyJsonObj readMyJsonObject() throws Exception {
 		return new MyJsonObj( new JSONParser().parse( readString() ) );
+	}
+	
+	public MyJsonAr readMyJsonArray() throws Exception {
+		return new MyJsonAr( new JSONParser().parse( readString() ) );
 	}
 	
 	public JSONObject readJsonObject() throws Exception {

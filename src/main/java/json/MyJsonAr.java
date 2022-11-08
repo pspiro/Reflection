@@ -14,7 +14,7 @@ public class MyJsonAr implements Iterable<MyJsonObj> {
 		return new MyJsonAr( new JSONParser().parse( text) );
 	}
 
-	MyJsonAr( Object obj) {
+	public MyJsonAr( Object obj) {
 		m_ar = (JSONArray)obj;
 	}
 	
