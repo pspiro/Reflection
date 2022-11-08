@@ -360,8 +360,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
-		log( LogType.COMMISSION, "%s %s %s %s",
-				rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
+		try {
+			log( LogType.COMMISSION, "%s %s %s %s", rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
+			
+			Object[] vals = { 
+					tradeKey, 
+					rpt.commission(), 
+					rpt.currency()
+			};
+			
+			m_database.insert( "commissions", vals);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public String getExchange(int conid) {

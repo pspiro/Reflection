@@ -19,14 +19,23 @@ public class CreateTables extends TestCase {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
-			//new TestPostgres().createEvents();
-			new CreateTables().createTrades();
-			//new TestPostgres().createEvents();
+			new CreateTables().createCommissions();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		S.out( "done");
+	}
+	
+	void createCommissions() throws Exception {
+		con.dropTable("commissions");
+		
+		String sql = "create table commissions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
+				+ "trade_key varchar(42),"
+				+ "commission double precision,"
+				+ "currency varchar(3)"
+				+ ")";
+		con.execute( sql);
 	}
 	
 	void createEvents() throws Exception {
