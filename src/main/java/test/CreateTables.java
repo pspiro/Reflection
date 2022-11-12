@@ -31,7 +31,7 @@ public class CreateTables extends TestCase {
 		con.dropTable("commissions");
 		
 		String sql = "create table commissions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "trade_key varchar(42),"
+				+ "tradekey varchar(42),"
 				+ "commission double precision,"
 				+ "currency varchar(3)"
 				+ ")";
