@@ -8,10 +8,14 @@ public class EchoServer {
 		int port = Integer.valueOf( args[1]);
 		S.out( "listening on %s:%s", host, port);
 		
-		SimpleTransaction.listen( host, port, transaction -> {
+		SimpleTransaction.listen( host, port, simpleTrans -> {
 			try {
-				S.out( transaction.getRequest() );
-				transaction.respond( "ok");
+				S.out( simpleTrans.getRequest() );
+				for (String key : simpleTrans.getHeaders().keySet() ) {
+					S.out( "%s: %s", key, simpleTrans.getHeaders().get( key) );
+				}
+				
+				simpleTrans.respond( "ok");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
