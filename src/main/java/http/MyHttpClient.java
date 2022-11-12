@@ -19,8 +19,8 @@ public class MyHttpClient {
 	private Socket m_socket;
 	
 	public static void main(String[] args) throws Exception {
-		MyHttpClient cli = new MyHttpClient( "192.168.1.11", 80);
-		cli.get( "hello");
+		MyHttpClient cli = new MyHttpClient( "34.125.124.211", 5001);
+		cli.get();
 		S.out( cli.readString() );
 	}
 
