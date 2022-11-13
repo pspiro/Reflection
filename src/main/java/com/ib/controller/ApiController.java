@@ -1414,10 +1414,7 @@ public class ApiController implements EWrapper {
 		throw new RuntimeException();
 	}
 	
-	@Override
-    public void connectAck() {
-		if (m_client.isAsyncEConnect())
-			m_client.sendStartApiMsg();
+	@Override public void connectAck() {
 	}
 
 	public void reqSecDefOptParams( String underlyingSymbol, String futFopExchange, /*String currency,*/ String underlyingSecType, int underlyingConId, ISecDefOptParamsReqHandler handler) {

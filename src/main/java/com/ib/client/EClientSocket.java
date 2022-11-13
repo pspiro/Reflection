@@ -14,18 +14,9 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	protected int m_defaultPort;
     private boolean m_allowRedirect;
     protected DataInputStream m_dis;
-	private boolean m_asyncEConnect = false;   // stays false
 	private boolean m_connected = false;
 	private Socket m_socket;
 		
-	public void setAsyncEConnect(boolean asyncEConnect) {
-		this.m_asyncEConnect = asyncEConnect;
-	}
-
-	public boolean isAsyncEConnect() {
-		return m_asyncEConnect;
-	}
-
 	public EClientSocket(EWrapper eWrapper, EReaderSignal signal) {
 		super(eWrapper, signal);
 	}
@@ -62,18 +53,16 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    // start reader thread
 	    EReader reader = new EReader(this, m_signal);
 	
-	    if (!m_asyncEConnect) {
-	    	if (!reader.putMessageToQueue())
-	    		return;
+    	if (!reader.putMessageToQueue())
+    		return;
 
-	    	// process the server num message, which is first message, I guess
-	    	// not the same as the nextValidId message
-	    	while (m_serverVersion == 0) {
-	    		m_signal.waitForSignal();
-	    		// System.out.println( "processing reader msgs");  //pas
-	    		reader.processMsgs();
-	    	}       
-	    }
+    	// process the server num message, which is first message, I guess
+    	// not the same as the nextValidId message
+    	while (m_serverVersion == 0) {
+    		m_signal.waitForSignal();
+    		// System.out.println( "processing reader msgs");  //pas
+    		reader.processMsgs();
+    	}       
 	}
 
 	public synchronized void eConnect(Socket socket, int clientId) throws IOException {
@@ -171,8 +160,7 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    // set connected flag
 	    m_connected = true;       
 
-	    if (!m_asyncEConnect)
-	    	sendStartApiMsg();
+    	sendStartApiMsg();
 	}
 
 	protected synchronized void performRedirect( String address, int defaultPort ) throws IOException {
