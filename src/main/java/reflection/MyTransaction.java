@@ -229,7 +229,7 @@ class MyTransaction {
 	/** Top-level message handler */ 
 	void refreshConfig() throws Exception {
 		S.out( "Refreshing config from google sheet");
-		Main.m_config.readFromSpreadsheet("Config");
+		Main.m_config.readFromSpreadsheet(m_main.tabName() );
 		respond( Main.m_config.toJson() );
 	}
 	
