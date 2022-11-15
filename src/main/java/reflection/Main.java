@@ -57,6 +57,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// is there some way to find out?
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
+	private String m_tabName;
 	
 	static boolean simulated() { return m_simulated; }
 
@@ -100,18 +101,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
-		// read config settings from google sheet; if it fails, fall back to 
-		// safe config settings which are known to work
-		try {
-			S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-			m_config.readFromSpreadsheet(tabName);
-			S.out( "  done");
-		}
-		catch( Exception e) {
-			S.out( "ERROR");
-			e.printStackTrace();
-			m_config.readFromSpreadsheet("Safe Config");
-		}
+		// read config settings from google sheet 
+		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		m_config.readFromSpreadsheet(tabName);
+		m_tabName = tabName;
+		S.out( "  done");
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
@@ -486,6 +480,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public ConnectionMgr mdConnMgr() {
 		return m_mdConnMgr;
+	}
+
+	public String tabName() {
+		return m_tabName;
 	}
 }
 
