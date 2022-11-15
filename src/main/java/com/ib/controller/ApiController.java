@@ -119,9 +119,9 @@ public class ApiController implements EWrapper {
 
 	// ---------------------------------------- Constructor and Connection handling ----------------------------------------
 	public interface IConnectionHandler {
-		void recNextValidId(int id);
-		void connected();
-		void disconnected();
+		void onRecNextValidId(int id);
+		void onConnected();
+		void onDisconnected();
 		void accountList(List<String> list);
 		void error(Exception e);
 		void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson);
@@ -168,7 +168,7 @@ public class ApiController implements EWrapper {
 
 	/** Called when we receive the server version. */
 	@Override public void onConnected() {
-		m_connectionHandler.connected();
+		m_connectionHandler.onConnected();
 	}
 
 	public void disconnect() {
@@ -176,7 +176,7 @@ public class ApiController implements EWrapper {
 			return;
 
 		m_client.eDisconnect();
-		m_connectionHandler.disconnected();
+		//m_connectionHandler.onDisconnected();
 		sendEOM();
 	}
 
@@ -193,9 +193,9 @@ public class ApiController implements EWrapper {
 	@Override public void nextValidId(int orderId) {
 //		m_orderId = orderId;
 //		m_reqId = m_orderId + 10000000; // let order id's not collide with other request id's
-//		if (m_connectionHandler != null) {
-//			m_connectionHandler.recNextValidId(orderId);
-//		}
+		if (m_connectionHandler != null) {
+			m_connectionHandler.onRecNextValidId(orderId);
+		}
 		recEOM();
 	}
 
@@ -238,7 +238,7 @@ public class ApiController implements EWrapper {
 	}
 
 	@Override public void connectionClosed() {
-		m_connectionHandler.disconnected();
+		m_connectionHandler.onDisconnected();
 	}
 
 
@@ -324,7 +324,7 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-	/** Return true if we have received server id. */
+	/** Return true if we have received server version */
 	public boolean isConnected() {
 		return m_client.isConnected();
 	}
@@ -462,7 +462,7 @@ public class ApiController implements EWrapper {
 		m_contractDetailsMap.put( reqId, processor);
 		
 		m_orderHandlers.put(reqId, new IOrderHandler() { 
-			public void handle(int errorCode, String errorMsg) { 
+			public void handle(int errorCode, String errorMsg) {
 				processor.contractDetailsEnd();
 			}
 
@@ -508,6 +508,7 @@ public class ApiController implements EWrapper {
 	}
 
 	@Override public void contractDetailsEnd(int reqId) {
+		S.out( "*** RECEIVED CD END ***");
 		IInternalHandler handler = m_contractDetailsMap.remove( reqId);
 		if (handler != null) {
 			handler.contractDetailsEnd();

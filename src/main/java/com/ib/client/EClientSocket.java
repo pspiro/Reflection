@@ -51,12 +51,16 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    m_socket = socket;
 	
 	    sendConnectRequest();
+	    S.out( "  sentconnectrequest");
 	
 	    // start reader thread
 	    EReader reader = new EReader(this, m_signal);
-	
-    	if (!reader.putMessageToQueue())
+	    S.out( "  created reader");
+	    
+    	if (!reader.putMessageToQueue()) {
+    		S.out( "  putMessageToQueue failed");
     		return;
+    	}
 
     	// process the server num message, which is first message, I guess
     	// not the same as the nextValidId message
@@ -86,10 +90,13 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	
 	    try{
 	        Socket socket = new Socket( m_host, port);
+	        S.out( "  created socket");
 	        eConnect(socket);
+	        S.out( "  econnected");
 	        return true;
 	    }
 	    catch( Exception e) {
+	    	e.printStackTrace();
 	    	eDisconnect();
 	        connectionError();
 	        return false;
@@ -231,6 +238,7 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 		return m_dis.readInt();
 	}
 
+	/** Return true if we are connected and have received server version. */
 	@Override public synchronized boolean isConnected() {
 		return m_socket != null && m_socket.isConnected() && m_connected;
 	}

@@ -10,7 +10,8 @@ public enum LogType {
 	PARTIAL_FILL,	// order was partially filled
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
-	CONNECTION,
+	ORDER_CONNECTION,
+	MD_CONNECTION,
 	TERMINATE,
 	CHECK,			// check order (what-if)
 	ORDER,			// received order

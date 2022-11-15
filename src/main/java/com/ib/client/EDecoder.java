@@ -1777,7 +1777,7 @@ class EDecoder implements ObjectInput {
 		}
 
 		
-		S.out( "tick %s", tickerId);
+		// S.out( "tick %s", tickerId);
 		
 		m_EWrapper.tickPrice( tickerId, tickType, price, attribs);
 
