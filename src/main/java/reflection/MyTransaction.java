@@ -423,7 +423,7 @@ class MyTransaction {
 		order.cryptoId( cryptoId);
 		order.wallet( wallet);
 		
-		S.out( "Requesting contract details for %s", conid);
+		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
 		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {

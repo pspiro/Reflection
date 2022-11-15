@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -25,7 +24,6 @@ import com.ib.client.DepthMktDataDescription;
 import com.ib.client.EClientErrors;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
-import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
 import com.ib.client.Execution;
 import com.ib.client.ExecutionFilter;
@@ -58,8 +56,6 @@ import com.ib.client.Types.FundamentalType;
 import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
-
-import tw.util.S;
 
 public class ApiController implements EWrapper {
 	private ApiConnection m_client;
@@ -140,8 +136,8 @@ public class ApiController implements EWrapper {
 	}
 	
 	private void startMsgProcessingThread() {
-		final EReaderSignal signal = new EJavaSignal();		
-		final EReader reader = new EReader(client(), signal);
+		final EJavaSignal signal = new EJavaSignal();		
+		final EReader reader = new EReader(client(), signal, false);
 		
 		reader.start();
 		

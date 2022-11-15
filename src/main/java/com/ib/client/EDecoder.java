@@ -162,12 +162,12 @@ class EDecoder implements ObjectInput {
     
     public int processMsg(EMessage msg) throws IOException {
     	if (!readMessageToInternalBuf(msg.getStream())) {
+    		S.out( "Error: did not read msg to internal buffer");
     		return 0;
     	}
     	
     	if (m_serverVersion == 0) {
     		processFirstMsg();
-    		
     		return m_messageReader.msgLength();
     	}
     	

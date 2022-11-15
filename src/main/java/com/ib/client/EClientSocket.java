@@ -19,8 +19,8 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	private boolean m_connected = false;
 	private Socket m_socket;
 		
-	public EClientSocket(EWrapper eWrapper, EReaderSignal signal) {
-		super(eWrapper, signal);
+	public EClientSocket(EWrapper eWrapper) {
+		super(eWrapper);
 	}
 
 	@Override
@@ -54,20 +54,26 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    S.out( "  sentconnectrequest");
 	
 	    // start reader thread
-	    EReader reader = new EReader(this, m_signal);
+	    EReader reader = new EReader(this, m_signal, true);
 	    S.out( "  created reader");
 	    
     	if (!reader.putMessageToQueue()) {
     		S.out( "  putMessageToQueue failed");
     		return;
     	}
+    	
+    	S.out( "  messages were put to queue");    	
 
     	// process the server num message, which is first message, I guess
     	// not the same as the nextValidId message
     	while (m_serverVersion == 0) {
+    		S.out( "  waiting for server version");
+    		//S.sleep(3000);
     		m_signal.waitForSignal();
+    		S.out( "    signaled");
     		// System.out.println( "processing reader msgs");  //pas
     		reader.processMsgs();
+    		S.out( "  processed msgs");
     	}       
 	}
 

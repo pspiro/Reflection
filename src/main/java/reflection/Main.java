@@ -49,6 +49,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	final static MySqlConnection m_database = new MySqlConnection();
 	
 	final HashMap<Integer,Prices> m_priceMap = new HashMap<Integer,Prices>(); // prices could be moved into the Stock object; no need for two separate maps  pas
+	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr();
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
@@ -145,13 +146,18 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false) ) {
 			JSONObject obj = new JSONObject();
 			if ("Y".equals( row.getValue( "Active") ) ) {
+				int conid = Integer.valueOf( row.getValue("Conid") );
+				String exch = row.getValue("Exchange");
+				
 				obj.put( "symbol", row.getValue("Symbol") );
-				obj.put( "conid", row.getValue("Conid") );
+				obj.put( "conid", String.valueOf( conid) );
 				obj.put( "smartcontractid", row.getValue("TokenAddress") );
 				obj.put( "description", row.getValue("Description") );
 				obj.put( "type", row.getValue("Type") );
 				obj.put( "exchange", row.getValue("Exchange") );
 				m_stocks.add( obj);
+				
+				m_exchMap.put( conid, exch);  
 			}
 		}
 	}
@@ -241,7 +247,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			// order id's; it's because sometimes, after a reconnect or if TWS
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
-			log( m_logType, "Received next valid id %s", id);  // why don't we receive this after disconnect/reconnect? pas
+			log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
 			m_recNextValidId = true;
 		}
 
@@ -463,7 +469,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public String getExchange(int conid) {
-		return conid == 44652000 ? "NSE" : "SMART";
+		return m_exchMap.get( conid);
 	}
 
 	public ApiController orderController() {

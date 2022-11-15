@@ -319,7 +319,7 @@ public abstract class EClient {
     public static final int MIN_VERSION = 100; // envelope encoding, applicable to useV100Plus mode only
     public static final int MAX_VERSION = MIN_SERVER_VER_WSH_EVENT_DATA_FILTERS_DATE; // ditto
 
-    protected EReaderSignal m_signal;
+	final EJavaSignal m_signal = new EJavaSignal();
     protected EWrapper m_eWrapper;    // msg handler
     protected int m_serverVersion;
     protected String m_TwsTime;
@@ -348,9 +348,8 @@ public abstract class EClient {
     // get
     public String optionalCapabilities() { return m_optionalCapabilities; }
 
-    public EClient( EWrapper eWrapper, EReaderSignal signal) {
+    public EClient( EWrapper eWrapper) {
         m_eWrapper = eWrapper;
-        m_signal = signal;
         m_clientId = -1;
         m_extraAuth = false;
         m_optionalCapabilities = "";

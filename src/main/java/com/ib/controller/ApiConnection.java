@@ -27,10 +27,9 @@ public class ApiConnection extends EClientSocket {
 
 	private final ILogger m_inLogger;
 	private final ILogger m_outLogger;
-	private static final EJavaSignal m_signal = new EJavaSignal();
 
 	public ApiConnection(EWrapper wrapper, ILogger inLogger, ILogger outLogger) {
-		super( wrapper, m_signal);
+		super( wrapper);
 		m_inLogger = inLogger;
 		m_outLogger = outLogger;
 	}
