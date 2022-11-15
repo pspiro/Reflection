@@ -136,5 +136,5 @@ public class TestOrder extends TestCase {
 	}
 	
 	// current stock price
-	static double curPrice = 122.36;  // you can query for this
+	static double curPrice = 144.66;  // you can query for this
 }

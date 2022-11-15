@@ -191,8 +191,8 @@ public class ApiController implements EWrapper {
 
 	/** Remove this. It doesn't always get called, namely if TWS is not running when we first connect. */
 	@Override public void nextValidId(int orderId) {
-//		m_orderId = orderId;
-//		m_reqId = m_orderId + 10000000; // let order id's not collide with other request id's
+		m_orderId = orderId;
+		m_reqId = -999990; // let order id's not collide with other request id's
 		if (m_connectionHandler != null) {
 			m_connectionHandler.onRecNextValidId(orderId);
 		}
@@ -508,7 +508,6 @@ public class ApiController implements EWrapper {
 	}
 
 	@Override public void contractDetailsEnd(int reqId) {
-		S.out( "*** RECEIVED CD END ***");
 		IInternalHandler handler = m_contractDetailsMap.remove( reqId);
 		if (handler != null) {
 			handler.contractDetailsEnd();
@@ -940,11 +939,8 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-	Random rnd = new Random( System.currentTimeMillis() );
-	
     private int nextOrderId() {
-    	//return m_orderId++;
-    	return rnd.nextInt( Integer.MAX_VALUE);
+    	return m_orderId++;
 	}
 
 	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {

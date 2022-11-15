@@ -41,8 +41,9 @@ public class TestConfig extends TestCase {
 	
 	public void testValidDbConfig() throws Exception {
 		MySqlConnection con = new MySqlConnection();
-		con.connect("jdbc:postgresql://34.125.38.193:5432/reflection", "postgres", "1359");
-		ResultSet rs = con.query( "select * from config");
+		con.connect("jdbc:postgresql://34.86.193.58:5432/reflection", "postgres", "1359");
+		             
+		ResultSet rs = con.query( "select * from system_configurations");
 		
 		assertTrue( rs.next() );
 		
