@@ -19,6 +19,7 @@ public class Util {
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 
 	public static void main(String[] args) throws RefException {
+		executeIn( 2000, () -> S.out("hello") );
 	}
 
 	/** Typical format of hours string is:
@@ -212,5 +213,13 @@ public class Util {
 	/** Execute the runnable in a new thread. */
 	public static void execute( Runnable runnable) {
 		new Thread(runnable).start();
+	}
+	
+	/** Execute the runnable in a new thread after waiting ms. */
+	public static void executeIn( int ms, Runnable runnable) {
+		new Thread( () -> {
+			S.sleep( ms);
+			runnable.run();
+		}).start();
 	}
 }
