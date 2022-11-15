@@ -82,16 +82,20 @@ public class Prices {
 	
 	/** Used for display on the Watch List */
 	double anyBid() {
-		return validBid() ? m_bid : validLast() ? m_last - .05 : 0;
+		return validBid() ? m_bid : validLast() ? m_last - .05 : validClose() ? m_close : 0;
 	}
 
 	/** Used for display on the Watch List */
 	double anyAsk() {
-		return validAsk() ? m_ask : validLast() ? m_last + .05 : 0;
+		return validAsk() ? m_ask : validLast() ? m_last + .05 : validClose() ? m_close : 0;
 	}
 
 	boolean validLast() {
 		return m_last > 0;
+	}
+	
+	boolean validClose() {
+		return m_close > 0;
 	}
 	
 	public boolean hasSomePrice() {
@@ -99,7 +103,7 @@ public class Prices {
 	}
 
 	public boolean hasAnyPrice() {
-		return validBid() || validAsk() || validLast();
+		return validBid() || validAsk() || validLast() || validClose();
 	}
 
 	public double midpoint() {
