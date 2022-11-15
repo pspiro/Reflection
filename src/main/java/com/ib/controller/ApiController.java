@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -58,11 +59,13 @@ import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
+import tw.util.S;
+
 public class ApiController implements EWrapper {
 	private ApiConnection m_client;
 	private final ILogger m_outLogger;
 	private final ILogger m_inLogger;
-	private int m_reqId;	// used for all requests except orders; designed not to conflict with m_orderId
+	private int m_reqId = -99999;	// used for all requests except orders; designed not to conflict with m_orderId
 	private int m_orderId;
 
 	private final IConnectionHandler m_connectionHandler;
@@ -111,12 +114,12 @@ public class ApiController implements EWrapper {
     private final Map<Integer, IWshMetaDataHandler> m_wshMetaDataMap = new HashMap<>();
     private final Map<Integer, IWshEventDataHandler> m_wshEventDataMap = new HashMap<>();
     private final Map<Integer, IHistoricalScheduleHandler> m_historicalScheduleMap = new HashMap<>();
-	private boolean m_connected = false;
 
 	public ApiConnection client() { return m_client; }
 
 	// ---------------------------------------- Constructor and Connection handling ----------------------------------------
 	public interface IConnectionHandler {
+		void recNextValidId(int id);
 		void connected();
 		void disconnected();
 		void accountList(List<String> list);
@@ -154,13 +157,19 @@ public class ApiController implements EWrapper {
         }).start();
 	}
 
-	public void connect( String host, int port, int clientId, String connectionOpts ) {
-		if(!m_client.isConnected()){
-			m_client.eConnect(host, port, clientId);
-			startMsgProcessingThread();
+	public boolean connect( String host, int port, int clientId, String connectionOpts ) {
+		if (m_client.eConnect(host, port, clientId, false) ) {
+			startMsgProcessingThread();  // << is this right??? why do we start processing thread if eConnect fails??? pas
 	        sendEOM();
+	        return true;
 		}
+		return false;
     }
+
+	/** Called when we receive the server version. */
+	@Override public void onConnected() {
+		m_connectionHandler.connected();
+	}
 
 	public void disconnect() {
 		if (!checkConnection())
@@ -168,7 +177,6 @@ public class ApiController implements EWrapper {
 
 		m_client.eDisconnect();
 		m_connectionHandler.disconnected();
-		m_connected = false;
 		sendEOM();
 	}
 
@@ -181,13 +189,13 @@ public class ApiController implements EWrapper {
 		recEOM();
 	}
 
+	/** Remove this. It doesn't always get called, namely if TWS is not running when we first connect. */
 	@Override public void nextValidId(int orderId) {
-		m_orderId = orderId;
-		m_reqId = m_orderId + 10000000; // let order id's not collide with other request id's
-		m_connected  = true;
-		if (m_connectionHandler != null) {
-			m_connectionHandler.connected();
-		}
+//		m_orderId = orderId;
+//		m_reqId = m_orderId + 10000000; // let order id's not collide with other request id's
+//		if (m_connectionHandler != null) {
+//			m_connectionHandler.recNextValidId(orderId);
+//		}
 		recEOM();
 	}
 
@@ -231,7 +239,6 @@ public class ApiController implements EWrapper {
 
 	@Override public void connectionClosed() {
 		m_connectionHandler.disconnected();
-		m_connected = false;
 	}
 
 
@@ -317,14 +324,8 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-	/** Return true if we have received nextValidId, meaning we can place orders.
-	 * isActive() might be better. */
+	/** Return true if we have received server id. */
 	public boolean isConnected() {
-		return m_connected;
-	}
-
-	/** Return true if we have a socket connection to client. */
-	public boolean isConnectedToClient() {
 		return m_client.isConnected();
 	}
 
@@ -928,7 +929,7 @@ public class ApiController implements EWrapper {
 
 		// when placing new order, assign new order id
 		if (order.orderId() == 0) {
-			order.orderId( m_orderId++);
+			order.orderId( nextOrderId() );
 			if (handler != null) {
 				m_orderHandlers.put( order.orderId(), handler);
 			}
@@ -938,7 +939,14 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-    public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
+	Random rnd = new Random( System.currentTimeMillis() );
+	
+    private int nextOrderId() {
+    	//return m_orderId++;
+    	return rnd.nextInt( Integer.MAX_VALUE);
+	}
+
+	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
 		if (!checkConnection())
 			return;
 

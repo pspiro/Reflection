@@ -14,6 +14,11 @@ public class ApiHandler implements IConnectionHandler { // move IConnectionHandl
 		m_main = main;
 	}
 	
+	@Override public void recNextValidId(int id) {
+		m_main.m_connMgr.recNextValidId(id );
+	}
+
+	/** Called when we receive server version. */
 	@Override public void connected() {
 		m_main.m_connMgr.onConnected();
 	}

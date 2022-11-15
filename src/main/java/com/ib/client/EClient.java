@@ -325,12 +325,13 @@ public abstract class EClient {
     protected String m_TwsTime;
     protected int m_clientId;
     protected boolean m_extraAuth;
-    protected boolean m_useV100Plus = true;
+    protected boolean m_useV100Plus = true;  // always true
     private String m_optionalCapabilities;
     private String m_connectOptions = ""; // iServer rails are used for Connection if this is not null
 	protected String m_host;
 	protected ETransport m_socketTransport;
 	
+	/** Always returns true */
 	public boolean isUseV100Plus() {
 		return m_useV100Plus;
 	}
@@ -367,6 +368,7 @@ public abstract class EClient {
 	    }
     }
     
+    /** Never called */
     public void disableUseV100Plus() {
     	if( isConnected() ) {
             m_eWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.ALREADY_CONNECTED.code(),
@@ -393,17 +395,17 @@ public abstract class EClient {
                 EClientErrors.CONNECT_FAIL.msg(), null);
     }
 
-    protected String checkConnected(String host) {
-        if( isConnected()) {
-            m_eWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.ALREADY_CONNECTED.code(),
-                    EClientErrors.ALREADY_CONNECTED.msg(), null);
-            return null;
-        }
-        if( IsEmpty( host) ) {
-            host = "127.0.0.1";
-        }
-        return host;
-    }
+//    protected String checkConnected(String host) {
+//        if( isConnected()) {
+//            m_eWrapper.error(EClientErrors.NO_VALID_ID, EClientErrors.ALREADY_CONNECTED.code(),
+//                    EClientErrors.ALREADY_CONNECTED.msg(), null);
+//            return null;
+//        }
+//        if( IsEmpty( host) ) {
+//            host = "127.0.0.1";
+//        }
+//        return host;
+//    }
     
     public abstract void eDisconnect();
     
@@ -625,7 +627,7 @@ public abstract class EClient {
         try {
             // send req mkt data msg
             Builder b = prepareBuffer(); 
-
+            
             b.send(REQ_MKT_DATA);
             b.send(VERSION);
             b.send(tickerId);

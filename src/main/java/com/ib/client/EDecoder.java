@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import tw.util.S;
+
 
 class EDecoder implements ObjectInput {
     // incoming msg id's
@@ -1774,6 +1776,8 @@ class EDecoder implements ObjectInput {
 			}
 		}
 
+		
+		S.out( "tick %s", tickerId);
 		
 		m_EWrapper.tickPrice( tickerId, tickType, price, attribs);
 

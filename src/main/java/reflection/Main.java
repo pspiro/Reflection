@@ -52,7 +52,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
 	// is there some way to find out?
-	boolean m_ibConnection = true; // is this needed? note that we assume it's connected at first but we don't know for sure
+	boolean m_ibConnection = true; // this is connection from TWS to CCP; we assume true initially but that could be wrong
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	
@@ -169,6 +169,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		private int m_port;
 		private int m_clientId;
 		private Timer m_timer;
+		private boolean m_recNextValidId;
+		private boolean m_requestedPrices;
+		private boolean m_failed;  // if we failed to connect, then when we do connect TWS might not really be ready, so wait a while
 
 		ConnectionMgr( ApiController c) {
 		}
@@ -182,6 +185,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		synchronized void startTimer() {
 			if (m_timer == null) {
+				m_failed = false;
+				
 				m_timer = new Timer();
 				m_timer.schedule(new TimerTask() {
 					@Override public void run() {
@@ -199,7 +204,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 
 		synchronized void onTimer() {
-			m_controller.connect(m_host, m_port, m_clientId, "");
+			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
+				if (!m_failed) {
+					S.out( "  failed at least once");
+					m_failed = true;
+				}
+			}
 		}
 
 		/** We are connected and have received first valid id, so can place orders. */
@@ -207,14 +217,44 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			return m_controller.isConnected();
 		}
 
-		/** Connected and ready to start placing orders. */
+		/** Called when we receive server version. We don't always receive nextValidId. */
 		synchronized void onConnected() {
 			log( LogType.CONNECTION, "Connected to TWS");
 			ibConnection(true); // we have to assume it's connected since we don't know for sure
 			stopTimer();
+
+			int wait = m_failed ? 15000 : 1000;  // wait 1 sec for nextValidId(), or wait 15 sec after a disconnect/reconnect for TWS to be fully up
+			S.out( "  waiting %s ms", wait);
 			
+			new Thread() {
+				public void run() {
+					try {
+						S.sleep( wait);
+						requestPrices();
+					}
+					catch( Exception e) {
+						e.printStackTrace();
+					}
+				}
+				
+			}.start();
+			
+		}
+		
+		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+		synchronized void recNextValidId(int id) {
+			log( LogType.CONNECTION, "Received next valid id %s", id);  // why don't we receive this after disconnect/reconnect? pas
+			m_recNextValidId = true;
+			
+			//checkPrices();
+		}
+
+		void checkPrices() {
 			try {
-				requestPrices();
+				if (m_recNextValidId && !m_requestedPrices) {
+					m_requestedPrices = true;
+					requestPrices();
+				}
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -225,6 +265,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			if (m_timer == null) {
 				log( LogType.CONNECTION, "Disconnected from TWS");
 				m_priceMap.clear();  // clear out all market data since those prices are now stale
+				m_requestedPrices = false;
 				startTimer();
 			}
 		}
@@ -377,6 +418,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public String getExchange(int conid) {
 		return conid == 44652000 ? "NSE" : "SMART";
+	}
+	
+	boolean recNextValidId() {
+		return m_connMgr.m_recNextValidId;
 	}
 }
 

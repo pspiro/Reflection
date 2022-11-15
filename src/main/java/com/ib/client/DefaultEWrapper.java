@@ -568,4 +568,10 @@ public class DefaultEWrapper implements EWrapper {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void onConnected() {
+		// TODO Auto-generated method stub
+		
+	}
 }

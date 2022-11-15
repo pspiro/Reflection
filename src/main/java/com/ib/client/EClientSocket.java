@@ -8,6 +8,8 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import tw.util.S;
+
 public class EClientSocket extends EClient implements EClientMsgSink  {
 
 	protected int m_redirectCount = 0;
@@ -71,28 +73,26 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    eConnect(socket);
 	}
 
-	public synchronized void eConnect( String host, int port, int clientId) {
-	    eConnect(host, port, clientId, false);
-	}
+	public synchronized boolean eConnect( String host, int port, int clientId, boolean extraAuth) {
+		if( isConnected() ) {
+			S.out( "EClientSocket.connect() already connected");
+			return true;
+		}
 
-	public synchronized void eConnect( String host, int port, int clientId, boolean extraAuth) {
-	    // already connected?
-	    m_host = checkConnected(host);
-	
+	    m_host = host;
 	    m_clientId = clientId;
 	    m_extraAuth = extraAuth;
 	    m_redirectCount = 0;
 	
-	    if(m_host == null){
-	        return;
-	    }
 	    try{
 	        Socket socket = new Socket( m_host, port);
 	        eConnect(socket);
+	        return true;
 	    }
 	    catch( Exception e) {
 	    	eDisconnect();
 	        connectionError();
+	        return false;
 	    }
 	}
 
@@ -158,9 +158,12 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    
 	    
 	    // set connected flag
+	    S.out( "Received server version %s", version);
 	    m_connected = true;       
 
     	sendStartApiMsg();
+    	
+    	m_eWrapper.onConnected();
 	}
 
 	protected synchronized void performRedirect( String address, int defaultPort ) throws IOException {
@@ -228,8 +231,7 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 		return m_dis.readInt();
 	}
 
-	@Override
-	public synchronized boolean isConnected() {
+	@Override public synchronized boolean isConnected() {
 		return m_socket != null && m_socket.isConnected() && m_connected;
 	}
 }
