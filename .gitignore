@@ -1,7 +1,9 @@
 /target/
 /.settings/
+/.credentials/
 *.log
 *.class
 *.prefs
 .classpath
 .project
+/bin/
