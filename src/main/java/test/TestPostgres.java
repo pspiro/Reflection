@@ -5,10 +5,8 @@ import java.sql.SQLException;
 import reflection.MySqlConnection;
 import tw.util.S;
 
+/** Just test that you can connect to the database. */
 public class TestPostgres {
-	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
-	static String dbUser = "postgres";
-	static String dbPassword = "1359";
 
 	public static void main(String[] args) throws SQLException {
 		if (args.length == 0) {

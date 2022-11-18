@@ -14,7 +14,8 @@ import json.MyJsonObj;
 import tw.util.IStream;
 import tw.util.S;
 
-/** Good for testing, don't use this in production, there are many things not handled. */
+/** Good for testing, don't use this in production, there are many things not handled.
+ *  Use AsyncHttpClient. */
 public class MyHttpClient {
 	private Socket m_socket;
 	

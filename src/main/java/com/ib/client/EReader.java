@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 
+import tw.util.S;
+
 
 
 /**
@@ -20,13 +22,14 @@ import java.util.LinkedList;
  */
 public class EReader extends Thread {
     private EClientSocket 	m_clientSocket;
-    private EReaderSignal m_signal;
+    private EJavaSignal m_signal;
     private EDecoder m_processMsgsDecoder;
     private static final EWrapper defaultWrapper = new DefaultEWrapper();
     private static final int IN_BUF_SIZE_DEFAULT = 8192;
     private byte[] m_iBuf = new byte[IN_BUF_SIZE_DEFAULT];
     private int m_iBufLen = 0;
     private final Deque<EMessage> m_msgQueue = new LinkedList<>();
+	private boolean m_startupReader;  // just reads the first message, could help for debugging
     
     protected boolean isUseV100Plus() {
 		return m_clientSocket.isUseV100Plus();
@@ -40,9 +43,10 @@ public class EReader extends Thread {
      * @param parent An EClientSocket connected to TWS.
      * @param signal A callback that informs that there are messages in msg queue.
      */
-    public EReader(EClientSocket parent, EReaderSignal signal) {
+    public EReader(EClientSocket parent, EJavaSignal signal, boolean startupReader) {
     	m_clientSocket = parent;
         m_signal = signal;
+        m_startupReader = startupReader;
         m_processMsgsDecoder = new EDecoder(parent.serverVersion(), parent.wrapper(), parent);
     }
     
@@ -78,9 +82,11 @@ public class EReader extends Thread {
 	public boolean putMessageToQueue() throws IOException {
 		EMessage msg = readSingleMessage();
 		
-		if (msg == null)
+		if (msg == null) {
+			S.out( "Error: read null msg");
 			return false;
-		
+		}
+
 		synchronized(m_msgQueue) {
 			m_msgQueue.addFirst(msg);
 		}

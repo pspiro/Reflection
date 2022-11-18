@@ -15,8 +15,10 @@ public class TestConfig extends TestCase {
 	public void testConnection() throws Exception {
 		String data = "{ 'msg': 'getconnectionstatus' }"; 
 		HashMap<String, Object> map = sendData( data);
-		assertEquals( "true", map.get("connectedToTWS") );
-		assertEquals( "true", map.get("connectedToBroker") );
+		assertEquals( "true", map.get("mktDataConnectedToTWS") );
+		assertEquals( "true", map.get("mktDataConnectedToBroker") );
+		assertEquals( "true", map.get("orderConnectedToTWS") );
+		assertEquals( "true", map.get("orderConnectedToBroker") );		
 	}
 	
 	public void testConfig() throws Exception {
@@ -31,20 +33,17 @@ public class TestConfig extends TestCase {
 		assertEquals( "paper", map.get( "mode") );
 	}
 	
-	public void testValidSheetConfig() throws Exception {
-		Config config = new Config();
-		config.readBackendConfig("Config");
-	}
-	
-	public void testValidSheetConfig2() throws Exception {
-		Config config = new Config();
-		config.readBackendConfig("Config-test");
+	public void testBackendConfig() throws Exception {
+		String data = "{ 'msg': 'pullbackendconfig' }"; 
+		HashMap<String, Object> map = sendData( data);
+		assertEquals( "OK", map.get( "code") );
 	}
 	
 	public void testValidDbConfig() throws Exception {
 		MySqlConnection con = new MySqlConnection();
-		con.connect("jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");
-		ResultSet rs = con.query( "select * from config");
+		con.connect("jdbc:postgresql://34.86.193.58:5432/reflection", "postgres", "1359");
+		             
+		ResultSet rs = con.query( "select * from system_configurations");
 		
 		assertTrue( rs.next() );
 		

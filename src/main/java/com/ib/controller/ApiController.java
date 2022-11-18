@@ -24,7 +24,6 @@ import com.ib.client.DepthMktDataDescription;
 import com.ib.client.EClientErrors;
 import com.ib.client.EJavaSignal;
 import com.ib.client.EReader;
-import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
 import com.ib.client.Execution;
 import com.ib.client.ExecutionFilter;
@@ -62,7 +61,7 @@ public class ApiController implements EWrapper {
 	private ApiConnection m_client;
 	private final ILogger m_outLogger;
 	private final ILogger m_inLogger;
-	private int m_reqId;	// used for all requests except orders; designed not to conflict with m_orderId
+	private int m_reqId = -99999;	// used for all requests except orders; designed not to conflict with m_orderId
 	private int m_orderId;
 
 	private final IConnectionHandler m_connectionHandler;
@@ -111,14 +110,14 @@ public class ApiController implements EWrapper {
     private final Map<Integer, IWshMetaDataHandler> m_wshMetaDataMap = new HashMap<>();
     private final Map<Integer, IWshEventDataHandler> m_wshEventDataMap = new HashMap<>();
     private final Map<Integer, IHistoricalScheduleHandler> m_historicalScheduleMap = new HashMap<>();
-	private boolean m_connected = false;
 
 	public ApiConnection client() { return m_client; }
 
 	// ---------------------------------------- Constructor and Connection handling ----------------------------------------
 	public interface IConnectionHandler {
-		void connected();
-		void disconnected();
+		void onRecNextValidId(int id);
+		void onConnected();
+		void onDisconnected();
 		void accountList(List<String> list);
 		void error(Exception e);
 		void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson);
@@ -137,8 +136,8 @@ public class ApiController implements EWrapper {
 	}
 	
 	private void startMsgProcessingThread() {
-		final EReaderSignal signal = new EJavaSignal();		
-		final EReader reader = new EReader(client(), signal);
+		final EJavaSignal signal = new EJavaSignal();		
+		final EReader reader = new EReader(client(), signal, false);
 		
 		reader.start();
 		
@@ -154,21 +153,26 @@ public class ApiController implements EWrapper {
         }).start();
 	}
 
-	public void connect( String host, int port, int clientId, String connectionOpts ) {
-		if(!m_client.isConnected()){
-			m_client.eConnect(host, port, clientId);
-			startMsgProcessingThread();
+	public boolean connect( String host, int port, int clientId, String connectionOpts ) {
+		if (m_client.eConnect(host, port, clientId, false) ) {
+			startMsgProcessingThread();  // << is this right??? why do we start processing thread if eConnect fails??? pas
 	        sendEOM();
+	        return true;
 		}
+		return false;
     }
+
+	/** Called when we receive the server version. */
+	@Override public void onConnected() {
+		m_connectionHandler.onConnected();
+	}
 
 	public void disconnect() {
 		if (!checkConnection())
 			return;
 
 		m_client.eDisconnect();
-		m_connectionHandler.disconnected();
-		m_connected = false;
+		//m_connectionHandler.onDisconnected();
 		sendEOM();
 	}
 
@@ -181,12 +185,12 @@ public class ApiController implements EWrapper {
 		recEOM();
 	}
 
+	/** Remove this. It doesn't always get called, namely if TWS is not running when we first connect. */
 	@Override public void nextValidId(int orderId) {
 		m_orderId = orderId;
-		m_reqId = m_orderId + 10000000; // let order id's not collide with other request id's
-		m_connected  = true;
+		m_reqId = -999990; // let order id's not collide with other request id's
 		if (m_connectionHandler != null) {
-			m_connectionHandler.connected();
+			m_connectionHandler.onRecNextValidId(orderId);
 		}
 		recEOM();
 	}
@@ -230,8 +234,7 @@ public class ApiController implements EWrapper {
 	}
 
 	@Override public void connectionClosed() {
-		m_connectionHandler.disconnected();
-		m_connected = false;
+		m_connectionHandler.onDisconnected();
 	}
 
 
@@ -317,14 +320,8 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-	/** Return true if we have received nextValidId, meaning we can place orders.
-	 * isActive() might be better. */
+	/** Return true if we have received server version */
 	public boolean isConnected() {
-		return m_connected;
-	}
-
-	/** Return true if we have a socket connection to client. */
-	public boolean isConnectedToClient() {
 		return m_client.isConnected();
 	}
 
@@ -461,7 +458,7 @@ public class ApiController implements EWrapper {
 		m_contractDetailsMap.put( reqId, processor);
 		
 		m_orderHandlers.put(reqId, new IOrderHandler() { 
-			public void handle(int errorCode, String errorMsg) { 
+			public void handle(int errorCode, String errorMsg) {
 				processor.contractDetailsEnd();
 			}
 
@@ -928,7 +925,7 @@ public class ApiController implements EWrapper {
 
 		// when placing new order, assign new order id
 		if (order.orderId() == 0) {
-			order.orderId( m_orderId++);
+			order.orderId( nextOrderId() );
 			if (handler != null) {
 				m_orderHandlers.put( order.orderId(), handler);
 			}
@@ -938,7 +935,11 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
-    public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
+    private int nextOrderId() {
+    	return m_orderId++;
+	}
+
+	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
 		if (!checkConnection())
 			return;
 
@@ -1414,10 +1415,7 @@ public class ApiController implements EWrapper {
 		throw new RuntimeException();
 	}
 	
-	@Override
-    public void connectAck() {
-		if (m_client.isAsyncEConnect())
-			m_client.sendStartApiMsg();
+	@Override public void connectAck() {
 	}
 
 	public void reqSecDefOptParams( String underlyingSymbol, String futFopExchange, /*String currency,*/ String underlyingSecType, int underlyingConId, ISecDefOptParamsReqHandler handler) {

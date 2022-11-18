@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
@@ -20,6 +22,7 @@ import com.ib.client.OrderState;
 import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.controller.ApiController;
+import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.sun.net.httpserver.HttpExchange;
@@ -41,20 +44,21 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Connected, Disconnected 
 	};
 
+	final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
 	
-	ApiController m_controller;
 	final HashMap<Integer,Prices> m_priceMap = new HashMap<Integer,Prices>(); // prices could be moved into the Stock object; no need for two separate maps  pas
+	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final ApiHandler m_apiHandler = new ApiHandler(this);
-	protected final ConnectionMgr m_connMgr = new ConnectionMgr( m_controller);
+	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr();
+	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
 	// is there some way to find out?
-	boolean m_ibConnection = true; // is this needed? note that we assume it's connected at first but we don't know for sure
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
+	private String m_tabName;
 	
 	static boolean simulated() { return m_simulated; }
 
@@ -98,18 +102,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
-		// read config settings from google sheet; if it fails, fall back to 
-		// safe config settings which are known to work
-		try {
-			S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-			m_config.readFromSpreadsheet(tabName);
-			S.out( "  done");
-		}
-		catch( Exception e) {
-			S.out( "ERROR");
-			e.printStackTrace();
-			m_config.readFromSpreadsheet("Safe Config");
-		}
+		// read config settings from google sheet 
+		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		m_config.readFromSpreadsheet(tabName);
+		m_tabName = tabName;
+		S.out( "  done");
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
@@ -128,16 +125,14 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.start();
 		S.out( "  done");
 
-		// connect to TWS  // change this to have a connection manager
-		m_controller = new ApiController( m_apiHandler, null, null);
-		m_controller.handleExecutions( this);
-		S.out( "Connecting to TWS on %s:%s with client id %s", m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
-		m_connMgr.connect( m_config.twsHost(), m_config.twsPort(), m_config.apiClientId() );
+		// connect to TWS
+		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort() );
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
 	void refreshStockList() throws Exception {
-		m_controller.cancelAllTopMktData();
+		mdController().cancelAllTopMktData();
 		m_stocks.clear();
 		m_priceMap.clear();
 		readStockListFromSheet();
@@ -151,37 +146,62 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false) ) {
 			JSONObject obj = new JSONObject();
 			if ("Y".equals( row.getValue( "Active") ) ) {
+				int conid = Integer.valueOf( row.getValue("Conid") );
+				String exch = row.getValue("Exchange");
+				
 				obj.put( "symbol", row.getValue("Symbol") );
-				obj.put( "conid", row.getValue("Conid") );
+				obj.put( "conid", String.valueOf( conid) );
 				obj.put( "smartcontractid", row.getValue("TokenAddress") );
 				obj.put( "description", row.getValue("Description") );
 				obj.put( "type", row.getValue("Type") );
 				obj.put( "exchange", row.getValue("Exchange") );
 				m_stocks.add( obj);
+				
+				m_exchMap.put( conid, exch);  
 			}
 		}
 	}
 
 
 	/** Manage the connection from this client to TWS. */
-	class ConnectionMgr {
+	class ConnectionMgr implements IConnectionHandler {
 		private String m_host;
 		private int m_port;
 		private int m_clientId;
 		private Timer m_timer;
+		private boolean m_recNextValidId;
+		private boolean m_requestedPrices;
+		private boolean m_failed;  // if we failed to connect, then when we do connect TWS might not really be ready, so wait a while
+		private boolean m_ibConnection;
+		private final LogType m_logType;
+		private final ApiController m_controller = new ApiController( this, null, null);
+		boolean ibConnection() { return m_ibConnection; }
 
-		ConnectionMgr( ApiController c) {
+		ConnectionMgr(LogType logType) {
+			m_logType = logType;
+			m_controller.handleExecutions( Main.this);
+		}
+		
+		public ApiController controller() { 
+			return m_controller;
 		}
 
-		public void connect(String host, int port, int clientId) {
+		void connect(String host, int port) {
+			int clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
+			S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
+			
 			m_host = host;
 			m_port = port;
 			m_clientId = clientId;
 			startTimer();
+			
+			//S.out( "  done");
 		}
 
 		synchronized void startTimer() {
 			if (m_timer == null) {
+				m_failed = false;
+				
 				m_timer = new Timer();
 				m_timer.schedule(new TimerTask() {
 					@Override public void run() {
@@ -199,19 +219,105 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 
 		synchronized void onTimer() {
-			m_controller.connect(m_host, m_port, m_clientId, "");
+			S.out( "%s trying...", m_logType);
+			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
+				S.out( "%s failed", m_logType);
+			}
+			else {
+				S.out( "%s success", m_logType);
+			}
 		}
 
-		/** We are connected and have received first valid id, so can place orders. */
+		/** We are connected and have received server version */
 		public boolean isConnected() {
 			return m_controller.isConnected();
 		}
-
-		/** Connected and ready to start placing orders. */
-		synchronized void onConnected() {
-			log( LogType.CONNECTION, "Connected to TWS");
-			ibConnection(true); // we have to assume it's connected since we don't know for sure
+		
+		/** Called when we receive server version. We don't always receive nextValidId. */
+		@Override public void onConnected() {
+			log( m_logType, "Connected to TWS");
+			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
+			
 			stopTimer();
+		}
+		
+		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+		@Override public synchronized void onRecNextValidId(int id) {
+			// we really don't care if we get this because we are using random
+			// order id's; it's because sometimes, after a reconnect or if TWS
+			// is just startup up, or if we tried and failed, we don't ever receive
+			// it
+			log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
+			m_recNextValidId = true;
+		}
+
+		@Override public synchronized void onDisconnected() {
+			if (m_timer == null) {
+				log( m_logType, "Disconnected from TWS");
+				m_priceMap.clear();  // clear out all market data since those prices are now stale
+				m_requestedPrices = false;
+				startTimer();
+			}
+		}
+
+		@Override public void accountList(List<String> list) {
+		}
+
+		@Override public void error(Exception e) {
+			e.printStackTrace();
+		}
+
+		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
+			switch (errorCode) {
+				case 1100: 
+					m_ibConnection = false; 
+					break;
+				case 1102: 
+					m_ibConnection = true; 
+					break;
+				case 10197:
+					S.out( "You can't get market data in your paper account while logged into your production account");
+					break;
+			}
+		
+			S.out( "RECEIVED %s %s %s", id, errorCode, errorMsg);
+		}
+
+		@Override public void show(String string) {
+			S.out( "Show: " + string);
+		}
+
+		/** Simulate disconnect to test reconnect */
+		public void disconnect() {
+			m_controller.disconnect();
+		}
+	}
+	
+	class OrderConnectionMgr extends ConnectionMgr {
+		OrderConnectionMgr() {
+			super( LogType.ORDER_CONNECTION);
+		}
+	}
+	
+	class MdConnectionMgr extends ConnectionMgr {
+		MdConnectionMgr() {
+			super( LogType.MD_CONNECTION);
+		}
+		
+		@Override public void onConnected() {
+			super.onConnected();
+
+			try {  // this doesn't work, even if you pause, which means TWS must send something out before getting here. pas
+//				requestPrices();
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+		@Override public synchronized void onRecNextValidId(int id) {
+			super.onRecNextValidId(id);  // we don't get this after a disconnect/reconnect, so in that case you should use onConnected()
 			
 			try {
 				requestPrices();
@@ -220,15 +326,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				e.printStackTrace();
 			}
 		}
-
-		synchronized void onDisconnected() {
-			if (m_timer == null) {
-				log( LogType.CONNECTION, "Disconnected from TWS");
-				m_priceMap.clear();  // clear out all market data since those prices are now stale
-				startTimer();
-			}
-		}
-
+		
 	}
 
 	/** Handle HTTP msg */
@@ -260,7 +358,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "requesting prices");
 
 		if (m_config.mode() == Mode.paper) {
-			m_controller.reqMktDataType(MarketDataType.DELAYED);
+			mdController().reqMktDataType(MarketDataType.DELAYED);
 		}
 
 		for (Object obj : m_stocks) {
@@ -280,7 +378,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				continue;
 			}
 
-			m_controller.reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 					c.tick(tickType, price, null);
 				}
@@ -290,11 +388,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			});
 		}
 	}
-
-	public void ibConnection(boolean connected) {
-		S.out( "Broker connection status set to " + connected);
-		m_ibConnection = connected;
-	}	
 
 	/** Write to the log file. Don't throw any exception. */
 	
@@ -376,7 +469,27 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public String getExchange(int conid) {
-		return conid == 44652000 ? "NSE" : "SMART";
+		return m_exchMap.get( conid);
+	}
+
+	public ApiController orderController() {
+		return m_orderConnMgr.controller();
+	}
+
+	public ApiController mdController() {
+		return m_mdConnMgr.controller();
+	}
+
+	public ConnectionMgr orderConnMgr() {
+		return m_orderConnMgr;
+	}
+
+	public ConnectionMgr mdConnMgr() {
+		return m_mdConnMgr;
+	}
+
+	public String tabName() {
+		return m_tabName;
 	}
 }
 

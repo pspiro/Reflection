@@ -38,9 +38,10 @@ public class Config {
 
 	// program parameters
 	private Mode mode = Mode.paper;  // paper or production
-	private String twsHost = "localhost";  // TWS is listening on this host
-	private int twsPort;  // TWS is listening on this port
-	private int apiClientId = 1;  // RefAPI client ID sent to TWS when connecting
+	private String twsOrderHost;  // TWS is listening on this host
+	private int twsOrderPort;  // TWS is listening on this port
+	private String twsMdHost;  // TWS is listening on this host
+	private int twsMdPort;  // TWS is listening on this port
 	private String refApiHost = "0.0.0.0"; // host for RefAPI to listen on
 	private int refApiPort = 8383;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
@@ -64,10 +65,13 @@ public class Config {
 	public long orderTimeout() { return orderTimeout; }
 	public long reconnectInterval() { return reconnectInterval; }
 
+	public String twsOrderHost() { return twsOrderHost; }
+	public int twsOrderPort() { return twsOrderPort; }
+
+	public String twsMdHost() { return twsMdHost; }
+	public int twsMdPort() { return twsMdPort; }
+
 	public Mode mode() {  return mode;  }
-	public String twsHost() { return twsHost; }
-	public int twsPort() { return twsPort; }
-	public int apiClientId() { return apiClientId; }
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 
@@ -86,10 +90,13 @@ public class Config {
 
 		// program parameters
 		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
-		this.twsHost = tab.get( "twsHost");
-		this.twsPort = tab.getInt( "twsPort");
-		this.apiClientId = tab.getInt( "apiClientId");
-		
+
+		this.twsOrderHost = tab.get( "twsOrderHost");
+		this.twsOrderPort = tab.getInt( "twsOrderPort");
+
+		this.twsMdHost = tab.get( "twsMdHost");
+		this.twsMdPort = tab.getInt( "twsMdPort");
+
 		this.refApiHost = tab.get( "refApiHost");
 		this.refApiPort = tab.getInt( "refApiPort");
 		

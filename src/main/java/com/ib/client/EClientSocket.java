@@ -8,26 +8,19 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.net.Socket;
 
+import tw.util.S;
+
 public class EClientSocket extends EClient implements EClientMsgSink  {
 
 	protected int m_redirectCount = 0;
 	protected int m_defaultPort;
     private boolean m_allowRedirect;
     protected DataInputStream m_dis;
-	private boolean m_asyncEConnect = false;   // stays false
 	private boolean m_connected = false;
 	private Socket m_socket;
 		
-	public void setAsyncEConnect(boolean asyncEConnect) {
-		this.m_asyncEConnect = asyncEConnect;
-	}
-
-	public boolean isAsyncEConnect() {
-		return m_asyncEConnect;
-	}
-
-	public EClientSocket(EWrapper eWrapper, EReaderSignal signal) {
-		super(eWrapper, signal);
+	public EClientSocket(EWrapper eWrapper) {
+		super(eWrapper);
 	}
 
 	@Override
@@ -58,22 +51,30 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    m_socket = socket;
 	
 	    sendConnectRequest();
+	    S.out( "  sentconnectrequest");
 	
 	    // start reader thread
-	    EReader reader = new EReader(this, m_signal);
-	
-	    if (!m_asyncEConnect) {
-	    	if (!reader.putMessageToQueue())
-	    		return;
+	    EReader reader = new EReader(this, m_signal, true);
+	    S.out( "  created reader");
+	    
+    	if (!reader.putMessageToQueue()) {
+    		S.out( "  putMessageToQueue failed");
+    		return;
+    	}
+    	
+    	S.out( "  messages were put to queue");    	
 
-	    	// process the server num message, which is first message, I guess
-	    	// not the same as the nextValidId message
-	    	while (m_serverVersion == 0) {
-	    		m_signal.waitForSignal();
-	    		// System.out.println( "processing reader msgs");  //pas
-	    		reader.processMsgs();
-	    	}       
-	    }
+    	// process the server num message, which is first message, I guess
+    	// not the same as the nextValidId message
+    	while (m_serverVersion == 0) {
+    		S.out( "  waiting for server version");
+    		//S.sleep(3000);
+    		m_signal.waitForSignal();
+    		S.out( "    signaled");
+    		// System.out.println( "processing reader msgs");  //pas
+    		reader.processMsgs();
+    		S.out( "  processed msgs");
+    	}       
 	}
 
 	public synchronized void eConnect(Socket socket, int clientId) throws IOException {
@@ -82,28 +83,29 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    eConnect(socket);
 	}
 
-	public synchronized void eConnect( String host, int port, int clientId) {
-	    eConnect(host, port, clientId, false);
-	}
+	public synchronized boolean eConnect( String host, int port, int clientId, boolean extraAuth) {
+		if( isConnected() ) {
+			S.out( "EClientSocket.connect() already connected");
+			return true;
+		}
 
-	public synchronized void eConnect( String host, int port, int clientId, boolean extraAuth) {
-	    // already connected?
-	    m_host = checkConnected(host);
-	
+	    m_host = host;
 	    m_clientId = clientId;
 	    m_extraAuth = extraAuth;
 	    m_redirectCount = 0;
 	
-	    if(m_host == null){
-	        return;
-	    }
 	    try{
 	        Socket socket = new Socket( m_host, port);
+	        S.out( "  created socket");
 	        eConnect(socket);
+	        S.out( "  econnected");
+	        return true;
 	    }
 	    catch( Exception e) {
+	    	e.printStackTrace();
 	    	eDisconnect();
 	        connectionError();
+	        return false;
 	    }
 	}
 
@@ -169,10 +171,12 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    
 	    
 	    // set connected flag
+	    S.out( "Received server version %s", version);
 	    m_connected = true;       
 
-	    if (!m_asyncEConnect)
-	    	sendStartApiMsg();
+    	sendStartApiMsg();
+    	
+    	m_eWrapper.onConnected();
 	}
 
 	protected synchronized void performRedirect( String address, int defaultPort ) throws IOException {
@@ -240,8 +244,8 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 		return m_dis.readInt();
 	}
 
-	@Override
-	public synchronized boolean isConnected() {
+	/** Return true if we are connected and have received server version. */
+	@Override public synchronized boolean isConnected() {
 		return m_socket != null && m_socket.isConnected() && m_connected;
 	}
 }

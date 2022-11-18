@@ -34,8 +34,8 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		getPrice, order, checkOrder, checkHours, getAllPrices, getDescription, getAllStocks, refreshStockList, getConfig, refreshConfig, pushBackendConfig, pullBackendConfig, getConnectionStatus, terminate, pullFaq, pushFaq;
-
+		checkHours, checkOrder, disconnect, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStockList, terminate;
+		
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
 		}
@@ -164,9 +164,20 @@ class MyTransaction {
 			case terminate:
 				terminate();
 				break;
+			case disconnect:
+				disconnect();
+				break;
 		}
 	}
 	
+	/** Simulate disconnect to test reconnect */
+	private void disconnect() {
+		S.out( "simulating disconnecting");
+		m_main.orderConnMgr().disconnect();
+		m_main.mdConnMgr().disconnect();
+		respond( code, RefCode.OK);
+	}
+
 	private void terminate() {
 		log( LogType.TERMINATE, "");
 		System.exit( 0);
@@ -203,7 +214,10 @@ class MyTransaction {
 	/** Top-level message handler */
 	private void getConnStatus() {
 		S.out( "Sending connection status");
-		respond( "connectedToTWS", m_main.m_controller.isConnected(), "connectedToBroker", m_main.m_ibConnection);
+		respond( "orderConnectedToTWS", m_main.orderController().isConnected(), 
+				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection(),
+				 "mktDataConnectedToTWS", m_main.mdController().isConnected(), 
+				 "mktDataConnectedToBroker", m_main.mdConnMgr().ibConnection() );
 	}
 
 	/** Top-level message handler */ 
@@ -215,7 +229,7 @@ class MyTransaction {
 	/** Top-level message handler */ 
 	void refreshConfig() throws Exception {
 		S.out( "Refreshing config from google sheet");
-		Main.m_config.readFromSpreadsheet("Config");
+		Main.m_config.readFromSpreadsheet(m_main.tabName() );
 		respond( Main.m_config.toJson() );
 	}
 	
@@ -236,7 +250,7 @@ class MyTransaction {
 	
 	/** Top-level method; used for admin purposes only, to get the conid */
 	private void getDescription() throws RefException {
-		require( m_main.m_controller.isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 
 		S.out( "Returning stock description");
 		Contract contract = new Contract();
@@ -245,7 +259,7 @@ class MyTransaction {
 		contract.exchange( m_map.getParam("exchange") );
 		contract.currency( m_map.getParam("currency") );
 
-		m_main.m_controller.reqContractDetails(contract, list -> {
+		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.UNKNOWN, "No such stock");
 				
@@ -278,7 +292,7 @@ class MyTransaction {
 
 	/** Top-level method. */
 	private void checkHours() throws RefException {
-		require( m_main.m_controller.isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "Param 'conid' must be positive integer");
@@ -288,7 +302,7 @@ class MyTransaction {
 		contract.conid( conid);
 		contract.exchange( m_main.getExchange( conid) );
 
-		m_main.m_controller.reqContractDetails(contract, list -> processHours( conid, list) );
+		m_main.orderController().reqContractDetails(contract, list -> processHours( conid, list) );
 		
 		setTimer( Main.m_config.timeout(), () -> timedOut( "checkHours timed out") );
 	}
@@ -313,7 +327,7 @@ class MyTransaction {
 	
 	/** Top-level method. */
 	private void getPrice() throws RefException {
-		require( m_main.m_controller.isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.mdController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 
 		int conid = m_map.getRequiredInt( "conid");
 
@@ -326,7 +340,7 @@ class MyTransaction {
 	
 	/** Top-level method. */
 	private void getAllPrices() throws RefException {
-		require( m_main.m_controller.isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.mdController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( !m_main.m_priceMap.keySet().isEmpty(), RefCode.NO_PRICES, "There are no prices available.");
 		
 		S.out( "Returning all prices");
@@ -357,8 +371,8 @@ class MyTransaction {
 
 	/** Top-level method. */
 	void order(boolean whatIf) throws RefException {
-		require( m_main.m_controller.isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-		require( m_main.m_ibConnection, RefCode.NOT_CONNECTED, "No connection to broker");
+		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
@@ -409,9 +423,9 @@ class MyTransaction {
 		order.cryptoId( cryptoId);
 		order.wallet( wallet);
 		
-		S.out( "Requesting contract details for %s", conid);
+		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
-		m_main.m_controller.reqContractDetails(contract, list -> {
+		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
@@ -452,7 +466,7 @@ class MyTransaction {
 		}
 		
 		// submit what-if order
-		m_main.m_controller.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
+		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderState(OrderState orderState) {
 				wrap( () -> {
 					S.out( "  rec what-if orderState  id=%s  %s", order.orderId(), Main.tos( orderState) );
@@ -490,7 +504,7 @@ class MyTransaction {
 			return;
 		}
 		
-		m_main.m_controller.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
+		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 				
@@ -549,7 +563,7 @@ class MyTransaction {
 				
 				if (!status.isComplete() && !status.isCanceled() ) {
 					S.out( "Canceling order %s", order.orderId() );
-					m_main.m_controller.cancelOrder( order.orderId(), "", null);
+					m_main.orderController().cancelOrder( order.orderId(), "", null);
 				}
 			}
 

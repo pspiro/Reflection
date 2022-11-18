@@ -111,5 +111,6 @@ public interface EWrapper {
 	void wshEventData(int reqId, String dataJson);
     void historicalSchedule(int reqId, String startDateTime, String endDateTime, String timeZone, List<HistoricalSession> sessions);
     void userInfo(int reqId, String whiteBrandingId);
+	void onConnected();
 }
 
