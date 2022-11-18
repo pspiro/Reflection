@@ -1,9 +1,11 @@
 /target/
 /.settings/
 /.credentials/
+/bin/
 *.log
 *.class
 *.prefs
 .classpath
 .project
-/bin/
+StoredCredential
+/restart

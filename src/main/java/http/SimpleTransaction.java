@@ -25,11 +25,13 @@ import reflection.RefException;
 import tw.util.S;
 
 public class SimpleTransaction {
-	interface MyHttpHandler {
+	public interface MyHttpHandler {
 		void handle( SimpleTransaction trans);
 	}
 	
 	private HttpExchange m_exchange;
+	
+	public HttpExchange exchange() { return m_exchange; } 
 	
 	public Headers getHeaders() {
 		return m_exchange.getRequestHeaders();
@@ -37,8 +39,6 @@ public class SimpleTransaction {
 	
 	public SimpleTransaction( HttpExchange exchange) {
 		m_exchange = exchange;
-		;
-		int a = 3;
 	}
 
 	public static void listen(String host, int port, MyHttpHandler handler) {
@@ -66,7 +66,7 @@ public class SimpleTransaction {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
-		S.out( "Received %s request %s %s", m_exchange.getRequestMethod(), uri, m_exchange.getHttpContext().getPath() ); 
+		S.out( "Received %s request %s", m_exchange.getRequestMethod(), uri); 
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			String[] parts = uri.split("\\?");
