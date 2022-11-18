@@ -16,6 +16,11 @@ import tw.util.S;
 
 public class Proxy {
 	public static void main(String[] args) {
+		if (args.length != 3) {
+			S.out( "usage: proxy host port server-url");
+			return;
+		}
+		
 		String host = args[0];
 		int port = Integer.valueOf( args[1]);
 		String serverUrl = args[2];
@@ -42,7 +47,7 @@ public class Proxy {
 
 	    S.out( "");
 	    S.out( "CLIENT --------> SERVER %s", fullUrl);
-	    S.out( client.getRequestURI() );
+	    S.out( "%s %s", client.getRequestMethod(), client.getRequestURI() );
 	    out( client.getRequestHeaders() );
 	    if (data.length > 0) S.out( new String(data) );
 
