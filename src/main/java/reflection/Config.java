@@ -108,6 +108,7 @@ public class Config {
 		this.reconnectInterval = tab.getInt( "reconnectInterval");
 		this.orderTimeout = tab.getInt( "orderTimeout");
 		this.timeout = tab.getInt( "timeout");
+		this.symbolsTab = tab.get( "symbolsTab");
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -118,7 +119,7 @@ public class Config {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
-		require( S.isNotNull( symbolsTab), "symbolsTab missing" );
+		require( S.isNotNull( symbolsTab), "symbolsTab" );
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {
