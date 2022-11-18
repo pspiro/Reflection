@@ -38,13 +38,15 @@ public class Proxy {
 	    byte[] data = new byte[TENK];
 	    client.getRequestBody().read( data);
 	    
+	    String fullUrl = serverUrl + client.getRequestURI();
+
 	    S.out( "");
-	    S.out( "CLIENT --------> SERVER");
+	    S.out( "CLIENT --------> SERVER %s", fullUrl);
 	    S.out( client.getRequestURI() );
 	    out( client.getRequestHeaders() );
 	    if (data.length > 0) S.out( new String(data) );
 
-	    BoundRequestBuilder msgToServer = server.prepare(client.getRequestMethod(), serverUrl);
+	    BoundRequestBuilder msgToServer = server.prepare(client.getRequestMethod(), fullUrl);
 		msgToServer.setHeaders( client.getRequestHeaders() );
 		msgToServer.setBody( data);
 		

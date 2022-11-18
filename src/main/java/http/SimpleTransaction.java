@@ -66,7 +66,7 @@ public class SimpleTransaction {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
-		S.out( "Received %s request %s %s", m_exchange.getRequestMethod(), uri, m_exchange.getHttpContext().getPath() ); 
+		S.out( "Received %s request %s %s", m_exchange.getRequestMethod(), uri); 
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			String[] parts = uri.split("\\?");
