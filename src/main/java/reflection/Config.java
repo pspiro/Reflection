@@ -50,7 +50,7 @@ public class Config {
 	private String postgresUrl;
 	private String postgresUser;
 	private String postgresPassword;
-	
+	private String symbolsTab;  // tab name where symbols are stored
 	
 	public double maxBuyAmt() { return maxBuyAmt; }
 	public double maxSellAmt() { return maxSellAmt; }
@@ -118,6 +118,7 @@ public class Config {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
+		require( S.isNotNull( symbolsTab), "symbolsTab missing" );
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {
@@ -273,5 +274,9 @@ public class Config {
 		
 		db.commit();
 		
+	}
+
+	public String symbolsTab() {
+		return symbolsTab;
 	}
 }

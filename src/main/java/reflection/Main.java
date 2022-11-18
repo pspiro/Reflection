@@ -142,8 +142,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
-		
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false) ) {
+		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			JSONObject obj = new JSONObject();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
