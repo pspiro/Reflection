@@ -1,4 +1,4 @@
-package proxy;
+package http;
 
 import java.io.IOException;
 import java.util.Map.Entry;
@@ -10,7 +10,6 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-import http.SimpleTransaction;
 import io.netty.handler.codec.http.HttpHeaders;
 import tw.util.S;
 
