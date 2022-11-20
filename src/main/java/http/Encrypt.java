@@ -1,4 +1,4 @@
-package util;
+package http;
 
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
@@ -15,20 +15,23 @@ import tw.util.S;
 
 public class Encrypt {
 	static String password = "hello";
-	static String salt = "uiowehfjxncvksufhgrwejgfuy";
+	static String salt = "uiowehfjxncvksufhgrwejgfuy";  // this is combined w/ the password to make it unique
 	static String algorithm = "AES/CBC/PKCS5Padding";
 
+	
+	// I want: 
+	// RS256 (RSASSA-PKCS1-v1_5 using SHA-256 hash)
 	public static void main(String[] args) throws Exception {
-		S.out( tostring(
+		S.out( encode(
 				getKeyFromPassword("hello", "ab").getEncoded() ) );
 
 		String input = "baeloiweukjlnsdkjljweoirjsldhfwqeoirjlsjlksddung";
 		SecretKey key = getKeyFromPassword(password, salt);
 		IvParameterSpec iv = generateIv();
-		String ivstr = tostring( iv.getIV() );
+		String ivstr = encode( iv.getIV() );  // this is data added to the input to make it unique
 		
 		String encrypted = encrypt( input, key, iv);
-		S.out( "iv: %s", tostring( iv.getIV()) );
+		S.out( "iv: %s", encode( iv.getIV()) );
 		S.out( "encrypted: %s", encrypted);
 
 		String plainText = decrypt( encrypted, key, ivstr);
@@ -50,22 +53,34 @@ public class Encrypt {
 	public static String encrypt( String input, SecretKey key, IvParameterSpec ivspec) throws Exception {
 		Cipher cipher = Cipher.getInstance(algorithm);
 		cipher.init(Cipher.ENCRYPT_MODE, key, ivspec);
-		return tostring( cipher.doFinal(input.getBytes()) );
+		return encode( cipher.doFinal(input.getBytes()) );
 	}
 
 	public static String decrypt( String cipherText, SecretKey key, String ivstr) throws Exception {
-		IvParameterSpec ivspec = new IvParameterSpec( tobytes(ivstr) );
+		IvParameterSpec ivspec = new IvParameterSpec( decode(ivstr) );
 		Cipher cipher = Cipher.getInstance(algorithm);
 		cipher.init(Cipher.DECRYPT_MODE, key, ivspec);
 		byte[] plainText = cipher.doFinal(Base64.getDecoder().decode(cipherText));
 		return new String(plainText);
 	}
 	
-	static String tostring( byte[] ar) {
-		return Base64.getEncoder().encodeToString(ar);	
+	static String encodeR( String str) {
+		return Base64.getEncoder().encodeToString(str.getBytes());	
 	}
-	static byte[] tobytes( String str) {
+	static String encode( String in) {
+		return encode( in.getBytes() );
+	}
+	static String encode( byte[] ar) {
+		return strip( Base64.getEncoder().encodeToString(ar) );	
+	}
+	static byte[] decode( String str) {
 		return Base64.getDecoder().decode(str);	
+	}
+	static String strip( String str) {
+		while (str.charAt( str.length()-1) == '=') {
+			str = str.substring(0, str.length() - 1);
+		}
+		return str;
 	}
 }
 /*
