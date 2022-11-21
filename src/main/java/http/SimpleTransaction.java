@@ -2,6 +2,7 @@ package http;
 
 import static reflection.Main.require;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
@@ -61,7 +62,6 @@ public class SimpleTransaction {
 		return "POST".equals(m_exchange.getRequestMethod() );
 	}
 
-	// now write a getJsonRequest
 	public String getRequest() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
@@ -164,4 +164,23 @@ public class SimpleTransaction {
 		respond( obj.toString() );
 	}
 
+	public void showAll() throws IOException {
+		S.out( "%s %s", m_exchange.getRequestMethod(), m_exchange.getRequestURI() );		
+
+		for (String key : getHeaders().keySet() ) {
+			S.out( "%s: %s", key, getHeaders().get( key) );
+		}
+		
+		if ("POST".equals( m_exchange.getRequestMethod() ) ) {
+			Headers headers = m_exchange.getRequestHeaders();
+			String len = headers.getFirst("content-length");
+			if (len != null) {
+				char[] bytes = new char[Integer.valueOf( len) ];
+	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
+	            reader.read(bytes, 0, bytes.length);
+	            S.out( new String( bytes) );
+			}
+		}
+		S.out( "-----");
+	}
 }

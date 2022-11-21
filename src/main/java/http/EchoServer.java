@@ -10,10 +10,7 @@ public class EchoServer {
 		
 		SimpleTransaction.listen( host, port, simpleTrans -> {
 			try {
-				S.out( simpleTrans.getRequest() );
-				for (String key : simpleTrans.getHeaders().keySet() ) {
-					S.out( "%s: %s", key, simpleTrans.getHeaders().get( key) );
-				}
+				simpleTrans.showAll();
 				
 				simpleTrans.respond( "ok");
 			} catch (Exception e) {

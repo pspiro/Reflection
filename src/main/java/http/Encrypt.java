@@ -1,7 +1,12 @@
 package http;
 
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.security.Signature;
 import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 
 import javax.crypto.Cipher;
@@ -82,71 +87,34 @@ public class Encrypt {
 		}
 		return str;
 	}
-}
-/*
-	public String encrypt(String data) {
-		String encryptedText = "";
-
-		if (data == null || secretAes256Key == null) {
-			return encryptedText;
+	
+	public static String getSHA(String input) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] bytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
+		return bytesToHex( bytes);
+	}
+	
+	static String bytesToHex(byte[] hash) {
+		StringBuilder hexString = new StringBuilder(2 * hash.length);
+		for (int i = 0; i < hash.length; i++) {
+			String hex = Integer.toHexString(0xff & hash[i]);
+			if(hex.length() == 1) {
+				hexString.append('0');
+			}
+			hexString.append(hex);
 		}
-
-		try {
-			Cipher encryptCipher = Cipher.getInstance(AES_TRANSFORMATION_MODE);
-			encryptCipher.init(Cipher.ENCRYPT_MODE, secretAes256Key, new SecureRandom());//new IvParameterSpec(getIV()) - if you want custom IV
-
-			//encrypted data:
-			byte[] encryptedBytes = encryptCipher.doFinal(data.getBytes("UTF-8"));
-
-			//take IV from this cipher
-			byte[] iv = encryptCipher.getIV();
-
-			//append Initiation Vector as a prefix to use it during decryption:
-			byte[] combinedPayload = new byte[iv.length + encryptedBytes.length];
-
-			//populate payload with prefix IV and encrypted data
-			System.arraycopy(iv, 0, combinedPayload, 0, iv.length);
-			System.arraycopy(encryptedBytes, 0, combinedPayload, iv.length, encryptedBytes.length);
-
-			encryptedText = Base64.encodeToString(combinedPayload, Base64.DEFAULT);
-
-		} 
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return encryptedText;
+		return hexString.toString();
 	}
 
-	public String decrypt(String encryptedString) {
-		String decryptedText = "";
+	/** RSASSA-PKCS1-v1_5 using SHA-256 hash */
+	static String signRSA(String input, String key) throws Exception {
+		byte[] b1 = Base64.getDecoder().decode(key);
+		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(b1);
 
-		if (encryptedString == null || secretAes256Key == null) 
-			return decryptedText;
+		Signature sig = Signature.getInstance("SHA256withRSA");
+		sig.initSign(KeyFactory.getInstance("RSA").generatePrivate(spec));
+		sig.update(input.getBytes("UTF-8"));
+		return Encrypt.encode( sig.sign() );
 	}
-
-	try {
-		//separate prefix with IV from the rest of encrypted data
-		byte[] encryptedPayload = Base64.decode(encryptedString, Base64.DEFAULT);
-		byte[] iv = new byte[16];
-		byte[] encryptedBytes = new byte[encryptedPayload.length - iv.length];
-
-		//populate iv with bytes:
-		System.arraycopy(encryptedPayload, 0, iv, 0, 16);
-
-		//populate encryptedBytes with bytes:
-		System.arraycopy(encryptedPayload, iv.length, encryptedBytes, 0, encryptedBytes.length);
-
-		Cipher decryptCipher = Cipher.getInstance(AES_TRANSFORMATION_MODE);
-		decryptCipher.init(Cipher.DECRYPT_MODE, secretAes256Key, new IvParameterSpec(iv));
-
-		byte[] decryptedBytes = decryptCipher.doFinal(encryptedBytes);
-		decryptedText = new String(decryptedBytes);
-
-	} catch (NoSuchAlgorithmException | BadPaddingException | NoSuchPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException | InvalidKeyException e) {
-		e.printStackTrace();
-	}
-
-	return decryptedText;
+	
 }
-*/
