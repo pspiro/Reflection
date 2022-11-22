@@ -9,24 +9,24 @@ import reflection.Util;
 import tw.util.S;
 
 /** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */ 
-public class MyJsonObj {  // replace or combine w/ TypedJson
+public class MyJsonObject {  // replace or combine w/ TypedJson
 	
 	private JSONObject m_obj;
 	
-	public MyJsonObj( Object obj) {
+	public MyJsonObject( Object obj) {
 		m_obj = (JSONObject)obj;
 	}
 	
-	public static MyJsonObj parse( String text) throws ParseException {
-		return new MyJsonObj( new JSONParser().parse( text) );
+	public static MyJsonObject parse( String text) throws ParseException {
+		return new MyJsonObject( new JSONParser().parse( text) );
 	}
 
 	public MyJsonAr getAr(String key) {
 		return new MyJsonAr( m_obj.get( key) );
 	}
 
-	public MyJsonObj getObj(String key) {
-		return new MyJsonObj( m_obj.get( key) );
+	public MyJsonObject getObj(String key) {
+		return new MyJsonObject( m_obj.get( key) );
 	}
 	
 	/** Converts any object type to string or returns empty string, never null. */

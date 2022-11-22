@@ -7,7 +7,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /** Array of object only. */
-public class MyJsonAr implements Iterable<MyJsonObj> { 
+public class MyJsonAr implements Iterable<MyJsonObject> { 
 	private JSONArray m_ar;
 	
 	public static MyJsonAr parse( String text) throws ParseException {
@@ -22,20 +22,20 @@ public class MyJsonAr implements Iterable<MyJsonObj> {
 		return m_ar.toString();
 	}
 	
-	public MyJsonObj getJsonObj( int i) {
-		return new MyJsonObj( m_ar.get( i) );
+	public MyJsonObject getJsonObj( int i) {
+		return new MyJsonObject( m_ar.get( i) );
 	}
 
-	@Override public Iterator<MyJsonObj> iterator() {
-		return new Iterator<MyJsonObj>() {
+	@Override public Iterator<MyJsonObject> iterator() {
+		return new Iterator<MyJsonObject>() {
 			Iterator<Object> iter = m_ar.iterator();
 			
 			@Override public boolean hasNext() {
 				return iter.hasNext();
 			}
 
-			@Override public MyJsonObj next() {
-				return new MyJsonObj( iter.next() );
+			@Override public MyJsonObject next() {
+				return new MyJsonObject( iter.next() );
 			}
 		};
 	}

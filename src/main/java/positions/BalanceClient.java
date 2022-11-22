@@ -5,7 +5,7 @@ import java.util.HashMap;
 
 import http.MyHttpClient;
 import json.MyJsonAr;
-import json.MyJsonObj;
+import json.MyJsonObject;
 import tw.util.S;
 
 /** This is a client that will query Moralis for the token balances for each wallet
@@ -48,9 +48,9 @@ public class BalanceClient {
 	    // query my position server
 		MyHttpClient cli = new MyHttpClient("localhost", 9393);
 		cli.get( "wallet?wallet=" + wallet);
-		MyJsonObj myWallet = cli.readMyJsonObject();
+		MyJsonObject myWallet = cli.readMyJsonObject();
 
-		for (MyJsonObj item : morPositions) {
+		for (MyJsonObject item : morPositions) {
 			String token = item.getString("token_address").toLowerCase();
 			if (m_map.containsKey(token) ) {
 				String name = item.getString("name");

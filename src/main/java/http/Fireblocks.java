@@ -6,6 +6,7 @@ import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
 
+import json.MyJsonObject;
 import tw.util.S;
 
 /** This shit works. */
@@ -20,6 +21,7 @@ public class Fireblocks {
 	private String endpoint;
 	private String body = "";  // optional
 	
+	// return MyJsonObj
 	void transact() throws Exception {
 		S.out( "api key: %s", apiKey);
 
@@ -80,7 +82,7 @@ public class Fireblocks {
 				catch( Exception e) {
 					e.printStackTrace();
 				}
-			}); // add join
+			}); //.join();
 	}
 
 	static void process(Response obj) {
