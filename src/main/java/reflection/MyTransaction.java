@@ -34,7 +34,7 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		checkHours, checkOrder, disconnect, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStockList, terminate;
+		checkHours, checkOrder, disconnect, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
 		
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -137,8 +137,8 @@ class MyTransaction {
 			case getAllStocks:
 				getAllStocks();
 				break;
-			case refreshStockList:
-				refreshStockList();
+			case refreshStocks:
+				refreshStocks();
 				break;
 			case getConfig:
 				getConfig();
@@ -234,7 +234,7 @@ class MyTransaction {
 	}
 	
 	/** Top-level message handler */ 
-	void refreshStockList() throws Exception {
+	void refreshStocks() throws Exception {
 		S.out( "Refreshing stock list from google sheet");
 		m_main.refreshStockList();
 		respond( code, RefCode.OK);
