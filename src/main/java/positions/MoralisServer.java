@@ -12,7 +12,7 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import com.sun.net.httpserver.HttpServer;
 
 import http.SimpleTransaction;
-import json.MyJsonObj;
+import json.MyJsonObject;
 import positions.EventFetcher.Balances;
 import reflection.Main;
 import reflection.MySqlConnection;
@@ -142,7 +142,7 @@ public class MoralisServer {
 				moralis, chain, farDate);
 		
 		String body = MoralisServer.querySync( url);
-		MyJsonObj jsonObj = MyJsonObj.parse( body);
+		MyJsonObject jsonObj = MyJsonObject.parse( body);
 		return jsonObj.getInt("block");
 	}
 
@@ -166,12 +166,12 @@ public class MoralisServer {
 	
 	void handleBlockchainEvent( SimpleTransaction trans) {
 		try {
-			MyJsonObj msg = trans.getJson();
+			MyJsonObject msg = trans.getJson();
 			
 			int block = msg.getObj( "block").getInt("number");
 
 			S.out( "Received ERC20 transfers");
-			for (MyJsonObj transfer : msg.getAr( "erc20Transfers") ) {
+			for (MyJsonObject transfer : msg.getAr( "erc20Transfers") ) {
 	        	String token = transfer.getString( "contract").toLowerCase();
 	        	String from = transfer.getString( "from").toLowerCase();
 	        	String to = transfer.getString( "to").toLowerCase();
@@ -184,7 +184,7 @@ public class MoralisServer {
 			
 			S.out( "");
 			S.out( "Received logs");
-	        for (MyJsonObj log : msg.getAr( "logs") ) {
+	        for (MyJsonObject log : msg.getAr( "logs") ) {
 	        	String token = log.getString( "address").toLowerCase();
 	        	String from = S.right( log.getString( "topic1"), 42).toLowerCase();
 	        	String to = S.right( log.getString( "topic2"), 42).toLowerCase();

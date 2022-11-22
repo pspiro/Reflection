@@ -9,7 +9,7 @@ import java.util.HashMap;
 import org.postgresql.util.PSQLException;
 
 import json.MyJsonAr;
-import json.MyJsonObj;
+import json.MyJsonObject;
 import json.TypedJson;
 import reflection.MySqlConnection;
 import reflection.Util;
@@ -124,10 +124,10 @@ public class EventFetcher {
 	}
 
 	private String processEventLog( String json, String token) throws Exception {
-		MyJsonObj obj = MyJsonObj.parse( json);
+		MyJsonObject obj = MyJsonObject.parse( json);
 		
 		MyJsonAr eventLogs = obj.getAr("result");
-		for (MyJsonObj event : eventLogs) {
+		for (MyJsonObject event : eventLogs) {
 			int block = event.getInt( "block_number");
 			String top0 = event.getString("topic0");
 			

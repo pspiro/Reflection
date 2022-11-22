@@ -140,9 +140,6 @@ class NcTransaction {
 			case refreshConfig:
 				refreshConfig();
 				break;
-			case getConnectionStatus:
-				getConnStatus();
-				break;
 			case pushBackendConfig:
 				pushBackendConfig();
 				break;
@@ -158,19 +155,9 @@ class NcTransaction {
 			case terminate:
 				terminate();
 				break;
-			case disconnect:
-				disconnect();
-				break;
 		}
 	}
 	
-	/** Simulate disconnect to test reconnect */
-	private void disconnect() {
-		S.out( "simulating disconnecting");
-		m_main.orderConnMgr().disconnect();
-		respond( code, RefCode.OK);
-	}
-
 	private void terminate() {
 		log( LogType.TERMINATE, "");
 		System.exit( 0);
@@ -204,12 +191,6 @@ class NcTransaction {
 		respond( code, RefCode.OK);
 	}
 
-	/** Top-level message handler */
-	private void getConnStatus() {
-		S.out( "Sending connection status");
-		respond( "orderConnectedToTWS", m_main.orderController().isConnected() ); 
-	}
-
 	/** Top-level message handler */ 
 	void getConfig() throws Exception {
 		S.out( "Sending config");
@@ -240,8 +221,6 @@ class NcTransaction {
 	
 	/** Top-level method; used for admin purposes only, to get the conid */
 	private void getDescription() throws RefException {
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-
 		S.out( "Returning stock description");
 		Contract contract = new Contract();
 		contract.secType( SecType.STK);
@@ -249,7 +228,7 @@ class NcTransaction {
 		contract.exchange( m_map.getParam("exchange") );
 		contract.currency( m_map.getParam("currency") );
 
-		m_main.orderController().reqContractDetails(contract, list -> {
+		m_main.reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.UNKNOWN, "No such stock");
 				
@@ -282,8 +261,6 @@ class NcTransaction {
 
 	/** Top-level method. */
 	private void checkHours() throws RefException {
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-		
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "Param 'conid' must be positive integer");
 
@@ -292,7 +269,7 @@ class NcTransaction {
 		contract.conid( conid);
 		contract.exchange( m_main.getExchange( conid) );
 
-		m_main.orderController().reqContractDetails(contract, list -> processHours( conid, list) );
+		m_main.reqContractDetails(contract, list -> processHours( conid, list) );
 		
 		setTimer( NcMain.m_config.timeout(), () -> timedOut( "checkHours timed out") );
 	}
@@ -321,8 +298,6 @@ class NcTransaction {
 
 	/** Top-level method. */
 	void order(boolean whatIf) throws RefException {
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
 
@@ -374,7 +349,7 @@ class NcTransaction {
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
-		m_main.orderController().reqContractDetails(contract, list -> {
+		m_main.reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
@@ -401,7 +376,7 @@ class NcTransaction {
 					submitWhatIf(  contract, order);
 				}
 				else {
-					log( LogType.SUBMIT_ORDER, order.getOrderLog(contract) );
+					log( LogType.ORDER, order.getOrderLog(contract) );
 					submitOrder(  contract, order);
 				}
 			});
@@ -418,7 +393,7 @@ class NcTransaction {
 		}
 		
 		// submit what-if order
-		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
+		m_main.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderState(OrderState orderState) {
 				wrap( () -> {
 					S.out( "  rec what-if orderState  id=%s  %s", order.orderId(), NcMain.tos( orderState) );
@@ -456,7 +431,7 @@ class NcTransaction {
 			return;
 		}
 		
-		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
+		m_main.placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 				
@@ -515,7 +490,7 @@ class NcTransaction {
 				
 				if (!status.isComplete() && !status.isCanceled() ) {
 					S.out( "Canceling order %s", order.orderId() );
-					m_main.orderController().cancelOrder( order.orderId(), "", null);
+					m_main.cancelOrder( order.orderId(), "", null);
 				}
 			}
 

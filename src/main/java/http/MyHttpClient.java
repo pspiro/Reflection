@@ -10,7 +10,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import json.MyJsonAr;
-import json.MyJsonObj;
+import json.MyJsonObject;
 import tw.util.IStream;
 import tw.util.S;
 
@@ -55,8 +55,8 @@ public class MyHttpClient {
         return map;
 	}
 
-	public MyJsonObj readMyJsonObject() throws Exception {
-		return new MyJsonObj( new JSONParser().parse( readString() ) );
+	public MyJsonObject readMyJsonObject() throws Exception {
+		return new MyJsonObject( new JSONParser().parse( readString() ) );
 	}
 	
 	public MyJsonAr readMyJsonArray() throws Exception {

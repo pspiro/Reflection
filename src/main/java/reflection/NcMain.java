@@ -6,8 +6,6 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
@@ -15,16 +13,14 @@ import org.json.simple.JSONObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
-import com.ib.client.Decimal;
+import com.ib.client.ContractDetails;
 import com.ib.client.Execution;
-import com.ib.client.MarketDataType;
+import com.ib.client.Order;
 import com.ib.client.OrderState;
-import com.ib.client.TickAttrib;
-import com.ib.client.TickType;
 import com.ib.controller.ApiController;
-import com.ib.controller.ApiController.IConnectionHandler;
+import com.ib.controller.ApiController.IContractDetailsHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
-import com.ib.controller.ApiController.TopMktDataAdapter;
+import com.ib.controller.ConnectionAdapter;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -35,6 +31,9 @@ import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
 
+/** This, along with NcTransaction is a version that that keeps "no connection"
+ *  to server. Somehow, it responds in roughly the same time. This version
+ *  would be appropriate to move to google cloud run. */
 public class NcMain implements HttpHandler, ITradeReportHandler {
 	public enum Mode { 
 		paper, production;
@@ -50,13 +49,14 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 	
 	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final ConnectionMgr m_orderConnMgr = new ConnectionMgr(LogType.ORDER_CONNECTION);
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
 	// is there some way to find out?
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	private String m_tabName;
+	private String m_host;
+	private int m_port;
 	
 	static boolean simulated() { return m_simulated; }
 
@@ -70,22 +70,7 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 
 	public static void main(String[] args) {
 		try {
-			String configTab = null;
-			for (String arg : args) {
-				if (arg.equals( "simulated")) {
-					m_simulated = true;
-					S.out( "Running in simulated mode");
-				}
-				else {
-					configTab = arg;
-				}
-			}
-			
-			if (S.isNull( configTab) ) {
-				throw new Exception( "You must specify a config tab name");
-			}
-			
-			new NcMain().run( configTab);
+			new NcMain().run( "Desktop-config");
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
@@ -105,6 +90,9 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 		m_config.readFromSpreadsheet(tabName);
 		m_tabName = tabName;
 		S.out( "  done");
+		
+		m_host = m_config.twsOrderHost();
+		m_port = m_config.twsOrderPort();
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
@@ -115,16 +103,13 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 
 		S.out( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
-		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
+		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort()+1 ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/favicon", nullHandler); // ignore these requests
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
 		S.out( "  done");
-
-		// connect to TWS
-		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -155,89 +140,6 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-
-	/** Manage the connection from this client to TWS. */
-	class ConnectionMgr implements IConnectionHandler {
-		private String m_host;
-		private int m_port;
-		private int m_clientId;
-		private final LogType m_logType;
-		private final ApiController m_controller = new ApiController( this, null, null);
-
-		ConnectionMgr(LogType logType) {
-			m_logType = logType;
-			m_controller.handleExecutions( NcMain.this);
-		}
-		
-		public ApiController controller() { 
-			return m_controller;
-		}
-
-		void connect(String host, int port) {
-			int clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
-			S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
-			
-			m_host = host;
-			m_port = port;
-			m_clientId = clientId;
-			
-			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
-				S.out( "%s failed", m_logType);
-			}
-			else {
-				S.out( "%s success", m_logType);
-			}
-		}
-
-		/** Called when we receive server version. We don't always receive nextValidId. */
-		@Override public void onConnected() {
-			log( m_logType, "Connected to TWS");
-		}
-		
-		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
-		@Override public synchronized void onRecNextValidId(int id) {
-			// we really don't care if we get this because we are using random
-			// order id's; it's because sometimes, after a reconnect or if TWS
-			// is just startup up, or if we tried and failed, we don't ever receive
-			// it
-			log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
-		}
-
-		@Override public synchronized void onDisconnected() {
-			log( m_logType, "Disconnected from TWS");
-		}
-
-		@Override public void accountList(List<String> list) {
-		}
-
-		@Override public void error(Exception e) {
-			e.printStackTrace();
-		}
-
-		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-			switch (errorCode) {
-				case 1100: 
-					break;
-				case 1102: 
-					break;
-				case 10197:
-					S.out( "You can't get market data in your paper account while logged into your production account");
-					break;
-			}
-		
-			S.out( "RECEIVED %s %s %s", id, errorCode, errorMsg);
-		}
-
-		@Override public void show(String string) {
-			S.out( "Show: " + string);
-		}
-
-		/** Simulate disconnect to test reconnect */
-		public void disconnect() {
-			m_controller.disconnect();
-		}
-	}
-	
 	/** Handle HTTP msg */
 	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
 		new NcTransaction( this, exch).handle();
@@ -336,16 +238,60 @@ public class NcMain implements HttpHandler, ITradeReportHandler {
 		return m_exchMap.get( conid);
 	}
 
-	public ApiController orderController() {
-		return m_orderConnMgr.controller();
-	}
-
-	public ConnectionMgr orderConnMgr() {
-		return m_orderConnMgr;
-	}
-
 	public String tabName() {
 		return m_tabName;
+	}
+
+	class SingleReq extends ConnectionAdapter {
+		private ApiController controller = new ApiController(this);
+		private Fun m_func;
+		
+		void connect(Fun func) {
+			m_func = func;
+			int clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
+			controller.connect(m_host, m_port, clientId, "");
+		}
+
+		public void onConnected() {
+			S.out( "***connected");
+			m_func.run(controller);  // you have to add the id
+		}
+		
+		public void onRecNextValidId(int id) {
+			S.out( "***rec next valid id " + id);
+			//m_func.run(controller);  // you have to add the id
+		}
+	}
+	
+	void connect( Fun fun) {
+		new SingleReq().connect( fun);
+	}
+	
+	public void reqContractDetails(Contract contract, IContractDetailsHandler handler) {
+		connect( controller -> {
+			controller.reqContractDetails( contract, list -> {
+				controller.disconnect();
+				handler.contractDetails( list);
+			});
+		});
+	}
+	
+	static interface C2 {
+		public void run( List<ContractDetails> dets);
+	}
+	
+	static interface Fun {
+		public void run( ApiController controller);
+	}
+
+	public void cancelOrder(int orderId, String string, Object object) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void placeOrModifyOrder(Contract contract, Order order, OrderHandlerAdapter orderHandlerAdapter) {
+		// TODO Auto-generated method stub
+		
 	}
 }
 

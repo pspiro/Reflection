@@ -17,7 +17,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import json.MyJsonObj;
+import json.MyJsonObject;
 import json.TypedJson;
 import reflection.Main;
 import reflection.ParamMap;
@@ -135,12 +135,12 @@ public class SimpleTransaction {
 		return map;
 	}	
 	
-	public MyJsonObj getJson() throws Exception {
+	public MyJsonObject getJson() throws Exception {
 		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "GET not supported for this endpoint");
 		S.out( "received POST w/ len %s", m_exchange.getRequestHeaders().getFirst("content-length") );
 
 		Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-        return new MyJsonObj( new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+        return new MyJsonObject( new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	}	
 
 	/** Only respond once for each request

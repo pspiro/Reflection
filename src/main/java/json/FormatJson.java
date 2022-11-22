@@ -12,7 +12,7 @@ public class FormatJson {
 		
 		int i = input.indexOf( "{");
 		String str = input.substring( i);
-		MyJsonObj obj = MyJsonObj.parse(str);
+		MyJsonObject obj = MyJsonObject.parse(str);
 		obj.display();  // figure out long vs integer in the Jsonobj
 	}
 }
