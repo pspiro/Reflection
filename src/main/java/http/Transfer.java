@@ -30,8 +30,8 @@ public class Transfer {
 				"}";
 
 		String assetId = "BNB_BSC";
-		String accountId = 4;
-		String body = toJson( bodyTemplate.format( assetId, accountId, address) );
+//		String accountId = 4;
+//		String body = toJson( bodyTemplate.format( assetId, accountId, address) );
 		
 		
 		Fireblocks fb = new Fireblocks();
