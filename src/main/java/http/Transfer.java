@@ -12,35 +12,37 @@ public class Transfer {
 
 	static String op = "POST"; 
 	static String endpoint = "/v1/transactions"; // /v1/vault/accounts_paged";
-
+	static String myDestWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	
 	public static void main(String[] args) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'TRANSFER'," + 
-				"'amount': '0'," + 
+				"'amount': '.00001'," + 
 				"'assetId': '%s'," + 
 				"'source': {'type': 'VAULT_ACCOUNT', 'id': '%s'}," + 
 				"'destination': {" + 
 				"   'type': 'ONE_TIME_ADDRESS'," + 
 				"   'oneTimeAddress': {'address': '%s'}" + 
 				"}," + 
-				"'priorityFee': '1'," + 
-				"'maxFee': '15'," + 
+//				"'priorityFee': '1'," + 
+//				"'maxFee': '15'," + 
 				"'note': 'Deployed from code'" + 
 				"}";
 
 		String assetId = "BNB_BSC";
-		String accountId = 4;
-		String body = toJson( bodyTemplate.format( assetId, accountId, address) );
-		
+		String accountId = "4";
+		String destAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+		String body = Fireblocks.toJson( 
+				String.format( bodyTemplate, assetId, accountId, destAddress) );
+		String operation = "POST";
 		
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.apiKey( prodApi);
 		fb.privateKey( prodPk);
-		fb.operation( "GET");
-		//fb.body( body);
+		fb.operation( operation);
+		fb.body( body);
 		fb.transact();
-		
 	}
 }
