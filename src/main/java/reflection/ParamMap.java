@@ -23,7 +23,7 @@ public class ParamMap extends HashMap<String, String> {
 		return Boolean.valueOf( getParam( tag) );
 	}
 	
-	int getRequiredInt(String tag) throws RefException {
+	public int getRequiredInt(String tag) throws RefException {
 		try {
 			return Integer.valueOf( getRequiredParam( tag) );
 		}
