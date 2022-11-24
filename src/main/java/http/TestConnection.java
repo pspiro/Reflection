@@ -25,7 +25,7 @@ public class TestConnection {
 		trans.showAll();
 		
 		ParamMap map = trans.getMap();
-		String msg = map.get("msg").intern();
+		String msg = map.get("msg");
 		
 		switch(msg) {
 			case "testdb":
@@ -37,7 +37,7 @@ public class TestConnection {
 				break;
 
 			default:
-				trans.respond( "supported msg types: testdb (url,user,pw), testip (host,port,op,cmd)");
+				trans.respond( "supported msg types: testdb (url,user,pw), testip (host,port,GET/POST,cmd)");
 		}
 	}
 
@@ -59,7 +59,7 @@ public class TestConnection {
 		String cmd = map.get("cmd");
 
 		MyHttpClient client = new MyHttpClient(host, port);
-		if (op.equals( "GET") ) {
+		if (op.equals("get") ) {  // this doesn't work, it always POSTS	
 			client.get( cmd);
 		}
 		else {

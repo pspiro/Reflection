@@ -165,7 +165,14 @@ public class SimpleTransaction {
 	}
 
 	public void showAll() throws IOException {
-		S.out( "%s %s", m_exchange.getRequestMethod(), m_exchange.getRequestURI() );		
+		S.out( "%s %s %s %s", 
+				m_exchange.getRemoteAddress().getHostName(),
+				m_exchange.getRemoteAddress().getPort(),
+				m_exchange.getRemoteAddress().getAddress(),
+				m_exchange.getRemoteAddress() );
+		
+		S.out( "%s %s", 
+				m_exchange.getRequestMethod(), m_exchange.getRequestURI() );		
 
 		for (String key : getHeaders().keySet() ) {
 			S.out( "%s: %s", key, getHeaders().get( key) );

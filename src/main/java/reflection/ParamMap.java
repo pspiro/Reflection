@@ -5,6 +5,7 @@ import java.util.HashMap;
 import reflection.MyTransaction.MsgType;
 import tw.util.S;
 
+/** Values are returned lower case, interned, although the intern() didn't seem to work. */
 public class ParamMap extends HashMap<String, String> {
 	
 	/** Returns lower case, interned string. */
