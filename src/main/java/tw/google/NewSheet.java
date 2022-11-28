@@ -197,6 +197,16 @@ public class NewSheet {
 				}
 			}
 			
+			/** Find and return the row when the value in the "col" column is equal to value. */
+			public ListEntry findRow( String col, String value) throws Exception {
+				for ( ListEntry row : fetchRows() ) {
+					if (value.equals( row.getValue( col) ) ) {
+						return row;
+					}
+				}
+				return null;
+			}
+			
 			public void startTransaction() throws Exception {
 				if (m_insEntries != null || m_updEntries != null) {
 					throw new MyException( "Transaction already started in %s", m_name);
@@ -494,7 +504,6 @@ public class NewSheet {
 		}
 
 	}
-	
 	
 	
 	static private String intToLetters( int col) {

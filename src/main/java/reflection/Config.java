@@ -51,6 +51,7 @@ public class Config {
 	private String postgresUser;
 	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
+	private String backendConfigTab;
 	
 	public double maxBuyAmt() { return maxBuyAmt; }
 	public double maxSellAmt() { return maxSellAmt; }
@@ -109,6 +110,7 @@ public class Config {
 		this.orderTimeout = tab.getInt( "orderTimeout");
 		this.timeout = tab.getInt( "timeout");
 		this.symbolsTab = tab.get( "symbolsTab");
+		this.backendConfigTab = tab.get( "backendConfigTab");
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -129,7 +131,6 @@ public class Config {
 	}
 	
 
-
 	public Json toJson() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		
@@ -141,80 +142,111 @@ public class Config {
 		return Util.toJsonMsg( list.toArray() );
 	}
 
-	public Json readBackendConfig(String tabName) throws Exception {
-		JSONObject whole = new JSONObject();
-		
-		Tab tab = NewSheet.getTab( NewSheet.Reflection, "Config");
-		ListEntry[] rows = tab.fetchRows(false);  // no formatting
-		
-		for (ListEntry row : rows) {
-			if ("Y".equals( row.getValue("Backend") ) ) {
-				String tag = row.getValue( "Tag");
-				String val = row.getValue( "Value");
-				if (tag != null && val != null) {
-					Double dval = tryDouble( val);
-					if (dval != null) {
-						whole.put( tag, dval); // this causes it to not have quotation marks in the JSON
-					}
-					else {
-						whole.put( tag, val);  // this will have quotation marks
-					}
-				}
-			}
-		}
-		
-		return new Json( whole);
-	}
-	
-	private Double tryDouble(String val) {
-		try {
-			return Double.valueOf( val);
-		}
-		catch( Exception e) {
-			return null;
-		}
-	}
-
 	/** Populate google sheet from database. */
 	void pullBackendConfig(MySqlConnection database) throws Exception {
+		Main.require( S.isNotNull( backendConfigTab), RefCode.UNKNOWN, "'backendConfigTab' setting missing from Reflection configuration");
+		
 		// read from google sheet
-		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
+		Tab tab = NewSheet.getTab( NewSheet.Reflection, backendConfigTab);
 
 		ResultSet res = database.queryNext( "select * from system_configurations");
 		for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
-			table.put( res.getMetaData().getColumnLabel(i), res.getString(i) );
-		}
-
-		validateBackendConfig( table);
-	}
-	
-	void pushBackendConfig(MySqlConnection database) throws Exception {
-		// read from google sheet
-		GTable table = new GTable( NewSheet.Reflection, "Backend-config", "Tag", "Value");
-
-		validateBackendConfig( table);
-
-		// build the sql string
-		StringBuilder sql = new StringBuilder( "update system_configurations set ");
-		boolean first = true;
-		for (Entry<String, String> entry : table.entrySet() ) {
-			String tag = entry.getKey();
-			String val = entry.getValue();
-			
-			if (S.isNotNull( tag) && S.isNotNull( val) ) {
-				if (!first) {
-					sql.append( ",");
-				}
-
-				String formatStr = Util.isNumeric( val) ? "%s=%s" : "%s='%s'";
-				sql.append( String.format( formatStr, tag, val) );
-				first = false;
-			}
+			insertOrUpdate( tab, res.getMetaData().getColumnLabel(i), res.getString(i), "", "1");
 		}
 		
+		ResultSet res2 = database.query( "select * from configurations");
+		while (res2.next() ) {
+			String tag = res2.getString("key");
+			String value = res2.getString("value");
+			String description = res2.getString("description");
+			
+			insertOrUpdate( tab, tag, value, description, "2");
+		}
+
+		//validateBackendConfig( table);
+	}
+	
+	private void insertOrUpdate(Tab tab, String tag, String value, String description, String type) throws Exception {
+		ListEntry row = tab.findRow( "Tag", tag);
+		if (row == null) {
+			row = tab.newListEntry();
+			row.setValue( "Tag", tag);
+			row.setValue( "Value", value);
+			row.setValue( "Description", description);
+			row.setValue( "Type", type);
+			row.insert();
+		}
+		else {
+			row.setValue( "Value", value);
+			row.setValue( "Description", description);
+			row.setValue( "Type", type);
+			row.update();
+		}
+	}
+
+	void pushBackendConfig(MySqlConnection database) throws Exception {
+		// read from google sheet
+		Tab tab = NewSheet.getTab( NewSheet.Reflection, backendConfigTab);
+
+		//validateBackendConfig( table);
+
+		// build the sql string for type 1 config
+		StringBuilder sql = new StringBuilder( "update system_configurations set ");
+		boolean first = true;
+
+		for (ListEntry row : tab.fetchRows() ) {
+			String tag = row.getValue( "Tag");
+			String value = row.getValue( "Value");
+			String type = row.getValue("Type");
+			
+			// don't update database with null values; do that manually if needed
+			// this is to protect against wiping out config values by mistake
+			if (S.isNull( tag) || S.isNull( value) ) {
+				continue;
+			}
+			
+			if ("1".equals( type) ) {
+				if (S.isNotNull( tag) && S.isNotNull( value) ) {
+					if (!first) {
+						sql.append( ",");
+					}
+
+					String formatStr = Util.isNumeric( value) ? "%s=%s" : "%s='%s'";
+					sql.append( String.format( formatStr, tag, value) );
+					first = false;
+				}
+				
+			}
+			else if ("2".equals( type) ) {
+				String description = row.getValue( "Description");
+				insertOrUpdate( database, tag, value, description);
+				
+			}
+			else if (S.isNotNull( tag) ) {
+				Main.require( false, RefCode.UNKNOWN, "Invalid type on backend config tab");
+			}
+		}		
+
+		// update the system_configurations table (type 1)
 		S.out( sql);
 		database.execute( sql.toString() );
 	}
+
+	static String[] configColumnNames = { "key", "value", "description" };
+
+	/** Update configurations table. 
+	 * @throws Exception */
+	private void insertOrUpdate(MySqlConnection db, String tag, String value, String description) throws Exception {
+		ResultSet res = db.query( "select * from configurations where key='%s'", tag);
+		if (res.next() ) {
+			db.execute( String.format( "update configurations set value='%s', description='%s' where key='%s'",
+					Util.dblQ(value), Util.dblQ(description), tag) );
+		}
+		else {
+			db.insert("configurations", configColumnNames, tag, value, description);
+		}
+	}
+	
 
 	private void validateBackendConfig(GTable t) throws Exception {
 		require( t, "min_order_size", 1, 100); 
@@ -232,8 +264,8 @@ public class Config {
 	}
 
 	private void require(GTable t, String param, double lower, double upper) throws Exception {
-		double val = t.getDouble( param);
-		require( val >= lower && val <= upper, param);
+		double value = t.getDouble( param);
+		require( value >= lower && value <= upper, param);
 	}
 
 	public int threads() {
