@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 import org.postgresql.util.PSQLException;
 
-import json.MyJsonAr;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import json.TypedJson;
 import reflection.MySqlConnection;
@@ -126,7 +126,7 @@ public class EventFetcher {
 	private String processEventLog( String json, String token) throws Exception {
 		MyJsonObject obj = MyJsonObject.parse( json);
 		
-		MyJsonAr eventLogs = obj.getAr("result");
+		MyJsonArray eventLogs = obj.getAr("result");
 		for (MyJsonObject event : eventLogs) {
 			int block = event.getInt( "block_number");
 			String top0 = event.getString("topic0");

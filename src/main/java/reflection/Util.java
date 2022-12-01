@@ -19,7 +19,7 @@ public class Util {
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 
 	public static void main(String[] args) throws RefException {
-		executeIn( 2000, () -> S.out("hello") );
+		S.out( padLeft( "abc", 7, '7') );
 	}
 
 	/** Typical format of hours string is:
@@ -221,5 +221,31 @@ public class Util {
 			S.sleep( ms);
 			runnable.run();
 		}).start();
+	}
+
+	public static String getenv(String env) throws RefException {
+		String str = System.getenv(env);
+		Main.require( S.isNotNull( str), RefCode.MISSING_ENV_VAR, "Missing environment variable %s", env);
+		return str;
+	}
+	
+	public static String padLeft( String str, int n, char c) {
+		StringBuilder sb = new StringBuilder(str);
+		while (sb.length() < n) {
+			sb.insert( 0, c);
+		}
+		return sb.toString();
+	}
+	
+	public static String padRight( String str, int n, char c) {
+		StringBuilder sb = new StringBuilder(str);
+		while (sb.length() < n) {
+			sb.append( c);
+		}
+		return sb.toString();
+	}
+
+	public static void require(boolean test, String text) throws RefException {
+		Main.require( test, RefCode.UNKNOWN, text);
 	}
 }

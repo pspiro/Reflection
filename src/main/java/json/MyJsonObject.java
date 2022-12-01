@@ -21,8 +21,8 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return new MyJsonObject( new JSONParser().parse( text) );
 	}
 
-	public MyJsonAr getAr(String key) {
-		return new MyJsonAr( m_obj.get( key) );
+	public MyJsonArray getAr(String key) {
+		return new MyJsonArray( m_obj.get( key) );
 	}
 
 	public MyJsonObject getObj(String key) {
@@ -47,47 +47,48 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	}
 
 	public void display() {
-		display( m_obj, 0);
+		display( m_obj, 0, false);
 	}
 	
 //	@Override public String toString() {
 //		return super.toString();
 //	}
 	
-	public static void display(Object objIn, int level) {
+	public static void display(Object objIn, int level, boolean force) {
 		if (objIn instanceof JSONObject) {
+			if (force) {
+				System.out.print( Util.tab( level) );
+			}
 			System.out.println( "{");
 
 			JSONObject map = ((JSONObject)objIn);
 			
 			for (Object key : map.keySet() ) {
 				Object val = map.get( key);
-				System.out.print( String.format( "%s%s : ", Util.tab( level), key) );
-				display( val, level + 1);
-				System.out.println( ", ");
+				System.out.print( String.format( "%s%s : ", Util.tab( level+1), key) );
+				display( val, level + 1, false);
+				System.out.println( ", ");  // leaves an extra , on the last one, not good
 			}
 			System.out.println( Util.tab( level) + "}");
 		}
 		else if (objIn instanceof JSONArray) {
-			System.out.println( "[ ");
+			System.out.println( "[");
+			
 			JSONArray ar = (JSONArray)objIn;
-			boolean first = true;
 			for (Object obj : ar) {
-				if (first) {
-					first = false;
-				}
-				else {
-					System.out.print(",");
-				}
-				display( obj, level + 1);
+				display( obj, level + 1, true);
 			}
-			System.out.print( " ] ");			
+			System.out.print( Util.tab(level) + "]");			
 		}
 		else {
-			System.out.print( objIn);
+			if (force) {
+				System.out.println( String.format( "%s%s,", Util.tab( level), objIn) );				
+			}
+			else {
+				System.out.print( objIn);
+			}
 		}
 		
 	}
 
-	
 }

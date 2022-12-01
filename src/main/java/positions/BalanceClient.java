@@ -4,7 +4,7 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 
 import http.MyHttpClient;
-import json.MyJsonAr;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import tw.util.S;
 
@@ -43,7 +43,7 @@ public class BalanceClient {
 		// query moralis server
 	    String url = String.format( "%s/%s/erc20?chain=%s", MoralisServer.moralis, wallet, chain);
 	    String text = MoralisServer.querySync( url);
-		MyJsonAr morPositions = MyJsonAr.parse(text);
+		MyJsonArray morPositions = MyJsonArray.parse(text);
 		
 	    // query my position server
 		MyHttpClient cli = new MyHttpClient("localhost", 9393);

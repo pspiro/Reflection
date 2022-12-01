@@ -28,7 +28,7 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
-import reflection.Main.Mode;
+import fireblocks.Fireblocks;
 import tw.util.S;
 import util.LogType;
 
@@ -558,7 +558,7 @@ class MyTransaction {
 	 *  Access to m_responded is synchronized. */ 
 	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
 		if (!m_responded) {
-			if (timeout) {
+			if (timeout) {       // this really shouldn't happen; our timeout here should be less than the timeout of the IOC order
 				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
 				
 				if (!status.isComplete() && !status.isCanceled() ) {
@@ -587,10 +587,22 @@ class MyTransaction {
 				}
 				
 				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
+				
+				transactFireblocks(order, shares);
 			}
 		}
 	}
 	
+	private void transactFireblocks(Order order, ModifiableDecimal shares) {
+		if (order.action() == Action.BUY) {
+			
+		}
+		else {
+			Fireblocks.rusdSell();
+		}
+		
+	}
+
 	synchronized boolean respond( Object...data) {
 		return respond( Util.toJsonMsg( data) );
 	}

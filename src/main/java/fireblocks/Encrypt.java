@@ -1,4 +1,4 @@
-package http;
+package fireblocks;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -72,7 +72,7 @@ public class Encrypt {
 	static String encodeR( String str) {
 		return Base64.getEncoder().encodeToString(str.getBytes());	
 	}
-	static String encode( String in) {
+	public static String encode( String in) {
 		return encode( in.getBytes() );
 	}
 	static String encode( byte[] ar) {

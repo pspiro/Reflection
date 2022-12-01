@@ -29,6 +29,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import fireblocks.Fireblocks;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -72,6 +73,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public static void main(String[] args) {
 		try {
+			Fireblocks.readKeys();
+			
 			String configTab = null;
 			for (String arg : args) {
 				if (arg.equals( "simulated")) {

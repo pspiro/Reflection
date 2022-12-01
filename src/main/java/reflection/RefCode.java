@@ -12,5 +12,6 @@ public enum RefCode {
 	TIMED_OUT,			// order timed out before being filled or canceled
 	REJECTED,			// order was rejected, reason unknown
 	ORDER_TOO_LARGE,	// dollar amt is too high as per config settings
-	PARTIAL_FILL		// order was partially filled
+	PARTIAL_FILL,		// order was partially filled
+	MISSING_ENV_VAR,
 }

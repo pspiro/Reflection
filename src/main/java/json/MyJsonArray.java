@@ -7,14 +7,19 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 /** Array of object only. */
-public class MyJsonAr implements Iterable<MyJsonObject> { 
+public class MyJsonArray implements Iterable<MyJsonObject> { 
 	private JSONArray m_ar;
 	
-	public static MyJsonAr parse( String text) throws ParseException {
-		return new MyJsonAr( new JSONParser().parse( text) );
+	public static void main(String[] args) throws ParseException {
+		MyJsonObject.parse( "{ \"a\":[ 4,5,6] }")
+			.display();
+	}
+	
+	public static MyJsonArray parse( String text) throws ParseException {
+		return new MyJsonArray( new JSONParser().parse( text) );
 	}
 
-	public MyJsonAr( Object obj) {
+	public MyJsonArray( Object obj) {
 		m_ar = (JSONArray)obj;
 	}
 	
@@ -38,5 +43,9 @@ public class MyJsonAr implements Iterable<MyJsonObject> {
 				return new MyJsonObject( iter.next() );
 			}
 		};
+	}
+	
+	public void display() {
+		MyJsonObject.display(m_ar, 0, false);
 	}
 }
