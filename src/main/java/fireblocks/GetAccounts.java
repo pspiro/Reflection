@@ -1,5 +1,8 @@
 package fireblocks;
 
+import org.json.simple.JSONObject;
+
+import json.MyJsonObject;
 import tw.util.S;
 
 /** Works for prod and test. */
@@ -10,7 +13,9 @@ public class GetAccounts {
 
 		//Fireblocks.get( "/v1/vault/accounts_paged");
 		//Fireblocks.get( "/v1/exchange_accounts");
-		S.out( Fireblocks.getTransactions() );
+		//S.out( Fireblocks.getTransactions() );
+		MyJsonObject obj = Fireblocks.getTransaction( "1bb612f8-a86b-4836-8a20-c3fddeff2d4f");
+		obj.display();
 
 	}
 }

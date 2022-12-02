@@ -53,14 +53,13 @@ public class Fireblocks {
 	 * @throws Exception */
 	public static void setVals() throws Exception {
 		Map<String, String> env = getEnv();
-		env.put( "api_key", prodApi);
-		env.put( "private_key", prodPk);
-		rusdAddress = Rusd.prodAddr;
-		platformBase = prodBase;
+//		env.put( "api_key", prodApi);
+//		env.put( "private_key", prodPk);
+//		rusdAddress = Rusd.prodAddr;
+//		platformBase = prodBase;
 
 		env.put( "api_key", testApi);
 		env.put( "private_key", testPk);
-		rusdAddress = Rusd.testAddr;
 		platformBase = testBase;
 		
 		readKeys();		
@@ -185,8 +184,8 @@ public class Fireblocks {
 		return fb.transact();
 	}
 
-	/** You should round it before passing it to BigDecimal, otherwise you end up with 
-	 *  lots of nines. */
+	/** Round it to four decimal places and then convert to hex.
+	 *  @param mult should be the 10^ number of decimal digits in the contract.  */
 	public static String padDouble(double amt, BigDecimal mult) {
 		BigInteger big = new BigDecimal( String.format( "%.4f", amt) )
 				.multiply(mult)
@@ -195,7 +194,7 @@ public class Fireblocks {
 	}
 	
 	public static String padInt(int amt) {
-		return padDouble( amt, BigDecimal.ONE);
+		return padLeft( String.format( "%x", amt) );
 	}
 	
 	/** Assume address starts with 0x */
@@ -213,33 +212,30 @@ public class Fireblocks {
 		return Util.padRight( str, 64, '0'); 
 	}
 	
-	public static void main(String[] args) throws RefException {
-		String title = "aaaaaaaaaa";
-		String url = "bbbbb";
-		String addr = Rusd.prodAddr; 
-
-		String[] types = { "string", "address", "string", "address" };
-		Object[] vals = { title, addr, url, addr };
-		
-		String str = encodeParameters( types, vals); 
-		S.out( str);
-	}
 
 	/** For encoding parameters for deployment or contract calls.
 	 *  Assume all string length <= 32 bytes 
 	 * @throws RefException */
 	public static String encodeParameters( String[] types, Object[] params) throws RefException {
+		// no parameters passed?
+		if (types == null) {
+			return "";
+		}
+		
 		StringBuilder sb = new StringBuilder();
 		
 		int statics = 0;
-		
+
+		// encode the parameters; strings just get a placeholder
 		for (int i = 0; i < types.length; i++) {
 			String type = types[i];
 			Object val = params[i];
 			if (type.equals("string") ) {
 				Main.require( val instanceof String, RefCode.UNKNOWN, "Wrong type");
+				
 				String str = (String)val;
 				Main.require( str.length() <= 32, RefCode.UNKNOWN, "String too long");
+				
 				// total number of parameters plus the number of strings (or other static types) that came before
 				int num = (types.length + statics * 2) * 32;
 				sb.append( padInt( num) );
@@ -249,8 +245,16 @@ public class Fireblocks {
 			else if (type.equals( "address") ) {
 				sb.append( padAddr( (String)val) );
 			}
+			else if (type.equals( "uint256") ) {
+				Util.require( val instanceof Integer, "Bad parameter type " + val.getClass() ); 
+				sb.append( padInt( (Integer)val) );
+			}
+			else {
+				Util.require( false, "Unknown type " + type);
+			}
 		}
 		
+		// encode the strings
 		for (int i = 0; i < types.length; i++) {
 			String type = types[i];
 			Object val = params[i];
@@ -277,7 +281,50 @@ public class Fireblocks {
 		return type.equals( "string") ? false : true;
 	}
 
-	public static String getTransactions() throws Exception {
-		return get( "/v1/transactions");
+	public static MyJsonArray getTransactions() throws Exception {
+		String str = get( "/v1/transactions");
+		Util.require( str.startsWith( "["), "Error: " + str);
+		return MyJsonArray.parse( str);
 	}
+
+	public static MyJsonObject getTransaction(String id) throws Exception {
+		String str = get( "/v1/transactions/" + id);
+		return toJsonObject( str);
+	}
+	
+	public static MyJsonObject call(String addr, String keccak, String[] paramTypes, Object[] params, String note) throws Exception {
+		String bodyTemplate = 
+				"{" + 
+				"'operation': 'CONTRACT_CALL'," + 
+				"'amount': '0'," + 
+				"'assetId': '%s'," + 
+				"'source': {'type': 'VAULT_ACCOUNT', 'id': '0'}," + 
+				"'destination': {" + 
+				"   'type': 'ONE_TIME_ADDRESS'," + 
+				"   'oneTimeAddress': {'address': '%s'}" + 
+				"}," + 
+				"'extraParameters': {" +
+				"   'contractCallData': '%s'" +
+				"}," +
+				"'note': '%s'" + 
+				"}";
+
+		String callData = keccak + encodeParameters( paramTypes, params); 
+		
+		String body = toJson( 
+				String.format( bodyTemplate, Fireblocks.platformBase, addr, callData, note) );  
+
+		Fireblocks fb = new Fireblocks();
+		fb.endpoint( "/v1/transactions");
+		fb.operation( "POST");
+		fb.body( body);
+		String ret = fb.transact();
+		return toJsonObject( ret); 
+	}
+	
+	private static MyJsonObject toJsonObject( String str) throws Exception {
+		Util.require( str.startsWith( "{"), "Error: " + str);
+		return MyJsonObject.parse( str);
+	}
+	
 }

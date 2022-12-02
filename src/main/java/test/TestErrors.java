@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import http.MyHttpClient;
-import json.MyJsonAr;
+import json.MyJsonArray;
 import junit.framework.TestCase;
 import reflection.RefCode;
 import reflection.RefException;
@@ -102,7 +102,7 @@ public class TestErrors extends TestCase {
 		return cli.readJsonMap();
 	}
 	
-	static MyJsonAr sendData2( String data) throws Exception {
+	static MyJsonArray sendData2( String data) throws Exception {
 		MyHttpClient cli = cli();
 		cli.post( data.replaceAll( "\\'", "\"") );
 		return cli.readMyJsonArray();

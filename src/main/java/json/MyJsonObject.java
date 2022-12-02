@@ -69,7 +69,7 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 				display( val, level + 1, false);
 				System.out.println( ", ");  // leaves an extra , on the last one, not good
 			}
-			System.out.println( Util.tab( level) + "}");
+			System.out.print( Util.tab( level) + "}, ");
 		}
 		else if (objIn instanceof JSONArray) {
 			System.out.println( "[");
