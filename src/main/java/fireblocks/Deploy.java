@@ -12,11 +12,10 @@ public class Deploy {
 
 	public static void main(String[] args) throws Exception {
 		//Tab tab = NewSheet.getTab(NewSheet.Reflection, "Prod-symbols");
-
-//		for (ListEntry row : tab.fetchRows() ) {
+		//for (ListEntry row : tab.fetchRows() ) {
+		
 		Fireblocks.setVals();
-			deploy();
-//		}
+		deploy();
 	}
 
 	private static void deploy() throws Exception {

@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -61,13 +62,6 @@ public class MoralisServer {
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
 	
 	public static void main(String[] args) {
-		try {
-			new MoralisServer().run(args);
-		} 
-		catch (Exception e) {
-			m_log.log( LogType.ERROR, e.getMessage() );				
-			e.printStackTrace();
-		}
 	}
 	
 	void run(String[] args) throws Exception {
@@ -267,14 +261,20 @@ public class MoralisServer {
 	interface MyFunction {
 		void accept(String t) throws Exception;
 	}
+	
+	public static MyJsonObject queryTransaction( String transactionHash, String chain) throws ParseException {
+		String url = String.format( "https://deep-index.moralis.io/api/v2/transaction/%s?chain=%s",
+				transactionHash, chain);
+		return MyJsonObject.parse( querySync( url) );
+	}
 
-	static String querySync(String url) {
+	public static String querySync(String url) {
 		StringHolder holder = new StringHolder();
 
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare("GET", url)
 			.setHeader("accept", "application/json")
-			.setHeader("X-API-Key", "test")		
+			.setHeader("X-API-Key", apiKey)		
 		  	.execute()
 		  	.toCompletableFuture()
 		  	.thenAccept( obj -> {
@@ -286,7 +286,7 @@ public class MoralisServer {
 		  			m_log.log( LogType.ERROR, e.getMessage() );
 		  			e.printStackTrace();
 		  		}
-		  	}).join();  // the .join() makes is synchronous
+		  	}).join();  // the .join() makes it synchronous
 
 		return holder.val;
 	}

@@ -1,37 +1,39 @@
 package fireblocks;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import json.MyJsonObject;
-import reflection.Main;
-import reflection.RefCode;
-import reflection.RefException;
-import reflection.Util;
-import tw.util.S;
 
 public class Rusd {
-	static String rusdAddr = "0x8a694956F724097ecE8Bf9A5B9d80ed8e05b66e2"; // contract address
-	static String qqq = "0xb402C11973Bcb15149b765e93E2553a688668f93";
+	static String refWallet = "0x63196e51854B6E1446eDaafbC401F8c7Afdb33ca"; // this is the address of the primary token on Fireblocks, e.g. ETH or BNB_BSC
+	static String userAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+
+	static String rusd = "0xc61b328c5a3619299e2714f1d7c2fe896ebeb819"; // contract address deployed with this refWallet
+	static String busd = "0x76CBf8325E0cC59AaD46204C80091757B06b54a3";
+    
+	static String buyRusd = "0x28c4ef43"; // buyRusd(address userAddress, address stableCoinAddress, uint256 amount)
+	static String buyStock =  "58e78a85";
+	static String sellStock = "5948f1f0";
 	
-	static int decimals = 5;
-	static BigDecimal mult = new BigDecimal( 10).pow(decimals);
-	static String buyKeccak =  "58e78a85";
-	static String sellKeccak = "5948f1f0";
 	
-	// keccaks calculated as:
-	// buyStock(address,address,address,uint256,uint256)
-	// sellStock(address,address,address,uint256,uint256)
-// do i need 0x for the contract call data?
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setVals();
+		//deploy();
+		call();
+	}
+	
+	// this works
+	static void deploy() throws Exception {
+		String[] paramTypes = { "address" };
+		String[] params = { refWallet };
+		Fireblocks.deploy( "c:/work/smart-contracts/rusd.bytecode", paramTypes, params, "Deploy RUSD");
+	}
+	
+	static void call() throws Exception {
 		
-		String myWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		
-		String[] types = { "address", "address", "address", "uint256", "uint256" };
-		Object[] params = { myWallet, rusdAddr, qqq, 5, 6 };
+		String[] types = { "address", "address", "uint256" };
+		Object[] params = { userAddress, busd, 10 };
 		
-		MyJsonObject obj = Fireblocks.call( rusdAddr, buyKeccak, types, params, "RUSD.buyStock");
+		MyJsonObject obj = Fireblocks.call( rusd, buyRusd, types, params, "RUSD.buyRusd");
 		obj.display();
 		
 		String id = obj.getString("id");

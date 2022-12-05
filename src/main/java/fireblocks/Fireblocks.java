@@ -10,7 +10,6 @@ import java.util.Random;
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
-import org.json.simple.parser.ParseException;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
@@ -18,7 +17,7 @@ import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
 import reflection.Util;
-import tw.util.OStream;
+import tw.util.IStream;
 import tw.util.S;
 import util.StringHolder;
 
@@ -39,7 +38,6 @@ public class Fireblocks {
 	
 	private static String apiKey;
 	private static String privateKey;
-	public static String rusdAddress;
 	
 	private String operation;
 	private String endpoint;
@@ -76,19 +74,20 @@ public class Fireblocks {
 	
 	// return MyJsonObj
 	String transact() throws Exception {
-		S.out( "api key: %s", apiKey);
+		S.out( "Sending Fireblocks transaction with body: %s", body);
+
+		//S.out( "api key: %s", apiKey);
 
 		long start = System.currentTimeMillis() / 1000;
 		long expire = start + 29;
 
 		// toJson removes spaces in the values, not good
 		String bodyHash = Encrypt.getSHA(body);
-		S.out( "Body: %s", body);
-		S.out( "Body hash: %s", bodyHash);
+		//S.out( "Body hash: %s", bodyHash);
 
 		String header = toJson( "{ 'alg': 'RS256', 'typ': 'JWT' }");
-		S.out( "Header: %s", header);
-		S.out( "Encoded: %s", Encrypt.encode( header) );
+		//S.out( "Header: %s", header);
+		//S.out( "Encoded: %s", Encrypt.encode( header) );
 
 		String nonce = String.valueOf( rnd.nextInt() );
 		
@@ -101,23 +100,23 @@ public class Fireblocks {
 				+ "'bodyHash': '%s'"
 				+ "}",
 				endpoint, nonce, start, expire, apiKey, bodyHash) );
-		S.out( "Payload: %s", payload);
-		S.out( "Encoded: %s", Encrypt.encode( payload) );
+		//S.out( "Payload: %s", payload);
+		//S.out( "Encoded: %s", Encrypt.encode( payload) );
 		
 		String input = String.format( "%s.%s",
 				Encrypt.encode( header),
 				Encrypt.encode( payload) );
 		//S.out( "Input:");
-		System.out.println(input);
+		//System.out.println(input);
 		
 		String signed = Encrypt.signRSA( input, privateKey);
 		//S.out( "Sig:");
-		System.out.println(signed);
+		//System.out.println(signed);
 
 		String jwt = String.format( "%s.%s.%s",
 				Encrypt.encode( header), Encrypt.encode( payload), signed)
 				.replace( "/", "_").replace( "+", "-");
-		System.out.println( jwt);
+		//System.out.println( jwt);
 		
 		//new OStream( "c:/temp/f2.t").write(body);
 		
@@ -292,7 +291,13 @@ public class Fireblocks {
 		return toJsonObject( str);
 	}
 	
-	public static MyJsonObject call(String addr, String keccak, String[] paramTypes, Object[] params, String note) throws Exception {
+	public static MyJsonObject deploy(String filename, String[] paramTypes, Object[] params, String note) throws Exception {
+		String data = new IStream(filename).readln();
+		return call( "0x0", data, paramTypes, params, note); 
+	}
+
+	/** @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not */
+	public static MyJsonObject call(String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'CONTRACT_CALL'," + 
@@ -309,10 +314,10 @@ public class Fireblocks {
 				"'note': '%s'" + 
 				"}";
 
-		String callData = keccak + encodeParameters( paramTypes, params); 
+		String fullCallData = callData + encodeParameters( paramTypes, params);  // call data + parameters 
 		
 		String body = toJson( 
-				String.format( bodyTemplate, Fireblocks.platformBase, addr, callData, note) );  
+				String.format( bodyTemplate, Fireblocks.platformBase, addr, fullCallData, note) );  
 
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( "/v1/transactions");

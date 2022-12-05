@@ -40,7 +40,7 @@ public class StockToken {
 				"   'oneTimeAddress': {'address': '%s'}" + 
 				"    }," + 
 				"'amount': '0'," + 
-				"'note': 'called from Rusd.java'," +
+				"'note': 'called from StockToken.java'," +
 				"'operation': 'CONTRACT_CALL'," +
 				"'extraParameters': {" +
 				"   'contractCallData': %s" +
@@ -56,7 +56,7 @@ public class StockToken {
         String callParams = String.format( "0x%s%s%s%s%s%s",
 				buyKeccak,
 				padAddr( userAddr),
-				padAddr( Fireblocks.rusdAddress),
+				padAddr( Rusd.rusd),
 				padAddr( stockTokenAddr),
 				pad( stablecoinAmt),
 				pad( stockTokenAmt) );
@@ -65,19 +65,17 @@ public class StockToken {
 		// take the first 4 bytes i think of the kkcac256 of the method signature
 		// and then all of the parameters, each some fixed number of bytes
 		
-		String accountId = "4";
+		String accountId = "0";
 		String destAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		String body = Fireblocks.toJson( bodyTemplate, 
-				Fireblocks.platformBase, accountId, Fireblocks.rusdAddress, callParams);
+				Fireblocks.platformBase, accountId, qqq, callParams);
 		
 		
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint("/v1/transactions");
 		fb.operation( "POST");
 		fb.body( body);
-		
-		S.out( body);
-		fb.transact();
+		S.out( fb.transact() );
 	}
 
 	

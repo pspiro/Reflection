@@ -1,9 +1,7 @@
 package fireblocks;
 
-import org.json.simple.JSONObject;
-
+import json.MyJsonArray;
 import json.MyJsonObject;
-import tw.util.S;
 
 /** Works for prod and test. */
 public class GetAccounts {
@@ -13,10 +11,18 @@ public class GetAccounts {
 
 		//Fireblocks.get( "/v1/vault/accounts_paged");
 		//Fireblocks.get( "/v1/exchange_accounts");
-		//S.out( Fireblocks.getTransactions() );
-		MyJsonObject obj = Fireblocks.getTransaction( "1bb612f8-a86b-4836-8a20-c3fddeff2d4f");
+//		MyJsonArray ar = Fireblocks.getTransactions();
+//		ar.display();
+		
+		MyJsonObject obj = Fireblocks.getTransaction( "ae6d1b87-7cf4-4589-99b5-a08ed5692a92"); 
 		obj.display();
+//		displayLastTransaction();
 
+	}
+
+	static void displayLastTransaction() throws Exception {
+		MyJsonArray ar = Fireblocks.getTransactions();
+		ar.getJsonObj(0).display();
 	}
 }
 
