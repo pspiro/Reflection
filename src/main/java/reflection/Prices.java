@@ -146,4 +146,9 @@ public class Prices {
 		tick( TickType.BID_SIZE, 0., Decimal.get( 100) );
 		tick( TickType.ASK_SIZE, 0., Decimal.get( 100) );
 	}
+
+	public void dump(int conid) {
+		S.out( "conid=%s  bid=%s  ask=%s  last=%s  close=%s  bidSize=%s  askSize=%s",
+				conid, m_bid, m_ask, m_last, m_close, m_bidSize, m_askSize);	
+	}
 }

@@ -34,7 +34,7 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		checkHours, checkOrder, disconnect, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
+		checkHours, checkOrder, disconnect, dump, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
 		
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -166,6 +166,10 @@ class MyTransaction {
 				break;
 			case disconnect:
 				disconnect();
+				break;
+			case dump:
+				m_main.dump();
+				respond( code, RefCode.OK);
 				break;
 		}
 	}

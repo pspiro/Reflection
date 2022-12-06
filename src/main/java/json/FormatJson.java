@@ -11,8 +11,15 @@ public class FormatJson {
 		scanner.close();
 		
 		int i = input.indexOf( "{");
-		String str = input.substring( i);
-		MyJsonObject obj = MyJsonObject.parse(str);
-		obj.display();  // figure out long vs integer in the Jsonobj
+		int j = input.indexOf( "[");
+
+		if (i < j || j == -1) {
+			MyJsonObject obj = MyJsonObject.parse(input.substring(i));
+			obj.display();
+		}
+		else {
+			MyJsonAr ar = MyJsonAr.parse(input.substring(j));
+			// ar.display(); fix this after merge 
+		}
 	}
 }
