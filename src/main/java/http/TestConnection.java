@@ -25,7 +25,7 @@ public class TestConnection {
 		trans.showAll();
 		
 		ParamMap map = trans.getMap();
-		String msg = map.get("msg");
+		String msg = map.getRequiredParam("msg");
 		
 		switch(msg) {
 			case "testdb":
@@ -37,17 +37,19 @@ public class TestConnection {
 				break;
 
 			default:
-				trans.respond( "supported msg types: testdb (url,user,pw), testip (host,port,GET/POST,cmd)");
+				trans.respond( "supported msg types: testdb (host,port,db,user,pw), testip (host,port,GET/POST,cmd)");
 		}
 	}
 
 	private static void testdb(SimpleTransaction trans, ParamMap map) throws Exception {
-		String url = map.get("url");
-		String user = map.get("user");
-		String pw = map.get("pw");
-		
+		String host = map.getRequiredParam("host");
+		String port = map.getRequiredParam("port");
+		String db = map.getRequiredParam("db");
+		String user = map.getRequiredParam("user");
+		String pw = map.getRequiredParam("pw");
+
 		MySqlConnection conn = new MySqlConnection();
-		conn.connect( url, user, pw);
+		conn.connect( host, port, db, user, pw);
 
 		trans.respond( "Connected");
 	}

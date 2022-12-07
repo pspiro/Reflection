@@ -21,6 +21,11 @@ public class MySqlConnection {
 		connection.setAutoCommit(true);
 	}
 
+	public MySqlConnection connect(String host, String port, String db, String user, String password) throws SQLException {
+		String url = String.format( "jdbc:postgresql://%s:%s/%s", host, port, db);
+		return connect( url, user, password);
+	}
+	
 	public MySqlConnection connect(String url, String user, String password) throws SQLException {
 		connection = DriverManager.getConnection(url, user, password);
 		return this;
