@@ -1,5 +1,6 @@
 package http;
 
+import java.net.Socket;
 import java.util.Map;
 
 import reflection.MySqlConnection;
@@ -28,6 +29,10 @@ public class TestConnection {
 		String msg = map.getRequiredParam("msg");
 		
 		switch(msg) {
+			case "testredis":
+				testredis( trans, map);
+				break;
+				
 			case "testdb":
 				testdb( trans, map);
 				break;
@@ -52,6 +57,17 @@ public class TestConnection {
 		conn.connect( host, port, db, user, pw);
 
 		trans.respond( "Connected");
+	}
+
+	private static void testredis(SimpleTransaction trans, ParamMap map) throws Exception {
+		String host = map.getRequiredParam("host");
+
+		Socket socket = new Socket( host, 6379);
+		socket.getOutputStream().write( "PING\n".getBytes() );
+		
+		byte[] ar = new byte[1024];
+		socket.getInputStream().read(ar);
+		trans.respond( new String(ar) );
 	}
 
 	private static void testip(SimpleTransaction trans, ParamMap map) throws Exception {
