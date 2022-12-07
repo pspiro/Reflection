@@ -30,6 +30,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Fireblocks;
+import json.MyJsonObject;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -293,6 +294,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		public void disconnect() {
 			m_controller.disconnect();
 		}
+		
+		public void dump() {
+			m_controller.dump();
+		}
+		
 	}
 	
 	class OrderConnectionMgr extends ConnectionMgr {
@@ -328,7 +334,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				e.printStackTrace();
 			}
 		}
-		
 	}
 
 	/** Handle HTTP msg */
@@ -380,6 +385,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				continue;
 			}
 
+			// you could have the prices flow directly into the Prices Object
 			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 					c.tick(tickType, price, null);
@@ -493,6 +499,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	public String tabName() {
 		return m_tabName;
 	}
+
+	void dump() {
+		S.out( "-----Dump: Prices-----");
+		for (Integer conid : m_priceMap.keySet() ) {
+			Prices prices = m_priceMap.get( conid);
+			prices.dump(conid);
+		}
+		S.out( "-----Dump: Stocks-----");
+		MyJsonObject.display( m_stocks, 0, false);
+		//S.out( m_stocks);
+		
+		m_mdConnMgr.dump();
+	}
+	
 }
 
 

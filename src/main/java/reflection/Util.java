@@ -19,7 +19,7 @@ public class Util {
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 
 	public static void main(String[] args) throws RefException {
-		S.out( padLeft( "abc", 7, '7') );
+		S.out( concatenate( ',', "a", "b") );
 	}
 
 	/** Typical format of hours string is:
@@ -247,5 +247,23 @@ public class Util {
 
 	public static void require(boolean test, String text) throws RefException {
 		Main.require( test, RefCode.UNKNOWN, text);
+	}
+
+	/** Use this in more places. */
+	public static String concatenate(char separator, String... values) {
+		StringBuilder builder = new StringBuilder();
+		for (String value : values) {
+			if (builder.length() > 0) {
+				builder.append(separator);
+			}
+			builder.append( value);
+		}
+		return builder.toString();
+	}
+
+	/** Replace single-quotes with double-single-quotes.
+	 *  This is needed when inserting or updating SQL records. */
+	public static String dblQ(String sql) {
+		return sql.replaceAll( "'", "''");  
 	}
 }

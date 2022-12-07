@@ -11,8 +11,13 @@ public class FormatJson {
 		scanner.close();
 		
 		int i = input.indexOf( "{");
-		String str = input.substring( i);
-		MyJsonObject obj = MyJsonObject.parse(str);
-		obj.display();  // figure out long vs integer in the Jsonobj
+		int j = input.indexOf( "[");
+
+		if (i < j || j == -1) {
+			MyJsonObject.parse(input.substring(i)).display();
+		}
+		else {
+			MyJsonArray.parse(input.substring(j)).display();
+		}
 	}
 }

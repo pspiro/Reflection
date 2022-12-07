@@ -41,26 +41,32 @@ public class MySqlConnection {
 		return connection.createStatement().executeQuery(fullSql);
 	}
 	
-	public void execute( String sql, Object... params) throws Exception {
+	/** Do not do Strin.format() substitutions on sql. */
+	public void execute( String sql) throws Exception {
 		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
-		String fullSql = String.format( sql, params);
-		connection.createStatement().executeUpdate(fullSql);
+		connection.createStatement().executeUpdate(sql);
 	}
 	
 	/** Don't call execute because the sql string could have percent signs in it
 	 *  (e.g. FAQ table. */
 	public void insert( String table, Object... values) throws Exception {
+		insert( table, null, values);
+	}
+
+	/** If column names are not given, you can (must) give any number of columns starting with the first.
+	 *  Single-quotes in the values are supported */  
+	public void insert( String table, String[] columnNames, Object... values) throws Exception {
 		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
 
+		// build values string
 		StringBuilder valStr = new StringBuilder();
-		
 		for (Object val : values) {
 			if (valStr.length() > 0) {
 				valStr.append(',');
 			}
 			if (val != null) {
 				String str = val instanceof String 
-						? String.format( "'%s'", ((String)val).replaceAll( "'", "''") )  // double-up the single-quotes 
+						? String.format( "'%s'", Util.dblQ((String)val))  // double-up the single-quotes 
 						: val.toString(); 
 				valStr.append( str);
 			}
@@ -68,14 +74,29 @@ public class MySqlConnection {
 				valStr.append( "NULL");
 			}
 		}
+		
+		String sql;
+		
+		if (columnNames != null) {
+			Main.require( columnNames.length == values.length, RefCode.UNKNOWN, "mismatched column/values when inserting");
 
-		String sql = String.format( "insert into %s values (%s)", table, valStr);
-		connection.createStatement().executeUpdate(sql);
+			sql = String.format( "insert into %s (%s) values (%s)", 
+					table,
+					Util.concatenate( ',', columnNames),				
+					valStr);
+		}
+		else {
+			sql = String.format( "insert into %s values (%s)",
+					table,
+					valStr);
+		}
+		
+		execute(sql);
 	}
 
 	public void dropTable(String table) throws Exception {
 		try {
-			execute( "drop table %s", table);
+			execute( "drop table " + table);
 		}
 		catch( PSQLException e) {
 			if (e.getMessage() != null && e.getMessage().contains("does not exist") ) {

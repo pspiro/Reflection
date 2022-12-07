@@ -57,6 +57,8 @@ import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
+import tw.util.S;
+
 public class ApiController implements EWrapper {
 	private ApiConnection m_client;
 	private final ILogger m_outLogger;
@@ -547,6 +549,13 @@ public class ApiController implements EWrapper {
 		}
 	}
 
+	public void dump() {
+		S.out( "-----Dump: Api Controller Top Market Data-----");
+		for (Integer key : m_topMktDataMap.keySet() ) {
+			S.out( "reqid=%s", key); 
+		}
+	}
+	
     public void reqTopMktData(Contract contract, String genericTickList, boolean snapshot, boolean regulatorySnapshot, ITopMktDataHandler handler) {
 		if (!checkConnection())
 			return;
