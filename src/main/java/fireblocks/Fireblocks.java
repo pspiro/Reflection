@@ -332,4 +332,7 @@ public class Fireblocks {
 		return MyJsonObject.parse( str);
 	}
 	
+	String getAccounts() {
+		return get("/v1/exchange_accounts");
+	}
 }
