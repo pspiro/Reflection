@@ -3,6 +3,7 @@ package fireblocks;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import json.MyJsonObject;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
@@ -10,72 +11,54 @@ import reflection.Util;
 import tw.util.S;
 
 public class StockToken {
-	// method signature: buy(address,uint256,uint256,address)	
-	static String qqq = "0xb402C11973Bcb15149b765e93E2553a688668f93";
+	// method signature: buy(address,uint256,uint256,address)
+	// test system
+	//static String qqq = "0xd1b41cefda7d036018a9daff9d5f4cc811770efb";
+	static String qqq = "0x561fe914443574d2aF7203dCA1ef120036514f87";
+	
 	
 	static int decimals = 5;
 	static BigDecimal mult = new BigDecimal( 10).pow(decimals);
 	static String buyKeccak = "3f60b633";
+	static String getcallerKk = "a5905412";
+	static String iscallerKk = "ac55c8b0";
 	
+	// 0: default
+	// 1: test  (failed, insuf funds)
+	// 2: owner
+	// 3: refwallet
+	// i passed refWallet but it acted like i used Test1 account; that was the sending address
+
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setVals();
+		//deploy();
 		
-		String myWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+		// you must approve the STOCK TOKEN for spending, i.e. BUSD.approve(StockToken)
+		// that's why this is really not good, because you would have to approve each 
+		// stock token, you couldn't give a blanket approval
+		buy(Rusd.userAddr, 1, qqq, 2, Rusd.busdAddr);
 		
-		buy( myWallet, qqq, 69.1, 69.1); 
+        //Fireblocks.call( 3, qqq, getcallerKk, new String[0], new Object[0], "getcaller").display();
+		//Fireblocks.call( 3, qqq, iscallerKk, new String[0], new Object[0], "iscaller").display();
 	}
 	
-	static void buy( String userAddr, String stockTokenAddr, double stablecoinAmt, double stockTokenAmt) throws Exception {
-		
-		// buyStock(address,address,address,uint256,uint256)
-		// sellStock(address,address,address,uint256,uint256)
-		
-		
-		String bodyTemplate = 
-				"{" + 
-				"'assetId': '%s'," + 
-				"'source': {'type': 'VAULT_ACCOUNT', 'id': '%s'}," + 
-				"'destination': {" + 
-				"   'type': 'ONE_TIME_ADDRESS'," + 
-				"   'oneTimeAddress': {'address': '%s'}" + 
-				"    }," + 
-				"'amount': '0'," + 
-				"'note': 'called from StockToken.java'," +
-				"'operation': 'CONTRACT_CALL'," +
-				"'extraParameters': {" +
-				"   'contractCallData': %s" +
-				"   }" +
-				"}";
-		
-//        address _userAddress,
-//        address _stableCoinAddress,
-//        address _stockTokenAddress,
-//        uint256 _stableCoinAmount,
-//        uint256 _stockTokenAmount
-
-        String callParams = String.format( "0x%s%s%s%s%s%s",
-				buyKeccak,
-				padAddr( userAddr),
-				padAddr( Rusd.rusd),
-				padAddr( stockTokenAddr),
-				pad( stablecoinAmt),
-				pad( stockTokenAmt) );
-        
-				
-		// take the first 4 bytes i think of the kkcac256 of the method signature
-		// and then all of the parameters, each some fixed number of bytes
-		
-		String accountId = "0";
-		String destAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-		String body = Fireblocks.toJson( bodyTemplate, 
-				Fireblocks.platformBase, accountId, qqq, callParams);
-		
-		
-		Fireblocks fb = new Fireblocks();
-		fb.endpoint("/v1/transactions");
-		fb.operation( "POST");
-		fb.body( body);
-		S.out( fb.transact() );
+	static void deploy() throws Exception {
+		String[] paramTypes = { "string", "string", "address", "address" };
+		Object[] params = { "QQQ Nasdaq 100 ETF", "QQQ", Rusd.refWalletAddr, Rusd.rusdAddr };
+		String addr = Deploy.deploy("c:/work/smart-contracts/StockToken.bytecode",
+				Rusd.ownerAcctId, paramTypes, params, "deploy stock");
+		S.out( "Deployed to %s", addr);
+	}
+	
+	// now test out all the stock and rusd methods,
+	// now that the contracts are deployed
+	
+	static void buy( String userAddr, int stockTokenAmt, String stockTokenAddr, int stablecoinAmt, String stablecoinAddr) throws Exception {
+		String[] paramTypes = { "address", "uint256", "uint256", "address" };
+        Object[] params = { userAddr, stockTokenAmt, stablecoinAmt, stablecoinAddr };  
+        MyJsonObject obj = Fireblocks.call( Rusd.refWalletAcctId, stockTokenAddr, 
+        		buyKeccak, paramTypes, params, "StockToken.buy");
+		Fireblocks.getTransaction(obj.getString("id")).display(); 
 	}
 
 	

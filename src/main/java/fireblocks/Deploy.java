@@ -1,87 +1,83 @@
 package fireblocks;
 
-import json.MyJsonArray;
 import json.MyJsonObject;
-import reflection.Util;
+import positions.MoralisServer;
+import reflection.RefCode;
+import reflection.RefException;
 import tw.util.IStream;
 import tw.util.S;
 
 public class Deploy {
-
-	static String op = "POST"; 
 
 	public static void main(String[] args) throws Exception {
 		//Tab tab = NewSheet.getTab(NewSheet.Reflection, "Prod-symbols");
 		//for (ListEntry row : tab.fetchRows() ) {
 		
 		Fireblocks.setVals();
-		deploy();
+		//deploy();
 	}
 
-	private static void deploy() throws Exception {
-		String bodyTemplate = 
-				"{" + 
-				"'operation': 'CONTRACT_CALL'," + 
-				"'amount': '0'," + 
-				"'assetId': '%s'," + 
-				"'source': {'type': 'VAULT_ACCOUNT', 'id': '0'}," + 
-				"'destination': {" + 
-				"   'type': 'ONE_TIME_ADDRESS'," + 
-				"   'oneTimeAddress': {'address': '0x0'}" + 
-				"}," + 
-				"'extraParameters': {" +
-				"   'contractCallData': '%s'" +
-				"}," +
-				"'note': 'Deployed From Code'" + 
-				"}";
+	/** The wallet associated w/ ownerAcctId becomes the owner of the deployed contract.
+	 *  The parameters passed here are the passed to the constructor of the smart contract
+	 *  being deployed. The whole thing takes 30 seconds.
+	 *  @return the deployed contract address */
+	public static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
+		S.out( "Deploying contract");
+		String data = new IStream(filename).readln();
+		MyJsonObject obj = Fireblocks.call( ownerAcctId, "0x0", data, paramTypes, params, note);
+		obj.display();
+		
+		// if there's an error, you got message and code
+		
+		//{"message":"Source is invalid","code":1427}		
+		
+		String id = obj.getString("id");  // it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
+		S.out( "  fireblocks id is %s", id);
 
-		String bytecode = new IStream( "c:/temp/bytecode.t")
-				.readln();
-		String params = Fireblocks.encodeParameters( 
-				new String[] { "string", "string" }, 
-				new Object[] { "jimmy", "bean" }
-				);
-		
-		String body = Fireblocks.toJson( 
-				String.format( bodyTemplate, Fireblocks.platformBase, bytecode + params) );  
-		
-		Fireblocks fb = new Fireblocks();
-		fb.endpoint( "/v1/transactions");
-		fb.operation( "POST");
-		fb.body( body);
-		
-		String resp = fb.transact();
-		Util.require( resp.startsWith( "{"), resp);
-		
-		MyJsonObject obj = MyJsonObject.parse( resp);
-		Util.require( obj.getString("status").equals("SUBMITTED"), resp);
+		S.out( "  waiting for blockchain transaction hash");
+		String txHash = getTransHash( id);
+		S.out( "  blockchain transaction hash is %s", txHash);
 
-		String id = obj.getString("id");
-		Util.require( S.isNotNull( id), resp);
-		
-		String transactions = Fireblocks.get( "/v1/transactions");
-		Util.require( transactions.startsWith("["), transactions);
-		
-		MyJsonArray ar = MyJsonArray.parse( transactions);
-		MyJsonObject trans = find( ar, id);
-		Util.require( trans != null, "Error: transaction with id not found: " + id);
-		
-		S.out( "Object returned:");
-		trans.display();
-		
-		String hash = trans.getString("txHash");  // make a "getRequiredString() 
-		
-		S.out( "transaction hash is %s, use it on Moralis or Infura", hash);
-		
+		S.out( "  waiting for deployed address");
+		return getDeployedAddress(txHash);
 	}
-
-	/** Find the object in the array with "id" = id */
-	private static MyJsonObject find(MyJsonArray ar, String id) {
-		for (MyJsonObject obj : ar) {
-			if (obj.getString("id").equals( id) ) {
-				return obj;
+	
+	/** Query the transaction from Fireblocks until it contains the txHash value
+	 *  which is the blockchain transaction has; takes about 13 seconds. */
+	static String getTransHash(String fireblocksId) throws Exception {
+		for (int i = 0; i < 5*60; i++) {
+			if (i > 0) S.sleep(1000);
+			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
+			S.out( "  status: %s  hash: %s", trans.getString("status"), trans.getString("txHash") );
+			
+			String txHash = trans.getString("txHash");
+			if (S.isNotNull( txHash) ) {
+				return txHash;
+			}
+			
+			String status = trans.getString("status");
+			if ("COMPLETED".equals(status) || "FAILED".equals(status) ) {
+				break;
 			}
 		}
-		return null;
+		
+		throw new RefException( RefCode.UNKNOWN, "Could not get transaction hash");
+	}	
+
+	/** Query the blockchain transaction through Moralis until the transaction
+	 *  is there AND it contains the receipt_contract_address field;
+	 *  takes about 17 seconds. */
+	static String getDeployedAddress(String txHash) throws Exception {
+		for (int i = 0; i < 3*60; i++) {
+			if (i > 0) S.sleep(1000);
+			
+			S.out( "    querying...");
+			MyJsonObject obj = MoralisServer.queryTransaction(txHash,  "goerli");
+			String addr = obj.getString("receipt_contract_address");
+			if (S.isNotNull(addr) ) {
+				return addr;
+			}
+		}
+		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		
 	}
 }

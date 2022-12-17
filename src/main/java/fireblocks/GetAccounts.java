@@ -2,6 +2,7 @@ package fireblocks;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import tw.util.S;
 
 /** Works for prod and test. */
 public class GetAccounts {
@@ -10,12 +11,11 @@ public class GetAccounts {
 		Fireblocks.setVals();
 
 		//Fireblocks.get( "/v1/vault/accounts_paged");
-		//Fireblocks.get( "/v1/exchange_accounts");
-//		MyJsonArray ar = Fireblocks.getTransactions();
-//		ar.display();
+		Fireblocks.getVaultAccounts().display();
 		
-		MyJsonObject obj = Fireblocks.getTransaction( "ae6d1b87-7cf4-4589-99b5-a08ed5692a92"); 
-		obj.display();
+		// Fireblocks.getTransactions().display();
+		
+		//Fireblocks.getTransaction( "a769ace6-6c35-492d-96e4-8f5588c1ee87").display(); 
 //		displayLastTransaction();
 
 	}

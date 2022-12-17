@@ -13,6 +13,7 @@ import org.asynchttpclient.Response;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import positions.MoralisServer;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
@@ -51,10 +52,9 @@ public class Fireblocks {
 	 * @throws Exception */
 	public static void setVals() throws Exception {
 		Map<String, String> env = getEnv();
-//		env.put( "api_key", prodApi);
-//		env.put( "private_key", prodPk);
-//		rusdAddress = Rusd.prodAddr;
-//		platformBase = prodBase;
+		env.put( "api_key", prodApi);
+		env.put( "private_key", prodPk);
+		platformBase = prodBase;
 
 		env.put( "api_key", testApi);
 		env.put( "private_key", testPk);
@@ -290,20 +290,17 @@ public class Fireblocks {
 		String str = get( "/v1/transactions/" + id);
 		return toJsonObject( str);
 	}
-	
-	public static MyJsonObject deploy(String filename, String[] paramTypes, Object[] params, String note) throws Exception {
-		String data = new IStream(filename).readln();
-		return call( "0x0", data, paramTypes, params, note); 
-	}
 
-	/** @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not */
-	public static MyJsonObject call(String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	/** @param addr is the address of the contract for which you are calling a method
+	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
+	 *  @param params are appended to the call data */
+	public static MyJsonObject call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'CONTRACT_CALL'," + 
 				"'amount': '0'," + 
 				"'assetId': '%s'," + 
-				"'source': {'type': 'VAULT_ACCOUNT', 'id': '0'}," + 
+				"'source': {'type': 'VAULT_ACCOUNT', 'id': '%s'}," + 
 				"'destination': {" + 
 				"   'type': 'ONE_TIME_ADDRESS'," + 
 				"   'oneTimeAddress': {'address': '%s'}" + 
@@ -317,7 +314,7 @@ public class Fireblocks {
 		String fullCallData = callData + encodeParameters( paramTypes, params);  // call data + parameters 
 		
 		String body = toJson( 
-				String.format( bodyTemplate, Fireblocks.platformBase, addr, fullCallData, note) );  
+				String.format( bodyTemplate, Fireblocks.platformBase, fromAcct, addr, fullCallData, note) );  
 
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( "/v1/transactions");
@@ -332,7 +329,8 @@ public class Fireblocks {
 		return MyJsonObject.parse( str);
 	}
 	
-	String getAccounts() {
-		return get("/v1/exchange_accounts");
+	static MyJsonObject getVaultAccounts() throws Exception {
+		return toJsonObject( get("/v1/vault/accounts_paged") );
 	}
+	
 }

@@ -6,13 +6,16 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import tw.util.S;
+
 /** Array of object only. */
 public class MyJsonArray implements Iterable<MyJsonObject> { 
 	private JSONArray m_ar;
 	
 	public static void main(String[] args) throws ParseException {
-		MyJsonObject.parse( "{ \"a\":[ 4,5,6] }")
-			.display();
+		MyJsonObject.parse( "{ \"a\":[ 4,5,6], \"b\": { \"c\": 7 } }").display();
+		S.out( "-----");
+		MyJsonArray.parse( "[ 4,[5,6],7,{\"a\":8,\"b\":9},{\"a\":8,\"b\":9}]").display();
 	}
 	
 	public static MyJsonArray parse( String text) throws ParseException {

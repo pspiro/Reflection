@@ -48,47 +48,64 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 
 	public void display() {
 		display( m_obj, 0, false);
+		System.out.println();
 	}
 	
 //	@Override public String toString() {
 //		return super.toString();
 //	}
 	
-	public static void display(Object objIn, int level, boolean force) {
+	public static void display(Object objIn, int level, boolean arrayItem) {
 		if (objIn instanceof JSONObject) {
-			if (force) {
-				System.out.print( Util.tab( level) );
-			}
-			System.out.println( "{");
+//			if (arrayItem) {
+//				out( Util.tab( level) );
+//			}
+			out( "{\n");
 
 			JSONObject map = ((JSONObject)objIn);
 			
+			boolean first = true;
 			for (Object key : map.keySet() ) {
+				if (!first) {
+					out( ",\n");
+				}
 				Object val = map.get( key);
-				System.out.print( String.format( "%s%s : ", Util.tab( level+1), key) );
+				out( "%s%s : ", Util.tab( level+1), key);
 				display( val, level + 1, false);
-				System.out.println( ", ");  // leaves an extra , on the last one, not good
+				first = false;
 			}
-			System.out.print( Util.tab( level) + "}, ");
+			out( "\n%s%s", Util.tab(level), "}");
 		}
 		else if (objIn instanceof JSONArray) {
-			System.out.println( "[");
+			out( "[\n%s", Util.tab(level+1) );
 			
 			JSONArray ar = (JSONArray)objIn;
+			boolean first = true;
 			for (Object obj : ar) {
+				if (!first) {
+					out( ", ");
+				}
 				display( obj, level + 1, true);
+				first = false;
 			}
-			System.out.print( Util.tab(level) + "]");			
+			out( "\n%s%s", Util.tab(level), "]");			
 		}
 		else {
-			if (force) {
-				System.out.println( String.format( "%s%s,", Util.tab( level), objIn) );				
-			}
-			else {
-				System.out.print( objIn);
-			}
+			out( objIn);
 		}
 		
+	}
+	
+	static void out( String format, Object... params) {
+		System.out.print( String.format( format, params) );
+	}
+
+	static void out( Object str) {
+		System.out.print( str);
+	}
+
+	public boolean getBool(String key) {
+		return Boolean.parseBoolean( getString(key) );
 	}
 
 }
