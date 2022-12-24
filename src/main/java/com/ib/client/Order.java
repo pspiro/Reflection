@@ -227,6 +227,8 @@ public class Order {
     private double  m_midOffsetAtHalf;
 	private String m_cryptoId;
 	private String m_wallet;
+	private String m_stablecoinAddr;
+	private String m_stockTokenAddr;
 	
 	// getters
     public Action  action()                         { return Action.get(m_action); }
@@ -778,7 +780,9 @@ public class Order {
 		m_wallet = v;
 	}
 	
-	public String wallet() { return m_wallet; }
+	public String wallet() { 
+		return m_wallet; 
+	}
 
 	public String getOrderLog(Contract contract) {
 		return String.format( "wallet=%s  cryptoid=%s  %s",
@@ -788,6 +792,12 @@ public class Order {
 	public String getCheckLog(Contract contract) {
 		return String.format( "%s %s %s (%s) at %s",
 				m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
+	}
+	public String stablecoinAddr() {
+		return m_stablecoinAddr;
+	}
+	public String stockTokenAddr() {
+		return m_stockTokenAddr;
 	}
     
     

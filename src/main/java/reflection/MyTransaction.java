@@ -29,6 +29,7 @@ import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
+import fireblocks.Rusd;
 import tw.util.S;
 import util.LogType;
 
@@ -124,6 +125,9 @@ class MyTransaction {
 				break;
 			case order:
 				order( false);
+				break;
+			case order2:
+				order( false, true);
 				break;
 			case checkOrder:
 				order( true);
@@ -374,7 +378,7 @@ class MyTransaction {
 	}
 
 	/** Top-level method. */
-	void order(boolean whatIf) throws RefException {
+	void order(boolean whatIf, boolean fireblocks) throws RefException {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
@@ -426,6 +430,10 @@ class MyTransaction {
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
 		order.wallet( wallet);
+		
+		if (fireblocks) {
+			
+		}
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
@@ -501,13 +509,6 @@ class MyTransaction {
 	private void submitOrder( Contract contract, Order order) throws RefException {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
-		// simulated trading?
-		if (Main.simulated() ) {
-			shares.value = order.totalQuantity(); 
-			respondToOrder( order, shares, false, OrderStatus.Unknown);
-			return;
-		}
-		
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
@@ -561,45 +562,53 @@ class MyTransaction {
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized. */ 
 	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
-		if (!m_responded) {
-			if (timeout) {       // this really shouldn't happen; our timeout here should be less than the timeout of the IOC order
-				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
-				
-				if (!status.isComplete() && !status.isCanceled() ) {
-					S.out( "Canceling order %s", order.orderId() );
-					m_main.orderController().cancelOrder( order.orderId(), "", null);
-				}
-			}
-
+		if (m_responded) {
+			return;    // this happens when the timeout occurs after an order is filled, which is normal
+		}
+		
+		if (timeout) {       // this could happen if our timeout is lower than the timeout of the IOC order
+			log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
 			
-			if (shares.isZero() ) {
-				String msg = timeout ? "Order timed out" : "Reason unknown";
-				respond( code, RefCode.REJECTED, text, msg);
-				log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
-						order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
-			}
-			else {
-				LogType logType;
-
-				if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
-					logType = LogType.FILLED;
-					respond( code, RefCode.OK, "filled", shares);
-				}
-				else {
-					logType = LogType.PARTIAL_FILL;
-					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
-				}
-				
-				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
-				
-				transactFireblocks(order, shares);
+			if (!status.isComplete() && !status.isCanceled() ) {
+				S.out( "Canceling order %s", order.orderId() );
+				m_main.orderController().cancelOrder( order.orderId(), "", null);
 			}
 		}
-	}
-	
-	private void transactFireblocks(Order order, ModifiableDecimal shares) {
-		if (order.action() == Action.BUY) {
+
+		
+		if (shares.isZero() ) {
+			String msg = timeout ? "Order timed out" : "Reason unknown";
+			respond( code, RefCode.REJECTED, text, msg);
+			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
+					order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
+			return;
+		}
+//				LogType logType;
+//
+//				if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
+//					logType = LogType.FILLED;
+//					respond( code, RefCode.OK, "filled", shares);
+//				}
+//				else {
+//					logType = LogType.PARTIAL_FILL;
+//					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
+//				}
+//				
+//				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
 			
+
+		if (order.action() == Action.BUY) {
+			// for a filled order, the abs(order size - filled size) should always be <= .5
+			// if > .5, then it was a partial fill and we will use the filled size instead of the order size
+			// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
+
+			double qty = order.totalQuantity().toDouble() - shares.value.toDouble() > .5
+					? shares.value.toDouble()
+					: order.totalQuantity().toDouble();
+					
+			
+			double dollarAmt = qty * order.lmtPrice() + Main.m_config.buyCommission() + tds
+			Rusd.buyStock(order.wallet(), order.stablecoinAddr(), order.stockTokenAddr(), stablecoinAmt, qty);
 		}
 		else {
 			Fireblocks.rusdSell();

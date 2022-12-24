@@ -64,7 +64,7 @@ public class Rusd {
 	/** Buying stock with either BUSD OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD) */
-	static void buyStock(String userAddr, String stablecoinAddr, String stockTokenAddr, int stablecoinAmt, int stockTokenAmt) throws Exception {
+	public static void buyStock(String userAddr, String stablecoinAddr, String stockTokenAddr, int stablecoinAmt, int stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { userAddr, stablecoinAddr, stockTokenAddr, stablecoinAmt, stockTokenAmt };
 		
