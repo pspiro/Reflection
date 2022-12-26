@@ -11,12 +11,20 @@ import java.util.TimeZone;
 import org.json.simple.JSONObject;
 
 import com.ib.client.Decimal;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
 
 import tw.util.S;
 
 public class Util {
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
+	
+	static HttpHandler nullHandler = new HttpHandler() {
+		@Override public void handle(HttpExchange exch) throws IOException {
+		}
+	};
+	
 
 	public static void main(String[] args) throws RefException {
 		S.out( concatenate( ',', "a", "b") );
@@ -163,7 +171,7 @@ public class Util {
 		}
 	}
 
-	static String readResource(Class cls, String filename) throws IOException {
+	public static String readResource(Class cls, String filename) throws IOException {
         InputStream is = cls.getClassLoader().getResourceAsStream(filename);
         byte[] data = new byte[100];
         return new String( data, 0, is.read(data, 0, data.length) );

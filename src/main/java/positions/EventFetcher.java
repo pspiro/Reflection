@@ -6,11 +6,12 @@ import static positions.MoralisServer.transferTopic;
 
 import java.util.HashMap;
 
+import org.json.simple.JSONObject;
 import org.postgresql.util.PSQLException;
 
 import json.MyJsonAr;
 import json.MyJsonObject;
-import json.TypedJson;
+import json.StringJson;
 import reflection.MySqlConnection;
 import reflection.Util;
 import tw.google.NewSheet;
@@ -30,7 +31,7 @@ public class EventFetcher {
 	private final MoralisServer m_server; // not used? 
 	private int m_responsesReceived;
 	private final HashMap<String,Stock> m_stockMap; // keys are in lower case
-	private TypedJson<Balances> m_walletMap = new TypedJson<Balances>(); // map wallet to token balances
+	private JSONObject m_walletMap = new JSONObject(); // map wallet to token balances
 	
 	
 	public EventFetcher(MoralisServer moralisServer) throws Exception {
@@ -98,14 +99,14 @@ public class EventFetcher {
 
 	
 	/** Map conid to balance */
-	static class Balances extends TypedJson<Double> {
+	static class Balances extends JSONObject {
 		double getDouble(String token) {
-			Double val = get(token);
+			Double val = (Double)get(token);
 			return val != null ? val : 0;
 		}
 		
 		void increment( String token, double val) {
-			putt( token, getDouble( token) + val);
+			put( token, getDouble( token) + val);
 		}
 	}
 	
@@ -115,7 +116,7 @@ public class EventFetcher {
 	}
 	
 	private synchronized Balances getOrCreateBalances(String wallet) {
-		Balances balances = m_walletMap.get( wallet);
+		Balances balances = (Balances)m_walletMap.get( wallet);
 		if (balances == null) {
 			balances = new Balances();
 			m_walletMap.put( wallet, balances);
@@ -174,6 +175,6 @@ public class EventFetcher {
 	} 	
 
 	Balances getWalletBalances(String wallet) {
-		return m_walletMap.get( wallet);
+		return (Balances)m_walletMap.get( wallet);
 	}
 }
