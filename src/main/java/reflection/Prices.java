@@ -1,5 +1,6 @@
 package reflection;
 
+import java.util.Map;
 import java.util.Random;
 
 import com.ib.client.Decimal;
@@ -17,37 +18,22 @@ public class Prices {
 	private double m_ask;
 	private double m_last;
 	private double m_close;
-	private Decimal m_bidSize;  // not being used for anything
-	private Decimal m_askSize;
 
+	public Prices(Map<String, String> map) {
+		m_bid = getDouble(map, "bid");
+		m_ask = getDouble(map, "ask");
+		m_last = getDouble(map, "last");
+		m_close = getDouble(map, "close");
+	}
+	
+	double getDouble( Map<String, String> map, String key) {
+		String val = map.get(key);
+		return val != null ? Double.valueOf( val) : 0;
+	}
+	
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
 
-	public void tick(TickType tickType, double price, Decimal size) {
-		switch( tickType) {
-			case CLOSE:
-			case DELAYED_CLOSE:
-				m_close = price; break;
-			case LAST:
-			case DELAYED_LAST:
-				m_last = price; break;
-			case BID:
-			case DELAYED_BID:
-				m_bid = price; break;
-			case ASK:
-			case DELAYED_ASK:
-				m_ask = price; break;
-			case BID_SIZE:
-			case DELAYED_BID_SIZE:
-				m_bidSize = size; break;
-			case ASK_SIZE:
-			case DELAYED_ASK_SIZE:
-				m_askSize = size; break;
-		default:
-			// ignore
-		}
-	}
-	
 	/** No penny stocks */
 	boolean validBid() {
 		return m_bid >= 1;
@@ -56,11 +42,6 @@ public class Prices {
 	/** No penny stocks */
 	boolean validAsk() {
 		return m_ask >= 1;
-	}
-
-	public String getString() {
-		return String.format( "bid=%s bidSize=%s ask=%s askSize=%s", 
-				m_bid, m_bidSize, m_ask, m_askSize);
 	}
 
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
@@ -75,9 +56,7 @@ public class Prices {
 	}
 
 	public Json toJson(int conid) throws RefException {
-		Main.require( m_bidSize !=null && m_askSize != null, RefCode.INVALID_PRICE, "conid %s has null sizes", conid); 
-		return Util.toJsonMsg("bid", anyBid(), "bidSize", m_bidSize.toInteger(), "ask", anyAsk(), "askSize", m_askSize.toInteger() );
-//		return Util.toJsonMsg("bid", m_bid, "ask", m_ask);
+		return Util.toJsonMsg( "bid", anyBid(), "ask", anyAsk() );
 	}
 	
 	/** Used for display on the Watch List */
@@ -139,16 +118,8 @@ public class Prices {
 		m_ask *= adj2;
 	}
 
-	/** Called in simulated mode only. */
-	public void setInitialPrices() {
-		tick( TickType.BID, 53.14, null);
-		tick( TickType.ASK, 53.42, null);
-		tick( TickType.BID_SIZE, 0., Decimal.get( 100) );
-		tick( TickType.ASK_SIZE, 0., Decimal.get( 100) );
-	}
-
 	public void dump(int conid) {
-		S.out( "conid=%s  bid=%s  ask=%s  last=%s  close=%s  bidSize=%s  askSize=%s",
-				conid, m_bid, m_ask, m_last, m_close, m_bidSize, m_askSize);	
+		S.out( "conid=%s  bid=%s  ask=%s  last=%s  close=%s",
+				conid, m_bid, m_ask, m_last, m_close);	
 	}
 }

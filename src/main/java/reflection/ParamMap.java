@@ -14,7 +14,7 @@ public class ParamMap extends HashMap<String, String> {
 		return value != null ? value.toLowerCase().intern() : null;
 	}
 	
-	String getRequiredParam(String tag) throws RefException {
+	public String getRequiredParam(String tag) throws RefException {
 		String val = getParam( tag);
 		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
 		return val;

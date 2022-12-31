@@ -11,26 +11,24 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
-import com.ib.client.Decimal;
 import com.ib.client.Execution;
-import com.ib.client.MarketDataType;
 import com.ib.client.OrderState;
-import com.ib.client.TickAttrib;
-import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
-import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Fireblocks;
 import json.MyJsonObject;
+import json.StringJson;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import reflection.MyTransaction.JRun;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -38,10 +36,6 @@ import util.DateLogFile;
 import util.LogType;
 
 public class Main implements HttpHandler, ITradeReportHandler {
-	public enum Mode { 
-		paper, production;
-	}
-
 	enum Status { 
 		Connected, Disconnected 
 	};
@@ -49,12 +43,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
+	Jedis m_jedis;
 	
-	final HashMap<Integer,Prices> m_priceMap = new HashMap<Integer,Prices>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
-	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr();
-	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
 
 	// we assume that TWS is connected to IB at first but that could be wrong;
 	// is there some way to find out?
@@ -66,12 +59,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	JSONArray stocks() { return m_stocks; }
 	
-	private HttpHandler nullHandler = new HttpHandler() {
-		@Override public void handle(HttpExchange exch) throws IOException {
-			//S.out( "received null msg " + exch.getHttpContext().getPath() );
-		}
-	};
-
 	public static void main(String[] args) {
 		try {
 			Fireblocks.readKeys();
@@ -119,11 +106,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
 		S.out( "  done");
+		
+		S.out( "Connecting to redis server on %s port %s", m_config.redisHost(), m_config.redisPort() );
+		m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+		m_jedis.get( "test");
+		S.out( "  done");
 
 		S.out( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
-		server.createContext("/favicon", nullHandler); // ignore these requests
+		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -131,23 +123,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		// connect to TWS
 		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort() );
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
 	void refreshStockList() throws Exception {
-		mdController().cancelAllTopMktData();
 		m_stocks.clear();
-		m_priceMap.clear();
 		readStockListFromSheet();
-		requestPrices();
 	}
 
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
-			JSONObject obj = new JSONObject();
+			StringJson obj = new StringJson();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
 				String exch = row.getValue("Exchange");
@@ -172,9 +160,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		private int m_port;
 		private int m_clientId;
 		private Timer m_timer;
-		private boolean m_recNextValidId;
-		private boolean m_requestedPrices;
-		private boolean m_failed;  // if we failed to connect, then when we do connect TWS might not really be ready, so wait a while
 		private boolean m_ibConnection;
 		private final LogType m_logType;
 		private final ApiController m_controller = new ApiController( this, null, null);
@@ -203,8 +188,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		synchronized void startTimer() {
 			if (m_timer == null) {
-				m_failed = false;
-				
 				m_timer = new Timer();
 				m_timer.schedule(new TimerTask() {
 					@Override public void run() {
@@ -251,14 +234,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
 			log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
-			m_recNextValidId = true;
 		}
 
 		@Override public synchronized void onDisconnected() {
 			if (m_timer == null) {
 				log( m_logType, "Disconnected from TWS");
-				m_priceMap.clear();  // clear out all market data since those prices are now stale
-				m_requestedPrices = false;
 				startTimer();
 			}
 		}
@@ -307,35 +287,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 	
-	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr() {
-			super( LogType.MD_CONNECTION);
-		}
-		
-		@Override public void onConnected() {
-			super.onConnected();
-
-			try {  // this doesn't work, even if you pause, which means TWS must send something out before getting here. pas
-//				requestPrices();
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
-		@Override public synchronized void onRecNextValidId(int id) {
-			super.onRecNextValidId(id);  // we don't get this after a disconnect/reconnect, so in that case you should use onConnected()
-			
-			try {
-				requestPrices();
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
 	/** Handle HTTP msg */
 	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
 		new MyTransaction( this, exch).handle();
@@ -351,52 +302,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 	
-	private Prices getOrCreatePrices( int conid) {
-		Prices prices = m_priceMap.get( conid);
-		if (prices == null) {
-			prices = new Prices();
-			m_priceMap.put( conid, prices);
-		}
-		return prices;
-	}
-
-	/** Might need to sync this with other API calls.  */
-	private void requestPrices() throws Exception {
-		S.out( "requesting prices");
-
-		if (m_config.mode() == Mode.paper) {
-			mdController().reqMktDataType(MarketDataType.DELAYED);
-		}
-
-		for (Object obj : m_stocks) {
-			JSONObject stock = (JSONObject)obj;  
-			int conid = Integer.valueOf( stock.get("conid").toString() );
-			String exchange = stock.get("exchange").toString();
-
-			final Contract contract = new Contract();
-			contract.conid( conid);
-			contract.exchange( exchange);
-
-			final Prices c = getOrCreatePrices( conid);
-			
-			// simulation mode?
-			if (simulated() ) {
-				c.setInitialPrices();
-				continue;
-			}
-
-			// you could have the prices flow directly into the Prices Object
-			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
-				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-					c.tick(tickType, price, null);
-				}
-				@Override public void tickSize(TickType tickType, Decimal size) {
-					c.tick(tickType, 0.0, size);
-				}
-			});
-		}
-	}
-
 	/** Write to the log file. Don't throw any exception. */
 	
 	static void log( LogType type, String text, Object... params) {
@@ -484,16 +389,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return m_orderConnMgr.controller();
 	}
 
-	public ApiController mdController() {
-		return m_mdConnMgr.controller();
-	}
-
 	public ConnectionMgr orderConnMgr() {
 		return m_orderConnMgr;
-	}
-
-	public ConnectionMgr mdConnMgr() {
-		return m_mdConnMgr;
 	}
 
 	public String tabName() {
@@ -501,16 +398,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	void dump() {
-		S.out( "-----Dump: Prices-----");
-		for (Integer conid : m_priceMap.keySet() ) {
-			Prices prices = m_priceMap.get( conid);
-			prices.dump(conid);
-		}
 		S.out( "-----Dump: Stocks-----");
 		MyJsonObject.display( m_stocks, 0, false);
 		//S.out( m_stocks);
-		
-		m_mdConnMgr.dump();
+	}
+	
+	/** Performs a Redis query wrapped in a pipeline. */
+	void jquery(JRun run) { // move into main or MyJedis
+		Pipeline p = m_jedis.pipelined();
+		run.run(p);
+		p.sync();
 	}
 	
 }

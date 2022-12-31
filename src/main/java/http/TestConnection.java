@@ -1,5 +1,6 @@
 package http;
 
+import java.net.Socket;
 import java.util.Map;
 
 import reflection.MySqlConnection;
@@ -25,9 +26,13 @@ public class TestConnection {
 		trans.showAll();
 		
 		ParamMap map = trans.getMap();
-		String msg = map.get("msg");
+		String msg = map.getRequiredParam("msg");
 		
 		switch(msg) {
+			case "testredis":
+				testredis( trans, map);
+				break;
+				
 			case "testdb":
 				testdb( trans, map);
 				break;
@@ -37,19 +42,32 @@ public class TestConnection {
 				break;
 
 			default:
-				trans.respond( "supported msg types: testdb (url,user,pw), testip (host,port,GET/POST,cmd)");
+				trans.respond( "supported msg types: testdb (host,port,db,user,pw), testip (host,port,GET/POST,cmd)");
 		}
 	}
 
 	private static void testdb(SimpleTransaction trans, ParamMap map) throws Exception {
-		String url = map.get("url");
-		String user = map.get("user");
-		String pw = map.get("pw");
-		
+		String host = map.getRequiredParam("host");
+		String port = map.getRequiredParam("port");
+		String db = map.getRequiredParam("db");
+		String user = map.getRequiredParam("user");
+		String pw = map.getRequiredParam("pw");
+
 		MySqlConnection conn = new MySqlConnection();
-		conn.connect( url, user, pw);
+		conn.connect( host, port, db, user, pw);
 
 		trans.respond( "Connected");
+	}
+
+	private static void testredis(SimpleTransaction trans, ParamMap map) throws Exception {
+		String host = map.getRequiredParam("host");
+
+		Socket socket = new Socket( host, 6379);
+		socket.getOutputStream().write( "PING\n".getBytes() );
+		
+		byte[] ar = new byte[1024];
+		socket.getInputStream().read(ar);
+		trans.respond( new String(ar) );
 	}
 
 	private static void testip(SimpleTransaction trans, ParamMap map) throws Exception {

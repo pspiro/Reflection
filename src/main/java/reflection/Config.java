@@ -3,11 +3,7 @@ package reflection;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Map.Entry;
 
-import org.json.simple.JSONObject;
-
-import reflection.Main.Mode;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -52,7 +48,12 @@ public class Config {
 	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
 	private String backendConfigTab;
+	private String redisHost;
+	private int redisPort;
 	
+	public String redisHost() { return redisHost; }
+	public int redisPort() { return redisPort; }
+
 	public double maxBuyAmt() { return maxBuyAmt; }
 	public double maxSellAmt() { return maxSellAmt; }
 	public double minSellSpread() { return minSellSpread; }
@@ -111,6 +112,8 @@ public class Config {
 		this.timeout = tab.getInt( "timeout");
 		this.symbolsTab = tab.get( "symbolsTab");
 		this.backendConfigTab = tab.get( "backendConfigTab");
+		this.redisHost = tab.get( "redisHost");
+		this.redisPort = tab.getInt( "redisPort");
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -122,6 +125,7 @@ public class Config {
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( symbolsTab), "symbolsTab" );
+		require( S.isNotNull( this.redisHost), "redisHost is missing" );
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {
