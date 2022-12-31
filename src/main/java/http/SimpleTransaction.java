@@ -18,7 +18,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import json.MyJsonObject;
-import json.TypedJson;
+import json.StringJson;
 import reflection.Main;
 import reflection.ParamMap;
 import reflection.RefCode;
@@ -29,6 +29,8 @@ public class SimpleTransaction {
 	public interface MyHttpHandler {
 		void handle( SimpleTransaction trans);
 	}
+	
+	public static MyHttpHandler nullHandler = trans -> {};
 	
 	private HttpExchange m_exchange;
 	
@@ -159,8 +161,8 @@ public class SimpleTransaction {
 	}
 
 	public void respondJson(String tag, String val) {
-		TypedJson<String> obj = new TypedJson<String>();
-		obj.putt( tag, val);
+		StringJson obj = new StringJson();
+		obj.put( tag, val);
 		respond( obj.toString() );
 	}
 

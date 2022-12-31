@@ -7,8 +7,10 @@ import static reflection.Util.inside;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -28,7 +30,9 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
-import reflection.Main.Mode;
+import json.StringJson;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 import tw.util.S;
 import util.LogType;
 
@@ -178,7 +182,6 @@ class MyTransaction {
 	private void disconnect() {
 		S.out( "simulating disconnecting");
 		m_main.orderConnMgr().disconnect();
-		m_main.mdConnMgr().disconnect();
 		respond( code, RefCode.OK);
 	}
 
@@ -219,9 +222,7 @@ class MyTransaction {
 	private void getConnStatus() {
 		S.out( "Sending connection status");
 		respond( "orderConnectedToTWS", m_main.orderController().isConnected(), 
-				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection(),
-				 "mktDataConnectedToTWS", m_main.mdController().isConnected(), 
-				 "mktDataConnectedToBroker", m_main.mdConnMgr().ibConnection() );
+				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection() );
 	}
 
 	/** Top-level message handler */ 
@@ -330,45 +331,71 @@ class MyTransaction {
 	}
 	
 	/** Top-level method. */
+	// remove this. pas
 	private void getPrice() throws RefException {
-		require( m_main.mdController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-
 		int conid = m_map.getRequiredInt( "conid");
-
-		Prices prices = m_main.m_priceMap.get( conid);
-		require(prices != null && prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
+		
+		Prices prices = getPrices( conid);
+		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
 		respond( prices.toJson(conid) );
 	}
+
+	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
+	private Prices getPrices(int conid) {
+		Map<String, String> ps = m_main.m_jedis.hgetAll( String.valueOf(conid) );
+		return new Prices( ps);
+	}
+	
+	static class PriceQuery {
+		private int conid;
+		private Response<Map<String, String>> res;
+
+		public PriceQuery(Pipeline p, int conid) {
+			this.conid = conid;
+			res = p.hgetAll("" + conid);
+		}
+
+		public Prices getPrices() {
+			return new Prices(res.get() );
+		}
+	}
+
+	interface JRun {
+		public void run(Pipeline p);
+	}
+	
+	
 	
 	/** Top-level method. */
 	private void getAllPrices() throws RefException {
-		require( m_main.mdController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-		require( !m_main.m_priceMap.keySet().isEmpty(), RefCode.NO_PRICES, "There are no prices available.");
-		
 		S.out( "Returning all prices");
-		
-		JSONObject whole = new JSONObject();
-		
-		for (Integer conid : m_main.m_priceMap.keySet() ) {
-			Prices prices = m_main.m_priceMap.get(conid);
-			if (prices.hasAnyPrice() ) {
-				if (Main.simulated() ) {
-					prices.adjustPrices();
-				}
 
-				JSONObject single = new JSONObject();
-				single.put( "bid", round( prices.anyBid() ) );
-				single.put( "ask", round( prices.anyAsk() ) );
-
-				whole.put( String.valueOf( conid), single); 
+		// send a single query to Redis for the prices
+		ArrayList<PriceQuery> list = new ArrayList<PriceQuery>(); 
+		m_main.jquery( pipeline -> {
+			for (Object obj : m_main.stocks() ) {
+				StringJson stk = (StringJson)obj;
+				list.add( new PriceQuery(pipeline, stk.getInt("conid") ) );
 			}
-		}
+		});
 
+		// build the json response
+		JSONObject whole = new JSONObject();
+		for (PriceQuery q : list) {
+			Prices prices = q.getPrices();
+
+			JSONObject single = new JSONObject();
+			single.put( "bid", round( prices.anyBid() ) );
+			single.put( "ask", round( prices.anyAsk() ) );
+			whole.put( "" + q.conid, single);
+		}
+		
 		respond( new Json( whole) );
 	}
 
+	/** this seems useless since you can still be left with .000001 */
 	private double round(double val) {
 		return Math.round( val * 100) / 100.;
 	}
@@ -440,8 +467,7 @@ class MyTransaction {
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 
 				// explain why there are no prices which should never happen otherwise
-				Prices prices = m_main.m_priceMap.get( contract.conid() );
-				require( prices != null, RefCode.REJECTED, "Prices are not available");
+				Prices prices = getPrices( contract.conid() );
 				prices.checkOrderPrice( order, orderPrice, Main.m_config);
 				
 				// if the user submitted a fractional quantity and it got rounded down to zero, approve the transaction
