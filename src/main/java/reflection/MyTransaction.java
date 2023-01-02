@@ -353,6 +353,7 @@ class MyTransaction {
 		return new Prices( ps);
 	}
 	
+	/** Used to query prices from Redis. */
 	static class PriceQuery {
 		private int conid;
 		private Response<Map<String, String>> res;
@@ -414,14 +415,13 @@ class MyTransaction {
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
 
 		String side = m_map.getRequiredParam( "side");
-		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "side must be 'buy' or 'sell'");
+		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
-		double dblQty = m_map.getRequiredDouble( "quantity");
-		require( dblQty > 0.0, RefCode.INVALID_REQUEST, "quantity must be positive");
-		int quantity = (int)Math.round( dblQty);
+		double quantity = m_map.getRequiredDouble( "quantity");
+		require( quantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
 		
 		double price = m_map.getRequiredDouble( "price");
-		require( price > 0, RefCode.INVALID_REQUEST, "price must be positive");
+		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
 		double amt = price * quantity;
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
@@ -450,7 +450,7 @@ class MyTransaction {
 
 		Order order = new Order();
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
-		order.totalQuantity( Decimal.get( quantity) );
+		order.totalQuantity( quantity);
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
 		order.whatIf( whatIf);
@@ -458,10 +458,6 @@ class MyTransaction {
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
 		order.walletAddr( wallet);
-		
-		if (fireblocks) {
-			
-		}
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
@@ -479,17 +475,26 @@ class MyTransaction {
 				Prices prices = getPrices( contract.conid() );
 				prices.checkOrderPrice( order, orderPrice, Main.m_config);
 				
-				// if the user submitted a fractional quantity and it got rounded down to zero, approve the transaction
-				if (quantity == 0) {
-					respond( code, RefCode.OK);
-				}
-				else if (whatIf) {
+				// if the user submitted an order for < .5 shares, we round to zero so no order is placed
+				if (whatIf) {
+					// for what-if, submit it with at least qty of 1 to make sure it is a valid order 
+					if (order.roundedQty() == 0) {
+						order.totalQuantity(1);
+					}
+					
 					log( LogType.CHECK, order.getCheckLog(contract) );
-					submitWhatIf(  contract, order);
+					submitWhatIf( contract, order);
 				}
 				else {
 					log( LogType.ORDER, order.getOrderLog(contract) );
-					submitOrder(  contract, order);
+
+					// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas 
+					if (order.roundedQty() == 0) {
+						respondToOrder(order, 0, false, OrderStatus.Filled, fireblocks);
+					}
+					else {
+						submitOrder(  contract, order, fireblocks);
+					}
 				}
 			});
 		});
@@ -533,7 +538,7 @@ class MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "checkorder timed out") );
 	}
 
-	private void submitOrder( Contract contract, Order order) throws RefException {
+	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws RefException {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
@@ -544,12 +549,12 @@ class MyTransaction {
 					S.out( "  order status  id=%s  status=%s", order.orderId(), status);
 	
 					// save the number of shares filled
-					shares.value = filled;
+					shares.value = filled.toDouble();
 					
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 					
 					if (status.isComplete() ) {
-						respondToOrder( order, shares, false, status);
+						respondToOrder( order, shares.value(), false, status, fireblocks);
 					}
 				});
 			}
@@ -583,75 +588,107 @@ class MyTransaction {
 		
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( Main.m_config.orderTimeout(), () -> respondToOrder( order, shares, true, OrderStatus.Unknown) );
+		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown, fireblocks) );
+	}
+	
+	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status, boolean fireblocks) throws Exception {
+		// this could happen if our timeout is lower than the timeout of the IOC order,
+		// which should never be the case
+		if (!m_responded) {
+			log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), filledShares, status);
+
+			// if order is still live, cancel the order 
+			if (!status.isComplete() && !status.isCanceled() ) {
+				S.out( "Canceling order %s on timeout", order.orderId() );
+				m_main.orderController().cancelOrder( order.orderId(), "", null);
+			}
+	
+			respondToOrder( order, filledShares, true, status, fireblocks);
+		}
 	}
 	
 	/** This is called when order status is "complete" or when timeout occurs.
-	 *  Access to m_responded is synchronized. */ 
-	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) throws Exception {
+	 *  Access to m_responded is synchronized.
+	 *  In the case where order qty < .5 and we didn't submit an order,
+	 *  orderStatus will be Filled. */ 
+	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status, boolean fireblocks) throws Exception {
 		if (m_responded) {
 			return;    // this happens when the timeout occurs after an order is filled, which is normal
 		}
 		
-		if (timeout) {       // this could happen if our timeout is lower than the timeout of the IOC order
-			log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
-			
-			if (!status.isComplete() && !status.isCanceled() ) {
-				S.out( "Canceling order %s", order.orderId() );
-				m_main.orderController().cancelOrder( order.orderId(), "", null);
-			}
-		}
-		
-		if (shares.isZero() ) {
-			String msg = timeout ? "Order timed out" : "Reason unknown";
+		// no shares filled and order size >= .5?
+		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
+			String msg = timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.";
 			respond( code, RefCode.REJECTED, text, msg);
 			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
-					order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
+					order.orderId(), order.cryptoId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
 		}
 
-		double stockQty; 
+		double stockQty;  // quantity of stock tokens to swap
 		LogType logType;
 		RefCode refCode;
+		double tds = 0;
+		String hash = "";
 
 		// for a filled order, the (order size - filled size) should always be <= .5
 		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
 		// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
-		if (order.totalQuantity().toDouble() - shares.value.toDouble() > .5001) {
-			stockQty = shares.value.toDouble();
+		if (order.totalQuantity() - filledShares > .5001) {
+			stockQty = filledShares;
 			logType = LogType.PARTIAL_FILL;
 			refCode = RefCode.PARTIAL_FILL;
 		}
 		else {
-			stockQty = order.totalQuantity().toDouble();
+			stockQty = order.totalQuantity();
 			logType = LogType.FILLED;
 			refCode = RefCode.OK;
 		}
 		
-		String id;
-		double tds = 0;
-		
-		if (order.action() == Action.BUY) {
-			double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
-			id = Rusd.buyStock(order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
-					order.stockTokenAddr(), stockQty);
+		if (fireblocks) {
+			try {
+				String id;
+				
+				if (order.action() == Action.BUY) {
+					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
+					id = Rusd.buyStock(order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
+							order.stockTokenAddr(), stockQty);
+				}
+				else {
+					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
+					tds = .01 * preAmt;
+					double stablecoinAmt = preAmt - tds;  
+					id = Rusd.sellStock(order.walletAddr(), Rusd.rusdAddr, stablecoinAmt,
+							order.stockTokenAddr(), stockQty);
+				}
+				
+				// it would be better if we could send back the response in two blocks, one
+				// when the order fills and one when the blockchain transaction is completed
+				
+				// wait for the transaction to be signed
+				hash = Deploy.getTransHash(id, 60);  // do we really need to wait this long? pas
+				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				log( LogType.ERROR, "Fireblocks failed for order %i - %s", order.orderId(), e.getMessage() );
+				respond( code, RefCode.BLOCKCHAIN_FAILED, text, "Blockchain transaction failed; please try again");
+				unwindOrder(order);
+				return;
+			}
 		}
-		else {
-			double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
-			tds = .01 * preAmt;
-			double stablecoinAmt = preAmt - tds;  
-			id = Rusd.sellStock(order.walletAddr(), Rusd.rusdAddr, stablecoinAmt,
-					order.stockTokenAddr(), stockQty);
-		}
-		
-		String hash = Deploy.getTransHash(id);
-		
-		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
-				order.orderId(), order.cryptoId(), order.action(), order.totalQuantity(), 
-				shares, order.lmtPrice(), 
-				Main.m_config.commission(), tds, hash);
 
-		respond( code, refCode, "filled", shares);
+		respond( code, refCode, "filled", stockQty);
+
+		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
+				order.orderId(), order.cryptoId(), order.action(), order.totalQty(), 
+				S.fmt3(filledShares), order.lmtPrice(), 
+				Main.m_config.commission(), tds, hash);
+	}
+	
+	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
+	private void unwindOrder(Order order) {
+		// send an alert to the operator to manually unwind the order for now. pas
 	}
 
 	synchronized boolean respond( Object...data) {
@@ -725,19 +762,28 @@ class MyTransaction {
 	}
 
 	static class ModifiableDecimal {
-		Decimal value = Decimal.ZERO;
+		private double value = 0;
 
-		@Override public String toString() { return value.toString(); }
+		@Override public String toString() { 
+			return S.fmt3(value);
+		}
 		
+		public double value() {
+			return this.value;
+		}
+
 		boolean isZero() {
-			return !nonZero();
+			return value == 0;
 		}
 		
 		boolean nonZero() {
-			return Decimal.isValidNotZeroValue(value);
+			return value != 0;
 		}
 	};
 	
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
+// add tests for partial fill, no fill, and order size < .5
+// confirm that TWS does not accept fractional shares
+// test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill

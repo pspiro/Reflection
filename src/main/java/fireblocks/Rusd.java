@@ -142,7 +142,7 @@ public class Rusd {
 		return timesPower( stablecoinAmt, getStablecoinMultiplier( stablecoinAddr) ); 
 	}
 
-	/** Return amt rounded to two decimals * 10^power */
+	/** Return amt rounded to three decimals * 10^power */
 	private static BigInteger timesPower(double amt, int power) {
 		return new BigDecimal( S.fmt3( amt) )
 				.multiply( ten.pow( power) )

@@ -48,6 +48,7 @@ public class Decimal implements Comparable<Decimal>{
         return result;
     }
     
+    /** Rounds to 3 decimal places. */
     public static final Decimal get(final double v) {
         Decimal result;
         if (v == Double.MAX_VALUE) {
@@ -58,7 +59,7 @@ public class Decimal implements Comparable<Decimal>{
             result = NaN;
         } else {
             DecimalFormat df = new DecimalFormat("#");
-            df.setMaximumFractionDigits(16);
+            df.setMaximumFractionDigits(3);  // changed from 16
             result = Decimal.parse(df.format(v));
         }
         return result;

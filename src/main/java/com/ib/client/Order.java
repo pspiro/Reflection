@@ -17,6 +17,8 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.client.Types.TriggerMethod;
 import com.ib.client.Types.VolatilityType;
 
+import tw.util.S;
+
 public class Order {
     final public static int 	CUSTOMER = 0;
     final public static int 	FIRM = 1;
@@ -41,7 +43,7 @@ public class Order {
 
     // primary attributes
     private String      m_action = "BUY";
-    private Decimal     m_totalQuantity = Decimal.INVALID;
+    private double      m_totalQuantity;
     private int         m_displaySize;
     private String      m_orderType = "LMT";
     private double      m_lmtPrice = Double.MAX_VALUE;
@@ -279,7 +281,7 @@ public class Order {
     public int scaleInitPosition()                  { return m_scaleInitPosition; }
     public int scalePriceAdjustInterval()           { return m_scalePriceAdjustInterval; }
     public int scaleSubsLevelSize()                 { return m_scaleSubsLevelSize; }
-    public Decimal totalQuantity()                  { return m_totalQuantity; }
+    public double totalQuantity()                   { return m_totalQuantity; }
     public int permId()                             { return m_permId; }
     public Method faMethod()                        { return Method.get(m_faMethod); }
     public String getFaMethod()                     { return m_faMethod; }
@@ -463,7 +465,7 @@ public class Order {
     public void sweepToFill(boolean v)                                  { m_sweepToFill = v; }
     public void tif(TimeInForce v)                                      { m_tif = ( v == null ) ? null : v.getApiString(); }
     public void tif(String v)                                           { m_tif = v; }
-    public void totalQuantity(Decimal v)                                { m_totalQuantity = v; }
+    public void totalQuantity(double v)                                 { m_totalQuantity = v; }
     public void trailingPercent(double v)                               { m_trailingPercent = v; }
     public void trailStopPrice(double v)                                { m_trailStopPrice = v; }
     public void transmit(boolean v)                                     { m_transmit = v; }
@@ -784,13 +786,15 @@ public class Order {
 		return m_walletAddr; 
 	}
 
+	/** Log entry for order. */
 	public String getOrderLog(Contract contract) {
 		return String.format( "wallet=%s  cryptoid=%s  %s",
 				m_walletAddr, m_cryptoId, getCheckLog(contract) );
 	}
 
+	/** Log entry for order or what-if. */
 	public String getCheckLog(Contract contract) {
-		return String.format( "%s %s %s (%s) at %s",
+		return String.format( "%s %.3f %s (%s) at %.2f",
 				m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
 	}
 	public String stablecoinAddr() {
@@ -799,7 +803,14 @@ public class Order {
 	public String stockTokenAddr() {
 		return m_stockTokenAddr;
 	}
-    
-    
+	
+	/** Return totalQuantity rounded to three decimal places. */
+    public String totalQty() { 
+    	return S.fmt3(m_totalQuantity); 
+    }
+	
+    public int roundedQty() {
+		return (int)Math.round(m_totalQuantity + .0001);  // add a bit so that 4.99999 rounds to 1
+	}
 
 }

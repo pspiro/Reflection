@@ -83,7 +83,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.buyStock(Rusd.userAddr, Rusd.busdAddr, amt, ge, 4.5);
 		Fireblocks.getTransaction( id2).display("buy stock with BUSD");
 		
-		assertEquals( 66, Deploy.getTransHash(id2).length() );
+		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
 	}
 
 	public void testBuyStockWithRusd() throws Exception {
@@ -93,7 +93,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.buyStock(Rusd.userAddr, Rusd.rusdAddr, 3.0, ge, 4.5);
 		Fireblocks.getTransaction( id2).display("buy stock with RUSD");
 
-		assertEquals( 66, Deploy.getTransHash(id2).length() );
+		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
 	}
 
 	public void testSellStock() throws Exception {
@@ -103,7 +103,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.sellStock(Rusd.userAddr, Rusd.rusdAddr, 99.991, ge, 4.555);
 		Fireblocks.getTransaction(id2).display("sell stock for RUSD");
 
-		assertEquals( 66, Deploy.getTransHash(id2).length() );
+		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
 	}
 
 

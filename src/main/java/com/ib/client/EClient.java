@@ -10,6 +10,8 @@ import java.util.List;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.WhatToShow;
 
+import tw.util.S;
+
 public abstract class EClient {
 
     // Client version history
@@ -1747,9 +1749,9 @@ public abstract class EClient {
             b.send( order.getAction());
             
 			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
-				b.send(order.totalQuantity().toString());
+				b.send( order.totalQty() );
 			else
-				b.send((int) order.totalQuantity().longValue());
+				b.send( order.roundedQty() );  // rounded to nearest int
             
 			b.send( order.getOrderType());
             if (m_serverVersion < MIN_SERVER_VER_ORDER_COMBO_LEGS_PRICE) {

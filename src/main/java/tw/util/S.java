@@ -41,8 +41,9 @@ import tw.grep.FileProcessor;
 
 public class S {
 	public static Format PRICE = new DecimalFormat( "$#,##0.00");
-	public static Format FMT3 = new DecimalFormat( "0.00");
-	public static Format FMT2 = new DecimalFormat( "#,##0.00");
+	public static Format FMT2D = new DecimalFormat( "0.00");  // two dec.
+	public static Format FMT3 = new DecimalFormat( "0.0##");  // up to 3 dec
+	public static Format FMT2DC = new DecimalFormat( "#,##0.00");  // two dec. plus comma
 	public static Format FMT0 = new DecimalFormat( "#,##0");
 	public static Format FMTPCT = new DecimalFormat( "0.0%");
 	public static Format USER_DATE = new SimpleDateFormat( "MM/dd/yy"); // see DateFormatSymbols class
@@ -161,6 +162,7 @@ public class S {
 		return String.format( notNull( string), params);
 	}
 
+	/** Double get two decimal places. */
 	public static void out( String str, Object... params) {
 		out( format( str, params) );
 	}
@@ -397,12 +399,17 @@ public class S {
 
 	/** Format with comma and two decimals. */
 	public static String fmt2( double v) { 
-		return v == Double.MAX_VALUE ? NONE : FMT2.format( v); 
+		return v == Double.MAX_VALUE ? NONE : FMT2DC.format( v); 
+	}
+	
+	/** Format with 1-3 decimals, no comma */
+	public static String fmt3( double v) { 
+		return FMT3.format( v); 
 	}
 	
 	/** Format with two decimals, no comma. */
-	public static String fmt3( double v) { 
-		return FMT3.format( v); 
+	public static String fmt2d( double v) { 
+		return FMT2D.format( v); 
 	}
 	
 	/** Format with comma. */
@@ -410,6 +417,7 @@ public class S {
 		return v == Integer.MAX_VALUE ? NONE : FMT0.format( v); 
 	}
 	
+	/** Format with no decimals (rounded to int). */
 	public static String fmt0( double v) { 
 		return FMT0.format( v); 
 	}
@@ -785,12 +793,7 @@ public class S {
 	}
 	
 	public static void main(String[] args) {
-		try {
-			S.out( right( "abcde", 2) );
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		S.out( String.format( "%s", Math.round(.499999999999999) ) );
 	}
 
 	public static void pressEnter() {

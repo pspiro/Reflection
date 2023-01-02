@@ -338,7 +338,7 @@ class NcTransaction {
 
 		Order order = new Order();
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
-		order.totalQuantity( Decimal.get( quantity) );
+		order.totalQuantity( quantity);
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
 		order.whatIf( whatIf);
@@ -439,7 +439,7 @@ class NcTransaction {
 					S.out( "  order status  id=%s  status=%s", order.orderId(), status);
 	
 					// save the number of shares filled
-					shares.value = filled;
+					shares.value = filled.toDouble();
 					
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 					
@@ -484,38 +484,6 @@ class NcTransaction {
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized. */ 
 	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
-		if (!m_responded) {
-			if (timeout) {
-				log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), shares, status);
-				
-				if (!status.isComplete() && !status.isCanceled() ) {
-					S.out( "Canceling order %s", order.orderId() );
-					m_main.cancelOrder( order.orderId(), "", null);
-				}
-			}
-
-			
-			if (shares.isZero() ) {
-				String msg = timeout ? "Order timed out" : "Reason unknown";
-				respond( code, RefCode.REJECTED, text, msg);
-				log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
-						order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
-			}
-			else {
-				LogType logType;
-
-				if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
-					logType = LogType.FILLED;
-					respond( code, RefCode.OK, "filled", shares);
-				}
-				else {
-					logType = LogType.PARTIAL_FILL;
-					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
-				}
-				
-				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
-			}
-		}
 	}
 	
 	synchronized boolean respond( Object...data) {
@@ -589,16 +557,19 @@ class NcTransaction {
 	}
 
 	static class ModifiableDecimal {
-		Decimal value = Decimal.ZERO;
+		double value = 0;
 
-		@Override public String toString() { return value.toString(); }
+		/** Return value w/ 3 decimal places. */
+		@Override public String toString() {  // when is this called?  
+			return S.fmt3(value); 
+		}
 		
 		boolean isZero() {
 			return !nonZero();
 		}
 		
 		boolean nonZero() {
-			return Decimal.isValidNotZeroValue(value);
+			return value != 0;
 		}
 	};
 	

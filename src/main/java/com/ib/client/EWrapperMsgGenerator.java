@@ -718,7 +718,7 @@ public class EWrapperMsgGenerator {
             boolean isOpenOrder) {
         Util.appendValidIntValue(sb, "orderId", orderId);
         Util.appendNonEmptyString(sb, "action", order.getAction());
-        Util.appendNonEmptyString(sb, "quantity", order.totalQuantity().toString());
+        Util.appendNonEmptyString(sb, "quantity", order.totalQty() );
         Util.appendPositiveDoubleValue(sb, "cashQty", order.cashQty());
         Util.appendPositiveIntValue(sb, "conid", contract.conid());
         Util.appendNonEmptyString(sb, "symbol", contract.symbol());

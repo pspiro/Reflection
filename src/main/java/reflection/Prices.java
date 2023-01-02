@@ -100,7 +100,7 @@ public class Prices {
 
 	/** Return midpoint formatted w/ two decimal places. */
 	public String midpointStr() {
-		return S.fmt3( midpoint() );
+		return S.fmt2d( midpoint() );
 	}
 
 

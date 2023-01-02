@@ -35,7 +35,7 @@ public class Deploy {
 		S.out( "  fireblocks id is %s", id);
 
 		S.out( "  waiting for blockchain transaction hash");
-		String txHash = getTransHash( id);
+		String txHash = getTransHash( id, 60);
 		S.out( "  blockchain transaction hash is %s", txHash);
 
 		S.out( "  waiting for deployed address");
@@ -44,8 +44,8 @@ public class Deploy {
 	
 	/** Query the transaction from Fireblocks until it contains the txHash value
 	 *  which is the blockchain transaction has; takes about 13 seconds. */
-	public static String getTransHash(String fireblocksId) throws Exception {
-		for (int i = 0; i < 5*60; i++) {
+	public static String getTransHash(String fireblocksId, int sec) throws Exception {
+		for (int i = 0; i < sec; i++) {
 			if (i > 0) S.sleep(1000);
 			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
 			S.out( "  status: %s  hash: %s", trans.getString("status"), trans.getString("txHash") );

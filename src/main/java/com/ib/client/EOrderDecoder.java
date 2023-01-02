@@ -56,7 +56,7 @@ public class EOrderDecoder {
     }
 
     public void readTotalQuantity() throws IOException {
-        m_order.totalQuantity(m_eDecoder.readDecimal());
+        m_order.totalQuantity(m_eDecoder.readDecimal().toDouble());
     }
 
     public void readOrderType() throws IOException {

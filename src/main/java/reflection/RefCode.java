@@ -14,4 +14,5 @@ public enum RefCode {
 	ORDER_TOO_LARGE,	// dollar amt is too high as per config settings
 	PARTIAL_FILL,		// order was partially filled
 	MISSING_ENV_VAR,
+	BLOCKCHAIN_FAILED,
 }
