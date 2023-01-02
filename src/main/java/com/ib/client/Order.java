@@ -226,7 +226,7 @@ public class Order {
     private double  m_midOffsetAtWhole;
     private double  m_midOffsetAtHalf;
 	private String m_cryptoId;
-	private String m_wallet;
+	private String m_walletAddr;
 	private String m_stablecoinAddr;
 	private String m_stockTokenAddr;
 	
@@ -776,17 +776,17 @@ public class Order {
 	public String cryptoId() {
 		return m_cryptoId;
 	}
-	public void wallet(String v) {
-		m_wallet = v;
+	public void walletAddr(String v) {
+		m_walletAddr = v;
 	}
 	
-	public String wallet() { 
-		return m_wallet; 
+	public String walletAddr() { 
+		return m_walletAddr; 
 	}
 
 	public String getOrderLog(Contract contract) {
 		return String.format( "wallet=%s  cryptoid=%s  %s",
-				m_wallet, m_cryptoId, getCheckLog(contract) );
+				m_walletAddr, m_cryptoId, getCheckLog(contract) );
 	}
 
 	public String getCheckLog(Contract contract) {

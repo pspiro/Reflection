@@ -57,7 +57,7 @@ public class GTable extends HashMap<String,String> {
 			return Integer.valueOf( get( tag) );
 		}
 		catch( Exception e) {
-			throw new Exception( String.format( "Tag %s is not a number", tag) );
+			throw new Exception( String.format( "Tag %s is not an integer", tag) );
 		}
 	}
 	

@@ -345,7 +345,7 @@ class NcTransaction {
 		order.transmit( true);
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
-		order.wallet( wallet);
+		order.walletAddr( wallet);
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
@@ -474,7 +474,7 @@ class NcTransaction {
 		});
 		
 		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
-				order.wallet(), order.cryptoId(), order.orderId() );
+				order.walletAddr(), order.cryptoId(), order.orderId() );
 		
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill

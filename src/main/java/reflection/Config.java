@@ -50,6 +50,7 @@ public class Config {
 	private String backendConfigTab;
 	private String redisHost;
 	private int redisPort;
+	private double commission;
 	
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
@@ -76,6 +77,7 @@ public class Config {
 	public Mode mode() {  return mode;  }
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
+	public double commission() { return commission; }
 
 	public Config() { }
 	
@@ -114,6 +116,7 @@ public class Config {
 		this.backendConfigTab = tab.get( "backendConfigTab");
 		this.redisHost = tab.get( "redisHost");
 		this.redisPort = tab.getInt( "redisPort");
+		this.commission = tab.getDouble( "commission");
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -258,8 +261,6 @@ public class Config {
 		require( t, "non_kyc_max_order_size", 0, 20000);
 		require( t, "price_refresh_interval", 5, 60);
 		require( t, "commission", 0, 5);
-//		require( t, "buy_commission", 0, 5 );
-//		require( t, "sell_commission", 0, 5 );
 		require( t, "buy_spread", .001, .05 );
 		require( t, "sell_spread", .001, .05 );
 		
@@ -316,4 +317,5 @@ public class Config {
 	public String symbolsTab() {
 		return symbolsTab;
 	}
+
 }

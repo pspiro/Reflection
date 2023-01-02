@@ -30,21 +30,26 @@ public class StockToken {
 	// i passed refWallet but it acted like i used Test1 account; that was the sending address
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setVals();
-		//deploy();
+		Fireblocks.setTestVals();
+		deploy("GE Stock", "GE");
 		
 		// you must approve the STOCK TOKEN for spending, i.e. BUSD.approve(StockToken)
 		// that's why this is really not good, because you would have to approve each 
 		// stock token, you couldn't give a blanket approval
-		buy(Rusd.userAddr, 1, qqq, 2, Rusd.busdAddr);
+		//buy(Rusd.userAddr, 1, qqq, 2, Rusd.busdAddr);
 		
         //Fireblocks.call( 3, qqq, getcallerKk, new String[0], new Object[0], "getcaller").display();
 		//Fireblocks.call( 3, qqq, iscallerKk, new String[0], new Object[0], "iscaller").display();
 	}
 	
-	static void deploy() throws Exception {
+	static void deploy(String name, String symbol) throws Exception {
 		String[] paramTypes = { "string", "string", "address", "address" };
-		Object[] params = { "QQQ Nasdaq 100 ETF", "QQQ", Rusd.refWalletAddr, Rusd.rusdAddr };
+		Object[] params = { 
+				name, 
+				symbol, 
+				Rusd.refWalletAddr, 
+				Rusd.rusdAddr 
+			};
 		String addr = Deploy.deploy("c:/work/smart-contracts/StockToken.bytecode",
 				Rusd.ownerAcctId, paramTypes, params, "deploy stock");
 		S.out( "Deployed to %s", addr);

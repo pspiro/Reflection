@@ -7,7 +7,7 @@ public class Transfer {
 	
 	// this works as of 11/26/22 10:37am in the fireblocks branch
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setVals();
+		Fireblocks.setTestVals();
 		
 		String bodyTemplate = 
 				"{" + 

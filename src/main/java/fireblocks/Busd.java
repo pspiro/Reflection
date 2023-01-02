@@ -1,19 +1,42 @@
 package fireblocks;
 
+import tw.util.S;
+
 public class Busd {
 
+	private static final String mintKeccak = "40c10f19";
+
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setVals();
+		Fireblocks.setTestVals();
+		//deploy();
+		//mint(Rusd.user2, 1);
+		approveToSpendBusd(Rusd.userAcctId, Rusd.rusdAddr, 1000);
+	}
+	
+	
+	private static void mint(String address, double amt) throws Exception {
+		String[] types = {"address", "uint256"};
+		Object[] vals = {
+				address,
+				Rusd.toStablecoin(Rusd.busdAddr, amt)
+		};
+		
+		Fireblocks.call( Rusd.refWalletAcctId, Rusd.busdAddr, mintKeccak, types, vals, "BUSD.mint()").display();
+	}
+	
+	public static String approveToSpendBusd(int account, String spenderAddr, double amt) throws Exception {
+		return Rusd.approve( account, spenderAddr, Rusd.busdAddr, amt);
+	}
+
+	static void deploy() throws Exception {
+		String[] types = { "address" };
+		Object[] vals = { Rusd.refWalletAddr };
+		
+		String addr = Deploy.deploy("c:/work/smart-contracts/BUSD.bytecode", Rusd.ownerAcctId, types, vals, "deploy BUSD");
+		S.out( "Deployed to %s", addr);
+		
 		// this must be initiated and signed by the user wallet
 		//approve(Rusd.refWallet, 1000);
 	}
 	
-	static void approve(String address, int amt) throws Exception {
-		String keccak  ="095ea7b3";
-
-		String[] paramTypes = { "address", "uint256" };
-		Object[] params = { address, amt };
-		
-		//Fireblocks.call( Rusd.busd, keccak, paramTypes, params, "approve busd");
-	}
 }

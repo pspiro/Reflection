@@ -30,7 +30,7 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Fireblocks;
+import fireblocks.Deploy;
 import fireblocks.Rusd;
 import json.StringJson;
 import redis.clients.jedis.Pipeline;
@@ -40,7 +40,7 @@ import util.LogType;
 
 class MyTransaction {
 	enum MsgType {
-		checkHours, checkOrder, disconnect, dump, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
+		checkHours, checkOrder, disconnect, dump, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, orderFb, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
 		
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -48,7 +48,7 @@ class MyTransaction {
 	}
 	
 
-	static double SMALL = .001; // if difference between order size and fill size is less than this, we consider the order fully filled
+	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
 	static final String text = "text";
 	
@@ -129,13 +129,13 @@ class MyTransaction {
 				getAllPrices();
 				break;
 			case order:
-				order( false);
+				order( false, false);
 				break;
-			case order2:
+			case orderFb:
 				order( false, true);
 				break;
 			case checkOrder:
-				order( true);
+				order( true, false);
 				break;
 			case checkHours:
 				checkHours();
@@ -457,7 +457,7 @@ class MyTransaction {
 		order.transmit( true);
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
-		order.wallet( wallet);
+		order.walletAddr( wallet);
 		
 		if (fireblocks) {
 			
@@ -579,7 +579,7 @@ class MyTransaction {
 		});
 		
 		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
-				order.wallet(), order.cryptoId(), order.orderId() );
+				order.walletAddr(), order.cryptoId(), order.orderId() );
 		
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
@@ -588,7 +588,7 @@ class MyTransaction {
 	
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized. */ 
-	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) {
+	private synchronized void respondToOrder(Order order, ModifiableDecimal shares, boolean timeout, OrderStatus status) throws Exception {
 		if (m_responded) {
 			return;    // this happens when the timeout occurs after an order is filled, which is normal
 		}
@@ -601,7 +601,6 @@ class MyTransaction {
 				m_main.orderController().cancelOrder( order.orderId(), "", null);
 			}
 		}
-
 		
 		if (shares.isZero() ) {
 			String msg = timeout ? "Order timed out" : "Reason unknown";
@@ -610,37 +609,49 @@ class MyTransaction {
 					order.orderId(), order.cryptoId(), order.totalQuantity(), order.lmtPrice(), msg);
 			return;
 		}
-//				LogType logType;
-//
-//				if (status == OrderStatus.Filled || Util.difference( shares.value, order.totalQuantity() ) < SMALL) {
-//					logType = LogType.FILLED;
-//					respond( code, RefCode.OK, "filled", shares);
-//				}
-//				else {
-//					logType = LogType.PARTIAL_FILL;
-//					respond( code, RefCode.PARTIAL_FILL, "filled", shares);
-//				}
-//				
-//				log( logType, "id=%s  cryptoid=%s  orderQty=%s  filled=%s  orderPrc=%s", order.orderId(), order.cryptoId(), order.totalQuantity(), shares, order.lmtPrice() );
-			
 
-		if (order.action() == Action.BUY) {
-			// for a filled order, the abs(order size - filled size) should always be <= .5
-			// if > .5, then it was a partial fill and we will use the filled size instead of the order size
-			// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
+		double stockQty; 
+		LogType logType;
+		RefCode refCode;
 
-			double qty = order.totalQuantity().toDouble() - shares.value.toDouble() > .5
-					? shares.value.toDouble()
-					: order.totalQuantity().toDouble();
-					
-			
-			double dollarAmt = qty * order.lmtPrice() + Main.m_config.buyCommission() + tds
-			Rusd.buyStock(order.wallet(), order.stablecoinAddr(), order.stockTokenAddr(), stablecoinAmt, qty);
+		// for a filled order, the (order size - filled size) should always be <= .5
+		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
+		// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
+		if (order.totalQuantity().toDouble() - shares.value.toDouble() > .5001) {
+			stockQty = shares.value.toDouble();
+			logType = LogType.PARTIAL_FILL;
+			refCode = RefCode.PARTIAL_FILL;
 		}
 		else {
-			Fireblocks.rusdSell();
+			stockQty = order.totalQuantity().toDouble();
+			logType = LogType.FILLED;
+			refCode = RefCode.OK;
 		}
 		
+		String id;
+		double tds = 0;
+		
+		if (order.action() == Action.BUY) {
+			double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
+			id = Rusd.buyStock(order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
+					order.stockTokenAddr(), stockQty);
+		}
+		else {
+			double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
+			tds = .01 * preAmt;
+			double stablecoinAmt = preAmt - tds;  
+			id = Rusd.sellStock(order.walletAddr(), Rusd.rusdAddr, stablecoinAmt,
+					order.stockTokenAddr(), stockQty);
+		}
+		
+		String hash = Deploy.getTransHash(id);
+		
+		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
+				order.orderId(), order.cryptoId(), order.action(), order.totalQuantity(), 
+				shares, order.lmtPrice(), 
+				Main.m_config.commission(), tds, hash);
+
+		respond( code, refCode, "filled", shares);
 	}
 
 	synchronized boolean respond( Object...data) {

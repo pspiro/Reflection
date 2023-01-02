@@ -2,7 +2,6 @@ package fireblocks;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Random;
@@ -13,12 +12,10 @@ import org.asynchttpclient.Response;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
-import positions.MoralisServer;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
 import reflection.Util;
-import tw.util.IStream;
 import tw.util.S;
 import util.StringHolder;
 
@@ -50,15 +47,20 @@ public class Fireblocks {
 	
 	/** Do not call this in production; for testing only. 
 	 * @throws Exception */
-	public static void setVals() throws Exception {
+	public static void setTestVals() throws Exception {
+		Map<String, String> env = getEnv();
+		env.put( "api_key", testApi);
+		env.put( "private_key", testPk);
+		platformBase = testBase;
+
+		readKeys();		
+	}
+	
+	public static void setProdVals() throws Exception {
 		Map<String, String> env = getEnv();
 		env.put( "api_key", prodApi);
 		env.put( "private_key", prodPk);
 		platformBase = prodBase;
-
-		env.put( "api_key", testApi);
-		env.put( "private_key", testPk);
-		platformBase = testBase;
 		
 		readKeys();		
 	}
@@ -74,7 +76,7 @@ public class Fireblocks {
 	
 	// return MyJsonObj
 	String transact() throws Exception {
-		S.out( "Sending Fireblocks transaction with body: %s", body);
+		S.out( "Sending Fireblocks transaction  %s  %s  '%s'", operation, endpoint, body);
 
 		//S.out( "api key: %s", apiKey);
 
@@ -158,15 +160,8 @@ public class Fireblocks {
 		}
 	}
 
-	static String toJson( String format, Object... params) {
-		return String.format( format, params).replaceAll( "\\'", "\"").replaceAll( " ", "");
-	}
-
-
-	public static void rusdSell() {
-		
-	}
-
+	/** This returns the map of environment variables so you can set or
+	 *  override values before they are read elsewhere. */
 	private static Map<String, String> getEnv() throws Exception {
 	    Class<?> pe = Class.forName("java.lang.ProcessEnvironment");
 	    Method getenv = pe.getDeclaredMethod("getenv", String.class);
@@ -176,6 +171,7 @@ public class Fireblocks {
 	    return (Map<String, String>) props.get(null);
 	}
 
+	/** Call a Fireblocks GET endpoing. */
 	public static String get(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
@@ -183,17 +179,12 @@ public class Fireblocks {
 		return fb.transact();
 	}
 
-	/** Round it to four decimal places and then convert to hex.
-	 *  @param mult should be the 10^ number of decimal digits in the contract.  */
-	public static String padDouble(double amt, BigDecimal mult) {
-		BigInteger big = new BigDecimal( String.format( "%.4f", amt) )
-				.multiply(mult)
-				.toBigInteger();
-		return padLeft( String.format( "%x", big) );
+	public static String padInt(int amt) {
+		return padLeft( String.format( "%x", amt) );  // hex encoding
 	}
 	
-	public static String padInt(int amt) {
-		return padLeft( String.format( "%x", amt) );
+	public static String padBigInt(BigInteger amt) {
+		return padLeft( amt.toString(16) );  // hex encoding
 	}
 	
 	/** Assume address starts with 0x */
@@ -245,8 +236,13 @@ public class Fireblocks {
 				sb.append( padAddr( (String)val) );
 			}
 			else if (type.equals( "uint256") ) {
-				Util.require( val instanceof Integer, "Bad parameter type " + val.getClass() ); 
-				sb.append( padInt( (Integer)val) );
+				Util.require( val instanceof Integer || val instanceof BigInteger, "Bad parameter type " + val.getClass() );
+				if (val instanceof Integer) {
+					sb.append( padInt( (Integer)val) );
+				}
+				else {
+					sb.append( padBigInt( (BigInteger)val ) );
+				}
 			}
 			else {
 				Util.require( false, "Unknown type " + type);
@@ -267,7 +263,7 @@ public class Fireblocks {
 	}
 
 	/** Return each byte's hex value */
-	private static String stringToBytes(String val) {
+	public static String stringToBytes(String val) {
 		StringBuilder sb = new StringBuilder();
 		for (byte b : val.getBytes() ) {
 			sb.append( String.format( "%2x", b) );
@@ -275,11 +271,6 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
-	/** Right now supporting only string non-static type. */
-	private static boolean isStatic(String type) {
-		return type.equals( "string") ? false : true;
-	}
-
 	public static MyJsonArray getTransactions() throws Exception {
 		String str = get( "/v1/transactions");
 		Util.require( str.startsWith( "["), "Error: " + str);
@@ -321,11 +312,19 @@ public class Fireblocks {
 		fb.operation( "POST");
 		fb.body( body);
 		String ret = fb.transact();
-		return toJsonObject( ret); 
+		MyJsonObject obj = toJsonObject( ret);
+		String str = obj.getString("message");
+		Main.require( S.isNull( str), RefCode.UNKNOWN, "Error on Fireblocks.call  msg=%s  code=%s",
+				str, obj.getString("code") );
+		return obj;
+	}
+
+	public static String toJson( String format, Object... params) {
+		return String.format( format, params).replaceAll( "\\'", "\"").replaceAll( " ", "");
 	}
 	
-	private static MyJsonObject toJsonObject( String str) throws Exception {
-		Util.require( str.startsWith( "{"), "Error: " + str);
+	public static MyJsonObject toJsonObject( String str) throws Exception {
+		Util.require( str.startsWith( "{"), "Error (not a json object): " + str);
 		return MyJsonObject.parse( str);
 	}
 	

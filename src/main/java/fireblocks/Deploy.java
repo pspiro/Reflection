@@ -13,7 +13,7 @@ public class Deploy {
 		//Tab tab = NewSheet.getTab(NewSheet.Reflection, "Prod-symbols");
 		//for (ListEntry row : tab.fetchRows() ) {
 		
-		Fireblocks.setVals();
+		Fireblocks.setTestVals();
 		//deploy();
 	}
 
@@ -44,7 +44,7 @@ public class Deploy {
 	
 	/** Query the transaction from Fireblocks until it contains the txHash value
 	 *  which is the blockchain transaction has; takes about 13 seconds. */
-	static String getTransHash(String fireblocksId) throws Exception {
+	public static String getTransHash(String fireblocksId) throws Exception {
 		for (int i = 0; i < 5*60; i++) {
 			if (i > 0) S.sleep(1000);
 			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
@@ -56,12 +56,16 @@ public class Deploy {
 			}
 			
 			String status = trans.getString("status");
-			if ("COMPLETED".equals(status) || "FAILED".equals(status) ) {
-				break;
+			if ("COMPLETED".equals(status) ) {
+				throw new RefException( RefCode.UNKNOWN, "Transaction completed with no transaction hash");
+			}
+			
+			if ("FAILED".equals(status) ) {
+				throw new RefException( RefCode.UNKNOWN, "Transaction failed - %s", trans.getString("subStatus") );
 			}
 		}
 		
-		throw new RefException( RefCode.UNKNOWN, "Could not get transaction hash");
+		throw new RefException( RefCode.UNKNOWN, "Timed out waiting for transaction hash"); // should never happen
 	}	
 
 	/** Query the blockchain transaction through Moralis until the transaction

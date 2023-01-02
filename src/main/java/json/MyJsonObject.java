@@ -46,6 +46,12 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
 	}
 
+	public void display(String title) {
+		S.out(title);
+		display( m_obj, 0, false);
+		System.out.println();
+	}
+
 	public void display() {
 		display( m_obj, 0, false);
 		System.out.println();
@@ -66,29 +72,39 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 			
 			boolean first = true;
 			for (Object key : map.keySet() ) {
-				if (!first) {
-					out( ",\n");
-				}
 				Object val = map.get( key);
-				out( "%s%s : ", Util.tab( level+1), key);
-				display( val, level + 1, false);
-				first = false;
+				
+				if (val != null && val.toString().length() > 0) {
+					if (!first) {
+						out( ",\n");
+					}
+
+					out( "%s%s : ", Util.tab( level+1), key);
+					display( val, level + 1, false);
+					first = false;
+				}
 			}
 			out( "\n%s%s", Util.tab(level), "}");
 		}
 		else if (objIn instanceof JSONArray) {
-			out( "[\n%s", Util.tab(level+1) );
-			
 			JSONArray ar = (JSONArray)objIn;
-			boolean first = true;
-			for (Object obj : ar) {
-				if (!first) {
-					out( ", ");
-				}
-				display( obj, level + 1, true);
-				first = false;
+			
+			if (ar.size() == 0) {
+				out( "[ ]");
 			}
-			out( "\n%s%s", Util.tab(level), "]");			
+			else {
+				out( "[\n%s", Util.tab(level+1) );
+				
+				boolean first = true;
+				for (Object obj : ar) {
+					if (!first) {
+						out( ", ");
+					}
+					display( obj, level + 1, true);
+					first = false;
+				}
+				out( "\n%s]", Util.tab(level) );
+			}
 		}
 		else {
 			out( objIn);
