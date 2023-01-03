@@ -34,8 +34,8 @@ public class Fireblocks {
 
 	static String base = "https://api.fireblocks.io";
 	
-	private static String apiKey;
-	private static String privateKey;
+	private static String s_apiKey;
+	private static String s_privateKey;
 	
 	private String operation;
 	private String endpoint;
@@ -44,6 +44,11 @@ public class Fireblocks {
 	public void operation(String v) { operation = v;	}
 	public void body(String v) { body = v;	}
 	public void endpoint(String v) { endpoint = v;	}
+	
+	public static void setKeys( String apiKey, String privateKey) {
+		s_apiKey = apiKey;
+		s_privateKey = privateKey;
+	}
 	
 	/** Do not call this in production; for testing only. 
 	 * @throws Exception */
@@ -66,13 +71,10 @@ public class Fireblocks {
 	}
 
 	public static void readKeys() throws Exception {
-		apiKey = Util.getenv("api_key");
-		privateKey = Util.getenv("private_key");
+		s_apiKey = Util.getenv("api_key");
+		s_privateKey = Util.getenv("private_key");
 	}
 	
-	interface Ret {
-		public void run(String ret); 
-	}
 	
 	// return MyJsonObj
 	String transact() throws Exception {
@@ -101,7 +103,7 @@ public class Fireblocks {
 				+ "'sub': '%s',"
 				+ "'bodyHash': '%s'"
 				+ "}",
-				endpoint, nonce, start, expire, apiKey, bodyHash) );
+				endpoint, nonce, start, expire, s_apiKey, bodyHash) );
 		//S.out( "Payload: %s", payload);
 		//S.out( "Encoded: %s", Encrypt.encode( payload) );
 		
@@ -111,7 +113,7 @@ public class Fireblocks {
 		//S.out( "Input:");
 		//System.out.println(input);
 		
-		String signed = Encrypt.signRSA( input, privateKey);
+		String signed = Encrypt.signRSA( input, s_privateKey);
 		//S.out( "Sig:");
 		//System.out.println(signed);
 
@@ -126,7 +128,7 @@ public class Fireblocks {
 		
 		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare(operation, base + endpoint)
-			.setHeader("X-API-Key", apiKey)
+			.setHeader("X-API-Key", s_apiKey)
 			.setHeader("Connection", "close")
 			.setHeader("Content-type", "application/json")
 			.setHeader("Accept", "application/json, text/plain, */*")

@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
+import fireblocks.Fireblocks;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -51,6 +52,8 @@ public class Config {
 	private String redisHost;
 	private int redisPort;
 	private double commission;
+	private String fireblocksApiKey;
+	private String fireblocksPrivateKey;	
 	
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
@@ -117,6 +120,9 @@ public class Config {
 		this.redisHost = tab.get( "redisHost");
 		this.redisPort = tab.getInt( "redisPort");
 		this.commission = tab.getDouble( "commission");
+		this.fireblocksApiKey = tab.get("fireblocksApiKey"); 
+		this.fireblocksPrivateKey = tab.get("fireblocksPrivateKey");
+		
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -127,9 +133,14 @@ public class Config {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
-		require( S.isNotNull( symbolsTab), "symbolsTab" );
-		require( S.isNotNull( this.redisHost), "redisHost is missing" );
-		require( S.isNotNull( this.backendConfigTab ), "backendConfigTab is missing from config" );
+		require( S.isNotNull( symbolsTab), "symbolsTab config is missing" );
+		require( S.isNotNull( redisHost), "redisHost config is missing" );
+		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
+		require( S.isNotNull( fireblocksApiKey), "fireblocksApiKey config is missing");
+		require( S.isNotNull( fireblocksPrivateKey), "fireblocksPrivateKey config is missing");
+		
+		// update Fireblocks static keys
+		Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey);
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {

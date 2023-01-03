@@ -58,8 +58,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	public static void main(String[] args) {
 		try {
-			Fireblocks.setTestVals(); // readKeys();
-			
 			String configTab = null;
 			for (String arg : args) {
 				if (arg.equals( "simulated")) {
