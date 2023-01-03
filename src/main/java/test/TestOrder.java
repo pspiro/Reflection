@@ -122,7 +122,7 @@ public class TestOrder extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( "quantity must be positive", text);
+		assertEquals( "Quantity must be positive", text);
 	}
 
 	

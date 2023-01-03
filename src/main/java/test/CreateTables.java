@@ -9,6 +9,7 @@ import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
+/** Create trades and commissions tables */
 public class CreateTables extends TestCase {
 	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
 	static String dbUser = "postgres";

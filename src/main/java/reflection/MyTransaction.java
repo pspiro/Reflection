@@ -340,19 +340,13 @@ class MyTransaction {
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
 		
-		Prices prices = getPrices( conid);
+		Prices prices = m_main.getPrices( conid);
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
 		respond( prices.toJson(conid) );
 	}
 
-	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
-	private Prices getPrices(int conid) {
-		Map<String, String> ps = m_main.m_jedis.hgetAll( String.valueOf(conid) );
-		return new Prices( ps);
-	}
-	
 	/** Used to query prices from Redis. */
 	static class PriceQuery {
 		private int conid;
@@ -374,11 +368,12 @@ class MyTransaction {
 	
 	
 	
-	/** Top-level method. */
+	/** Top-level method. */  // put a timer so we don't call this more than once every n ms. pas
 	private void getAllPrices() throws RefException {
 		S.out( "Returning all prices");
 
 		// send a single query to Redis for the prices
+		// the responses are fed into the PriceQuery objects
 		ArrayList<PriceQuery> list = new ArrayList<PriceQuery>(); 
 		m_main.jquery( pipeline -> {
 			for (Object obj : m_main.stocks() ) {
@@ -387,7 +382,7 @@ class MyTransaction {
 			}
 		});
 
-		// build the json response
+		// build the json response   // we could reuse this and just update the prices each time
 		JSONObject whole = new JSONObject();
 		for (PriceQuery q : list) {
 			Prices prices = q.getPrices();
@@ -458,6 +453,7 @@ class MyTransaction {
 		order.outsideRth( true);
 		order.cryptoId( cryptoId);
 		order.walletAddr( wallet);
+		order.stockTokenAddr( m_main.getSmartContractId(conid) );
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
@@ -472,7 +468,7 @@ class MyTransaction {
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 
 				// explain why there are no prices which should never happen otherwise
-				Prices prices = getPrices( contract.conid() );
+				Prices prices = m_main.getPrices( contract.conid() );
 				prices.checkOrderPrice( order, orderPrice, Main.m_config);
 				
 				// if the user submitted an order for < .5 shares, we round to zero so no order is placed
@@ -626,10 +622,8 @@ class MyTransaction {
 		}
 
 		double stockQty;  // quantity of stock tokens to swap
-		LogType logType;
-		RefCode refCode;
-		double tds = 0;
-		String hash = "";
+		LogType logType;  // fill or partial fill
+		RefCode refCode;  // fill or partial fill
 
 		// for a filled order, the (order size - filled size) should always be <= .5
 		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
@@ -645,6 +639,9 @@ class MyTransaction {
 			refCode = RefCode.OK;
 		}
 		
+		double tds = 0;     // the tds tax paid by Indian residents
+		String hash = "";   // the blockchain hashcode
+
 		if (fireblocks) {
 			try {
 				String id;
@@ -787,3 +784,4 @@ class MyTransaction {
 // add tests for partial fill, no fill, and order size < .5
 // confirm that TWS does not accept fractional shares
 // test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill
+// test exception during fireblocks part

@@ -48,7 +48,7 @@ public class TestWhatIf extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( "quantity must be positive", text);
+		assertEquals( "Quantity must be positive", text);
 	}
 
 	// missing price
@@ -68,7 +68,7 @@ public class TestWhatIf extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( "price must be positive", text);
+		assertEquals( "Price must be positive", text);
 	}
 
 	// price too low 
@@ -128,7 +128,7 @@ public class TestWhatIf extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( "quantity must be positive", text);
+		assertEquals( "Quantity must be positive", text);
 	}
 	
 

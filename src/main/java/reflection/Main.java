@@ -5,6 +5,7 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,17 +41,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Connected, Disconnected 
 	};
 
-	final static Random rnd = new Random( System.currentTimeMillis() );
+	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
-	Jedis m_jedis;
-	
-	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
+	private Jedis m_jedis;
+	private final HashMap<Integer,StringJson> m_stockMap = new HashMap<Integer,StringJson>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas 
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr();
-
-	// we assume that TWS is connected to IB at first but that could be wrong;
-	// is there some way to find out?
+	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr(); // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	private String m_tabName;
@@ -61,7 +58,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	public static void main(String[] args) {
 		try {
-			Fireblocks.readKeys();
+			Fireblocks.setTestVals(); // readKeys();
 			
 			String configTab = null;
 			for (String arg : args) {
@@ -135,22 +132,34 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
-			StringJson obj = new StringJson();
+			StringJson stock = new StringJson();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
-				String exch = row.getValue("Exchange");
 				
-				obj.put( "symbol", row.getValue("Symbol") );
-				obj.put( "conid", String.valueOf( conid) );
-				obj.put( "smartcontractid", row.getValue("TokenAddress") );
-				obj.put( "description", row.getValue("Description") );
-				obj.put( "type", row.getValue("Type") );
-				obj.put( "exchange", row.getValue("Exchange") );
-				m_stocks.add( obj);
-				
-				m_exchMap.put( conid, exch);  
+				stock.put( "symbol", row.getValue("Symbol") );
+				stock.put( "conid", String.valueOf( conid) );
+				stock.put( "smartcontractid", row.getValue("TokenAddress") );
+				stock.put( "description", row.getValue("Description") );
+				stock.put( "type", row.getValue("Type") );
+				stock.put( "exchange", row.getValue("Exchange") );
+				m_stocks.add( stock);
+				m_stockMap.put( conid, stock);  
 			}
 		}
+	}
+	
+	String getExchange( int conid) throws RefException {
+		return getStock(conid).get("exchange");
+	}
+
+	String getSmartContractId( int conid) throws RefException {
+		return getStock(conid).get("smartcontractid");
+	}
+	
+	StringJson getStock( int conid) throws RefException {
+		StringJson stock = m_stockMap.get( conid);
+		require(stock != null, RefCode.NO_SUCH_STOCK, "Error - unknown conid %s", conid);
+		return stock;
 	}
 
 
@@ -381,10 +390,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-	public String getExchange(int conid) {
-		return m_exchMap.get( conid);
-	}
-
 	public ApiController orderController() {
 		return m_orderConnMgr.controller();
 	}
@@ -409,6 +414,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		run.run(p);
 		p.sync();
 	}
+	
+	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
+	Prices getPrices(int conid) {
+		Map<String, String> ps = m_jedis.hgetAll( String.valueOf(conid) );
+		return new Prices( ps);
+	}
+	
 	
 }
 

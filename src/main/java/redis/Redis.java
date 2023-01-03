@@ -38,12 +38,12 @@ public class Redis {
 	final static RedisConfig m_config = new RedisConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
 	
-	final HashMap<Integer,String> m_exchMap = new HashMap<Integer,String>(); // prices could be moved into the Stock object; no need for two separate maps  pas
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private String m_tabName;
 	private Jedis m_jedis;
+	private Pipeline pipeline;  // access to this is synchronized
 
 	public static void main(String[] args) {
 		try {
@@ -120,8 +120,6 @@ public class Redis {
 				obj.put( "type", row.getValue("Type") );
 				obj.put( "exchange", row.getValue("Exchange") );
 				m_stocks.add( obj);
-				
-				m_exchMap.put( conid, exch);  
 			}
 		}
 	}
@@ -144,8 +142,6 @@ public class Redis {
 			}
 		}
 	}
-	
-	private Pipeline pipeline;
 	
 	synchronized void tick(Runnable run) {
 		if (pipeline == null) {
@@ -193,7 +189,7 @@ public class Redis {
 					
 					if (type != null) {
 						if (price > 0) { 
-							String val = String.format( "%1.3f", price);
+							String val = S.fmt3( price);
 							S.out( "ticking %s %s=%s", conidStr, type, val);
 							tick( () ->	pipeline.hset( conidStr, type, val) );
 						}
@@ -236,10 +232,6 @@ public class Redis {
 
 	static void log( LogType type, String text, Object... params) {
 		m_log.log( type, text, params);
-	}
-
-	public String getExchange(int conid) {
-		return m_exchMap.get( conid);
 	}
 
 	public ApiController mdController() {

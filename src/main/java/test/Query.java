@@ -10,6 +10,7 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 
+/** Run any database query and add the results to the "Query" tab of Reflection/config sheet */
 public class Query {
 	public static void main(String[] args) {
 		try {

@@ -71,6 +71,7 @@ public class TestErrors extends TestCase {
 	public void testCheckHours3() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '83' }";
 		HashMap<String, Object> map = sendData( data);
+		S.out( map);
 		assertEquals( RefCode.NO_SUCH_STOCK.toString(), map.get( code) );
 		assertEquals( "No contract details found for conid 83", map.get( text) ); 
 	}
@@ -90,7 +91,7 @@ public class TestErrors extends TestCase {
 	static String prod = "34.125.38.193";
 	static String local = "localhost";
 	
-	static String host = prod;
+	static String host = local;
 	
 	static MyHttpClient cli() throws Exception {
 		return new MyHttpClient( host, 8383);

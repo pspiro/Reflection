@@ -804,6 +804,10 @@ public class Order {
 		return m_stockTokenAddr;
 	}
 	
+	public void stockTokenAddr(String v) {
+		m_stockTokenAddr = v;
+	}
+	
 	/** Return totalQuantity rounded to three decimal places. */
     public String totalQty() { 
     	return S.fmt3(m_totalQuantity); 

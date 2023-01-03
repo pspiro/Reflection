@@ -129,6 +129,7 @@ public class Config {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( symbolsTab), "symbolsTab" );
 		require( S.isNotNull( this.redisHost), "redisHost is missing" );
+		require( S.isNotNull( this.backendConfigTab ), "backendConfigTab is missing from config" );
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {
