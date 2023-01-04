@@ -5,7 +5,7 @@ import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 
-public class RedisConfig {
+public class MktDataConfig {
 
 	// program parameters
 	private Mode mode = Mode.paper;  // paper or production
@@ -28,7 +28,7 @@ public class RedisConfig {
 	public int redisPort() { return redisPort; }
 	public long reconnectInterval() { return reconnectInterval; }
 
-	public RedisConfig() { 
+	public MktDataConfig() { 
 	}
 	
 	public void readFromSpreadsheet(String tabName) throws Exception {

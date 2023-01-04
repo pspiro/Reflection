@@ -31,7 +31,7 @@ class ConnectionMgr implements IConnectionHandler {
 	}
 
 	void connect(String host, int port) {
-		int clientId = Redis.rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
+		int clientId = MktDataServer.rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
 		S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
 		
 		m_host = host;
@@ -50,7 +50,7 @@ class ConnectionMgr implements IConnectionHandler {
 				@Override public void run() {
 					onTimer();
 				}
-			}, 0, Redis.m_config.reconnectInterval() );
+			}, 0, MktDataServer.m_config.reconnectInterval() );
 		}
 	}
 
@@ -78,7 +78,7 @@ class ConnectionMgr implements IConnectionHandler {
 	
 	/** Called when we receive server version. We don't always receive nextValidId. */
 	@Override public void onConnected() {
-		Redis.log( m_logType, "Connected to TWS");
+		MktDataServer.log( m_logType, "Connected to TWS");
 		m_ibConnection = true; // we have to assume it's connected since we don't know for sure
 		
 		stopTimer();
@@ -90,12 +90,12 @@ class ConnectionMgr implements IConnectionHandler {
 		// order id's; it's because sometimes, after a reconnect or if TWS
 		// is just startup up, or if we tried and failed, we don't ever receive
 		// it
-		Redis.log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
+		MktDataServer.log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
 	}
 
 	@Override public synchronized void onDisconnected() {
 		if (m_timer == null) {
-			Redis.log( m_logType, "Disconnected from TWS");
+			MktDataServer.log( m_logType, "Disconnected from TWS");
 			startTimer();
 		}
 	}

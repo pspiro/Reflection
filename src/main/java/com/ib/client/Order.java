@@ -281,7 +281,6 @@ public class Order {
     public int scaleInitPosition()                  { return m_scaleInitPosition; }
     public int scalePriceAdjustInterval()           { return m_scalePriceAdjustInterval; }
     public int scaleSubsLevelSize()                 { return m_scaleSubsLevelSize; }
-    public double totalQuantity()                   { return m_totalQuantity; }
     public int permId()                             { return m_permId; }
     public Method faMethod()                        { return Method.get(m_faMethod); }
     public String getFaMethod()                     { return m_faMethod; }
@@ -811,6 +810,10 @@ public class Order {
 	/** Return totalQuantity rounded to three decimal places. */
     public String totalQty() { 
     	return S.fmt3(m_totalQuantity); 
+    }
+    
+    public double totalQuantity() { 
+    	return m_totalQuantity; 
     }
 	
     public int roundedQty() {

@@ -5,6 +5,7 @@ import static test.TestErrors.sendData;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
+import redis.clients.jedis.Jedis;
 import reflection.Prices;
 import reflection.RefCode;
 import tw.util.S;
@@ -109,7 +110,7 @@ public class TestOrder extends TestCase {
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
-	public void testFracShares2()  throws Exception {
+	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
@@ -124,6 +125,16 @@ public class TestOrder extends TestCase {
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 		assertEquals( "Quantity must be positive", text);
 	}
+	
+	public void testPartialFill()  throws Exception {
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		HashMap<String, Object> map = sendData( data);
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		S.out( map);
+		assertEquals( RefCode.PARTIAL_FILL.toString(), ret);
+		assertEquals( "2 shares filled", text);
+	}
 
 	
 	static String orderData(double offset) {
@@ -136,5 +147,6 @@ public class TestOrder extends TestCase {
 	}
 	
 	// current stock price
-	static double curPrice = 144.66;  // you can query for this
+	static Jedis jedis = new Jedis("34.125.38.193", 3001); 
+	static double curPrice = Double.valueOf( jedis.hget("8314", "last") );
 }

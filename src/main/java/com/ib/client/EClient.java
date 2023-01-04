@@ -1748,9 +1748,10 @@ public abstract class EClient {
             // send main order fields
             b.send( order.getAction());
             
-			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
-				b.send( order.totalQty() );
-			else
+            // frac shares not supported
+//			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
+//				b.send( order.totalQty() );
+//			else
 				b.send( order.roundedQty() );  // rounded to nearest int
             
 			b.send( order.getOrderType());

@@ -546,6 +546,7 @@ class MyTransaction {
 	
 					// save the number of shares filled
 					shares.value = filled.toDouble();
+					//shares.value = filled.toDouble() - 1;  // to test partial fills
 					
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 					
@@ -781,7 +782,8 @@ class MyTransaction {
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
-// add tests for partial fill, no fill, and order size < .5
+// add tests for partial fill, no fill
 // confirm that TWS does not accept fractional shares
 // test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill
 // test exception during fireblocks part
+// IOC timeout seems to be 3-4 seconds

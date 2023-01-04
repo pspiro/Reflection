@@ -7,6 +7,7 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
+import tw.util.S;
 
 public class TestWhatIf extends TestCase {
 	// what-if

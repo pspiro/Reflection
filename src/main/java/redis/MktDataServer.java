@@ -29,13 +29,13 @@ import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
 
-public class Redis {
+public class MktDataServer {
 	enum Status { 
 		Connected, Disconnected 
 	};
 
 	final static Random rnd = new Random( System.currentTimeMillis() );
-	final static RedisConfig m_config = new RedisConfig();
+	final static MktDataConfig m_config = new MktDataConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
 	
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
@@ -56,7 +56,7 @@ public class Redis {
 			// ensure that application is not already running
 			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
 			
-			new Redis().run( configTab);
+			new MktDataServer().run( configTab);
 			
 			// you should listen on a port to prevent running dup instances, or some other thing. pas
 		}
