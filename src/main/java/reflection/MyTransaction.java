@@ -381,15 +381,27 @@ class MyTransaction {
 				list.add( new PriceQuery(pipeline, stk.getInt("conid") ) );
 			}
 		});
-
+		
+		boolean admin = m_map.getBool("admin");
+		
 		// build the json response   // we could reuse this and just update the prices each time
 		JSONObject whole = new JSONObject();
 		for (PriceQuery q : list) {
 			Prices prices = q.getPrices();
 
 			JSONObject single = new JSONObject();
-			single.put( "bid", round( prices.anyBid() ) );
-			single.put( "ask", round( prices.anyAsk() ) );
+			// in admin mode, which is for debugging, return the actual prices
+			if (admin) {
+				single.put( "bid", round( prices.bid() ) );
+				single.put( "ask", round( prices.ask() ) );
+				single.put( "last", round( prices.last() ) );
+				single.put( "close", round( prices.close() ) );
+			}
+			// for the user, we return best bid/ask we can come up with
+			else {
+				single.put( "bid", round( prices.anyBid() ) );
+				single.put( "ask", round( prices.anyAsk() ) );
+			}
 			whole.put( "" + q.conid, single);
 		}
 		

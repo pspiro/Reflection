@@ -54,6 +54,7 @@ public class SimpleTransaction {
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
+			System.exit(0);
 		}
 		catch (Exception e) {
 			e.printStackTrace();

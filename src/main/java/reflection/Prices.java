@@ -33,7 +33,9 @@ public class Prices {
 	
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
-
+	public double last() { return m_last; }
+	public double close() { return m_close; }
+	
 	/** No penny stocks */
 	boolean validBid() {
 		return m_bid >= 1;
