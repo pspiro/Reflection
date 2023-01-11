@@ -46,16 +46,12 @@ public class MktDataServer {
 
 	public static void main(String[] args) {
 		try {
-			String configTab = "Home-config";
-			
-			if (S.isNull( configTab) ) {
-				throw new Exception( "You must specify a config tab name");
-			}
+			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
 			
 			// ensure that application is not already running
 			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
 			
-			new MktDataServer().run( configTab);
+			new MktDataServer().run( args[0] );
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -188,7 +184,7 @@ public class MktDataServer {
 							tick( () ->	pipeline.hset( conidStr, type, val) );
 						}
 						else if (type == "bid" || type == "ask") {
-							S.out( "deleting bid/ask");
+							S.out( "clearing %s %s", conidStr, type);
 							tick( () ->	pipeline.hdel( conidStr, type) );
 							// delete it!!! pas
 						}

@@ -31,7 +31,7 @@ class ConnectionMgr implements IConnectionHandler {
 	}
 
 	void connect(String host, int port) {
-		int clientId = MktDataServer.rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
+		int clientId = 1; //MktDataServer.rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
 		S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
 		
 		m_host = host;
