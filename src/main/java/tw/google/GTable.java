@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.util.S;
 
 
 /** A hashtable backed by a google sheet with two columns. */
@@ -41,6 +42,14 @@ public class GTable extends HashMap<String,String> {
 	
 	@Override public String get(Object key) {
 		return super.get( m_caseSensitive ? key : ((String)key).toLowerCase() );
+	}
+	
+	public String getRequiredString(Object key) throws Exception {
+		String val = get(key);
+		if (S.isNull(val) ) {
+			throw new Exception(String.format("Missing required key '%s' from google sheet", key) );
+		}
+		return val;
 	}
 	
 	public double getDouble(String tag) throws Exception {

@@ -19,7 +19,6 @@ import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import reflection.Main;
-import reflection.Mode;
 import reflection.MySqlConnection;
 import reflection.Prices;
 import reflection.Util;
@@ -57,15 +56,10 @@ public class MktDataServer {
 			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
 			
 			new MktDataServer().run( configTab);
-			
-			// you should listen on a port to prevent running dup instances, or some other thing. pas
-		}
-		catch( BindException e) {
-			S.out( "The application is already running");
-			e.printStackTrace();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
 

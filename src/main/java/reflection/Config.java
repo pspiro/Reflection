@@ -34,7 +34,6 @@ public class Config {
 	
 
 	// program parameters
-	private Mode mode = Mode.paper;  // paper or production
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
 	private String twsMdHost;  // TWS is listening on this host
@@ -77,7 +76,6 @@ public class Config {
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
 
-	public Mode mode() {  return mode;  }
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
@@ -96,8 +94,6 @@ public class Config {
 		this.maxSellAmt = tab.getDouble( "maxSellAmt");
 
 		// program parameters
-		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
-
 		this.twsOrderHost = tab.get( "twsOrderHost");
 		this.twsOrderPort = tab.getInt( "twsOrderPort");
 

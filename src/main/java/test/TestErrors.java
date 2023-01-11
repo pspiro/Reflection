@@ -91,7 +91,7 @@ public class TestErrors extends TestCase {
 	static String prod = "34.125.38.193";
 	static String local = "localhost";
 	
-	static String host = local;
+	static String host = prod; //local;
 	
 	static MyHttpClient cli() throws Exception {
 		return new MyHttpClient( host, 8383);

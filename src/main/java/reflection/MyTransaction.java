@@ -38,7 +38,7 @@ import redis.clients.jedis.Response;
 import tw.util.S;
 import util.LogType;
 
-class MyTransaction {
+public class MyTransaction {
 	enum MsgType {
 		checkHours, checkOrder, disconnect, dump, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, orderFb, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
 		
@@ -51,6 +51,7 @@ class MyTransaction {
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
 	static final String text = "text";
+	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	
 	private Main m_main;
 	private HttpExchange m_exchange;
@@ -475,7 +476,7 @@ class MyTransaction {
 				
 				ContractDetails deets = list.get(0);
 				require( inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
-				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, "Exchange is closed");
+				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 

@@ -44,6 +44,7 @@ public class SimpleTransaction {
 		m_exchange = exchange;
 	}
 
+	/** Quits the program if there is an exception */
 	public static void listen(String host, int port, MyHttpHandler handler) {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress(host, port), 0);
@@ -58,6 +59,7 @@ public class SimpleTransaction {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 	

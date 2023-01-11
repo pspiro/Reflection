@@ -3,9 +3,8 @@ package test;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
-import redis.clients.jedis.Jedis;
+import reflection.MyTransaction;
 import reflection.RefCode;
-import tw.util.S;
 
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends TestCase {
@@ -15,7 +14,7 @@ public class TestOutsideHours extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
-		assertEquals( text, "Exchange is closed");
+		assertEquals( MyTransaction.exchangeIsClosed, text);
 	}
 
 	public void testOrder() throws Exception {
@@ -24,7 +23,7 @@ public class TestOutsideHours extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
-		assertEquals( text, "Exchange is closed");
+		assertEquals( MyTransaction.exchangeIsClosed, text);
 	}
 
 }
