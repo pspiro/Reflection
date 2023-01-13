@@ -184,7 +184,7 @@ public class MktDataServer {
 							tick( () ->	pipeline.hset( conidStr, type, val) );
 							
 							if (type.equals( "last") ) {
-								tick( () ->	pipeline.hset( conidStr, "time", String.valueOf( System.currentTimeMillis() / 1000) ) );
+								tick( () ->	pipeline.hset( conidStr, "time", String.valueOf( System.currentTimeMillis() ) ) );
 							}
 						}
 						else if (type == "bid" || type == "ask") {
