@@ -350,10 +350,10 @@ public class MyTransaction {
 
 	/** Used to query prices from Redis. */
 	static class PriceQuery {
-		private int conid;
+		private String conid;  // no point storing an int since String is needed
 		private Response<Map<String, String>> res;
 
-		public PriceQuery(Pipeline p, int conid) {
+		public PriceQuery(Pipeline p, String conid) {
 			this.conid = conid;
 			res = p.hgetAll("" + conid);
 		}
@@ -379,7 +379,7 @@ public class MyTransaction {
 		m_main.jquery( pipeline -> {
 			for (Object obj : m_main.stocks() ) {
 				StringJson stk = (StringJson)obj;
-				list.add( new PriceQuery(pipeline, stk.getInt("conid") ) );
+				list.add( new PriceQuery(pipeline, stk.get("conid") ) );
 			}
 		});
 		
@@ -387,8 +387,8 @@ public class MyTransaction {
 		
 		// build the json response   // we could reuse this and just update the prices each time
 		JSONObject whole = new JSONObject();
-		for (PriceQuery q : list) {
-			Prices prices = q.getPrices();
+		for (PriceQuery priceQuery : list) {
+			Prices prices = priceQuery.getPrices();
 
 			JSONObject single = new JSONObject();
 			// in admin mode, which is for debugging, return the actual prices
@@ -397,13 +397,14 @@ public class MyTransaction {
 				single.put( "ask", round( prices.ask() ) );
 				single.put( "last", round( prices.last() ) );
 				single.put( "close", round( prices.close() ) );
+				single.put( "time", prices.getFormattedTime() );
 			}
 			// for the user, we return best bid/ask we can come up with
 			else {
 				single.put( "bid", round( prices.anyBid() ) );
 				single.put( "ask", round( prices.anyAsk() ) );
 			}
-			whole.put( "" + q.conid, single);
+			whole.put( priceQuery.conid, single);
 		}
 		
 		respond( new Json( whole) );

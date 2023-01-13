@@ -180,8 +180,12 @@ public class MktDataServer {
 					if (type != null) {
 						if (price > 0) { 
 							String val = S.fmt3( price);
-							S.out( "ticking %s %s=%s", conidStr, type, val);
+							//S.out( "ticking %s %s=%s", conidStr, type, val);
 							tick( () ->	pipeline.hset( conidStr, type, val) );
+							
+							if (type.equals( "last") ) {
+								tick( () ->	pipeline.hset( conidStr, "time", String.valueOf( System.currentTimeMillis() / 1000) ) );
+							}
 						}
 						else if (type == "bid" || type == "ask") {
 							S.out( "clearing %s %s", conidStr, type);

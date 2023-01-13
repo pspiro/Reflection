@@ -560,7 +560,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		S.out( "Requesting mkt data %s %s on %s", contract.symbol(), contract.conid(), contract.exchange() );
+		S.out( "Requesting mkt data %s on %s", contract.conid(), contract.exchange() );
     	int reqId = m_reqId++;
     	m_topMktDataMap.put( reqId, handler);
     	m_client.reqMktData( reqId, contract, genericTickList, snapshot, regulatorySnapshot, Collections.emptyList() );

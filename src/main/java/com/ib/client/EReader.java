@@ -83,8 +83,8 @@ public class EReader extends Thread {
 		EMessage msg = readSingleMessage();
 		
 		if (msg == null) {
-			S.out( "Error: read null msg");
-			return false;
+			S.out( "Error: read null msg");  // this is bad and we never recover; I saw this happen
+			return false;					// when TWS was sitting at "This is not a brokerage account" message
 		}
 
 		synchronized(m_msgQueue) {

@@ -1,11 +1,12 @@
 package reflection;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.Random;
 
 import com.ib.client.Decimal;
 import com.ib.client.Order;
-import com.ib.client.TickType;
 import com.ib.client.Types.Action;
 
 import tw.util.S;
@@ -13,17 +14,20 @@ import tw.util.S;
 public class Prices {
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
 	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
+	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/DD HH:mm:ss");
 	
 	private double m_bid;
 	private double m_ask;
 	private double m_last;
 	private double m_close;
+	private String m_time;
 
 	public Prices(Map<String, String> map) {
 		m_bid = getDouble(map, "bid");
 		m_ask = getDouble(map, "ask");
 		m_last = getDouble(map, "last");
 		m_close = getDouble(map, "close");
+		m_time = map.get("time");
 	}
 	
 	double getDouble( Map<String, String> map, String key) {
@@ -35,6 +39,12 @@ public class Prices {
 	public double ask() { return m_ask; }
 	public double last() { return m_last; }
 	public double close() { return m_close; }
+	
+	public String getFormattedTime() {
+		return S.isNull( m_time)
+				? ""
+				: timeFmt.format( new Date( Long.valueOf( m_time) ) );
+	}
 	
 	/** No penny stocks */
 	boolean validBid() {
