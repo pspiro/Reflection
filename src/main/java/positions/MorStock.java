@@ -1,6 +1,6 @@
 package positions;
 
-class Stock {
+class MorStock {
 	private String symbol;
 	private String token;
 	private int conid;
@@ -9,7 +9,7 @@ class Stock {
 	String token() { return token; }
 	int conid() { return conid; }
 	
-	Stock( String sym, String tok, int con) {
+	MorStock( String sym, String tok, int con) {
 		symbol = sym;
 		token = tok;
 		conid = con;

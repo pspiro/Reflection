@@ -20,7 +20,7 @@ public class BalanceClient {
 		}
 	}
 
-	HashMap<String, Stock> m_map;
+	HashMap<String, MorStock> m_map;
 	
 	private void run() throws Exception {
 		MoralisServer.m_database.connect( "jdbc:postgresql://localhost:5432/reflection", "postgres", "1359");

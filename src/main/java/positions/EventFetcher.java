@@ -29,7 +29,7 @@ public class EventFetcher {
 	
 	private final MoralisServer m_server; // not used? 
 	private int m_responsesReceived;
-	private final HashMap<String,Stock> m_stockMap; // keys are in lower case
+	private final HashMap<String,MorStock> m_stockMap; // keys are in lower case
 	private JSONObject m_walletMap = new JSONObject(); // map wallet to token balances
 	
 	
@@ -40,10 +40,10 @@ public class EventFetcher {
 	}
 	
 	/** Reads all stocks, active and inactive. */ 
-	public static HashMap<String,Stock> readStocks() throws Exception {
+	public static HashMap<String,MorStock> readStocks() throws Exception {
 		S.out( "Reading contracts from google sheet");
 
-		HashMap<String,Stock> stockMap = new HashMap<String,Stock>(); // map token to Stock
+		HashMap<String,MorStock> stockMap = new HashMap<String,MorStock>(); // map token to Stock
 		
 		ListEntry[] rows = NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false);
 		for (ListEntry row : rows) {
@@ -53,7 +53,7 @@ public class EventFetcher {
 			
 			if (S.isNotNull( symbol) ) {
 				if (Util.validToken(token) ) { 
-					Stock stock = new Stock( symbol, token, conid);
+					MorStock stock = new MorStock( symbol, token, conid);
 					stockMap.put( token, stock);
 				}
 				else {
@@ -68,7 +68,7 @@ public class EventFetcher {
 	/** Query missing blocks one contract at a time. */
 	void backfill(int startingBlock, int endingBlock) throws Exception {
 		
-		for (Stock stock : m_stockMap.values() ) {
+		for (MorStock stock : m_stockMap.values() ) {
 			String symbol = stock.symbol();
 			String token = stock.token();
 			
