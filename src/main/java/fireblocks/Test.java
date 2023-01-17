@@ -11,9 +11,10 @@ public class Test {
 	
 	static String getfirstKeccak = "0xaf3e9eb6";  // no 0x??????????????????????
 	
-//	public static void main(String[] args) throws ParseException {
-//		MoralisServer.queryTransaction("0x675cba1e5f2cc316674c297363e9be69f6d34625705be098c14c2d9a0be0ba92", "goerli").display(); 
-//	}
+	public static void main(String[] args)  {
+		S.out( System.currentTimeMillis() );
+		//MoralisServer.queryTransaction("0x675cba1e5f2cc316674c297363e9be69f6d34625705be098c14c2d9a0be0ba92", "goerli").display(); 
+	}
 	
 //	public static void main(String[] args) throws Exception {
 //		Fireblocks.setVals();

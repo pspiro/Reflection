@@ -10,12 +10,12 @@ public class GetAccounts {
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setTestVals();
 
-		//Fireblocks.getVaultAccounts().display();
+		Fireblocks.getVaultAccounts().display();
 		
 		// Fireblocks.getTransactions().display();
 		
 		//Fireblocks.getTransaction( "a769ace6-6c35-492d-96e4-8f5588c1ee87").display(); 
-		displayLastTransaction();
+		//displayLastTransaction();
 
 	}
 

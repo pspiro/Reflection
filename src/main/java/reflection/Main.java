@@ -154,6 +154,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return getStock(conid).get("smartcontractid");
 	}
 	
+	String getType( int conid) throws RefException {
+		return getStock(conid).get("type");
+	}
+	
 	StringJson getStock( int conid) throws RefException {
 		StringJson stock = m_stockMap.get( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Error - unknown conid %s", conid);

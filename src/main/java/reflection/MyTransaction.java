@@ -52,6 +52,8 @@ public class MyTransaction {
 	static final String code = "code";
 	static final String text = "text";
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
+	public static final String etf = "ETF";  // must match type column from spreadsheet
+	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
 	
 	private Main m_main;
 	private HttpExchange m_exchange;
@@ -471,13 +473,75 @@ public class MyTransaction {
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
+		smartInsideHours( contract, inside -> {
+			wrap( () -> {
+				require( inside, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+				
+				if (!inside) {
+					thr
+				}
+				
+			});
+			
+		});
+	}
+	
+	interface Inside {
+		void run(boolean inside) throws RefException;
+	}
+	
+	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
+	 *  check IBEOS and change the exchange on the contract passed in to IBEOS */
+	void smartInsideHours( Contract contract, Inside runnable) {
+		insideHours( contract, inside -> {
+			if (inside) {
+				runnable.run(true);
+			}
+
+			if (etf.equals( m_main.getType( contract.conid() ) ) ) {
+				contract.exchange(ibeos);
+				insideHours( contract, runnable);
+			}
+			else {
+				runnable.run(false);
+			}
+		});
+	}
+
+	/** Call true or false on the Inside runnable */
+	void insideHours( Contract contract, Inside runnable) {
 		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
 				ContractDetails deets = list.get(0);
-				require( inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
-				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+				
+				if (inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
+					inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ) ) {
+					runnable.run(true);
+				}
+			});
+		}
+	}
+	
+	
+	/*
+		
+		m_main.orderController().reqContractDetails(contract, list -> {
+			wrap( () -> {
+				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
+				
+				ContractDetails deets = list.get(0);
+				
+				boolean inside =
+						inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
+						inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() );
+				if (!inside && etf.equals( m_main.getType(conid ) ) {
+ 
+				}
+						
+						
+						, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 

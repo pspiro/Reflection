@@ -8,7 +8,10 @@ public class Transfer {
 	// this works as of 11/26/22 10:37am in the fireblocks branch
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setTestVals();
-		
+		transfer("0", "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "transfer platform base");
+	}
+	
+	static void transfer(String accountId, String destAddress, String note) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'TRANSFER'," + 
@@ -19,15 +22,11 @@ public class Transfer {
 				"   'type': 'ONE_TIME_ADDRESS'," + 
 				"   'oneTimeAddress': {'address': '%s'}" + 
 				"}," + 
-//				"'priorityFee': '1'," + 
-//				"'maxFee': '15'," + 
-				"'note': 'Deployed from code'" + 
+				"'note': '%s'" + 
 				"}";
 
-		String accountId = "0";
-		String destAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		String body = Fireblocks.toJson( 
-				String.format( bodyTemplate, Fireblocks.platformBase, accountId, destAddress) );
+				String.format( bodyTemplate, Fireblocks.platformBase, accountId, destAddress, note) );
 		String operation = "POST";
 		
 		Fireblocks fb = new Fireblocks();
