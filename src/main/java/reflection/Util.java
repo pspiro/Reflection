@@ -36,15 +36,7 @@ public class Util {
 		20220809:0930-20220809:1600
 		@return true if we are currently inside of the hours. 
 	 * @throws RefException */
-	static boolean inside( int conid, String hours, String timeZoneId) throws RefException {
-		// simulated trading? always return true
-		if (Main.simulated() ) {
-			return true;
-		}
-		
-		return inside( new Date(), conid, hours, timeZoneId);
-	}
-	
+
 	/** These are broken out to facilitate testing. */
 	public static boolean inside( Date now, int conid, String hours, String timeZoneIdIn) throws RefException {
 		Main.require (hours != null, RefCode.UNKNOWN, "Null trading hours for %s", conid);

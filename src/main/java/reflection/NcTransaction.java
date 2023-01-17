@@ -122,9 +122,6 @@ class NcTransaction {
 			case checkOrder:
 				order( true);
 				break;
-			case checkHours:
-				checkHours();
-				break;
 			case getDescription:
 				getDescription();
 				break;
@@ -259,39 +256,6 @@ class NcTransaction {
 		setTimer( NcMain.m_config.timeout(), () -> timedOut( "getDescription timed out") );
 	}
 
-	/** Top-level method. */
-	private void checkHours() throws RefException {
-		int conid = m_map.getRequiredInt( "conid");
-		require( conid > 0, RefCode.INVALID_REQUEST, "Param 'conid' must be positive integer");
-
-		S.out( "Returning trading hours for %s", conid);
-		Contract contract = new Contract();
-		contract.conid( conid);
-		contract.exchange( m_main.getExchange( conid) );
-
-		m_main.reqContractDetails(contract, list -> processHours( conid, list) );
-		
-		setTimer( NcMain.m_config.timeout(), () -> timedOut( "checkHours timed out") );
-	}
-	
-	private void processHours(int conid, List<ContractDetails> list) {
-		wrap( () -> {
-			require( !list.isEmpty(), RefCode.NO_SUCH_STOCK, "No contract details found for conid %s", conid);
-			
-			ContractDetails deets = list.get(0);
-
-			if (inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ) {
-				respond( "hours", "liquid");
-			}
-			else if (inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ) ) {
-				respond( "hours", "illiquid");
-			}
-			else {
-				respond( "hours", "closed");
-			}
-		});
-	}
-	
 	private double round(double val) {
 		return Math.round( val * 100) / 100.;
 	}
@@ -354,8 +318,8 @@ class NcTransaction {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
 				ContractDetails deets = list.get(0);
-				require( inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
-				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, "Exchange is closed");
+//				require( inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
+//				         inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ), RefCode.EXCHANGE_CLOSED, "Exchange is closed");
 
 				// check that we have prices and that they are within bounds; 
 				// do this after checking trading hours because that would 

@@ -3,7 +3,13 @@
 
 package com.ib.client;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+
+import tw.util.S;
 
 public class ContractDetails {
     private Contract m_contract;
@@ -51,6 +57,7 @@ public class ContractDetails {
     private String   m_nextOptionType;
     private boolean  m_nextOptionPartial = false;
     private String   m_notes;
+    private String m_simTime; // used for testing for Reflection
 
     // Get
     public int conid()                  { return m_contract.conid(); }
@@ -98,6 +105,7 @@ public class ContractDetails {
     public String nextOptionType()      { return m_nextOptionType; }
     public boolean nextOptionPartial()  { return m_nextOptionPartial; }
     public String notes()               { return m_notes; }
+    public String simTime() { return m_simTime; }
 
     // Set
     public void contract(Contract contract)         { m_contract = contract; }
@@ -144,6 +152,7 @@ public class ContractDetails {
     public void nextOptionType(String nextOptionType) { m_nextOptionType = nextOptionType; }
     public void nextOptionPartial(boolean nextOptionPartial) { m_nextOptionPartial = nextOptionPartial; }
     public void notes(String notes)             { m_notes = notes; }
+    public void simTime(String v) { m_simTime = v; }
 
     public ContractDetails() {
         m_contract = new Contract();
@@ -245,4 +254,13 @@ public class ContractDetails {
         sb.append( val);
         sb.append( '\n');
     }
+
+    public static DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
+
+    /** If simTime is set, return today's date and simTime, otherwise return now */
+    public Date getNow() throws ParseException {
+		return S.isNull( m_simTime) 
+				? new Date()
+				: dateAndTime.parse( S.userDate(new Date()) + " " + m_simTime);
+	}
 }

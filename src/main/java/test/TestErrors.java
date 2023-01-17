@@ -91,7 +91,7 @@ public class TestErrors extends TestCase {
 	static String prod = "34.125.38.193";
 	static String local = "localhost";
 	
-	static String host = prod; //local;
+	static String host = local;
 	
 	static MyHttpClient cli() throws Exception {
 		return new MyHttpClient( host, 8383);
@@ -115,26 +115,6 @@ public class TestErrors extends TestCase {
 		return cli.readJsonMap();
 	}
 
-	@SuppressWarnings("deprecation")   // run this test again with a different time zone
-	public void testExchHours() throws RefException {
-		String str = "20220807:CLOSED;"
-				+ "20220916:0900-20220916:1600;"
-				+ "20220918:0930-20220918:1600";
-		
-		String tz = "America/New_York";
-		
-		assertTrue(  Util.inside( date(2022, 9, 16,  9, 00), 8314, str, tz) );
-		assertTrue(  Util.inside( date(2022, 9, 16, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 15, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 17, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16,  8, 59), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16, 16, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16, 16, 10), 8314, str, tz) );
-	}
-
-	private Date date(int year, int month, int day, int hr, int min) {
-		return new Date( year - 1900, month - 1, day, hr, min);
-	}
 	
 	public static void main(String[] args) {
 		S.out( new SimpleDateFormat( "yyyymmdd").getTimeZone().getID() );

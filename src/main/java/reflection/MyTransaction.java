@@ -2,7 +2,6 @@ package reflection;
 
 import static reflection.Main.log;
 import static reflection.Main.require;
-import static reflection.Util.inside;
 
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -326,10 +325,10 @@ public class MyTransaction {
 			
 			ContractDetails deets = list.get(0);
 
-			if (inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ) {
+			if (inside( deets, deets.liquidHours() ) ) {
 				respond( "hours", "liquid");
 			}
-			else if (inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ) ) {
+			else if (inside( deets, deets.tradingHours() ) ) {
 				respond( "hours", "illiquid");
 			}
 			else {
@@ -473,37 +472,53 @@ public class MyTransaction {
 		
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
 		
-		smartInsideHours( contract, inside -> {
-			wrap( () -> {
-				require( inside, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
-				
-				if (!inside) {
-					thr
+		insideAnyHours( contract, inside -> {
+			require( inside, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+			
+			// check that we have prices and that they are within bounds; 
+			// do this after checking trading hours because that would 
+			// explain why there are no prices which should never happen otherwise
+			Prices prices = m_main.getPrices( contract.conid() );
+			prices.checkOrderPrice( order, orderPrice, Main.m_config);
+			
+			// if the user submitted an order for < .5 shares, we round to zero so no order is placed
+			if (whatIf) {
+				// for what-if, submit it with at least qty of 1 to make sure it is a valid order 
+				if (order.roundedQty() == 0) {
+					order.totalQuantity(1);
 				}
 				
-			});
-			
+				log( LogType.CHECK, order.getCheckLog(contract) );
+				submitWhatIf( contract, order);
+			}
+			else {
+				log( LogType.ORDER, order.getOrderLog(contract) );
+
+				// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas 
+				if (order.roundedQty() == 0) {
+					respondToOrder(order, 0, false, OrderStatus.Filled, fireblocks);
+				}
+				else {
+					submitOrder(  contract, order, fireblocks);
+				}
+			}
 		});
 	}
 	
 	interface Inside {
-		void run(boolean inside) throws RefException;
+		void run(boolean inside) throws Exception;
 	}
 	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS */
-	void smartInsideHours( Contract contract, Inside runnable) {
+	void insideAnyHours( Contract contract, Inside runnable) {
 		insideHours( contract, inside -> {
-			if (inside) {
-				runnable.run(true);
-			}
-
-			if (etf.equals( m_main.getType( contract.conid() ) ) ) {
+			if (!inside && etf.equals( m_main.getType( contract.conid() ) ) ) {
 				contract.exchange(ibeos);
 				insideHours( contract, runnable);
 			}
 			else {
-				runnable.run(false);
+				runnable.run(inside);
 			}
 		});
 	}
@@ -515,65 +530,31 @@ public class MyTransaction {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
 				ContractDetails deets = list.get(0);
-				
-				if (inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
-					inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() ) ) {
-					runnable.run(true);
-				}
-			});
-		}
-	}
-	
-	
-	/*
-		
-		m_main.orderController().reqContractDetails(contract, list -> {
-			wrap( () -> {
-				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
-				
-				ContractDetails deets = list.get(0);
-				
-				boolean inside =
-						inside( deets.conid(), deets.liquidHours(), deets.timeZoneId() ) ||
-						inside( deets.conid(), deets.tradingHours(), deets.timeZoneId() );
-				if (!inside && etf.equals( m_main.getType(conid ) ) {
- 
-				}
-						
-						
-						, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+				deets.simTime( m_map.getParam("simTime") );  // this is for use by the test scripts in TestOutsideHours only 
 
-				// check that we have prices and that they are within bounds; 
-				// do this after checking trading hours because that would 
-				// explain why there are no prices which should never happen otherwise
-				Prices prices = m_main.getPrices( contract.conid() );
-				prices.checkOrderPrice( order, orderPrice, Main.m_config);
-				
-				// if the user submitted an order for < .5 shares, we round to zero so no order is placed
-				if (whatIf) {
-					// for what-if, submit it with at least qty of 1 to make sure it is a valid order 
-					if (order.roundedQty() == 0) {
-						order.totalQuantity(1);
-					}
-					
-					log( LogType.CHECK, order.getCheckLog(contract) );
-					submitWhatIf( contract, order);
-				}
-				else {
-					log( LogType.ORDER, order.getOrderLog(contract) );
-
-					// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas 
-					if (order.roundedQty() == 0) {
-						respondToOrder(order, 0, false, OrderStatus.Filled, fireblocks);
-					}
-					else {
-						submitOrder(  contract, order, fireblocks);
-					}
-				}
+				runnable.run( inside( deets) );
 			});
 		});
 	}
 	
+	/** Return true if we are current inside trading hours OR liquid hours.
+	 *  When running test scripts, simTime param will be set and used. */
+	static boolean inside( ContractDetails deets) throws Exception {
+		if (Main.simulated() ) {
+			return true;
+		}
+		
+		return inside( deets, deets.tradingHours() ) ||
+			   inside( deets, deets.liquidHours() );
+	}
+
+	/** Return true if we are inside the specified hours; uses simTime if set. 
+	 * @throws ParseException 
+	 * @throws Exception */
+	static boolean inside(ContractDetails deets, String hours) throws Exception {
+		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
+	}
+
 	private void submitWhatIf( Contract contract, final Order order) throws RefException {
 		// check trading hours first since it is a nicer error message
 		
