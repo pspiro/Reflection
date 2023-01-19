@@ -142,7 +142,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	static String orderData(double offset, String side, String cryptoId) {
-		return String.format( "{ 'msg': 'order', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'cryptoid': '%s', 'wallet': '0x747474' }",
+		return String.format( "{ 'msg': 'order', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'cryptoid': '%s', 'wallet': '0x747474', 'tds': 1.11 }",
 				side, Double.valueOf( curPrice + offset), cryptoId );
 	}
 	

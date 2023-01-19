@@ -43,7 +43,10 @@ public class Deploy {
 	}
 	
 	/** Query the transaction from Fireblocks until it contains the txHash value
-	 *  which is the blockchain transaction has; takes about 13 seconds. */
+	 *  which is the blockchain transaction has; takes about 13 seconds. 
+	 *  
+	 *  PERFORMANCE NOTE - we get a response 3-5 seconds sooner here than 
+	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message */
 	public static String getTransHash(String fireblocksId, int sec) throws Exception {
 		for (int i = 0; i < sec; i++) {
 			if (i > 0) S.sleep(1000);
