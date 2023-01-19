@@ -63,30 +63,42 @@ public class MoralisListener {
 	}
 	
 	void handleBlockchainEvent( SimpleTransaction trans) {
+		S.out( "----------");
+		try {
+			trans.getJson().display();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void handleBlockchainEvent2( SimpleTransaction trans) {
 		try {
 			MyJsonObject msg = trans.getJson();
 			
-			int block = msg.getObj( "block").getInt("number");
+			MyJsonObject block = msg.getObj( "block");
+			if (block != null) {
+				S.out( "-----Block %s", block.getInt("number"));
+			}
 
-			S.out( "Received ERC20 transfers");
+			S.out( "-----ERC20 transfers");
 			for (MyJsonObject transfer : msg.getAr( "erc20Transfers") ) {
 	        	String token = transfer.getString( "contract").toLowerCase();
 	        	String from = transfer.getString( "from").toLowerCase();
 	        	String to = transfer.getString( "to").toLowerCase();
 	        	double val = transfer.getDouble( "valueWithDecimals");
 	        	String hash = transfer.getString( "transactionHash").toLowerCase();
-	        	S.out( "  %s %s %s %s %s %s", token, block, from, to, val, hash);  // formats w/ two dec.
+	        	S.out( "  %s %s %s %s %s", token, from, to, val, hash);  // formats w/ two dec.
 	        }
 			
 			S.out( "");
-			S.out( "Received logs");
+			S.out( "-----Received logs");
 	        for (MyJsonObject log : msg.getAr( "logs") ) {
 	        	String token = log.getString( "address").toLowerCase();
 	        	String from = S.right( log.getString( "topic1"), 42).toLowerCase();
 	        	String to = S.right( log.getString( "topic2"), 42).toLowerCase();
 	        	double val = Util.hexToDec( log.getString( "data"), 16);
 	        	String hash = log.getString( "transactionHash").toLowerCase();
-	        	S.out( "  %s %s %s %s %s %s", block, token, from, to, val, hash);  // formats w/ two dec.		        	
+	        	S.out( "  %s %s %s %s %s", token, from, to, val, hash);  // formats w/ two dec.		        	
 	        }
 			
 			trans.respond( "OK");
