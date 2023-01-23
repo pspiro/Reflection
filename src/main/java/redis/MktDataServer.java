@@ -83,7 +83,7 @@ public class MktDataServer {
 		S.out( "  done");
 		
 		// connect to TWS
-		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort() );
+		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
