@@ -530,7 +530,7 @@ public class MyTransaction {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
 				
 				ContractDetails deets = list.get(0);
-				deets.simTime( m_map.getParam("simTime") );  // this is for use by the test scripts in TestOutsideHours only 
+				deets.simTime( m_map.getParam("simtime") );  // this is for use by the test scripts in TestOutsideHours only 
 
 				runnable.run( inside( deets) );
 			});

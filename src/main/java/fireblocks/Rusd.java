@@ -49,7 +49,11 @@ public class Rusd {
 		Fireblocks.setTestVals();
 //		deploy();
 		//approveBusd();
-//		buyStock( userAddr, busdAddr, 10, StockToken.qqq, 11); // this works
+		//String id = buyStock( userAddr, busdAddr, 10, StockToken.qqq, 11); // this works
+		String id = buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // this works
+		String hash = Deploy.getTransHash(id, 60);  // do we really need to wait this long? pas
+		S.out( "got hash " + hash);
+		
 		//buyStock( userAddr, busdAddr, 10, TestFireblocks.qqq, 11); // this works
 		//buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // test this
 //		buyRusd( userAddr, busdAddr, 9);   // this works, make sure you have called BUSD.approve(RUSD) for spending
@@ -85,6 +89,9 @@ public class Rusd {
 	 */
 
 	/** Buying stock with either BUSD OR RUSD; need to test it both ways.
+	 * 
+	 *  IMPORTANT, READ THIS FOR FOR TROUBLE-SHOOTING
+	 *  
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */

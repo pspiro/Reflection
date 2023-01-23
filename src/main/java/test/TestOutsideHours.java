@@ -12,24 +12,6 @@ import tw.util.S;
 
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends TestCase {
-	public void testCheckOrder() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474',  }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
-		assertEquals( MyTransaction.exchangeIsClosed, text);
-	}
-
-	public void testOrder() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': ' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
-		assertEquals( MyTransaction.exchangeIsClosed, text);
-	}
-	
 	@SuppressWarnings("deprecation")   // run this test again with a different time zone
 	public void testExchHours() throws RefException {
 		String str = "20220807:CLOSED;"
@@ -51,9 +33,12 @@ public class TestOutsideHours extends TestCase {
 		return new Date( year - 1900, month - 1, day, hr, min);
 	}
 
-	public HashMap<String, Object> testHours( int conid, String time) throws Exception {
-		String format = "{ 'msg': 'order', 'conid': '%s', 'side': 'buy', 'quantity': '100', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
-		String data = String.format( format, conid, TestOrder.curPrice + 5, time); 
+	public static HashMap<String, Object> testHours( int conid, String time) throws Exception {
+		double price = TestOrder.curPrice + 5;
+		if (conid == 320227571) price = 300;
+				
+		String format = "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
+		String data = String.format( format, conid, price, time); 
 		return TestErrors.sendData( data);
 	}
 
@@ -74,6 +59,7 @@ public class TestOutsideHours extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 
+		S.out( "testStk1 " + text);
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
@@ -83,72 +69,98 @@ public class TestOutsideHours extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 
+		S.out( "testStk2 " + text);
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testStk3() throws Exception {
+		HashMap<String, Object> map = testHours( 8314, "19:59");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		S.out( "testStk3 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}
+	
+	public void testStk4() throws Exception {
 		HashMap<String, Object> map = testHours( 8314, "20:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 
-		assertEquals( RefCode.OK.toString(), ret);
+		S.out( "testStk4 " + text);
+		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
+		assertEquals( MyTransaction.exchangeIsClosed, text);
+	
 	}
 	
-	public void testStk4() throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "20:01");
+	public void testEtf0()  throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "3:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
 		assertEquals( MyTransaction.exchangeIsClosed, text);
-	
 	}
+	
+	public void testEtf1()  throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "4:00");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+
+		S.out( "testEtf1 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}
+	
+	public void testEtf2() throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "10:00");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+
+		S.out( "testEtf2 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}
+	
+	public void testEtf3() throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "19:59");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		S.out( "testEtf3 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}
+	
+	public void testEtf4() throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "20:00");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+
+		S.out( "testEtf4 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}	
+
+	public void testEtf5() throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "23:59");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+
+		S.out( "testEtf4 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}	
+
+	public void testEtf6() throws Exception {
+		HashMap<String, Object> map = testHours( 320227571, "03:29");
+
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+
+		S.out( "testEtf4 " + text);
+		assertEquals( RefCode.OK.toString(), ret);
+	}	
+
 }
-	
-/*	public void testETFLiquid()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': ' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-
-		assertEquals( RefCode.OK.toString(), ret);
-	}
-	
-	public void testETFIlliquid()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': ' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-
-		assertEquals( RefCode.OK.toString(), ret);
-	}
-	
-	public void testETFVeryIlliquid()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': ' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-
-		assertEquals( RefCode.OK.toString(), ret);
-	}
-	
-	public void testETFOutside()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': ' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
-
-		String ret = (String)map.get( "code");
-		String text = (String)map.get( "text");
-		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
-		assertEquals( MyTransaction.exchangeIsClosed, text);
-	}
-	
-	// test: stock inside, stock outside, ETF inside, ETF after hours, ETF outside
-	
-
-}
-*/
