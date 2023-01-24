@@ -352,7 +352,7 @@ public class MyTransaction {
 	/** Used to query prices from Redis. */
 	static class PriceQuery {
 		private String conid;  // no point storing an int since String is needed
-		private Response<Map<String, String>> res;
+		private Response<Map<String, String>> res;  // returns a map of tag->val where tag =bid/ask/... and val is price
 
 		public PriceQuery(Pipeline p, String conid) {
 			this.conid = conid;

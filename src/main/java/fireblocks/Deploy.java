@@ -46,12 +46,17 @@ public class Deploy {
 	 *  which is the blockchain transaction has; takes about 13 seconds. 
 	 *  
 	 *  PERFORMANCE NOTE - we get a response 3-5 seconds sooner here than 
-	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message */
-	public static String getTransHash(String fireblocksId, int sec) throws Exception {
-		for (int i = 0; i < sec; i++) {
+	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message
+	 *  
+	 *  The Moralis is WAY MORE delayed, even	. */
+	public static String getTransHash(String fireblocksId, int tries) throws Exception {
+		// it always takes at least a few seconds, I think
+		S.sleep(3000);
+		
+		for (int i = 0; i < tries; i++) {
 			if (i > 0) S.sleep(1000);
 			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
-			S.out( "  status: %s  hash: %s", trans.getString("status"), trans.getString("txHash") );
+			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
 			
 			String txHash = trans.getString("txHash");
 			if (S.isNotNull( txHash) ) {

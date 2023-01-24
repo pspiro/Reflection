@@ -46,13 +46,29 @@ public class Rusd {
 	
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	public static void main(String[] args) throws Exception {
+		for (int i = 0; i < 3; i++) {
+			new Thread( () -> testone() ).start();
+			S.sleep(100);
+		}
+	}
+	
+	static void testone() {
+		try {
+			testonea();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	static void testonea() throws Exception {
 		Fireblocks.setTestVals();
 //		deploy();
 		//approveBusd();
 		//String id = buyStock( userAddr, busdAddr, 10, StockToken.qqq, 11); // this works
 		String id = buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // this works
 		String hash = Deploy.getTransHash(id, 60);  // do we really need to wait this long? pas
-		S.out( "got hash " + hash);
+		S.out( "%s got hash %s", id, hash);
 		
 		//buyStock( userAddr, busdAddr, 10, TestFireblocks.qqq, 11); // this works
 		//buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // test this
@@ -112,8 +128,7 @@ public class Rusd {
 				params[4], stockTokenAddr, params[3], getName(stablecoinAddr), userAddr);
 		MyJsonObject obj = Fireblocks.call( refWalletAcctId, rusdAddr, 
 				buyStockKeccak, paramTypes, params, "RUSD.buyStock()");
-		obj.display("'buyStock' ret val");
-		
+		S.out( "%s Buy stock %s", obj.getString("id"), obj.getString("status") );
 		return obj.getString("id");
 	}
 	

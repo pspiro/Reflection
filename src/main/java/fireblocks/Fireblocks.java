@@ -78,7 +78,7 @@ public class Fireblocks {
 	
 	// return MyJsonObj
 	String transact() throws Exception {
-		S.out( "Sending Fireblocks transaction  %s  %s  '%s'", operation, endpoint, body);
+		//S.out( "Sending Fireblocks transaction  %s  %s  '%s'", operation, endpoint, body);
 
 		//S.out( "api key: %s", apiKey);
 

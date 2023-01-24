@@ -346,6 +346,7 @@ public class S {
 		return Math.max( v1, v2);
 	}
 	
+	// see Util for executeIn()
 //	public static void exec( final int ms, final Runnable runnable) {
 //		if( m_timer == null) {
 //			m_timer = new Timer();
@@ -861,6 +862,5 @@ public class S {
 		return str.substring( str.length() - i);
 	}
 	
-	// see Util for executeIn()
 
 }
