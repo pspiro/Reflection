@@ -10,6 +10,7 @@ public class MktDataConfig {
 	private Mode mode = Mode.paper;  // paper or production
 	private String twsMdHost;  // TWS is listening on this host
 	private int twsMdPort;  // TWS is listening on this port
+	private int twsMdClientId;
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private String postgresUrl;
 	private String postgresUser;
@@ -26,6 +27,7 @@ public class MktDataConfig {
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
 	public long reconnectInterval() { return reconnectInterval; }
+	public int twsMdClientId() { return twsMdClientId; }
 
 	public MktDataConfig() { 
 	}
@@ -38,6 +40,7 @@ public class MktDataConfig {
 		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getInt( "twsMdPort");
+		this.twsMdClientId = tab.getInt( "twsMdClientId");
 //		this.postgresUrl = tab.get( "postgresUrl");
 //		this.postgresUser = tab.get( "postgresUser");
 //		this.postgresPassword = tab.get( "postgresPassword");
