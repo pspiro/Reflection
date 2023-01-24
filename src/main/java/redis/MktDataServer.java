@@ -1,7 +1,5 @@
 package redis;
 
-import java.net.BindException;
-import java.util.HashMap;
 import java.util.Random;
 
 import org.json.simple.JSONArray;
@@ -14,13 +12,11 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 
 import http.SimpleTransaction;
-import json.MyJsonObject;
 import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import reflection.Main;
 import reflection.MySqlConnection;
-import reflection.Prices;
 import reflection.Util;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -84,7 +80,14 @@ public class MktDataServer {
 		
 		// connect to TWS
 		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort() );
+		
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown()));
 	}
+
+	private void shutdown() {
+		S.out("received shutdown msg");
+	}
+
 
 	/** Refresh list of stocks and re-request market data. */ 
 	void refreshStockList() throws Exception {   // never called. pas
