@@ -3,6 +3,7 @@ package reflection;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ import json.MyJsonObject;
 import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.util.JedisURIHelper;
 import reflection.MyTransaction.JRun;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -85,6 +87,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	private void run(String tabName) throws Exception {
+		Fireblocks.setTestVals();  // see also call to Fireblocks.setVals() in Config
+		
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -101,9 +105,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
 		S.out( "  done");
-		
-		S.out( "Connecting to redis server on %s port %s", m_config.redisHost(), m_config.redisPort() );
-		m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+
+		// if port is zero, host contains connection string, otherwise host and port are used
+		if (m_config.redisPort() == 0) {
+			S.out( "Connecting to redis with connection %s", m_config.redisHost() );
+			Util.require( JedisURIHelper.isValid( URI.create(m_config.redisHost() ) ), "redis connect string is invalid" );
+			m_jedis = new Jedis(m_config.redisHost() );
+		}
+		else {
+			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
+			m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+		}
 		m_jedis.get( "test");
 		S.out( "  done");
 

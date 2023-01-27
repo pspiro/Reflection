@@ -1,7 +1,10 @@
 package redis;
 
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
+import java.util.TimeZone;
 
 import org.json.simple.JSONArray;
 
@@ -33,6 +36,7 @@ public class MktDataServer {
 	final static Random rnd = new Random( System.currentTimeMillis() );
 	final static MktDataConfig m_config = new MktDataConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
+	final static int SpyConid = 756733;
 	
 	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
@@ -81,16 +85,35 @@ public class MktDataServer {
 		m_jedis.get( "test");
 		S.out( "  done");
 		
+		// check every 30 sec to see if we are in extended trading hours or not
+		// should eventually be reduced
+		Util.executeEvery( 30, () -> checkTime() ); 
+		
 		// connect to TWS
 		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown()));
 	}
 
-	private void shutdown() {
-		S.out("received shutdown msg");
+	boolean m_insideHours;
+	static SimpleDateFormat hhmm = new SimpleDateFormat( "kk:mm");
+
+	static {
+		TimeZone zone = TimeZone.getTimeZone("America/New_York");
+		hhmm.setTimeZone( zone);			
+	}
+	
+	/** Check to see if we are in extended trading hours or not so we know which 
+	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
+	 * better would be to check against the trading hours of an actual ETF. */
+	private void checkTime() {
+		String now = hhmm.format( new Date() );
+		m_insideHours = now.compareTo("04:00") >= 0 && now.compareTo("20:00") < 0;
 	}
 
+	private void shutdown() {
+		S.out("received shutdown msg from linux kill command");
+	}
 
 	/** Refresh list of stocks and re-request market data. */ 
 	void refreshStockList() throws Exception {   // never called. pas

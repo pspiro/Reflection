@@ -1,5 +1,7 @@
 package fireblocks;
 
+import tw.util.S;
+
 public class Transfer {
 	static String op = "POST"; 
 	static String endpoint = "/v1/transactions"; // /v1/vault/accounts_paged";
@@ -10,12 +12,13 @@ public class Transfer {
 		Fireblocks.setTestVals();
 		
 		String dest = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-		String id1 = Transfer.transfer( Fireblocks.testRusd, "1", dest, ".01", "transfer busd");
-		Fireblocks.getTransHash(id1, 60);
+		
+		String id2 = Transfer.transfer( Fireblocks.testBusd, "1", dest, "96", "transfer BUSD");
+		S.out(id2);
 	}
 	
-	// submitted test system TAP on 1/26/23; this won't work in production until you submit prod TAP
-	/** @param amt should be the decimal number, e.g. 1.2 transfers one 1.2x10^n where n is the # of decimals
+	/** @param asset is the Fireblocks assetId, not the contract address
+	 *  @param amt should be the decimal number, e.g. 1.2 transfers one 1.2x10^n where n is the # of decimals
 	 *  @return FB trans id */
 	public static String transfer(String asset, String srcAccountId, String destAddress, String amount, String note) throws Exception {
 		String bodyTemplate = 
@@ -32,7 +35,7 @@ public class Transfer {
 				"}";
 
 		String body = Fireblocks.toJson( 
-				String.format( bodyTemplate, amount, Fireblocks.platformBase, srcAccountId, destAddress, note) );
+				String.format( bodyTemplate, amount, asset, srcAccountId, destAddress, note) );
 		String operation = "POST";
 		
 		Fireblocks fb = new Fireblocks();

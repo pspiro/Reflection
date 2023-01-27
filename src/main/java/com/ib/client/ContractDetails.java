@@ -57,7 +57,7 @@ public class ContractDetails {
     private String   m_nextOptionType;
     private boolean  m_nextOptionPartial = false;
     private String   m_notes;
-    private String m_simTime; // used for testing for Reflection
+    private String m_simTime; // used for testing for Reflection; contains the time only, will be combined with today's date
 
     // Get
     public int conid()                  { return m_contract.conid(); }

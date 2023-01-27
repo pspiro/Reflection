@@ -78,9 +78,12 @@ public class Fireblocks {
 		s_privateKey = Util.getenv("private_key");
 	}
 	
-	/** Returns the Fireblocks ID */
+	/** Returns the Fireblocks ID. Throws exception if there is no id */
 	String transactToId() throws Exception {
-		return transactToObj().getString("id");
+		MyJsonObject obj = transactToObj();
+		String id = obj.getString("id");
+		Util.require( S.isNotNull(id), "Fireblocks error: " + obj.getString("message") );
+		return id;
 	}
 		
 	/** Returns MyJsonObject */

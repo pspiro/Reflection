@@ -573,8 +573,7 @@ public class MyTransaction {
 			   inside( deets, deets.liquidHours() );
 	}
 
-	/** Return true if we are inside the specified hours; uses simTime if set. 
-	 * @throws ParseException 
+	/** Return true if we are inside the specified hours; uses deets.simTime if set. 
 	 * @throws Exception */
 	static boolean inside(ContractDetails deets, String hours) throws Exception {
 		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
@@ -868,13 +867,16 @@ public class MyTransaction {
 	void mint() throws Exception {
 		String dest = m_map.getRequiredParam( "wallet");
 
-		S.out( "Transferring 500 BUSD to %s", dest);
-		Transfer.transfer( Fireblocks.testBusd, "1", dest, "500", "Transfer BUSD");
+		S.out( "Transferring 1000 BUSD to %s", dest);
+		String id1 = Transfer.transfer( Fireblocks.testBusd, "1", dest, "1000", "Transfer BUSD");
+		S.out( "FB id is %s", id1);
 
 		S.out( "Transferring .001 Goerli ETH to %s", dest);
-		Transfer.transfer( Fireblocks.platformBase, "1", dest, ".001", "Transfer ETH");  
+		String id2 = Transfer.transfer( Fireblocks.platformBase, "1", dest, ".005", "Transfer ETH");
+		S.out( "FB id is %s", id2);
+		
+		respond( code, RefCode.OK);
 	}
-	
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
