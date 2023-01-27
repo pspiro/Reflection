@@ -56,21 +56,15 @@ public class Fireblocks {
 	/** Do not call this in production; for testing only. 
 	 * @throws Exception */
 	public static void setTestVals() throws Exception {
-		Map<String, String> env = getEnv();
-		env.put( "api_key", testApi);
-		env.put( "private_key", testPk);
+		s_apiKey = testApi;
+		s_privateKey = testPk;
 		platformBase = testBase;
-
-		readKeys();		
 	}
 	
 	public static void setProdVals() throws Exception {
-		Map<String, String> env = getEnv();
-		env.put( "api_key", prodApi);
-		env.put( "private_key", prodPk);
+		s_apiKey = prodApi;
+		s_privateKey = prodPk;
 		platformBase = prodBase;
-		
-		readKeys();		
 	}
 
 	public static void readKeys() throws Exception {
@@ -175,17 +169,6 @@ public class Fireblocks {
 		else if (body.startsWith( "[")) {
 			MyJsonArray.parse(body).display();
 		}
-	}
-
-	/** This returns the map of environment variables so you can set or
-	 *  override values before they are read elsewhere. */
-	private static Map<String, String> getEnv() throws Exception {
-	    Class<?> pe = Class.forName("java.lang.ProcessEnvironment");
-	    Method getenv = pe.getDeclaredMethod("getenv", String.class);
-	    getenv.setAccessible(true);
-	    Field props = pe.getDeclaredField("theCaseInsensitiveEnvironment");
-	    props.setAccessible(true);
-	    return (Map<String, String>) props.get(null);
 	}
 
 	/** Call a Fireblocks GET endpoing. */
