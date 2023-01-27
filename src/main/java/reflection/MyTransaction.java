@@ -548,8 +548,7 @@ public class MyTransaction {
 			   inside( deets, deets.liquidHours() );
 	}
 
-	/** Return true if we are inside the specified hours; uses simTime if set. 
-	 * @throws ParseException 
+	/** Return true if we are inside the specified hours; uses deets.simTime if set. 
 	 * @throws Exception */
 	static boolean inside(ContractDetails deets, String hours) throws Exception {
 		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );

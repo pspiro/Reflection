@@ -7,6 +7,8 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.simple.JSONObject;
 
@@ -27,7 +29,7 @@ public class Util {
 	
 
 	public static void main(String[] args) throws RefException {
-		S.out( concatenate( ',', "a", "b") );
+		executeEvery( 2000, () -> S.out("lkj") );
 	}
 
 	/** Typical format of hours string is:
@@ -221,6 +223,23 @@ public class Util {
 			S.sleep( ms);
 			runnable.run();
 		}).start();
+	}
+
+	static Timer m_timer;
+	
+	/** Execute the runnable in a new thread every period ms forever. */
+	public static synchronized void executeEvery( int period, Runnable runnable) {
+		if (m_timer == null) {
+			m_timer = new Timer();
+		}
+		
+		TimerTask task = new TimerTask() {
+			@Override public void run() {
+				runnable.run();
+			}
+		};
+		
+		m_timer.schedule( task, period, period);
 	}
 
 	public static String getenv(String env) throws RefException {
