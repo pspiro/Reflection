@@ -30,7 +30,9 @@ import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Deploy;
+import fireblocks.Fireblocks;
 import fireblocks.Rusd;
+import fireblocks.Transfer;
 import json.StringJson;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -39,7 +41,27 @@ import util.LogType;
 
 public class MyTransaction {
 	enum MsgType {
-		checkHours, checkOrder, disconnect, dump, getAllPrices, getAllStocks, getConfig, getConnectionStatus, getDescription, getPrice, order, orderFb, pullBackendConfig, pullFaq, pushBackendConfig, pushFaq, refreshConfig, refreshStocks, terminate;
+		checkHours,
+		checkOrder,
+		disconnect,
+		dump,
+		getAllPrices,
+		getAllStocks,
+		getConfig,
+		getConnectionStatus,
+		getDescription,
+		getPrice,
+		mint,
+		order,
+		orderFb,
+		pullBackendConfig,
+		pullFaq,
+		pushBackendConfig,
+		pushFaq,
+		refreshConfig,
+		refreshStocks,
+		terminate,
+		;
 		
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
@@ -124,6 +146,9 @@ public class MyTransaction {
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
 		switch (msgType) { // this could be switched to polymorphism if desired
+			case mint:
+				mint();
+				break;
 			case getPrice:
 				getPrice();
 				break;
@@ -723,7 +748,7 @@ public class MyTransaction {
 				// when the order fills and one when the blockchain transaction is completed
 				
 				// wait for the transaction to be signed
-				hash = Deploy.getTransHash(id, 60);  // do we really need to wait this long? pas
+				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
 			catch( Exception e) {
@@ -837,6 +862,18 @@ public class MyTransaction {
 			return value != 0;
 		}
 	};
+	
+	/** top-level method 
+	 * @throws Exception */
+	void mint() throws Exception {
+		String dest = m_map.getRequiredParam( "wallet");
+
+		S.out( "Transferring 500 BUSD to %s", dest);
+		Transfer.transfer( Fireblocks.testBusd, "1", dest, "500", "Transfer BUSD");
+
+		S.out( "Transferring .001 Goerli ETH to %s", dest);
+		Transfer.transfer( Fireblocks.platformBase, "1", dest, ".001", "Transfer ETH");  
+	}
 	
 }
 

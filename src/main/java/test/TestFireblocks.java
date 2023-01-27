@@ -17,7 +17,7 @@ public class TestFireblocks extends TestCase {
 		return str.replaceAll( "\\'", "\"");
 	}
 	
-	public void testEncode() throws RefException {
+	public void testEncode() throws Exception {
 		String[] types = { "string", "address", "uint256", "uint256" };
 		Object[] vals = {
 				"hello",
@@ -44,7 +44,7 @@ public class TestFireblocks extends TestCase {
 		assertEquals( 6, obj.getInt("age") );
 	}
 	
-	public void testToStockToken() throws RefException {
+	public void testToStockToken() throws Exception {
 		String[] types = { "uint256" };
 		Object[] vals = { Rusd.toStockToken(34.01111) };
 		assertEquals( 
@@ -52,7 +52,7 @@ public class TestFireblocks extends TestCase {
 				Fireblocks.encodeParameters( types, vals) );
 	}
 
-	public void testToStablecoin() throws RefException {
+	public void testToStablecoin() throws Exception {
 		String[] types = { "uint256" };
 		Object[] vals = { Rusd.toStablecoin( Rusd.rusdAddr, 34.0111) }; // it gets rounded to two decimal places
 		assertEquals( 
@@ -83,7 +83,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.buyStock(Rusd.userAddr, Rusd.busdAddr, amt, ge, 4.5);
 		Fireblocks.getTransaction( id2).display("buy stock with BUSD");
 		
-		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
+		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );
 	}
 
 	public void testBuyStockWithRusd() throws Exception {
@@ -93,7 +93,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.buyStock(Rusd.userAddr, Rusd.rusdAddr, 3.0, ge, 4.5);
 		Fireblocks.getTransaction( id2).display("buy stock with RUSD");
 
-		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
+		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );
 	}
 
 	public void testSellStock() throws Exception {
@@ -103,7 +103,7 @@ public class TestFireblocks extends TestCase {
 		String id2 = Rusd.sellStock(Rusd.userAddr, Rusd.rusdAddr, 99.991, ge, 4.555);
 		Fireblocks.getTransaction(id2).display("sell stock for RUSD");
 
-		assertEquals( 66, Deploy.getTransHash(id2,60).length() );
+		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );
 	}
 
 

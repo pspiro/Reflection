@@ -245,8 +245,10 @@ public class Util {
 		return sb.toString();
 	}
 
-	public static void require(boolean test, String text) throws RefException {
-		Main.require( test, RefCode.UNKNOWN, text);
+	public static void require(boolean test, String text) throws Exception {
+		if (!test) {
+			throw new Exception( text);
+		}
 	}
 
 	/** Use this in more places. */

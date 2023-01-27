@@ -28,7 +28,10 @@ public class Fireblocks {
 
 	static String prodBase = "BNB_BSC";
 	static String testBase = "ETH_TEST3";
-	static String platformBase;
+	public static String platformBase;
+	
+	public static String testBusd = "BUSD_ETH_TEST3_6ZNB";  // Fireblocks asset id
+	public static String testRusd = "RUSD_ETH_TEST3_S89L";
 	
 	static Random rnd = new Random(System.currentTimeMillis());
 
@@ -75,8 +78,16 @@ public class Fireblocks {
 		s_privateKey = Util.getenv("private_key");
 	}
 	
-	
-	// return MyJsonObj
+	/** Returns the Fireblocks ID */
+	String transactToId() throws Exception {
+		return transactToObj().getString("id");
+	}
+		
+	/** Returns MyJsonObject */
+	MyJsonObject transactToObj() throws Exception {
+		return MyJsonObject.parse( transact() );
+	}
+			
 	String transact() throws Exception {
 		//S.out( "Sending Fireblocks transaction  %s  %s  '%s'", operation, endpoint, body);
 
@@ -113,6 +124,7 @@ public class Fireblocks {
 		//S.out( "Input:");
 		//System.out.println(input);
 		
+		Util.require( s_privateKey != null, "You must set key vals first");
 		String signed = Encrypt.signRSA( input, s_privateKey);
 		//S.out( "Sig:");
 		//System.out.println(signed);
@@ -208,7 +220,7 @@ public class Fireblocks {
 	/** For encoding parameters for deployment or contract calls.
 	 *  Assume all string length <= 32 bytes 
 	 * @throws RefException */
-	public static String encodeParameters( String[] types, Object[] params) throws RefException {
+	public static String encodeParameters( String[] types, Object[] params) throws Exception {
 		// no parameters passed?
 		if (types == null) {
 			return "";
@@ -334,4 +346,37 @@ public class Fireblocks {
 		return toJsonObject( get("/v1/vault/accounts_paged") );
 	}
 	
+	/** Query the transaction from Fireblocks until it contains the txHash value
+	 *  which is the blockchain transaction has; takes about 13 seconds. 
+	 *  
+	 *  PERFORMANCE NOTE - we get a response 3-5 seconds sooner here than 
+	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message
+	 *  
+	 *  The Moralis is WAY MORE delayed, even	. */
+	public static String getTransHash(String fireblocksId, int tries) throws Exception {
+		// it always takes at least a few seconds, I think
+		S.sleep(3000);
+		
+		for (int i = 0; i < tries; i++) {
+			if (i > 0) S.sleep(1000);
+			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
+			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
+			
+			String txHash = trans.getString("txHash");
+			if (S.isNotNull( txHash) ) {
+				return txHash;
+			}
+			
+			String status = trans.getString("status");
+			if ("COMPLETED".equals(status) ) {
+				throw new RefException( RefCode.UNKNOWN, "Transaction completed with no transaction hash");
+			}
+			
+			if ("FAILED".equals(status) ) {
+				throw new RefException( RefCode.UNKNOWN, "Transaction failed - %s", trans.getString("subStatus") );
+			}
+		}
+		
+		throw new RefException( RefCode.UNKNOWN, "Timed out waiting for transaction hash"); // should never happen
+	}	
 }

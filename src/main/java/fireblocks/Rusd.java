@@ -67,7 +67,7 @@ public class Rusd {
 		//approveBusd();
 		//String id = buyStock( userAddr, busdAddr, 10, StockToken.qqq, 11); // this works
 		String id = buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // this works
-		String hash = Deploy.getTransHash(id, 60);  // do we really need to wait this long? pas
+		String hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 		S.out( "%s got hash %s", id, hash);
 		
 		//buyStock( userAddr, busdAddr, 10, TestFireblocks.qqq, 11); // this works

@@ -262,7 +262,7 @@ public class MoralisServer {
 		void accept(String t) throws Exception;
 	}
 	
-	public static MyJsonObject queryTransaction( String transactionHash, String chain) throws ParseException {
+	public static MyJsonObject queryTransaction( String transactionHash, String chain) throws Exception {
 		String url = String.format( "https://deep-index.moralis.io/api/v2/transaction/%s?chain=%s",
 				transactionHash, chain);
 		return MyJsonObject.parse( querySync( url) );

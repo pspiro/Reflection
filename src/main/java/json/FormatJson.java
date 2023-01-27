@@ -5,7 +5,7 @@ import java.util.Scanner;
 import org.json.simple.parser.ParseException;
 
 public class FormatJson {
-	public static void main(String[] args) throws ParseException {
+	public static void main(String[] args) throws Exception {
 		Scanner scanner = new Scanner(System.in);
 		String input = scanner.nextLine();
 		scanner.close();

@@ -1,5 +1,6 @@
 package redis;
 
+import java.net.URI;
 import java.util.Random;
 
 import org.json.simple.JSONArray;
@@ -74,7 +75,9 @@ public class MktDataServer {
 //		S.out( "  done");
 		
 		S.out( "Connecting to redis server on %s port %s", m_config.redisHost(), m_config.redisPort() );
-		m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+		//m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+		URI jedisUri = new URI("redis://default:dCPwswvMVvWskdBDAMux201hWEv60Ry0@redis-19488.c1.asia-northeast1-1.gce.cloud.redislabs.com:19488");
+		m_jedis = new Jedis(jedisUri);
 		m_jedis.get( "test");
 		S.out( "  done");
 		

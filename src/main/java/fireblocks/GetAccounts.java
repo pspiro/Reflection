@@ -9,15 +9,25 @@ public class GetAccounts {
 
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setTestVals();
-
-		Fireblocks.getVaultAccounts().display();
+		MyJsonObject account = getAccount( "Minting Wallet");
+		account.display();
+	}
+	
+	static MyJsonObject getAccount( String accountName) throws Exception { 
+		MyJsonObject obj = Fireblocks.getVaultAccounts();
+		MyJsonArray accounts = obj.getAr("accounts");
+		for (MyJsonObject account : accounts) {
+			if (account.getString("name").equals( accountName) ) {
+				return account;
+			}
+		}
+		throw new Exception( "No such account: " + accountName);
+	}
 		
 		// Fireblocks.getTransactions().display();
 		
 		//Fireblocks.getTransaction( "a769ace6-6c35-492d-96e4-8f5588c1ee87").display(); 
 		//displayLastTransaction();
-
-	}
 
 	static void displayLastTransaction() throws Exception {
 		MyJsonArray ar = Fireblocks.getTransactions();
@@ -40,7 +50,7 @@ TestNet
 accounts : [
 	{ hiddenOnUI : false, name : RefWallet, id : 3, autoFuel : false }, 
 	{ hiddenOnUI : false, name : Owner, id : 2, autoFuel : false }, 
-	{ hiddenOnUI : false, name : Test1, id : 1, autoFuel : false }, 
+	{ hiddenOnUI : false, name : Minting Wallet, id : 1, autoFuel : false }, 
 	{ hiddenOnUI : false, name : Default, id : 0, autoFuel : false }
 	]
 */
