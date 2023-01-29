@@ -7,6 +7,7 @@ public enum LogType {
 	COMMISSION,		// commission report received
 	REJECTED,		// order was rejected
 	FILLED,			// order was completely filled
+	MINT,			// minted some goerli ETF for user
 	PARTIAL_FILL,	// order was partially filled
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,

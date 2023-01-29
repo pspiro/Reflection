@@ -29,10 +29,8 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Deploy;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
-import fireblocks.Transfer;
 import json.StringJson;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -208,6 +206,13 @@ public class MyTransaction {
 				respond( code, RefCode.OK);
 				break;
 		}
+	}
+	
+	/** Top-level message handler. This version takes wallet param; you can also call
+	 *  reflection.trading/mint/0xxxx.xxx */ 
+	void mint() throws Exception {
+		Main.mint( m_map.getRequiredParam( "wallet") );
+		respond( code, "OK");
 	}
 	
 	/** Simulate disconnect to test reconnect */
@@ -779,30 +784,23 @@ public class MyTransaction {
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
 	synchronized boolean respond( Json response) {
-		if (!m_responded) {
-			// need this? pas
-			//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
-	
-			try {
-				OutputStream outputStream = m_exchange.getResponseBody();
-				m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
-				
-				m_exchange.sendResponseHeaders(200, response.length());
-				outputStream.write(response.getBytes());
-				outputStream.close();
-				//log( "%s %s ~ %s", Util.now(), m_map.getLog(), response.getLog() );
-				
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-				log( LogType.ERROR, "Exception while responding");
-			}
-			finally {
-				m_responded = true;
-				return true;
-			}
+		if (m_responded) {
+			return false;
 		}
-		return false;
+
+		// need this? pas
+		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
+		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
+			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
+			m_exchange.sendResponseHeaders( 200, response.length() );
+			outputStream.write(response.getBytes());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, "Exception while responding with json");
+		}
+		m_responded = true;
+		return true;
 	}
 
 	void wrap( RefRunnable runnable) {
@@ -861,22 +859,6 @@ public class MyTransaction {
 			return value != 0;
 		}
 	};
-	
-	/** top-level method 
-	 * @throws Exception */
-	void mint() throws Exception {
-		String dest = m_map.getRequiredParam( "wallet");
-
-		S.out( "Transferring 1000 BUSD to %s", dest);
-		String id1 = Transfer.transfer( Fireblocks.testBusd, "1", dest, "1000", "Transfer BUSD");
-		S.out( "FB id is %s", id1);
-
-		S.out( "Transferring .001 Goerli ETH to %s", dest);
-		String id2 = Transfer.transfer( Fireblocks.platformBase, "1", dest, ".005", "Transfer ETH");
-		S.out( "FB id is %s", id2);
-		
-		respond( code, RefCode.OK);
-	}
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned

@@ -134,5 +134,4 @@ class ConnectionMgr implements IConnectionHandler {
 	public void dump() {
 		m_controller.dump();
 	}
-	
 }

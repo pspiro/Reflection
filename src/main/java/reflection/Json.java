@@ -3,7 +3,7 @@ package reflection;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-/** @deprecated use TypedJson */
+/** Consider TypedJson instead of this class. */
 public class Json {
 
 	private String m_str;

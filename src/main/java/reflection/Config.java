@@ -51,6 +51,9 @@ public class Config {
 	private double commission;
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;	
+	private String mintHtml;
+	private String mintBusd;
+	private String mintEth;
 	
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
@@ -92,24 +95,26 @@ public class Config {
 		this.twsOrderHost = tab.get( "twsOrderHost");
 		this.twsOrderPort = tab.getInt( "twsOrderPort");
 
-		this.refApiHost = tab.get( "refApiHost");
+		this.refApiHost = tab.getRequiredString( "refApiHost");
 		this.refApiPort = tab.getInt( "refApiPort");
 		
 		this.postgresUrl = tab.get( "postgresUrl");
 		this.postgresUser = tab.get( "postgresUser");
 		this.postgresPassword = tab.get( "postgresPassword");
 		
-		
 		this.reconnectInterval = tab.getInt( "reconnectInterval");
 		this.orderTimeout = tab.getInt( "orderTimeout");
 		this.timeout = tab.getInt( "timeout");
-		this.symbolsTab = tab.get( "symbolsTab");
+		this.symbolsTab = tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = tab.get( "backendConfigTab");
 		this.redisHost = tab.get( "redisHost");
 		this.redisPort = tab.getInt( "redisPort");
 		this.commission = tab.getDouble( "commission");
-		this.fireblocksApiKey = tab.get("fireblocksApiKey"); 
-		this.fireblocksPrivateKey = tab.get("fireblocksPrivateKey");
+		this.fireblocksApiKey = tab.getRequiredString("fireblocksApiKey"); 
+		this.fireblocksPrivateKey = tab.getRequiredString("fireblocksPrivateKey");
+		this.mintHtml = tab.getRequiredString("mintHtml");
+		this.mintBusd = tab.getRequiredString("mintBusd");
+		this.mintEth = tab.getRequiredString("mintEth");
 		
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -121,11 +126,7 @@ public class Config {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
-		require( S.isNotNull( symbolsTab), "symbolsTab config is missing" );
-		require( S.isNotNull( redisHost), "redisHost config is missing" );
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
-		require( S.isNotNull( fireblocksApiKey), "fireblocksApiKey config is missing");
-		require( S.isNotNull( fireblocksPrivateKey), "fireblocksPrivateKey config is missing");
 		
 		// update Fireblocks static keys
 		Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey);
@@ -316,6 +317,16 @@ public class Config {
 
 	public String symbolsTab() {
 		return symbolsTab;
+	}
+
+	public String mintHtml() {
+		return mintHtml;
+	}
+	public String mintBusd() {
+		return mintBusd;
+	}
+	public String mintEth() {
+		return mintEth;
 	}
 
 }

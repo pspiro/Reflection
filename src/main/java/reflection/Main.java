@@ -1,6 +1,10 @@
 package reflection;
 
+import static reflection.Main.log;
+import static reflection.Main.require;
+
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -26,6 +30,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Fireblocks;
+import fireblocks.Transfer;
 import json.MyJsonObject;
 import json.StringJson;
 import redis.clients.jedis.Jedis;
@@ -123,6 +128,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
+		server.createContext("/mint", exch -> handleMint(exch) ); 
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -310,7 +316,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 	
-	/** Handle HTTP msg */
+	/** Handle HTTP msg synchronously */
 	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
 		new MyTransaction( this, exch).handle();
 	}
@@ -435,6 +441,50 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return new Prices( ps);
 	}
 	
+	public void handleMint(HttpExchange exchange) throws IOException {
+		String response;
+		
+		try {
+			String uri = exchange.getRequestURI().toString().toLowerCase();
+			Util.require( uri.length() < 4000, "URI is too long");
+		
+			String[] parts = uri.split("/");
+			Util.require( parts.length == 3, "Format of URL should be https://reflection.trade/mint/0x000...000");
+			
+			mint( parts[2]);
+			response = m_config.mintHtml();
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+			response = "An error occurred - " + e.getMessage();
+		}
+
+		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
+		try (OutputStream outputStream = exchange.getResponseBody() ) {
+			exchange.getResponseHeaders().add( "Content-Type", "text/html");
+			exchange.sendResponseHeaders( 200, response.length() );
+			outputStream.write( response.getBytes() );
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, "Exception while responding with html");
+		}
+	}
+	
+	/** Transfer some BUSD and ETH to the user's wallet */
+	static void mint( String dest) throws Exception {
+		Util.require(dest.length() == 42, "The wallet address is invalid");
+		
+		S.out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
+		String id1 = Transfer.transfer( Fireblocks.testBusd, "1", dest, m_config.mintBusd(), "Transfer BUSD");
+		S.out( "  FB id is %s", id1);
+
+		S.out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
+		String id2 = Transfer.transfer( Fireblocks.platformBase, "1", dest, m_config.mintEth(), "Transfer ETH");
+		S.out( "  FB id is %s", id2);
+		
+		log( LogType.MINT, "Minted to %s", dest);
+	}
 	
 }
 
