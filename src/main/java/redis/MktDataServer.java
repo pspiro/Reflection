@@ -33,17 +33,24 @@ public class MktDataServer {
 		Connected, Disconnected 
 	};
 
-	final static Random rnd = new Random( System.currentTimeMillis() );
-	final static MktDataConfig m_config = new MktDataConfig();
-	final static MySqlConnection m_database = new MySqlConnection();
-	final static int SpyConid = 756733;
+	private final static SimpleDateFormat hhmm = new SimpleDateFormat( "kk:mm:ss");
+	private final static Random rnd = new Random( System.currentTimeMillis() );
+	        final static MktDataConfig m_config = new MktDataConfig();
+	private final static MySqlConnection m_database = new MySqlConnection();
+	private final static DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
+	//final static int SpyConid = 756733;
 	
-	final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
-	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private String m_tabName;
 	private Jedis m_jedis;
 	private Pipeline pipeline;  // access to this is synchronized
+	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
+
+	static {
+		TimeZone zone = TimeZone.getTimeZone("America/New_York");
+		hhmm.setTimeZone( zone);			
+	}
 
 	public static void main(String[] args) {
 		try {
@@ -59,7 +66,6 @@ public class MktDataServer {
 			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
-
 
 	private void run(String tabName) throws Exception {
 		// create log file folder and open log file
@@ -85,9 +91,10 @@ public class MktDataServer {
 		m_jedis.get( "test");
 		S.out( "  done");
 		
-		// check every 30 sec to see if we are in extended trading hours or not
-		// should eventually be reduced
-		Util.executeEvery( 30, () -> checkTime() ); 
+		// check every few seconds to see if we are in extended trading hours or not
+		// we could check with every tick but that is a lot of expensive time operations
+		checkTime(true);
+		Util.executeEvery( 5000, () -> checkTime(false) ); 
 		
 		// connect to TWS
 		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
@@ -95,20 +102,21 @@ public class MktDataServer {
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown()));
 	}
 
-	boolean m_insideHours;
-	static SimpleDateFormat hhmm = new SimpleDateFormat( "kk:mm");
-
-	static {
-		TimeZone zone = TimeZone.getTimeZone("America/New_York");
-		hhmm.setTimeZone( zone);			
-	}
-	
 	/** Check to see if we are in extended trading hours or not so we know which 
 	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
 	 * better would be to check against the trading hours of an actual ETF. */
-	private void checkTime() {
+	private void checkTime(boolean log) {
+		boolean inside = m_insideHours;
+		
 		String now = hhmm.format( new Date() );
-		m_insideHours = now.compareTo("04:00") >= 0 && now.compareTo("20:00") < 0;
+		m_insideHours = now.compareTo("03:59:45") >= 0 && now.compareTo("19:59:40") < 0;
+		// switch over 20 sec early because we do not want to miss the flood of prices
+		// that will come when the new exchange is turned on; note that this will
+		// also cause us to miss the -1 that comes at the close of the old exchange
+		
+		if (log || inside != m_insideHours) {
+			log( LogType.TIME, "Transitioned trading hours, inside=%s", m_insideHours);
+		}
 	}
 
 	private void shutdown() {
@@ -129,11 +137,8 @@ public class MktDataServer {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			StringJson obj = new StringJson();
 			if ("Y".equals( row.getValue( "Active") ) ) {
-				int conid = Integer.valueOf( row.getValue("Conid") );
-				String exch = row.getValue("Exchange");
-				
 				obj.put( "symbol", row.getValue("Symbol") );
-				obj.put( "conid", String.valueOf( conid) );
+				obj.put( "conid", row.getValue("Conid") );
 				obj.put( "smartcontractid", row.getValue("TokenAddress") );
 				obj.put( "description", row.getValue("Description") );
 				obj.put( "type", row.getValue("Type") );
@@ -188,48 +193,89 @@ public class MktDataServer {
 			StringJson stock = (StringJson)obj;  
 			String conidStr = stock.get("conid");
 			String exchange = stock.get("exchange");
-
-			final Contract contract = new Contract();
-			contract.conid( Integer.valueOf( conidStr) );
-			contract.exchange( exchange);
-
 			
-			// you could have the prices flow directly into the Prices Object
-			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
-				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-					String type = getTopType( tickType);
-					
-					// add a timeout for the prices to expire. pas
-					// use transactions or pipeline to speed it up. pas
-					// use expire() or pexpire()
-					
-					// we get price=-1 for bid/ask when market is closed
-					// we could remove the prices with hdel if we want
-					
-					if (type != null) {
-						if (price > 0) { 
-							String val = S.fmt3( price);
-							//S.out( "ticking %s %s=%s", conidStr, type, val);
-							tick( () ->	pipeline.hset( conidStr, type, val) );
-							
-							if (type.equals( "last") ) {
-								tick( () ->	pipeline.hset( conidStr, "time", String.valueOf( System.currentTimeMillis() ) ) );
-							}
-						}
-						else if (type == "bid" || type == "ask") {
-							S.out( "clearing %s %s", conidStr, type);
-							tick( () ->	pipeline.hdel( conidStr, type) );
-							// delete it!!! pas
-						}
-					}
+
+			// for ETF's request price on SMART and IBEOS
+			if (stock.get("type").equals("ETF") ) {
+				requestEtfPrice( conidStr);
+			}
+			else {
+				requestStockPrice( conidStr, exchange);
+			}
+		}
+	}
+	
+	private void requestStockPrice(String conid, String exchange) {
+		final Contract contract = new Contract();
+		contract.conid( Integer.valueOf( conid) );
+		contract.exchange( exchange);
+
+		
+		// you could have the prices flow directly into the Prices Object
+		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				tickMktData( conid, tickType, price);
+			}
+		});
+	}
+
+	/** Request prices on both SMART and IBEOS, and then filter based on time */
+	private void requestEtfPrice( String conid) {
+		final Contract contract = new Contract();
+		contract.conid( Integer.valueOf( conid) );
+
+		// request price on SMART
+		contract.exchange( "SMART");
+		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				if (m_insideHours) {
+					tickMktData(conid, tickType, price);
 				}
-			});
+			}
+		});
+		
+		// request price on IBEOS
+		contract.exchange( "IBEOS");
+		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				if (!m_insideHours) {
+					tickMktData(conid, tickType, price);
+				}
+			}
+		});
+	}
+	
+	void tickMktData(String conid, TickType tickType, double price) {
+		String type = getTickType( tickType);
+		
+		// add a timeout for the prices to expire. pas
+		// use transactions or pipeline to speed it up. pas
+		// use expire() or pexpire()
+		
+		
+		if (type != null) {
+			if (price > 0) { 
+				String val = S.fmt3( price);
+				//S.out( "ticking %s %s=%s", conidStr, type, val);
+				tick( () ->	pipeline.hset( conid, type, val) );
+				
+				if (type.equals( "last") ) {
+					tick( () ->	pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
+				}
+			}
+			// we get price=-1 for bid/ask when market is closed
+			else if (type == "bid" || type == "ask") {
+				S.out( "clearing %s %s", conid, type);
+				tick( () ->	pipeline.hdel( conid, type) );
+				// delete it!!! pas
+			}
 		}
 	}
 
 	/** Write to the log file. Don't throw any exception. */
+	// better would be to return TickType. pas
 	
-	static private String getTopType(TickType tickType) {
+	static private String getTickType(TickType tickType) {
 		String type = null;
 
 		switch( tickType) {

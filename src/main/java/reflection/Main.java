@@ -1,8 +1,5 @@
 package reflection;
 
-import static reflection.Main.log;
-import static reflection.Main.require;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;

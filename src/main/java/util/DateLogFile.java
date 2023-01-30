@@ -55,7 +55,7 @@ public class DateLogFile {
 			}
 
 			FileUtilities.createDir( "logs");
-			m_log = new OStream( fname);			
+			m_log = new OStream( fname, true);			
 		}
 		catch( Exception e) {
 			e.printStackTrace();

@@ -14,6 +14,7 @@ public enum LogType {
 	ORDER_CONNECTION,
 	MD_CONNECTION,
 	TERMINATE,
+	TIME,			// switched to/from IBEOS hours 
 	CHECK,			// check order (what-if)
 	ORDER,			// received order
 	SUBMIT,
