@@ -239,6 +239,7 @@ public class MktDataServer {
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				if (!m_insideHours) {
+					S.out( "Ticking IBEOS %s %s %s", conid, tickType, price);
 					tickMktData(conid, tickType, price);
 				}
 			}
