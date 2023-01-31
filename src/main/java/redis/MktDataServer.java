@@ -83,11 +83,18 @@ public class MktDataServer {
 //		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 //		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
 //		S.out( "  done");
-		
-		S.out( "Connecting to redis server on %s port %s", m_config.redisHost(), m_config.redisPort() );
-		//m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
-		URI jedisUri = new URI("redis://default:dCPwswvMVvWskdBDAMux201hWEv60Ry0@redis-19488.c1.asia-northeast1-1.gce.cloud.redislabs.com:19488");
-		m_jedis = new Jedis(jedisUri);
+
+		// if redis port is zero, host contains the full URI;
+		// otherwise, we use host and port
+		if (m_config.redisPort() == 0) {
+			S.out( "Connecting to redis server with URI %s", m_config.redisHost() );
+			URI jedisUri = new URI(m_config.redisHost());
+			m_jedis = new Jedis(jedisUri);
+		}
+		else {
+			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
+			m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+		}
 		m_jedis.get( "test");
 		S.out( "  done");
 		
@@ -166,7 +173,8 @@ public class MktDataServer {
 			}
 		}
 	}
-	
+
+	/** Create pipeline if necessary and add the tick to the queue */
 	synchronized void tick(Runnable run) {
 		if (pipeline == null) {
 			pipeline = m_jedis.pipelined();
@@ -174,9 +182,9 @@ public class MktDataServer {
 		}
 		run.run();
 	}
-	
+
+	/** Send all the queued up messages to redis and delete the pipeline */
 	synchronized void syncNow() {
-		S.out( "sending to redis");
 		pipeline.sync();
 		pipeline = null;
 	}
