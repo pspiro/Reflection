@@ -12,6 +12,8 @@ import com.ib.client.Types.Action;
 import tw.util.S;
 
 public class Prices {
+	public static final Prices NULL = new Prices();
+	
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
 	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
 	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/DD HH:mm:ss");
@@ -30,6 +32,11 @@ public class Prices {
 		m_time = map.get("time");
 	}
 	
+	/** Used only by NULL prices. */
+	private Prices() {
+		m_time = "";
+	}
+
 	double getDouble( Map<String, String> map, String key) {
 		String val = map.get(key);
 		return val != null ? Double.valueOf( val) : 0;

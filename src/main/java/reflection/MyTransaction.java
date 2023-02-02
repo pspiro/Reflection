@@ -2,6 +2,7 @@ package reflection;
 
 import static reflection.Main.log;
 import static reflection.Main.require;
+import static reflection.Main.round;
 
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -34,6 +35,7 @@ import fireblocks.Rusd;
 import json.StringJson;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
+import reflection.Main.Stock;
 import tw.util.S;
 import util.LogType;
 
@@ -381,16 +383,26 @@ public class MyTransaction {
 
 	/** Used to query prices from Redis. */
 	static class PriceQuery {
-		private String conid;  // no point storing an int since String is needed
-		private Response<Map<String, String>> res;  // returns a map of tag->val where tag =bid/ask/... and val is price
+		Stock m_stock;
+		private Response<Map<String, String>> m_res;  // returns a map of tag->val where tag =bid/ask/... and val is price
 
-		public PriceQuery(Pipeline p, String conid) {
-			this.conid = conid;
-			res = p.hgetAll("" + conid);
+		public PriceQuery(Pipeline pipeline, Stock stock) {
+			m_stock = stock;
+			m_res = pipeline.hgetAll( conidStr() );
 		}
 
-		public Prices getPrices() {
-			return new Prices(res.get() );
+		Prices getPrices() {
+			return new Prices(m_res.get() );
+		}
+		
+		/** Update the stock from the prices in m_res;
+		 *  Called when the query returs. */
+		void updateStock() {
+			m_stock.setPrices( new Prices(m_res.get() ) );
+		}
+
+		public String conidStr() {
+			return (String)m_stock.get( "conid");
 		}
 	}
 
@@ -404,46 +416,31 @@ public class MyTransaction {
 	private void getAllPrices() throws RefException {
 		S.out( "Returning all prices");
 
-		// send a single query to Redis for the prices
-		// the responses are fed into the PriceQuery objects
-		ArrayList<PriceQuery> list = new ArrayList<PriceQuery>(); 
-		m_main.jquery( pipeline -> {
-			for (Object obj : m_main.stocks() ) {
-				StringJson stk = (StringJson)obj;
-				list.add( new PriceQuery(pipeline, stk.get("conid") ) );
-			}
-		});
-		
 		boolean admin = m_map.getBool("admin");
 		
 		// build the json response   // we could reuse this and just update the prices each time
 		JSONObject whole = new JSONObject();
-		for (PriceQuery priceQuery : list) {
-			Prices prices = priceQuery.getPrices();
-
+		for (Object obj : m_main.stocks() ) {
+			Stock stk = (Stock)obj;
+			
 			JSONObject single = new JSONObject();
 			// in admin mode, which is for debugging, return the actual prices
 			if (admin) {
-				single.put( "bid", round( prices.bid() ) );
-				single.put( "ask", round( prices.ask() ) );
-				single.put( "last", round( prices.last() ) );
-				single.put( "close", round( prices.close() ) );
-				single.put( "time", prices.getFormattedTime() );
+				single.put( "bid", round( stk.prices().bid() ) );
+				single.put( "ask", round( stk.prices().ask() ) );
+				single.put( "last", round( stk.prices().last() ) );
+				single.put( "close", round( stk.prices().close() ) );
+				single.put( "time", stk.prices().getFormattedTime() );
 			}
 			// for the user, we return best bid/ask we can come up with
-			else {
-				single.put( "bid", round( prices.anyBid() ) );
-				single.put( "ask", round( prices.anyAsk() ) );
+			else {                                // this part should go away
+				single.put( "bid", round( stk.prices().anyBid() ) );
+				single.put( "ask", round( stk.prices().anyAsk() ) );
 			}
-			whole.put( priceQuery.conid, single);
+			whole.put( stk.get("conid"), single);
 		}
 		
 		respond( new Json( whole) );
-	}
-
-	/** this seems useless since you can still be left with .000001 */
-	private double round(double val) {
-		return Math.round( val * 100) / 100.;
 	}
 
 	/** Top-level method. */

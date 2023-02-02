@@ -1,10 +1,13 @@
 package reflection;
 
+import static reflection.Main.round;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,7 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -34,6 +38,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.util.JedisURIHelper;
 import reflection.MyTransaction.JRun;
+import reflection.MyTransaction.PriceQuery;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -49,7 +54,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
 	private Jedis m_jedis;
-	private final HashMap<Integer,StringJson> m_stockMap = new HashMap<Integer,StringJson>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas 
+	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas 
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr(); // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
@@ -120,12 +125,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 		m_jedis.get( "test");
 		S.out( "  done");
+		
+		S.out( "Starting stock price query thread every n ms");
+		Util.executeEvery( 3000, () -> queryAllPrices() );  // improve this, set up redis stream
 
 		S.out( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/mint", exch -> handleMint(exch) ); 
+		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) ); 
+		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) ); 
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -145,7 +155,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
-			StringJson stock = new StringJson();
+			Stock stock = new Stock();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
 				
@@ -162,19 +172,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 	
 	String getExchange( int conid) throws RefException {
-		return getStock(conid).get("exchange");
+		return getStock(conid).getString("exchange");
 	}
 
 	String getSmartContractId( int conid) throws RefException {
-		return getStock(conid).get("smartcontractid");
+		return getStock(conid).getString("smartcontractid");
 	}
 	
 	String getType( int conid) throws RefException {
-		return getStock(conid).get("type");
+		return getStock(conid).getString("type");
 	}
 	
-	StringJson getStock( int conid) throws RefException {
-		StringJson stock = m_stockMap.get( conid);
+	Stock getStock( int conid) throws RefException {
+		Stock stock = m_stockMap.get( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Error - unknown conid %s", conid);
 		return stock;
 	}
@@ -481,6 +491,64 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  FB id is %s", id2);
 		
 		log( LogType.MINT, "Minted to %s", dest);
+	}
+
+	public void queryAllPrices() {  // might want to move this into a separate microservice
+		S.out( "querying prices");
+		
+		try {
+			
+			// send a single query to Redis for the prices
+			// the responses are fed into the PriceQuery objects
+			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>(); 
+			jquery( pipeline -> {
+				for (Object stock : m_stocks) {
+					list.add( new PriceQuery(pipeline, (Stock)stock) );
+				}
+			});
+			
+			// update the stock object in place       // synchronize this? pas
+			for (PriceQuery priceQuery : list) {
+				priceQuery.updateStock();
+			}
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, e.getMessage() );
+		}
+	}
+
+	private void handleGetStocksWithPrices(HttpExchange exch) {
+		MyTransaction t = new MyTransaction( this, exch);
+		t.respond( new Json( m_stocks) );
+	}
+	
+	/** this seems useless since you can still be left with .000001 */
+	static double round(double val) {
+		return Math.round( val * 100) / 100.;
+	}
+
+	/** All values are string, including conid, except bid and ask
+	 *  which are doubles. This object lives in the m_stockMap
+	 *  map and also in the m_stocks array. Each stock is itself
+	 *  a map (JSONObject) with keys "bid" and "ask". This is so
+	 *  we don't need to recreate the array every time the client
+	 *  queries for the prices, which is often. */
+	static class Stock extends JSONObject {
+		Prices m_prices = Prices.NULL;
+		
+		void setPrices( Prices prices) {
+			m_prices = prices;
+			
+			put( "bid", round( prices.anyBid() ) );  // for front-end display
+			put( "ask", round( prices.anyAsk() ) );
+		}
+		
+		Prices prices() { return m_prices; }
+		
+		public String getString(String key) {
+			return (String)super.get(key);
+		}
 	}
 	
 }
