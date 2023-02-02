@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.round;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
@@ -33,7 +31,6 @@ import com.sun.net.httpserver.HttpServer;
 import fireblocks.Fireblocks;
 import fireblocks.Transfer;
 import json.MyJsonObject;
-import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.util.JedisURIHelper;
@@ -135,7 +132,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/mint", exch -> handleMint(exch) ); 
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) ); 
-		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) ); 
+		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -518,9 +516,31 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
+	// create a mktdat trans obj
+	
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		MyTransaction t = new MyTransaction( this, exch);
-		t.respond( new Json( m_stocks) );
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+		S.out( "Received %s %s", uri, exch.getHttpContext().getPath() ); 
+		new MyTransaction( this, exch).respond( new Json( m_stocks) );
+	}
+
+// frontend expects an error msg like this
+//	{
+//	"statusCode": 400,
+//	"message": "Bad Request"
+//	}
+	
+	private void handleGetStockWithPrice(HttpExchange exch) {
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+		S.out( "Received %s %s", uri, exch.getHttpContext().getPath() );
+
+		String[] ar = uri.split( "/");
+		//require( ar.length
+		int conid = Integer.valueOf( ar[ar.length-1]);
+		Stock stock = m_stockMap.get( conid);
+		new MyTransaction( this, exch).respond( new Json( stock) );
 	}
 	
 	/** this seems useless since you can still be left with .000001 */
@@ -581,3 +601,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 // you might need throttleing based on IP address to prevent DOS attacks
 // lessons: post data is truncated at content length if too short; server hangs waiting for data if too long 
 // *probably more efficient to have one timer thread instead of one for each message; fix this when it gets busy
+
+// oracle docs
+//https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpExchange.html
+//displaying the context is not that interesting, it only displays the map key
