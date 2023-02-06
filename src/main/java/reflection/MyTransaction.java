@@ -97,7 +97,7 @@ public class MyTransaction {
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
-			S.out( "Received GET request %s %s", uri, m_exchange.getHttpContext().getPath() ); 
+			S.out( "Received GET request %s", uri); 
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
 			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present. Valid requests are " + MsgType.allValues() );

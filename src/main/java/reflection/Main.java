@@ -519,10 +519,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// create a mktdat trans obj
 	
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
-		//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
-		S.out( "Received %s %s", uri, exch.getHttpContext().getPath() ); 
-		new MyTransaction( this, exch).respond( new Json( m_stocks) );
+		try {
+			String uri = exch.getRequestURI().toString().toLowerCase();
+			//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+			S.out( "Received %s", uri); 
+			new MyTransaction( this, exch).respond( new Json( m_stocks) );
+			S.out( "  check");
+		}
+		finally {
+			S.out( "    finally");
+		}
 	}
 
 // frontend expects an error msg like this
@@ -532,15 +538,24 @@ public class Main implements HttpHandler, ITradeReportHandler {
 //	}
 	
 	private void handleGetStockWithPrice(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
-		//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
-		S.out( "Received %s %s", uri, exch.getHttpContext().getPath() );
-
-		String[] ar = uri.split( "/");
-		//require( ar.length
-		int conid = Integer.valueOf( ar[ar.length-1]);
-		Stock stock = m_stockMap.get( conid);
-		new MyTransaction( this, exch).respond( new Json( stock) );
+		try {
+			String uri = exch.getRequestURI().toString().toLowerCase();
+			//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+			S.out( "Received %s", uri);
+	
+			String[] ar = uri.split( "/");
+			S.out( "  check");
+	
+			//require( ar.length
+			int conid = Integer.valueOf( ar[ar.length-1]);
+			S.out( "    check");
+			Stock stock = m_stockMap.get( conid);
+			S.out( "      check");
+			new MyTransaction( this, exch).respond( new Json( stock) );
+		}
+		finally {
+			S.out( "        finally");
+		}
 	}
 	
 	/** this seems useless since you can still be left with .000001 */
