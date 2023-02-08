@@ -10,23 +10,6 @@ import reflection.Util;
 import tw.util.S;
 
 public class Rusd {
-	static class Addresses {
-		public static String ownerAddr = "0xdA2c28Af9CbfaD9956333Aba0Fc3B482bc0AeD13";
-		public static String refWalletAddr = "0x4d2AE56E463bBbd1803DD892a4AF1b7Ce9b65667"; // test system
-		public static String userAddr = "0xAb52e8f017fBD6C7708c7C90C0204966690e7Fc8"; // Testnet Test1 account (id=1)
-		public static String busdAddr = "0x833c8c086885f01bf009046279ac745cec864b7d"; // this is our BUSD that I deployed from test.Owner with test.RefWallet as the one who can call mint
-		public static String rusdAddr = "0xdd9b1982261f0437aff1d3fec9584f86ab4f8197"; // contract address deployed with this refWallet
-		
-		void setProdAddresses() {
-			ownerAddr = "0xdA2c28Af9CbfaD9956333Aba0Fc3B482bc0AeD13";
-			refWalletAddr = "0x4d2AE56E463bBbd1803DD892a4AF1b7Ce9b65667"; // test system
-			userAddr = "0xAb52e8f017fBD6C7708c7C90C0204966690e7Fc8"; // Testnet Test1 account (id=1)
-			busdAddr = "0x833c8c086885f01bf009046279ac745cec864b7d"; // this is our BUSD that I deployed from test.Owner with test.RefWallet as the one who can call mint
-			rusdAddr = "0xdd9b1982261f0437aff1d3fec9584f86ab4f8197"; // contract address deployed with this refWallet
-		}
-	}
-
-	static Addresses addrs = new Addresses();
 	
 	// busd on binance and ethereum has 18 decimals
 	// rusd on binance and ethereum has 6 decimals
@@ -50,8 +33,8 @@ public class Rusd {
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	
 	public static void main(String[] args) throws Exception {
-		//Fireblocks.setProdVals();
-		Fireblocks.setTestVals();
+		Fireblocks.setProdVals();
+		//Fireblocks.setTestVals();
 		deploy();
 	}
 	
