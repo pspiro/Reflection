@@ -60,7 +60,7 @@ public class TestOrder extends TestCase {
 		HashMap<String, Object> map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
-		String filled = (String)map.get( "filled");
+		S.out( "testOrder4: %s", map);
 		assertEquals( RefCode.REJECTED.toString(), code);
 		assertEquals( "Reason unknown", text);
 	}
@@ -90,35 +90,37 @@ public class TestOrder extends TestCase {
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '147', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '147', 'wallet': '8383', 'cryptoid': 'testmaxamtsell' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtsell' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		S.out( "testFracShares: %s: %s", ret, text);
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -127,11 +129,11 @@ public class TestOrder extends TestCase {
 	}
 	
 	public void testPartialFill()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '147', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
 		HashMap<String, Object> map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
-		S.out( map);
+		S.out( "testPartialFill: %s", map);
 		assertEquals( RefCode.PARTIAL_FILL.toString(), ret);
 		assertEquals( "2 shares filled", text);
 	}
@@ -147,6 +149,5 @@ public class TestOrder extends TestCase {
 	}
 	
 	// current stock price
-	static Jedis jedis = new Jedis("34.125.38.193", 3001); 
-	static double curPrice = Double.valueOf( jedis.hget("8314", "last") );
+	static double curPrice = 135.75; // Double.valueOf( jedis.hget("8314", "last") );
 }

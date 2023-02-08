@@ -155,6 +155,7 @@ public class Rusd {
 		return obj.getString("id");
 	}
 	
+	/** Amount gets rounded to three decimals */
 	public static BigInteger toStockToken(double stockTokenAmt) {
 		return timesPower( stockTokenAmt, stockTokenDecimals);
 	}
