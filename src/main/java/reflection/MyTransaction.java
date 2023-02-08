@@ -741,7 +741,7 @@ public class MyTransaction {
 					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
 					tds = .01 * preAmt;
 					double stablecoinAmt = preAmt - tds;  
-					id = Rusd.sellStock(order.walletAddr(), Rusd.rusdAddr, stablecoinAmt,
+					id = Rusd.sellStock(order.walletAddr(), Fireblocks.rusdAddr, stablecoinAmt,
 							order.stockTokenAddr(), stockQty);
 				}
 				
