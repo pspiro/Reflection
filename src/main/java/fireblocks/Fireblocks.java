@@ -305,7 +305,9 @@ public class Fireblocks {
 		String fullCallData = callData + encodeParameters( paramTypes, params);  // call data + parameters 
 		
 		String body = toJson( 
-				String.format( bodyTemplate, Fireblocks.platformBase, fromAcct, addr, fullCallData, note) );  
+				String.format( bodyTemplate, Fireblocks.platformBase, fromAcct, addr, fullCallData, note) );
+		
+		S.out( body);
 
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( "/v1/transactions");

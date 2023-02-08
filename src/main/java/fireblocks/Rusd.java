@@ -46,44 +46,8 @@ public class Rusd {
 	
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	public static void main(String[] args) throws Exception {
-		for (int i = 0; i < 3; i++) {
-			new Thread( () -> testone() ).start();
-			S.sleep(100);
-		}
-	}
-	
-	static void testone() {
-		try {
-			testonea();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	static void testonea() throws Exception {
 		Fireblocks.setTestVals();
-//		deploy();
-		//approveBusd();
-		//String id = buyStock( userAddr, busdAddr, 10, StockToken.qqq, 11); // this works
-		String id = buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // this works
-		String hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
-		S.out( "%s got hash %s", id, hash);
-		
-		//buyStock( userAddr, busdAddr, 10, TestFireblocks.qqq, 11); // this works
-		//buyStock( userAddr, rusdAddr, 10, StockToken.qqq, 11); // test this
-//		buyRusd( userAddr, busdAddr, 9);   // this works, make sure you have called BUSD.approve(RUSD) for spending
-		//mint( Rusd.userAddr, 2000);
-	}
-	
-	private static void mint(String address, double amt) throws Exception {
-		String[] types = {"address", "uint256"};
-		Object[] vals = {
-				address,
-				Rusd.toStablecoin(Rusd.busdAddr, amt)
-		};
-		
-		Fireblocks.call( Rusd.refWalletAcctId, Rusd.rusdAddr, mintKeccak, types, vals, "RUSD.mint()").display();
+		deploy();
 	}
 	
 	// this works
