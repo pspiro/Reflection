@@ -64,22 +64,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	public static void main(String[] args) {
 		try {
-			String configTab = null;
-			for (String arg : args) {
-				if (arg.equals( "simulated")) {
-					m_simulated = true;
-					S.out( "Running in simulated mode");
-				}
-				else {
-					configTab = arg;
-				}
-			}
-			
-			if (S.isNull( configTab) ) {
+			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
 			}
 			
-			new Main().run( configTab);
+			new Main().run( args[0] );
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
@@ -101,6 +90,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_config.readFromSpreadsheet(tabName);
 		m_tabName = tabName;
 		S.out( "  done");
+		
+		// APPROVE-ALL SETTING IS DANGEROUS and not normal
+		// make user approve it during startup
+		if (m_config.approveAll() ) {
+			S.out( "The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
+			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
+				return;
+			}
+		}
 
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();

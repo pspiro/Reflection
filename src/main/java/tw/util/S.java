@@ -797,14 +797,13 @@ public class S {
 		S.out( String.format( "%s", Math.round(.499999999999999) ) );
 	}
 
-	public static void pressEnter() {
-		pressEnter( "Press enter");		
-	}
-
-	public static void pressEnter(String str) {
+	public static String input(String str) {
 		out( str);
-		new Scanner(System.in).nextLine();		
+		try(Scanner scanner = new Scanner(System.in) ) {
+			return scanner.nextLine();
+		}
 	}
+	
 
 	/** @param endsWith is case-insensitive; we need this to avoid tmp files created in the downloads folder. */
 	@SuppressWarnings("unchecked")

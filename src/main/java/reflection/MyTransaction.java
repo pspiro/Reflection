@@ -567,10 +567,6 @@ public class MyTransaction {
 	/** Return true if we are current inside trading hours OR liquid hours.
 	 *  When running test scripts, simTime param will be set and used. */
 	static boolean inside( ContractDetails deets) throws Exception {
-		if (Main.simulated() ) {
-			return true;
-		}
-		
 		return inside( deets, deets.tradingHours() ) ||
 			   inside( deets, deets.liquidHours() );
 	}
@@ -583,12 +579,6 @@ public class MyTransaction {
 
 	private void submitWhatIf( Contract contract, final Order order) throws RefException {
 		// check trading hours first since it is a nicer error message
-		
-		// simulated trading?
-		if (Main.simulated() ) {
-			respond( code, RefCode.OK);
-			return;
-		}
 		
 		// submit what-if order
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
@@ -621,6 +611,18 @@ public class MyTransaction {
 
 	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws RefException {
 		ModifiableDecimal shares = new ModifiableDecimal();
+		
+		// very dangerous!
+		if (Main.m_config.approveAll() ) {
+			S.out( "Auto-filling order  id=%s", order.orderId() );
+			respond( code, RefCode.OK, "filled", order.totalQty() );
+
+			log( LogType.AUTO_FILL, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
+					order.orderId(), order.cryptoId(), order.action(), order.totalQty(), 
+					order.totalQty(), order.lmtPrice(), 
+					Main.m_config.commission(), 0, "");
+			return;
+		}
 
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,

@@ -1,22 +1,23 @@
 package util;
 
 public enum LogType {
-	RESTART,		// application was restarted
-	ERROR,			// should never happen
-	TRADE,			// trade report received
+	AUTO_FILL,		// approveAll config setting is on
+	CHECK,			// check order (what-if)
 	COMMISSION,		// commission report received
-	REJECTED,		// order was rejected
+	ERROR,			// should never happen
 	FILLED,			// order was completely filled
+	MD_CONNECTION,
 	MINT,			// minted some goerli ETF for user
-	PARTIAL_FILL,	// order was partially filled
+	ORDER,			// received order
+	ORDER_CONNECTION,
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
-	ORDER_CONNECTION,
-	MD_CONNECTION,
+	PARTIAL_FILL,	// order was partially filled
+	REJECTED,		// order was rejected
+	RESTART,		// application was restarted
+	SUBMIT,
 	TERMINATE,
 	TIME,			// switched to/from IBEOS hours 
-	CHECK,			// check order (what-if)
-	ORDER,			// received order
-	SUBMIT,
-	WALLET
+	TRADE,			// trade report received
+	WALLET,
 }

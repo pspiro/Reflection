@@ -43,6 +43,12 @@ public class GTable extends HashMap<String,String> {
 	@Override public String get(Object key) {
 		return super.get( m_caseSensitive ? key : ((String)key).toLowerCase() );
 	}
+
+	/** true for true or yes, everything else false */
+	public boolean getBoolean(String key) {
+		String val = S.notNull( get(key) ).toLowerCase();
+		return val.equals("true") || val.equals("yes");
+	}
 	
 	public String getRequiredString(Object key) throws Exception {
 		String val = get(key);

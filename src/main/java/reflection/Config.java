@@ -54,7 +54,9 @@ public class Config {
 	private String mintHtml;
 	private String mintBusd;
 	private String mintEth;
+	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
 	
+	public boolean approveAll() { return approveAll; }
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
 
@@ -115,6 +117,7 @@ public class Config {
 		this.mintHtml = tab.getRequiredString("mintHtml");
 		this.mintBusd = tab.getRequiredString("mintBusd");
 		this.mintEth = tab.getRequiredString("mintEth");
+		this.approveAll = tab.getBoolean("approveAll");
 		
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -137,7 +140,6 @@ public class Config {
 			throw new Exception( String.format( "Config parameter %s is invalid", parameter) );
 		}
 	}
-	
 
 	public Json toJson() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
