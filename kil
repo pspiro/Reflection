@@ -2,8 +2,9 @@
 
 if [ "$1" = "" ]; then
 echo "usage: kil <name>"
+elif (( ${#1} < 4 )); then
+echo "pattern match must have at least four characters"
 else
-
 echo "Killing these processes:"
 ps ax | grep $1 | grep -v grep 
 echo ""
@@ -14,3 +15,5 @@ echo ""
 echo done
 
 fi
+
+echo the end
