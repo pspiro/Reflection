@@ -14,7 +14,7 @@ public class StockToken {
 	// method signature: buy(address,uint256,uint256,address)
 	// test system
 	//static String qqq = "0xd1b41cefda7d036018a9daff9d5f4cc811770efb";
-	static String qqq = "0x561fe914443574d2aF7203dCA1ef120036514f87";
+	public static String qqq = "0x561fe914443574d2aF7203dCA1ef120036514f87";
 	
 	
 	static int decimals = 5;
@@ -47,11 +47,11 @@ public class StockToken {
 		Object[] params = { 
 				name, 
 				symbol, 
-				Rusd.refWalletAddr, 
-				Rusd.rusdAddr 
+				Fireblocks.refWalletAddr, 
+				Fireblocks.rusdAddr 
 			};
 		String addr = Deploy.deploy("c:/work/smart-contracts/StockToken.bytecode",
-				Rusd.ownerAcctId, paramTypes, params, "deploy stock");
+				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
 		S.out( "Deployed to %s", addr);
 	}
 	
@@ -61,7 +61,7 @@ public class StockToken {
 	static void buy( String userAddr, int stockTokenAmt, String stockTokenAddr, int stablecoinAmt, String stablecoinAddr) throws Exception {
 		String[] paramTypes = { "address", "uint256", "uint256", "address" };
         Object[] params = { userAddr, stockTokenAmt, stablecoinAmt, stablecoinAddr };  
-        MyJsonObject obj = Fireblocks.call( Rusd.refWalletAcctId, stockTokenAddr, 
+        MyJsonObject obj = Fireblocks.call( Fireblocks.refWalletAcctId, stockTokenAddr, 
         		buyKeccak, paramTypes, params, "StockToken.buy");
 		Fireblocks.getTransaction(obj.getString("id")).display(); 
 	}

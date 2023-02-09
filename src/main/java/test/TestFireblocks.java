@@ -2,14 +2,10 @@ package test;
 
 import java.math.BigInteger;
 
-import fireblocks.Busd;
-import fireblocks.Deploy;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
-import fireblocks.StockToken;
 import json.MyJsonObject;
 import junit.framework.TestCase;
-import reflection.RefException;
 import tw.util.S;
 
 public class TestFireblocks extends TestCase {
@@ -21,7 +17,7 @@ public class TestFireblocks extends TestCase {
 		String[] types = { "string", "address", "uint256", "uint256" };
 		Object[] vals = {
 				"hello",
-				Rusd.rusdAddr,
+				Fireblocks.rusdAddr,
 				3,
 				new BigInteger("4")
 		};
@@ -54,12 +50,12 @@ public class TestFireblocks extends TestCase {
 
 	public void testToStablecoin() throws Exception {
 		String[] types = { "uint256" };
-		Object[] vals = { Rusd.toStablecoin( Rusd.rusdAddr, 34.0111) }; // it gets rounded to three decimal places
+		Object[] vals = { Rusd.toStablecoin( Fireblocks.rusdAddr, 34.0111) }; // it gets rounded to three decimal places
 		assertEquals( 
 				"000000000000000000000000000000000000000000000000000000000206f778",
 				Fireblocks.encodeParameters( types, vals) );
 
-		Object[] vals2 = { Rusd.toStablecoin( Rusd.busdAddr, 34.0111) };
+		Object[] vals2 = { Rusd.toStablecoin( Fireblocks.busdAddr, 34.0111) };
 		S.out( Fireblocks.encodeParameters( types, vals2) );
 		assertEquals( 
 				"000000000000000000000000000000000000000000000001d7ff584d4fcf8000",
@@ -92,7 +88,7 @@ public class TestFireblocks extends TestCase {
 		Fireblocks.setTestVals();
 		
 		// let refWallet call RUSD.buy()
-		String id2 = Rusd.buyStock(Rusd.userAddr, Rusd.rusdAddr, 3.0, ge, 4.5);
+		String id2 = Rusd.buyStock(Fireblocks.userAddr, Fireblocks.rusdAddr, 3.0, ge, 4.5);
 		Fireblocks.getTransaction( id2).display("buy stock with RUSD");
 
 		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );
@@ -102,7 +98,7 @@ public class TestFireblocks extends TestCase {
 		Fireblocks.setTestVals();
 
 		// let refWallet call RUSD.buy()
-		String id2 = Rusd.sellStock(Rusd.userAddr, Rusd.rusdAddr, 99.991, ge, 4.555);
+		String id2 = Rusd.sellStock(Fireblocks.userAddr, Fireblocks.rusdAddr, 99.991, ge, 4.555);
 		Fireblocks.getTransaction(id2).display("sell stock for RUSD");
 
 		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );

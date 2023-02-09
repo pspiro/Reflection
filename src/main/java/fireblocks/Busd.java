@@ -10,7 +10,7 @@ public class Busd {
 		Fireblocks.setTestVals();
 		//deploy();
 		//mint(Rusd.user2, 1);
-		approveToSpendBusd(Rusd.userAcctId, Rusd.rusdAddr, 1000);
+		approveToSpendBusd(Fireblocks.userAcctId, Fireblocks.rusdAddr, 1000);
 	}
 	
 	
@@ -18,21 +18,21 @@ public class Busd {
 		String[] types = {"address", "uint256"};
 		Object[] vals = {
 				address,
-				Rusd.toStablecoin(Rusd.busdAddr, amt)
+				Rusd.toStablecoin(Fireblocks.busdAddr, amt)
 		};
 		
-		Fireblocks.call( Rusd.refWalletAcctId, Rusd.busdAddr, mintKeccak, types, vals, "BUSD.mint()").display();
+		Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.busdAddr, mintKeccak, types, vals, "BUSD.mint()").display();
 	}
 	
 	public static String approveToSpendBusd(int account, String spenderAddr, double amt) throws Exception {
-		return Rusd.approve( account, spenderAddr, Rusd.busdAddr, amt);
+		return Rusd.approve( account, spenderAddr, Fireblocks.busdAddr, amt);
 	}
 
 	static void deploy() throws Exception {
 		String[] types = { "address" };
-		Object[] vals = { Rusd.refWalletAddr };
+		Object[] vals = { Fireblocks.refWalletAddr };
 		
-		String addr = Deploy.deploy("c:/work/smart-contracts/BUSD.bytecode", Rusd.ownerAcctId, types, vals, "deploy BUSD");
+		String addr = Deploy.deploy("c:/work/smart-contracts/BUSD.bytecode", Fireblocks.ownerAcctId, types, vals, "deploy BUSD");
 		S.out( "Deployed to %s", addr);
 		
 		// this must be initiated and signed by the user wallet
