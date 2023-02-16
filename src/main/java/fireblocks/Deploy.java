@@ -9,13 +9,6 @@ import tw.util.S;
 
 public class Deploy {
 
-	public static void main(String[] args) throws Exception {
-		//Tab tab = NewSheet.getTab(NewSheet.Reflection, "Prod-symbols");
-		//for (ListEntry row : tab.fetchRows() ) {
-		
-		Fireblocks.setTestVals();
-		//deploy();
-	}
 
 	/** The wallet associated w/ ownerAcctId becomes the owner of the deployed contract.
 	 *  The parameters passed here are the passed to the constructor of the smart contract
@@ -51,7 +44,7 @@ public class Deploy {
 			if (i > 0) S.sleep(1000);
 			
 			S.out( "    querying...");
-			MyJsonObject obj = MoralisServer.queryTransaction(txHash,  "goerli");
+			MyJsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
 			String addr = obj.getString("receipt_contract_address");
 			if (S.isNotNull(addr) ) {
 				return addr;

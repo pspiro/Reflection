@@ -15,6 +15,7 @@ public class StockToken {
 	// test system
 	//static String qqq = "0xd1b41cefda7d036018a9daff9d5f4cc811770efb";
 	public static String qqq = "0x561fe914443574d2aF7203dCA1ef120036514f87";
+	public static String ge =  "0x17211791ea7529a18f18f9247474338a5aee226b"; // on polygon
 	
 	
 	static int decimals = 5;
@@ -30,7 +31,7 @@ public class StockToken {
 	// i passed refWallet but it acted like i used Test1 account; that was the sending address
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
+		Fireblocks.setProdValsPolygon();
 		deploy("GE Stock", "GE");
 		
 		// you must approve the STOCK TOKEN for spending, i.e. BUSD.approve(StockToken)
@@ -50,7 +51,7 @@ public class StockToken {
 				Fireblocks.refWalletAddr, 
 				Fireblocks.rusdAddr 
 			};
-		String addr = Deploy.deploy("c:/work/smart-contracts/StockToken.bytecode",
+		String addr = Deploy.deploy("c:/work/smart-contracts.old/StockToken.bytecode",
 				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
 		S.out( "Deployed to %s", addr);
 	}

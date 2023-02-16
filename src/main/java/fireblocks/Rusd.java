@@ -29,13 +29,16 @@ public class Rusd {
 	// deploy QQQ from owner wallet
 	static final BigDecimal ten = new BigDecimal(10);
 	
+	static String myWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdVals();
+		//Fireblocks.setProdVals();
+		Fireblocks.setProdValsPolygon();
 		//Fireblocks.setTestVals();
-		deploy();
+		//deploy();
+		mint( myWallet, 10000);
 	}
 	
 	private static void mint(String address, double amt) throws Exception {
@@ -53,7 +56,7 @@ public class Rusd {
 		S.out( "Deploying RUSD from owner %d with refWallet %s", Fireblocks.ownerAcctId, Fireblocks.refWalletAddr);
 		String[] paramTypes = { "address" };
 		Object[] params = { Fireblocks.refWalletAddr };
-		String addr = Deploy.deploy( "c:/work/smart-contracts/rusd.bytecode", Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
+		String addr = Deploy.deploy( "c:/work/smart-contracts.old/rusd.bytecode", Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
 		S.out( "Deployed to %s", addr);
 	}
 	
@@ -73,7 +76,7 @@ public class Rusd {
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
-	public static String buyStock(String userAddr, String stablecoinAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
+	public static String buyStock(String userAddr, String stablecoinAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt, String note) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -89,7 +92,7 @@ public class Rusd {
 		S.out( "Refwallet buying %s %s with %s %s for user %s", 
 				params[4], stockTokenAddr, params[3], Fireblocks.getStablecoinName(stablecoinAddr), userAddr);
 		MyJsonObject obj = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, 
-				buyStockKeccak, paramTypes, params, "RUSD.buyStock()");
+				buyStockKeccak, paramTypes, params, "RUSD.buyStock " + note);
 		S.out( "%s Buy stock %s", obj.getString("id"), obj.getString("status") );
 		return obj.getString("id");
 	}
@@ -136,8 +139,8 @@ public class Rusd {
 
 	/** Returns the number of decimals of the stablecoin smart contract */
 	private static int getStablecoinMultiplier(String stablecoinAddr) throws RefException {
-		if (stablecoinAddr.equals("RUSD") ) return 6;  // this will change, all return 18
-		if (stablecoinAddr.equals("BUSD") ) return 18;  // this will change, all return 18
+		if (stablecoinAddr.equals(Fireblocks.rusdAddr) ) return 18;  // this will change, all return 18
+		if (stablecoinAddr.equals(Fireblocks.busdAddr) ) return 18;  // this will change, all return 18
 		throw new RefException( RefCode.UNKNOWN, "Invalid stablecoin address " + stablecoinAddr);
 	}
 

@@ -8,7 +8,7 @@ import tw.util.S;
 public class GetAccounts {
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdVals();
+		Fireblocks.setFirstProdVals();
 		MyJsonObject account = getAccount( "Reflection Owner");
 		account.display();
 	}
