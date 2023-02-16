@@ -61,9 +61,9 @@ public class StockToken {
 	static void buy( String userAddr, int stockTokenAmt, String stockTokenAddr, int stablecoinAmt, String stablecoinAddr) throws Exception {
 		String[] paramTypes = { "address", "uint256", "uint256", "address" };
         Object[] params = { userAddr, stockTokenAmt, stablecoinAmt, stablecoinAddr };  
-        MyJsonObject obj = Fireblocks.call( Fireblocks.refWalletAcctId, stockTokenAddr, 
+        String id = Fireblocks.call( Fireblocks.refWalletAcctId, stockTokenAddr, 
         		buyKeccak, paramTypes, params, "StockToken.buy");
-		Fireblocks.getTransaction(obj.getString("id")).display(); 
+		Fireblocks.getTransaction(id).display(); 
 	}
 
 	

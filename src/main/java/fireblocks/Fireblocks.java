@@ -28,11 +28,10 @@ public class Fireblocks {
 	public static int refWalletAcctId;
 	public static int ownerAcctId;
 	public static int userAcctId;
-	
-
-	// these are the test system addresses
 	public static String ownerAddr;
 	public static String refWalletAddr;
+	
+	// contract addresses
 	public static String busdAddr;
 	public static String rusdAddr;
 	public static String userAddr;  // move this
@@ -93,13 +92,13 @@ public class Fireblocks {
 		
 		// contracts
 		busdAddr = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
-		rusdAddr = "";
+		rusdAddr = "0x06d194729cd7c0956b122e6ce2b0339a3def1e6f"; // this is with 450e as owner and FB RefWallet, deployed from Remix
 		initMap();
 
 		// Fireblocks values
 		s_apiKey = "e3f1c5b4-48f3-f495-7b14-23e729bc3628";
 		s_privateKey = "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";
-		platformBase = "BNB_BSC";
+		platformBase = "AVAX"; //"BNB_BSC";
 		refWalletAcctId = 3;
 		ownerAcctId = 4;
 		userAcctId = 5;
@@ -323,7 +322,7 @@ public class Fireblocks {
 	/** @param addr is the address of the contract for which you are calling a method
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data */
-	public static MyJsonObject call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'CONTRACT_CALL'," + 
@@ -335,7 +334,7 @@ public class Fireblocks {
 				"   'oneTimeAddress': {'address': '%s'}" + 
 				"}," + 
 				"'extraParameters': {" +
-				"   'contractCallData': '%s'" +
+				"   'contractCallData': '0x%s'" +
 				"}," +
 				"'note': '%s'" + 
 				"}";
@@ -356,7 +355,7 @@ public class Fireblocks {
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.UNKNOWN, "Error on Fireblocks.call  msg=%s  code=%s",
 				str, obj.getString("code") );
-		return obj;
+		return obj.getString("id");
 	}
 
 	public static String toJson( String format, Object... params) {
