@@ -20,7 +20,7 @@ public class Busd {
 				Rusd.toStablecoin(Fireblocks.busdAddr, amt)
 		};
 		
-		Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.busdAddr, mintKeccak, types, vals, "BUSD.mint()").display();
+		Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.busdAddr, mintKeccak, types, vals, "BUSD.mint()");
 	}
 	
 	public static String approveToSpendBusd(int account, String spenderAddr, double amt) throws Exception {

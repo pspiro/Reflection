@@ -479,11 +479,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Util.require(dest.length() == 42, "The wallet address is invalid");
 		
 		S.out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
-		String id1 = Transfer.transfer( Fireblocks.testBusd, "1", dest, m_config.mintBusd(), "Transfer BUSD");
+		String id1 = Transfer.transfer( Fireblocks.testBusd, 1, dest, m_config.mintBusd(), "Transfer BUSD");
 		S.out( "  FB id is %s", id1);
 
 		S.out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
-		String id2 = Transfer.transfer( Fireblocks.platformBase, "1", dest, m_config.mintEth(), "Transfer ETH");
+		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
 		S.out( "  FB id is %s", id2);
 		
 		log( LogType.MINT, "Minted to %s", dest);

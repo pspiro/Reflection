@@ -28,11 +28,10 @@ public class Fireblocks {
 	public static int refWalletAcctId;
 	public static int ownerAcctId;
 	public static int userAcctId;
-	
-
-	// these are the test system addresses
 	public static String ownerAddr;
 	public static String refWalletAddr;
+	
+	// contract addresses
 	public static String busdAddr;
 	public static String rusdAddr;
 	public static String userAddr;  // move this
@@ -119,7 +118,7 @@ public class Fireblocks {
 		rusdAddr = "";
 		initMap();
 
-		platformBase = "ETH";
+		platformBase = "AVAX";
 		moralisPlatform = "avalanche"; // just a guess
 	}
 	
@@ -365,7 +364,7 @@ public class Fireblocks {
 	/** @param addr is the address of the contract for which you are calling a method
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data */
-	public static MyJsonObject call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'CONTRACT_CALL'," + 
@@ -398,7 +397,7 @@ public class Fireblocks {
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.UNKNOWN, "Error on Fireblocks.call  msg=%s  code=%s",
 				str, obj.getString("code") );
-		return obj;
+		return obj.getString("id");
 	}
 
 	public static String toJson( String format, Object... params) {

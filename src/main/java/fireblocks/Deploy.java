@@ -17,14 +17,13 @@ public class Deploy {
 	public static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
 		S.out( "Deploying contract");
 		String data = new IStream(filename).readln();
-		MyJsonObject obj = Fireblocks.call( ownerAcctId, "0x0", data, paramTypes, params, note);
-		obj.display();
+		String id = Fireblocks.call( ownerAcctId, "0x0", data, paramTypes, params, note);
 		
 		// if there's an error, you got message and code
 		
 		//{"message":"Source is invalid","code":1427}		
 		
-		String id = obj.getString("id");  // it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
+		// it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
 		S.out( "  fireblocks id is %s", id);
 
 		S.out( "  waiting for blockchain transaction hash");
