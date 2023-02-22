@@ -8,9 +8,11 @@ import tw.util.S;
 public class GetAccounts {
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setFirstProdVals();
-		MyJsonObject account = getAccount( "Reflection Owner");
-		account.display();
+		Fireblocks.setProdValsPolygon();
+		Fireblocks.getTransactions().display();
+
+//		MyJsonObject account = getAccount( "Reflection Owner");
+//		account.display();
 	}
 	
 	static MyJsonObject getAccount( String accountName) throws Exception { 

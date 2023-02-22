@@ -15,7 +15,11 @@ public class StockToken {
 	// test system
 	//static String qqq = "0xd1b41cefda7d036018a9daff9d5f4cc811770efb";
 	public static String qqq = "0x561fe914443574d2aF7203dCA1ef120036514f87";
-	public static String ge =  "0x17211791ea7529a18f18f9247474338a5aee226b"; // on polygon
+	public static String ge =  "0x17211791ea7529a18f18f9247474338a5aee226b"; // on polygon, 18 dec
+	public static String ibm = "0xdfff5c453e63facda29b44260c2f5b62b2acd131"; // on polygon, 18 dec
+	public static String stk1 = "";
+	public static String stk2 = "";
+	static final int stockTokenDecimals = 18;
 	
 	
 	static int decimals = 5;
@@ -32,26 +36,30 @@ public class StockToken {
 
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setProdValsPolygon();
-		deploy("GE Stock", "GE");
-		
-		// you must approve the STOCK TOKEN for spending, i.e. BUSD.approve(StockToken)
-		// that's why this is really not good, because you would have to approve each 
-		// stock token, you couldn't give a blanket approval
-		//buy(Rusd.userAddr, 1, qqq, 2, Rusd.busdAddr);
-		
-        //Fireblocks.call( 3, qqq, getcallerKk, new String[0], new Object[0], "getcaller").display();
-		//Fireblocks.call( 3, qqq, iscallerKk, new String[0], new Object[0], "iscaller").display();
+		deploy("Stock1", "Stock1");
+		deploy2("Stock2", "Stock2");
 	}
 	
 	static void deploy(String name, String symbol) throws Exception {
-		String[] paramTypes = { "string", "string", "address", "address" };
+		String[] paramTypes = { "string", "string", "address" };
 		Object[] params = { 
 				name, 
 				symbol, 
-				Fireblocks.refWalletAddr, 
 				Fireblocks.rusdAddr 
 			};
-		String addr = Deploy.deploy("c:/work/smart-contracts.old/StockToken.bytecode",
+		String addr = Deploy.deploy("c:/work/smart-contracts/bytecode/StockToken.bytecode",
+				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
+		S.out( "Deployed to %s", addr);
+	}
+	
+	static void deploy2(String name, String symbol) throws Exception {
+		String[] paramTypes = { "string", "string", "address" };
+		Object[] params = { 
+				name, 
+				symbol, 
+				Fireblocks.rusdAddr 
+			};
+		String addr = Deploy.deploy("c:/work/smart-contracts/bytecode/StockToken.bytecode",
 				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
 		S.out( "Deployed to %s", addr);
 	}

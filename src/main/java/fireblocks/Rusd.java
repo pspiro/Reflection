@@ -11,10 +11,8 @@ import tw.util.S;
 public class Rusd {
 	
 	// busd on binance and ethereum has 18 decimals
-	// rusd on binance and ethereum has 6 decimals
-	// usdc on ethereum has 6 decimals
-	// stock tokens have 6 decimals
-	static final int stockTokenDecimals = 6;
+	// usdc and usdt on ethereum have 6 decimals
+	// stock tokens have 18 decimals
 	
 	
 	// keccaks
@@ -23,6 +21,7 @@ public class Rusd {
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
 	static final String mintKeccak = "40c10f19";
+	static final String burnKeccak = "9dc29fac";
 
 	// deploy RUSD from owner wallet
 	// deploy QQQ from owner wallet
@@ -33,32 +32,45 @@ public class Rusd {
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdValsPolygon();
-		
-		deploy();
-		
+		Fireblocks.setProdValsAvax();
+		deploy( "c:/work/smart-contracts/bytecode/rusd.bytecode");
+		// working as of 2/21 w/ new StockToken class, had to remove RefWallet parameter
+//		Fireblocks.setProdValsPolygon();
+//		String id = buyStock(myWallet, Fireblocks.rusdAddr, 1, StockToken.ibm, 1, "buy IBM");
+//		Fireblocks.getTransHash(id, 60);
 	}
 	
 	// this works in test system, fails in production
-	static void deploy() throws Exception {
+	static void deploy(String filename) throws Exception {
 		S.out( "Deploying RUSD from owner %d with refWallet %s", Fireblocks.ownerAcctId, Fireblocks.refWalletAddr);
 		String[] paramTypes = { "address" };
 		Object[] params = { Fireblocks.refWalletAddr };
 
-		String addr = Deploy.deploy( "c:/work/smart-contracts/rusd.bytecode", 
+		String addr = Deploy.deploy( filename, 
 				Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
 		
 		S.out( "Deployed to %s", addr);
 	}
-	
+	// works as of 2/20
 	private static void mint(String address, double amt) throws Exception {
 		String[] types = {"address", "uint256"};
 		Object[] vals = {
 				address,
-				Rusd.toStablecoin(Fireblocks.busdAddr, amt)
+				Rusd.toStablecoin(Fireblocks.rusdAddr, amt)
 		};
 		
 		String id = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, mintKeccak, types, vals, "RUSD.mint");
+		Fireblocks.getTransHash( id, 60);
+	}
+	// works as of 2/20 but the method should be removed from the smart contract
+	private static void burn(String address, double amt) throws Exception {
+		String[] types = {"address", "uint256"};
+		Object[] vals = {
+				address,
+				Rusd.toStablecoin(Fireblocks.rusdAddr, amt)
+		};
+		
+		String id = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, burnKeccak, types, vals, "RUSD.mint");
 		Fireblocks.getTransHash( id, 60);
 	}
 	
@@ -111,12 +123,12 @@ public class Rusd {
 	
 	/** Amount gets rounded to three decimals */
 	public static BigInteger toStockToken(double stockTokenAmt) {
-		return timesPower( stockTokenAmt, stockTokenDecimals);
+		return timesPower( stockTokenAmt, StockToken.stockTokenDecimals);
 	}
 	
 	/** This method rounds stablecoinAmt to two decimals and converts to integer. */ 
 	public static BigInteger toStablecoin(String stablecoinAddr, double stablecoinAmt) throws RefException {
-		return timesPower( stablecoinAmt, getStablecoinMultiplier( stablecoinAddr) ); 
+		return timesPower( stablecoinAmt, Fireblocks.getStablecoinMultiplier( stablecoinAddr) ); 
 	}
 
 	/** Return amt rounded to three decimals * 10^power */
@@ -126,12 +138,6 @@ public class Rusd {
 				.toBigInteger();
 	}
 
-	/** Returns the number of decimals of the stablecoin smart contract */
-	private static int getStablecoinMultiplier(String stablecoinAddr) throws RefException {
-		if (stablecoinAddr.equals(Fireblocks.rusdAddr) ) return 18;  // this will change
-		if (stablecoinAddr.equals(Fireblocks.busdAddr) ) return 18;  // this will change, all return 18
-		throw new RefException( RefCode.UNKNOWN, "Invalid stablecoin address " + stablecoinAddr);
-	}
 
 //    address _userAddress,
 //    address _stableCoinAddress,

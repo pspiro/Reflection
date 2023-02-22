@@ -34,6 +34,7 @@ public class Fireblocks {
 	// contract addresses
 	public static String busdAddr;
 	public static String rusdAddr;
+	public static int rusdDec = 18;
 	public static String userAddr;  // move this
 	public static String moralisPlatform;
 
@@ -67,7 +68,8 @@ public class Fireblocks {
 		
 		// contracts
 		busdAddr = "0x2b0945a0318f47a055218d007c7b4f8c57480d03"; // actually USDC
-		rusdAddr = "0x3a59c94c3b80631ed883384c5d3c2db06c66a151";
+		rusdAddr = "0xfe09af21b999d6981c830daae9238a35208e7893"; // today
+		rusdDec = 6;
 		initMap();
 
 		platformBase = "MATIC_POLYGON";
@@ -460,4 +462,10 @@ public class Fireblocks {
 		return name;
 	}
 	
+	/** Returns the number of decimals of the stablecoin smart contract */
+	static int getStablecoinMultiplier(String stablecoinAddr) throws RefException {
+		if (stablecoinAddr.equals(Fireblocks.rusdAddr) ) return rusdDec;  // this will change
+		if (stablecoinAddr.equals(Fireblocks.busdAddr) ) return 18;  // this will change, all return 18
+		throw new RefException( RefCode.UNKNOWN, "Invalid stablecoin address " + stablecoinAddr);
+	}
 }
