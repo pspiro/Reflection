@@ -49,7 +49,7 @@ public class IStream {
 		}
 	}
 
-	/** Reads the whole file into a single string. */
+	/** Reads the whole file into a single string and close the stream. */
 	public String readAll() {
 		try {
 			StringBuilder sb = new StringBuilder();

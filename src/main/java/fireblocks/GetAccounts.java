@@ -9,7 +9,9 @@ public class GetAccounts {
 
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setProdValsPolygon();
-		Fireblocks.getTransactions().display();
+		//Fireblocks.getTransactions().display();
+		displayLastTransaction(3);
+		//Fireblocks.getVaultAccounts().display();
 
 //		MyJsonObject account = getAccount( "Reflection Owner");
 //		account.display();
@@ -31,9 +33,12 @@ public class GetAccounts {
 		//Fireblocks.getTransaction( "a769ace6-6c35-492d-96e4-8f5588c1ee87").display(); 
 		//displayLastTransaction();
 
-	static void displayLastTransaction() throws Exception {
+	static void displayLastTransaction(int n) throws Exception {
 		MyJsonArray ar = Fireblocks.getTransactions();
-		ar.getJsonObj(0).display();
+		
+		for (int i = 0; i < n; i++) { 
+			ar.getJsonObj(i).display();
+		}
 	}
 }
 

@@ -32,46 +32,37 @@ public class Rusd {
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdValsAvax();
-		deploy( "c:/work/smart-contracts/bytecode/rusd.bytecode");
-		// working as of 2/21 w/ new StockToken class, had to remove RefWallet parameter
-//		Fireblocks.setProdValsPolygon();
-//		String id = buyStock(myWallet, Fireblocks.rusdAddr, 1, StockToken.ibm, 1, "buy IBM");
-//		Fireblocks.getTransHash(id, 60);
+		Fireblocks.setProdValsPolygon();
+
+		String rusdAddr = "0x31ed1e80db8a6e82b2f73c4cb37a1390fe7793a7"; // deploy( "c:/work/bytecode/rusd.bytecode");
+		String ibmAddr = "0xfdaf3b9c6665fe47eb701abea7429d0c1b5d30a1"; // StockToken.deploy( "c:/work/bytecode/stocktoken.bytecode", "IBM", "IBM", rusdAddr);
+		
+		Util.execute( () -> {
+			try {
+				buyStock( Fireblocks.refWalletAcctId1, rusdAddr, myWallet, rusdAddr, 0, ibmAddr, 1, "buy IBM1");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		
+		Util.execute( () -> {
+			try {
+				buyStock( Fireblocks.refWalletAcctId2, rusdAddr, myWallet, rusdAddr, 0, ibmAddr, 1, "buy IBM2");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+
 	}
 	
-	// this works in test system, fails in production
-	static void deploy(String filename) throws Exception {
-		S.out( "Deploying RUSD from owner %d with refWallet %s", Fireblocks.ownerAcctId, Fireblocks.refWalletAddr);
-		String[] paramTypes = { "address" };
-		Object[] params = { Fireblocks.refWalletAddr };
+	/** Deploy RUSD
+	 *  @return deployed address */
+	static String deploy(String filename) throws Exception {
+		S.out( "Deploying RUSD from owner %d with refWallet %s", Fireblocks.ownerAcctId, Fireblocks.refWalletAddr1);
+		String[] paramTypes = { "address", "address" };
+		Object[] params = { Fireblocks.refWalletAddr1, Fireblocks.refWalletAddr2 };
 
-		String addr = Deploy.deploy( filename, 
-				Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
-		
-		S.out( "Deployed to %s", addr);
-	}
-	// works as of 2/20
-	private static void mint(String address, double amt) throws Exception {
-		String[] types = {"address", "uint256"};
-		Object[] vals = {
-				address,
-				Rusd.toStablecoin(Fireblocks.rusdAddr, amt)
-		};
-		
-		String id = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, mintKeccak, types, vals, "RUSD.mint");
-		Fireblocks.getTransHash( id, 60);
-	}
-	// works as of 2/20 but the method should be removed from the smart contract
-	private static void burn(String address, double amt) throws Exception {
-		String[] types = {"address", "uint256"};
-		Object[] vals = {
-				address,
-				Rusd.toStablecoin(Fireblocks.rusdAddr, amt)
-		};
-		
-		String id = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, burnKeccak, types, vals, "RUSD.mint");
-		Fireblocks.getTransHash( id, 60);
+		return Deploy.deploy( filename, Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
 	}
 	
 
@@ -82,7 +73,7 @@ public class Rusd {
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
-	public static String buyStock(String userAddr, String stablecoinAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt, String note) throws Exception {
+	public static String buyStock(int refWalletAcctId, String rusdAddr, String userAddr, String stablecoinAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt, String note) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -96,9 +87,9 @@ public class Rusd {
 		// sufficient coin in the source wallet. pas
 		
 		S.out( "Refwallet buying %s %s with %s %s for user %s", 
-				params[4], stockTokenAddr, params[3], Fireblocks.getStablecoinName(stablecoinAddr), userAddr);
-		return Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, 
-				buyStockKeccak, paramTypes, params, "RUSD.buyStock()");
+				params[4], stockTokenAddr, params[3], stablecoinAddr, userAddr);
+		return Fireblocks.call( refWalletAcctId, rusdAddr, 
+				buyStockKeccak, paramTypes, params, note);
 	}
 	
 	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
@@ -117,7 +108,7 @@ public class Rusd {
 				toStockToken( stockTokenAmt) 
 			};
 		
-		return Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, 
+		return Fireblocks.call( Fireblocks.refWalletAcctId1, Fireblocks.rusdAddr, 
 				sellStockKeccak, paramTypes, params, "RUSD.sellStock()");
 	}
 	
@@ -148,7 +139,7 @@ public class Rusd {
 		String[] paramTypes = { "address", "address", "uint256" };
 		Object[] params = { userAddr, otherStablecoin, amt };
 
-		String id = Fireblocks.call( Fireblocks.refWalletAcctId, Fireblocks.rusdAddr, 
+		String id = Fireblocks.call( Fireblocks.refWalletAcctId1, Fireblocks.rusdAddr, 
 				buyRusdKeccak, paramTypes, params, "RUSD.buyRusd");
 
 		Fireblocks.getTransaction( id).display();
@@ -168,7 +159,7 @@ public class Rusd {
 				toStablecoin( stablecoinAddr, amt), 
 			};
 		
-		S.out( "Account %s approving %s to spend %s %s", account, spenderAddr, toStablecoin( stablecoinAddr, amt), Fireblocks.getStablecoinName( stablecoinAddr) );
+		S.out( "Account %s approving %s to spend %s %s", account, spenderAddr, toStablecoin( stablecoinAddr, amt), stablecoinAddr);
 		return Fireblocks.call( account, stablecoinAddr, Rusd.approveKeccak, paramTypes, params, "Rusd.approve()");
 	}
 }

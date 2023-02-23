@@ -88,7 +88,7 @@ public class TestFireblocks extends TestCase {
 		Fireblocks.setTestVals();
 		
 		// let refWallet call RUSD.buy()
-		String id2 = Rusd.buyStock(Fireblocks.userAddr, Fireblocks.rusdAddr, 3.0, ge, 4.5, "test");
+		String id2 = Rusd.buyStock(Fireblocks.refWalletAcctId1, null, Fireblocks.userAddr, Fireblocks.rusdAddr, 3.0, ge, 4.5, "test");
 		Fireblocks.getTransaction( id2).display("buy stock with RUSD");
 
 		assertEquals( 66, Fireblocks.getTransHash(id2,60).length() );

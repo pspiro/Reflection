@@ -736,7 +736,7 @@ public class MyTransaction {
 				
 				if (order.action() == Action.BUY) {
 					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
-					id = Rusd.buyStock(order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
+					id = Rusd.buyStock(Fireblocks.refWalletAcctId1, null, order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
 							order.stockTokenAddr(), stockQty, "prod");
 				}
 				else {

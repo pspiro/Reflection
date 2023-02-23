@@ -16,8 +16,11 @@ public class Deploy {
 	 *  @return the deployed contract address */
 	public static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
 		S.out( "Deploying contract");
-		String data = new IStream(filename).readln();
-		String id = Fireblocks.call( ownerAcctId, "0x0", data, paramTypes, params, note);
+		
+		String bytecode = MyJsonObject.parse( new IStream(filename).readAll() )
+				.getString("object");
+		
+		String id = Fireblocks.call( ownerAcctId, "0x0", bytecode, paramTypes, params, note);
 		
 		// if there's an error, you got message and code
 		
@@ -46,6 +49,7 @@ public class Deploy {
 			MyJsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
 			String addr = obj.getString("receipt_contract_address");
 			if (S.isNotNull(addr) ) {
+				S.out( "contract deployed to " + addr);
 				return addr;
 			}
 		}

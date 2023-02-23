@@ -36,20 +36,17 @@ public class StockToken {
 
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setProdValsPolygon();
-		deploy("Stock1", "Stock1");
-		deploy2("Stock2", "Stock2");
+		//deploy2("Stock2", "Stock2");
 	}
 	
-	static void deploy(String name, String symbol) throws Exception {
+	static String deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		String[] paramTypes = { "string", "string", "address" };
 		Object[] params = { 
 				name, 
-				symbol, 
-				Fireblocks.rusdAddr 
+				symbol,
+				rusdAddr
 			};
-		String addr = Deploy.deploy("c:/work/smart-contracts/bytecode/StockToken.bytecode",
-				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
-		S.out( "Deployed to %s", addr);
+		return Deploy.deploy(filename, Fireblocks.ownerAcctId, paramTypes, params, "deploy stock token " + symbol);
 	}
 	
 	static void deploy2(String name, String symbol) throws Exception {
@@ -70,7 +67,7 @@ public class StockToken {
 	static void buy( String userAddr, int stockTokenAmt, String stockTokenAddr, int stablecoinAmt, String stablecoinAddr) throws Exception {
 		String[] paramTypes = { "address", "uint256", "uint256", "address" };
         Object[] params = { userAddr, stockTokenAmt, stablecoinAmt, stablecoinAddr };  
-        String id = Fireblocks.call( Fireblocks.refWalletAcctId, stockTokenAddr, 
+        String id = Fireblocks.call( Fireblocks.refWalletAcctId1, stockTokenAddr, 
         		buyKeccak, paramTypes, params, "StockToken.buy");
 		Fireblocks.getTransaction(id).display(); 
 	}
