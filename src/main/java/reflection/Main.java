@@ -452,7 +452,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			Util.require( uri.length() < 4000, "URI is too long");
 		
 			String[] parts = uri.split("/");
-			Util.require( parts.length == 3, "Format of URL should be https://reflection.trade/mint/0x000...000");
+			Util.require( parts.length == 3, "Format of URL should be https://reflection.trade/mint/0x...  where the last piece of the URL is your wallet address");
 			
 			mint( parts[2]);
 			response = m_config.mintHtml();

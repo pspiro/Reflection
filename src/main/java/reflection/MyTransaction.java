@@ -737,7 +737,7 @@ public class MyTransaction {
 				if (order.action() == Action.BUY) {
 					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
 					id = Rusd.buyStock(order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
-							order.stockTokenAddr(), stockQty);
+							order.stockTokenAddr(), stockQty, "prod");
 				}
 				else {
 					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();

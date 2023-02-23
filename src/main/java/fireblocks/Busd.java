@@ -7,10 +7,9 @@ public class Busd {
 	private static final String mintKeccak = "40c10f19";
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
-		//deploy();
-		//mint(Rusd.user2, 1);
-		approveToSpendBusd(Fireblocks.userAcctId, Fireblocks.rusdAddr, 1000);
+		Fireblocks.setProdValsPolygon();
+		deploy();
+		//approveToSpendBusd(Fireblocks.userAcctId, Fireblocks.rusdAddr, 1000);
 	}
 	
 	
@@ -32,7 +31,7 @@ public class Busd {
 		String[] types = { "address" };
 		Object[] vals = { Fireblocks.refWalletAddr };
 		
-		String addr = Deploy.deploy("c:/work/smart-contracts/BUSD.bytecode", Fireblocks.ownerAcctId, types, vals, "deploy BUSD");
+		String addr = Deploy.deploy("c:/work/smart-contracts.OLD/BUSD.bytecode", Fireblocks.ownerAcctId, types, vals, "deploy BUSD");
 		S.out( "Deployed to %s", addr);
 		
 		// this must be initiated and signed by the user wallet

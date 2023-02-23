@@ -8,14 +8,11 @@ import tw.util.S;
 public class GetAccounts {
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
-		//Fireblocks.setProdVals();
-		
-		Fireblocks.getTransaction( "a4e259fb-ef36-462b-b376-94c0d1b759f4").display(); 
+		Fireblocks.setProdValsPolygon();
+		Fireblocks.getTransactions().display();
 
-
-		//MyJsonObject account = getAccount( "Reflection Owner");
-		//account.display();
+//		MyJsonObject account = getAccount( "Reflection Owner");
+//		account.display();
 	}
 	
 	static MyJsonObject getAccount( String accountName) throws Exception { 
@@ -31,6 +28,7 @@ public class GetAccounts {
 		
 		// Fireblocks.getTransactions().display();
 		
+		//Fireblocks.getTransaction( "a769ace6-6c35-492d-96e4-8f5588c1ee87").display(); 
 		//displayLastTransaction();
 
 	static void displayLastTransaction() throws Exception {

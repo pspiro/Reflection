@@ -34,7 +34,9 @@ public class Fireblocks {
 	// contract addresses
 	public static String busdAddr;
 	public static String rusdAddr;
+	public static int rusdDec = 18;
 	public static String userAddr;  // move this
+	public static String moralisPlatform;
 
 	public static String platformBase;
 	
@@ -61,11 +63,22 @@ public class Fireblocks {
 		s_privateKey = privateKey;
 	}
 	
+	public static void setProdValsPolygon() {
+		setFirstProdVals();
+		
+		// contracts
+		busdAddr = "0x2b0945a0318f47a055218d007c7b4f8c57480d03"; // actually USDC
+		rusdAddr = "0xfe09af21b999d6981c830daae9238a35208e7893"; // today
+		rusdDec = 6;
+		initMap();
+
+		platformBase = "MATIC_POLYGON";
+		moralisPlatform = "polygon";
+	}
+
 	/** Do not call this in production; for testing only. 
 	 * @throws Exception */
 	public static void setTestVals() {
-		
-
 		// wallets
 		ownerAddr = "0xdA2c28Af9CbfaD9956333Aba0Fc3B482bc0AeD13";
 		refWalletAddr = "0x4d2AE56E463bBbd1803DD892a4AF1b7Ce9b65667"; // test system
@@ -83,25 +96,56 @@ public class Fireblocks {
 		refWalletAcctId = 3;
 		ownerAcctId = 2;
 		userAcctId = 1;
+		moralisPlatform = "goerli";
 	}
 	
-	public static void setProdVals() {
+	public static void setFirstProdVals() {
 		// wallets
 		ownerAddr = "0x966454dCA56f75aB15Df54cee9033062D331e0d4";  // on Fireblocks
 		refWalletAddr = "0xF6e9Bff937ac8DF6220688DEa63A1c92b6339510";  // on Fireblocks
 		
-		// contracts
-		busdAddr = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
-		rusdAddr = "0x06d194729cd7c0956b122e6ce2b0339a3def1e6f"; // this is with 450e as owner and FB RefWallet, deployed from Remix
-		initMap();
-
 		// Fireblocks values
 		s_apiKey = "e3f1c5b4-48f3-f495-7b14-23e729bc3628";
 		s_privateKey = "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";
-		platformBase = "AVAX"; //"BNB_BSC";
 		refWalletAcctId = 3;
 		ownerAcctId = 4;
 		userAcctId = 5;
+	}
+	
+	public static void setProdValsAvax() {
+		setFirstProdVals();
+		
+		// contracts
+		busdAddr = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // actually USDC
+		rusdAddr = "";
+		initMap();
+
+		platformBase = "AVAX";
+		moralisPlatform = "avalanche"; // just a guess
+	}
+	
+	public static void setProdValsEth() {
+		setFirstProdVals();
+		
+		// contracts
+		busdAddr = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // actually USDC
+		rusdAddr = "";
+		initMap();
+
+		platformBase = "ETH";
+		moralisPlatform = "ethereum";
+	}
+
+	public static void setProdValsBinance() {
+		setFirstProdVals();
+		
+		// contracts
+		busdAddr = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
+		rusdAddr = ""; // we did deploy it on Binance from Remix w/ 455e as owner
+		initMap();
+
+		platformBase = "BNB_BSC";
+		moralisPlatform = "binance";
 	}
 
 	public static void readKeys() throws Exception {
@@ -334,7 +378,7 @@ public class Fireblocks {
 				"   'oneTimeAddress': {'address': '%s'}" + 
 				"}," + 
 				"'extraParameters': {" +
-				"   'contractCallData': '0x%s'" +
+				"   'contractCallData': '%s'" +   //0x seems optional
 				"}," +
 				"'note': '%s'" + 
 				"}";
@@ -418,4 +462,10 @@ public class Fireblocks {
 		return name;
 	}
 	
+	/** Returns the number of decimals of the stablecoin smart contract */
+	static int getStablecoinMultiplier(String stablecoinAddr) throws RefException {
+		if (stablecoinAddr.equals(Fireblocks.rusdAddr) ) return rusdDec;  // this will change
+		if (stablecoinAddr.equals(Fireblocks.busdAddr) ) return 18;  // this will change, all return 18
+		throw new RefException( RefCode.UNKNOWN, "Invalid stablecoin address " + stablecoinAddr);
+	}
 }

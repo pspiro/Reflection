@@ -174,12 +174,7 @@ public class MktDataServer {
 
 	/** Send all the queued up messages to redis and delete the pipeline */
 	synchronized void syncNow() {
-		try {
-			pipeline.sync();
-		}
-		catch( Exception e) {
-			m_log.log(e);
-		}
+		wrap( () -> pipeline.sync() );
 		pipeline = null;
 	}
 

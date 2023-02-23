@@ -1,1 +1,1 @@
-Built on ${timestamp}
+Built on ${timestamp} GMT
