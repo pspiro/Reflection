@@ -18,27 +18,20 @@ class ConnectionMgr implements IConnectionHandler {
 	private int m_clientId;
 	private Timer m_timer;
 	private boolean m_ibConnection;
-	private final LogType m_logType;
 	private final ApiController m_controller = new ApiController( this, null, null);
 	boolean ibConnection() { return m_ibConnection; }
 
-	ConnectionMgr(LogType logType) {
-		m_logType = logType;
-	}
-	
 	public ApiController controller() { 
 		return m_controller;
 	}
 
 	void connect(String host, int port, int clientId) {
-		S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
+		MktDataServer.log( "Connecting to TWS on %s:%s with client id %s", host, port, clientId);
 		
 		m_host = host;
 		m_port = port;
 		m_clientId = clientId;
 		startTimer();
-		
-		//S.out( "  done");
 	}
 
 	synchronized void startTimer() {
@@ -61,12 +54,12 @@ class ConnectionMgr implements IConnectionHandler {
 	}
 
 	synchronized void onTimer() {
-		S.out( "%s trying...", m_logType);
+		MktDataServer.log( "Trying to connect");
 		if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
-			S.out( "%s failed", m_logType);
+			MktDataServer.log( "connect() failure");
 		}
 		else {
-			S.out( "%s success", m_logType);
+			MktDataServer.log( "connect() success");
 		}
 	}
 
@@ -77,7 +70,7 @@ class ConnectionMgr implements IConnectionHandler {
 	
 	/** Called when we receive server version. We don't always receive nextValidId. */
 	@Override public void onConnected() {
-		MktDataServer.log( m_logType, "Connected to TWS");
+		MktDataServer.log( "Connected to TWS");
 		m_ibConnection = true; // we have to assume it's connected since we don't know for sure
 		
 		stopTimer();
@@ -89,12 +82,12 @@ class ConnectionMgr implements IConnectionHandler {
 		// order id's; it's because sometimes, after a reconnect or if TWS
 		// is just startup up, or if we tried and failed, we don't ever receive
 		// it
-		MktDataServer.log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
+		MktDataServer.log( "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
 	}
 
 	@Override public synchronized void onDisconnected() {
 		if (m_timer == null) {
-			MktDataServer.log( m_logType, "Disconnected from TWS");
+			MktDataServer.log( "Disconnected from TWS");
 			startTimer();
 		}
 	}
@@ -115,11 +108,11 @@ class ConnectionMgr implements IConnectionHandler {
 				m_ibConnection = true; 
 				break;
 			case 10197:
-				S.out( "You can't get market data in your paper account while logged into your production account");
+				MktDataServer.log( "You can't get market data in your paper account while logged into your production account");
 				break;
 		}
 	
-		S.out( "RECEIVED %s %s %s", id, errorCode, errorMsg);
+		MktDataServer.log( "Received from TWS %s %s %s", id, errorCode, errorMsg);
 	}
 
 	@Override public void show(String string) {

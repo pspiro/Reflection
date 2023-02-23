@@ -1,5 +1,6 @@
 package util;
 
+import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -28,6 +29,12 @@ public class DateLogFile {
 		return fmt.format( new Date() ); 
 	}
 
+	/** Don't bother to check for date change here. */
+	public synchronized void log(Exception e) {
+		e.printStackTrace( new PrintStream(m_log) );
+	}
+	
+	/** Check for date change, reset to next day log file if necessary. */
 	public synchronized void log(LogType type, String text, Object... params) {
 		try {
 			// if date has changed since last log msg, close the log file and create a new one
