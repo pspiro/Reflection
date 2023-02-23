@@ -6,6 +6,7 @@ public enum LogType {
 	COMMISSION,		// commission report received
 	ERROR,			// should never happen
 	FILLED,			// order was completely filled
+	INFO,
 	MD_CONNECTION,
 	MINT,			// minted some goerli ETF for user
 	ORDER,			// received order
@@ -19,5 +20,5 @@ public enum LogType {
 	TERMINATE,
 	TIME,			// switched to/from IBEOS hours 
 	TRADE,			// trade report received
-	WALLET,
+	WALLET, 
 }

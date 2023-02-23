@@ -20,7 +20,7 @@ import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import reflection.Main;
-import reflection.MySqlConnection;
+import reflection.MyTransaction.ExRunnable;
 import reflection.Util;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -36,7 +36,6 @@ public class MktDataServer {
 	private final static SimpleDateFormat hhmm = new SimpleDateFormat( "kk:mm:ss");
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	        final static MktDataConfig m_config = new MktDataConfig();
-	private final static MySqlConnection m_database = new MySqlConnection();
 	private final static DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	//final static int SpyConid = 756733;
 	
@@ -62,14 +61,14 @@ public class MktDataServer {
 			new MktDataServer().run( args[0] );
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			m_log.log( e);
 			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
 	private void run(String tabName) throws Exception {
 		// create log file folder and open log file
-		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
+		log( Util.readResource( Main.class, "version.txt") );  // print build date/time
 
 		// read config settings from google sheet 
 		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
@@ -80,10 +79,6 @@ public class MktDataServer {
 		readStockListFromSheet();
 		S.out( "  done");
 		
-//		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
-//		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
-//		S.out( "  done");
-
 		// if redis port is zero, host contains the full URI;
 		// otherwise, we use host and port
 		if (m_config.redisPort() == 0) {
@@ -122,12 +117,12 @@ public class MktDataServer {
 		// also cause us to miss the -1 that comes at the close of the old exchange
 		
 		if (log || inside != m_insideHours) {
-			log( LogType.TIME, "Transitioned trading hours, inside=%s", m_insideHours);
+			log( "Transitioned trading hours, inside=%s", m_insideHours);
 		}
 	}
 
 	private void shutdown() {
-		S.out("received shutdown msg from linux kill command");
+		log("Received shutdown msg from linux kill command");
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -158,19 +153,13 @@ public class MktDataServer {
 
 	class MdConnectionMgr extends ConnectionMgr {
 		MdConnectionMgr() {
-			super( LogType.MD_CONNECTION);
+			super();
 		}
 		
 		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
 		@Override public synchronized void onRecNextValidId(int id) {
 			super.onRecNextValidId(id);  // we don't get this after a disconnect/reconnect, so in that case you should use onConnected()
-			
-			try {
-				requestPrices();
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
+			wrap( () -> requestPrices() );
 		}
 	}
 
@@ -185,13 +174,18 @@ public class MktDataServer {
 
 	/** Send all the queued up messages to redis and delete the pipeline */
 	synchronized void syncNow() {
-		pipeline.sync();
+		try {
+			pipeline.sync();
+		}
+		catch( Exception e) {
+			m_log.log(e);
+		}
 		pipeline = null;
 	}
 
 	/** Might need to sync this with other API calls.  */
 	private void requestPrices() throws Exception {
-		S.out( "requesting prices");
+		log( "Requesting prices");
 
 		if (m_config.mode() == Mode.paper) {
 			mdController().reqMktDataType(MarketDataType.DELAYED);
@@ -218,8 +212,6 @@ public class MktDataServer {
 		contract.conid( Integer.valueOf( conid) );
 		contract.exchange( exchange);
 
-		
-		// you could have the prices flow directly into the Prices Object
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				tickMktData( conid, tickType, price);
@@ -247,7 +239,7 @@ public class MktDataServer {
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				if (!m_insideHours) {
-					S.out( "Ticking IBEOS %s %s %s", conid, tickType, price);
+					//log( "Ticking IBEOS %s %s %s", conid, tickType, price);
 					tickMktData(conid, tickType, price);
 				}
 			}
@@ -255,30 +247,32 @@ public class MktDataServer {
 	}
 	
 	void tickMktData(String conid, TickType tickType, double price) {
-		String type = getTickType( tickType);
-		
-		// add a timeout for the prices to expire. pas
-		// use transactions or pipeline to speed it up. pas
-		// use expire() or pexpire()
-		
-		
-		if (type != null) {
-			if (price > 0) { 
-				String val = S.fmt3( price);
-				//S.out( "ticking %s %s=%s", conidStr, type, val);
-				tick( () ->	pipeline.hset( conid, type, val) );
-				
-				if (type.equals( "last") ) {
-					tick( () ->	pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
+		wrap( () -> {
+			String type = getTickType( tickType);
+			
+			// add a timeout for the prices to expire. pas
+			// use transactions or pipeline to speed it up. pas
+			// use expire() or pexpire()
+			
+			
+			if (type != null) {
+				if (price > 0) { 
+					String val = S.fmt3( price);
+					//S.out( "ticking %s %s=%s", conidStr, type, val);
+					tick( () ->	pipeline.hset( conid, type, val) ); 
+					
+					if (type.equals( "last") ) {
+						tick( () ->	pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
+					}
+				}
+				// we get price=-1 for bid/ask when market is closed
+				else if (type == "bid" || type == "ask") {
+					log( "clearing %s %s", conid, type);
+					tick( () ->	pipeline.hdel( conid, type) );
+					// delete it!!! pas
 				}
 			}
-			// we get price=-1 for bid/ask when market is closed
-			else if (type == "bid" || type == "ask") {
-				S.out( "clearing %s %s", conid, type);
-				tick( () ->	pipeline.hdel( conid, type) );
-				// delete it!!! pas
-			}
-		}
+		});
 	}
 
 	/** Write to the log file. Don't throw any exception. */
@@ -308,8 +302,8 @@ public class MktDataServer {
 		return type;
 	}
 
-	static void log( LogType type, String text, Object... params) {
-		m_log.log( type, text, params);
+	static void log( String text, Object... params) {
+		m_log.log( LogType.INFO, text, params);
 	}
 
 	public ApiController mdController() {
@@ -324,4 +318,12 @@ public class MktDataServer {
 		return m_tabName;
 	}
 
+	void wrap( ExRunnable runnable) {
+		try {
+			runnable.run();
+		}
+		catch( Exception e) {
+			m_log.log(e);
+		}
+	}
 }

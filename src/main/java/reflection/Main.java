@@ -587,34 +587,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 }
 
 
-// get tws running on cloud
-// get database running and tested on cloud
-// get google access running and tested on cloud
 
-// 
+// Issues 
 // high: put in a check if an order fills after a timeout; that's a WARNING and ALERT for someone to do something, or for the program to close out the position
 // high: add a check for max value; add a test for it 
 // you must submit the order at the right price to ensure you get filled at least .4% profit, or whatever
 
 // Bugs
-// low: TWS times out overnight, API connects but can't get msgs, at least not contractDetails
 // low: on Sunday night, at least, a what-if order returns all Double.max_value strings to api
-
-// shail: what is the ib program not tws i can run for api?
-// shail: why does NYSE order go in as smart?
-// shail: where is the tws.log file?
-// shail can you check IB errorCode 640 for me?
-// shail: bug in IB API code cancelTopMktData
-
-// Notes
-// All order go in as smart routing
-// Paradigm: all threads and runnables should throw and catch RefException
-
-// Later
-// you might need throttleing based on IP address to prevent DOS attacks
-// lessons: post data is truncated at content length if too short; server hangs waiting for data if too long 
 // *probably more efficient to have one timer thread instead of one for each message; fix this when it gets busy
-
-// oracle docs
-//https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpExchange.html
-//displaying the context is not that interesting, it only displays the map key

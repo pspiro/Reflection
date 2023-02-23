@@ -802,7 +802,7 @@ public class MyTransaction {
 		return true;
 	}
 
-	void wrap( RefRunnable runnable) {
+	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
@@ -821,11 +821,12 @@ public class MyTransaction {
 		}
 	}
 	
-	interface RefRunnable {
+	/** Runnable, returns void, throws Exception */
+	public interface ExRunnable {
 		void run() throws Exception; 
 	}
 
-	void setTimer( long ms, RefRunnable runnable) {
+	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas
 			@Override public void run() {
