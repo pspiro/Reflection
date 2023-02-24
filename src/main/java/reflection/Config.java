@@ -93,24 +93,29 @@ public class Config {
 		this.maxBuyAmt = tab.getDouble( "maxBuyAmt");
 		this.maxSellAmt = tab.getDouble( "maxSellAmt");
 
-		// program parameters
+		// TWS connection
 		this.twsOrderHost = tab.get( "twsOrderHost");
 		this.twsOrderPort = tab.getInt( "twsOrderPort");
-
-		this.refApiHost = tab.getRequiredString( "refApiHost");
-		this.refApiPort = tab.getInt( "refApiPort");
-		
-		this.postgresUrl = tab.get( "postgresUrl");
-		this.postgresUser = tab.get( "postgresUser");
-		this.postgresPassword = tab.get( "postgresPassword");
-		
 		this.reconnectInterval = tab.getInt( "reconnectInterval");
 		this.orderTimeout = tab.getInt( "orderTimeout");
 		this.timeout = tab.getInt( "timeout");
-		this.symbolsTab = tab.getRequiredString( "symbolsTab");
-		this.backendConfigTab = tab.get( "backendConfigTab");
+
+		// market data
 		this.redisHost = tab.get( "redisHost");
 		this.redisPort = tab.getInt( "redisPort");
+
+		// listen here
+		this.refApiHost = tab.getRequiredString( "refApiHost");
+		this.refApiPort = tab.getInt( "refApiPort");
+		
+		// database
+		this.postgresUrl = tab.get( "postgresUrl");
+		this.postgresUser = tab.get( "postgresUser");
+		this.postgresPassword = tab.get( "postgresPassword");
+
+		// additional data
+		this.symbolsTab = tab.getRequiredString( "symbolsTab");
+		this.backendConfigTab = tab.get( "backendConfigTab");
 		this.commission = tab.getDouble( "commission");
 		this.fireblocksApiKey = tab.getRequiredString("fireblocksApiKey"); 
 		this.fireblocksPrivateKey = tab.getRequiredString("fireblocksPrivateKey");

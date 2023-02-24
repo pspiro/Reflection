@@ -70,12 +70,13 @@ public class MktDataServer {
 	private void run(String[] args) throws Exception {
 		String tabName = args[0];
 		
-		if (args.length > 1 && (args[1].equals("/d") || args[1].equals("-d") ) ) {
-			m_debug = true;
-		}
-		
 		// create log file folder and open log file
 		log( Util.readResource( Main.class, "version.txt") );  // print build date/time
+
+		if (args.length > 1 && (args[1].equals("/d") || args[1].equals("-d") ) ) {
+			m_debug = true;
+			log( "debug mode=true");
+		}
 
 		// read config settings from google sheet 
 		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);

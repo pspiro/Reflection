@@ -12,13 +12,10 @@ public class MktDataConfig {
 	private int twsMdPort;  // TWS is listening on this port
 	private int twsMdClientId;
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
-	private String postgresUrl;
-	private String postgresUser;
-	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
 	private String redisHost;
 	private int redisPort;
-	private int batchTime; // in ms
+	private int redisBatchTime; // in ms
 
 	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
@@ -41,12 +38,9 @@ public class MktDataConfig {
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getInt( "twsMdPort");
 		this.twsMdClientId = tab.getInt( "twsMdClientId");
-//		this.postgresUrl = tab.get( "postgresUrl");
-//		this.postgresUser = tab.get( "postgresUser");
-//		this.postgresPassword = tab.get( "postgresPassword");
 
-		this.batchTime = tab.getInt( "redisBatchTime");
-		require( batchTime >= 0 && batchTime <= 5000, "redisBatchTime");
+		this.redisBatchTime = tab.getInt( "redisBatchTime");
+		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");
 		
 		this.reconnectInterval = tab.getInt( "reconnectInterval");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
@@ -60,14 +54,9 @@ public class MktDataConfig {
 		}
 	}
 	
-	private void require(GTable t, String param, double lower, double upper) throws Exception {
-		double value = t.getDouble( param);
-		require( value >= lower && value <= upper, param);
-	}
-
 	/** Batch time in ms. */
 	public int batchTime() {
-		return batchTime;
+		return redisBatchTime;
 	}
 
 }

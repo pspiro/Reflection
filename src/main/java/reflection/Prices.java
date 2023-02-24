@@ -24,6 +24,11 @@ public class Prices {
 	private double m_close;
 	private String m_time;
 
+	public double bid() { return m_bid; }
+	public double ask() { return m_ask; }
+	public double last() { return m_last; }
+	public double close() { return m_close; }
+
 	public Prices(Map<String, String> map) {
 		m_bid = getDouble(map, "bid");
 		m_ask = getDouble(map, "ask");
@@ -41,11 +46,6 @@ public class Prices {
 		String val = map.get(key);
 		return val != null ? Double.valueOf( val) : 0;
 	}
-	
-	public double bid() { return m_bid; }
-	public double ask() { return m_ask; }
-	public double last() { return m_last; }
-	public double close() { return m_close; }
 	
 	public String getFormattedTime() {
 		return S.isNull( m_time)
@@ -120,21 +120,6 @@ public class Prices {
 	/** Return midpoint formatted w/ two decimal places. */
 	public String midpointStr() {
 		return S.fmt2d( midpoint() );
-	}
-
-
-	
-	/** This is called only when simulating prices and trading, never in production.
-	 *  Adjust the prices up or down by from .0001 to 0015 
-	 *  This should cause some orders to be rejected. */
-	static Random rnd = new Random();
-	static Decimal defSize = Decimal.get( 100.0);
-	public void adjustPrices() {
-		double adj = (rnd.nextInt(15) + 1) / 10000.0;
-		double adj2 = rnd.nextBoolean() ? 1 + adj : 1 - adj;
-		
-		m_bid *= adj2;
-		m_ask *= adj2;
 	}
 
 	public void dump(int conid) {

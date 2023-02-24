@@ -396,7 +396,7 @@ public class MyTransaction {
 		}
 		
 		/** Update the stock from the prices in m_res;
-		 *  Called when the query returs. */
+		 *  Called when the query returns. */
 		void updateStock() {
 			m_stock.setPrices( new Prices(m_res.get() ) );
 		}
