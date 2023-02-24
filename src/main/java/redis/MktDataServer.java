@@ -45,7 +45,8 @@ public class MktDataServer {
 	private Jedis m_jedis;
 	private Pipeline pipeline;  // access to this is synchronized
 	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
-
+	private boolean m_debug;
+	
 	static {
 		TimeZone zone = TimeZone.getTimeZone("America/New_York");
 		hhmm.setTimeZone( zone);			
@@ -58,7 +59,7 @@ public class MktDataServer {
 			// ensure that application is not already running
 			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
 			
-			new MktDataServer().run( args[0] );
+			new MktDataServer().run( args);
 		}
 		catch (Exception e) {
 			m_log.log( e);
@@ -66,7 +67,13 @@ public class MktDataServer {
 		}
 	}
 
-	private void run(String tabName) throws Exception {
+	private void run(String[] args) throws Exception {
+		String tabName = args[0];
+		
+		if (args.length > 1 && (args[1].equals("/d") || args[1].equals("-d") ) ) {
+			m_debug = true;
+		}
+		
 		// create log file folder and open log file
 		log( Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -101,7 +108,7 @@ public class MktDataServer {
 		// connect to TWS
 		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
 		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown()));
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
 	}
 
 	/** Check to see if we are in extended trading hours or not so we know which 
@@ -119,10 +126,6 @@ public class MktDataServer {
 		if (log || inside != m_insideHours) {
 			log( "Transitioned trading hours, inside=%s", m_insideHours);
 		}
-	}
-
-	private void shutdown() {
-		log("Received shutdown msg from linux kill command");
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -174,6 +177,9 @@ public class MktDataServer {
 
 	/** Send all the queued up messages to redis and delete the pipeline */
 	synchronized void syncNow() {
+		if (m_debug) {
+			log( "Syncing now");
+		}
 		wrap( () -> pipeline.sync() );
 		pipeline = null;
 	}
@@ -209,7 +215,7 @@ public class MktDataServer {
 
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-				tickMktData( conid, tickType, price);
+				tickMktData( conid, tickType, price, "stock");
 			}
 		});
 	}
@@ -224,7 +230,7 @@ public class MktDataServer {
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				if (m_insideHours) {
-					tickMktData(conid, tickType, price);
+					tickMktData(conid, tickType, price, "ETF");
 				}
 			}
 		});
@@ -234,15 +240,19 @@ public class MktDataServer {
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				if (!m_insideHours) {
-					//log( "Ticking IBEOS %s %s %s", conid, tickType, price);
-					tickMktData(conid, tickType, price);
+					tickMktData(conid, tickType, price, "IBEOS");
 				}
 			}
 		});
 	}
 	
-	void tickMktData(String conid, TickType tickType, double price) {
+	void tickMktData(String conid, TickType tickType, double price, String contractType) {
 		wrap( () -> {
+			if (m_debug) {
+				log( "Ticking %s %s %s %s", contractType, conid, tickType, price);
+			}
+			
+			
 			String type = getTickType( tickType);
 			
 			// add a timeout for the prices to expire. pas

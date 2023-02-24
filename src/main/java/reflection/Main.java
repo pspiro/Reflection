@@ -139,6 +139,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		// connect to TWS
 		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
