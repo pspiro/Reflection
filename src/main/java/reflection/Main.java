@@ -132,6 +132,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) ); 
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
+		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
+		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
 		server.createContext("/", this); 
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -183,7 +185,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	Stock getStock( int conid) throws RefException {
 		Stock stock = m_stockMap.get( conid);
-		require(stock != null, RefCode.NO_SUCH_STOCK, "Error - unknown conid %s", conid);
+		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
 	}
 
@@ -538,24 +540,26 @@ public class Main implements HttpHandler, ITradeReportHandler {
 //	}
 	
 	private void handleGetStockWithPrice(HttpExchange exch) {
-		try {
-			String uri = exch.getRequestURI().toString().toLowerCase();
-			//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
-			S.out( "Received %s", uri);
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		//require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+		S.out( "Received %s", uri);
+
+		String[] ar = uri.split( "/");
+		S.out( "  check");
+
+		//require( ar.length
+		int conid = Integer.valueOf( ar[ar.length-1]);
+		S.out( "    check");
+		Stock stock = m_stockMap.get( conid);
+		S.out( "      check");
+		new MyTransaction( this, exch).respond( new Json( stock) );
+	}
 	
-			String[] ar = uri.split( "/");
-			S.out( "  check");
-	
-			//require( ar.length
-			int conid = Integer.valueOf( ar[ar.length-1]);
-			S.out( "    check");
-			Stock stock = m_stockMap.get( conid);
-			S.out( "      check");
-			new MyTransaction( this, exch).respond( new Json( stock) );
-		}
-		finally {
-			S.out( "        finally");
-		}
+	private void handleOrder(HttpExchange exch, boolean whatIf) {
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		S.out( "Received %s", uri);
+
+		new MyTransaction( this, exch).backendOrder(whatIf);
 	}
 	
 	/** this seems useless since you can still be left with .000001 */

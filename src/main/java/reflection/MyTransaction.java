@@ -87,12 +87,15 @@ public class MyTransaction {
 	}
 
 	void handle() {
-		wrap( () -> handle2() );
+		wrap( () -> {
+			parseMsg();
+			handleMsg();
+		});
 	}
 	
 	// you could encapsulate all these methods in MyExchange
 
-	void handle2() throws Exception {
+	void parseMsg() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
@@ -117,8 +120,7 @@ public class MyTransaction {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            
-				JSONParser parser = new JSONParser();
-	            JSONObject jsonObject = (JSONObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            JSONObject jsonObject = (JSONObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	            
 	            for (Object key : jsonObject.keySet() ) {
 	            	Object value = jsonObject.get(key);
@@ -142,6 +144,9 @@ public class MyTransaction {
 				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.getMessage() ); // no point returning the message text because  
 			}
 		}
+	}
+	
+	void handleMsg() throws Exception {
 
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
@@ -450,8 +455,12 @@ public class MyTransaction {
 
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
+		m_main.getStock(conid);  // throws exception if conid is invalid 
 
-		String side = m_map.getRequiredParam( "side");
+		String side = m_map.getParam( "side");
+		if (S.isNull( side) ) {
+			side = m_map.getRequiredParam("action");
+		}
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
 		double quantity = m_map.getRequiredDouble( "quantity");
@@ -468,7 +477,7 @@ public class MyTransaction {
 		String cryptoId = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
-			cryptoId = m_map.getRequiredParam("cryptoid");
+			cryptoId = m_map.getParam("cryptoid");  // remove this, no longer used
 		}
 		
 		// calculate order price
@@ -858,7 +867,39 @@ public class MyTransaction {
 		boolean nonZero() {
 			return value != 0;
 		}
-	};
+	}
+
+	/** Msg received directly from Frontend via nginx */
+	public void backendCheckOrder() {
+		
+	}
+
+	/** Msg received directly from Frontend via nginx */
+	public void backendOrder(boolean whatIf) {
+		wrap( () -> {
+			parseMsg();
+			
+	   		// some should be written to the log file 
+	        // String = m_map.get("symbol": "META",
+			// String = m_map.getRequiredParam("currency");
+			// String smartcontractid = m_map.getRequiredParam("smartcontractid");
+			// double spread = m_map.getRequiredDouble("spread"); //??????????
+			// double commission = m_map.getRequiredDouble("commission");
+			
+			int conid = m_map.getRequiredInt("conid");
+			double quantity = m_map.getRequiredDouble("quantity");
+			double price = m_map.getRequiredDouble("price");
+			
+			String side = m_map.getRequiredParam("action");
+			require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
+			m_map.put( "side", side);
+	
+			String wallet = m_map.getRequiredParam("wallet_public_key");
+			m_map.put( "wallet", wallet); // you can remove this when orders are no longer being passed through the back-end 
+			
+			order(whatIf, false);
+		});
+    }
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned

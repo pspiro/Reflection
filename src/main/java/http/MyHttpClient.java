@@ -116,10 +116,15 @@ public class MyHttpClient {
 	}
 	
 	public void post( String data) throws Exception {
+		post( "/", data);
+	}
+
+	/** e.g. post2( "/api", */
+	public void post( String url, String data) throws Exception {
 		String contLen = String.format( "Content-length: %s\r\n", data.length() );
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( "POST / HTTP/1.1\r\n");
+		sb.append( "POST " + url + " HTTP/1.1\r\n");
 		sb.append( contLen);
 		sb.append( "\r\n");
 		sb.append( data);
