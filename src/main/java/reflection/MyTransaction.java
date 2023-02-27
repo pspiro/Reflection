@@ -858,7 +858,16 @@ public class MyTransaction {
 		boolean nonZero() {
 			return value != 0;
 		}
-	};
+	}
+
+	/** Handle a Backend-style event. Conid is last parameter */
+	public void handleGetStockWithPrice(String uri) {
+		wrap( () -> {
+			String[] ar = uri.split( "/");
+			int conid = Integer.valueOf( ar[ar.length-1]);
+			respond( new Json( m_main.getStock(conid) ) );
+		});
+	}
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
