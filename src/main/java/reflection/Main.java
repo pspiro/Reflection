@@ -43,31 +43,31 @@ import util.DateLogFile;
 import util.LogType;
 
 public class Main implements HttpHandler, ITradeReportHandler {
-	enum Status { 
-		Connected, Disconnected 
+	enum Status {
+		Connected, Disconnected
 	};
 
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
 	private Jedis m_jedis;
-	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas 
+	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr(); // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	private String m_tabName;
-	
+
 	static boolean simulated() { return m_simulated; }
 
 	JSONArray stocks() { return m_stocks; }
-	
+
 	public static void main(String[] args) {
 		try {
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
 			}
-			
+
 			new Main().run( args[0] );
 		}
 		catch( BindException e) {
@@ -81,16 +81,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	private void run(String tabName) throws Exception {
 		Fireblocks.setTestVals();  // see also call to Fireblocks.setVals() in Config
-		
+
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
-		// read config settings from google sheet 
+		// read config settings from google sheet
 		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
 		m_config.readFromSpreadsheet(tabName);
 		m_tabName = tabName;
 		S.out( "  done");
-		
+
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
 		if (m_config.approveAll() ) {
@@ -103,7 +103,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
 		S.out( "  done");
-		
+
 		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
 		S.out( "  done");
@@ -120,7 +120,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 		m_jedis.get( "test");
 		S.out( "  done");
-		
+
 		S.out( "Starting stock price query thread every n ms");
 		Util.executeEvery( 3000, () -> queryAllPrices() );  // improve this, set up redis stream
 
@@ -128,22 +128,24 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
-		server.createContext("/mint", exch -> handleMint(exch) ); 
-		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) ); 
+		server.createContext("/mint", exch -> handleMint(exch) );
+		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
-		server.createContext("/", this); 
+		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
+		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
+		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
 		S.out( "  done");
 
 		// connect to TWS
 		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		
+
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
 
-	/** Refresh list of stocks and re-request market data. */ 
+	/** Refresh list of stocks and re-request market data. */
 	void refreshStockList() throws Exception {
 		m_stocks.clear();
 		readStockListFromSheet();
@@ -156,7 +158,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			Stock stock = new Stock();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
-				
+
 				stock.put( "symbol", row.getValue("Symbol") );
 				stock.put( "conid", String.valueOf( conid) );
 				stock.put( "smartcontractid", row.getValue("TokenAddress") );
@@ -164,11 +166,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				stock.put( "type", row.getValue("Type") );
 				stock.put( "exchange", row.getValue("Exchange") );
 				m_stocks.add( stock);
-				m_stockMap.put( conid, stock);  
+				m_stockMap.put( conid, stock);
 			}
 		}
 	}
-	
+
 	String getExchange( int conid) throws RefException {
 		return getStock(conid).getString("exchange");
 	}
@@ -176,14 +178,14 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	String getSmartContractId( int conid) throws RefException {
 		return getStock(conid).getString("smartcontractid");
 	}
-	
+
 	String getType( int conid) throws RefException {
 		return getStock(conid).getString("type");
 	}
-	
+
 	Stock getStock( int conid) throws RefException {
 		Stock stock = m_stockMap.get( conid);
-		require(stock != null, RefCode.NO_SUCH_STOCK, "Error - unknown conid %s", conid);
+		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
 	}
 
@@ -203,20 +205,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			m_logType = logType;
 			m_controller.handleExecutions( Main.this);
 		}
-		
-		public ApiController controller() { 
+
+		public ApiController controller() {
 			return m_controller;
 		}
 
 		void connect(String host, int port) {
 			int clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
 			S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
-			
+
 			m_host = host;
 			m_port = port;
 			m_clientId = clientId;
 			startTimer();
-			
+
 			//S.out( "  done");
 		}
 
@@ -252,15 +254,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		public boolean isConnected() {
 			return m_controller.isConnected();
 		}
-		
+
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
 			log( m_logType, "Connected to TWS");
 			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
-			
+
 			stopTimer();
 		}
-		
+
 		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
 		@Override public synchronized void onRecNextValidId(int id) {
 			// we really don't care if we get this because we are using random
@@ -286,17 +288,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 			switch (errorCode) {
-				case 1100: 
-					m_ibConnection = false; 
+				case 1100:
+					m_ibConnection = false;
 					break;
-				case 1102: 
-					m_ibConnection = true; 
+				case 1102:
+					m_ibConnection = true;
 					break;
 				case 10197:
 					S.out( "You can't get market data in your paper account while logged into your production account");
 					break;
 			}
-		
+
 			S.out( "RECEIVED %s %s %s", id, errorCode, errorMsg);
 		}
 
@@ -308,19 +310,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		public void disconnect() {
 			m_controller.disconnect();
 		}
-		
+
 		public void dump() {
 			m_controller.dump();
 		}
-		
+
 	}
-	
+
 	class OrderConnectionMgr extends ConnectionMgr {
 		OrderConnectionMgr() {
 			super( LogType.ORDER_CONNECTION);
 		}
 	}
-	
+
 	/** Handle HTTP msg synchronously */
 	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
 		new MyTransaction( this, exch).handle();
@@ -335,9 +337,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			throw new RefException( code, errMsg, params);
 		}
 	}
-	
+
 	/** Write to the log file. Don't throw any exception. */
-	
+
 	static void log( LogType type, String text, Object... params) {
 		m_log.log( type, text, params);
 	}
@@ -357,14 +359,14 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Object[] dbValues = {
 				exec.time(),
 				exec.orderId(),
-				exec.side(), 
+				exec.side(),
 				exec.shares().toDouble(),
 				contract.symbol(),
-				exec.price(), 
-				exec.permId(), 
-				exec.cumQty(), 
+				exec.price(),
+				exec.permId(),
+				exec.cumQty(),
 				contract.conid(),
-				exec.exchange(), 
+				exec.exchange(),
 				exec.avgPrice(),
 				exec.orderRef(),
 				tradeKey
@@ -372,15 +374,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		Object[] msgValues = {
 				exec.orderId(),
-				exec.side(), 
+				exec.side(),
 				exec.shares().toDouble(),
 				contract.symbol(),
 				contract.conid(),
-				exec.price(), 
+				exec.price(),
 				exec.exchange(),
-				
-				exec.permId(), 
-				exec.cumQty(), 
+
+				exec.permId(),
+				exec.cumQty(),
 				exec.avgPrice(),
 				exec.orderRef(),
 				tradeKey
@@ -402,13 +404,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
 		try {
 			log( LogType.COMMISSION, "%s %s %s %s", rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
-			
-			Object[] vals = { 
-					tradeKey, 
-					rpt.commission(), 
+
+			Object[] vals = {
+					tradeKey,
+					rpt.commission(),
 					rpt.currency()
 			};
-			
+
 			m_database.insert( "commissions", vals);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -432,33 +434,33 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		MyJsonObject.display( m_stocks, 0, false);
 		//S.out( m_stocks);
 	}
-	
+
 	/** Performs a Redis query wrapped in a pipeline. */
 	void jquery(JRun run) { // move into main or MyJedis
 		Pipeline p = m_jedis.pipelined();
 		run.run(p);
 		p.sync();
 	}
-	
+
 	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
 	Prices getPrices(int conid) {
 		Map<String, String> ps = m_jedis.hgetAll( String.valueOf(conid) );
 		return new Prices( ps);
 	}
-	
+
 	public void handleMint(HttpExchange exchange) throws IOException {
 		String response;
-		
+
 		try {
 			String uri = exchange.getRequestURI().toString().toLowerCase();
 			Util.require( uri.length() < 4000, "URI is too long");
-		
+
 			String[] parts = uri.split("/");
 			Util.require( parts.length == 3, "Format of URL should be https://reflection.trade/mint/0x...  where the last piece of the URL is your wallet address");
-			
+
 			mint( parts[2]);
 			response = m_config.mintHtml();
-		} 
+		}
 		catch (Exception e) {
 			e.printStackTrace();
 			response = "An error occurred - " + e.getMessage();
@@ -475,11 +477,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			log( LogType.ERROR, "Exception while responding with html");
 		}
 	}
-	
+
 	/** Transfer some BUSD and ETH to the user's wallet */
 	static void mint( String dest) throws Exception {
 		Util.require(dest.length() == 42, "The wallet address is invalid");
-		
+
 		S.out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
 		String id1 = Transfer.transfer( Fireblocks.testBusd, 1, dest, m_config.mintBusd(), "Transfer BUSD");
 		S.out( "  FB id is %s", id1);
@@ -487,24 +489,24 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
 		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
 		S.out( "  FB id is %s", id2);
-		
+
 		log( LogType.MINT, "Minted to %s", dest);
 	}
 
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		S.out( "querying prices");
-		
+
 		try {
-			
+
 			// send a single query to Redis for the prices
 			// the responses are fed into the PriceQuery objects
-			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>(); 
+			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>();
 			jquery( pipeline -> {
 				for (Object stock : m_stocks) {
 					list.add( new PriceQuery(pipeline, (Stock)stock) );
 				}
 			});
-			
+
 			// update the stock object in place       // synchronize this? pas
 			for (PriceQuery priceQuery : list) {
 				priceQuery.updateStock();
@@ -517,10 +519,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	// create a mktdat trans obj
-	
+
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
-		S.out( "Received %s", uri); 
+		S.out( "Received %s", uri);
 		new MyTransaction( this, exch)
 			.respond( new Json( m_stocks) );
 	}
@@ -530,14 +532,21 @@ public class Main implements HttpHandler, ITradeReportHandler {
 //	"statusCode": 400,
 //	"message": "Bad Request"
 //	}
-	
+
 	private void handleGetStockWithPrice(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
 		S.out( "Received %s", uri);
 		new MyTransaction( this, exch)
 			.handleGetStockWithPrice( uri);
 	}
-	
+
+	private void handleOrder(HttpExchange exch, boolean whatIf) {
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		S.out( "Received %s", uri);
+
+		new MyTransaction( this, exch).backendOrder(whatIf);
+	}
+
 	/** this seems useless since you can still be left with .000001 */
 	static double round(double val) {
 		return Math.round( val * 100) / 100.;
@@ -551,28 +560,28 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	 *  queries for the prices, which is often. */
 	static class Stock extends JSONObject {
 		Prices m_prices = Prices.NULL;
-		
+
 		void setPrices( Prices prices) {
 			m_prices = prices;
-			
+
 			put( "bid", round( prices.anyBid() ) );  // for front-end display
 			put( "ask", round( prices.anyAsk() ) );
 		}
-		
+
 		Prices prices() { return m_prices; }
-		
+
 		public String getString(String key) {
 			return (String)super.get(key);
 		}
 	}
-	
+
 }
 
 
 
-// Issues 
+// Issues
 // high: put in a check if an order fills after a timeout; that's a WARNING and ALERT for someone to do something, or for the program to close out the position
-// high: add a check for max value; add a test for it 
+// high: add a check for max value; add a test for it
 // you must submit the order at the right price to ensure you get filled at least .4% profit, or whatever
 
 // Bugs

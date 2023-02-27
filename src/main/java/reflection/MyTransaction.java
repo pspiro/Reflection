@@ -62,12 +62,12 @@ public class MyTransaction {
 		refreshStocks,
 		terminate,
 		;
-		
+
 		public static String allValues() {
 			return Arrays.asList( values() ).toString();
 		}
 	}
-	
+
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
@@ -75,7 +75,7 @@ public class MyTransaction {
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf = "ETF";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
-	
+
 	private Main m_main;
 	private HttpExchange m_exchange;
 	private boolean m_responded;  // only respond once per transaction
@@ -83,21 +83,24 @@ public class MyTransaction {
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
-		m_exchange = exchange; 
+		m_exchange = exchange;
 	}
 
 	void handle() {
-		wrap( () -> handle2() );
+		wrap( () -> {
+			parseMsg();
+			handleMsg();
+		});
 	}
-	
+
 	// you could encapsulate all these methods in MyExchange
 
-	void handle2() throws Exception {
+	void parseMsg() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
-			S.out( "Received GET request %s", uri); 
+			S.out( "Received GET request %s", uri);
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
 			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present. Valid requests are " + MsgType.allValues() );
@@ -111,19 +114,18 @@ public class MyTransaction {
 				m_map.put( pair[0], pair[1]);
 			}
 		}
-		
+
 		// POST request
 		else {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-	            
-				JSONParser parser = new JSONParser();
-	            JSONObject jsonObject = (JSONObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
-	            
+
+	            JSONObject jsonObject = (JSONObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+
 	            for (Object key : jsonObject.keySet() ) {
 	            	Object value = jsonObject.get(key);
 	            	require( key instanceof String, RefCode.INVALID_REQUEST, "Invalid JSON, key is not a string");
-	            	
+
 	            	if (value != null) {
 	            		m_map.put( (String)key, value.toString() );
 	            	}
@@ -132,16 +134,19 @@ public class MyTransaction {
 	            S.out( "Received POST request " + m_map.toString() );
 			}
 			catch( RefException e) {  // catch the above require() call
-				throw e; 
+				throw e;
 			}
 			catch( ParseException e) {   // this exception does not set the exception message text
-				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.toString() );  
+				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.toString() );
 			}
 			catch( Exception e) {
 				e.printStackTrace(); // should never happen
-				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.getMessage() ); // no point returning the message text because  
+				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.getMessage() ); // no point returning the message text because
 			}
 		}
+	}
+
+	void handleMsg() throws Exception {
 
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
@@ -209,14 +214,14 @@ public class MyTransaction {
 				break;
 		}
 	}
-	
+
 	/** Top-level message handler. This version takes wallet param; you can also call
-	 *  reflection.trading/mint/0xxxx.xxx */ 
+	 *  reflection.trading/mint/0xxxx.xxx */
 	void mint() throws Exception {
 		Main.mint( m_map.getRequiredParam( "wallet") );
 		respond( code, "OK");
 	}
-	
+
 	/** Simulate disconnect to test reconnect */
 	private void disconnect() {
 		S.out( "simulating disconnecting");
@@ -229,28 +234,28 @@ public class MyTransaction {
 		System.exit( 0);
 	}
 
-	/** Top-level message handler */ 
+	/** Top-level message handler */
 	private void pushFaq() throws Exception {
 		S.out( "Pushing FAQ");
 		Main.m_config.pushFaq( Main.m_database);
 		respond( code, RefCode.OK);
 	}
 
-	/** Top-level message handler */ 
+	/** Top-level message handler */
 	private void pullFaq() throws Exception {
 		S.out( "Pulling FAQ");
 		Main.m_config.pullFaq( Main.m_database);
 		respond( code, RefCode.OK);
 	}
 
-	/** Top-level message handler */ 
+	/** Top-level message handler */
 	private void pushBackendConfig() throws Exception {
 		S.out( "Pushing backend config from google sheet to database");
 		Main.m_config.pushBackendConfig( Main.m_database);
 		respond( code, RefCode.OK);
 	}
 
-	/** Top-level message handler */ 
+	/** Top-level message handler */
 	private void pullBackendConfig() throws Exception {
 		S.out( "Pulling backend config from database to google sheet");
 		Main.m_config.pullBackendConfig( Main.m_database);
@@ -260,30 +265,30 @@ public class MyTransaction {
 	/** Top-level message handler */
 	private void getConnStatus() {
 		S.out( "Sending connection status");
-		respond( "orderConnectedToTWS", m_main.orderController().isConnected(), 
+		respond( "orderConnectedToTWS", m_main.orderController().isConnected(),
 				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection() );
 	}
 
-	/** Top-level message handler */ 
+	/** Top-level message handler */
 	void getConfig() throws Exception {
 		S.out( "Sending config");
 		respond( Main.m_config.toJson() );
 	}
-	
-	/** Top-level message handler */ 
+
+	/** Top-level message handler */
 	void refreshConfig() throws Exception {
 		S.out( "Refreshing config from google sheet");
 		Main.m_config.readFromSpreadsheet(m_main.tabName() );
 		respond( Main.m_config.toJson() );
 	}
-	
-	/** Top-level message handler */ 
+
+	/** Top-level message handler */
 	void refreshStocks() throws Exception {
 		S.out( "Refreshing stock list from google sheet");
 		m_main.refreshStockList();
 		respond( code, RefCode.OK);
 	}
-	
+
 	/** Top-level message handler */
 	private void getAllStocks() throws RefException {
 		require( !m_main.stocks().isEmpty(), RefCode.UNKNOWN, "We don't have the list of stocks");
@@ -291,7 +296,7 @@ public class MyTransaction {
 		S.out( "Returning all stocks");
 		respond( new Json( m_main.stocks() ) );
 	}
-	
+
 	/** Top-level method; used for admin purposes only, to get the conid */
 	private void getDescription() throws RefException {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
@@ -306,9 +311,9 @@ public class MyTransaction {
 		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.UNKNOWN, "No such stock");
-				
+
 				JSONArray whole = new JSONArray();
-				
+
 				for (ContractDetails deets : list) {
 					JSONObject tradingHours = new JSONObject();
 					tradingHours.put( "tradingHours", deets.tradingHours() );
@@ -337,7 +342,7 @@ public class MyTransaction {
 	/** Top-level method. */
 	private void checkHours() throws RefException {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-		
+
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "Param 'conid' must be positive integer");
 
@@ -347,14 +352,14 @@ public class MyTransaction {
 		contract.exchange( m_main.getExchange( conid) );
 
 		m_main.orderController().reqContractDetails(contract, list -> processHours( conid, list) );
-		
+
 		setTimer( Main.m_config.timeout(), () -> timedOut( "checkHours timed out") );
 	}
-	
+
 	private void processHours(int conid, List<ContractDetails> list) {
 		wrap( () -> {
 			require( !list.isEmpty(), RefCode.NO_SUCH_STOCK, "No contract details found for conid %s", conid);
-			
+
 			ContractDetails deets = list.get(0);
 
 			if (inside( deets, deets.liquidHours() ) ) {
@@ -368,12 +373,12 @@ public class MyTransaction {
 			}
 		});
 	}
-	
+
 	/** Top-level method. */
 	// remove this. pas
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
-		
+
 		Prices prices = m_main.getPrices( conid);
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
@@ -394,7 +399,7 @@ public class MyTransaction {
 		Prices getPrices() {
 			return new Prices(m_res.get() );
 		}
-		
+
 		/** Update the stock from the prices in m_res;
 		 *  Called when the query returns. */
 		void updateStock() {
@@ -409,20 +414,20 @@ public class MyTransaction {
 	interface JRun {
 		public void run(Pipeline p);
 	}
-	
-	
-	
+
+
+
 	/** Top-level method. */  // put a timer so we don't call this more than once every n ms. pas
 	private void getAllPrices() throws RefException {
 		S.out( "Returning all prices");
 
 		boolean admin = m_map.getBool("admin");
-		
+
 		// build the json response   // we could reuse this and just update the prices each time
 		JSONObject whole = new JSONObject();
 		for (Object obj : m_main.stocks() ) {
 			Stock stk = (Stock)obj;
-			
+
 			JSONObject single = new JSONObject();
 			// in admin mode, which is for debugging, return the actual prices
 			if (admin) {
@@ -439,7 +444,7 @@ public class MyTransaction {
 			}
 			whole.put( stk.get("conid"), single);
 		}
-		
+
 		respond( new Json( whole) );
 	}
 
@@ -450,13 +455,17 @@ public class MyTransaction {
 
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
+		m_main.getStock(conid);  // throws exception if conid is invalid
 
-		String side = m_map.getRequiredParam( "side");
+		String side = m_map.getParam( "side");
+		if (S.isNull( side) ) {
+			side = m_map.getRequiredParam("action");
+		}
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
 		double quantity = m_map.getRequiredDouble( "quantity");
 		require( quantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
-		
+
 		double price = m_map.getRequiredDouble( "price");
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
@@ -468,9 +477,9 @@ public class MyTransaction {
 		String cryptoId = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
-			cryptoId = m_map.getRequiredParam("cryptoid");
+			cryptoId = m_map.getParam("cryptoid");  // remove this, no longer used
 		}
-		
+
 		// calculate order price
 		double prePrice;
 		if (side == "buy") {
@@ -480,7 +489,7 @@ public class MyTransaction {
 			prePrice = price + price * Main.m_config.minSellSpread();
 		}
 		double orderPrice = Util.round( prePrice);  // round to two decimals
-		
+
 		Contract contract = new Contract();
 		contract.conid( conid);
 		contract.exchange( m_main.getExchange( conid) );
@@ -496,32 +505,32 @@ public class MyTransaction {
 		order.cryptoId( cryptoId);
 		order.walletAddr( wallet);
 		order.stockTokenAddr( m_main.getSmartContractId(conid) );
-		
+
 		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
-		
+
 		insideAnyHours( contract, inside -> {
 			require( inside, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
-			
-			// check that we have prices and that they are within bounds; 
-			// do this after checking trading hours because that would 
+
+			// check that we have prices and that they are within bounds;
+			// do this after checking trading hours because that would
 			// explain why there are no prices which should never happen otherwise
 			Prices prices = m_main.getPrices( contract.conid() );
 			prices.checkOrderPrice( order, orderPrice, Main.m_config);
-			
+
 			// if the user submitted an order for < .5 shares, we round to zero so no order is placed
 			if (whatIf) {
-				// for what-if, submit it with at least qty of 1 to make sure it is a valid order 
+				// for what-if, submit it with at least qty of 1 to make sure it is a valid order
 				if (order.roundedQty() == 0) {
 					order.totalQuantity(1);
 				}
-				
+
 				log( LogType.CHECK, order.getCheckLog(contract) );
 				submitWhatIf( contract, order);
 			}
 			else {
 				log( LogType.ORDER, order.getOrderLog(contract) );
 
-				// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas 
+				// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
 				if (order.roundedQty() == 0) {
 					respondToOrder(order, 0, false, OrderStatus.Filled, fireblocks);
 				}
@@ -531,11 +540,11 @@ public class MyTransaction {
 			}
 		});
 	}
-	
+
 	interface Inside {
 		void run(boolean inside) throws Exception;
 	}
-	
+
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS */
 	void insideAnyHours( Contract contract, Inside runnable) {
@@ -555,15 +564,15 @@ public class MyTransaction {
 		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
-				
+
 				ContractDetails deets = list.get(0);
-				deets.simTime( m_map.getParam("simtime") );  // this is for use by the test scripts in TestOutsideHours only 
+				deets.simTime( m_map.getParam("simtime") );  // this is for use by the test scripts in TestOutsideHours only
 
 				runnable.run( inside( deets) );
 			});
 		});
 	}
-	
+
 	/** Return true if we are current inside trading hours OR liquid hours.
 	 *  When running test scripts, simTime param will be set and used. */
 	static boolean inside( ContractDetails deets) throws Exception {
@@ -571,7 +580,7 @@ public class MyTransaction {
 			   inside( deets, deets.liquidHours() );
 	}
 
-	/** Return true if we are inside the specified hours; uses deets.simTime if set. 
+	/** Return true if we are inside the specified hours; uses deets.simTime if set.
 	 * @throws Exception */
 	static boolean inside(ContractDetails deets, String hours) throws Exception {
 		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
@@ -579,7 +588,7 @@ public class MyTransaction {
 
 	private void submitWhatIf( Contract contract, final Order order) throws RefException {
 		// check trading hours first since it is a nicer error message
-		
+
 		// submit what-if order
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderState(OrderState orderState) {
@@ -596,7 +605,7 @@ public class MyTransaction {
 					S.out( "  rec what-if error for %s; %s - %s", order.orderId(), errorCode, errorMsg);
 
 					// NOTE that this code is duplicated in what-if handler
-					
+
 					// price does not conform to market rule, e.g. too many decimals
 					if (errorCode == 110) {
 						require( false, RefCode.INVALID_PRICE, errorMsg);
@@ -611,15 +620,15 @@ public class MyTransaction {
 
 	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws RefException {
 		ModifiableDecimal shares = new ModifiableDecimal();
-		
+
 		// very dangerous!
 		if (Main.m_config.approveAll() ) {
 			S.out( "Auto-filling order  id=%s", order.orderId() );
 			respond( code, RefCode.OK, "filled", order.totalQty() );
 
-			log( LogType.AUTO_FILL, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
-					order.orderId(), order.cryptoId(), order.action(), order.totalQty(), 
-					order.totalQty(), order.lmtPrice(), 
+			log( LogType.AUTO_FILL, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+					order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
+					order.totalQty(), order.lmtPrice(),
 					Main.m_config.commission(), 0, "");
 			return;
 		}
@@ -627,33 +636,33 @@ public class MyTransaction {
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
-				
+
 				wrap( () -> {
 					S.out( "  order status  id=%s  status=%s", order.orderId(), status);
-	
+
 					// save the number of shares filled
 					shares.value = filled.toDouble();
 					//shares.value = filled.toDouble() - 1;  // to test partial fills
-					
+
 					// better is: if canceled w/ no shares filled, let it go to handle() below
-					
+
 					if (status.isComplete() ) {
 						respondToOrder( order, shares.value(), false, status, fireblocks);
 					}
 				});
 			}
-			
+
 			@Override public void handle(int errorCode, String errorMsg) {
 				wrap( () -> {
-					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", order.orderId(), errorCode, errorMsg);  
-					
-					// if some shares were filled, let orderStatus or timeout handle it 
+					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", order.orderId(), errorCode, errorMsg);
+
+					// if some shares were filled, let orderStatus or timeout handle it
 					if (shares.nonZero() ) {
 						return;
 					}
 
 					// no shares filled
-					
+
 					// price does not conform to market rule, e.g. too many decimals
 					if (errorCode == 110) {
 						throw new RefException( RefCode.INVALID_PRICE, errorMsg);
@@ -666,45 +675,45 @@ public class MyTransaction {
 				});
 			}
 		});
-		
+
 		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
 				order.walletAddr(), order.cryptoId(), order.orderId() );
-		
+
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
 		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown, fireblocks) );
 	}
-	
+
 	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status, boolean fireblocks) throws Exception {
 		// this could happen if our timeout is lower than the timeout of the IOC order,
 		// which should never be the case
 		if (!m_responded) {
 			log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), filledShares, status);
 
-			// if order is still live, cancel the order 
+			// if order is still live, cancel the order
 			if (!status.isComplete() && !status.isCanceled() ) {
 				S.out( "Canceling order %s on timeout", order.orderId() );
 				m_main.orderController().cancelOrder( order.orderId(), "", null);
 			}
-	
+
 			respondToOrder( order, filledShares, true, status, fireblocks);
 		}
 	}
-	
+
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized.
 	 *  In the case where order qty < .5 and we didn't submit an order,
-	 *  orderStatus will be Filled. */ 
+	 *  orderStatus will be Filled. */
 	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status, boolean fireblocks) throws Exception {
 		if (m_responded) {
 			return;    // this happens when the timeout occurs after an order is filled, which is normal
 		}
-		
+
 		// no shares filled and order size >= .5?
 		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
 			String msg = timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.";
 			respond( code, RefCode.REJECTED, text, msg);
-			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s", 
+			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s",
 					order.orderId(), order.cryptoId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
 		}
@@ -726,30 +735,30 @@ public class MyTransaction {
 			logType = LogType.FILLED;
 			refCode = RefCode.OK;
 		}
-		
+
 		double tds = 0;     // the tds tax paid by Indian residents
 		String hash = "";   // the blockchain hashcode
 
 		if (fireblocks) {
 			try {
 				String id;
-				
+
 				if (order.action() == Action.BUY) {
 					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
-					id = Rusd.buyStock(Fireblocks.refWalletAcctId1, null, order.walletAddr(), order.stablecoinAddr(), stablecoinAmt, 
+					id = Rusd.buyStock(Fireblocks.refWalletAcctId1, null, order.walletAddr(), order.stablecoinAddr(), stablecoinAmt,
 							order.stockTokenAddr(), stockQty, "prod");
 				}
 				else {
 					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
 					tds = .01 * preAmt;
-					double stablecoinAmt = preAmt - tds;  
+					double stablecoinAmt = preAmt - tds;
 					id = Rusd.sellStock(order.walletAddr(), Fireblocks.rusdAddr, stablecoinAmt,
 							order.stockTokenAddr(), stockQty);
 				}
-				
+
 				// it would be better if we could send back the response in two blocks, one
 				// when the order fills and one when the blockchain transaction is completed
-				
+
 				// wait for the transaction to be signed
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
@@ -765,12 +774,12 @@ public class MyTransaction {
 
 		respond( code, refCode, "filled", stockQty);
 
-		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s", 
-				order.orderId(), order.cryptoId(), order.action(), order.totalQty(), 
-				S.fmt3(filledShares), order.lmtPrice(), 
+		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+				order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
+				S.fmt3(filledShares), order.lmtPrice(),
 				Main.m_config.commission(), tds, hash);
 	}
-	
+
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
 		// send an alert to the operator to manually unwind the order for now. pas
@@ -779,7 +788,7 @@ public class MyTransaction {
 	synchronized boolean respond( Object...data) {
 		return respond( Util.toJsonMsg( data) );
 	}
-	
+
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
 	synchronized boolean respond( Json response) {
@@ -808,7 +817,7 @@ public class MyTransaction {
 		}
 		catch( RefException e) {
 			boolean responded = respond( e.toJson() );
-			
+
 			// display log except for timeouts where we have already responded
 			if (responded || e.code() != RefCode.TIMED_OUT) {
 				log( LogType.ERROR, e.toString() );
@@ -820,10 +829,10 @@ public class MyTransaction {
 			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
 		}
 	}
-	
+
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {
-		void run() throws Exception; 
+		void run() throws Exception;
 	}
 
 	void setTimer( long ms, ExRunnable runnable) {
@@ -835,7 +844,7 @@ public class MyTransaction {
 			}
 		}, ms);
 	}
-	
+
 	static void timedOut( String text, Object... params) throws RefException {
 		throw new RefException( RefCode.TIMED_OUT, text, params);
 	}
@@ -843,10 +852,10 @@ public class MyTransaction {
 	static class ModifiableDecimal {
 		private double value = 0;
 
-		@Override public String toString() { 
+		@Override public String toString() {
 			return S.fmt3(value);
 		}
-		
+
 		public double value() {
 			return this.value;
 		}
@@ -854,7 +863,7 @@ public class MyTransaction {
 		boolean isZero() {
 			return value == 0;
 		}
-		
+
 		boolean nonZero() {
 			return value != 0;
 		}
@@ -868,6 +877,33 @@ public class MyTransaction {
 			respond( new Json( m_main.getStock(conid) ) );
 		});
 	}
+
+	/** Msg received directly from Frontend via nginx */
+	public void backendOrder(boolean whatIf) {
+		wrap( () -> {
+			parseMsg();
+
+	   		// some should be written to the log file
+	        // String = m_map.get("symbol": "META",
+			// String = m_map.getRequiredParam("currency");
+			// String smartcontractid = m_map.getRequiredParam("smartcontractid");
+			// double spread = m_map.getRequiredDouble("spread"); //??????????
+			// double commission = m_map.getRequiredDouble("commission");
+
+			int conid = m_map.getRequiredInt("conid");
+			double quantity = m_map.getRequiredDouble("quantity");
+			double price = m_map.getRequiredDouble("price");
+
+			String side = m_map.getRequiredParam("action");
+			require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
+			m_map.put( "side", side);
+
+			String wallet = m_map.getRequiredParam("wallet_public_key");
+			m_map.put( "wallet", wallet); // you can remove this when orders are no longer being passed through the back-end
+
+			order(whatIf, false);
+		});
+    }
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned
