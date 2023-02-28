@@ -881,6 +881,8 @@ public class MyTransaction {
 	/** Msg received directly from Frontend via nginx */
 	public void backendOrder(boolean whatIf) {
 		wrap( () -> {
+			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
+			
 			parseMsg();
 
 	   		// some should be written to the log file

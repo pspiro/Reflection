@@ -494,7 +494,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public void queryAllPrices() {  // might want to move this into a separate microservice
-		S.out( "querying prices");
+		//S.out( "querying prices");
 
 		try {
 
