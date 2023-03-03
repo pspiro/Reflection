@@ -287,4 +287,10 @@ public class Util {
 	public static String dblQ(String sql) {
 		return sql.replaceAll( "'", "''");  
 	}
+
+	public static class Ex extends Exception {
+		public Ex( String format, Object... params) {
+			super( String.format( format, params) );
+		}
+	}
 }

@@ -1,0 +1,55 @@
+package fireblocks;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import reflection.RefException;
+import tw.util.S;
+
+public class Erc20 {
+	static final String approveKeccak = "095ea7b3";
+
+	protected String m_address;
+	protected int m_decimals;
+	
+	Erc20( String address, int decimals) {
+		this.m_address = address;
+		this.m_decimals = decimals;
+	}
+	
+	public String address() {
+		return m_address;
+	}
+	
+	public int decimals() {
+		return m_decimals;
+	}
+	
+	String approve(int accountId, String spenderAddr, double amt) throws Exception {
+		String[] paramTypes = { "address", "uint256" };
+		
+		Object[] params = { 
+				spenderAddr, 
+				toBlockchain( amt), 
+			};
+		
+		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
+		return Fireblocks.call( accountId, m_address, 
+				Rusd.approveKeccak, paramTypes, params, "BUSD approve");
+		
+	}
+
+	/** Return amt rounded to four decimals * 10^power */
+	static final BigDecimal ten = new BigDecimal(10);
+
+	static BigInteger timesPower(double amt, int power) {
+		return new BigDecimal( S.fmt4( amt) )
+				.multiply( ten.pow( power) )
+				.toBigInteger();
+	}
+
+	public BigInteger toBlockchain(double amt) throws RefException {
+		return timesPower( amt, m_decimals); 
+	}
+
+}

@@ -524,7 +524,7 @@ class NcTransaction {
 		double value = 0;
 
 		/** Return value w/ 3 decimal places. */
-		@Override public String toString() {  // when is this called?  
+		@Override public String toString() {  
 			return S.fmt3(value); 
 		}
 		

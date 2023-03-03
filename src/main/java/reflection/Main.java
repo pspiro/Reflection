@@ -29,6 +29,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Fireblocks;
+import fireblocks.Rusd;
 import fireblocks.Transfer;
 import json.MyJsonObject;
 import redis.clients.jedis.Jedis;
@@ -57,6 +58,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 	private String m_tabName;
+	private Rusd m_rusd;  // you could move this into Config
+	
+	Rusd rusd() { return m_rusd; }
 
 	static boolean simulated() { return m_simulated; }
 
@@ -90,6 +94,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_config.readFromSpreadsheet(tabName);
 		m_tabName = tabName;
 		S.out( "  done");
+		
+		if (m_config.useFireblocks() ) {
+			m_rusd = m_config.newRusd();
+		}
 
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
@@ -99,7 +107,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				return;
 			}
 		}
-
+		
 		S.out( "Reading stock list from google sheet");
 		readStockListFromSheet();
 		S.out( "  done");

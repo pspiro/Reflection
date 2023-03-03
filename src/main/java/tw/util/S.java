@@ -43,6 +43,7 @@ public class S {
 	public static Format PRICE = new DecimalFormat( "$#,##0.00");
 	public static Format FMT2D = new DecimalFormat( "0.00");  // two dec.
 	public static Format FMT3 = new DecimalFormat( "0.0##");  // 1-3 dec
+	public static Format FMT4 = new DecimalFormat( "0.0###");  // 1-4 dec
 	public static Format FMT2DC = new DecimalFormat( "#,##0.00");  // two dec. plus comma
 	public static Format FMT0 = new DecimalFormat( "#,##0");
 	public static Format FMTPCT = new DecimalFormat( "0.0%");
@@ -406,6 +407,11 @@ public class S {
 	/** Format with 1-3 decimals, no comma */
 	public static String fmt3( double v) { 
 		return FMT3.format( v);   // faster than String.format("%.3f")
+	}
+	
+	/** Format with 1-4 decimals, no comma */
+	public static String fmt4( double v) { 
+		return FMT4.format( v);   // faster than String.format("%.3f")
 	}
 	
 	/** Format with two decimals, no comma. */

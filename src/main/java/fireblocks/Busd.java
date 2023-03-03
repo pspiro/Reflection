@@ -2,43 +2,25 @@ package fireblocks;
 
 import tw.util.S;
 
-public class Busd {
+/** This is just for testing. */  // move into test folder 
+public class Busd extends Erc20 {
+	static final String mintKeccak = "40c10f19";
 
-	private static final String mintKeccak = "40c10f19";
-
-	static String mywallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	
-	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdValsPolygon();
-		mint(mywallet, 2000);
-		//deploy();
-		//approveToSpendBusd(Fireblocks.userAcctId, Fireblocks.rusdAddr, 1000);
+	public Busd( String address, int decimals) {
+		super( address, 6);
 	}
 	
-	
-	private static void mint(String address, double amt) throws Exception {
-		String[] types = {"address", "uint256"};
-		Object[] vals = {
-				address,
-				Rusd.toStablecoin(Fireblocks.busdAddr, amt)
+	/** This can be called by anybody, the BUSD does not have an owner. */
+	public String mint(int accountId, String address, double amt) throws Exception {
+		S.out( "Account %s minting %s %s", accountId, amt, address);
+		
+		String[] paramTypes = { "address", "uint256" };
+		
+		Object[] params = { 
+				address, 
+				toBlockchain( amt) 
 		};
 		
-		Fireblocks.call( Fireblocks.refWalletAcctId1, Fireblocks.busdAddr, mintKeccak, types, vals, "BUSD.mint()");
+		return Fireblocks.call( accountId, m_address, mintKeccak, paramTypes, params, "BUSD mint");
 	}
-	
-	public static String approveToSpendBusd(int account, String spenderAddr, double amt) throws Exception {
-		return Rusd.approve( account, spenderAddr, Fireblocks.busdAddr, amt);
-	}
-
-	static void deploy() throws Exception {
-		String[] types = { "address" };
-		Object[] vals = { Fireblocks.refWalletAddr1 };
-		
-		String addr = Deploy.deploy("c:/work/smart-contracts.OLD/BUSD.bytecode", Fireblocks.ownerAcctId, types, vals, "deploy BUSD");
-		S.out( "Deployed to %s", addr);
-		
-		// this must be initiated and signed by the user wallet
-		//approve(Rusd.refWallet, 1000);
-	}
-	
 }

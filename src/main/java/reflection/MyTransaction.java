@@ -7,7 +7,6 @@ import static reflection.Main.round;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,9 +29,8 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
+import fireblocks.Accounts;
 import fireblocks.Fireblocks;
-import fireblocks.Rusd;
-import json.StringJson;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import reflection.Main.Stock;
@@ -489,6 +487,10 @@ public class MyTransaction {
 			prePrice = price + price * Main.m_config.minSellSpread();
 		}
 		double orderPrice = Util.round( prePrice);  // round to two decimals
+		
+		if (fireblocks) {
+			m_map.getRequiredParam("currency");
+		}
 
 		Contract contract = new Contract();
 		contract.conid( conid);
@@ -743,17 +745,47 @@ public class MyTransaction {
 			try {
 				String id;
 
+				// buy
 				if (order.action() == Action.BUY) {
 					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
-					id = Rusd.buyStock(Fireblocks.refWalletAcctId1, null, order.walletAddr(), order.stablecoinAddr(), stablecoinAmt,
-							order.stockTokenAddr(), stockQty, "prod");
+					
+					// buy with RUSD
+					if (m_map.getParam("currency").toLowerCase().equals( "rusd") ) {
+						id = m_main.rusd().buyStockWithRusd(
+								Accounts.nextAdminId(), 
+								order.walletAddr(), 
+								stablecoinAmt,
+								order.stockTokenAddr(), 
+								stockQty
+						);
+					}
+					
+					// buy with BUSD
+					else {
+						id = m_main.rusd().buyStockWithStablecoin(
+								Accounts.nextAdminId(), 
+								order.walletAddr(),
+								Main.m_config.busdAddr(),
+								Main.m_config.busdDecimals(),
+								stablecoinAmt,
+								order.stockTokenAddr(), 
+								stockQty
+						);
+					}
 				}
+				
+				// sell
 				else {
 					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
 					tds = .01 * preAmt;
 					double stablecoinAmt = preAmt - tds;
-					id = Rusd.sellStock(order.walletAddr(), Fireblocks.rusdAddr, stablecoinAmt,
-							order.stockTokenAddr(), stockQty);
+					id = m_main.rusd().sellStockForRusd(
+							Accounts.nextAdminId(),
+							order.walletAddr(),
+							stablecoinAmt,
+							order.stockTokenAddr(),
+							stockQty
+					);
 				}
 
 				// it would be better if we could send back the response in two blocks, one
@@ -776,7 +808,7 @@ public class MyTransaction {
 
 		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
-				S.fmt3(filledShares), order.lmtPrice(),
+				S.fmt4(filledShares), order.lmtPrice(),
 				Main.m_config.commission(), tds, hash);
 	}
 

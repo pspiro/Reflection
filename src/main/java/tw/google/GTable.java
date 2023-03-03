@@ -2,6 +2,7 @@ package tw.google;
 
 import java.util.HashMap;
 
+import reflection.Util.Ex;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -53,7 +54,7 @@ public class GTable extends HashMap<String,String> {
 	public String getRequiredString(Object key) throws Exception {
 		String val = get(key);
 		if (S.isNull(val) ) {
-			throw new Exception(String.format("Missing required key '%s' from google sheet", key) );
+			throw new Ex("Missing required key '%s' from google sheet", key);
 		}
 		return val;
 	}
@@ -63,18 +64,22 @@ public class GTable extends HashMap<String,String> {
 			return Double.valueOf( get( tag) );
 		}
 		catch( Exception e) {
-			throw new Exception( String.format( "Tag %s is not a number", tag) );
+			throw new Ex( "Tag %s is not a number", tag);
 		}
 	}
 	
-	public int getInt(String tag) throws Exception {
+	public int getRequiredInt(String tag) throws Exception {
+		// keep this outside the try block so it throws a better exception
+		String str = getRequiredString(tag);
+
 		try {
-			return Integer.valueOf( get( tag) );
+			return Integer.valueOf(str); 
 		}
 		catch( Exception e) {
-			throw new Exception( String.format( "Tag %s is not an integer", tag) );
+			throw new Ex( "Tag %s is not an integer", tag);
 		}
 	}
+	
 	
 	// update map and sheet
 	@Override public String put(String tag, String newVal) {

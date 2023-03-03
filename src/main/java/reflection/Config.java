@@ -4,7 +4,10 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
+import fireblocks.Accounts;
+import fireblocks.Busd;
 import fireblocks.Fireblocks;
+import fireblocks.Rusd;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -56,6 +59,20 @@ public class Config {
 	private String mintEth;
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
 	
+	// Fireblocks
+	private boolean useFireblocks;
+	private String rusdAddr;
+	private String busdAddr;
+	private int rusdDecimals;
+	private int busdDecimals;
+	private int stockTokenDecimals;
+	
+	public int rusdDecimals() { return rusdDecimals; }
+	public int busdDecimals() { return busdDecimals; }
+	public int stockTokenDecimals() { return stockTokenDecimals; }
+	
+	public boolean useFireblocks() { return useFireblocks; }
+	
 	public boolean approveAll() { return approveAll; }
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
@@ -79,9 +96,9 @@ public class Config {
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
+	public String rusdAddr() { return rusdAddr; }
+	public String busdAddr() { return busdAddr; }
 
-	public Config() { }
-	
 	public void readFromSpreadsheet(String tabName) throws Exception {
 		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 		
@@ -95,18 +112,18 @@ public class Config {
 
 		// TWS connection
 		this.twsOrderHost = tab.get( "twsOrderHost");
-		this.twsOrderPort = tab.getInt( "twsOrderPort");
-		this.reconnectInterval = tab.getInt( "reconnectInterval");
-		this.orderTimeout = tab.getInt( "orderTimeout");
-		this.timeout = tab.getInt( "timeout");
+		this.twsOrderPort = tab.getRequiredInt( "twsOrderPort");
+		this.reconnectInterval = tab.getRequiredInt( "reconnectInterval");
+		this.orderTimeout = tab.getRequiredInt( "orderTimeout");
+		this.timeout = tab.getRequiredInt( "timeout");
 
 		// market data
 		this.redisHost = tab.get( "redisHost");
-		this.redisPort = tab.getInt( "redisPort");
+		this.redisPort = tab.getRequiredInt( "redisPort");
 
 		// listen here
 		this.refApiHost = tab.getRequiredString( "refApiHost");
-		this.refApiPort = tab.getInt( "refApiPort");
+		this.refApiPort = tab.getRequiredInt( "refApiPort");
 		
 		// database
 		this.postgresUrl = tab.get( "postgresUrl");
@@ -124,6 +141,15 @@ public class Config {
 		this.mintEth = tab.getRequiredString("mintEth");
 		this.approveAll = tab.getBoolean("approveAll");
 		
+		// Fireblocks
+		this.useFireblocks = tab.getBoolean("useFireblocks");
+		if (useFireblocks) {
+			this.rusdAddr = tab.getRequiredString("rusdAddr");
+			this.busdAddr = tab.getRequiredString("busdAddr");
+			this.rusdDecimals = tab.getRequiredInt("rusdDecimals");
+			this.busdDecimals = tab.getRequiredInt("busdDecimals");
+			this.stockTokenDecimals = tab.getRequiredInt("stockTokenDecimals");
+		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
@@ -142,7 +168,7 @@ public class Config {
 	
 	private void require( boolean v, String parameter) throws Exception {
 		if (!v) {
-			throw new Exception( String.format( "Config parameter %s is invalid", parameter) );
+			throw new Exception( String.format( "Config parameter %s is missing or invalid", parameter) );
 		}
 	}
 
@@ -336,4 +362,12 @@ public class Config {
 		return mintEth;
 	}
 
+	/** This causes a dependency that we might not want to have. */
+	public Rusd newRusd() {
+		return new Rusd( rusdAddr, rusdDecimals, stockTokenDecimals);
+	}
+
+	public Busd newBusd() {
+		return new Busd( busdAddr, 6);
+	}
 }

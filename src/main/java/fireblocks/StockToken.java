@@ -10,7 +10,7 @@ import reflection.RefException;
 import reflection.Util;
 import tw.util.S;
 
-public class StockToken {
+public class StockToken extends Erc20 {
 	// method signature: buy(address,uint256,uint256,address)
 	// test system
 	//static String qqq = "0xd1b41cefda7d036018a9daff9d5f4cc811770efb";
@@ -28,6 +28,10 @@ public class StockToken {
 	static String getcallerKk = "a5905412";
 	static String iscallerKk = "ac55c8b0";
 	
+	StockToken( String address) {
+		super( address, stockTokenDecimals);
+	}
+	
 	// 0: default
 	// 1: test  (failed, insuf funds)
 	// 2: owner
@@ -36,55 +40,22 @@ public class StockToken {
 
 	public static void main(String[] args) throws Exception {
 		Fireblocks.setProdValsPolygon();
-		//deploy2("Stock2", "Stock2");
 	}
 	
-	static String deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
+	static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		String[] paramTypes = { "string", "string", "address" };
 		Object[] params = { 
 				name, 
 				symbol,
 				rusdAddr
-			};
-		return Deploy.deploy(filename, Fireblocks.ownerAcctId, paramTypes, params, "deploy stock token " + symbol);
-	}
-	
-	static void deploy2(String name, String symbol) throws Exception {
-		String[] paramTypes = { "string", "string", "address" };
-		Object[] params = { 
-				name, 
-				symbol, 
-				Fireblocks.rusdAddr 
-			};
-		String addr = Deploy.deploy("c:/work/smart-contracts/bytecode/StockToken.bytecode",
-				Fireblocks.ownerAcctId, paramTypes, params, "deploy stock");
-		S.out( "Deployed to %s", addr);
-	}
-	
-	// now test out all the stock and rusd methods,
-	// now that the contracts are deployed
-	
-	static void buy( String userAddr, int stockTokenAmt, String stockTokenAddr, int stablecoinAmt, String stablecoinAddr) throws Exception {
-		String[] paramTypes = { "address", "uint256", "uint256", "address" };
-        Object[] params = { userAddr, stockTokenAmt, stablecoinAmt, stablecoinAddr };  
-        String id = Fireblocks.call( Fireblocks.refWalletAcctId1, stockTokenAddr, 
-        		buyKeccak, paramTypes, params, "StockToken.buy");
-		Fireblocks.getTransaction(id).display(); 
+		};
+
+		String address = Deploy.deploy(filename, Fireblocks.ownerAcctId, paramTypes, params, "deploy stock token " + symbol);
+		return new StockToken( address);
 	}
 
-	
-	private static String pad(double amt) {
-		BigInteger big = new BigDecimal(amt).multiply(mult).toBigInteger();
-		S.out( "big: %s", big);
-		return pad( String.format( "%x", big) );
-	}
-	
-	private static String padAddr(String addr) throws RefException {
-		Main.require( addr != null && addr.length() == 42, RefCode.UNKNOWN, "Invalid address %s", addr);
-		return pad( addr.substring(2) );
-	}
-
-	private static String pad(String str) {
-		return Util.padLeft( str, 64, '0'); 
+	/** Amount gets rounded to three decimals */
+	public static BigInteger toStockToken(double stockTokenAmt) {
+		return Rusd.timesPower( stockTokenAmt, stockTokenDecimals);
 	}
 }

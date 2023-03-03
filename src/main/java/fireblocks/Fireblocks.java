@@ -33,9 +33,8 @@ public class Fireblocks {
 	public static String refWalletAddr1;
 	public static String refWalletAddr2;
 	
+	
 	// contract addresses
-	public static String busdAddr;
-	public static String rusdAddr;
 	public static int rusdDec = 18;
 	public static String userAddr;  // move this
 	public static String moralisPlatform;
@@ -83,13 +82,6 @@ public class Fireblocks {
 	public static void setProdValsPolygon() {
 		setFirstProdVals();
 		
-		// contracts
-		busdAddr = "0x2b0945a0318f47a055218d007c7b4f8c57480d03"; // actually USDC
-		// w/ one ref walletrusdAddr = "0xfe09af21b999d6981c830daae9238a35208e7893"; // today
-		
-		// w/ two ref wallets
-		rusdAddr = "0xfc3f3706b17fe6be71b11cd140feed50f6df4767";
-		
 		rusdDec = 6;
 		initMap();
 
@@ -106,8 +98,6 @@ public class Fireblocks {
 		userAddr = "0xAb52e8f017fBD6C7708c7C90C0204966690e7Fc8"; // Testnet Test1 account (id=1)
 		
 		// contracts
-		busdAddr = "0x833c8c086885f01bf009046279ac745cec864b7d"; // this is our BUSD that I deployed from test.Owner with test.RefWallet as the one who can call mint
-		rusdAddr = "0xdd9b1982261f0437aff1d3fec9584f86ab4f8197"; // contract address deployed with this refWallet
 		initMap();
 		
 		// Fireblocks values
@@ -124,8 +114,6 @@ public class Fireblocks {
 		setFirstProdVals();
 		
 		// contracts
-		busdAddr = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // actually USDC
-		rusdAddr = "";
 		initMap();
 
 		platformBase = "AVAX";
@@ -136,8 +124,6 @@ public class Fireblocks {
 		setFirstProdVals();
 		
 		// contracts
-		busdAddr = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // actually USDC
-		rusdAddr = "";
 		initMap();
 
 		platformBase = "ETH";
@@ -148,8 +134,6 @@ public class Fireblocks {
 		setFirstProdVals();
 		
 		// contracts
-		busdAddr = "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56";
-		rusdAddr = ""; // we did deploy it on Binance from Remix w/ 455e as owner
 		initMap();
 
 		platformBase = "BNB_BSC";
@@ -260,12 +244,20 @@ public class Fireblocks {
 		}
 	}
 
-	/** Call a Fireblocks GET endpoing. */
-	public static String get(String endpoint) throws Exception {
+	/** Call a Fireblocks GET endpoing, return json object */
+	public static MyJsonObject getObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.operation( "GET");
-		return fb.transact();
+		return fb.transactToObj();
+	}
+
+	/** Call a Fireblocks GET endpoint, return the string (could be array) */
+	public static MyJsonArray getArray(String endpoint) throws Exception {
+		Fireblocks fb = new Fireblocks();
+		fb.endpoint( endpoint);
+		fb.operation( "GET");
+		return MyJsonArray.parse( fb.transact() );
 	}
 
 	public static String padInt(int amt) {
@@ -360,21 +352,13 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
-	public static MyJsonArray getTransactions() throws Exception {
-		String str = get( "/v1/transactions");
-		Util.require( str.startsWith( "["), "Error: " + str);
-		return MyJsonArray.parse( str);
-	}
-
-	public static MyJsonObject getTransaction(String id) throws Exception {
-		String str = get( "/v1/transactions/" + id);
-		return toJsonObject( str);
-	}
-
 	/** @param addr is the address of the contract for which you are calling a method
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
-	 *  @param params are appended to the call data */
+	 *  @param params are appended to the call data
+	 *  @return Fireblocks id */
 	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
+		
 		String bodyTemplate = 
 				"{" + 
 				"'operation': 'CONTRACT_CALL'," + 
@@ -419,10 +403,6 @@ public class Fireblocks {
 		return MyJsonObject.parse( str);
 	}
 	
-	static MyJsonObject getVaultAccounts() throws Exception {
-		return toJsonObject( get("/v1/vault/accounts_paged") );
-	}
-	
 	/** Query the transaction from Fireblocks until it contains the txHash value
 	 *  which is the blockchain transaction has; takes about 13 seconds. 
 	 *  
@@ -436,7 +416,7 @@ public class Fireblocks {
 		
 		for (int i = 0; i < tries; i++) {
 			if (i > 0) S.sleep(1000);
-			MyJsonObject trans = Fireblocks.getTransaction( fireblocksId);
+			MyJsonObject trans = Transactions.getTransaction( fireblocksId);
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
 			
 			String txHash = trans.getString("txHash");
@@ -458,14 +438,5 @@ public class Fireblocks {
 	}
 	
 	static void initMap() {
-	}
-	
-	
-	/** Returns the number of decimals of the stablecoin smart contract */
-	static int getStablecoinMultiplier(String stablecoinAddr) throws RefException {
-		return 6;
-//		if (stablecoinAddr.equals(Fireblocks.rusdAddr) ) return rusdDec;  // this will change
-//		if (stablecoinAddr.equals(Fireblocks.busdAddr) ) return 18;  // this will change, all return 18
-//		throw new RefException( RefCode.UNKNOWN, "Invalid stablecoin address " + stablecoinAddr);
 	}
 }

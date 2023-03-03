@@ -33,16 +33,16 @@ public class MktDataConfig {
 		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 
 		this.redisHost = tab.getRequiredString( "redisHost");
-		this.redisPort = tab.getInt( "redisPort");
+		this.redisPort = tab.getRequiredInt( "redisPort");
 		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
-		this.twsMdPort = tab.getInt( "twsMdPort");
-		this.twsMdClientId = tab.getInt( "twsMdClientId");
+		this.twsMdPort = tab.getRequiredInt( "twsMdPort");
+		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");
 
-		this.redisBatchTime = tab.getInt( "redisBatchTime");
+		this.redisBatchTime = tab.getRequiredInt( "redisBatchTime");
 		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");
 		
-		this.reconnectInterval = tab.getInt( "reconnectInterval");
+		this.reconnectInterval = tab.getRequiredInt( "reconnectInterval");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 
 		this.symbolsTab = tab.getRequiredString( "symbolsTab");
