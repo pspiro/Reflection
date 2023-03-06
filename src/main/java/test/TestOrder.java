@@ -4,9 +4,7 @@ import static test.TestErrors.sendData;
 
 import java.util.HashMap;
 
-import http.MyHttpClient;
 import junit.framework.TestCase;
-import redis.clients.jedis.Jedis;
 import reflection.Prices;
 import reflection.RefCode;
 import tw.util.S;

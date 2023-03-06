@@ -1,15 +1,12 @@
 package test;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 
 import http.MyHttpClient;
 import json.MyJsonArray;
 import junit.framework.TestCase;
 import reflection.RefCode;
-import reflection.RefException;
-import reflection.Util;
 import tw.util.S;
 
 public class TestErrors extends TestCase {
