@@ -19,6 +19,7 @@ import http.SimpleTransaction;
 import json.StringJson;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.MyTransaction.ExRunnable;
 import reflection.Util;
@@ -327,6 +328,13 @@ public class MktDataServer {
 	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
+		}
+		catch( JedisConnectionException e) {
+			// this happens when writing to redis, e.g. when calling pipeline.hdel( conid, type)
+			// we don't know how to recover from this
+			
+			m_log.log(e);
+			System.exit(0);
 		}
 		catch( Exception e) {
 			m_log.log(e);

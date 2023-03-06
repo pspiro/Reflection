@@ -31,6 +31,7 @@ public class DateLogFile {
 
 	/** Don't bother to check for date change here. */
 	public synchronized void log(Exception e) {
+		e.printStackTrace();
 		e.printStackTrace( new PrintStream(m_log) );
 	}
 	
