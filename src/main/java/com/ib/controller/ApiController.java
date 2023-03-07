@@ -457,6 +457,9 @@ public class ApiController implements EWrapper {
 
 	private void internalReqContractDetails( Contract contract, final IInternalHandler processor) {
 		int reqId = m_reqId++;
+		
+		S.out( "requesting %s %s %s", reqId, contract.conid(), contract.symbol() );
+		
 		m_contractDetailsMap.put( reqId, processor);
 		
 		m_orderHandlers.put(reqId, new IOrderHandler() { 
@@ -560,8 +563,8 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		S.out( "Requesting mkt data %s on %s", contract.conid(), contract.exchange() );
     	int reqId = m_reqId++;
+		S.out( "Requesting mkt data %s on %s reqId %s", contract.conid(), contract.exchange(), reqId);
     	m_topMktDataMap.put( reqId, handler);
     	m_client.reqMktData( reqId, contract, genericTickList, snapshot, regulatorySnapshot, Collections.emptyList() );
 		sendEOM();

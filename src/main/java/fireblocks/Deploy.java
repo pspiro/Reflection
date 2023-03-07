@@ -33,7 +33,7 @@ public class Deploy {
 		
 		// deploy RUSD
 		rusd.deploy( 
-				"c:/work/bytecode/rusd.bytecode",
+				"c:/work/smart-contracts/build/contracts/rusd.json",
 				instance.getAddress( "RefWallet"),
 				instance.getAddress( "Admin1")
 		);
@@ -60,7 +60,7 @@ public class Deploy {
 			if ("Y".equals( row.getValue( "Active") ) && S.isNull( row.getValue( "Token Address") ) ) {
 				// deploy stock token
 				StockToken token = StockToken.deploy( 
-						"c:/work/bytecode/stocktoken.bytecode", 
+						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
 						row.getValue( "Contract Name"),
 						row.getValue( "Contract Symbol"),
 						rusd.address()
@@ -71,6 +71,8 @@ public class Deploy {
 				row.update();
 			}
 		}
+		
+		Test.main(null);
 	}
 
 	// move this into Erc20? Or let it return a
@@ -83,9 +85,10 @@ public class Deploy {
 		S.out( "Deploying contract from %s", filename);
 		
 		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-//		String bytecode = MyJsonObject.parse( new IStream(filename).readAll() )
-//				.getString("object");
-		String bytecode = new IStream(filename).readln();
+		String bytecode = MyJsonObject.parse( new IStream(filename).readAll() )
+				.getString("bytecode");
+		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
+//		String bytecode = new IStream(filename).readln();
 		
 		String id = Fireblocks.call( ownerAcctId, "0x0", bytecode, paramTypes, params, note);
 		

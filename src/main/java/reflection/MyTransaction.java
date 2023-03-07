@@ -9,7 +9,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,9 +29,8 @@ import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
+import fireblocks.Busd;
 import fireblocks.Fireblocks;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.Response;
 import reflection.Main.Stock;
 import tw.util.S;
 import util.LogType;
@@ -730,11 +728,10 @@ public class MyTransaction {
 					
 					// buy with BUSD
 					else {
-						id = m_main.rusd().buyStockWithStablecoin(
+						id = m_main.rusd().buyStock(
 								Accounts.nextAdminId(), 
 								order.walletAddr(),
-								Main.m_config.busdAddr(),
-								Main.m_config.busdDecimals(),
+								Main.m_config.newBusd(),
 								stablecoinAmt,
 								order.stockTokenAddr(), 
 								stockQty

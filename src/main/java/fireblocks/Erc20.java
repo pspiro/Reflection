@@ -25,6 +25,8 @@ public class Erc20 {
 		return m_decimals;
 	}
 	
+	/** Approve some wallet to spend on behalf of another
+	 *  NOTE: you must wait for the respons */
 	String approve(int accountId, String spenderAddr, double amt) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		

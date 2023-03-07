@@ -11,8 +11,11 @@ import tw.util.S;
 
 public class Rusd extends Erc20 {
 	
-	// busd on binance and ethereum has 18 decimals
-	// usdc and usdt on ethereum have 6 decimals
+	// BUSD on binance and ethereum has 18 decimals
+	// USDP on ethereum has 18 decimals
+	// USDC and USDT on ethereum have 6 decimals
+	// RUSD must match the number of decimals of the non-RUSD stablecoin because
+	//   buyRusd and sellRusd takes only one number
 	// stock tokens have 18 decimals
 	
 	
@@ -21,7 +24,6 @@ public class Rusd extends Erc20 {
 	static final String sellRusdKeccak = "054d4a45";
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
-	static final String burnKeccak = "9dc29fac";
 	static final String addOrRemoveKeccak = "89fa2c03";
 
 	// deploy RUSD from owner wallet
@@ -66,11 +68,10 @@ public class Rusd extends Erc20 {
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
 	public String buyStockWithRusd(int adminAcctId, String userAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
-		return buyStockWithStablecoin( 
+		return buyStock( 
 				adminAcctId, 
 				userAddr,
-				m_address, 
-				m_decimals, 
+				this,
 				stablecoinAmt,
 				stockTokenAddr,
 				stockTokenAmt
@@ -78,21 +79,21 @@ public class Rusd extends Erc20 {
 	}
 	
 	/** Buy with either RUSD or BUSD */
-	public String buyStockWithStablecoin(int adminAcctId, String userAddr, String stablecoinAddr, int stablecoinDecimals, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
+	public String buyStock(int adminAcctId, String userAddr, Erc20 stablecoin, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
-				stablecoinAddr, 
+				stablecoin.address(), 
 				stockTokenAddr,
-				timesPower( stablecoinAmt, stablecoinDecimals),
-				StockToken.toStockToken( stockTokenAmt) 
+				timesPower( stablecoinAmt, stablecoin.decimals() ),
+				StockToken.toStockToken(stockTokenAmt) 
 			};
 		
 		// you should check (a) that approval was done, and (b) that there is
 		// sufficient coin in the source wallet. pas
 		
-		S.out( "Refwallet buying %s %s with %s %s for user %s", 
-				params[4], stockTokenAddr, params[3], stablecoinAddr, userAddr);
+		S.out( "Account %s buying %s %s with %s %s for user %s",
+				adminAcctId, params[4], stockTokenAddr, params[3], stablecoin.address(), userAddr);
 		return Fireblocks.call( adminAcctId, m_address, 
 				buyStockKeccak, paramTypes, params, "RUSD buy stock");
 	}
@@ -111,15 +112,33 @@ public class Rusd extends Erc20 {
 				StockToken.toStockToken( stockTokenAmt) 
 		};
 		
+		S.out( "Account %s selling %s %s for %s RUSD for user %s",
+				adminAcctId, 
+				params[4], 
+				stockTokenAddr, 
+				params[3], 
+				userAddr);
+		
 		return Fireblocks.call( adminAcctId, m_address, 
 				sellStockKeccak, paramTypes, params, "RUSD sell stock");
 	}
 	
-	/** There is a RUSD.buyRusd method but it is for the future, currently never called. */
-	public String sellRusd(int adminAcctId, String userAddr, String busdAddr, int amt) throws Exception {
+	/** Burn RUSD from user wallet and transfer BUSD from RefWallet to user wallet
+	 *  Since we only pass one amount, RUSD must have same number of decimals as BUSD */
+	public String sellRusd(int adminAcctId, String userAddr, Busd busd, double amt) throws Exception {
 		String[] paramTypes = { "address", "address", "uint256" };
-		Object[] params = { userAddr, busdAddr, amt };
 
+		Object[] params = { 
+				userAddr, 
+				busd.address(), 
+				toBlockchain(amt)
+		};
+		
+		Util.require( m_decimals == busd.decimals(), "Number of decimals must match");
+
+		S.out( "Account %s user %s selling %s RUSD for BUSD",
+				adminAcctId, userAddr, amt);
+		
 		return Fireblocks.call( 
 				adminAcctId, 
 				m_address, 
@@ -129,7 +148,9 @@ public class Rusd extends Erc20 {
 				"sell RUSD");
 	}
 
-	
+	/** There is a RUSD.buyRusd method but it is for the future, currently never called. */
+	// public void buyRusd() {
+	// }
 
 
 //    address _userAddress,
@@ -153,6 +174,9 @@ public class Rusd extends Erc20 {
 				adminAddr, 
 				1 
 		};
+		
+		S.out( "Account %s adding or removing admin %s (%s)",
+				callerAcctId, adminAddr, add);
 		
 		Fireblocks.call( callerAcctId, m_address, addOrRemoveKeccak, paramTypes, params, "RUSD add admin");
 	}
