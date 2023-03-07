@@ -32,11 +32,11 @@ import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.Transfer;
 import json.MyJsonObject;
-import redis.clients.jedis.Jedis;
+import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
+import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
-import reflection.MyTransaction.JRun;
-import reflection.MyTransaction.PriceQuery;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -51,7 +51,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new Config();
 	final static MySqlConnection m_database = new MySqlConnection();
-	private Jedis m_jedis;
+	private MyRedis m_redis;
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr(); // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
@@ -120,17 +120,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		if (m_config.redisPort() == 0) {
 			S.out( "Connecting to redis with connection %s", m_config.redisHost() );
 			Util.require( JedisURIHelper.isValid( URI.create(m_config.redisHost() ) ), "redis connect string is invalid" );
-			m_jedis = new Jedis(m_config.redisHost() );
+			m_redis = new MyRedis(m_config.redisHost() );
 		}
 		else {
 			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-			m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		}
-		m_jedis.get( "test");
+		m_redis.run( jedis -> jedis.connect() ); // this is not required but we want to bail out if redis is not running
 		S.out( "  done");
 
 		S.out( "Starting stock price query thread every n ms");
-		Util.executeEvery( 3000, () -> queryAllPrices() );  // improve this, set up redis stream
+		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 
 		S.out( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
@@ -443,17 +443,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		//S.out( m_stocks);
 	}
 
-	/** Performs a Redis query wrapped in a pipeline. */
-	void jquery(JRun run) { // move into main or MyJedis
-		Pipeline p = m_jedis.pipelined();
-		run.run(p);
-		p.sync();
-	}
-
 	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
-	Prices getPrices(int conid) {
-		Map<String, String> ps = m_jedis.hgetAll( String.valueOf(conid) );
-		return new Prices( ps);
+	Prices getPrices(int conid) throws JedisException {
+		// inside the runnable, it will check to make sure that we have a redis connection
+		Map<String, String> map = m_redis.query( jedis -> jedis.hgetAll( String.valueOf(conid) ) );
+		return new Prices(map);
 	}
 
 	public void handleMint(HttpExchange exchange) throws IOException {
@@ -501,24 +495,48 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		log( LogType.MINT, "Minted to %s", dest);
 	}
 
+	/** Used to query prices from Redis. */
+	static class PriceQuery {
+		Stock m_stock;
+		private Response<Map<String, String>> m_res;  // returns a map of tag->val where tag =bid/ask/... and val is price
+
+		public PriceQuery(Pipeline pipeline, Stock stock) {
+			m_stock = stock;
+			m_res = pipeline.hgetAll( conidStr() );
+		}
+
+		/** Update the stock from the prices in m_res;
+		 *  Must be called after the pipeline is closed. */
+		void updateStock() {
+			m_stock.setPrices( new Prices(m_res.get() ) );
+		}
+
+		public String conidStr() {
+			return (String)m_stock.get( "conid");
+		}
+	}
+
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		//S.out( "querying prices");
 
 		try {
-
 			// send a single query to Redis for the prices
 			// the responses are fed into the PriceQuery objects
 			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>();
-			jquery( pipeline -> {
+			
+			m_redis.pipeline( pipeline -> {
 				for (Object stock : m_stocks) {
 					list.add( new PriceQuery(pipeline, (Stock)stock) );
 				}
 			});
-
+			
 			// update the stock object in place       // synchronize this? pas
 			for (PriceQuery priceQuery : list) {
 				priceQuery.updateStock();
 			}
+		}
+		catch( JedisException e) {
+			m_log.log(LogType.JEDIS, e.getMessage() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
@@ -582,7 +600,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			return (String)super.get(key);
 		}
 	}
-
 }
 
 

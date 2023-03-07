@@ -58,6 +58,7 @@ public class Config {
 	private String mintBusd;
 	private String mintEth;
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
+	int redisQueryInterval;
 	
 	// Fireblocks
 	private boolean useFireblocks;
@@ -120,6 +121,7 @@ public class Config {
 		// market data
 		this.redisHost = tab.get( "redisHost");
 		this.redisPort = tab.getRequiredInt( "redisPort");
+		this.redisQueryInterval = tab.getRequiredInt("redisQueryInterval");
 
 		// listen here
 		this.refApiHost = tab.getRequiredString( "refApiHost");
@@ -369,5 +371,9 @@ public class Config {
 
 	public Busd newBusd() {
 		return new Busd( busdAddr, 6);
+	}
+
+	public int redisQueryInterval() {
+		return redisQueryInterval;
 	}
 }

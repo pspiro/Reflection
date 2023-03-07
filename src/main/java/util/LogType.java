@@ -7,6 +7,7 @@ public enum LogType {
 	ERROR,			// should never happen
 	FILLED,			// order was completely filled
 	INFO,
+	JEDIS,
 	MD_CONNECTION,
 	MINT,			// minted some goerli ETF for user
 	ORDER,			// received order

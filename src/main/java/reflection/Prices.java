@@ -38,7 +38,7 @@ public class Prices {
 	}
 	
 	/** Used only by NULL prices. */
-	private Prices() {
+	public Prices() {
 		m_time = "";
 	}
 

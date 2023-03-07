@@ -43,7 +43,7 @@ public class MktDataServer {
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
 	private String m_tabName;
-	private Jedis m_jedis;
+	private MyRedis m_redis;
 	private Pipeline pipeline;  // access to this is synchronized
 	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
 	private boolean m_debug;
@@ -92,14 +92,13 @@ public class MktDataServer {
 		// otherwise, we use host and port
 		if (m_config.redisPort() == 0) {
 			S.out( "Connecting to redis server with URI %s", m_config.redisHost() );
-			URI jedisUri = new URI(m_config.redisHost());
-			m_jedis = new Jedis(jedisUri);
+			m_redis = new MyRedis(m_config.redisHost());
 		}
 		else {
 			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-			m_jedis = new Jedis(m_config.redisHost(), m_config.redisPort() );
+			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		}
-		m_jedis.get( "test");
+		m_redis.run( jedis -> jedis.connect() );  // test the connection, let it fail now
 		S.out( "  done");
 		
 		// check every few seconds to see if we are in extended trading hours or not
@@ -171,7 +170,7 @@ public class MktDataServer {
 	/** Create pipeline if necessary and add the tick to the queue */
 	synchronized void tick(Runnable run) {
 		if (pipeline == null) {
-			pipeline = m_jedis.pipelined();
+			pipeline = m_redis.query( jedis)
 			Util.executeIn( m_config.batchTime(), () -> syncNow() );
 		}
 		run.run();

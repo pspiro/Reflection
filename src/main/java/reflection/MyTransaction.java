@@ -373,7 +373,6 @@ public class MyTransaction {
 	}
 
 	/** Top-level method. */
-	// remove this. pas
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
 
@@ -383,37 +382,6 @@ public class MyTransaction {
 		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
 		respond( prices.toJson(conid) );
 	}
-
-	/** Used to query prices from Redis. */
-	static class PriceQuery {
-		Stock m_stock;
-		private Response<Map<String, String>> m_res;  // returns a map of tag->val where tag =bid/ask/... and val is price
-
-		public PriceQuery(Pipeline pipeline, Stock stock) {
-			m_stock = stock;
-			m_res = pipeline.hgetAll( conidStr() );
-		}
-
-		Prices getPrices() {
-			return new Prices(m_res.get() );
-		}
-
-		/** Update the stock from the prices in m_res;
-		 *  Called when the query returns. */
-		void updateStock() {
-			m_stock.setPrices( new Prices(m_res.get() ) );
-		}
-
-		public String conidStr() {
-			return (String)m_stock.get( "conid");
-		}
-	}
-
-	interface JRun {
-		public void run(Pipeline p);
-	}
-
-
 
 	/** Top-level method. */  // put a timer so we don't call this more than once every n ms. pas
 	private void getAllPrices() throws RefException {
