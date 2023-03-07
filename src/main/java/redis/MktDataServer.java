@@ -1,6 +1,5 @@
 package redis;
 
-import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
@@ -17,7 +16,7 @@ import com.ib.controller.ApiController.TopMktDataAdapter;
 
 import http.SimpleTransaction;
 import json.StringJson;
-import redis.clients.jedis.Jedis;
+import redis.MyRedis.PRun;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
@@ -44,7 +43,6 @@ public class MktDataServer {
 	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
 	private String m_tabName;
 	private MyRedis m_redis;
-	private Pipeline pipeline;  // access to this is synchronized
 	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
 	private boolean m_debug;
 	
@@ -98,7 +96,7 @@ public class MktDataServer {
 			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
 			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		}
-		m_redis.run( jedis -> jedis.connect() );  // test the connection, let it fail now
+		m_redis.connect();  // test the connection, let it fail now
 		S.out( "  done");
 		
 		// check every few seconds to see if we are in extended trading hours or not
@@ -167,22 +165,11 @@ public class MktDataServer {
 		}
 	}
 
-	/** Create pipeline if necessary and add the tick to the queue */
-	synchronized void tick(Runnable run) {
-		if (pipeline == null) {
-			pipeline = m_redis.query( jedis)
-			Util.executeIn( m_config.batchTime(), () -> syncNow() );
-		}
-		run.run();
-	}
-
-	/** Send all the queued up messages to redis and delete the pipeline */
-	synchronized void syncNow() {
-		if (m_debug) {
-			log( "Syncing now");
-		}
-		wrap( () -> pipeline.sync() );
-		pipeline = null;
+	/** Create pipeline if necessary and add the tick to the queue 
+	 * @throws Exception */
+	synchronized void tick(PRun run) throws Exception {
+		m_redis.startPipeline( m_config.redisBatchTime(), e -> m_log.log(e) );
+		m_redis.runOnPipeline(run);
 	}
 
 	/** Might need to sync this with other API calls.  */
@@ -265,16 +252,16 @@ public class MktDataServer {
 				if (price > 0) { 
 					String val = S.fmt3( price);
 					//S.out( "ticking %s %s=%s", conidStr, type, val);
-					tick( () ->	pipeline.hset( conid, type, val) ); 
+					tick( pipeline -> pipeline.hset( conid, type, val) ); 
 					
 					if (type.equals( "last") ) {
-						tick( () ->	pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
+						tick( pipeline -> pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
 					}
 				}
 				// we get price=-1 for bid/ask when market is closed
 				else if (type == "bid" || type == "ask") {
 					log( "clearing %s %s", conid, type);
-					tick( () ->	pipeline.hdel( conid, type) );
+					tick( pipeline -> pipeline.hdel( conid, type) );
 					// delete it!!! pas
 				}
 			}
@@ -340,3 +327,6 @@ public class MktDataServer {
 		}
 	}
 }
+
+//does pipelined() form the connection if not there?
+//does query or run on pipe really ever fail?

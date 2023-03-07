@@ -5,8 +5,12 @@ import positions.MoralisServer;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
+import reflection.Util;
+import tw.google.NewSheet;
+import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.IStream;
 import tw.util.S;
+import static fireblocks.Accounts.instance;
 
 public class Deploy {
 	// it seems that you have to wait or call w/ the same Admin
@@ -14,104 +18,59 @@ public class Deploy {
 	// Fireblocks checks and thinks it will fail if the first
 	// one is not done yet
 	
+	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
 		Config config = new Config();
-		config.readFromSpreadsheet("Dev-config");
+		config.readFromSpreadsheet("Test-config");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();
 		
-		Accounts accounts = Accounts.instance;
-		accounts.read();
+		Util.require( S.isNotNull( busd.address() ), "BUSD address is missing");
+		Util.require( S.isNull( rusd.address() ), "RUSD is already deployed");
+		
+		instance.read();
 		
 		// deploy RUSD
 		rusd.deploy( 
 				"c:/work/bytecode/rusd.bytecode",
-				accounts.getAddress( "RefWallet"),
-				accounts.getAddress( "Admin1")
+				instance.getAddress( "RefWallet"),
+				instance.getAddress( "Admin1")
 		);
+		
+		// update spreadsheet with deployed address
+		config.setRusdAddress( rusd.address() );
 		
 		// let RefWallet approve RUSD to transfer BUSD
 		busd.approve( 
-				accounts.getId( "RefWallet"), // called by
+				instance.getId( "RefWallet"), // called by
 				rusd.address(), // approving
-				100000
+				1000000000  // $1B
 		);
 		
 		// add a second owner
 		rusd.addOrRemoveAdmin(
-				accounts.getId( "Owner"), 
-				accounts.getAddress( "Admin2"), 
+				instance.getId( "Owner"), 
+				instance.getAddress( "Admin2"), 
 				true
 		);
-		
-		// deploy StockToken
-		StockToken stock = StockToken.deploy(
-				"c:/work/bytecode/stocktoken.bytecode",
-				"GE Reflection Stock Token",
-				"GE",
-				rusd.address()
-		);
-		
-		// mint 100 BUSD
-		busd.mint( accounts.getId( "Admin1"), accounts.getAddress( "Bob"), 100);
-		busd.mint( accounts.getId( "Admin1"), accounts.getAddress( "Sam"), 100);
-		
-		// buy 2 stock with 100 BUSD
-		rusd.buyStockWithStablecoin(
-				accounts.getId( "Admin1"),
-				accounts.getAddress( "Bob"),
-				busd.address(),
-				busd.decimals(),
-				100,
-				stock.address(),
-				2
-		);
-		
-		// 100/2/0
-		
-		// sell stock for 100 RUSD
-		rusd.sellStockForRusd(
-				accounts.getId( "Admin1"),
-				accounts.getAddress( "Bob"),
-				100,  // stablecoin
-				stock.address(), // stock token
-				2
-		);
 
-		// buy stock token for 50 RUSD
-		rusd.buyStockWithRusd(
-				accounts.getId( "Admin1"),
-				accounts.getAddress( "Bob"),
-				50,
-				stock.address(),
-				1
-		);
-		
-		// sell 50 RUSD for 80 BUSD
-		rusd.sellRusd(
-				accounts.getId( "Admin1"),
-				accounts.getAddress( "Bob"),
-				busd.address(),
-				50
-		);
-		
-		// buy 2 stock for sam
-		rusd.buyStockWithStablecoin(
-				accounts.getId( "Admin2"),
-				accounts.getAddress( "Sam"),
-				busd.address(),
-				busd.decimals(),
-				100,
-				stock.address(),
-				2
-		);
-		
-		
-		
-		
-		// 1 stock + 50 RUSD = 100
+		// deploy stock tokens that are active and have an empty token address
+		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
+			if ("Y".equals( row.getValue( "Active") ) && S.isNull( row.getValue( "Token Address") ) ) {
+				// deploy stock token
+				StockToken token = StockToken.deploy( 
+						"c:/work/bytecode/stocktoken.bytecode", 
+						row.getValue( "Contract Name"),
+						row.getValue( "Contract Symbol"),
+						rusd.address()
+				);
+				
+				// update row on Symbols tab with new stock token address
+				row.setValue( "Token Address", token.address() );
+				row.update();
+			}
+		}
 	}
 
 	// move this into Erc20? Or let it return a

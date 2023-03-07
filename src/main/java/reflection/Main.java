@@ -37,6 +37,9 @@ import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
+import reflection.Config.RefApiConfig;
+import reflection.Main.PriceQuery;
+import reflection.Main.Stock;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -49,7 +52,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	};
 
 	private final static Random rnd = new Random( System.currentTimeMillis() );
-	final static Config m_config = new Config();
+	final static Config m_config = new RefApiConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
 	private MyRedis m_redis;
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
@@ -84,8 +87,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	private void run(String tabName) throws Exception {
-		Fireblocks.setTestVals();  // see also call to Fireblocks.setVals() in Config
-
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -126,7 +127,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
 			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		}
-		m_redis.run( jedis -> jedis.connect() ); // this is not required but we want to bail out if redis is not running
+		m_redis.connect(); // this is not required but we want to bail out if redis is not running
 		S.out( "  done");
 
 		S.out( "Starting stock price query thread every n ms");

@@ -44,11 +44,17 @@ public class Rusd extends Erc20 {
 	/** Deploy RUSD
 	 *  @return deployed address */
 	void deploy(String filename, String refWallet, String admin) throws Exception {
-		S.out( "Deploying RUSD from owner %d with refWallet %s and admin %s", Fireblocks.ownerAcctId, refWallet, admin);
+		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, admin);
 		String[] paramTypes = { "address", "address" };
 		Object[] params = { refWallet, admin };
-
-		m_address = Deploy.deploy( filename, Fireblocks.ownerAcctId, paramTypes, params, "Deploy RUSD");
+		
+		m_address = Deploy.deploy( 
+				filename, 
+				Accounts.instance.getId( "Owner"), 
+				paramTypes, 
+				params, 
+				"Deploy RUSD"
+		);
 	}
 	
 

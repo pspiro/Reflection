@@ -55,7 +55,7 @@ public class MktDataConfig {
 	}
 	
 	/** Batch time in ms. */
-	public int batchTime() {
+	public int redisBatchTime() {
 		return redisBatchTime;
 	}
 
