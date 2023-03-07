@@ -15,7 +15,6 @@ public class Test {
 	// one is not done yet
 	
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		

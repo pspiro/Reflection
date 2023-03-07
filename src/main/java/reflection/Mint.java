@@ -8,11 +8,6 @@ import tw.google.NewSheet;
 import tw.util.S;
 
 public class Mint implements MyHttpHandler {
-	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();		
-		new Mint().run();
-	}
-	
 	GTable tab;
 	
 	void run() throws Exception {

@@ -52,20 +52,23 @@ public class Config {
 	private String redisHost;
 	private int redisPort;
 	private double commission;
-	private String fireblocksApiKey;
-	private String fireblocksPrivateKey;	
 	private String mintHtml;
 	private String mintBusd;
 	private String mintEth;
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
 	
 	// Fireblocks
-	private boolean useFireblocks;
-	private String rusdAddr;
+	protected boolean useFireblocks;
+	private String fireblocksApiKey;
+	private String fireblocksPrivateKey;
+	private String moralisPlatform;
+	private String platformBase;
+	protected String rusdAddr;
 	private String busdAddr;
 	private int rusdDecimals;
 	private int busdDecimals;
 	private int stockTokenDecimals;
+	private GTable m_tab;
 	
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
@@ -100,55 +103,57 @@ public class Config {
 	public String busdAddr() { return busdAddr; }
 
 	public void readFromSpreadsheet(String tabName) throws Exception {
-		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
+		m_tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 		
 		// user experience parameters
-		this.buySpread = tab.getDouble( "buySpread");
-		this.sellSpread = tab.getDouble( "sellSpread");
-		this.minBuySpread = tab.getDouble( "minBuySpread");   // should be changed to read table without formatting. pas
-		this.minSellSpread = tab.getDouble( "minSellSpread");
-		this.maxBuyAmt = tab.getDouble( "maxBuyAmt");
-		this.maxSellAmt = tab.getDouble( "maxSellAmt");
+		this.buySpread = m_tab.getDouble( "buySpread");
+		this.sellSpread = m_tab.getDouble( "sellSpread");
+		this.minBuySpread = m_tab.getDouble( "minBuySpread");   // should be changed to read table without formatting. pas
+		this.minSellSpread = m_tab.getDouble( "minSellSpread");
+		this.maxBuyAmt = m_tab.getDouble( "maxBuyAmt");
+		this.maxSellAmt = m_tab.getDouble( "maxSellAmt");
 
 		// TWS connection
-		this.twsOrderHost = tab.get( "twsOrderHost");
-		this.twsOrderPort = tab.getRequiredInt( "twsOrderPort");
-		this.reconnectInterval = tab.getRequiredInt( "reconnectInterval");
-		this.orderTimeout = tab.getRequiredInt( "orderTimeout");
-		this.timeout = tab.getRequiredInt( "timeout");
+		this.twsOrderHost = m_tab.get( "twsOrderHost");
+		this.twsOrderPort = m_tab.getRequiredInt( "twsOrderPort");
+		this.reconnectInterval = m_tab.getRequiredInt( "reconnectInterval");
+		this.orderTimeout = m_tab.getRequiredInt( "orderTimeout");
+		this.timeout = m_tab.getRequiredInt( "timeout");
 
 		// market data
-		this.redisHost = tab.get( "redisHost");
-		this.redisPort = tab.getRequiredInt( "redisPort");
+		this.redisHost = m_tab.get( "redisHost");
+		this.redisPort = m_tab.getRequiredInt( "redisPort");
 
 		// listen here
-		this.refApiHost = tab.getRequiredString( "refApiHost");
-		this.refApiPort = tab.getRequiredInt( "refApiPort");
+		this.refApiHost = m_tab.getRequiredString( "refApiHost");
+		this.refApiPort = m_tab.getRequiredInt( "refApiPort");
 		
 		// database
-		this.postgresUrl = tab.get( "postgresUrl");
-		this.postgresUser = tab.get( "postgresUser");
-		this.postgresPassword = tab.get( "postgresPassword");
+		this.postgresUrl = m_tab.get( "postgresUrl");
+		this.postgresUser = m_tab.get( "postgresUser");
+		this.postgresPassword = m_tab.get( "postgresPassword");
 
 		// additional data
-		this.symbolsTab = tab.getRequiredString( "symbolsTab");
-		this.backendConfigTab = tab.get( "backendConfigTab");
-		this.commission = tab.getDouble( "commission");
-		this.fireblocksApiKey = tab.getRequiredString("fireblocksApiKey"); 
-		this.fireblocksPrivateKey = tab.getRequiredString("fireblocksPrivateKey");
-		this.mintHtml = tab.getRequiredString("mintHtml");
-		this.mintBusd = tab.getRequiredString("mintBusd");
-		this.mintEth = tab.getRequiredString("mintEth");
-		this.approveAll = tab.getBoolean("approveAll");
+		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
+		this.backendConfigTab = m_tab.get( "backendConfigTab");
+		this.commission = m_tab.getDouble( "commission");
+		this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
+		this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
+		this.mintHtml = m_tab.getRequiredString("mintHtml");
+		this.mintBusd = m_tab.getRequiredString("mintBusd");
+		this.mintEth = m_tab.getRequiredString("mintEth");
+		this.approveAll = m_tab.getBoolean("approveAll");
 		
 		// Fireblocks
-		this.useFireblocks = tab.getBoolean("useFireblocks");
+		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.rusdAddr = tab.getRequiredString("rusdAddr");
-			this.busdAddr = tab.getRequiredString("busdAddr");
-			this.rusdDecimals = tab.getRequiredInt("rusdDecimals");
-			this.busdDecimals = tab.getRequiredInt("busdDecimals");
-			this.stockTokenDecimals = tab.getRequiredInt("stockTokenDecimals");
+			this.rusdAddr = m_tab.get("rusdAddr");  // not required when deploying 
+			this.busdAddr = m_tab.getRequiredString("busdAddr");
+			this.platformBase = m_tab.getRequiredString("platformBase");
+			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform");
+			this.rusdDecimals = m_tab.getRequiredInt("rusdDecimals");
+			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
+			this.stockTokenDecimals = m_tab.getRequiredInt("stockTokenDecimals");
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -163,10 +168,10 @@ public class Config {
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		
 		// update Fireblocks static keys
-		Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey);
+		Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
 	}
 	
-	private void require( boolean v, String parameter) throws Exception {
+	protected void require( boolean v, String parameter) throws Exception {
 		if (!v) {
 			throw new Exception( String.format( "Config parameter %s is missing or invalid", parameter) );
 		}
@@ -369,5 +374,20 @@ public class Config {
 
 	public Busd newBusd() {
 		return new Busd( busdAddr, 6);
+	}
+	
+	public void setRusdAddress(String address) throws Exception {
+		m_tab.put( "rusdAddr", address);
+	}
+	
+	static class RefApiConfig extends Config {
+		
+		public void readFromSpreadsheet(String tabName) throws Exception {
+			super.readFromSpreadsheet(tabName);
+			
+			if (useFireblocks) {
+				require(S.isNotNull( this.rusdAddr), "rusdAddr");
+			}
+		}
 	}
 }

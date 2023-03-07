@@ -28,6 +28,8 @@ public class StockToken extends Erc20 {
 	static String getcallerKk = "a5905412";
 	static String iscallerKk = "ac55c8b0";
 	
+	// String m_rusdAddress; // this could/should be a member var
+	
 	StockToken( String address) {
 		super( address, stockTokenDecimals);
 	}
@@ -38,11 +40,9 @@ public class StockToken extends Erc20 {
 	// 3: refwallet
 	// i passed refWallet but it acted like i used Test1 account; that was the sending address
 
-	public static void main(String[] args) throws Exception {
-		Fireblocks.setProdValsPolygon();
-	}
-	
 	static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
+		S.out( "Deploying stock token from %s  name=%s  symbol=%s", filename, name, symbol);
+		
 		String[] paramTypes = { "string", "string", "address" };
 		Object[] params = { 
 				name, 
@@ -50,7 +50,13 @@ public class StockToken extends Erc20 {
 				rusdAddr
 		};
 
-		String address = Deploy.deploy(filename, Fireblocks.ownerAcctId, paramTypes, params, "deploy stock token " + symbol);
+		String address = Deploy.deploy(
+				filename, 
+				Accounts.instance.getId("Owner"), 
+				paramTypes, 
+				params, 
+				"deploy stock token " + symbol
+		);
 		return new StockToken( address);
 	}
 

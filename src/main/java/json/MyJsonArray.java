@@ -51,4 +51,8 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	public void display() {
 		MyJsonObject.display(m_ar, 0, false);
 	}
+
+	public static boolean isArray(String ret) {
+		return S.isNotNull(ret) && ret.startsWith("[");
+	}
 }

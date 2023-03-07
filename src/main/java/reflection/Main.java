@@ -35,6 +35,7 @@ import json.MyJsonObject;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.util.JedisURIHelper;
+import reflection.Config.RefApiConfig;
 import reflection.MyTransaction.JRun;
 import reflection.MyTransaction.PriceQuery;
 import tw.google.NewSheet;
@@ -49,7 +50,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	};
 
 	private final static Random rnd = new Random( System.currentTimeMillis() );
-	final static Config m_config = new Config();
+	final static Config m_config = new RefApiConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
 	private Jedis m_jedis;
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
@@ -84,8 +85,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	private void run(String tabName) throws Exception {
-		Fireblocks.setTestVals();  // see also call to Fireblocks.setVals() in Config
-
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 

@@ -22,7 +22,6 @@ public class TestFireblocks extends TestCase {
 
 	static {
 		try {
-			Fireblocks.setTestVals();
 			config.readFromSpreadsheet("Dev-config");
 			Accounts.instance.read();  // could do lazy init
 			rusd = config.newRusd();
@@ -39,7 +38,7 @@ public class TestFireblocks extends TestCase {
 		String[] types = { "string", "address", "uint256", "uint256" };
 		Object[] vals = {
 				"hello",
-				Fireblocks.userAddr,
+				myWallet,
 				3,
 				new BigInteger("4")
 		};
@@ -88,7 +87,7 @@ public class TestFireblocks extends TestCase {
 	public void testBuyStockWithRusd() throws Exception {
 		String id = rusd.buyStockWithRusd(
 				Accounts.nextAdminId(), 
-				Fireblocks.userAddr,
+				myWallet,
 				0, 
 				ge, 
 				10 
@@ -102,7 +101,7 @@ public class TestFireblocks extends TestCase {
 	public void testSellStock() throws Exception {
 		String id = rusd.sellStockForRusd(
 				Accounts.nextAdminId(), 
-				Fireblocks.userAddr,
+				myWallet,
 				100, 
 				ge, 
 				9 

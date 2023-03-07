@@ -12,7 +12,7 @@ public class Busd extends Erc20 {
 	
 	/** This can be called by anybody, the BUSD does not have an owner. */
 	public String mint(int accountId, String address, double amt) throws Exception {
-		S.out( "Account %s minting %s %s", accountId, amt, address);
+		S.out( "Account %s minting %s BUSD for %s", accountId, amt, address);
 		
 		String[] paramTypes = { "address", "uint256" };
 		

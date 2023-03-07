@@ -21,7 +21,6 @@ public class Transactions {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Fireblocks.setTestVals();
 		displayLastTransactions(3);
 	}
 }
