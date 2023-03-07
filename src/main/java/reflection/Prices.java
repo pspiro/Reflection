@@ -16,7 +16,7 @@ public class Prices {
 	
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
 	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
-	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/DD HH:mm:ss");
+	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
 	
 	private double m_bid;
 	private double m_ask;
