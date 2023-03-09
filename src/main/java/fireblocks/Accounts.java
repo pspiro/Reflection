@@ -2,6 +2,7 @@ package fireblocks;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import reflection.Config;
 import tw.util.S;
 
 /** Works for prod and test. */
@@ -12,6 +13,17 @@ public class Accounts {
 	public static Accounts instance = new Accounts();
 
 	private Accounts() {
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config config = new Config();
+		config.readFromSpreadsheet("Test-config");
+
+		instance.display();
+	}
+	public void display() throws Exception {
+		read();
+		m_accounts.display();
 	}
 	
 	public synchronized void read() throws Exception {

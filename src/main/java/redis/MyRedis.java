@@ -152,6 +152,7 @@ public class MyRedis {
 		void handle( Exception e);
 	}
 
+	/** This is not needed but it's called at startup we we will fail if we can't connect */
 	public void connect() {
 		checkConnection();
 		m_jedis.connect();

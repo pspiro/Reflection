@@ -20,8 +20,8 @@ public class Rusd extends Erc20 {
 	
 	
 	// keccaks
-	static final String buyRusdKeccak = "28c4ef43"; // this can't be right, we never buy rusd. pas // buyRusd(address userAddress, address stableCoinAddress, uint256 amount)
-	static final String sellRusdKeccak = "054d4a45";
+	static final String buyRusdKeccak = "8a854e17";
+	static final String sellRusdKeccak = "5690cc4f"; 
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
 	static final String addOrRemoveKeccak = "89fa2c03";
@@ -33,22 +33,23 @@ public class Rusd extends Erc20 {
 	
 	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
 	
-	private int stockTokenDecimals;
-	
 //	String rusdAddr = "0x31ed1e80db8a6e82b2f73c4cb37a1390fe7793a7"; // deploy( "c:/work/bytecode/rusd.bytecode");
 //	String ibmAddr = "0xfdaf3b9c6665fe47eb701abea7429d0c1b5d30a1"; // StockToken.deploy( "c:/work/bytecode/stocktoken.bytecode", "IBM", "IBM", rusdAddr);
 	
-	public Rusd( String rusdAddr, int rusdDecimals, int stockTokenDecimals) {
+	/** NOTE: rusdDecimals must match the number of decimals from the source
+	 *  code; the value here is not passed into the smart contract constructor 
+	 * @throws Exception */
+	public Rusd( String rusdAddr, int rusdDecimals) throws Exception {
 		super( rusdAddr, rusdDecimals);
-		this.stockTokenDecimals = stockTokenDecimals;
+		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD");
 	}
 	
 	/** Deploy RUSD
 	 *  @return deployed address */
-	void deploy(String filename, String refWallet, String admin) throws Exception {
-		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, admin);
+	void deploy(String filename, String refWallet, String adminAddr) throws Exception {
+		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
 		String[] paramTypes = { "address", "address" };
-		Object[] params = { refWallet, admin };
+		Object[] params = { refWallet, adminAddr };
 		
 		m_address = Deploy.deploy( 
 				filename, 
@@ -85,7 +86,7 @@ public class Rusd extends Erc20 {
 				userAddr,
 				stablecoin.address(), 
 				stockTokenAddr,
-				timesPower( stablecoinAmt, stablecoin.decimals() ),
+				stablecoin.toBlockchain( stablecoinAmt),
 				StockToken.toStockToken(stockTokenAmt) 
 			};
 		
@@ -108,7 +109,7 @@ public class Rusd extends Erc20 {
 				userAddr, 
 				m_address, 
 				stockTokenAddr, 
-				toBlockchain( stablecoinAmt), 
+				toBlockchain( stablecoinAmt),
 				StockToken.toStockToken( stockTokenAmt) 
 		};
 		
@@ -123,21 +124,41 @@ public class Rusd extends Erc20 {
 				sellStockKeccak, paramTypes, params, "RUSD sell stock");
 	}
 	
+	/** Not used yet, for testing only */
+	String buyRusd(int adminAcctId, String userAddr, Busd busd, double amt) throws Exception {
+		String[] paramTypes = { "address", "address", "uint256", "uint256" };
+		Object[] params = { 
+				userAddr, 
+				busd.address(),
+				busd.toBlockchain(amt),
+				toBlockchain(amt)
+		};
+
+		S.out( "Account %s user %s buying %s RUSD with BUSD", adminAcctId, userAddr, amt);
+
+		return Fireblocks.call( 
+				adminAcctId, 
+				m_address,
+				buyRusdKeccak, 
+				paramTypes, 
+				params, 
+				"buy RUSD"
+		);
+	}
+
 	/** Burn RUSD from user wallet and transfer BUSD from RefWallet to user wallet
 	 *  Since we only pass one amount, RUSD must have same number of decimals as BUSD */
 	public String sellRusd(int adminAcctId, String userAddr, Busd busd, double amt) throws Exception {
-		String[] paramTypes = { "address", "address", "uint256" };
+		String[] paramTypes = { "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
 				userAddr, 
-				busd.address(), 
+				busd.address(),
+				busd.toBlockchain(amt),
 				toBlockchain(amt)
 		};
 		
-		Util.require( m_decimals == busd.decimals(), "Number of decimals must match");
-
-		S.out( "Account %s user %s selling %s RUSD for BUSD",
-				adminAcctId, userAddr, amt);
+		S.out( "Account %s user %s selling %s RUSD", adminAcctId, userAddr, amt);
 		
 		return Fireblocks.call( 
 				adminAcctId, 
@@ -157,17 +178,8 @@ public class Rusd extends Erc20 {
 //    address _stableCoinAddress,
 //    uint256 _amount
 
-//	static void buyRusd(String userAddr, String otherStablecoin, int amt) throws Exception {
-//		String[] paramTypes = { "address", "address", "uint256" };
-//		Object[] params = { userAddr, otherStablecoin, amt };
-//
-//		String id = Fireblocks.call( Fireblocks.refWalletAcctId1, Fireblocks.rusdAddr, 
-//				buyRusdKeccak, paramTypes, params, "RUSD.buyRusd");
-//
-//		Fireblocks.getTransaction( id).display();
-//	}
 
-	public void addOrRemoveAdmin(int callerAcctId, String adminAddr, boolean add) throws Exception {
+	public void addOrRemoveAdmin(String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
@@ -175,10 +187,15 @@ public class Rusd extends Erc20 {
 				1 
 		};
 		
-		S.out( "Account %s adding or removing admin %s (%s)",
-				callerAcctId, adminAddr, add);
+		S.out( "Owner adding or removing admin %s (%s)", adminAddr, add);
 		
-		Fireblocks.call( callerAcctId, m_address, addOrRemoveKeccak, paramTypes, params, "RUSD add admin");
+		Fireblocks.call( 
+				Accounts.instance.getId( "Owner"),
+				m_address, 
+				addOrRemoveKeccak, 
+				paramTypes, 
+				params, 
+				"RUSD add admin");
 	}
 
 }
