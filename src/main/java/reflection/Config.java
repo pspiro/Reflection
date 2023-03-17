@@ -68,12 +68,10 @@ public class Config {
 	private String busdAddr;
 	private int rusdDecimals;
 	private int busdDecimals;
-	private int stockTokenDecimals;
 	private GTable m_tab;
 	
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
-	public int stockTokenDecimals() { return stockTokenDecimals; }
 	
 	public boolean useFireblocks() { return useFireblocks; }
 	
@@ -155,7 +153,6 @@ public class Config {
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform");
 			this.rusdDecimals = m_tab.getRequiredInt("rusdDecimals");
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
-			this.stockTokenDecimals = m_tab.getRequiredInt("stockTokenDecimals");
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -369,9 +366,10 @@ public class Config {
 		return mintEth;
 	}
 
-	/** This causes a dependency that we might not want to have. */
-	public Rusd newRusd() {
-		return new Rusd( rusdAddr, rusdDecimals, stockTokenDecimals);
+	/** This causes a dependency that we might not want to have. 
+	 * @throws Exception */
+	public Rusd newRusd() throws Exception {
+		return new Rusd( rusdAddr, rusdDecimals);
 	}
 
 	public Busd newBusd() {

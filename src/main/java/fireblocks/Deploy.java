@@ -21,7 +21,7 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
+		config.readFromSpreadsheet("Avax-config");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();
@@ -38,6 +38,8 @@ public class Deploy {
 				instance.getAddress( "Admin1")
 		);
 		
+		System.exit(0);
+		
 		// update spreadsheet with deployed address
 		config.setRusdAddress( rusd.address() );
 		
@@ -50,7 +52,6 @@ public class Deploy {
 		
 		// add a second owner
 		rusd.addOrRemoveAdmin(
-				instance.getId( "Owner"), 
 				instance.getAddress( "Admin2"), 
 				true
 		);

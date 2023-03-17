@@ -2,12 +2,12 @@ package fireblocks;
 
 import tw.util.S;
 
-/** This is just for testing. */  // move into test folder 
+/** This class represents any non-RUSD stablecoin */ 
 public class Busd extends Erc20 {
 	static final String mintKeccak = "40c10f19";
 
 	public Busd( String address, int decimals) {
-		super( address, 6);
+		super( address, decimals);
 	}
 	
 	/** This can be called by anybody, the BUSD does not have an owner. */

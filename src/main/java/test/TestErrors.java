@@ -94,15 +94,20 @@ public class TestErrors extends TestCase {
 		return new MyHttpClient( host, 8383);
 	}
 	
+	/** Replace single-quotes with double-quotes */
+	public static String toJson(String str) {
+		return str.replaceAll( "\\'", "\"");
+	}
+	
 	static HashMap<String, Object> sendData( String data) throws Exception {
 		MyHttpClient cli = cli();
-		cli.post( data.replaceAll( "\\'", "\"") );
+		cli.post( toJson( data) );
 		return cli.readJsonMap();
 	}
 	
 	static MyJsonArray sendData2( String data) throws Exception {
 		MyHttpClient cli = cli();
-		cli.post( data.replaceAll( "\\'", "\"") );
+		cli.post( toJson( data) );
 		return cli.readMyJsonArray();
 	}
 	

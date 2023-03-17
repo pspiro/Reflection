@@ -21,6 +21,10 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	public static MyJsonArray parse( String text) throws ParseException {
 		return new MyJsonArray( new JSONParser().parse( text) );
 	}
+	
+	public int size() {
+		return m_ar.size();
+	}
 
 	public MyJsonArray( Object obj) {
 		m_ar = (JSONArray)obj;

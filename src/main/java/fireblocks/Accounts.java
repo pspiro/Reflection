@@ -16,6 +16,11 @@ public class Accounts {
 
 	private Accounts() {
 	}
+
+	public void display() throws Exception {
+		read();
+		m_accounts.display();
+	}
 	
 	public synchronized void read() throws Exception {
 		if (!m_read) {
