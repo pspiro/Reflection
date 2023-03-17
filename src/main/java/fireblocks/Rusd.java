@@ -1,11 +1,7 @@
 package fireblocks;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.util.HashMap;
 
-import reflection.Config;
-import reflection.RefCode;
-import reflection.RefException;
 import reflection.Util;
 import tw.util.S;
 
@@ -59,6 +55,8 @@ public class Rusd extends Erc20 {
 		);
 	}
 	
+	
+	
 
 	/** Buying stock with either BUSD OR RUSD; need to test it both ways.
 	 * 
@@ -67,9 +65,8 @@ public class Rusd extends Erc20 {
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
-	public String buyStockWithRusd(int adminAcctId, String userAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
+	public String buyStockWithRusd(String userAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
 		return buyStock( 
-				adminAcctId, 
 				userAddr,
 				this,
 				stablecoinAmt,
@@ -79,7 +76,7 @@ public class Rusd extends Erc20 {
 	}
 	
 	/** Buy with either RUSD or BUSD */
-	public String buyStock(int adminAcctId, String userAddr, Erc20 stablecoin, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
+	public String buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -92,6 +89,8 @@ public class Rusd extends Erc20 {
 		// you should check (a) that approval was done, and (b) that there is
 		// sufficient coin in the source wallet. pas
 		
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
+
 		S.out( "Account %s buying %s %s with %s %s for user %s",
 				adminAcctId, params[4], stockTokenAddr, params[3], stablecoin.address(), userAddr);
 		return Fireblocks.call( adminAcctId, m_address, 
@@ -101,7 +100,7 @@ public class Rusd extends Erc20 {
 	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD) */
-	public String sellStockForRusd(int adminAcctId, String userAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
+	public String sellStockForRusd(String userAddr, double stablecoinAmt, String stockTokenAddr, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
@@ -112,6 +111,8 @@ public class Rusd extends Erc20 {
 				StockToken.toStockToken( stockTokenAmt) 
 		};
 		
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
+
 		S.out( "Account %s selling %s %s for %s RUSD for user %s",
 				adminAcctId, 
 				params[4], 
@@ -125,7 +126,7 @@ public class Rusd extends Erc20 {
 	
 	/** Burn RUSD from user wallet and transfer BUSD from RefWallet to user wallet
 	 *  Since we only pass one amount, RUSD must have same number of decimals as BUSD */
-	public String sellRusd(int adminAcctId, String userAddr, Busd busd, double amt) throws Exception {
+	public String sellRusd(String userAddr, Busd busd, double amt) throws Exception {
 		String[] paramTypes = { "address", "address", "uint256" };
 
 		Object[] params = { 
@@ -135,6 +136,8 @@ public class Rusd extends Erc20 {
 		};
 		
 		Util.require( m_decimals == busd.decimals(), "Number of decimals must match");
+
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
 
 		S.out( "Account %s user %s selling %s RUSD for BUSD",
 				adminAcctId, userAddr, amt);

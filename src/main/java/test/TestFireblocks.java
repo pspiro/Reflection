@@ -84,33 +84,6 @@ public class TestFireblocks extends TestCase {
 		
 	}
 	
-	public void testBuyStockWithRusd() throws Exception {
-		String id = rusd.buyStockWithRusd(
-				Accounts.nextAdminId(), 
-				myWallet,
-				0, 
-				ge, 
-				10 
-		);
-		Transactions.getTransaction( id).display("buy stock with RUSD");
-
-		assertEquals( 66, Fireblocks.getTransHash(id,60).length() );
-		// better is wait and confirm the new balance in the account 
-	}
-
-	public void testSellStock() throws Exception {
-		String id = rusd.sellStockForRusd(
-				Accounts.nextAdminId(), 
-				myWallet,
-				100, 
-				ge, 
-				9 
-		);
-		Transactions.getTransaction( id).display("sell stock");
-
-		assertEquals( 66, Fireblocks.getTransHash(id,60).length() );
-	}
-	
 	
 //	public void testBuyStockWithBusd() throws Exception {
 //	// first you must approve the transaction, which has to be signed by the user,

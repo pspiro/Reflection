@@ -718,7 +718,6 @@ public class MyTransaction {
 					// buy with RUSD
 					if (m_map.getParam("currency").toLowerCase().equals( "rusd") ) {
 						id = m_main.rusd().buyStockWithRusd(
-								Accounts.nextAdminId(), 
 								order.walletAddr(), 
 								stablecoinAmt,
 								order.stockTokenAddr(), 
@@ -729,7 +728,6 @@ public class MyTransaction {
 					// buy with BUSD
 					else {
 						id = m_main.rusd().buyStock(
-								Accounts.nextAdminId(), 
 								order.walletAddr(),
 								Main.m_config.newBusd(),
 								stablecoinAmt,
@@ -745,7 +743,6 @@ public class MyTransaction {
 					tds = .01 * preAmt;
 					double stablecoinAmt = preAmt - tds;
 					id = m_main.rusd().sellStockForRusd(
-							Accounts.nextAdminId(),
 							order.walletAddr(),
 							stablecoinAmt,
 							order.stockTokenAddr(),

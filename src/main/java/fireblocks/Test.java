@@ -46,7 +46,6 @@ public class Test {
 		
 		// let Bob buy 1 stock with 1 BUSD (now RefWallet has 1 BUSD which is needed when user wants to sell their RUSD) 
 		rusd.buyStock(
-				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				busd,
 				1,
@@ -57,7 +56,6 @@ public class Test {
 		
 		// let user buy stock with zero RUSD
 		rusd.buyStockWithRusd(
-				accounts.getId( "Admin1"),
 				userAddr,
 				0, 
 				stock.address(), 
@@ -65,7 +63,6 @@ public class Test {
 		
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
-				accounts.getId( "Admin1"),
 				userAddr,
 				1,
 				stock.address(),
@@ -73,7 +70,6 @@ public class Test {
 		
 		// buy stock for 1 RUSD
 		rusd.buyStockWithRusd(
-				accounts.getId( "Admin1"),
 				userAddr,
 				1, 
 				stock.address(), 
@@ -81,7 +77,6 @@ public class Test {
 				
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
-				accounts.getId( "Admin1"),
 				userAddr,
 				1,
 				stock.address(),
@@ -89,7 +84,6 @@ public class Test {
 		
 		// redeem RUSD for BUSD
 		rusd.sellRusd(
-				accounts.getId( "Admin1"),
 				userAddr,
 				busd,
 				1);
