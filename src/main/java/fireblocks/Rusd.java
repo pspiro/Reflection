@@ -126,7 +126,7 @@ public class Rusd extends Erc20 {
 	}
 	
 	/** Not used yet, for testing only */
-	String buyRusd(int adminAcctId, String userAddr, Busd busd, double amt) throws Exception {
+	String buyRusd(String userAddr, Busd busd, double amt) throws Exception {
 		String[] paramTypes = { "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr, 
@@ -134,6 +134,8 @@ public class Rusd extends Erc20 {
 				busd.toBlockchain(amt),
 				toBlockchain(amt)
 		};
+
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
 
 		S.out( "Account %s user %s buying %s RUSD with BUSD", adminAcctId, userAddr, amt);
 

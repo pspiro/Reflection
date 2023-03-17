@@ -59,8 +59,4 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	public static boolean isArray(String ret) {
 		return S.isNotNull(ret) && ret.startsWith("[");
 	}
-	
-	public int size() {
-		return m_ar.size();
-	}
 }

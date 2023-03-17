@@ -34,19 +34,16 @@ public class TestBuyRusd {
 		Fireblocks.getTransHash(id, 60);
 		
 		rusd.buyRusd(
-				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				busd,
 				1);
 		
 		rusd.buyRusd(
-				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				busd,
 				1);
 		
 		rusd.sellRusd(
-				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				busd,
 				2);
