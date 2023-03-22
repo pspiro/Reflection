@@ -38,8 +38,6 @@ import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
-import reflection.Main.PriceQuery;
-import reflection.Main.Stock;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -54,12 +52,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
+	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
+	private static boolean m_simulated;
+
 	private MyRedis m_redis;
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final OrderConnectionMgr m_orderConnMgr = new OrderConnectionMgr(); // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
-	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
-	private static boolean m_simulated;
+	private ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private String m_tabName;
 	private Rusd m_rusd;  // you could move this into Config
 	
@@ -83,6 +82,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
@@ -149,7 +149,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 
 		// connect to TWS
-		m_orderConnMgr.connect( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
+		S.out( "  done");
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
@@ -206,29 +208,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		private int m_clientId;
 		private Timer m_timer;
 		private boolean m_ibConnection;
-		private final LogType m_logType;
 		private final ApiController m_controller = new ApiController( this, null, null);
 		boolean ibConnection() { return m_ibConnection; }
 
-		ConnectionMgr(LogType logType) {
-			m_logType = logType;
+		ConnectionMgr(String host, int port) {
+			m_host = host;
+			m_port = port;
+			m_clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
+			
 			m_controller.handleExecutions( Main.this);
 		}
 
 		public ApiController controller() {
 			return m_controller;
-		}
-
-		void connect(String host, int port) {
-			int clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
-			S.out( "%s connecting to TWS on %s:%s with client id %s", m_logType, host, port, clientId);
-
-			m_host = host;
-			m_port = port;
-			m_clientId = clientId;
-			startTimer();
-
-			//S.out( "  done");
 		}
 
 		synchronized void startTimer() {
@@ -249,13 +241,21 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			}
 		}
 
-		synchronized void onTimer() {
-			S.out( "%s trying...", m_logType);
-			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
-				S.out( "%s failed", m_logType);
+		void onTimer() {
+			try {
+				connectNow();
+				log( LogType.INFO, "connect() success");
 			}
-			else {
-				S.out( "%s success", m_logType);
+			catch( Exception e) {
+				log( LogType.ERROR, "connect() failure");
+				m_log.log(e);
+			}
+		}
+		
+		synchronized void connectNow() throws Exception {
+			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s...", m_host, m_port, m_clientId);
+			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
+				throw new Exception("Could not connect to TWS");
 			}
 		}
 
@@ -266,7 +266,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
-			log( m_logType, "Connected to TWS");
+			log( LogType.INFO, "Connected to TWS");
 			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
 
 			stopTimer();
@@ -278,12 +278,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			// order id's; it's because sometimes, after a reconnect or if TWS
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
-			log( m_logType, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
+			log( LogType.INFO, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
 		}
 
 		@Override public synchronized void onDisconnected() {
 			if (m_timer == null) {
-				log( m_logType, "Disconnected from TWS");
+				log( LogType.ERROR, "Disconnected from TWS");
 				startTimer();
 			}
 		}
@@ -324,12 +324,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			m_controller.dump();
 		}
 
-	}
-
-	class OrderConnectionMgr extends ConnectionMgr {
-		OrderConnectionMgr() {
-			super( LogType.ORDER_CONNECTION);
-		}
 	}
 
 	/** Handle HTTP msg synchronously */
