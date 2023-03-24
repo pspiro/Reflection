@@ -41,11 +41,11 @@ public class TestSellRusd {
 				1);
 
 		// user to approve buying with BUSD; you must wait for this
-		String id = busd.approve(
+		busd.approve(
 				accounts.getId( "Bob"),
 				rusd.address(),
-				1);
-		Fireblocks.getTransHash(id, 60);
+				1)
+				.waitForHash();
 		
 		// let Bob buy 1 stock with 1 BUSD (now RefWallet has 1 BUSD which is needed when user wants to sell their RUSD) 
 		rusd.buyStock(

@@ -1,4 +1,4 @@
-package test;
+package testcase;
 
 import junit.framework.TestCase;
 import tw.google.GTable;

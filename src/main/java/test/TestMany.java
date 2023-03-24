@@ -3,6 +3,8 @@ package test;
 import java.util.HashMap;
 import java.util.Random;
 
+import testcase.TestErrors;
+import testcase.TestOrder;
 import tw.util.S;
 
 public class TestMany {

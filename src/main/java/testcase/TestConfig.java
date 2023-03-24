@@ -1,6 +1,6 @@
-package test;
+package testcase;
 
-import static test.TestErrors.sendData;
+import static testcase.TestErrors.sendData;
 
 import java.sql.ResultSet;
 import java.util.HashMap;

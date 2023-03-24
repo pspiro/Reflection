@@ -27,25 +27,22 @@ public class Deploy {
 		Busd busd = config.newBusd();
 		
 		Util.require( S.isNotNull( busd.address() ), "BUSD address is missing");
-		//Util.require( S.isNull( rusd.address() ), "RUSD is already deployed");
-		
 		instance.read();
-		
-		// deploy RUSD
-		if (S.isNull( rusd.address() ) ) {
-			rusd.deploy( 
-					"c:/work/smart-contracts/build/contracts/rusd.json",
-					instance.getAddress( "RefWallet"),
-					instance.getAddress( "Admin1")
-			);
-			config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
-		}
 		
 		// deploy BUSD (for testing only)
 		if ("deploy".equals( busd.address() ) ) {
 			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
-			config.setBusdAddress( busd.address() );
+			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
 		}
+
+		// deploy RUSD and update spreadsheet
+		Util.require( "deploy".equals( rusd.address() ), "RUSD must be set to 'deploy'");
+		rusd.deploy( 
+				"c:/work/smart-contracts/build/contracts/rusd.json",
+				instance.getAddress( "RefWallet"),
+				instance.getAddress( "Admin1")
+		);
+		config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
 		
 		// let RefWallet approve RUSD to transfer BUSD
 		busd.approve( 

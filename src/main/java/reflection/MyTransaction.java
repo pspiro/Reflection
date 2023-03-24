@@ -467,6 +467,7 @@ public class MyTransaction {
 		order.totalQuantity( quantity);
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
+		order.allOrNone(true);  // all or none, we don't want partial fills
 		order.whatIf( whatIf);
 		order.transmit( true);
 		order.outsideRth( true);
@@ -686,7 +687,7 @@ public class MyTransaction {
 			return;
 		}
 
-		double stockQty;  // quantity of stock tokens to swap
+		double stockTokenQty;  // quantity of stock tokens to swap
 		LogType logType;  // fill or partial fill
 		RefCode refCode;  // fill or partial fill
 
@@ -694,12 +695,13 @@ public class MyTransaction {
 		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
 		// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
 		if (order.totalQuantity() - filledShares > .5001) {
-			stockQty = filledShares;
+			// this should never happen since we set all-or-none on the orders
+			stockTokenQty = filledShares;
 			logType = LogType.PARTIAL_FILL;
 			refCode = RefCode.PARTIAL_FILL;
 		}
 		else {
-			stockQty = order.totalQuantity();
+			stockTokenQty = order.totalQuantity();
 			logType = LogType.FILLED;
 			refCode = RefCode.OK;
 		}
@@ -713,7 +715,7 @@ public class MyTransaction {
 
 				// buy
 				if (order.action() == Action.BUY) {
-					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
+					double stablecoinAmt = stockTokenQty * order.lmtPrice() + Main.m_config.commission();
 					
 					// buy with RUSD
 					if (m_map.getParam("currency").toLowerCase().equals( "rusd") ) {
@@ -721,7 +723,7 @@ public class MyTransaction {
 								order.walletAddr(), 
 								stablecoinAmt,
 								order.stockTokenAddr(), 
-								stockQty
+								stockTokenQty
 						);
 					}
 					
@@ -732,21 +734,21 @@ public class MyTransaction {
 								Main.m_config.newBusd(),
 								stablecoinAmt,
 								order.stockTokenAddr(), 
-								stockQty
+								stockTokenQty
 						);
 					}
 				}
 				
 				// sell
 				else {
-					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
+					double preAmt = stockTokenQty * order.lmtPrice() - Main.m_config.commission();
 					tds = .01 * preAmt;
 					double stablecoinAmt = preAmt - tds;
 					id = m_main.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
 							order.stockTokenAddr(),
-							stockQty
+							stockTokenQty
 					);
 				}
 
@@ -754,6 +756,9 @@ public class MyTransaction {
 				// when the order fills and one when the blockchain transaction is completed
 
 				// wait for the transaction to be signed
+				// this won't be good if we have multiple orders pending since each one is
+				// polling every one second; either put them in a queue or use the Fireblocks
+				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
@@ -766,7 +771,7 @@ public class MyTransaction {
 			}
 		}
 
-		respond( code, refCode, "filled", stockQty);
+		respond( code, refCode, "filled", stockTokenQty);
 
 		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
@@ -908,3 +913,4 @@ public class MyTransaction {
 // test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill
 // test exception during fireblocks part
 // IOC timeout seems to be 3-4 seconds
+// don't store commission in two places in db
