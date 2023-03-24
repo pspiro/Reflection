@@ -389,11 +389,13 @@ public class Config {
 	}
 	
 	public void setRusdAddress(String address) throws Exception {
-		m_tab.put( "rusdAddr", address);
+		rusdAddr = address;
+		m_tab.put( "rusdAddr", rusdAddr);
 	}
 	
 	public void setBusdAddress(String address) {
-		m_tab.put( "busdAddr", address);
+		busdAddr = address;
+		m_tab.put( "busdAddr", busdAddr);
 	}
 
 	static class RefApiConfig extends Config {

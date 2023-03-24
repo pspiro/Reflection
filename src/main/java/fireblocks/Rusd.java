@@ -145,7 +145,7 @@ public class Rusd extends Erc20 {
 				buyRusdKeccak, 
 				paramTypes, 
 				params, 
-				"buy RUSD"
+				"RUSD buy RUSD"
 		);
 	}
 
@@ -172,7 +172,7 @@ public class Rusd extends Erc20 {
 				sellRusdKeccak, 
 				paramTypes, 
 				params, 
-				"sell RUSD");
+				"RUSD sell RUSD");
 	}
 
 	/** There is a RUSD.buyRusd method but it is for the future, currently never called. */

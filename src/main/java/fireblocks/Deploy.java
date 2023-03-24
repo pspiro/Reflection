@@ -20,16 +20,15 @@ public class Deploy {
 	
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
+		S.out( "Deploying system");
+		
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();
 		
-		Util.require( S.isNotNull( busd.address() ), "BUSD address is missing");
-		instance.read();
-		
-		// deploy BUSD (for testing only)
+		// deploy BUSD? (for testing only)
 		if ("deploy".equals( busd.address() ) ) {
 			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
 			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
@@ -74,7 +73,7 @@ public class Deploy {
 			}
 		}
 		
-		Test.main(null);
+		Test.run(busd, rusd);
 	}
 
 	// move this into Erc20? Or let it return a

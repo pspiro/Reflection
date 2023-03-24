@@ -13,38 +13,24 @@ public class Test {
 	// one is not done yet
 	
 	
+	static Accounts accounts = Accounts.instance;
+	static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+
 	public static void main(String[] args) throws Exception {
-		Accounts.instance.setAdmins( "Admin1,Admin2");
+		accounts.setAdmins( "Admin1,Admin2");
 		
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
+
+		run( config.newBusd(), config.newRusd() );
+	}
+	
+	static void run(Busd busd, Rusd rusd) throws Exception {
+		accounts.setAdmins( "Admin1,Admin2");
 		
-		Rusd rusd = config.newRusd();
-		Busd busd = config.newBusd();
-		
-		Accounts accounts = Accounts.instance;
-		accounts.read();
-
-		String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-		//String userAddr = accounts.getAddress("Bob");
-		
-		rusd.sellRusd(
-				userAddr,
-				busd,
-				1);
-System.exit(0);
-
-
-
-
 		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );
 		
-
-
-
-
-
 		
 		// ----- Bob -----------------------------
 		
@@ -68,7 +54,7 @@ System.exit(0);
 				stock,
 				1);
 
-		S.input("Check balances, should be 1 BUSD in RefWallet");
+		//S.input("Check balances, should be 1 BUSD in RefWallet");
 		
 		// ----- 0x450e -----------------------------
 		
@@ -100,10 +86,11 @@ System.exit(0);
 				stock,
 				1);
 		
-		// redeem RUSD for BUSD
+		// redeem (sell) RUSD for BUSD
 		rusd.sellRusd(
 				userAddr,
 				busd,
 				1);
 	}
+
 }
