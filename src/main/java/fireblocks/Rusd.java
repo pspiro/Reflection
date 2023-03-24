@@ -37,7 +37,7 @@ public class Rusd extends Erc20 {
 	 * @throws Exception */
 	public Rusd( String rusdAddr, int rusdDecimals) throws Exception {
 		super( rusdAddr, rusdDecimals);
-		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD");
+		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
 	}
 	
 	/** Deploy RUSD

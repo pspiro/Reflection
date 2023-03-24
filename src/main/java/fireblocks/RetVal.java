@@ -11,7 +11,8 @@ public class RetVal {
 		return m_id;
 	}
 	
-	void waitForHash() throws Exception {
-		Fireblocks.getTransHash(m_id, 60);
+	/** This blocks for up to 63 seconds */
+	String waitForHash() throws Exception {
+		return Fireblocks.getTransHash(m_id, 60);
 	}
 }

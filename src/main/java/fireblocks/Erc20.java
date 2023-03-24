@@ -36,8 +36,8 @@ public class Erc20 {
 			};
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
-		return new RetVal( Fireblocks.call( accountId, m_address, 
-				Rusd.approveKeccak, paramTypes, params, "BUSD approve") );
+		return Fireblocks.call2( accountId, m_address, 
+				Rusd.approveKeccak, paramTypes, params, "BUSD approve");
 		
 	}
 
