@@ -146,7 +146,7 @@ public class Config {
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.rusdAddr = m_tab.get("rusdAddr");  // not required when deploying 
+			this.rusdAddr = m_tab.getRequiredString("rusdAddr"); 
 			this.busdAddr = m_tab.getRequiredString("busdAddr");
 			this.platformBase = m_tab.getRequiredString("platformBase");
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform");

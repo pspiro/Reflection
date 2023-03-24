@@ -21,26 +21,22 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Avax-config");
+		config.readFromSpreadsheet("Test-config");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();
 		
 		Util.require( S.isNotNull( busd.address() ), "BUSD address is missing");
-		Util.require( S.isNull( rusd.address() ), "RUSD is already deployed");
+		Util.require( "deploy".equals( rusd.address() ), "RUSD must be set to 'deploy'");
 		
 		instance.read();
 		
-		// deploy RUSD
+		// deploy RUSD and update spreadsheet
 		rusd.deploy( 
 				"c:/work/smart-contracts/build/contracts/rusd.json",
 				instance.getAddress( "RefWallet"),
 				instance.getAddress( "Admin1")
 		);
-		
-		System.exit(0);
-		
-		// update spreadsheet with deployed address
 		config.setRusdAddress( rusd.address() );
 		
 		// let RefWallet approve RUSD to transfer BUSD

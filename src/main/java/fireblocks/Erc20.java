@@ -26,8 +26,8 @@ public class Erc20 {
 	}
 	
 	/** Approve some wallet to spend on behalf of another
-	 *  NOTE: you must wait for the respons */
-	String approve(int accountId, String spenderAddr, double amt) throws Exception {
+	 *  NOTE: you must wait for the response */
+	RetVal approve(int accountId, String spenderAddr, double amt) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
@@ -36,8 +36,8 @@ public class Erc20 {
 			};
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
-		return Fireblocks.call( accountId, m_address, 
-				Rusd.approveKeccak, paramTypes, params, "BUSD approve");
+		return new RetVal( Fireblocks.call( accountId, m_address, 
+				Rusd.approveKeccak, paramTypes, params, "BUSD approve") );
 		
 	}
 

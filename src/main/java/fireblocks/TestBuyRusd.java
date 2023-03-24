@@ -27,11 +27,10 @@ public class TestBuyRusd {
 				2);
 
 		// user to approve buying with BUSD; you must wait for this
-		String id = busd.approve(
+		busd.approve(
 				accounts.getId( "Bob"),
 				rusd.address(),
-				2);
-		Fireblocks.getTransHash(id, 60);
+				2).waitForHash();
 		
 		rusd.buyRusd(
 				accounts.getAddress("Bob"),
