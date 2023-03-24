@@ -204,6 +204,11 @@ public class Fireblocks {
 	 *  Assume all string length <= 32 bytes 
 	 * @throws RefException */
 	public static String encodeParameters( String[] types, Object[] params) throws Exception {
+		Util.require( 
+				types == null && params == null || 
+				types != null && params != null && types.length == params.length, 
+				"types and params are out of sync");
+		
 		// no parameters passed?
 		if (types == null) {
 			return "";
@@ -218,10 +223,10 @@ public class Fireblocks {
 			String type = types[i];
 			Object val = params[i];
 			if (type.equals("string") ) {
-				Main.require( val instanceof String, RefCode.UNKNOWN, "Wrong type");
+				Util.require( val instanceof String, "Wrong type");
 				
 				String str = (String)val;
-				Main.require( str.length() <= 32, RefCode.UNKNOWN, "String too long");
+				Util.require( str.length() <= 32, "String too long");
 				
 				// total number of parameters plus the number of strings (or other static types) that came before
 				int num = (types.length + statics * 2) * 32;

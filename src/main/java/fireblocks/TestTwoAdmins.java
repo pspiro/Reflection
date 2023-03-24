@@ -35,7 +35,7 @@ public class TestTwoAdmins {
 				Accounts.instance.getAddress(name),
 				busd,
 				1,
-				stock.address(),
+				stock,
 				1);
 	}
 

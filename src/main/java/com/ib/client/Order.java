@@ -17,6 +17,7 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.client.Types.TriggerMethod;
 import com.ib.client.Types.VolatilityType;
 
+import fireblocks.StockToken;
 import tw.util.S;
 
 public class Order {
@@ -799,8 +800,8 @@ public class Order {
 	public String stablecoinAddr() {
 		return m_stablecoinAddr;
 	}
-	public String stockTokenAddr() {
-		return m_stockTokenAddr;
+	public StockToken stockTokenAddr() {
+		return new StockToken( m_stockTokenAddr);
 	}
 	
 	public void stockTokenAddr(String v) {

@@ -11,6 +11,9 @@ import tw.util.S;
 public class Accounts {
 	private MyJsonArray m_accounts;   // create a map. pas
 	private boolean m_read;
+	private String[] m_admins;
+	private int m_nextAdminIndex = -1;
+	private final HashMap<String,String> m_mapUserToAdmin = new HashMap<>();
 	
 	public static Accounts instance = new Accounts();
 
@@ -65,12 +68,6 @@ public class Accounts {
 		return address;
 	}
 	
-	
-	
-	private String[] m_admins;
-	private int m_nextAdminIndex = -1;
-	private HashMap<String,String> m_mapUserToAdmin = new HashMap<>();
-	
 	/** Set the list of admins
 	 *  @param admins is comma-delimited */
 	public void setAdmins( String admins) {
@@ -83,7 +80,7 @@ public class Accounts {
 	}
 	
 	private synchronized String getAdmin(String userAddr) throws Exception {
-		Util.require(m_admins.length > 0, "No admins set");
+		Util.require(m_admins != null && m_admins.length > 0, "No admins set");
 		
 		String admin = m_mapUserToAdmin.get(userAddr);
 		if (admin == null) {

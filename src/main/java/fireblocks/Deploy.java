@@ -21,27 +21,31 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Avax-config");
+		config.readFromSpreadsheet("Test-config");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();
 		
 		Util.require( S.isNotNull( busd.address() ), "BUSD address is missing");
-		Util.require( S.isNull( rusd.address() ), "RUSD is already deployed");
+		//Util.require( S.isNull( rusd.address() ), "RUSD is already deployed");
 		
 		instance.read();
 		
 		// deploy RUSD
-		rusd.deploy( 
-				"c:/work/smart-contracts/build/contracts/rusd.json",
-				instance.getAddress( "RefWallet"),
-				instance.getAddress( "Admin1")
-		);
+		if (S.isNull( rusd.address() ) ) {
+			rusd.deploy( 
+					"c:/work/smart-contracts/build/contracts/rusd.json",
+					instance.getAddress( "RefWallet"),
+					instance.getAddress( "Admin1")
+			);
+			config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
+		}
 		
-		System.exit(0);
-		
-		// update spreadsheet with deployed address
-		config.setRusdAddress( rusd.address() );
+		// deploy BUSD (for testing only)
+		if ("deploy".equals( busd.address() ) ) {
+			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
+			config.setBusdAddress( busd.address() );
+		}
 		
 		// let RefWallet approve RUSD to transfer BUSD
 		busd.approve( 

@@ -30,7 +30,7 @@ public class StockToken extends Erc20 {
 	
 	// String m_rusdAddress; // this could/should be a member var
 	
-	StockToken( String address) {
+	public StockToken( String address) {    // you might want to add the name here
 		super( address, stockTokenDecimals);
 	}
 	
@@ -61,7 +61,7 @@ public class StockToken extends Erc20 {
 	}
 
 	/** Amount gets rounded to three decimals */
-	public static BigInteger toStockToken(double stockTokenAmt) {
-		return Rusd.timesPower( stockTokenAmt, stockTokenDecimals);
-	}
+//	public static BigInteger toStockToken(double stockTokenAmt) {
+//		return Rusd.timesPower( stockTokenAmt, stockTokenDecimals);
+//	}
 }

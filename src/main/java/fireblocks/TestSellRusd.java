@@ -6,7 +6,7 @@ import tw.google.NewSheet;
 import tw.util.S;
 
 /** Tests all BUSD and StockToken features */
-public class Test {
+public class TestSellRusd {
 	// it seems that you have to wait or call w/ the same Admin
 	// if you need the first transaction to finish because
 	// Fireblocks checks and thinks it will fail if the first
@@ -28,23 +28,9 @@ public class Test {
 		String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		//String userAddr = accounts.getAddress("Bob");
 		
-		rusd.sellRusd(
-				userAddr,
-				busd,
-				1);
-System.exit(0);
-
-
-
-
+		
 		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );
-		
-
-
-
-
-
 		
 		// ----- Bob -----------------------------
 		
@@ -70,40 +56,19 @@ System.exit(0);
 				1);
 
 		S.input("Check balances, should be 1 BUSD in RefWallet");
-		
-		// ----- 0x450e -----------------------------
-		
-		// let user buy stock with zero RUSD
-		rusd.buyStockWithRusd(
-				userAddr,
-				0, 
-				stock, 
-				1);
-		
+
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
-				userAddr,
+				accounts.getAddress("Bob"),
 				1,
 				stock,
 				1);
 		
-		// buy stock for 1 RUSD
-		rusd.buyStockWithRusd(
-				userAddr,
-				1, 
-				stock, 
-				1);
-				
-		// sell stock for 1 RUSD
-		rusd.sellStockForRusd(
-				userAddr,
-				1,
-				stock,
-				1);
+		S.input("Check balances, should be 1 BUSD in RefWallet and 1 RUSD in Bob");
 		
 		// redeem RUSD for BUSD
 		rusd.sellRusd(
-				userAddr,
+				accounts.getAddress("Bob"),
 				busd,
 				1);
 	}

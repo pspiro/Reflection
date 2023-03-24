@@ -161,6 +161,9 @@ public class Config {
 				fireblocksApiKey = Secret.readValue( fireblocksApiKey);
 				fireblocksPrivateKey = Secret.readValue( fireblocksPrivateKey);
 			}
+
+			// update Fireblocks static keys
+			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -173,9 +176,6 @@ public class Config {
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
-		
-		// update Fireblocks static keys
-		Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {
@@ -381,7 +381,7 @@ public class Config {
 	}
 
 	public Busd newBusd() {
-		return new Busd( busdAddr, 6);
+		return new Busd( busdAddr, busdDecimals);
 	}
 
 	public int redisQueryInterval() {
@@ -392,6 +392,10 @@ public class Config {
 		m_tab.put( "rusdAddr", address);
 	}
 	
+	public void setBusdAddress(String address) {
+		m_tab.put( "busdAddr", address);
+	}
+
 	static class RefApiConfig extends Config {
 		
 		public void readFromSpreadsheet(String tabName) throws Exception {

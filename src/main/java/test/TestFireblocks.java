@@ -61,13 +61,6 @@ public class TestFireblocks extends TestCase {
 		assertEquals( 6, obj.getInt("age") );
 	}
 	
-	public void testToStockToken() throws Exception {
-		String[] types = { "uint256" };
-		Object[] vals = { StockToken.toStockToken(34.011112) };
-		assertEquals( 
-			"000000000000000000000000000000000000000000000001d7ffb3406049c000", // it gets rounded to four decimal places
-			Fireblocks.encodeParameters( types, vals) );
-	}
 
 	public void testToStablecoin() throws Exception {
 //		String[] types = { "uint256" };
