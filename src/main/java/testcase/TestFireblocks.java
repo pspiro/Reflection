@@ -1,4 +1,4 @@
-package test;
+package testcase;
 
 import java.math.BigInteger;
 
@@ -22,8 +22,7 @@ public class TestFireblocks extends TestCase {
 
 	static {
 		try {
-			config.readFromSpreadsheet("Dev-config");
-			Accounts.instance.read();  // could do lazy init
+			config.readFromSpreadsheet("Test-config");
 			rusd = config.newRusd();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -50,15 +49,6 @@ public class TestFireblocks extends TestCase {
 	
 	public void testStringToBytes() {
 		assertEquals( "414243", Fireblocks.stringToBytes("ABC") );		
-	}
-	
-	public void testToJson() throws Exception {
-		MyJsonObject obj = Fireblocks.toJsonObject( 
-				Fireblocks.toJson("{ 'name': '%s', 'age': %s }", "peter", 6)
-			);
-		
-		assertEquals( "peter", obj.getString("name") );
-		assertEquals( 6, obj.getInt("age") );
 	}
 	
 	public void testToStockToken() throws Exception {

@@ -1,4 +1,4 @@
-package test;
+package testcase;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -99,7 +99,7 @@ public class TestErrors extends TestCase {
 		return str.replaceAll( "\\'", "\"");
 	}
 	
-	static HashMap<String, Object> sendData( String data) throws Exception {
+	public static HashMap<String, Object> sendData( String data) throws Exception {
 		MyHttpClient cli = cli();
 		cli.post( toJson( data) );
 		return cli.readJsonMap();
