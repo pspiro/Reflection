@@ -185,11 +185,12 @@ public class MktDataServer {
 		for (Object obj : m_stocks) {
 			StringJson stock = (StringJson)obj;  
 			String conidStr = stock.get("conid");
-			String exchange = stock.get("exchange");
+			String exchange = "SMART"; //stock.get("exchange");  // exchange would be pulled from the master symbol table
 			
 
 			// for ETF's request price on SMART and IBEOS
-			if (stock.get("type").equals("ETF") ) {
+			// ETF's that trade 24 hours per day have type ETF-24
+			if (stock.get("type").equals("ETF-24") ) {
 				requestEtfPrice( conidStr);
 			}
 			else {

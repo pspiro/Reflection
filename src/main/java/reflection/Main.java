@@ -165,17 +165,27 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
+		// read master list of symbols and map conid to entry
+		HashMap<Integer,ListEntry> map = new HashMap<>();
+		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
+			map.put( entry.getInt("Conid"), entry);
+		}
+		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				int conid = Integer.valueOf( row.getValue("Conid") );
 
-				stock.put( "symbol", row.getValue("Symbol") );
 				stock.put( "conid", String.valueOf( conid) );
 				stock.put( "smartcontractid", row.getValue("TokenAddress") );
-				stock.put( "description", row.getValue("Description") );
-				stock.put( "type", row.getValue("Type") );
-				stock.put( "exchange", row.getValue("Exchange") );
+				
+				ListEntry masterRow = map.get(conid);
+				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
+				stock.put( "symbol", masterRow.getValue("Symbol") );
+				stock.put( "description", masterRow.getValue("Description") );
+				stock.put( "type", masterRow.getValue("Type") ); // Stock, ETF, ETF-24
+				stock.put( "exchange", masterRow.getValue("Exchange") );
+
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);
 			}
@@ -578,7 +588,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	 *  map and also in the m_stocks array. Each stock is itself
 	 *  a map (JSONObject) with keys "bid" and "ask". This is so
 	 *  we don't need to recreate the array every time the client
-	 *  queries for the prices, which is often. */
+	 *  queries for the prices, which is often.
+	 *  
+	 *   Type could be Stock, ETF, or ETF-24 */
 	static class Stock extends JSONObject {
 		Prices m_prices = Prices.NULL;
 
