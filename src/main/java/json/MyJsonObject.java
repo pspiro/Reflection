@@ -8,7 +8,7 @@ import org.json.simple.parser.ParseException;
 import reflection.Util;
 import tw.util.S;
 
-/** Use MyJsonObj when you are reading or parsing; use TypedJson when you are creating */ 
+/** Use MyJsonObj when you are reading or parsing; use StringJson when you are creating */ 
 public class MyJsonObject {  // replace or combine w/ TypedJson
 	
 	private JSONObject m_obj;

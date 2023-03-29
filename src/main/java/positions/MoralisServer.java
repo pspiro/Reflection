@@ -295,7 +295,7 @@ public class MoralisServer {
 		return holder.val;
 	}
 
-	static String contractCall( String contractAddress, String functionName, String abi) throws FileNotFoundException {
+	public static String contractCall( String contractAddress, String functionName, String abi) throws FileNotFoundException {
 		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
 				moralis, contractAddress, chain, functionName);
 		return post( url, abi);
