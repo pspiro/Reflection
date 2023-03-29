@@ -7,6 +7,7 @@ import http.MyHttpClient;
 import json.MyJsonArray;
 import junit.framework.TestCase;
 import reflection.RefCode;
+import reflection.Util;
 import tw.util.S;
 
 public class TestErrors extends TestCase {
@@ -94,20 +95,15 @@ public class TestErrors extends TestCase {
 		return new MyHttpClient( host, 8383);
 	}
 	
-	/** Replace single-quotes with double-quotes */
-	public static String toJson(String str) {
-		return str.replaceAll( "\\'", "\"");
-	}
-	
 	public static HashMap<String, Object> sendData( String data) throws Exception {
 		MyHttpClient cli = cli();
-		cli.post( toJson( data) );
+		cli.post( Util.toJson( data) );
 		return cli.readJsonMap();
 	}
 	
 	static MyJsonArray sendData2( String data) throws Exception {
 		MyHttpClient cli = cli();
-		cli.post( toJson( data) );
+		cli.post( Util.toJson( data) );
 		return cli.readMyJsonArray();
 	}
 	

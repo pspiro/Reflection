@@ -284,4 +284,9 @@ public class Util {
 			super( String.format( format, params) );
 		}
 	}
+
+	/** Replace single-quotes with double-quotes */
+	public static String toJson(String str) {  // not a good name
+		return str.replaceAll( "\\'", "\"");
+	}
 }
