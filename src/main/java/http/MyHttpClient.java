@@ -138,8 +138,9 @@ public class MyHttpClient {
 		get( "");
 	}
 	
-	/** Do not include a / in data */
-	public void get( String data) throws Exception {
+	/** Do not include a / in data 
+	 * @return */
+	public MyHttpClient get( String data) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "GET /" + data + " HTTP/1.1\r\n");
 		for (String header : m_headers) {
@@ -148,6 +149,7 @@ public class MyHttpClient {
 		sb.append( "\r\n");
 
 		write( sb.toString() );
+		return this;
 	}
 
 	public void header(String val) {

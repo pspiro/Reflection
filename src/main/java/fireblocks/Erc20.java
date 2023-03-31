@@ -50,8 +50,14 @@ public class Erc20 {
 				.toBigInteger();
 	}
 
+	/** Returns hex string */
 	public BigInteger toBlockchain(double amt) throws RefException {
 		return timesPower( amt, m_decimals); 
+	}
+	
+	/** Takes decimal string */
+	public static double fromBlockchain(String str, int power) {
+		return new BigDecimal(str).divide( ten.pow(power) ).doubleValue(); 
 	}
 
 }

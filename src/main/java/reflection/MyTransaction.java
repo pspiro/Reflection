@@ -27,11 +27,10 @@ import com.ib.client.OrderStatus;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
+import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Erc20;
 import fireblocks.Fireblocks;
-import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
@@ -50,6 +49,7 @@ public class MyTransaction {
 		getConfig,
 		getConnectionStatus,
 		getDescription,
+		getPositions,
 		getPrice,
 		mint,
 		order,
@@ -212,7 +212,26 @@ public class MyTransaction {
 				m_main.dump();
 				respond( code, RefCode.OK);
 				break;
+			case getPositions:
+				getPositions();
+				break;
 		}
+	}
+
+	private void getPositions() {
+		JSONArray ar = new JSONArray();
+		
+		m_main.orderController().reqPositions( new IPositionHandler() {
+			@Override public void position(String account, Contract contract, Decimal pos, double avgCost) {
+				JSONObject obj = new JSONObject();
+				obj.put( "conid", contract.conid() );
+				obj.put( "position", pos.toDouble() );
+				ar.add( obj);
+			}
+			@Override public void positionEnd() {
+				respond( new Json(ar) ); 
+			}
+		});
 	}
 
 	/** Top-level message handler. This version takes wallet param; you can also call
