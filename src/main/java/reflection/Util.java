@@ -289,4 +289,8 @@ public class Util {
 	public static String toJson(String str) {  // not a good name
 		return str.replaceAll( "\\'", "\"");
 	}
+	
+	public static boolean isValidAddress( String str) {
+		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
+	}
 }

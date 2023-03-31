@@ -1,9 +1,6 @@
 package positions;
 
 
-import static positions.MoralisServer.moralis;
-
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
@@ -12,10 +9,12 @@ import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpServer;
 
 import http.SimpleTransaction;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.EventFetcher.Balances;
 import reflection.Main;
@@ -324,5 +323,18 @@ public class MoralisServer {
 		  	}).join();  // the .join() makes it synchronous
 
 		return holder.val;
+	}
+	
+	/** Fields returned:
+ 		symbol : BUSD,
+		balance : 4722366482869645213697,
+		possible_spam : true,
+		decimals : 18,
+		name : Reflection BUSD,
+		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
+	public static MyJsonArray reqPositions(String wallet) throws Exception {
+		String url = String.format("%s/%s/erc20?chain=%s",
+				moralis, wallet, chain);
+		return MyJsonArray.parse( querySync( url) );
 	}
 }

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,9 +29,12 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Accounts;
-import fireblocks.Busd;
+import fireblocks.Erc20;
 import fireblocks.Fireblocks;
+import fireblocks.StockToken;
+import json.MyJsonArray;
+import json.MyJsonObject;
+import positions.MoralisServer;
 import reflection.Main.Stock;
 import tw.util.S;
 import util.LogType;
@@ -876,8 +880,60 @@ public class MyTransaction {
 			respond( new Json( m_main.getStock(conid) ) );
 		});
 	}
+	
+	public void handleReqPositions(String uri) {
+		wrap( () -> {
+			// get wallet address (last token in URI)
+			String[] ar = uri.split( "/");
+			String address = ar[ar.length-1];
+			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			
+			// query positions from Moralis
+			MyJsonArray positions = MoralisServer.reqPositions(address);
+			
+			JSONArray retVal = new JSONArray();
+			
+			// should contain:
+//			quantity": 0.000001,
+//			"conId": "756733",
+//			"price": 394.32,
+//			"symbol": "SPY (S&P 500 ETF)"
+			
+			for (MyJsonObject position : positions) {
+				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
+				if (stock != null) {
+					JSONObject resp = new JSONObject();
+					resp.put("conId", stock.get("conid") );
+					resp.put("symbol", stock.get("symbol") );
+					resp.put("price", getPrice(stock) );
+					String balance = (String)stock.get("balance");
+					
+					//resp.put("quantity", Erc20.fromBlockchain(balance, StockToken.stockTokenDecimals) );
+					retVal.add(resp);
+				}
+			}
+			
+			respond( new Json(retVal) );
+		});
+	}
 
-	/** Msg received directly from Frontend via nginx */
+	private double getPrice(HashMap stock) {  // change this, let the redis add a reference price or display price. pas
+		Double bid = (Double)stock.get("bid");
+		Double ask = (Double)stock.get("ask");
+		
+		if (bid != null && ask != null) {
+			return (bid + ask) / 2;
+		}
+		if (bid != null) {
+			return bid;
+		}
+		if (ask != null) {
+			return ask;
+		}
+		return 0;
+	}
+	
+/** Msg received directly from Frontend via nginx */
 	public void backendOrder(boolean whatIf) {
 		wrap( () -> {
 			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 

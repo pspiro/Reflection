@@ -19,7 +19,7 @@ public class StockToken extends Erc20 {
 	public static String ibm = "0xdfff5c453e63facda29b44260c2f5b62b2acd131"; // on polygon, 18 dec
 	public static String stk1 = "";
 	public static String stk2 = "";
-	static final int stockTokenDecimals = 18;
+	public static final int stockTokenDecimals = 18;
 	
 	
 	static int decimals = 5;

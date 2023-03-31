@@ -143,6 +143,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
 		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
+		server.createContext("/api/reflection-api/positions", exch -> handleReqPositions(exch) );		
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -150,7 +151,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		// connect to TWS
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
+		//m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
 		S.out( "  done");
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
@@ -558,6 +559,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			.respond( new Json( m_stocks) );
 	}
 
+	private void handleReqPositions(HttpExchange exch) {
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		S.out( "Received %s", uri);
+		new MyTransaction(this, exch).handleReqPositions(uri);
+	}
+
 // frontend expects an error msg like this
 //	{
 //	"statusCode": 400,
@@ -606,6 +613,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		public String getString(String key) {
 			return (String)super.get(key);
 		}
+	}
+
+	// VERY BAD AND INEFFICIENT. ps
+	public HashMap getStockByTokAddr(String addr) throws RefException {
+		require(Util.isValidAddress(addr), RefCode.UNKNOWN, "Invalid address %s when getting stock by tok addr", addr);
+		
+		for (Object obj : m_stocks) {
+			HashMap stock = (HashMap)obj;
+			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
+				return stock;
+			}
+		}
+		return null;
 	}
 }
 
