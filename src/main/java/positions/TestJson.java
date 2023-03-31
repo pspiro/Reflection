@@ -18,7 +18,7 @@ public class TestJson {
 
 	static class A {
 		MyJsonObject obj;
-		
+
 		A(MyJsonObject o) {
 			obj = o;
 		}

@@ -917,7 +917,7 @@ public class MyTransaction {
 		});
 	}
 
-	private double getPrice(HashMap stock) {  // change this, let the redis add a reference price or display price. pas
+	private double getPrice(HashMap stock) {
 		Double bid = (Double)stock.get("bid");
 		Double ask = (Double)stock.get("ask");
 		
