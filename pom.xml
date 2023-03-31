@@ -106,11 +106,19 @@
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-secretmanager</artifactId>
 		</dependency>
-	
+
+		<!-- for GoogleCredentials, used by google secrets -->		
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<!--version>1.16.0</version-->
+		</dependency>
+		
 	</dependencies>
 	
 	<!-- you can use this for dependency management, they you don't need to add the version
-	     of any of the google cloud libraries -->
+	     of any of the google cloud libraries; in particular this will add the correct
+	     version of google-cloud-secretmanager -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>

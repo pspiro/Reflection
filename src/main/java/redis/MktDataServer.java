@@ -40,7 +40,7 @@ public class MktDataServer {
 	//final static int SpyConid = 756733;
 	
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final MdConnectionMgr m_mdConnMgr = new MdConnectionMgr();
+	private MdConnectionMgr m_mdConnMgr;
 	private String m_tabName;
 	private MyRedis m_redis;
 	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
@@ -103,9 +103,11 @@ public class MktDataServer {
 		// we could check with every tick but that is a lot of expensive time operations
 		checkTime(true);
 		Util.executeEvery( 5000, () -> checkTime(false) ); 
-		
+
 		// connect to TWS
-		m_mdConnMgr.connect( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
+		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
+		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
+		//m_mdConnMgr.startTimer();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
 	}
@@ -154,8 +156,8 @@ public class MktDataServer {
 
 
 	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr() {
-			super();
+		MdConnectionMgr( String host, int port, int clientId) {
+			super( host, port, clientId);
 		}
 		
 		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
@@ -183,11 +185,12 @@ public class MktDataServer {
 		for (Object obj : m_stocks) {
 			StringJson stock = (StringJson)obj;  
 			String conidStr = stock.get("conid");
-			String exchange = stock.get("exchange");
+			String exchange = "SMART"; //stock.get("exchange");  // exchange would be pulled from the master symbol table
 			
 
 			// for ETF's request price on SMART and IBEOS
-			if (stock.get("type").equals("ETF") ) {
+			// ETF's that trade 24 hours per day have type ETF-24
+			if (stock.get("type").equals("ETF-24") ) {
 				requestEtfPrice( conidStr);
 			}
 			else {
@@ -297,6 +300,10 @@ public class MktDataServer {
 
 	static void log( String text, Object... params) {
 		m_log.log( LogType.INFO, text, params);
+	}
+
+	static void log( Exception e) {
+		m_log.log( e);
 	}
 
 	public ApiController mdController() {

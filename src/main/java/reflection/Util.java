@@ -171,25 +171,16 @@ public class Util {
         return new String( data, 0, is.read(data, 0, data.length) );
 	}
 	
-	/** Convert hex to decimal and then apply # of decimal digits.
-	 *  Could be used to read the transaction size from the logs. */
-	public static double hexToDec(String str, int decDigits) {
+	/** Convert hex to integer to decimal and then apply # of decimal digits.
+	 *  Could be used to read the transaction size from the logs.
+	 *  @param hexVal can start with 0x or not */
+	public static double hexToDec(String hexVal, int decDigits) {
 		// strip off 0x
-		if (startsWith( str, "0x") ) {
-			str = str.substring( 2);
+		if (startsWith( hexVal, "0x") ) {
+			hexVal = hexVal.substring( 2);
 		}
 		
-		BigInteger tot = new BigInteger("0", 16);
-
-		for (int i = str.length() - 1; i >= 0; i--) {
-			int val = Character.digit(str.charAt(i), 16); // convert hex char to integer 0-15
-			if (val != 0) {
-	        	BigInteger mult = new BigInteger( "16").pow( str.length() - i - 1);
-	        	BigInteger dec = new BigInteger(String.valueOf( val)).multiply( mult);
-	        	tot = tot.add( dec);
-			}
-        }
-		
+		BigInteger tot = new BigInteger(hexVal, 16);
         BigInteger div = new BigInteger("10").pow( decDigits);
         BigDecimal ans = new BigDecimal( tot).divide( new BigDecimal( div) );
         return ans.doubleValue();
@@ -292,5 +283,14 @@ public class Util {
 		public Ex( String format, Object... params) {
 			super( String.format( format, params) );
 		}
+	}
+
+	/** Replace single-quotes with double-quotes */
+	public static String toJson(String str) {  // not a good name
+		return str.replaceAll( "\\'", "\"");
+	}
+	
+	public static boolean isValidAddress( String str) {
+		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 }

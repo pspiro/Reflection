@@ -1,6 +1,6 @@
-package test;
+package testcase;
 
-import static test.TestErrors.sendData;
+import static testcase.TestErrors.sendData;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -7,6 +7,7 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.MySqlConnection;
+import testcase.TestErrors;
 import tw.util.S;
 
 /** Create trades and commissions tables */

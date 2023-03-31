@@ -204,6 +204,11 @@ public class Fireblocks {
 	 *  Assume all string length <= 32 bytes 
 	 * @throws RefException */
 	public static String encodeParameters( String[] types, Object[] params) throws Exception {
+		Util.require( 
+				types == null && params == null || 
+				types != null && params != null && types.length == params.length, 
+				"types and params are out of sync");
+		
 		// no parameters passed?
 		if (types == null) {
 			return "";
@@ -218,10 +223,10 @@ public class Fireblocks {
 			String type = types[i];
 			Object val = params[i];
 			if (type.equals("string") ) {
-				Main.require( val instanceof String, RefCode.UNKNOWN, "Wrong type");
+				Util.require( val instanceof String, "Wrong type");
 				
 				String str = (String)val;
-				Main.require( str.length() <= 32, RefCode.UNKNOWN, "String too long");
+				Util.require( str.length() <= 32, "String too long");
 				
 				// total number of parameters plus the number of strings (or other static types) that came before
 				int num = (types.length + statics * 2) * 32;
@@ -268,11 +273,15 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
+	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+		return call2(fromAcct, addr, callData, paramTypes, params, note).id();
+	}
+	
 	/** @param addr is the address of the contract for which you are calling a method
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data
-	 *  @return Fireblocks id */
-	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	 *  @return RetVal so caller can either get ID or wait for blockchain hash */
+	public static RetVal call2(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
 		
 		String bodyTemplate = 
@@ -302,21 +311,16 @@ public class Fireblocks {
 		fb.endpoint( "/v1/transactions");
 		fb.operation( "POST");
 		fb.body( body);
-		String ret = fb.transact();
-		MyJsonObject obj = toJsonObject( ret);
+		
+		MyJsonObject obj = fb.transactToObj();
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.UNKNOWN, "Error on Fireblocks.call  msg=%s  code=%s",
 				str, obj.getString("code") );
-		return obj.getString("id");
+		return new RetVal( obj.getString("id") );
 	}
 
 	public static String toJson( String format, Object... params) {
 		return String.format( format, params).replaceAll( "\\'", "\"").replaceAll( " ", "");
-	}
-	
-	public static MyJsonObject toJsonObject( String str) throws Exception {
-		Util.require( str.startsWith( "{"), "Error (not a json object): " + str);
-		return MyJsonObject.parse( str);
 	}
 	
 	/** Query the transaction from Fireblocks until it contains the txHash value

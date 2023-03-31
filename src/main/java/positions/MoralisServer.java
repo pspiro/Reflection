@@ -1,6 +1,7 @@
 package positions;
 
 
+import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.sql.ResultSet;
@@ -13,6 +14,7 @@ import org.json.simple.parser.ParseException;
 import com.sun.net.httpserver.HttpServer;
 
 import http.SimpleTransaction;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.EventFetcher.Balances;
 import reflection.Main;
@@ -26,7 +28,8 @@ import util.DateLogFile;
 import util.LogType;
 import util.StringHolder;
 
-/** This app keeps the positions of all wallets in memory for fast access. */
+/** This app keeps the positions of all wallets in memory for fast access.
+ *  This is not really useful because the queries from Moralis are really quick */
 public class MoralisServer {
 	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
 	static String dbUser = "postgres";
@@ -274,7 +277,7 @@ public class MoralisServer {
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare("GET", url)
 			.setHeader("accept", "application/json")
-			.setHeader("X-API-Key", apiKey)		
+			.setHeader("X-API-Key", apiKey)
 		  	.execute()
 		  	.toCompletableFuture()
 		  	.thenAccept( obj -> {
@@ -291,4 +294,47 @@ public class MoralisServer {
 		return holder.val;
 	}
 
+	public static String contractCall( String contractAddress, String functionName, String abi) throws FileNotFoundException {
+		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
+				moralis, contractAddress, chain, functionName);
+		return post( url, abi);
+	}
+
+	public static String post(String url, String body) {
+		StringHolder holder = new StringHolder();
+
+	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
+		client
+			.prepare("POST", url)
+			.setHeader("accept", "application/json")
+			.setHeader("content-type", "application/json")
+			.setHeader("X-API-Key", MoralisServer.apiKey)
+			.setBody(body)
+		  	.execute()
+		  	.toCompletableFuture()
+		  	.thenAccept( obj -> {
+		  		try {
+		  			client.close();
+		  			holder.val = obj.getResponseBody();
+		  		}
+		  		catch (Exception e) {
+		  			e.printStackTrace();
+		  		}
+		  	}).join();  // the .join() makes it synchronous
+
+		return holder.val;
+	}
+	
+	/** Fields returned:
+ 		symbol : BUSD,
+		balance : 4722366482869645213697,
+		possible_spam : true,
+		decimals : 18,
+		name : Reflection BUSD,
+		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
+	public static MyJsonArray reqPositions(String wallet) throws Exception {
+		String url = String.format("%s/%s/erc20?chain=%s",
+				moralis, wallet, chain);
+		return MyJsonArray.parse( querySync( url) );
+	}
 }

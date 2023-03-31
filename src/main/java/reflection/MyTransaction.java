@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -26,11 +27,13 @@ import com.ib.client.OrderStatus;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
+import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Accounts;
-import fireblocks.Busd;
 import fireblocks.Fireblocks;
+import json.MyJsonArray;
+import json.MyJsonObject;
+import positions.MoralisServer;
 import reflection.Main.Stock;
 import tw.util.S;
 import util.LogType;
@@ -46,6 +49,7 @@ public class MyTransaction {
 		getConfig,
 		getConnectionStatus,
 		getDescription,
+		getPositions,
 		getPrice,
 		mint,
 		order,
@@ -208,7 +212,26 @@ public class MyTransaction {
 				m_main.dump();
 				respond( code, RefCode.OK);
 				break;
+			case getPositions:
+				getPositions();
+				break;
 		}
+	}
+
+	private void getPositions() {
+		JSONArray ar = new JSONArray();
+		
+		m_main.orderController().reqPositions( new IPositionHandler() {
+			@Override public void position(String account, Contract contract, Decimal pos, double avgCost) {
+				JSONObject obj = new JSONObject();
+				obj.put( "conid", contract.conid() );
+				obj.put( "position", pos.toDouble() );
+				ar.add( obj);
+			}
+			@Override public void positionEnd() {
+				respond( new Json(ar) ); 
+			}
+		});
 	}
 
 	/** Top-level message handler. This version takes wallet param; you can also call
@@ -467,6 +490,7 @@ public class MyTransaction {
 		order.totalQuantity( quantity);
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
+		order.allOrNone(true);  // all or none, we don't want partial fills
 		order.whatIf( whatIf);
 		order.transmit( true);
 		order.outsideRth( true);
@@ -686,7 +710,7 @@ public class MyTransaction {
 			return;
 		}
 
-		double stockQty;  // quantity of stock tokens to swap
+		double stockTokenQty;  // quantity of stock tokens to swap
 		LogType logType;  // fill or partial fill
 		RefCode refCode;  // fill or partial fill
 
@@ -694,12 +718,13 @@ public class MyTransaction {
 		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
 		// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
 		if (order.totalQuantity() - filledShares > .5001) {
-			stockQty = filledShares;
+			// this should never happen since we set all-or-none on the orders
+			stockTokenQty = filledShares;
 			logType = LogType.PARTIAL_FILL;
 			refCode = RefCode.PARTIAL_FILL;
 		}
 		else {
-			stockQty = order.totalQuantity();
+			stockTokenQty = order.totalQuantity();
 			logType = LogType.FILLED;
 			refCode = RefCode.OK;
 		}
@@ -713,7 +738,7 @@ public class MyTransaction {
 
 				// buy
 				if (order.action() == Action.BUY) {
-					double stablecoinAmt = stockQty * order.lmtPrice() + Main.m_config.commission();
+					double stablecoinAmt = stockTokenQty * order.lmtPrice() + Main.m_config.commission();
 					
 					// buy with RUSD
 					if (m_map.getParam("currency").toLowerCase().equals( "rusd") ) {
@@ -721,7 +746,7 @@ public class MyTransaction {
 								order.walletAddr(), 
 								stablecoinAmt,
 								order.stockTokenAddr(), 
-								stockQty
+								stockTokenQty
 						);
 					}
 					
@@ -732,21 +757,21 @@ public class MyTransaction {
 								Main.m_config.newBusd(),
 								stablecoinAmt,
 								order.stockTokenAddr(), 
-								stockQty
+								stockTokenQty
 						);
 					}
 				}
 				
 				// sell
 				else {
-					double preAmt = stockQty * order.lmtPrice() - Main.m_config.commission();
+					double preAmt = stockTokenQty * order.lmtPrice() - Main.m_config.commission();
 					tds = .01 * preAmt;
 					double stablecoinAmt = preAmt - tds;
 					id = m_main.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
 							order.stockTokenAddr(),
-							stockQty
+							stockTokenQty
 					);
 				}
 
@@ -754,6 +779,9 @@ public class MyTransaction {
 				// when the order fills and one when the blockchain transaction is completed
 
 				// wait for the transaction to be signed
+				// this won't be good if we have multiple orders pending since each one is
+				// polling every one second; either put them in a queue or use the Fireblocks
+				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
@@ -766,7 +794,7 @@ public class MyTransaction {
 			}
 		}
 
-		respond( code, refCode, "filled", stockQty);
+		respond( code, refCode, "filled", stockTokenQty);
 
 		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
@@ -871,8 +899,60 @@ public class MyTransaction {
 			respond( new Json( m_main.getStock(conid) ) );
 		});
 	}
+	
+	public void handleReqPositions(String uri) {
+		wrap( () -> {
+			// get wallet address (last token in URI)
+			String[] ar = uri.split( "/");
+			String address = ar[ar.length-1];
+			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			
+			// query positions from Moralis
+			MyJsonArray positions = MoralisServer.reqPositions(address);
+			
+			JSONArray retVal = new JSONArray();
+			
+			// should contain:
+//			quantity": 0.000001,
+//			"conId": "756733",
+//			"price": 394.32,
+//			"symbol": "SPY (S&P 500 ETF)"
+			
+			for (MyJsonObject position : positions) {
+				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
+				if (stock != null) {
+					JSONObject resp = new JSONObject();
+					resp.put("conId", stock.get("conid") );
+					resp.put("symbol", stock.get("symbol") );
+					resp.put("price", getPrice(stock) );
+					String balance = (String)stock.get("balance");
+					
+					//resp.put("quantity", Erc20.fromBlockchain(balance, StockToken.stockTokenDecimals) );
+					retVal.add(resp);
+				}
+			}
+			
+			respond( new Json(retVal) );
+		});
+	}
 
-	/** Msg received directly from Frontend via nginx */
+	private double getPrice(HashMap stock) {
+		Double bid = (Double)stock.get("bid");
+		Double ask = (Double)stock.get("ask");
+		
+		if (bid != null && ask != null) {
+			return (bid + ask) / 2;
+		}
+		if (bid != null) {
+			return bid;
+		}
+		if (ask != null) {
+			return ask;
+		}
+		return 0;
+	}
+	
+/** Msg received directly from Frontend via nginx */
 	public void backendOrder(boolean whatIf) {
 		wrap( () -> {
 			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
@@ -908,3 +988,4 @@ public class MyTransaction {
 // test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill
 // test exception during fireblocks part
 // IOC timeout seems to be 3-4 seconds
+// don't store commission in two places in db

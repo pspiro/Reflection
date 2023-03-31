@@ -35,7 +35,7 @@ public class TestTwoAdmins {
 				Accounts.instance.getAddress(name),
 				busd,
 				1,
-				stock.address(),
+				stock,
 				1);
 	}
 
@@ -49,11 +49,10 @@ public class TestTwoAdmins {
 				2);
 
 		// user to approve buying with BUSD; you must wait for this
-		String id = busd.approve(
+		busd.approve(
 				Accounts.instance.getId(name),
 				rusd.address(),
-				2);
-		Fireblocks.getTransHash(id, 60);
+				2).waitForHash();
 	}
 }
 

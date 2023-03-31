@@ -26,8 +26,8 @@ public class Erc20 {
 	}
 	
 	/** Approve some wallet to spend on behalf of another
-	 *  NOTE: you must wait for the respons */
-	String approve(int accountId, String spenderAddr, double amt) throws Exception {
+	 *  NOTE: you must wait for the response */
+	RetVal approve(int accountId, String spenderAddr, double amt) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
@@ -36,7 +36,7 @@ public class Erc20 {
 			};
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
-		return Fireblocks.call( accountId, m_address, 
+		return Fireblocks.call2( accountId, m_address, 
 				Rusd.approveKeccak, paramTypes, params, "BUSD approve");
 		
 	}
@@ -50,8 +50,14 @@ public class Erc20 {
 				.toBigInteger();
 	}
 
+	/** Returns hex string */
 	public BigInteger toBlockchain(double amt) throws RefException {
 		return timesPower( amt, m_decimals); 
+	}
+	
+	/** Takes decimal string */
+	public static double fromBlockchain(String str, int power) {
+		return new BigDecimal(str).divide( ten.pow(power) ).doubleValue(); 
 	}
 
 }

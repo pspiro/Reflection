@@ -24,14 +24,11 @@ class ConnectionMgr implements IConnectionHandler {
 	public ApiController controller() { 
 		return m_controller;
 	}
-
-	void connect(String host, int port, int clientId) {
-		MktDataServer.log( "Connecting to TWS on %s:%s with client id %s", host, port, clientId);
-		
+	
+	ConnectionMgr( String host, int port, int clientId) {
 		m_host = host;
 		m_port = port;
 		m_clientId = clientId;
-		startTimer();
 	}
 
 	synchronized void startTimer() {
@@ -53,13 +50,21 @@ class ConnectionMgr implements IConnectionHandler {
 		}
 	}
 
-	synchronized void onTimer() {
-		MktDataServer.log( "Trying to connect");
-		if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
-			MktDataServer.log( "connect() failure");
-		}
-		else {
+	void onTimer() {
+		try {
+			connectNow();
 			MktDataServer.log( "connect() success");
+		}
+		catch( Exception e) {
+			MktDataServer.log( "connect() failure");
+			MktDataServer.log(e);
+		}
+	}
+	
+	synchronized void connectNow() throws Exception {
+		MktDataServer.log( "Connecting to TWS on %s:%s with client id %s...", m_host, m_port, m_clientId);
+		if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
+			throw new Exception("Could not connect to TWS");
 		}
 	}
 
