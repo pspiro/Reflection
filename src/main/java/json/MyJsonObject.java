@@ -18,8 +18,12 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	}
 	
 	public static MyJsonObject parse( String text) throws Exception {
-		Util.require( text != null && text.trim().startsWith( "{"), "Error: not a json object: " + text);
+		Util.require( isObject(text), "Error: not a json object: " + text);
 		return new MyJsonObject( new JSONParser().parse( text) );
+	}
+	
+	public static boolean isObject(String text) {
+		return text != null && text.trim().startsWith("{");
 	}
 
 	public MyJsonArray getAr(String key) {

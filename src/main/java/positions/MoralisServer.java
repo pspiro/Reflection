@@ -335,6 +335,13 @@ public class MoralisServer {
 	public static MyJsonArray reqPositions(String wallet) throws Exception {
 		String url = String.format("%s/%s/erc20?chain=%s",
 				moralis, wallet, chain);
-		return MyJsonArray.parse( querySync( url) );
+		String ret = querySync(url);
+		
+		// we expect an array; if we get an object, there must have been an error
+		if (MyJsonObject.isObject(ret) ) {
+			throw new Exception( "Moralis " + MyJsonObject.parse(ret).getString("message") );
+		}
+
+		return MyJsonArray.parse( ret);
 	}
 }

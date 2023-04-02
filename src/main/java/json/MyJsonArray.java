@@ -6,6 +6,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import reflection.Util;
 import tw.util.S;
 
 /** Array of object only. */
@@ -18,7 +19,8 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 		MyJsonArray.parse( "[ 4,[5,6],7,{\"a\":8,\"b\":9},{\"a\":8,\"b\":9}]").display();
 	}
 	
-	public static MyJsonArray parse( String text) throws ParseException {
+	public static MyJsonArray parse( String text) throws Exception {
+		Util.require( isArray(text), "Error: not a json array: " + text);
 		return new MyJsonArray( new JSONParser().parse( text) );
 	}
 	
@@ -57,6 +59,6 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	}
 
 	public static boolean isArray(String ret) {
-		return S.isNotNull(ret) && ret.startsWith("[");
+		return ret != null && ret.trim().startsWith("[");
 	}
 }

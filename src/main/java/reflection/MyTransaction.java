@@ -215,13 +215,13 @@ public class MyTransaction {
 				respond( code, RefCode.OK);
 				break;
 			case getPositions:
-				getPositions();
+				getStockPositions();
 				break;
 		}
 	}
 
 	/** Used by the Monitor program */
-	private void getPositions() {
+	private void getStockPositions() {
 		JSONArray ar = new JSONArray();
 		
 		m_main.orderController().reqPositions( new IPositionHandler() {
