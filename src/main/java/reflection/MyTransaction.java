@@ -30,7 +30,9 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import fireblocks.Erc20;
 import fireblocks.Fireblocks;
+import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
@@ -218,6 +220,7 @@ public class MyTransaction {
 		}
 	}
 
+	/** Used by the Monitor program */
 	private void getPositions() {
 		JSONArray ar = new JSONArray();
 		
@@ -232,6 +235,8 @@ public class MyTransaction {
 				respond( new Json(ar) ); 
 			}
 		});
+		
+		setTimer( Main.m_config.timeout(), () -> timedOut( "getPositions timed out") );
 	}
 
 	/** Top-level message handler. This version takes wallet param; you can also call
@@ -894,29 +899,23 @@ public class MyTransaction {
 	/** Handle a Backend-style event. Conid is last parameter */
 	public void handleGetStockWithPrice(String uri) {
 		wrap( () -> {
-			String[] ar = uri.split( "/");
-			int conid = Integer.valueOf( ar[ar.length-1]);
+			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
 			respond( new Json( m_main.getStock(conid) ) );
 		});
 	}
 	
+	/** Used by the portfolio section on the dashboard
+	 *  We're returning the token positions from the blockchain, not IB positions */
 	public void handleReqPositions(String uri) {
 		wrap( () -> {
 			// get wallet address (last token in URI)
-			String[] ar = uri.split( "/");
-			String address = ar[ar.length-1];
+			String address = Util.getLastToken(uri, "/");
 			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
 			// query positions from Moralis
 			MyJsonArray positions = MoralisServer.reqPositions(address);
 			
 			JSONArray retVal = new JSONArray();
-			
-			// should contain:
-//			quantity": 0.000001,
-//			"conId": "756733",
-//			"price": 394.32,
-//			"symbol": "SPY (S&P 500 ETF)"
 			
 			for (MyJsonObject position : positions) {
 				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
@@ -925,9 +924,9 @@ public class MyTransaction {
 					resp.put("conId", stock.get("conid") );
 					resp.put("symbol", stock.get("symbol") );
 					resp.put("price", getPrice(stock) );
-					String balance = (String)stock.get("balance");
-					
-					//resp.put("quantity", Erc20.fromBlockchain(balance, StockToken.stockTokenDecimals) );
+					resp.put("quantity", Erc20.fromBlockchain(
+							(String)position.getString("balance"), 
+							StockToken.stockTokenDecimals) );
 					retVal.add(resp);
 				}
 			}

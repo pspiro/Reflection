@@ -293,4 +293,9 @@ public class Util {
 	public static boolean isValidAddress( String str) {
 		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
+	
+	public static String getLastToken(String str, String sep) {
+		String[] ar = str.split(sep);
+		return ar[ar.length-1];
+	}
 }

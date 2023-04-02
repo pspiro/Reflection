@@ -11,6 +11,8 @@
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
 			</resource>
+			
+			<!-- this entry and the file in the resources folder is needed for google secrets -->
 			<resource>
 				<directory>src/main/META-INF</directory>
 			</resource>
@@ -101,17 +103,16 @@
 		    <version>4.3.0</version>
 		</dependency>		
 
-		<!-- for google secrets -->
+		<!-- for google secrets; version is handled by dependencyManagement -->
 		<dependency>
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-secretmanager</artifactId>
 		</dependency>
 
-		<!-- for GoogleCredentials, used by google secrets -->		
+		<!-- for GoogleCredentials, used by google secrets; version is handled by dependencyManagement -->		
 		<dependency>
 			<groupId>com.google.auth</groupId>
 			<artifactId>google-auth-library-oauth2-http</artifactId>
-			<!--version>1.16.0</version-->
 		</dependency>
 		
 	</dependencies>
