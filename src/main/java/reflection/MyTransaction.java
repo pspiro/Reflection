@@ -919,14 +919,17 @@ public class MyTransaction {
 			
 			for (MyJsonObject position : positions) {
 				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
-				if (stock != null) {
+
+				double balance = Erc20.fromBlockchain(
+						(String)position.getString("balance"), 
+						StockToken.stockTokenDecimals);
+				
+				if (stock != null && balance >= Main.m_config.minTokenPosition() ) {
 					JSONObject resp = new JSONObject();
 					resp.put("conId", stock.get("conid") );
 					resp.put("symbol", stock.get("symbol") );
 					resp.put("price", getPrice(stock) );
-					resp.put("quantity", Erc20.fromBlockchain(
-							(String)position.getString("balance"), 
-							StockToken.stockTokenDecimals) );
+					resp.put("quantity", balance); 
 					retVal.add(resp);
 				}
 			}

@@ -57,7 +57,8 @@ public class Config {
 	private String mintBusd;
 	private String mintEth;
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
-	int redisQueryInterval;
+	private int redisQueryInterval;
+	private double minTokenPosition; // minimum token position to display in portfolio section
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -101,6 +102,7 @@ public class Config {
 	public double commission() { return commission; }
 	public String rusdAddr() { return rusdAddr; }
 	public String busdAddr() { return busdAddr; }
+	public double minTokenPosition() { return minTokenPosition; }
 
 	public void readFromSpreadsheet(String tabName) throws Exception {
 		m_tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
@@ -112,6 +114,7 @@ public class Config {
 		this.minSellSpread = m_tab.getDouble( "minSellSpread");
 		this.maxBuyAmt = m_tab.getDouble( "maxBuyAmt");
 		this.maxSellAmt = m_tab.getDouble( "maxSellAmt");
+		this.minTokenPosition = m_tab.getDouble("minTokenPosition");
 
 		// TWS connection
 		this.twsOrderHost = m_tab.get( "twsOrderHost");
