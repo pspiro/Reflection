@@ -3,6 +3,7 @@ package fireblocks;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import positions.MoralisServer;
 import reflection.RefException;
 import tw.util.S;
 
@@ -56,8 +57,15 @@ public class Erc20 {
 	}
 	
 	/** Takes decimal string */
-	public static double fromBlockchain(String str, int power) {
-		return new BigDecimal(str).divide( ten.pow(power) ).doubleValue(); 
+	public static double fromBlockchain(String amt, int power) {
+		return new BigDecimal(amt).divide( ten.pow(power) ).doubleValue(); 
+	}
+	
+	/** Returns the number of this token held by wallet */ 
+	public double reqPosition(String wallet) throws Exception {
+		return fromBlockchain(
+				MoralisServer.reqPosition(wallet, m_address),
+				m_decimals);
 	}
 
 }

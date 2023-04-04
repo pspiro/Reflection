@@ -144,6 +144,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
 		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
+		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -460,7 +461,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		String response;
 
 		try {
-			String uri = exchange.getRequestURI().toString().toLowerCase();
+			String uri = getURI(exchange);
 			Util.require( uri.length() < 4000, "URI is too long");
 
 			String[] parts = uri.split("/");
@@ -550,39 +551,49 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-	// create a mktdat trans obj
+	// frontend expects an error msg like this
+//		{
+//		"statusCode": 400,
+//		"message": "Bad Request"
+//		}
+
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
+		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-		new MyTransaction( this, exch)
+		new BackendTransaction( this, exch)
 			.respond( new Json( m_stocks) );
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
+		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-		new MyTransaction(this, exch).handleReqPositions(uri);
+		new BackendTransaction(this, exch).handleReqPositions(uri);
 	}
 
-// frontend expects an error msg like this
-//	{
-//	"statusCode": 400,
-//	"message": "Bad Request"
-//	}
-
 	private void handleGetStockWithPrice(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
+		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-		new MyTransaction( this, exch)
+		new BackendTransaction( this, exch)
 			.handleGetStockWithPrice( uri);
 	}
 
 	private void handleOrder(HttpExchange exch, boolean whatIf) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
+		String uri = getURI(exch);
 		S.out( "Received %s", uri);
 
-		new MyTransaction( this, exch).backendOrder(whatIf);
+		new BackendTransaction( this, exch).backendOrder(whatIf);
+	}
+
+	private void handleRedeem(HttpExchange exch) {
+		String uri = getURI(exch);
+		S.out( "Received %s", uri);
+
+		new BackendTransaction( this, exch).handleRedeem(uri);
+	}
+	
+	private String getURI(HttpExchange exch) {
+		return exch.getRequestURI().toString().toLowerCase();
 	}
 
 	/** this seems useless since you can still be left with .000001 */

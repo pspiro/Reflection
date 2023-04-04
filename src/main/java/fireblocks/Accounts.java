@@ -53,7 +53,7 @@ public class Accounts {
 	
 	/** Returns the wallet address of the platform base token. Note that
 	 *  other tokens (like Bitcoin) would have a different addresses. */
-	String getAddress(String accountName) throws Exception {
+	public String getAddress(String accountName) throws Exception {
 		return getAddress( getId(accountName) );
 	}
 	

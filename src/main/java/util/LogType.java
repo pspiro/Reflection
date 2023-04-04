@@ -15,11 +15,12 @@ public enum LogType {
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
 	PARTIAL_FILL,	// order was partially filled
+	REDEEM, 
 	REJECTED,		// order was rejected
 	RESTART,		// application was restarted
 	SUBMIT,
 	TERMINATE,
 	TIME,			// switched to/from IBEOS hours 
 	TRADE,			// trade report received
-	WALLET, 
+	WALLET,
 }

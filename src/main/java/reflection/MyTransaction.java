@@ -30,8 +30,11 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import fireblocks.Accounts;
+import fireblocks.Busd;
 import fireblocks.Erc20;
 import fireblocks.Fireblocks;
+import fireblocks.Rusd;
 import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
@@ -40,6 +43,7 @@ import reflection.Main.Stock;
 import tw.util.S;
 import util.LogType;
 
+/** This class handles events from the Backend. See subclass */
 public class MyTransaction {
 	enum MsgType {
 		checkHours,
@@ -78,10 +82,10 @@ public class MyTransaction {
 	public static final String etf = "ETF";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
 
-	private Main m_main;
-	private HttpExchange m_exchange;
+	protected Main m_main;
+	protected HttpExchange m_exchange;
 	private boolean m_responded;  // only respond once per transaction
-	private ParamMap m_map = new ParamMap();
+	protected ParamMap m_map = new ParamMap();
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
@@ -843,7 +847,7 @@ public class MyTransaction {
 			runnable.run();
 		}
 		catch( RefException e) {
-			boolean responded = respond( e.toJson() );
+			boolean responded = respond( e.toJson() );  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
 			if (responded || e.code() != RefCode.TIMED_OUT) {
@@ -853,7 +857,9 @@ public class MyTransaction {
 		catch( Exception e) {
 			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
-			respond( code, RefCode.UNKNOWN, text, e.getMessage() );  // could there be invalid characters? pas
+			respond( 
+					RefException.eToJson(e, RefCode.UNKNOWN) 
+				);
 		}
 	}
 
@@ -895,93 +901,11 @@ public class MyTransaction {
 			return value != 0;
 		}
 	}
-
-	/** Handle a Backend-style event. Conid is last parameter */
-	public void handleGetStockWithPrice(String uri) {
-		wrap( () -> {
-			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
-			respond( new Json( m_main.getStock(conid) ) );
-		});
-	}
 	
-	/** Used by the portfolio section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions */
-	public void handleReqPositions(String uri) {
-		wrap( () -> {
-			// get wallet address (last token in URI)
-			String address = Util.getLastToken(uri, "/");
-			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-			
-			// query positions from Moralis
-			MyJsonArray positions = MoralisServer.reqPositions(address);
-			
-			JSONArray retVal = new JSONArray();
-			
-			for (MyJsonObject position : positions) {
-				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
-
-				double balance = Erc20.fromBlockchain(
-						(String)position.getString("balance"), 
-						StockToken.stockTokenDecimals);
-				
-				if (stock != null && balance >= Main.m_config.minTokenPosition() ) {
-					JSONObject resp = new JSONObject();
-					resp.put("conId", stock.get("conid") );
-					resp.put("symbol", stock.get("symbol") );
-					resp.put("price", getPrice(stock) );
-					resp.put("quantity", balance); 
-					retVal.add(resp);
-				}
-			}
-			
-			respond( new Json(retVal) );
-		});
+	protected void alert(String string, Object... params) {
+		String str = String.format(string, params);
+		log( LogType.REDEEM, str);
 	}
-
-	private double getPrice(HashMap stock) {
-		Double bid = (Double)stock.get("bid");
-		Double ask = (Double)stock.get("ask");
-		
-		if (bid != null && ask != null) {
-			return (bid + ask) / 2;
-		}
-		if (bid != null) {
-			return bid;
-		}
-		if (ask != null) {
-			return ask;
-		}
-		return 0;
-	}
-	
-/** Msg received directly from Frontend via nginx */
-	public void backendOrder(boolean whatIf) {
-		wrap( () -> {
-			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
-			
-			parseMsg();
-
-	   		// some should be written to the log file
-	        // String = m_map.get("symbol": "META",
-			// String = m_map.getRequiredParam("currency");
-			// String smartcontractid = m_map.getRequiredParam("smartcontractid");
-			// double spread = m_map.getRequiredDouble("spread"); //??????????
-			// double commission = m_map.getRequiredDouble("commission");
-
-			int conid = m_map.getRequiredInt("conid");
-			double quantity = m_map.getRequiredDouble("quantity");
-			double price = m_map.getRequiredDouble("price");
-
-			String side = m_map.getRequiredParam("action");
-			require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
-			m_map.put( "side", side);
-
-			String wallet = m_map.getRequiredParam("wallet_public_key");
-			m_map.put( "wallet", wallet); // you can remove this when orders are no longer being passed through the back-end
-
-			order(whatIf, false);
-		});
-    }
 }
 
 // with 2 sec timeout, we see timeout occur before fill is returned

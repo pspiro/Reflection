@@ -17,7 +17,17 @@ public class RefException extends Exception {
 	}
 
 	public Json toJson() {
-		return Util.toJsonMsg( "code", m_code, "text", getMessage() );
+		return eToJson(this, m_code);
+	}
+	
+	public static Json eToJson(Exception e, RefCode refCode) {
+		return Util.toJsonMsg(
+				"code", RefCode.UNKNOWN, 
+				"text", e.getMessage(),
+				"message", e.getMessage(),
+				"error", e.getMessage(),
+				"statusCode", 400
+			);
 	}
 
 }

@@ -26,10 +26,10 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import tw.util.S;
 
 public class Auth {
-	private static final String APPLICATION_NAME ="Reflection"; // was Brisco
-	private static FileDataStoreFactory DATA_STORE_FACTORY;
-	private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
-	private static HttpTransport HTTP_TRANSPORT;
+	private static final String applicationName ="Reflection"; // was Brisco
+	private static FileDataStoreFactory dataStoreFactory;
+	private static final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+	private static HttpTransport httpTransport;
 	private static final String clientId = "1061634809648-vrnvk8f7ltagdn36442oa12a9hnubpr7.apps.googleusercontent.com";
 	private static final String secret = "3eTlljq0d9uSyAySFl2tELH6";
 	
@@ -42,12 +42,11 @@ public class Auth {
 	
 	static {
 		try {
-			HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
 			
 			Logger.getLogger(FileDataStoreFactory.class.getName()).setLevel(Level.SEVERE);
-//			File dataStoreDir = new File(System.getProperty("user.home"), ".credentials/calendar-java-quickstart"); // Directory to store user credentials for this application.
-			File dataStoreDir = new File(".", ".credentials"); // Directory to store user credentials for this application.
-			DATA_STORE_FACTORY = new FileDataStoreFactory(dataStoreDir);
+			File dataStoreDir = new File(".", ".googfiles"); // Directory to store user credentials for this application.
+			dataStoreFactory = new FileDataStoreFactory(dataStoreDir);
 		} catch (Throwable t) {
 			t.printStackTrace();
 			System.exit(1);
@@ -90,8 +89,8 @@ public class Auth {
 		//scopes.add( "https://www.googleapis.com/auth/calendar");
 		//scopes.add( "https://www.googleapis.com/auth/tasks");
 
-		Builder builder = new GoogleAuthorizationCodeFlow.Builder(HTTP_TRANSPORT, JSON_FACTORY, clientId, secret, scopes);
-		builder.setDataStoreFactory(DATA_STORE_FACTORY);
+		Builder builder = new GoogleAuthorizationCodeFlow.Builder(httpTransport, jsonFactory, clientId, secret, scopes);
+		builder.setDataStoreFactory(dataStoreFactory);
 		builder.setAccessType("offline"); //???
 		m_credentials = new AuthorizationCodeInstalledApp(builder.build(), new LocalServerReceiver()).authorize("user");
 	}
@@ -104,8 +103,8 @@ public class Auth {
      */
     public Sheets getSheetsService() throws IOException {
     	if (m_sheet == null) {
-        	m_sheet = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, m_credentials)
-                .setApplicationName(APPLICATION_NAME)
+        	m_sheet = new Sheets.Builder(httpTransport, jsonFactory, m_credentials)
+                .setApplicationName(applicationName)
                 .build();
     	}
     	return m_sheet;
@@ -113,8 +112,8 @@ public class Auth {
 
 	public TwMail getMail() {
 		if (m_mail == null) {
-			m_gmail = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, m_credentials)
-                .setApplicationName(APPLICATION_NAME)
+			m_gmail = new Gmail.Builder(httpTransport, jsonFactory, m_credentials)
+                .setApplicationName(applicationName)
                 .build();
 			m_mail = new TwMail( m_gmail);
 		}

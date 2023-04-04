@@ -344,4 +344,16 @@ public class MoralisServer {
 
 		return MyJsonArray.parse( ret);
 	}
+	
+	public static String reqPosition(String wallet, String token) throws Exception {
+		MyJsonArray ar = reqPositions(wallet);
+		for (MyJsonObject obj : ar) {
+			if (obj.getString("token_address").equalsIgnoreCase(token) ) {
+				return obj.getString("balance");
+			}
+		}
+		return "0";
+	}
+	
+	
 }
