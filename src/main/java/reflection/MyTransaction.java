@@ -8,7 +8,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,16 +29,10 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Accounts;
-import fireblocks.Busd;
-import fireblocks.Erc20;
 import fireblocks.Fireblocks;
-import fireblocks.Rusd;
-import fireblocks.StockToken;
-import json.MyJsonArray;
-import json.MyJsonObject;
-import positions.MoralisServer;
 import reflection.Main.Stock;
+import tw.google.Auth;
+import tw.google.TwMail;
 import tw.util.S;
 import util.LogType;
 
@@ -902,9 +895,15 @@ public class MyTransaction {
 		}
 	}
 	
-	protected void alert(String string, Object... params) {
-		String str = String.format(string, params);
-		log( LogType.REDEEM, str);
+	protected void alert(String subject, String body) throws Exception {
+		TwMail mail = Auth.auth().getMail();
+		mail.send(
+				"RefAPI", 
+				"peteraspiro@gmail.com", 
+				"peteraspiro@gmail.com",
+				subject,
+				body,
+				"plain");
 	}
 }
 

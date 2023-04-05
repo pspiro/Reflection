@@ -34,7 +34,7 @@ public class Accounts {
 		}
 	}
 
-	int getId( String name) throws Exception {
+	public int getId( String name) throws Exception {
 		return Integer.valueOf( getAccount(name).getString("id") );
 	}
 	
@@ -72,7 +72,7 @@ public class Accounts {
 	 *  @param admins is comma-delimited */
 	public void setAdmins( String admins) {
 		m_admins = admins.split(",");
-		S.out( "Setting %s admins", m_admins.length);
+		S.out( "Fireblocks admin accounts are: %s", admins);
 	}
 		
 	public int getAdminAccountId(String userAddr) throws Exception {

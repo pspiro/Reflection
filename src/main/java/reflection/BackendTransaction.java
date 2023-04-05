@@ -119,12 +119,16 @@ public class BackendTransaction extends MyTransaction {
 			double busdPos = busd.reqPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
 				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos);
+				// wait for completion
 //				respond( code, RefCode.OK);  deal w/ responde codes and messages 
 //				respond( )
 			}
 			else {
-				alert( "Insufficient BUSD in RefWallet for RUSD redemption.  required=%s  have=%s  need=%s",
-						rusdPos, busdPos, (rusdPos - busdPos) );
+				String str = String.format( 
+						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
+						userAddr, rusdPos, busdPos, (rusdPos - busdPos) );
+				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
+				throw new Exception( str);  // will create log entry with ERROR code
 			}
 		});
 	}

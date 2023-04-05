@@ -14,7 +14,8 @@ public class Test {
 	
 	
 	static Accounts accounts = Accounts.instance;
-	static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	//static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	static String userAddr = "0x1cB79caf8c86f04bD31C4AD1f43A5ba17d61BD35";	
 
 	public static void main(String[] args) throws Exception {
 		accounts.setAdmins( "Admin1,Admin2");
