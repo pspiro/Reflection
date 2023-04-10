@@ -11,6 +11,7 @@ import org.json.simple.parser.JSONParser;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import reflection.Util;
 import tw.util.IStream;
 import tw.util.S;
 
@@ -18,6 +19,8 @@ import tw.util.S;
  *  Use AsyncHttpClient. */
 public class MyHttpClient {
 	private Socket m_socket;
+	private ArrayList<String> m_reqHeaders = new ArrayList<String>();
+	private HashMap<String,String> m_respHeaders = new HashMap<>();
 	
 	public static void main(String[] args) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "34.125.124.211", 5001);
@@ -56,11 +59,11 @@ public class MyHttpClient {
 	}
 
 	public MyJsonObject readMyJsonObject() throws Exception {
-		return new MyJsonObject( new JSONParser().parse( readString() ) );
+		return MyJsonObject.parse( readString() );
 	}
 	
 	public MyJsonArray readMyJsonArray() throws Exception {
-		return new MyJsonArray( new JSONParser().parse( readString() ) );
+		return MyJsonArray.parse( readString() );
 	}
 	
 	public JSONObject readJsonObject() throws Exception {
@@ -71,18 +74,16 @@ public class MyHttpClient {
 		BufferedReader br = new BufferedReader( new InputStreamReader( m_socket.getInputStream() ) );
 
 		// build map of headers until a blank line is read
-		HashMap<String,String> map = new HashMap<String,String>(); 
-
 		String str;
 		while (S.isNotNull( (str=br.readLine()))) {
 			String[] ar = str.split( ":");
 			if (ar.length == 2) {
-				map.put( ar[0].toLowerCase().trim(), ar[1].trim() );
+				m_respHeaders.put( ar[0].toLowerCase().trim(), ar[1].trim() );
 			}
 		}
 
 		// content-length found?
-		String lenStr = map.get( "content-length");
+		String lenStr = m_respHeaders.get( "content-length");
 		if (S.isNotNull( lenStr) ) {
 			int len = Integer.valueOf( lenStr); 
 			char[] ar = new char[len];
@@ -93,7 +94,7 @@ public class MyHttpClient {
 		// this is technically wrong; chunked code has length
 		// parameters in it, but this will work if there are
 		// no empty lines
-		if ("chunked".equals( map.get( "transfer-encoding") ) ) {
+		if ("chunked".equals( m_respHeaders.get( "transfer-encoding") ) ) {
 			StringBuilder sb= new StringBuilder();
 			while (S.isNotNull( (str=br.readLine()))) {
 				sb.append( str);
@@ -101,7 +102,6 @@ public class MyHttpClient {
 			}
 			return sb.toString();
 		}
-		
 		
 		throw new Exception("illprepared");
 
@@ -132,18 +132,20 @@ public class MyHttpClient {
 		write( sb.toString() );
 	}
 
-	ArrayList<String> m_headers = new ArrayList<String>();
-
 	public void get() throws Exception {
 		get( "");
 	}
 	
-	/** Do not include a / in data 
+	/** @param data may or not start with / 
 	 * @return */
 	public MyHttpClient get( String data) throws Exception {
+		if (!data.startsWith("/") ) {
+			data = "/" + data;
+		}
+		
 		StringBuilder sb = new StringBuilder();
-		sb.append( "GET /" + data + " HTTP/1.1\r\n");
-		for (String header : m_headers) {
+		sb.append( "GET " + data + " HTTP/1.1\r\n");
+		for (String header : m_reqHeaders) {
 			sb.append( header + "\r\n");
 		}
 		sb.append( "\r\n");
@@ -153,10 +155,19 @@ public class MyHttpClient {
 	}
 
 	public void header(String val) {
-		m_headers.add( val);
+		m_reqHeaders.add( val);
 	}
 
 	public void header(String key, String val) {
-		m_headers.add( String.format( "%s: %s", key, val) );
+		m_reqHeaders.add( String.format( "%s: %s", key, val) );
+	}
+
+	public void dumpHeaders() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public HashMap<String,String> getHeaders() {
+		return m_respHeaders;
 	}
 }
