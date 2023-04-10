@@ -3,16 +3,13 @@ package reflection;
 import static reflection.Main.log;
 import static reflection.Main.require;
 
+import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.util.Utils;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -22,7 +19,6 @@ import fireblocks.Rusd;
 import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
-import json.StringJson;
 import positions.MoralisServer;
 import tw.util.S;
 import util.LogType;
@@ -201,10 +197,14 @@ public class BackendTransaction extends MyTransaction {
 			signedMsg.put( "signature", signature);
 			signedMsg.put( "message", msg);
 
-			String cookie= StringEscapeUtils.escapeHtml4(
-					String.format( "__Host_authToken%s%s=%s",
+			String cookie= 
+					URLEncoder.encode(
+							String.format( "__Host_authToken%s%s=%s",
 							address, chainId, signedMsg) );
 
+			S.out( "COOKIE:");
+			S.out( cookie);
+			
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
 			
