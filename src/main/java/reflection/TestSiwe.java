@@ -5,13 +5,14 @@ import org.json.simple.JSONObject;
 import com.moonstoneid.siwe.SiweMessage;
 
 import http.MyHttpClient;
+import json.MyJsonObject;
 import tw.util.S;
 
 public class TestSiwe {
 	public static void main(String[] args) throws Exception {
 		String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 
-		S.out( "Sending init");
+		S.out( "-----Sending siwe/init");
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
 		cli.get("/siwe/init");
 
@@ -46,14 +47,30 @@ public class TestSiwe {
 		signedMsg.put( "signature", signature);
 		signedMsg.put( "message", msg);
 
-		S.out( "Sending signin:");
+		S.out( "-----Sending siwe/signin:");
 		S.out( signedMsg);
 		MyHttpClient cli2 = new MyHttpClient("localhost", 8383);
 		cli2.post("/siwe/signin", signedMsg.toString() );
 
-		String resp = cli2.readString();
-		S.out( "Received response: %s", resp);
-		S.out( "Reveived headers:");
-		S.out( cli2.getHeaders() );
+		String resp2 = cli2.readString();
+		S.out( "Received response: %s", resp2);
+
+		String cookie2 = cli2.getHeaders().get("set-cookie");
+		S.out( "Reveived cookie: %s", cookie2);
+		
+		String signedMsg2 = cookie2.split("=")[1];
+		S.out( "Received signed msg: %s", signedMsg2);
+		// verify that the cookie is correct
+		
+		//----------------------------
+		S.out( "-----Sending siwe/me");
+		
+		MyHttpClient cli3 = new MyHttpClient("localhost", 8383);
+		cli3.addHeader("cookie", cookie2);
+		cli3.get("/siwe/me");
+		S.out( "Receved:");
+		MyJsonObject resp3 = cli3.readMyJsonObject();
+		resp3.display();
+		
 	}
 }

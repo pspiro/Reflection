@@ -154,11 +154,11 @@ public class MyHttpClient {
 		return this;
 	}
 
-	public void header(String val) {
+	public void addHeader(String val) {
 		m_reqHeaders.add( val);
 	}
 
-	public void header(String key, String val) {
+	public void addHeader(String key, String val) {
 		m_reqHeaders.add( String.format( "%s: %s", key, val) );
 	}
 

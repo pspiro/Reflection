@@ -230,17 +230,12 @@ public class BackendTransaction extends MyTransaction {
 			
 			SiweMessage obj = msg.getSiweMessage();
 			
-			signedMsg.get("address");
-			
 			
 			JSONObject resp = new JSONObject();
 			resp.put("loggedIn", true);
-			resp.put("message", tempMsg);
-//			for (Entry<String, List<String>> a : headers.entrySet() ) {
-//				S.out( a);
-//			}
+			resp.put("message", signedMsg);
 			
-			respond("loggedIn", true, "message", resp.toString() );
+			respond("loggedIn", true, "message", signedMsg);
 		});
 
 	}
