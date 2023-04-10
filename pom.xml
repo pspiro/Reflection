@@ -115,6 +115,12 @@
 			<artifactId>google-auth-library-oauth2-http</artifactId>
 		</dependency>
 		
+		<dependency>
+			<groupId>com.moonstoneid</groupId>
+			<artifactId>siwe-java</artifactId>
+			<version>1.0.1</version>
+		</dependency>		
+		
 	</dependencies>
 	
 	<!-- you can use this for dependency management, they you don't need to add the version

@@ -4,10 +4,14 @@ import static reflection.Main.log;
 import static reflection.Main.require;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.moonstoneid.siwe.util.Utils;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -18,6 +22,7 @@ import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
+import tw.util.S;
 import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
@@ -148,6 +153,47 @@ public class BackendTransaction extends MyTransaction {
 		}
 		return 0;
 	}
-	
+
+	public void handleSiweInit() {
+		respond( "nonce", Utils.generateNonce() );
+	}
+
+	/*
+	{
+	"signature":"0xb704d00b0bd15e789e26e566d668ee03cca287218bd6110e01334f40a38d9a8377eece1d958fff7a72a5b669185729a18c1a253fd0ddcf9711764a761d60ba821b",
+	"message":{
+		"domain":"usedapp-docs.netlify.app",
+		"address":"0xb95bf9C71e030FA3D8c0940456972885DB60843F",
+		"statement":"Sign in with Ethereum.",
+		"uri":"https://usedapp-docs.netlify.app",
+		"version":"1",
+		"chainId":5,
+		"nonce":"s6BSC0iXede6QSw5D",
+		"issuedAt":"2023-04-10T14:40:03.878Z"
+	}
+	 */
+	public void handleSiweSignin() {
+		S.out( "Handling /siwe/signin");
+		
+		String signature = m_map.get( "signature");
+		String message = m_map.get( "message");
+		S.out( "signature: %s", signature);
+		S.out( "message: %s", message);
+		
+		respondOk();
+	}
+
+	public void handleSiweMe() {
+		S.out( "Handling /siwe/me");
+
+		S.out( "headers");
+		Headers headers = m_exchange.getRequestHeaders();
+		for (Entry<String, List<String>> a : headers.entrySet() ) {
+			S.out( a);
+		}
+		
+		respondOk();
+		
+	}
 
 }

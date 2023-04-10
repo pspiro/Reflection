@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,10 +28,10 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
-import reflection.Main.Stock;
 import tw.google.Auth;
 import tw.google.TwMail;
 import tw.util.S;
@@ -60,6 +61,7 @@ public class MyTransaction {
 		refreshConfig,
 		refreshStocks,
 		terminate,
+		test,
 		;
 
 		public static String allValues() {
@@ -209,12 +211,28 @@ public class MyTransaction {
 				break;
 			case dump:
 				m_main.dump();
-				respond( code, RefCode.OK);
+				respondOk();
 				break;
 			case getPositions:
 				getStockPositions();
 				break;
+			case test:
+				onTest();
+				break;
 		}
+	}
+
+	private void onTest() {
+		Headers headers = m_exchange.getRequestHeaders();
+		S.out( "headers");
+		S.out( headers);
+		S.out( "vals");
+		List<String> vals = headers.get( "Authorization");
+		S.out( vals);
+		for (Entry<String, List<String>> a : headers.entrySet() ) {
+			S.out( a);
+		}
+		
 	}
 
 	/** Used by the Monitor program */
@@ -247,7 +265,7 @@ public class MyTransaction {
 	private void disconnect() {
 		S.out( "simulating disconnecting");
 		m_main.orderConnMgr().disconnect();
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	private void terminate() {
@@ -259,21 +277,21 @@ public class MyTransaction {
 	private void pushFaq() throws Exception {
 		S.out( "Pushing FAQ");
 		Main.m_config.pushFaq( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
 	private void pullFaq() throws Exception {
 		S.out( "Pulling FAQ");
 		Main.m_config.pullFaq( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
 	private void pushBackendConfig() throws Exception {
 		S.out( "Pushing backend config from google sheet to database");
 		Main.m_config.pushBackendConfig( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
@@ -307,7 +325,7 @@ public class MyTransaction {
 	void refreshStocks() throws Exception {
 		S.out( "Refreshing stock list from google sheet");
 		m_main.refreshStockList();
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
@@ -591,7 +609,7 @@ public class MyTransaction {
 					double initMargin = Double.valueOf( orderState.initMarginAfter() );
 					double elv = Double.valueOf( orderState.equityWithLoanAfter() );
 					require( initMargin <= elv, RefCode.REJECTED, "Insufficient liquidity in brokerage account");
-					respond( code, RefCode.OK);
+					respondOk();
 				});
 			}
 			@Override public void handle(int errorCode, String errorMsg) {
@@ -807,6 +825,10 @@ public class MyTransaction {
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
 		// send an alert to the operator to manually unwind the order for now. pas
+	}
+
+	public void respondOk() {
+		respond( code, RefCode.OK);
 	}
 
 	synchronized boolean respond( Object...data) {
