@@ -2,6 +2,7 @@ package reflection;
 
 import java.util.HashMap;
 
+import json.MyJsonObject;
 import reflection.MyTransaction.MsgType;
 import tw.util.S;
 
@@ -54,5 +55,10 @@ public class ParamMap extends HashMap<String, String> {
 	public String getLowerCase(String tag) {
 		String str = get(tag);
 		return str == null ? null : str.toLowerCase();
+	}
+	
+	public MyJsonObject getJsonObject(String tag) throws Exception {
+		String str = get(tag);
+		return str != null ? MyJsonObject.parse(str) : null;
 	}
 }

@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Timer;
@@ -76,7 +77,8 @@ public class MyTransaction {
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf = "ETF";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
-
+	static final HashMap<String,String> nullMap = new HashMap<>();
+	
 	protected Main m_main;
 	protected HttpExchange m_exchange;
 	private boolean m_responded;  // only respond once per transaction
@@ -837,7 +839,11 @@ public class MyTransaction {
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
-	synchronized boolean respond( Json response) {
+	boolean respond( Json response) {
+		return respond( response, nullMap);
+	}
+
+	synchronized boolean respond( Json response, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;
 		}
@@ -846,6 +852,12 @@ public class MyTransaction {
 		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
+
+			// add custom headers, if any  (add URL encoding here?)
+			for (Entry<String, String> header : headers.entrySet() ) {
+				m_exchange.getResponseHeaders().add( header.getKey(), header.getValue() );
+			}
+			
 			m_exchange.sendResponseHeaders( 200, response.length() );
 			outputStream.write(response.getBytes());
 		}

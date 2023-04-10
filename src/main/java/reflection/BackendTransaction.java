@@ -21,6 +21,7 @@ import fireblocks.Rusd;
 import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
+import json.StringJson;
 import positions.MoralisServer;
 import tw.util.S;
 import util.LogType;
@@ -154,11 +155,8 @@ public class BackendTransaction extends MyTransaction {
 		return 0;
 	}
 
-	public void handleSiweInit() {
-		respond( "nonce", Utils.generateNonce() );
-	}
-
 	/*
+	 * signed message looks like this:
 	{
 	"signature":"0xb704d00b0bd15e789e26e566d668ee03cca287218bd6110e01334f40a38d9a8377eece1d958fff7a72a5b669185729a18c1a253fd0ddcf9711764a761d60ba821b",
 	"message":{
@@ -172,28 +170,60 @@ public class BackendTransaction extends MyTransaction {
 		"issuedAt":"2023-04-10T14:40:03.878Z"
 	}
 	 */
-	public void handleSiweSignin() {
-		S.out( "Handling /siwe/signin");
-		
-		String signature = m_map.get( "signature");
-		String message = m_map.get( "message");
-		S.out( "signature: %s", signature);
-		S.out( "message: %s", message);
-		
-		respondOk();
+
+	/** Frontend requests nonce to build SIWE message */
+	public void handleSiweInit() {
+		S.out( "Handling /siwi/init");
+		respond( "nonce", Utils.generateNonce() );
 	}
 
-	public void handleSiweMe() {
-		S.out( "Handling /siwe/me");
+	/** Frontend send message and signature; we should verify */
+	public void handleSiweSignin() {
+		wrap( () -> {
+			S.out( "Handling /siwe/signin");
+			
+			parseMsg();
 
-		S.out( "headers");
-		Headers headers = m_exchange.getRequestHeaders();
-		for (Entry<String, List<String>> a : headers.entrySet() ) {
-			S.out( a);
-		}
-		
-		respondOk();
-		
+			String signature = m_map.get( "signature");
+			String msg = m_map.get("message");
+			MyJsonObject message = MyJsonObject.parse(msg);
+			
+			S.out( "signature: %s", signature);
+			S.out( "message: %s", message);
+
+			String address = message.getString("address");
+			String chainId = message.getString("chainId");
+			String nonce = message.getString("nonce");
+			S.out( "RECEIVED SIGNIN %s %s %s", address, chainId, nonce);
+			
+			JSONObject signedMsg = new JSONObject();
+			signedMsg.put( "signature", signature);
+			signedMsg.put( "message", message);
+
+			String cookie= String.format( "__Host_authToken%s%s=%s",
+					address, chainId, signedMsg);
+
+			HashMap<String,String> headers = new HashMap<>();
+			headers.put( "Set-Cookie", cookie);
+			
+			respond( Util.toJsonMsg( code, "OK"), headers);
+		});
+	}
+
+	/** This is a keep-alive, nothing to do */
+	public void handleSiweMe() {
+		wrap( () -> {
+			S.out( "Handling /siwe/me");
+//	
+//			S.out( "headers");
+//			Headers headers = m_exchange.getRequestHeaders();
+//			for (Entry<String, List<String>> a : headers.entrySet() ) {
+//				S.out( a);
+//			}
+			
+			respondOk();
+		});
+
 	}
 
 }

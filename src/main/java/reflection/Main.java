@@ -586,7 +586,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private void handleOrder(HttpExchange exch, boolean whatIf) {
 		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-
+		
 		new BackendTransaction( this, exch).backendOrder(whatIf);
 	}
 
