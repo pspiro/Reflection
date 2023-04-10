@@ -3,7 +3,8 @@ package json;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+
+import com.moonstoneid.siwe.SiweMessage;
 
 import reflection.Util;
 import tw.util.S;
@@ -127,6 +128,20 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 
 	public boolean getBool(String key) {
 		return Boolean.parseBoolean( getString(key) );
+	}
+
+	public SiweMessage getSiweMessage() throws Exception {
+		return new SiweMessage.Builder(
+				getString("domain"), 
+				getString("address"), 
+				getString("URI"), 
+				getString("version"), 
+				getInt("chainId"), 
+				getString("nonce"), 
+				getString("issuedAt")
+				)
+				.statement(getString("statement"))
+				.build();
 	}
 
 }
