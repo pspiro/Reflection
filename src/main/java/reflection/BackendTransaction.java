@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -198,10 +199,11 @@ public class BackendTransaction extends MyTransaction {
 			
 			JSONObject signedMsg = new JSONObject();
 			signedMsg.put( "signature", signature);
-			signedMsg.put( "message", message);
+			signedMsg.put( "message", msg);
 
-			String cookie= String.format( "__Host_authToken%s%s=%s",
-					address, chainId, signedMsg);
+			String cookie= StringEscapeUtils.escapeHtml4(
+					String.format( "__Host_authToken%s%s=%s",
+							address, chainId, signedMsg) );
 
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
