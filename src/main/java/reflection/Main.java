@@ -15,7 +15,6 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -24,6 +23,7 @@ import com.ib.client.OrderState;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -145,6 +145,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
+		server.createContext("/siwe/init", exch -> new BackendTransaction( this, exch).handleSiweInit() );
+		server.createContext("/siwe/signin", exch -> new BackendTransaction( this, exch).handleSiweSignin() );
+		server.createContext("/siwe/me", exch -> new BackendTransaction( this, exch).handleSiweMe() );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -445,9 +448,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	void dump() {
-		S.out( "-----Dump: Stocks-----");
+		S.out( "-----Dumping Stocks-----");
 		MyJsonObject.display( m_stocks, 0, false);
-		//S.out( m_stocks);
+		
+		S.out( "Dumping config");
+		m_config.dump();
 	}
 
 	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
@@ -581,7 +586,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private void handleOrder(HttpExchange exch, boolean whatIf) {
 		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-
+		
 		new BackendTransaction( this, exch).backendOrder(whatIf);
 	}
 
@@ -599,31 +604,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	/** this seems useless since you can still be left with .000001 */
 	static double round(double val) {
 		return Math.round( val * 100) / 100.;
-	}
-
-	/** All values are string, including conid, except bid and ask
-	 *  which are doubles. This object lives in the m_stockMap
-	 *  map and also in the m_stocks array. Each stock is itself
-	 *  a map (JSONObject) with keys "bid" and "ask". This is so
-	 *  we don't need to recreate the array every time the client
-	 *  queries for the prices, which is often.
-	 *  
-	 *   Type could be Stock, ETF, or ETF-24 */
-	static class Stock extends JSONObject {
-		Prices m_prices = Prices.NULL;
-
-		void setPrices( Prices prices) {
-			m_prices = prices;
-
-			put( "bid", round( prices.anyBid() ) );  // for front-end display
-			put( "ask", round( prices.anyAsk() ) );
-		}
-
-		Prices prices() { return m_prices; }
-
-		public String getString(String key) {
-			return (String)super.get(key);
-		}
 	}
 
 	// VERY BAD AND INEFFICIENT. ps

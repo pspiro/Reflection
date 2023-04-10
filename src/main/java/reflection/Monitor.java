@@ -18,7 +18,6 @@ import http.MyHttpClient;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
-import reflection.Main.Stock;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyTable;

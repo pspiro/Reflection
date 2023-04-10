@@ -422,4 +422,9 @@ public class Config {
 				fireblocksPrivateKey);
 		
 	}
+
+	public void dump() {
+		S.out( "dumping config");
+		S.out( m_tab);
+	}
 }

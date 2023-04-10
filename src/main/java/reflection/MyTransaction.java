@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,10 +29,10 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
-import reflection.Main.Stock;
 import tw.google.Auth;
 import tw.google.TwMail;
 import tw.util.S;
@@ -60,6 +62,7 @@ public class MyTransaction {
 		refreshConfig,
 		refreshStocks,
 		terminate,
+		test,
 		;
 
 		public static String allValues() {
@@ -74,7 +77,8 @@ public class MyTransaction {
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf = "ETF";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
-
+	static final HashMap<String,String> nullMap = new HashMap<>();
+	
 	protected Main m_main;
 	protected HttpExchange m_exchange;
 	private boolean m_responded;  // only respond once per transaction
@@ -209,12 +213,28 @@ public class MyTransaction {
 				break;
 			case dump:
 				m_main.dump();
-				respond( code, RefCode.OK);
+				respondOk();
 				break;
 			case getPositions:
 				getStockPositions();
 				break;
+			case test:
+				onTest();
+				break;
 		}
+	}
+
+	private void onTest() {
+		Headers headers = m_exchange.getRequestHeaders();
+		S.out( "headers");
+		S.out( headers);
+		S.out( "vals");
+		List<String> vals = headers.get( "Authorization");
+		S.out( vals);
+		for (Entry<String, List<String>> a : headers.entrySet() ) {
+			S.out( a);
+		}
+		
 	}
 
 	/** Used by the Monitor program */
@@ -247,7 +267,7 @@ public class MyTransaction {
 	private void disconnect() {
 		S.out( "simulating disconnecting");
 		m_main.orderConnMgr().disconnect();
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	private void terminate() {
@@ -259,21 +279,21 @@ public class MyTransaction {
 	private void pushFaq() throws Exception {
 		S.out( "Pushing FAQ");
 		Main.m_config.pushFaq( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
 	private void pullFaq() throws Exception {
 		S.out( "Pulling FAQ");
 		Main.m_config.pullFaq( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
 	private void pushBackendConfig() throws Exception {
 		S.out( "Pushing backend config from google sheet to database");
 		Main.m_config.pushBackendConfig( Main.m_database);
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
@@ -307,7 +327,7 @@ public class MyTransaction {
 	void refreshStocks() throws Exception {
 		S.out( "Refreshing stock list from google sheet");
 		m_main.refreshStockList();
-		respond( code, RefCode.OK);
+		respondOk();
 	}
 
 	/** Top-level message handler */
@@ -591,7 +611,7 @@ public class MyTransaction {
 					double initMargin = Double.valueOf( orderState.initMarginAfter() );
 					double elv = Double.valueOf( orderState.equityWithLoanAfter() );
 					require( initMargin <= elv, RefCode.REJECTED, "Insufficient liquidity in brokerage account");
-					respond( code, RefCode.OK);
+					respondOk();
 				});
 			}
 			@Override public void handle(int errorCode, String errorMsg) {
@@ -809,13 +829,21 @@ public class MyTransaction {
 		// send an alert to the operator to manually unwind the order for now. pas
 	}
 
+	public void respondOk() {
+		respond( code, RefCode.OK);
+	}
+
 	synchronized boolean respond( Object...data) {
 		return respond( Util.toJsonMsg( data) );
 	}
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
-	synchronized boolean respond( Json response) {
+	boolean respond( Json response) {
+		return respond( response, nullMap);
+	}
+
+	synchronized boolean respond( Json response, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;
 		}
@@ -824,6 +852,12 @@ public class MyTransaction {
 		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
+
+			// add custom headers, if any  (add URL encoding here?)
+			for (Entry<String, String> header : headers.entrySet() ) {
+				m_exchange.getResponseHeaders().add( header.getKey(), header.getValue() );
+			}
+			
 			m_exchange.sendResponseHeaders( 200, response.length() );
 			outputStream.write(response.getBytes());
 		}
