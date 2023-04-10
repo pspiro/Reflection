@@ -3,6 +3,7 @@ package reflection;
 import static reflection.Main.log;
 import static reflection.Main.require;
 
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +11,8 @@ import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.util.Utils;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -175,7 +176,6 @@ public class BackendTransaction extends MyTransaction {
 		S.out( "Handling /siwi/init");
 		respond( "nonce", Utils.generateNonce() );
 	}
-	static String tempMsg;
 	
 	/** Frontend send message and signature; we should verify */
 	public void handleSiweSignin() {
@@ -185,38 +185,28 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 
 			String signature = m_map.get( "signature");
-			String msg = m_map.get("message");
-			MyJsonObject message = MyJsonObject.parse(msg);
+			MyJsonObject msgObj = MyJsonObject.parse( m_map.get("message") );
+			SiweMessage siweMsg = msgObj.getSiweMessage();
 			
-			S.out( "signature: %s", signature);
-			S.out( "message: %s", message);
-
-			String address = message.getString("address");
-			String chainId = message.getString("chainId");
-			String nonce = message.getString("nonce");
-			S.out( "RECEIVED SIGNIN %s %s %s", address, chainId, nonce);
+			siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signature);  // we should not take the domain and nonce from here. pas
 			
 			JSONObject signedMsg = new JSONObject();
 			signedMsg.put( "signature", signature);
-			signedMsg.put( "message", msg);
+			signedMsg.put( "message", msgObj);
 
 			String cookie = String.format( "__Host_authToken%s%s=%s",
-							address, chainId, URLEncoder.encode(signedMsg.toString() ) );
-
-			S.out( "COOKIE:");
-			S.out( cookie);
+					siweMsg.getAddress(), 
+					siweMsg.getChainId(), 
+					URLEncoder.encode(signedMsg.toString() ) 
+			);
 			
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
-			
-			tempMsg = msg;
 			
 			respond( Util.toJsonMsg( code, "OK"), headers);
 		});
 	}
 	
-	Object message;
-
 	/** This is a keep-alive, nothing to do */
 	public void handleSiweMe() {
 		wrap( () -> {
@@ -229,6 +219,19 @@ public class BackendTransaction extends MyTransaction {
 			Main.require(headers.size() == 1, RefCode.INVALID_REQUEST, "Wrong number of Cookies in header: " + headers.size() );
 			
 			String cookie = headers.get(0);
+			Main.require( cookie.split("=").length == 2, RefCode.INVALID_REQUEST, "Invalid SIWE cookie " + cookie);
+			
+			MyJsonObject signedMsg = MyJsonObject.parse(
+					URLDecoder.decode( cookie.split("=")[1])    // you should URL-decode this first
+			);
+			
+			String signature = signedMsg.getString("signature");
+			MyJsonObject msg = signedMsg.getObj("message");
+			
+			SiweMessage obj = msg.getSiweMessage();
+			
+			signedMsg.get("address");
+			
 			
 			JSONObject resp = new JSONObject();
 			resp.put("loggedIn", true);

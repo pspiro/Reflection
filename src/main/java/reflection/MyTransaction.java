@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -849,7 +850,6 @@ public class MyTransaction {
 		}
 
 		// need this? pas
-		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
 
