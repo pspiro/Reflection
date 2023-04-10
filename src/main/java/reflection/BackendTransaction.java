@@ -237,7 +237,7 @@ public class BackendTransaction extends MyTransaction {
 //				S.out( a);
 //			}
 			
-			respond("loggedIn", true, "message", tempMsg);
+			respond("loggedIn", true, "message", resp.toString() );
 		});
 
 	}
