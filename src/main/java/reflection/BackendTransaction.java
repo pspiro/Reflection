@@ -197,10 +197,8 @@ public class BackendTransaction extends MyTransaction {
 			signedMsg.put( "signature", signature);
 			signedMsg.put( "message", msg);
 
-			String cookie= 
-					URLEncoder.encode(
-							String.format( "__Host_authToken%s%s=%s",
-							address, chainId, signedMsg) );
+			String cookie = String.format( "__Host_authToken%s%s=%s",
+							address, chainId, URLEncoder.encode(signedMsg.toString() ) );
 
 			S.out( "COOKIE:");
 			S.out( cookie);
