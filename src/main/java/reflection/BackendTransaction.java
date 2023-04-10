@@ -5,11 +5,13 @@ import static reflection.Main.require;
 
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.util.Utils;
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -173,7 +175,8 @@ public class BackendTransaction extends MyTransaction {
 		S.out( "Handling /siwi/init");
 		respond( "nonce", Utils.generateNonce() );
 	}
-
+	static String tempMsg;
+	
 	/** Frontend send message and signature; we should verify */
 	public void handleSiweSignin() {
 		wrap( () -> {
@@ -206,22 +209,35 @@ public class BackendTransaction extends MyTransaction {
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
 			
+			tempMsg = msg;
+			
 			respond( Util.toJsonMsg( code, "OK"), headers);
 		});
 	}
+	
+	Object message;
 
 	/** This is a keep-alive, nothing to do */
 	public void handleSiweMe() {
 		wrap( () -> {
 			S.out( "Handling /siwe/me");
-//	
-//			S.out( "headers");
-//			Headers headers = m_exchange.getRequestHeaders();
+			
+			S.out( "headers");
+			S.out(m_exchange.getRequestHeaders());			
+
+			List<String> headers = m_exchange.getRequestHeaders().get("Cookie");
+			Main.require(headers.size() == 1, RefCode.INVALID_REQUEST, "Wrong number of Cookies in header: " + headers.size() );
+			
+			String cookie = headers.get(0);
+			
+			JSONObject resp = new JSONObject();
+			resp.put("loggedIn", true);
+			resp.put("message", tempMsg);
 //			for (Entry<String, List<String>> a : headers.entrySet() ) {
 //				S.out( a);
 //			}
 			
-			respondOk();
+			respond("loggedIn", true, "message", tempMsg);
 		});
 
 	}
