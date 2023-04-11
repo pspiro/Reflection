@@ -1,25 +1,22 @@
 package reflection;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JSONAware;
 
-/** Consider StringJson instead of this class. */
-public class Json {
+import json.MyJsonObject;
+
+/** Consider StringJson instead of this class. */   // this class no longer serves any purpose
+public class Json {						// and should be removed. pas
 
 	private String m_str;
 
 	public long length() { return m_str.length(); }
 	public byte[] getBytes() { return m_str.getBytes(); }
 
-	public Json(String string) {
-		m_str = string;
+	public Json(MyJsonObject obj) {
+		m_str = obj.toString();
 	}
 
-	public Json(JSONArray ar) {
-		m_str = ar.toJSONString();
-	}
-	
-	public Json(JSONObject obj) {
+	public Json(JSONAware obj) {
 		m_str = obj.toJSONString();
 	}
 	

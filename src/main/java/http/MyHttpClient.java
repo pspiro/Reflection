@@ -164,8 +164,9 @@ public class MyHttpClient {
 		m_reqHeaders.add( val);
 	}
 
-	public void addHeader(String key, String val) {
+	public MyHttpClient addHeader(String key, String val) {
 		m_reqHeaders.add( String.format( "%s: %s", key, val) );
+		return this;
 	}
 
 	public void dumpHeaders() {
