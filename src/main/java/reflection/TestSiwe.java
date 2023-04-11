@@ -1,5 +1,8 @@
 package reflection;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.SiweMessage;
@@ -12,11 +15,11 @@ public class TestSiwe {
 	public static void main(String[] args) throws Exception {
 		String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 
-		S.out( "-----Sending siwe/init");
+		S.out( "-----Sending GET siwe/init");
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
 		cli.get("/siwe/init");
-
 		String nonce = cli.readMyJsonObject().getString("nonce");
+		Util.require( cli.getResponseCode() == 200, "Received error response code: " + cli.getResponseCode() );
 		S.out( "Received nonce: %s", nonce);
 
 		// (will be wrong)
@@ -25,37 +28,29 @@ public class TestSiwe {
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 
 				wallet, 
-				"https://usedapp-docs.netlify.app", 
+				"https://reflection.trading", 
 				"1", 
-				5, 
-				nonce, 
-				"2023-04-10T14:40:03.878Z")
+				5,      // chainId 
+				nonce,
+				DateTimeFormatter.ISO_INSTANT.format( Instant.now() ) )
 				.statement("Sign in to Reflection.")
 				.build();
 		
-		JSONObject msg = new JSONObject();
-		msg.put( "domain", siweMsg.getDomain() );
-		msg.put( "address", siweMsg.getAddress() );
-		msg.put( "URI", siweMsg.getUri() );
-		msg.put( "version", siweMsg.getVersion() );
-		msg.put( "chainId", siweMsg.getChainId() );
-		msg.put( "nonce", siweMsg.getNonce() );
-		msg.put( "issuedAt", siweMsg.getIssuedAt() );
-		msg.put( "statement", siweMsg.getStatement() );
-		
 		JSONObject signedMsg = new JSONObject();
 		signedMsg.put( "signature", signature);
-		signedMsg.put( "message", msg);
+		signedMsg.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
-		S.out( "-----Sending siwe/signin:");
-		S.out( signedMsg);
+		S.out( "-----Sending POST siwe/signin: %s", signedMsg);
 		MyHttpClient cli2 = new MyHttpClient("localhost", 8383);
 		cli2.post("/siwe/signin", signedMsg.toString() );
-
-		String resp2 = cli2.readString();
-		S.out( "Received response: %s", resp2);
+		
+		S.out( "Received response: %s", cli2.readString() );
+		S.out( "Received response code: %s", cli2.getResponseCode() );
+		Util.require( cli2.getResponseCode() == 200, "Received error response code: " + cli2.getResponseCode() );
 
 		String cookie2 = cli2.getHeaders().get("set-cookie");
+		Util.require( S.isNotNull( cookie2), "No cookie returned from signin");
+		
 		S.out( "Reveived cookie: %s", cookie2);
 		
 		String signedMsg2 = cookie2.split("=")[1];
@@ -68,9 +63,10 @@ public class TestSiwe {
 		MyHttpClient cli3 = new MyHttpClient("localhost", 8383);
 		cli3.addHeader("cookie", cookie2);
 		cli3.get("/siwe/me");
-		S.out( "Receved:");
+		
 		MyJsonObject resp3 = cli3.readMyJsonObject();
-		resp3.display();
+		Util.require( cli3.getResponseCode() == 200, "Received error response code: " + cli3.getResponseCode() );
+		resp3.display("Received:");
 		
 	}
 }

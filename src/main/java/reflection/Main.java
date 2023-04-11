@@ -145,9 +145,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
-		server.createContext("/siwe/init", exch -> new BackendTransaction( this, exch).handleSiweInit() );
-		server.createContext("/siwe/signin", exch -> new BackendTransaction( this, exch).handleSiweSignin() );
-		server.createContext("/siwe/me", exch -> new BackendTransaction( this, exch).handleSiweMe() );
+		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
+		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -573,7 +573,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private void handleReqTokenPositions(HttpExchange exch) {
 		String uri = getURI(exch);
 		S.out( "Received %s", uri);
-		new BackendTransaction(this, exch).handleReqPositions(uri);
+		new BackendTransaction(this, exch)
+			.handleReqPositions(uri);
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
@@ -587,17 +588,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		String uri = getURI(exch);
 		S.out( "Received %s", uri);
 		
-		new BackendTransaction( this, exch).backendOrder(whatIf);
+		new BackendTransaction( this, exch)
+			.backendOrder(whatIf);
 	}
 
 	private void handleRedeem(HttpExchange exch) {
 		String uri = getURI(exch);
 		S.out( "Received %s", uri);
 
-		new BackendTransaction( this, exch).handleRedeem(uri);
+		new BackendTransaction( this, exch)
+			.handleRedeem(uri);
 	}
 	
-	private String getURI(HttpExchange exch) {
+	private static String getURI(HttpExchange exch) {
 		return exch.getRequestURI().toString().toLowerCase();
 	}
 

@@ -71,7 +71,7 @@ public class BackendTransaction extends MyTransaction {
 			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
 			// query positions from Moralis
-			setTimer( Main.m_config.timeout(), () -> timedOut( "request for toekn positions timed out") );
+			setTimer( Main.m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			MyJsonArray positions = MoralisServer.reqPositions(address);
 			
 			JSONArray retVal = new JSONArray();
@@ -153,91 +153,6 @@ public class BackendTransaction extends MyTransaction {
 			return ask;
 		}
 		return 0;
-	}
-
-	/*
-	 * signed message looks like this:
-	{
-	"signature":"0xb704d00b0bd15e789e26e566d668ee03cca287218bd6110e01334f40a38d9a8377eece1d958fff7a72a5b669185729a18c1a253fd0ddcf9711764a761d60ba821b",
-	"message":{
-		"domain":"usedapp-docs.netlify.app",
-		"address":"0xb95bf9C71e030FA3D8c0940456972885DB60843F",
-		"statement":"Sign in with Ethereum.",
-		"uri":"https://usedapp-docs.netlify.app",
-		"version":"1",
-		"chainId":5,
-		"nonce":"s6BSC0iXede6QSw5D",
-		"issuedAt":"2023-04-10T14:40:03.878Z"
-	}
-	 */
-
-	/** Frontend requests nonce to build SIWE message */
-	public void handleSiweInit() {
-		S.out( "Handling /siwi/init");
-		respond( "nonce", Utils.generateNonce() );
-	}
-	
-	/** Frontend send message and signature; we should verify */
-	public void handleSiweSignin() {
-		wrap( () -> {
-			S.out( "Handling /siwe/signin");
-			
-			parseMsg();
-
-			String signature = m_map.get( "signature");
-			MyJsonObject msgObj = MyJsonObject.parse( m_map.get("message") );
-			SiweMessage siweMsg = msgObj.getSiweMessage();
-			
-			siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signature);  // we should not take the domain and nonce from here. pas
-			
-			JSONObject signedMsg = new JSONObject();
-			signedMsg.put( "signature", signature);
-			signedMsg.put( "message", msgObj);
-
-			String cookie = String.format( "__Host_authToken%s%s=%s",
-					siweMsg.getAddress(), 
-					siweMsg.getChainId(), 
-					URLEncoder.encode(signedMsg.toString() ) 
-			);
-			
-			HashMap<String,String> headers = new HashMap<>();
-			headers.put( "Set-Cookie", cookie);
-			
-			respond( Util.toJsonMsg( code, "OK"), headers);
-		});
-	}
-	
-	/** This is a keep-alive, nothing to do */
-	public void handleSiweMe() {
-		wrap( () -> {
-			S.out( "Handling /siwe/me");
-			
-			S.out( "headers");
-			S.out(m_exchange.getRequestHeaders());			
-
-			List<String> headers = m_exchange.getRequestHeaders().get("Cookie");
-			Main.require(headers.size() == 1, RefCode.INVALID_REQUEST, "Wrong number of Cookies in header: " + headers.size() );
-			
-			String cookie = headers.get(0);
-			Main.require( cookie.split("=").length == 2, RefCode.INVALID_REQUEST, "Invalid SIWE cookie " + cookie);
-			
-			MyJsonObject signedMsg = MyJsonObject.parse(
-					URLDecoder.decode( cookie.split("=")[1])    // you should URL-decode this first
-			);
-			
-			String signature = signedMsg.getString("signature");
-			MyJsonObject msg = signedMsg.getObj("message");
-			
-			SiweMessage obj = msg.getSiweMessage();
-			
-			
-			JSONObject resp = new JSONObject();
-			resp.put("loggedIn", true);
-			resp.put("message", signedMsg);
-			
-			respond("loggedIn", true, "message", signedMsg);
-		});
-
 	}
 
 }

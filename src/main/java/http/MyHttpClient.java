@@ -21,6 +21,7 @@ public class MyHttpClient {
 	private Socket m_socket;
 	private ArrayList<String> m_reqHeaders = new ArrayList<String>();
 	private HashMap<String,String> m_respHeaders = new HashMap<>();
+	private int m_responseCode;
 	
 	public static void main(String[] args) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "34.125.124.211", 5001);
@@ -72,6 +73,11 @@ public class MyHttpClient {
 	
 	public String readString() throws Exception {
 		BufferedReader br = new BufferedReader( new InputStreamReader( m_socket.getInputStream() ) );
+
+		String first = br.readLine();
+		String[] main = first.split(" ");
+		Util.require( main.length >= 2, "Wrong format for first line of http response: " + first);
+		m_responseCode = Integer.parseInt(main[1]);
 
 		// build map of headers until a blank line is read
 		String str;
@@ -169,5 +175,9 @@ public class MyHttpClient {
 
 	public HashMap<String,String> getHeaders() {
 		return m_respHeaders;
+	}
+
+	public int getResponseCode() {
+		return m_responseCode;
 	}
 }

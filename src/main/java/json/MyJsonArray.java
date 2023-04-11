@@ -36,7 +36,7 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 		return m_ar.toString();
 	}
 	
-	public MyJsonObject getJsonObj( int i) {
+	public MyJsonObject getJsonObj( int i) throws Exception {
 		return new MyJsonObject( m_ar.get( i) );
 	}
 
@@ -49,7 +49,14 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 			}
 
 			@Override public MyJsonObject next() {
-				return new MyJsonObject( iter.next() );
+				try {
+					Object obj = iter.next();
+					return obj != null ? new MyJsonObject(obj) : null;
+				}
+				catch( NullPointerException e) {
+					e.printStackTrace();  
+					return null;  // this will never happen
+				}
 			}
 		};
 	}

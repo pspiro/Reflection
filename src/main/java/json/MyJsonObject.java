@@ -6,15 +6,19 @@ import org.json.simple.parser.JSONParser;
 
 import com.moonstoneid.siwe.SiweMessage;
 
+import reflection.SiweUtil;
 import reflection.Util;
 import tw.util.S;
 
-/** Use MyJsonObj when you are reading or parsing; use StringJson when you are creating */ 
+/** Use MyJsonObj when you are reading or parsing; use StringJson when you are creating.
+ *  The only current limitation is that getAr() assumes that you get an array of object
+ *  which is not guaranteed */ 
 public class MyJsonObject {  // replace or combine w/ TypedJson
 	
 	private JSONObject m_obj;
 	
-	public MyJsonObject( Object obj) {
+	public MyJsonObject( Object obj) throws NullPointerException {  // one of the rare places we return NPE due to the code in MyJsonArray.iter
+		if (obj == null) throw new NullPointerException("Cannot create MyJsonObject from null JSONObject");
 		m_obj = (JSONObject)obj;
 	}
 	
@@ -31,7 +35,7 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return new MyJsonArray( m_obj.get( key) );
 	}
 
-	public MyJsonObject getObj(String key) {
+	public MyJsonObject getObj(String key) throws Exception {
 		return new MyJsonObject( m_obj.get( key) );
 	}
 	
@@ -50,6 +54,10 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	public double getDouble(String key) {
 		String str = getString( key);
 		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
+	}
+	
+	@Override public String toString() {
+		return m_obj.toString();
 	}
 
 	public void display(String title) {
@@ -131,17 +139,6 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	}
 
 	public SiweMessage getSiweMessage() throws Exception {
-		return new SiweMessage.Builder(
-				getString("domain"), 
-				getString("address"), 
-				getString("URI"), 
-				getString("version"), 
-				getInt("chainId"), 
-				getString("nonce"), 
-				getString("issuedAt")
-				)
-				.statement(getString("statement"))
-				.build();
+		return SiweUtil.toSiweMessage(this);
 	}
-
 }

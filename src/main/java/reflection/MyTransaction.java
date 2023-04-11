@@ -135,7 +135,7 @@ public class MyTransaction {
 	            	}
 	            }
 
-	            S.out( "Received POST request " + m_map.toString() );
+	            S.out( "Received POST request " + jsonObject);
 			}
 			catch( RefException e) {  // catch the above require() call
 				throw e;
@@ -727,7 +727,10 @@ public class MyTransaction {
 		// no shares filled and order size >= .5?
 		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
 			String msg = timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.";
-			respond( code, RefCode.REJECTED, text, msg);
+			respondFull( 
+					Util.toJsonMsg( code, RefCode.REJECTED, text, msg),
+					400,
+					nullMap);
 			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s",
 					order.orderId(), order.cryptoId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
@@ -834,17 +837,19 @@ public class MyTransaction {
 		respond( code, RefCode.OK);
 	}
 
-	synchronized boolean respond( Object...data) {
-		return respond( Util.toJsonMsg( data) );
+	/** @param data is an array of key/value pairs */
+	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
+		return respondFull( Util.toJsonMsg( data), 200, nullMap);
 	}
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
 	boolean respond( Json response) {
-		return respond( response, nullMap);
+		return respondFull( response, 200, nullMap);
 	}
 
-	synchronized boolean respond( Json response, HashMap<String,String> headers) {
+	/** @param responseCode is 200 or 400 */
+	synchronized boolean respondFull( Json response, int responseCode, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;
 		}
@@ -858,7 +863,7 @@ public class MyTransaction {
 				m_exchange.getResponseHeaders().add( header.getKey(), header.getValue() );
 			}
 			
-			m_exchange.sendResponseHeaders( 200, response.length() );
+			m_exchange.sendResponseHeaders( responseCode, response.length() );
 			outputStream.write(response.getBytes());
 		}
 		catch (Exception e) {
@@ -874,7 +879,7 @@ public class MyTransaction {
 			runnable.run();
 		}
 		catch( RefException e) {
-			boolean responded = respond( e.toJson() );  // return false if we already responded
+			boolean responded = respondFull( e.toJson(), 400, nullMap);  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
 			if (responded || e.code() != RefCode.TIMED_OUT) {
@@ -884,8 +889,10 @@ public class MyTransaction {
 		catch( Exception e) {
 			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
-			respond( 
-					RefException.eToJson(e, RefCode.UNKNOWN) 
+			respondFull( 
+					RefException.eToJson(e, RefCode.UNKNOWN),
+					400,
+					nullMap
 				);
 		}
 	}
