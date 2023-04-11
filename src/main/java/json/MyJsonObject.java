@@ -39,6 +39,10 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return new MyJsonObject( m_obj.get( key) );
 	}
 	
+	public JSONObject toJsonObj() {
+		return m_obj;
+	}
+	
 	/** Converts any object type to string or returns empty string, never null. */
 	public String getString(String key) {
 		Object val = m_obj.get(key);

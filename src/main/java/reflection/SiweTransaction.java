@@ -78,7 +78,7 @@ public class SiweTransaction extends MyTransaction {
 			
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
-			response.put("message", obj);
+			response.put("message", obj.getObj("message").toJsonObj() );
 			respond( new Json(response) );
 		});
 
