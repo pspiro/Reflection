@@ -101,7 +101,10 @@ public class SiweTransaction extends MyTransaction {
 			S.out( "Handling /siwe/me");
 			
 			S.out( "headers");
-			S.out(m_exchange.getRequestHeaders());			
+			S.out(m_exchange.getRequestHeaders());
+			
+			
+			// check for expiration
 
 			List<String> headers = m_exchange.getRequestHeaders().get("Cookie");
 			Main.require(headers.size() == 1, RefCode.INVALID_REQUEST, "Wrong number of Cookies in header: " + headers.size() );

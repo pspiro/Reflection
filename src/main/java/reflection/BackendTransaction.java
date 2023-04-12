@@ -3,16 +3,11 @@ package reflection;
 import static reflection.Main.log;
 import static reflection.Main.require;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.moonstoneid.siwe.SiweMessage;
-import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -23,7 +18,6 @@ import fireblocks.StockToken;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
-import tw.util.S;
 import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
@@ -125,9 +119,8 @@ public class BackendTransaction extends MyTransaction {
 			double busdPos = busd.reqPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
 				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos);
-				// wait for completion
-//				respond( code, RefCode.OK);  deal w/ responde codes and messages 
-//				respond( )
+				
+				respond( code, RefCode.OK);  // wait for completion. pas 
 			}
 			else {
 				String str = String.format( 

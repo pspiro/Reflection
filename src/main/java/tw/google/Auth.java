@@ -36,7 +36,6 @@ public class Auth {
 	private Credential m_credentials;
 	private Sheets m_sheet;    // new
 	private TwMail m_mail;
-	private Gmail m_gmail;
 	
 	public Credential c() { return m_credentials; }
 	
@@ -83,7 +82,7 @@ public class Auth {
 		ArrayList<String> scopes = new ArrayList<String>();
 //		scopes.add( "https://www.googleapis.com/auth/gmail.modify");
 //		scopes.add( "https://www.googleapis.com/auth/gmail.readonly");
-//		scopes.add( "https://www.googleapis.com/auth/gmail.compose");
+		scopes.add( "https://www.googleapis.com/auth/gmail.compose");
 		//scopes.add( "https://docs.google.com/feeds/");
 		scopes.add( "https://spreadsheets.google.com/feeds");
 		//scopes.add( "https://www.googleapis.com/auth/calendar");
@@ -112,7 +111,7 @@ public class Auth {
 
 	public TwMail getMail() {
 		if (m_mail == null) {
-			m_gmail = new Gmail.Builder(httpTransport, jsonFactory, m_credentials)
+			Gmail m_gmail = new Gmail.Builder(httpTransport, jsonFactory, m_credentials)
                 .setApplicationName(applicationName)
                 .build();
 			m_mail = new TwMail( m_gmail);
