@@ -22,6 +22,8 @@ public class MyHttpClient {
 	private ArrayList<String> m_reqHeaders = new ArrayList<String>();
 	private HashMap<String,String> m_respHeaders = new HashMap<>();
 	private int m_responseCode;
+	private boolean m_read;
+	private String m_data;
 	
 	public static void main(String[] args) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "34.125.124.211", 5001);
@@ -72,14 +74,25 @@ public class MyHttpClient {
 	}
 	
 	public String readString() throws Exception {
+		read();
+		return m_data;
+	}
+	
+	private void read() throws Exception {
+		if (m_read) {
+			return;
+		}
+		m_read = true;
+		
 		BufferedReader br = new BufferedReader( new InputStreamReader( m_socket.getInputStream() ) );
 
+		// read response code
 		String first = br.readLine();
 		String[] main = first.split(" ");
 		Util.require( main.length >= 2, "Wrong format for first line of http response: " + first);
 		m_responseCode = Integer.parseInt(main[1]);
 
-		// build map of headers until a blank line is read
+		// read headers
 		String str;
 		while (S.isNotNull( (str=br.readLine()))) {
 			String[] ar = str.split( ":");
@@ -94,7 +107,8 @@ public class MyHttpClient {
 			int len = Integer.valueOf( lenStr); 
 			char[] ar = new char[len];
 			br.read( ar, 0, len);
-			return new String( ar);
+			m_data = new String( ar);
+			return;
 		}
 
 		// this is technically wrong; chunked code has length
@@ -106,10 +120,11 @@ public class MyHttpClient {
 				sb.append( str);
 				sb.append( "\r\n");
 			}
-			return sb.toString();
+			m_data = sb.toString();
+			return;
 		}
 		
-		throw new Exception("illprepared");
+		throw new Exception("illprepared");  // no content length
 
 		// this might work
 		// no content-length found; read until end of stream
@@ -160,25 +175,27 @@ public class MyHttpClient {
 		return this;
 	}
 
+	/** for sending, must contain ":" */
 	public void addHeader(String val) {
 		m_reqHeaders.add( val);
 	}
 
+	/** for sending */
 	public MyHttpClient addHeader(String key, String val) {
 		m_reqHeaders.add( String.format( "%s: %s", key, val) );
 		return this;
 	}
 
 	public void dumpHeaders() {
-		// TODO Auto-generated method stub
-		
 	}
 
-	public HashMap<String,String> getHeaders() {
+	public HashMap<String,String> getHeaders() throws Exception {
+		read();
 		return m_respHeaders;
 	}
 
-	public int getResponseCode() {
+	public int getResponseCode() throws Exception {
+		read();
 		return m_responseCode;
 	}
 }

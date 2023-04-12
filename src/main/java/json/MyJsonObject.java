@@ -1,5 +1,6 @@
 package json;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -144,5 +145,11 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 
 	public SiweMessage getSiweMessage() throws Exception {
 		return SiweUtil.toSiweMessage(this);
+	}
+
+	public MyJsonObject getRequiredObj(String key) throws Exception {
+		MyJsonObject obj = getObj(key);
+		Util.require(obj != null, "The required key is missing from the json object: " + key);
+		return obj;
 	}
 }

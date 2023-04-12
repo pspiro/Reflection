@@ -3,7 +3,12 @@ package reflection;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import org.json.simple.JSONObject;
@@ -17,14 +22,22 @@ import json.MyJsonObject;
 import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {
+	static HashSet<String> m_validNonces = new HashSet<>();
+	
 	public SiweTransaction(Main main, HttpExchange exch) {
 		super(main,exch);
 	}
 
-	/** Frontend requests nonce to build SIWE message */
+	/** Frontend requests nonce to build SIWE message.
+	 *  Generate the nonce, save it, and return it */
 	public void handleSiweInit() {
 		S.out( "Handling /siwi/init");
-		respond( "nonce", Utils.generateNonce() );   // how to tie this to the nonce received below?
+		String nonce = Utils.generateNonce();
+		
+		// save the nonce; only saved nonces are valid in the signin message, and only once 
+		m_validNonces.add( nonce);
+		
+		respond( "nonce", nonce );   // how to tie this to the nonce received below?
 	}
 	
 	/** Frontend sends POST msg with siwe message and signature; we should verify
@@ -39,19 +52,43 @@ public class SiweTransaction extends MyTransaction {
             
             S.out( "Received signed msg: %s", signedMsg);
 			
-			MyJsonObject msgObj = signedMsg.getObj( "message");
-			SiweMessage siweMsg = msgObj.getSiweMessage();
-			S.out( "**error, verify is disabled**");
-			//siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
+			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
-			String cookieVal = String.format( "__Host_authToken%s%s=%s",
+			// validate and remove the nonce so it is no longer valid
+			Main.require( 
+					m_validNonces.remove(siweMsg.getNonce() ), 
+					RefCode.INVALID_REQUEST, 
+					"The nonce %s is invalid", siweMsg.getNonce()
+			);
+			
+			// verify signature
+			if (!signedMsg.getBool("test") ) {
+				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
+			}
+			
+			// verify time is not too far in future or past
+			Instant createdAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
+			Main.require(
+					Duration.between( createdAt, Instant.now() ).toMillis() <= Main.m_config.siweTimeout(),
+					RefCode.TIMED_OUT,
+					"The 'issuedAt' time on the SIWE login request too far in the past"
+			);
+
+			Main.require(
+					Duration.between( Instant.now(), createdAt).toMillis() <= Main.m_config.siweTimeout(),
+					RefCode.TIMED_OUT,
+					"The 'issuedAt' time on the SIWE login request too far in the future"
+			);
+		
+			// create the cookie to send back in the 'Set-Cookie' message header
+			String cookie = String.format( "__Host_authToken%s%s=%s",
 					siweMsg.getAddress(), 
 					siweMsg.getChainId(), 
 					URLEncoder.encode(signedMsg.toString() ) 
 			);
 			
 			HashMap<String,String> headers = new HashMap<>();
-			headers.put( "Set-Cookie", cookieVal);
+			headers.put( "Set-Cookie", cookie);
 			
 			respondFull( Util.toJsonMsg( code, "OK"), 200, headers);
 		});

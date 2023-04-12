@@ -2,6 +2,7 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.time.Duration;
 import java.util.ArrayList;
 
 import fireblocks.Busd;
@@ -59,6 +60,7 @@ public class Config {
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
 	private int redisQueryInterval;
 	private double minTokenPosition; // minimum token position to display in portfolio section
+	private int siweTimeout;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -145,6 +147,7 @@ public class Config {
 		this.mintBusd = m_tab.getRequiredString("mintBusd");
 		this.mintEth = m_tab.getRequiredString("mintEth");
 		this.approveAll = m_tab.getBoolean("approveAll");
+		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -426,5 +429,9 @@ public class Config {
 	public void dump() {
 		S.out( "dumping config");
 		S.out( m_tab);
+	}
+
+	public int siweTimeout() {
+		return siweTimeout;
 	}
 }
