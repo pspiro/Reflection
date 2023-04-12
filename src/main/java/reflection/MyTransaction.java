@@ -408,10 +408,14 @@ public class MyTransaction {
 		});
 	}
 
-	/** Top-level method. */
+	/** Top-level method - old style */
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
+		returnPrice(conid);
+	}
 
+	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
+	void returnPrice(int conid) throws RefException {
 		Prices prices = m_main.getPrices( conid);
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 

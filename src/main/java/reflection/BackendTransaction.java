@@ -91,11 +91,32 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** Handle a Backend-style event. Conid is last parameter */
+	/** Handle a Backend-style event. Conid is last parameter
+	 * 
+	 * @return 
+		{
+		"smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
+		"symbol": "IBM",
+		"ask": 128.78,
+		"description": "International Business Machines",
+		"conid": "8314",
+		"exchange": "SMART",
+		"type": "Stock",
+		"bid": 128.5
+		}
+	 */
 	public void handleGetStockWithPrice(String uri) {
 		wrap( () -> {
 			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
 			respond( new Json( m_main.getStock(conid) ) );
+		});
+	}
+	
+	/** Backend-style msg; conid is last parameter */
+	public void handleGetPrice(String uri) {
+		wrap( () -> {
+			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
+			returnPrice(conid);
 		});
 	}
 	
