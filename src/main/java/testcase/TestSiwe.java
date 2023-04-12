@@ -61,7 +61,7 @@ public class TestSiwe extends TestCase {
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 
 				myWalletAddress, 
-				"https://reflection.trading", 
+				"http://localhost", 
 				"1", 
 				5,      // chainId 
 				nonce,
@@ -92,9 +92,9 @@ public class TestSiwe extends TestCase {
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("cookie", cookie).get("/siwe/me");
 		assertEquals( 200, cli.getResponseCode() );
+//		S.out( cli.readString() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
-		
 		MyJsonObject meSiweMsg = meResponseMsg.getObj("message");
 		assertEquals( myWalletAddress, meSiweMsg.getString("address") );
 		assertEquals( nonce, meSiweMsg.getString("nonce"));

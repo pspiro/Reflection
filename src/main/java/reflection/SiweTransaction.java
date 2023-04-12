@@ -62,9 +62,9 @@ public class SiweTransaction extends MyTransaction {
 			);
 			
 			// verify signature
-//			if (!signedMsg.getBool("test") ) {
-//				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
-//			}
+			if (!signedMsg.getBool("test") ) {
+				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
+			}
 			
 			// verify time is not too far in future or past
 			Instant createdAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
