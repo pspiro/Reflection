@@ -14,7 +14,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -226,16 +225,9 @@ public class MyTransaction {
 	}
 
 	private void onTest() {
-		Headers headers = m_exchange.getRequestHeaders();
-		S.out( "headers");
-		S.out( headers);
-		S.out( "vals");
-		List<String> vals = headers.get( "Authorization");
-		S.out( vals);
-		for (Entry<String, List<String>> a : headers.entrySet() ) {
-			S.out( a);
-		}
-		
+		S.out( "Sending test alert");
+		alert("TEST", "This is a test of the alert system");
+		respondOk();
 	}
 
 	/** Used by the Monitor program */
@@ -830,7 +822,9 @@ public class MyTransaction {
 
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
-		// send an alert to the operator to manually unwind the order for now. pas
+		String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
+				order.walletAddr(), order.orderId() );
+		alert( "UNWIND ORDER", body);
 	}
 
 	public void respondOk() {
@@ -936,15 +930,21 @@ public class MyTransaction {
 		}
 	}
 	
-	protected void alert(String subject, String body) throws Exception {
-		TwMail mail = Auth.auth().getMail();
-		mail.send(
-				"RefAPI", 
-				"peteraspiro@gmail.com", 
-				"peteraspiro@gmail.com",
-				subject,
-				body,
-				"plain");
+	/** don't throw an exception here, it should not disrupt any other process */
+	protected void alert(String subject, String body) {
+		try {
+			TwMail mail = Auth.auth().getMail();
+			mail.send(
+					"RefAPI", 
+					"peteraspiro@gmail.com", 
+					"peteraspiro@gmail.com",
+					subject,
+					body,
+					"plain");
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 }
 
