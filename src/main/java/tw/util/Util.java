@@ -94,6 +94,8 @@ public class Util {
 		throw new RuntimeException();
 		
 	}
+	
+	// to convert 1 or more items to a List, use Arrays.asList()
 
 }
 //move into S. ps

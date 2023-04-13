@@ -960,6 +960,7 @@ public class MyTransaction {
 			e.printStackTrace();
 		}
 	}
+
 	
 	/** Validate the cookie or throw exception, and update the access time on the cookie 
 	 * @param userAddr */

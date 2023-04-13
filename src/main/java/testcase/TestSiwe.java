@@ -1,8 +1,5 @@
 package testcase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.Instant;
@@ -147,11 +144,4 @@ public class TestSiwe extends TestCase {
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( "Session has expired", cli.readMyJsonObject().getString("message") );
 	}
-	
-	void testValidateCookie() {
-		
-	}
-	
-	
-	
 }
