@@ -107,7 +107,9 @@ public class BackendTransaction extends MyTransaction {
 	 */
 	public void handleGetStockWithPrice(String uri) {
 		wrap( () -> {
-			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
+			String last = Util.getLastToken(uri, "/");
+			require( !last.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
+			int conid = Integer.valueOf(last);
 			respond( new Json( m_main.getStock(conid) ) );
 		});
 	}
