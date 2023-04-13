@@ -6,7 +6,6 @@ import java.net.URLEncoder;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +23,7 @@ import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>();
-	private static final HashMap<String,Session> sessionMap = new HashMap<>();  // map   
+	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map   
 					// it would be better to store this in the Redis; give it a key so you can see or wipe out all 
 	
 	static class Session {
@@ -149,8 +148,6 @@ public class SiweTransaction extends MyTransaction {
 			Main.require( cookie.split("=").length >= 2, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
 
 			MyJsonObject signedSiweMsg = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
-			Main.require( signedSiweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
-			
 			MyJsonObject siweMsg = signedSiweMsg.getObj("message");
 			Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
 			
@@ -189,7 +186,7 @@ public class SiweTransaction extends MyTransaction {
 	}
 
 	/** Find the cookie header that starts with name */
-	private String findCookie(Headers headers, String name) {
+	static String findCookie(Headers headers, String name) {
 		if (headers != null) {
 			List<String> cookies = headers.get( "Cookie");
 			if (cookies != null) {

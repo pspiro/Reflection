@@ -128,6 +128,8 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			String userAddr = Util.getLastToken(uri, "/");
 			require( Util.isValidAddress(userAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			
+			validateCookie(userAddr);
 
 			Rusd rusd = Main.m_config.newRusd();
 			Busd busd = Main.m_config.newBusd();

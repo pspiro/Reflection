@@ -7,6 +7,7 @@ import static reflection.Main.round;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,8 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
+import json.MyJsonObject;
+import reflection.SiweTransaction.Session;
 import tw.google.Auth;
 import tw.google.TwMail;
 import tw.util.S;
@@ -454,7 +457,7 @@ public class MyTransaction {
 	}
 
 	/** Top-level method. */
-	void order(boolean whatIf, boolean fireblocks) throws RefException {
+	void order(boolean whatIf, boolean fireblocks) throws Exception {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
@@ -482,8 +485,14 @@ public class MyTransaction {
 		String cryptoId = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
+			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+
 			cryptoId = m_map.getParam("cryptoid");  // remove this, no longer used
 		}
+
+		// make sure user is signed in with SIWE and session is not expired
+		// only trade and redeem messages need this
+		validateCookie(wallet);
 
 		// calculate order price
 		double prePrice;
@@ -950,6 +959,46 @@ public class MyTransaction {
 		catch( Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/** Validate the cookie or throw exception, and update the access time on the cookie 
+	 * @param userAddr */
+	void validateCookie(String walletAddr) throws Exception {
+		String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+		Main.require( 
+				cookie != null && cookie.split("=").length >= 2, 
+				RefCode.INVALID_REQUEST, 
+				"Null or malformed cookie: " + cookie);
+
+		// parse cookie which has two fields, signature and message
+		MyJsonObject siweMsg = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) )
+				.getObj("message");
+		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
+		
+		// find session object
+		Session session = SiweTransaction.sessionMap.get( siweMsg.getString("address") );
+		Main.require(session != null, RefCode.INVALID_REQUEST, "No session object found for address " + siweMsg.getString("address") );
+
+		// valiate nonce
+		Main.require(
+				session.nonce().equals( siweMsg.getString("nonce") ),
+				RefCode.INVALID_REQUEST,
+				"Nonce does not match");
+
+		// check for expiration
+		Main.require( 
+				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
+				RefCode.INVALID_REQUEST,
+				"Session has expired");
+		
+		// confirm no wallet or same wallet
+		Main.require( 
+				walletAddr == null || walletAddr.equalsIgnoreCase(siweMsg.getString("address") ), 
+				RefCode.INVALID_REQUEST, 
+				"The address on the message does not match the address of the session");
+		
+		// update expiration time
+		session.update();
 	}
 }
 
