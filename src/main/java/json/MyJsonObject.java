@@ -37,7 +37,8 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	}
 
 	public MyJsonObject getObj(String key) throws Exception {
-		return new MyJsonObject( m_obj.get( key) );
+		Object obj = m_obj.get(key);
+		return obj != null ? new MyJsonObject(obj) : null;
 	}
 	
 	public JSONObject toJsonObj() {

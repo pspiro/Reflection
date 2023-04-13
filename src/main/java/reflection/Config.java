@@ -60,7 +60,8 @@ public class Config {
 	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
 	private int redisQueryInterval;
 	private double minTokenPosition; // minimum token position to display in portfolio section
-	private int siweTimeout;
+	private int siweTimeout; // max time between issuedAt field and now
+	private int sessionTimeout; // session times out after this amount of inactivity
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -148,6 +149,7 @@ public class Config {
 		this.mintEth = m_tab.getRequiredString("mintEth");
 		this.approveAll = m_tab.getBoolean("approveAll");
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
+		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -433,5 +435,9 @@ public class Config {
 
 	public int siweTimeout() {
 		return siweTimeout;
+	}
+
+	public long sessionTimeout() {
+		return sessionTimeout;
 	}
 }
