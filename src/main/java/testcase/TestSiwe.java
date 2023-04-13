@@ -1,10 +1,9 @@
 package testcase;
 
 import java.net.URLDecoder;
-import java.time.Duration;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 
 import org.json.simple.JSONObject;
 
@@ -88,43 +87,64 @@ public class TestSiwe extends TestCase {
 		assertEquals( myWalletAddress, msg3.getString("address"));
 		assertEquals( nonce, msg3.getString("nonce"));
 
-		// test siwe/me
+		// a second attemp to sign in with the same nonce should fail
 		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("cookie", cookie).get("/siwe/me");
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( cli.readString() );
+		assertEquals( 400, cli.getResponseCode() );
+
+		// test successful siwe/me
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		S.out( cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
-//		S.out( cli.readString() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
 		MyJsonObject meSiweMsg = meResponseMsg.getObj("message");
 		assertEquals( myWalletAddress, meSiweMsg.getString("address") );
 		assertEquals( nonce, meSiweMsg.getString("nonce"));
 		
-		// a second attemp with the same nonce should fail
+		// test siwe/me w/ no cookie
 		cli = new MyHttpClient("localhost", 8383);
-		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( cli.readString() );
+		cli.get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "No cookie header in request", cli.readMyJsonObject().getString("message") );
 		
+		// test siwe/me wrong address
+		JSONObject badSignedObj = MyJsonObject.parse("""
+				 { "signature": "signature", "message": { "address": "0xwrongaddress" } }
+				""").toJsonObj();
 		
+		String badCookie = String.format( "__Host_authToken%s%s=%s", "0xwrongaddress", 5, URLEncoder.encode(badSignedObj.toString() ) );
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "No session object found for address 0xwrongaddress", cli.readMyJsonObject().getString("message") );
 		
-		// you need to test failures on issuedAt time and wrong nonce
-		
+		// test siwe/me wrong nonce
+		badSignedObj = MyJsonObject.parse("""
+				 { "signature": "signature", "message": { "address": "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "nonce": "badnonce" } }
+				""").toJsonObj();		
+		badCookie = String.format( "__Host_authToken%s%s=%s", "0xwrongaddress", 5, URLEncoder.encode(badSignedObj.toString() ) );
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "Nonce", cli.readMyJsonObject().getString("message").substring(0,5) );
+
+		// test another successful me
+		S.sleep(1000);
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		assertEquals( 200, cli.getResponseCode() );
+
+		// test timed out session
+		S.sleep(3000);
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "Session has expired", cli.readMyJsonObject().getString("message") );
 	}
-//	
-//	public static void main(String[] args) {
-//		Instant start = Instant.now();
-//
-//		// create str
-//		String str = DateTimeFormatter.ISO_INSTANT.format( start);
-//		
-//		// 
-//		Instant a = Instant.from(DateTimeFormatter.ISO_INSTANT.parse(str));
-//		
-//		S.sleep(100);
-//		
-//		Duration i = Duration.between( Instant.now(), a );
-//		S.out( "%s ms", i.toMillis() );
-//		
-//			
-//	}
+	
+	
+	
 }

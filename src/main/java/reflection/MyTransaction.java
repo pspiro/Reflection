@@ -77,7 +77,6 @@ public class MyTransaction {
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf = "ETF";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
-	static final HashMap<String,String> nullMap = new HashMap<>();
 	
 	protected Main m_main;
 	protected HttpExchange m_exchange;
@@ -726,7 +725,7 @@ public class MyTransaction {
 			respondFull( 
 					Util.toJsonMsg( code, RefCode.REJECTED, text, msg),
 					400,
-					nullMap);
+					null);
 			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s",
 					order.orderId(), order.cryptoId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
@@ -837,13 +836,13 @@ public class MyTransaction {
 
 	/** @param data is an array of key/value pairs */
 	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
-		return respondFull( Util.toJsonMsg( data), 200, nullMap);
+		return respondFull( Util.toJsonMsg( data), 200, null);
 	}
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
 	boolean respond( Json response) {
-		return respondFull( response, 200, nullMap);
+		return respondFull( response, 200, null);
 	}
 
 	/** @param responseCode is 200 or 400 */
@@ -857,8 +856,10 @@ public class MyTransaction {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
 
 			// add custom headers, if any  (add URL encoding here?)
-			for (Entry<String, String> header : headers.entrySet() ) {
-				m_exchange.getResponseHeaders().add( header.getKey(), header.getValue() );
+			if (headers != null) {
+				for (Entry<String, String> header : headers.entrySet() ) {
+					m_exchange.getResponseHeaders().add( header.getKey(), header.getValue() );
+				}
 			}
 			
 			m_exchange.sendResponseHeaders( responseCode, response.length() );
@@ -877,7 +878,7 @@ public class MyTransaction {
 			runnable.run();
 		}
 		catch( RefException e) {
-			boolean responded = respondFull( e.toJson(), 400, nullMap);  // return false if we already responded
+			boolean responded = respondFull( e.toJson(), 400, null);  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
 			if (responded || e.code() != RefCode.TIMED_OUT) {
@@ -890,7 +891,7 @@ public class MyTransaction {
 			respondFull( 
 					RefException.eToJson(e, RefCode.UNKNOWN),
 					400,
-					nullMap
+					null
 				);
 		}
 	}
