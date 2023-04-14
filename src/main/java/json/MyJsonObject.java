@@ -5,6 +5,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+import com.google.api.services.gmail.Gmail.Users.Drafts.Get;
 import com.moonstoneid.siwe.SiweMessage;
 
 import reflection.SiweUtil;
@@ -21,6 +22,15 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	public MyJsonObject( Object obj) throws NullPointerException {  // one of the rare places we return NPE due to the code in MyJsonArray.iter
 		if (obj == null) throw new NullPointerException("Cannot create MyJsonObject from null JSONObject");
 		m_obj = (JSONObject)obj;
+	}
+	
+	public MyJsonObject() {
+		m_obj = new JSONObject();
+	}
+	
+	public MyJsonObject put(String key, Object val) {
+		m_obj.put(key, val);
+		return this;
 	}
 	
 	public static MyJsonObject parse( String text) throws Exception {
@@ -152,5 +162,9 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		MyJsonObject obj = getObj(key);
 		Util.require(obj != null, "The required key is missing from the json object: " + key);
 		return obj;
+	}
+	
+	public Object get(String tag) {
+		return getString(tag);
 	}
 }

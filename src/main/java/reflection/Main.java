@@ -148,6 +148,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
+		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution

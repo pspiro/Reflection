@@ -563,9 +563,10 @@ public class MyTransaction {
 	interface Inside {
 		void run(boolean inside) throws Exception;
 	}
-
+	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
-	 *  check IBEOS and change the exchange on the contract passed in to IBEOS */
+	 *  check IBEOS and change the exchange on the contract passed in to IBEOS.
+	 *  Note that the callback is wrapped */
 	void insideAnyHours( Contract contract, Inside runnable) {
 		insideHours( contract, inside -> {
 			if (!inside && etf.equals( m_main.getType( contract.conid() ) ) ) {
@@ -615,7 +616,10 @@ public class MyTransaction {
 					S.out( "  rec what-if orderState  id=%s  %s", order.orderId(), Main.tos( orderState) );
 					double initMargin = Double.valueOf( orderState.initMarginAfter() );
 					double elv = Double.valueOf( orderState.equityWithLoanAfter() );
-					require( initMargin <= elv, RefCode.REJECTED, "Insufficient liquidity in brokerage account");
+					if (initMargin > elv) {
+						alert( "WARNING: LOW LIQUIDITY IN BROKERAGE ACCOUNT", "");
+						throw new RefException(RefCode.REJECTED, "Insufficient liquidity in brokerage account");
+					}
 					respondOk();
 				});
 			}

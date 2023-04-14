@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -297,5 +299,9 @@ public class Util {
 	public static String getLastToken(String str, String sep) {
 		String[] ar = str.split(sep);
 		return ar[ar.length-1];
+	}
+
+	public static String isoNow() {
+		return DateTimeFormatter.ISO_INSTANT.format( Instant.now() );
 	}
 }

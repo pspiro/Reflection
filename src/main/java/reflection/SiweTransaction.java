@@ -72,8 +72,7 @@ public class SiweTransaction extends MyTransaction {
 			S.out( "Handling /siwe/signin");
 			
             MyJsonObject signedMsg = new MyJsonObject(
-            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) )
-            );
+            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );
             
             S.out( "Received signed msg: %s", signedMsg);
 			
@@ -83,27 +82,26 @@ public class SiweTransaction extends MyTransaction {
 			Main.require( 
 					validNonces.remove(siweMsg.getNonce() ), 
 					RefCode.INVALID_REQUEST, 
-					"The nonce %s is invalid", siweMsg.getNonce()
-			);
+					"The nonce %s is invalid", siweMsg.getNonce() );
 			
 			// verify signature
-			if (!signedMsg.getBool("test") ) {
+			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
+				// free pass, used for testing
+			}
+			else {
 				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
 			}
 			
-			// verify time is not too far in future or past
+			// verify issuedAt is not too far in future or past
 			Instant createdAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
 			Main.require(
 					Duration.between( createdAt, Instant.now() ).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request too far in the past"
-			);
-
+					"The 'issuedAt' time on the SIWE login request too far in the past");
 			Main.require(
 					Duration.between( Instant.now(), createdAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request too far in the future"
-			);
+					"The 'issuedAt' time on the SIWE login request too far in the future");
 			
 			// store session object; let the nonce be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
@@ -113,8 +111,7 @@ public class SiweTransaction extends MyTransaction {
 			String cookie = String.format( "__Host_authToken%s%s=%s",
 					siweMsg.getAddress(), 
 					siweMsg.getChainId(), 
-					URLEncoder.encode(signedMsg.toString() ) 
-			);
+					URLEncoder.encode(signedMsg.toString() ) );
 			
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
@@ -179,6 +176,10 @@ public class SiweTransaction extends MyTransaction {
 			respond( new Json(response) );
 		});
 
+	}
+	
+	void handleSiweSignout() {
+		respondOk();
 	}
 	
 	void failedMe(String text) {

@@ -4,6 +4,7 @@ import static testcase.TestErrors.sendData;
 
 import java.util.HashMap;
 
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import redis.clients.jedis.Jedis;
 import tw.util.S;
@@ -16,7 +17,7 @@ public class TestPrices extends TestCase{
 	public void testOne() throws Exception {
 		
 		String data = "{ 'msg': 'getprice', 'conid': '8314' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		S.out( "bid=%s  ask=%s", map.get( "bid"), map.get( "ask") );
 		double bid = (Double)map.get( "bid");
 		assertTrue( bid >= curPrice - offset && bid <= curPrice + offset);
@@ -32,7 +33,7 @@ public class TestPrices extends TestCase{
 
 	public void testAll() throws Exception {
 		String data = "{ 'msg': 'getallprices' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		HashMap ibm = (HashMap)map.get( "8314");
 		double bid = (Double)ibm.get( "bid");
 		double ask =  (Double)ibm.get( "ask");
@@ -58,7 +59,7 @@ public class TestPrices extends TestCase{
 		jedis.hset( conid, "last", lst);
 		
 		String data = "{ 'msg': 'getallprices' }"; 
-		HashMap<String, Object> map = TestErrors.sendData( data);
+		MyJsonObject map = TestErrors.sendData( data);
 		HashMap prices = (HashMap)map.get(conid);
 		assertEquals( bid, prices.get("bid").toString() );
 		assertEquals( ask, prices.get("ask").toString() );

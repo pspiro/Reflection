@@ -145,7 +145,7 @@ public class CreateTables extends TestCase {
 		S.out( System.currentTimeMillis() );
 		for (int i = 0; i < 100; i++) {
 			String data = "{ 'msg': 'getconfig' }";
-			HashMap<String, Object> res = TestErrors.sendData(data);
+			//HashMap<String, Object> res = TestErrors.sendData(data);
 			//S.out( res);
 		}
 		S.out( System.currentTimeMillis() );

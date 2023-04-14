@@ -9,7 +9,21 @@ import org.json.simple.JSONObject;
  *  we don't need to recreate the array every time the client
  *  queries for the prices, which is often.
  *  
- *   Type could be Stock, ETF, or ETF-24 */
+ *   Type could be Stock, ETF, or ETF-24
+ *   
+ * The tags are:
+	"smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
+	"symbol": "IBM",
+	"ask": 128.6,
+	"description": "International Business Machines",
+	"conid": "8314",
+	"exchange": "SMART",
+	"type": "Stock",
+	"bid": 128.5
+	"exchangeStatus",
+	"exchangeTime",
+ *    
+ *    */
 class Stock extends JSONObject {
 	Prices m_prices = Prices.NULL;
 

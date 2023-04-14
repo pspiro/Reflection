@@ -8,6 +8,7 @@ import java.util.HashMap;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.ib.client.Contract;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
@@ -15,6 +16,7 @@ import fireblocks.Busd;
 import fireblocks.Erc20;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
+import io.netty.util.Timeout;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
@@ -110,7 +112,23 @@ public class BackendTransaction extends MyTransaction {
 			String last = Util.getLastToken(uri, "/");
 			require( !last.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
 			int conid = Integer.valueOf(last);
-			respond( new Json( m_main.getStock(conid) ) );
+			
+			Stock stock = m_main.getStock(conid);
+			
+			Contract contract = new Contract();
+			contract.conid(conid);
+			contract.exchange( m_main.getExchange( conid) );
+			
+			insideAnyHours( contract, inside -> {
+				stock.put( "exchangeStatus", inside ? "open" : "closed");
+				respond( new Json( stock) );
+			});
+			
+			// if we timed out, respond with the prices anyway
+			setTimer( Main.m_config.timeout(), () -> {
+				log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
+				respond( new Json( stock) );
+			});
 		});
 	}
 	

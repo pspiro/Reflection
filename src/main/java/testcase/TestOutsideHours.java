@@ -3,6 +3,7 @@ package testcase;
 import java.util.Date;
 import java.util.HashMap;
 
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.MyTransaction;
 import reflection.RefCode;
@@ -33,7 +34,7 @@ public class TestOutsideHours extends TestCase {
 		return new Date( year - 1900, month - 1, day, hr, min);
 	}
 
-	public static HashMap<String, Object> testHours( int conid, String time) throws Exception {
+	public static MyJsonObject testHours( int conid, String time) throws Exception {
 		double price = TestOrder.curPrice + 5;
 		if (conid == 320227571) price = 300;
 				
@@ -44,7 +45,7 @@ public class TestOutsideHours extends TestCase {
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */
 	public void testStk0()  throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "3:59");
+		MyJsonObject map = testHours( 8314, "3:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -54,7 +55,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk1()  throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "4:00");
+		MyJsonObject map = testHours( 8314, "4:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -64,7 +65,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk2() throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "10:00");
+		MyJsonObject map = testHours( 8314, "10:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -74,7 +75,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk3() throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "19:59");
+		MyJsonObject map = testHours( 8314, "19:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -83,7 +84,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk4() throws Exception {
-		HashMap<String, Object> map = testHours( 8314, "20:00");
+		MyJsonObject map = testHours( 8314, "20:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -95,7 +96,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf0()  throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "3:59");
+		MyJsonObject map = testHours( 320227571, "3:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -105,7 +106,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf1()  throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "4:00");
+		MyJsonObject map = testHours( 320227571, "4:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -115,7 +116,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf2() throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "10:00");
+		MyJsonObject map = testHours( 320227571, "10:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -125,7 +126,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf3() throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "19:59");
+		MyJsonObject map = testHours( 320227571, "19:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -134,7 +135,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf4() throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "20:00");
+		MyJsonObject map = testHours( 320227571, "20:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -144,7 +145,7 @@ public class TestOutsideHours extends TestCase {
 	}	
 
 	public void testEtf5() throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "23:59");
+		MyJsonObject map = testHours( 320227571, "23:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -154,7 +155,7 @@ public class TestOutsideHours extends TestCase {
 	}	
 
 	public void testEtf6() throws Exception {
-		HashMap<String, Object> map = testHours( 320227571, "03:29");
+		MyJsonObject map = testHours( 320227571, "03:29");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");

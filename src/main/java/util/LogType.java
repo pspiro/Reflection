@@ -20,7 +20,8 @@ public enum LogType {
 	RESTART,		// application was restarted
 	SUBMIT,
 	TERMINATE,
-	TIME,			// switched to/from IBEOS hours 
+	TIME,			// switched to/from IBEOS hours
+	TIMEOUT,		// msg timed out but we responded anyway
 	TRADE,			// trade report received
 	WALLET,
 }

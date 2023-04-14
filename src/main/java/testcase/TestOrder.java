@@ -2,8 +2,7 @@ package testcase;
 
 import static testcase.TestErrors.sendData;
 
-import java.util.HashMap;
-
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
@@ -14,7 +13,7 @@ public class TestOrder extends TestCase {
 	// missing cryptoId
 	public void testOrder1() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -24,7 +23,7 @@ public class TestOrder extends TestCase {
 	// missing walletId
 	public void testOrder2() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'cryptoId': '0x838383' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -34,7 +33,7 @@ public class TestOrder extends TestCase {
 	// reject order; price too low
 	public void testOrder3() throws Exception {
 		String data = orderData( -1);
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		S.out( code + " " + text);
@@ -46,7 +45,7 @@ public class TestOrder extends TestCase {
 	// sell order price to high
 	public void testOrder35() throws Exception {
 		String data = orderData( 1, "SELL", "pricetoohigh");
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
@@ -56,7 +55,7 @@ public class TestOrder extends TestCase {
 	// reject order; price too high; IB won't accept it
 	public void testOrder4() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '150', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";		
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		S.out( "testOrder4: %s", map);
@@ -67,7 +66,7 @@ public class TestOrder extends TestCase {
 	// fill order buy order
 	public void testOrder98() throws Exception {
 		String data = orderData( 3);
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		String filled = (String)map.get( "filled");
@@ -79,7 +78,7 @@ public class TestOrder extends TestCase {
 	// fill order sell order
 	public void testOrder99() throws Exception {
 		String data = orderData( -3, "sell", "testorder99");
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		String filled = (String)map.get( "filled");
@@ -90,21 +89,21 @@ public class TestOrder extends TestCase {
 	
 	public void testMaxAmtBuy()  throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtsell' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		S.out( "testFracShares: %s: %s", ret, text);
@@ -113,14 +112,14 @@ public class TestOrder extends TestCase {
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -129,7 +128,7 @@ public class TestOrder extends TestCase {
 	
 	public void testPartialFill()  throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		S.out( "testPartialFill: %s", map);

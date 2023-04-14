@@ -1,10 +1,10 @@
 package testcase;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 
 import http.MyHttpClient;
 import json.MyJsonArray;
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.RefCode;
 import reflection.Util;
@@ -18,7 +18,7 @@ public class TestErrors extends TestCase {
 	public void testMalformedJson() throws Exception {
 		String data = "{ 'nomsg': 'nodata', }";
 		
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertEquals( "Param 'msg' is missing", map.get( text) ); 
 	}
@@ -26,14 +26,14 @@ public class TestErrors extends TestCase {
 	public void testMissingMsg() throws Exception {
 		String data = "{ 'nomsg': 'nodata' }";
 		
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertEquals( "Param 'msg' is missing", map.get( text) ); 
 	}
 	
 	public void testInvalidMsg() throws Exception {
 		String data = "{ 'msg': 'notamsg' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertStartsWith( "Param 'msg' has invalid value", map.get( text) ); 
 	}
@@ -44,7 +44,7 @@ public class TestErrors extends TestCase {
 
 	public void testJson2() throws Exception {
 		String data = "{ 'msg': 'value' ";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertTrue( ((String)(map.get( text))).startsWith( "Error parsing json") );
 	}
@@ -52,7 +52,7 @@ public class TestErrors extends TestCase {
 	// invalid conid
 	public void testCheckHours() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '-5' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertEquals( "Param 'conid' must be positive integer", map.get( text) ); 
 	}
@@ -60,7 +60,7 @@ public class TestErrors extends TestCase {
 	// missing conid
 	public void testCheckHours2() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conidd': '33' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
 		assertEquals( "Param 'conid' is missing", map.get( text) ); 
 	}
@@ -68,7 +68,7 @@ public class TestErrors extends TestCase {
 	// no such conid
 	public void testCheckHours3() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '83' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		S.out( map);
 		assertEquals( RefCode.NO_SUCH_STOCK.toString(), map.get( code) );
 		assertEquals( "No contract details found for conid 83", map.get( text) ); 
@@ -77,7 +77,7 @@ public class TestErrors extends TestCase {
 	// all valid
 	public void testCheckHours4() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '8314' }";
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String hours = (String)map.get( "hours");
 		assertTrue( hours.equals( "liquid") || hours.equals( "illiquid") || hours.equals( "closed") );
 	}
@@ -95,10 +95,10 @@ public class TestErrors extends TestCase {
 		return new MyHttpClient( host, 8383);
 	}
 	
-	public static HashMap<String, Object> sendData( String data) throws Exception {
+	public static MyJsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = cli();
 		cli.post( Util.toJson( data) );
-		return cli.readJsonMap();
+		return cli.readMyJsonObject();
 	}
 	
 	static MyJsonArray sendData2( String data) throws Exception {
@@ -107,10 +107,10 @@ public class TestErrors extends TestCase {
 		return cli.readMyJsonArray();
 	}
 	
-	static HashMap<String, Object> sendAndReceive( String filename) throws Exception {
+	static MyJsonObject sendAndReceive( String filename) throws Exception {
 		MyHttpClient cli = cli();
 		cli.writeFile( filename);
-		return cli.readJsonMap();
+		return cli.readMyJsonObject();
 	}
 
 	

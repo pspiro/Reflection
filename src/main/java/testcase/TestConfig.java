@@ -3,8 +3,8 @@ package testcase;
 import static testcase.TestErrors.sendData;
 
 import java.sql.ResultSet;
-import java.util.HashMap;
 
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.MySqlConnection;
 import tw.util.S;
@@ -13,7 +13,7 @@ public class TestConfig extends TestCase {
 	
 	public void testConnection() throws Exception {
 		String data = "{ 'msg': 'getconnectionstatus' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		//assertEquals( "true", map.get("mktDataConnectedToTWS") );
 		//assertEquals( "true", map.get("mktDataConnectedToBroker") );
 		assertEquals( "true", map.get("orderConnectedToTWS") );
@@ -22,19 +22,19 @@ public class TestConfig extends TestCase {
 	
 	public void testConfig() throws Exception {
 		String data = "{ 'msg': 'getconfig' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( "paper", map.get( "mode") );
 	}
 
 	public void testRefreshConfig() throws Exception {
 		String data = "{ 'msg': 'refreshconfig' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		assertEquals( "paper", map.get( "mode") );
 	}
 	
 	public void testBackendConfig() throws Exception {
 		String data = "{ 'msg': 'pullbackendconfig' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		S.out( map);
 		assertEquals( "OK", map.get( "code") );
 	}

@@ -1,8 +1,8 @@
 package test;
 
-import java.util.HashMap;
 import java.util.Random;
 
+import json.MyJsonObject;
 import testcase.TestErrors;
 import testcase.TestOrder;
 import tw.util.S;
@@ -34,7 +34,7 @@ public class TestMany {
 		double priceOffset = -2;
 		
 		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell", cryptoId);
-		HashMap<String, Object> map = TestErrors.sendData( data);
+		MyJsonObject map = TestErrors.sendData( data);
 		synchronized( lock) {
 			S.out( map);
 		}

@@ -48,19 +48,6 @@ public class MyHttpClient {
 		m_socket.getOutputStream().write( bytes);
 	}
 
-	/** This is redundant and doesn't add anything except the types.
-	 *  @deprecated use readMyJsonObj */
-	public HashMap<String,Object> readJsonMap() throws Exception {
-		JSONObject jsonObject = readJsonObject();
-
-		HashMap<String,Object> map = new HashMap<String,Object>();
-        for (Object key : jsonObject.keySet() ) {
-        	map.put( (String)key, jsonObject.get(key) );
-        }
-        
-        return map;
-	}
-
 	public MyJsonObject readMyJsonObject() throws Exception {
 		return MyJsonObject.parse( readString() );
 	}
@@ -142,12 +129,11 @@ public class MyHttpClient {
 
 	/** e.g. post2( "/api", */
 	public void post( String url, String data) throws Exception {
-		String contLen = String.format( "Content-length: %s\r\n", data.length() );
+		addHeader( "Content-length", "" + data.length() );
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "POST " + url + " HTTP/1.1\r\n");
-		sb.append( contLen);
-		sb.append( "\r\n");
+		addHeaders(sb);
 		sb.append( data);
 		
 		write( sb.toString() );
@@ -166,13 +152,17 @@ public class MyHttpClient {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append( "GET " + data + " HTTP/1.1\r\n");
+		addHeaders(sb);
+
+		write( sb.toString() );
+		return this;
+	}
+
+	private void addHeaders(StringBuilder sb) {
 		for (String header : m_reqHeaders) {
 			sb.append( header + "\r\n");
 		}
 		sb.append( "\r\n");
-
-		write( sb.toString() );
-		return this;
 	}
 
 	/** for sending, must contain ":" */

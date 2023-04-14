@@ -55,7 +55,7 @@ public class TestSiwe extends TestCase {
 		assertEquals( 20, nonce.length() );
 		
 		String myWalletAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-		String signature = "0xb704d00b0bd15e789e26e566d668ee03cca287218bd6110e01334f40a38d9a8377eece1d958fff7a72a5b669185729a18c1a253fd0ddcf9711764a761d60ba821b";
+		String signature = "102268";  // special sig that will always pass
 
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 
@@ -69,7 +69,6 @@ public class TestSiwe extends TestCase {
 				.build();
 		
 		JSONObject signedMsgSent = new JSONObject();
-		signedMsgSent.put( "test", true);				// tells backend to approve signature
 		signedMsgSent.put( "signature", signature);
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 

@@ -2,12 +2,10 @@ package testcase;
 
 import static testcase.TestErrors.sendData;
 
-import java.util.HashMap;
-
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
-import tw.util.S;
 
 public class TestWhatIf extends TestCase {
 	// what-if
@@ -15,7 +13,7 @@ public class TestWhatIf extends TestCase {
 	// missing conid
 	public void testWhatIf1() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'side': 'buy', 'quantity': '100', 'price': '83' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -25,7 +23,7 @@ public class TestWhatIf extends TestCase {
 	// missing side
 	public void testWhatIf2() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'quantity': '100', 'price': '83' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -35,7 +33,7 @@ public class TestWhatIf extends TestCase {
 	// missing quantity
 	public void testWhatIf3() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'price': '83' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -45,7 +43,7 @@ public class TestWhatIf extends TestCase {
 	// negative quantity 
 	public void testWhatIf35() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '-100', 'price': '83' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -55,7 +53,7 @@ public class TestWhatIf extends TestCase {
 	// missing price
 	public void testWhatIf4() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -65,7 +63,7 @@ public class TestWhatIf extends TestCase {
 	// negative price 
 	public void testWhatIf5() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '-83' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -75,7 +73,7 @@ public class TestWhatIf extends TestCase {
 	// price too low 
 	public void testWhatIf6() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '30' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_PRICE.toString(), ret);
@@ -88,7 +86,7 @@ public class TestWhatIf extends TestCase {
 //		double price = TestOrder.curPrice + 1;
 //		
 //		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1000000', 'price': '%s' }", price); 
-//		HashMap<String, Object> map = sendData( data);
+//		MyJsonObject map = sendData( data);
 //		String ret = (String)map.get( "code");
 //		String text = (String)map.get( "text");
 //		assertEquals( RefCode.REJECTED.toString(), ret);
@@ -97,35 +95,35 @@ public class TestWhatIf extends TestCase {
 
 	public void testMaxAmtBuy()  throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '133' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '133' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 	
 	public void testFracSize()  throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '147' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testFracSize2()  throws Exception {  // rounded 
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '147' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testZeroShares()  throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '147' }"; 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -138,7 +136,7 @@ public class TestWhatIf extends TestCase {
 		double price = TestOrder.curPrice + 2;
 		
 		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '%s' }", price); 
-		HashMap<String, Object> map = sendData( data);
+		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.OK.toString(), ret);
