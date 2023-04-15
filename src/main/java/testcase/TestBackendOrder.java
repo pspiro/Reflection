@@ -7,6 +7,9 @@ import com.moonstoneid.siwe.SiweMessage;
 import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import redis.clients.jedis.Jedis;
+import reflection.Config;
+import reflection.Main;
 import reflection.Prices;
 import reflection.RefCode;
 import reflection.SiweUtil;
@@ -21,9 +24,25 @@ public class TestBackendOrder extends TestCase {
 	static {
 		try {
 			signIn(wallet);
+			seed();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void seed() throws Exception {
+		String tabName = "Desktop-config";
+
+		Config config = new Config();
+		config.readFromSpreadsheet(tabName);
+
+		Jedis jedis = config.redisPort() == 0
+				? new Jedis( config.redisHost() )  // use full connection string
+				: new Jedis( config.redisHost(), config.redisPort() );
+		
+		jedis.hset( "8314", "bid", "" + curPrice);
+		jedis.hset( "8314", "ask", "" + curPrice);
+		jedis.hset( "8314", "last", "" + curPrice);
 	}
 	
 	// missing cryptoId

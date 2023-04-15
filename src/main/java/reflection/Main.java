@@ -566,51 +566,46 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
+		getURI(exch);
+		new BackendTransaction(this, exch)
 			.respond( new Json( m_stocks) );
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
 		new BackendTransaction(this, exch)
 			.handleReqPositions(uri);
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleGetStockWithPrice( uri);
 	}
 
 	private void handleGetPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleGetPrice( uri);
 	}
 
 	private void handleOrder(HttpExchange exch, boolean whatIf) {
-		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		
-		new BackendTransaction( this, exch)
+		getURI(exch);
+		new BackendTransaction(this, exch)
 			.backendOrder(whatIf);
 	}
 
 	private void handleRedeem(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleRedeem(uri);
 	}
 	
+	/** Note this returns URI in all lower case */
 	private static String getURI(HttpExchange exch) {
-		return exch.getRequestURI().toString().toLowerCase();
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		S.out( "Handling %s", uri);
+		return uri;
 	}
 
 	/** this seems useless since you can still be left with .000001 */

@@ -140,8 +140,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Redeem (sell) RUSD 
-	 * @param uri */
+	/** Redeem (sell) RUSD */ 
 	public void handleRedeem(String uri) {
 		wrap( () -> {
 			String userAddr = Util.getLastToken(uri, "/");
@@ -161,7 +160,10 @@ public class BackendTransaction extends MyTransaction {
 
 			double busdPos = busd.reqPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
-				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos);
+				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos)
+					.waitForHash();
+				
+				// QUESTION: can we send back a partial response before the hash is ready using chunks or WebSockets?
 				
 				respond( code, RefCode.OK);  // wait for completion. pas 
 			}
@@ -170,7 +172,7 @@ public class BackendTransaction extends MyTransaction {
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
 						userAddr, rusdPos, busdPos, (rusdPos - busdPos) );
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
-				throw new Exception( str);  // will create log entry with ERROR code
+				throw new RefException( RefCode.INSUFFICIENT_FUNDS, str);
 			}
 		});
 	}

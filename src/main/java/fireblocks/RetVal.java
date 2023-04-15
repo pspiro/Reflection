@@ -1,5 +1,7 @@
 package fireblocks;
 
+import tw.util.S;
+
 public class RetVal {
 	private String m_id;
 
@@ -12,7 +14,8 @@ public class RetVal {
 	}
 	
 	/** This blocks for up to 63 seconds */
-	String waitForHash() throws Exception {
+	public String waitForHash() throws Exception {
+		S.out( "  waiting for blockchain hash...");
 		return Fireblocks.getTransHash(m_id, 60);
 	}
 }

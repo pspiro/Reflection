@@ -35,6 +35,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
 import json.MyJsonObject;
+import redis.clients.jedis.Jedis;
 import reflection.SiweTransaction.Session;
 import tw.google.Auth;
 import tw.google.TwMail;
@@ -64,6 +65,7 @@ public class MyTransaction {
 		pushFaq,
 		refreshConfig,
 		refreshStocks,
+		seedPrices,
 		terminate,
 		test,
 		;
@@ -223,6 +225,8 @@ public class MyTransaction {
 			case test:
 				onTest();
 				break;
+			case seedPrices:
+				onSeedPrices();
 		}
 	}
 
@@ -1004,6 +1008,24 @@ public class MyTransaction {
 		
 		// update expiration time
 		session.update();
+	}
+	
+	/** top-level method; set some prices for use in test systems */
+	void onSeedPrices() {
+		Jedis jedis = Main.m_config.redisPort() == 0
+			? new Jedis( Main.m_config.redisHost() )  // use full connection string
+			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
+
+		jedis.hset( "8314", "bid", "128.20");
+		jedis.hset( "8314", "ask", "128.20");
+		jedis.hset( "13824", "bid", "148.48");
+		jedis.hset( "13824", "ask", "148.48");
+		jedis.hset( "13977", "bid", "116.05");
+		jedis.hset( "13977", "ask", "116.05");
+		jedis.hset( "265598", "bid", "165.03");
+		jedis.hset( "265598", "ask", "165.03");
+		
+		respondOk();
 	}
 }
 

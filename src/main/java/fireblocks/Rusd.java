@@ -151,7 +151,7 @@ public class Rusd extends Erc20 {
 
 	/** Burn RUSD from user wallet and transfer BUSD from RefWallet to user wallet
 	 *  Since we only pass one amount, RUSD must have same number of decimals as BUSD */
-	public String sellRusd(String userAddr, Busd busd, double amt) throws Exception {
+	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
 		String[] paramTypes = { "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
@@ -166,7 +166,7 @@ public class Rusd extends Erc20 {
 		S.out( "Account %s user %s selling %s RUSD for BUSD",
 				adminAcctId, userAddr, amt);
 		
-		return Fireblocks.call( 
+		return Fireblocks.call2( 
 				adminAcctId, 
 				m_address, 
 				sellRusdKeccak, 
