@@ -568,7 +568,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		getURI(exch);
 		new BackendTransaction(this, exch)
-			.respond( new Json( m_stocks) );
+			.respond( m_stocks);
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {

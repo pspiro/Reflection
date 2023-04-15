@@ -116,7 +116,7 @@ public class Util {
 
 	/** Create the whole Json message, including the time.
 	 *  @param strs tag/value pairs */
-	static Json toJsonMsg( Object... strs) { // get rid of this. pas
+	static JSONObject toJsonMsg( Object... strs) { // get rid of this. pas
 		JSONObject obj = new JSONObject();
 		
 		Object tag = null;
@@ -134,7 +134,7 @@ public class Util {
 				tag = null;
 			}
 		}
-		return new Json( obj);
+		return obj;
 	}
 
 	/** Numbers we will put without quotation marks; everything else gets quotation marks. */

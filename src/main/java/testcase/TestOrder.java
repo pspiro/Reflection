@@ -1,18 +1,27 @@
 package testcase;
 
-import static testcase.TestErrors.sendData;
-
+import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
+import reflection.Util;
 import tw.util.S;
 
 public class TestOrder extends TestCase {
+	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	static double curPrice = 135.75; // Double.valueOf( jedis.hget("8314", "last") );
 
+	/** This version includes the cookie */
+	static MyJsonObject sendData( String data) throws Exception {
+		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+		cli.addHeader("Cookie", Cookie.cookie).post( "/", Util.toJson(data) );
+		return cli.readMyJsonObject();
+	}
+	
 	// missing cryptoId
 	public void testOrder1() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0x747474' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -21,7 +30,7 @@ public class TestOrder extends TestCase {
 	}
 
 	// missing walletId
-	public void testOrder2() throws Exception {
+	public void testMissingWallet() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '83', 'cryptoId': '0x838383' }";
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
@@ -31,7 +40,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	// reject order; price too low
-	public void testOrder3() throws Exception {
+	public void testPriceTooLow() throws Exception {
 		String data = orderData( -1);
 		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
@@ -43,7 +52,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	// sell order price to high
-	public void testOrder35() throws Exception {
+	public void testPriceTooHigh() throws Exception {
 		String data = orderData( 1, "SELL", "pricetoohigh");
 		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
@@ -54,7 +63,7 @@ public class TestOrder extends TestCase {
 	
 	// reject order; price too high; IB won't accept it
 	public void testOrder4() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '150', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";		
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '150', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtbuy' }";		
 		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -64,7 +73,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	// fill order buy order
-	public void testOrder98() throws Exception {
+	public void testFillBuy() throws Exception {
 		String data = orderData( 3);
 		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
@@ -76,7 +85,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	// fill order sell order
-	public void testOrder99() throws Exception {
+	public void testFillSell() throws Exception {
 		String data = orderData( -3, "sell", "testorder99");
 		MyJsonObject map = sendData( data);
 		String code = (String)map.get( "code");
@@ -88,21 +97,21 @@ public class TestOrder extends TestCase {
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtbuy' }";
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtbuy' }";
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '138', 'wallet': '8383', 'cryptoid': 'testmaxamtsell' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtsell' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -111,14 +120,14 @@ public class TestOrder extends TestCase {
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -127,7 +136,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	public void testPartialFill()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '138', 'wallet': '8383', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'side': 'buy', 'quantity': '3', 'price': '138', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -142,11 +151,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	public static String orderData(double offset, String side, String cryptoId) {
-		return String.format( "{ 'msg': 'order', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'cryptoid': '%s', 'wallet': '0x747474', 'tds': 1.11 }",
+		return String.format( "{ 'msg': 'order', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'cryptoid': '%s', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11 }",
 				side, Double.valueOf( curPrice + offset), cryptoId );
 	}
-
-
-	// current stock price
-	static double curPrice = 135.75; // Double.valueOf( jedis.hget("8314", "last") );
 }

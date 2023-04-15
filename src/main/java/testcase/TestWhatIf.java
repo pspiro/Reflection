@@ -1,6 +1,6 @@
 package testcase;
 
-import static testcase.TestErrors.sendData;
+import static testcase.TestOrder.sendData;
 
 import json.MyJsonObject;
 import junit.framework.TestCase;

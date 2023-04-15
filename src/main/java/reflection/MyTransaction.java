@@ -16,6 +16,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -30,7 +31,6 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
@@ -248,7 +248,7 @@ public class MyTransaction {
 				ar.add( obj);
 			}
 			@Override public void positionEnd() {
-				respond( new Json(ar) ); 
+				respond(ar); 
 			}
 		});
 		
@@ -334,7 +334,7 @@ public class MyTransaction {
 		require( !m_main.stocks().isEmpty(), RefCode.UNKNOWN, "We don't have the list of stocks");
 
 		S.out( "Returning all stocks");
-		respond( new Json( m_main.stocks() ) );
+		respond(m_main.stocks());
 	}
 
 	/** Top-level method; used for admin purposes only, to get the conid */
@@ -372,7 +372,7 @@ public class MyTransaction {
 					whole.add( obj);
 				}
 
-				respond( new Json( whole).fmtArray() );
+				respondFmt(whole);
 			});
 		});
 
@@ -457,7 +457,7 @@ public class MyTransaction {
 			whole.put( stk.get("conid"), single);
 		}
 
-		respond( new Json( whole) );
+		respond(whole);
 	}
 
 	/** Top-level method. */
@@ -853,21 +853,36 @@ public class MyTransaction {
 
 	/** @param data is an array of key/value pairs */
 	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
-		return respondFull( Util.toJsonMsg( data), 200, null);
+		if (data.length > 1 && data.length % 2 == 0) {
+			return respondFull( Util.toJsonMsg( data), 200, null);
+		}
+		
+		// can't throw an exeption here
+		Exception e = new Exception("respond(Object...) called with wrong number of params");
+		e.printStackTrace();
+		return respondFull( RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
 	}
 
 	/** Only respond once for each request
 	 *  @return true if we responded just now. */
-	boolean respond( Json response) {
+	boolean respond( JSONAware response) {
 		return respondFull( response, 200, null);
 	}
 
+	private void respondFmt(JSONArray ar) {
+		respondFull( ar, 200, null, true);
+	}
+
+	synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
+		return respondFull(response, responseCode, headers, false);
+	}
+	
 	/** @param responseCode is 200 or 400 */
-	synchronized boolean respondFull( Json response, int responseCode, HashMap<String,String> headers) {
+	synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers, boolean fmtArray) {
 		if (m_responded) {
 			return false;
 		}
-
+		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
@@ -879,8 +894,15 @@ public class MyTransaction {
 				}
 			}
 			
-			m_exchange.sendResponseHeaders( responseCode, response.length() );
-			outputStream.write(response.getBytes());
+			String data = response.toString();
+			
+			// format array, one item on each line
+			if (fmtArray) {
+				data = data.replaceAll( ",\\{", ",\n{");
+			}
+			
+			m_exchange.sendResponseHeaders( responseCode, data.length() );
+			outputStream.write(data.getBytes());
 		}
 		catch (Exception e) {
 			e.printStackTrace();

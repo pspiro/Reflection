@@ -8,29 +8,17 @@ import redis.clients.jedis.Response;
 import tw.util.S;
 
 public class TestMyRedis extends TestCase {
-	static String addr = "34.125.38.193";
+	static String connect = "redis://default:rIBTXxqgQCGFmIYGuJVgK2t2x6OtlDfH@redis-19769.c299.asia-northeast1-1.gce.cloud.redislabs.com:19769";
 	
 
-	/** This test should fail if we connect and succeed if not */
-	public void testConnect() {
-		try {
-			MyRedis redis = new MyRedis(addr, 6379);
-			redis.connect();
-			assertTrue(false);
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
 	public void testSetAndGet() {
-		MyRedis redis = new MyRedis(addr, 6379);
+		MyRedis redis = new MyRedis(connect);
 		redis.run( jedis -> jedis.set( "a", "b") );
 		assertEquals( "b", redis.query( jedis -> jedis.get( "a") ) );
 	}
 	
 	public void testBreak1() {
-		MyRedis redis = new MyRedis(addr, 6379);
+		MyRedis redis = new MyRedis(connect);
 		
 		//Util.executeIn(2500, () -> redis.run( jedis -> jedis.disconnect()));
 		
@@ -57,7 +45,7 @@ public class TestMyRedis extends TestCase {
 	Response<String> obj2;
 
 	public void testPipeline1() {
-		MyRedis redis = new MyRedis(addr, 6379);
+		MyRedis redis = new MyRedis(connect);
 		redis.pipeline( pipeline -> {
 			pipeline.set( "c", "d");
 			pipeline.set( "e", "f");
@@ -73,7 +61,7 @@ public class TestMyRedis extends TestCase {
 	}
 
 	public void testPipeline2() throws Exception {
-		MyRedis redis = new MyRedis(addr, 6379);
+		MyRedis redis = new MyRedis(connect);
 
 		redis.startPipeline(500, ex -> ex.printStackTrace() );
 		redis.runOnPipeline( pipeline -> pipeline.set( "m1", "m2") );

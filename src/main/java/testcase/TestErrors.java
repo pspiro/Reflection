@@ -1,9 +1,6 @@
 package testcase;
 
-import java.text.SimpleDateFormat;
-
 import http.MyHttpClient;
-import json.MyJsonArray;
 import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.RefCode;
@@ -14,6 +11,16 @@ public class TestErrors extends TestCase {
 	String text = "text";
 	String code = "code";
 	
+	static String prod = "34.125.38.193";
+	static String local = "localhost";
+	static String host = local;
+	
+	/** This version does not include the cookie */
+	public static MyJsonObject sendData( String data) throws Exception {
+		MyHttpClient cli = new MyHttpClient( host, 8383);
+		cli.post( Util.toJson( data) );
+		return cli.readMyJsonObject();
+	}
 	
 	public void testMalformedJson() throws Exception {
 		String data = "{ 'nomsg': 'nodata', }";
@@ -71,7 +78,7 @@ public class TestErrors extends TestCase {
 		MyJsonObject map = sendData( data);
 		S.out( map);
 		assertEquals( RefCode.NO_SUCH_STOCK.toString(), map.get( code) );
-		assertEquals( "No contract details found for conid 83", map.get( text) ); 
+		assertEquals( "Unknown conid 83", map.get( text) ); 
 	}
 	
 	// all valid
@@ -80,43 +87,6 @@ public class TestErrors extends TestCase {
 		MyJsonObject map = sendData( data);
 		String hours = (String)map.get( "hours");
 		assertTrue( hours.equals( "liquid") || hours.equals( "illiquid") || hours.equals( "closed") );
-	}
-	
-	
-	
-
-	
-	static String prod = "34.125.38.193";
-	static String local = "localhost";
-	
-	static String host = prod; //local;
-	
-	static MyHttpClient cli() throws Exception {
-		return new MyHttpClient( host, 8383);
-	}
-	
-	public static MyJsonObject sendData( String data) throws Exception {
-		MyHttpClient cli = cli();
-		cli.post( Util.toJson( data) );
-		return cli.readMyJsonObject();
-	}
-	
-	static MyJsonArray sendData2( String data) throws Exception {
-		MyHttpClient cli = cli();
-		cli.post( Util.toJson( data) );
-		return cli.readMyJsonArray();
-	}
-	
-	static MyJsonObject sendAndReceive( String filename) throws Exception {
-		MyHttpClient cli = cli();
-		cli.writeFile( filename);
-		return cli.readMyJsonObject();
-	}
-
-	
-	public static void main(String[] args) {
-		S.out( new SimpleDateFormat( "yyyymmdd").getTimeZone().getID() );
-		
 	}
 	
 } 	

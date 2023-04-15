@@ -14,8 +14,6 @@ public class TestConfig extends TestCase {
 	public void testConnection() throws Exception {
 		String data = "{ 'msg': 'getconnectionstatus' }"; 
 		MyJsonObject map = sendData( data);
-		//assertEquals( "true", map.get("mktDataConnectedToTWS") );
-		//assertEquals( "true", map.get("mktDataConnectedToBroker") );
 		assertEquals( "true", map.get("orderConnectedToTWS") );
 		assertEquals( "true", map.get("orderConnectedToBroker") );		
 	}
@@ -23,21 +21,23 @@ public class TestConfig extends TestCase {
 	public void testConfig() throws Exception {
 		String data = "{ 'msg': 'getconfig' }"; 
 		MyJsonObject map = sendData( data);
-		assertEquals( "paper", map.get( "mode") );
+		assertEquals( "18", map.get( "busdDecimals") );
 	}
 
 	public void testRefreshConfig() throws Exception {
 		String data = "{ 'msg': 'refreshconfig' }"; 
 		MyJsonObject map = sendData( data);
-		assertEquals( "paper", map.get( "mode") );
+		assertEquals( "18", map.get( "busdDecimals") );
 	}
-	
-	public void testBackendConfig() throws Exception {
-		String data = "{ 'msg': 'pullbackendconfig' }"; 
-		MyJsonObject map = sendData( data);
-		S.out( map);
-		assertEquals( "OK", map.get( "code") );
-	}
+
+	/** We should not pull backend config because there could be changes
+	 *  in the spreadsheet that were not pushed yet */
+//	public void testBackendConfig() throws Exception {
+//		String data = "{ 'msg': 'pullbackendconfig' }"; 
+//		MyJsonObject map = sendData( data);
+//		S.out( map);
+//		assertEquals( "OK", map.get( "code") );
+//	}
 	
 	public void testValidDbConfig() throws Exception {
 		MySqlConnection con = new MySqlConnection();
@@ -64,5 +64,4 @@ public class TestConfig extends TestCase {
 		assertTrue( buy_spread > .001 && buy_spread < .05);
 		assertTrue( sell_spread > .001 && sell_spread < .05);
 	}
-
 }

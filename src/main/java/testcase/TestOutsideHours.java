@@ -40,7 +40,7 @@ public class TestOutsideHours extends TestCase {
 				
 		String format = "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
 		String data = String.format( format, conid, price, time); 
-		return TestErrors.sendData( data);
+		return TestOrder.sendData( data);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */
@@ -101,6 +101,7 @@ public class TestOutsideHours extends TestCase {
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 
+		S.out(text);
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
 		assertEquals( MyTransaction.exchangeIsClosed, text);
 	}

@@ -89,7 +89,7 @@ public class BackendTransaction extends MyTransaction {
 				}
 			}
 			
-			respond( new Json(retVal) );
+			respond(retVal);
 		});
 	}
 
@@ -121,13 +121,13 @@ public class BackendTransaction extends MyTransaction {
 			
 			insideAnyHours( contract, inside -> {
 				stock.put( "exchangeStatus", inside ? "open" : "closed");
-				respond( new Json( stock) );
+				respond(stock);
 			});
 			
 			// if we timed out, respond with the prices anyway
 			setTimer( Main.m_config.timeout(), () -> {
 				log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
-				respond( new Json( stock) );
+				respond(stock);
 			});
 		});
 	}

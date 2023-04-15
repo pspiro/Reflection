@@ -173,7 +173,7 @@ public class SiweTransaction extends MyTransaction {
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
-			respond( new Json(response) );
+			respond(response);
 		});
 
 	}
