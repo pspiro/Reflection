@@ -23,7 +23,8 @@ public class Deploy {
 		S.out( "Deploying system");
 		
 		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
+		config.readFromSpreadsheet("Dev-config");
+		Util.require(config.useFireblocks(), "Turn on Fireblocks");
 		
 		Rusd rusd = config.newRusd();
 		Busd busd = config.newBusd();

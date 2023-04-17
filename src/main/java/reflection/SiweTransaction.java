@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -128,14 +129,13 @@ public class SiweTransaction extends MyTransaction {
 			
 			// check for cookie header
 			String cookie = findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+			S.out( "  cookie:" + cookie);
 			
 			// no cookie 
 			if (cookie == null) {
 				failedMe( "No cookie header in request");
 				return;
 			}
-			
-			S.out( "Received cookie " + cookie);
 			
 			// the cookie has two parts: tag=value
 			// the tag is __Host_authToken<address><chainid>
@@ -186,14 +186,22 @@ public class SiweTransaction extends MyTransaction {
 		respondFull( Util.toJsonMsg( "loggedIn", false, "message", text), 400, null);
 	}
 
+	public static void main(String[] args) {
+		
+	}
+	
 	/** Find the cookie header that starts with name */
 	static String findCookie(Headers headers, String name) {
 		if (headers != null) {
-			List<String> cookies = headers.get( "Cookie");
-			if (cookies != null) {
-				for (String cookie : cookies) {
-					if (cookie.startsWith(name) ) {
-						return cookie;
+			List<String> listOfCookies = headers.get( "Cookie");
+			if (listOfCookies != null) {
+				for (String cookies : listOfCookies) {
+					StringTokenizer st = new StringTokenizer(cookies, ";");
+					while (st.hasMoreTokens() ) {
+						String cookie = st.nextToken().trim();
+						if (cookie.startsWith(name) ) {
+							return cookie;
+						}
 					}
 				}
 			}
