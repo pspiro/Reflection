@@ -284,7 +284,7 @@ public class Config {
 				
 			}
 			else if (S.isNotNull( tag) ) {
-				Main.require( false, RefCode.UNKNOWN, "Invalid type on backend config tab");
+				Main.require( false, RefCode.UNKNOWN, "Invalid value in Type column (missing entry?) on backend config tab");
 			}
 		}		
 
