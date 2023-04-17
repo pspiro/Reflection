@@ -133,7 +133,7 @@ public class MyHttpClient {
 	}
 
 	/** e.g. post2( "/api", */
-	public void post( String url, String data) throws Exception {
+	public MyHttpClient post( String url, String data) throws Exception {
 		addHeader( "Content-length", "" + data.length() );
 
 		StringBuilder sb = new StringBuilder();
@@ -142,6 +142,7 @@ public class MyHttpClient {
 		sb.append( data);
 		
 		write( sb.toString() );
+		return this;
 	}
 
 	public void get() throws Exception {

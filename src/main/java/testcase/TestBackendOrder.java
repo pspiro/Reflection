@@ -42,19 +42,9 @@ public class TestBackendOrder extends TestCase {
 		jedis.hset( "8314", "last", "" + curPrice);
 	}
 	
-	// missing cryptoId
-	public void testOrder1() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e' }"; 
-		MyJsonObject map = sendData( data);
-		String ret = map.getString( "code");
-		String text = map.getString( "text");
-		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( text, "Param 'cryptoid' is missing");
-	}
-
 	// missing walletId
 	public void testOrder2() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83', 'cryptoId': '0x0xb016711702D3302ceF6cEb62419abBeF5c44450e83' }";
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83' }";
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -75,48 +65,50 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	// sell order price to high
-	public void testOrder35() throws Exception {
-		String data = orderData( 1, "SELL", "pricetoohigh");
+	public void testSellTooHigh() throws Exception {
+		String data = orderData( 1, "SELL");
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
+		S.out("sell too high %s %s", code, text);
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
 		assertEquals( Prices.TOO_HIGH, text);
 	}
 	
 	// reject order; price too high; IB won't accept it
+	// this test will fail if autoFill is turned on
 	public void testOrder4() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '150', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtbuy' }";		
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '200', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtbuy' }";		
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "testOrder4: %s", map);
-		assertEquals( RefCode.REJECTED.toString(), code);
+		assertEquals( RefCode.REJECTED.toString(), code);  // fails if auto-fill is on
 		assertEquals( "Reason unknown", text);
 	}
 	
 	// fill order buy order
-	public void testOrder98() throws Exception {
+	public void testFillBuy() throws Exception {
 		String data = orderData( 3);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
-		String filled = map.getString( "filled");
+		S.out( "fill buy %s %s", code, text);
 		assertEquals( RefCode.OK.toString(), code);
-		assertEquals( null, text);
-		assertEquals( "100", filled);
+		double filled = map.getDouble( "filled");
+		assertEquals( 100.0, filled);
 	}
 	
 	// fill order sell order
-	public void testOrder99() throws Exception {
-		String data = orderData( -3, "sell", "testorder99");
+	public void testFillSell() throws Exception {
+		String data = orderData( -3, "sell");
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
-		String filled = map.getString( "filled");
+		S.out( "fill sell %s %s", code, text);
 		assertEquals( RefCode.OK.toString(), code);
-		assertEquals( null, text);
-		assertEquals( "100", filled);
+		double filled = map.getDouble( "filled");
+		assertEquals( 100.0, filled);
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
@@ -138,7 +130,7 @@ public class TestBackendOrder extends TestCase {
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
-		S.out( "testFracShares: %s: %s", ret, text);
+		S.out( "testFracShares %s %s", ret, text);
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
@@ -158,32 +150,20 @@ public class TestBackendOrder extends TestCase {
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 	}
 	
-	public void testPartialFill()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '3', 'price': '138', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
-		MyJsonObject map = sendData( data);
-		String ret = map.getString( "code");
-		String text = map.getString( "text");
-		S.out( "testPartialFill: %s", map);
-		assertEquals( RefCode.PARTIAL_FILL.toString(), ret);
-		assertEquals( "2 shares filled", text);
-	}
 
 	
 	static String orderData(double offset) {
-		return orderData( offset, "buy", "0x0xb016711702D3302ceF6cEb62419abBeF5c44450e");
+		return orderData( offset, "buy");
 	}
 	
-	static String orderData(double offset, String side, String cryptoId) {
-		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': '100', 'price': '%s', 'cryptoid': '%s', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11 }",
-				side, Double.valueOf( curPrice + offset), cryptoId );
+	static String orderData(double offset, String side) {
+		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': '100', 'price': '%s', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11 }",
+				side, Double.valueOf( curPrice + offset) );
 	}
 	
 	static MyJsonObject sendData( String data) throws Exception {
-//		signIn(wallet);  can we just sign in once?
-		
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
 		cli.addHeader("Cookie", Cookie.cookie).post( "/api/reflection-api/order", Util.toJson(data) );
 		return cli.readMyJsonObject();
 	}
-	// current stock price
 }

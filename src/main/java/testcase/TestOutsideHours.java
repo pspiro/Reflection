@@ -13,6 +13,9 @@ import tw.util.S;
 
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends TestCase {
+	static int QQQ = 320227571;
+	static int IBM = 8314;
+	
 	@SuppressWarnings("deprecation")   // run this test again with a different time zone
 	public void testExchHours() throws RefException {
 		String str = "20220807:CLOSED;"
@@ -21,13 +24,13 @@ public class TestOutsideHours extends TestCase {
 		
 		String tz = "America/New_York";
 		
-		assertTrue(  Util.inside( date(2022, 9, 16,  9, 00), 8314, str, tz) );
-		assertTrue(  Util.inside( date(2022, 9, 16, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 15, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 17, 12, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16,  8, 59), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16, 16, 00), 8314, str, tz) );
-		assertFalse( Util.inside( date(2022, 9, 16, 16, 10), 8314, str, tz) );
+		assertTrue(  Util.inside( date(2022, 9, 16,  9, 00), IBM, str, tz) );
+		assertTrue(  Util.inside( date(2022, 9, 16, 12, 00), IBM, str, tz) );
+		assertFalse( Util.inside( date(2022, 9, 15, 12, 00), IBM, str, tz) );
+		assertFalse( Util.inside( date(2022, 9, 17, 12, 00), IBM, str, tz) );
+		assertFalse( Util.inside( date(2022, 9, 16,  8, 59), IBM, str, tz) );
+		assertFalse( Util.inside( date(2022, 9, 16, 16, 00), IBM, str, tz) );
+		assertFalse( Util.inside( date(2022, 9, 16, 16, 10), IBM, str, tz) );
 	}
 
 	private Date date(int year, int month, int day, int hr, int min) {
@@ -36,16 +39,16 @@ public class TestOutsideHours extends TestCase {
 
 	public static MyJsonObject testHours( int conid, String time) throws Exception {
 		double price = TestOrder.curPrice + 5;
-		if (conid == 320227571) price = 300;
+		if (conid == QQQ) price = 318*1.05;
 				
 		String format = "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
 		String data = String.format( format, conid, price, time); 
-		return TestOrder.sendData( data);
+		return TestOrder.post( data);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */
 	public void testStk0()  throws Exception {
-		MyJsonObject map = testHours( 8314, "3:59");
+		MyJsonObject map = testHours( IBM, "3:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -55,7 +58,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk1()  throws Exception {
-		MyJsonObject map = testHours( 8314, "4:00");
+		MyJsonObject map = testHours( IBM, "4:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -65,7 +68,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk2() throws Exception {
-		MyJsonObject map = testHours( 8314, "10:00");
+		MyJsonObject map = testHours( IBM, "10:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -75,7 +78,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk3() throws Exception {
-		MyJsonObject map = testHours( 8314, "19:59");
+		MyJsonObject map = testHours( IBM, "19:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -84,7 +87,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testStk4() throws Exception {
-		MyJsonObject map = testHours( 8314, "20:00");
+		MyJsonObject map = testHours( IBM, "20:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -96,7 +99,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf0()  throws Exception {
-		MyJsonObject map = testHours( 320227571, "3:59");
+		MyJsonObject map = testHours( QQQ, "3:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -107,7 +110,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf1()  throws Exception {
-		MyJsonObject map = testHours( 320227571, "4:00");
+		MyJsonObject map = testHours( QQQ, "4:00");  // this will fail on the weekend
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -117,7 +120,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf2() throws Exception {
-		MyJsonObject map = testHours( 320227571, "10:00");
+		MyJsonObject map = testHours( QQQ, "10:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -127,7 +130,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf3() throws Exception {
-		MyJsonObject map = testHours( 320227571, "19:59");
+		MyJsonObject map = testHours( QQQ, "19:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -136,7 +139,7 @@ public class TestOutsideHours extends TestCase {
 	}
 	
 	public void testEtf4() throws Exception {
-		MyJsonObject map = testHours( 320227571, "20:00");
+		MyJsonObject map = testHours( QQQ, "20:00");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -146,7 +149,7 @@ public class TestOutsideHours extends TestCase {
 	}	
 
 	public void testEtf5() throws Exception {
-		MyJsonObject map = testHours( 320227571, "23:59");
+		MyJsonObject map = testHours( QQQ, "23:59");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -156,7 +159,7 @@ public class TestOutsideHours extends TestCase {
 	}	
 
 	public void testEtf6() throws Exception {
-		MyJsonObject map = testHours( 320227571, "03:29");
+		MyJsonObject map = testHours( QQQ, "03:29");
 
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");

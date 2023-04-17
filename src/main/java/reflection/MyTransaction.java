@@ -27,6 +27,7 @@ import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
+import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
@@ -372,7 +373,7 @@ public class MyTransaction {
 					whole.add( obj);
 				}
 
-				respondFmt(whole);
+				respond(whole);
 			});
 		});
 
@@ -486,12 +487,9 @@ public class MyTransaction {
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 
 		String wallet = null;
-		String cryptoId = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
 			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-
-			cryptoId = m_map.getParam("cryptoid");  // remove this, no longer used
 		}
 
 		// make sure user is signed in with SIWE and session is not expired
@@ -525,7 +523,6 @@ public class MyTransaction {
 		order.whatIf( whatIf);
 		order.transmit( true);
 		order.outsideRth( true);
-		order.cryptoId( cryptoId);
 		order.walletAddr( wallet);
 		order.stockTokenAddr( m_main.getSmartContractId(conid) );
 
@@ -573,6 +570,12 @@ public class MyTransaction {
 	 *  Note that the callback is wrapped */
 	void insideAnyHours( Contract contract, Inside runnable) {
 		insideHours( contract, inside -> {
+			
+			// for testing
+			if (Main.m_config.autoFill() ) {
+				runnable.run(true);
+			}
+			
 			if (!inside && etf.equals( m_main.getType( contract.conid() ) ) ) {
 				contract.exchange(ibeos);
 				insideHours( contract, runnable);
@@ -649,13 +652,12 @@ public class MyTransaction {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// very dangerous!
-		if (Main.m_config.approveAll() ) {
+		if (Main.m_config.autoFill() ) {
 			S.out( "Auto-filling order  id=%s", order.orderId() );
 			respond( code, RefCode.OK, "filled", order.totalQty() );
 
-			log( LogType.AUTO_FILL, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-					order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
-					order.totalQty(), order.lmtPrice(),
+			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
 					Main.m_config.commission(), 0, "");
 			return;
 		}
@@ -703,8 +705,7 @@ public class MyTransaction {
 			}
 		});
 
-		log( LogType.SUBMIT, "wallet=%s  cryptoid=%s  orderid=%s",
-				order.walletAddr(), order.cryptoId(), order.orderId() );
+		log( LogType.SUBMIT, "wallet=%s  orderid=%s", order.walletAddr(), order.orderId() );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
@@ -715,7 +716,8 @@ public class MyTransaction {
 		// this could happen if our timeout is lower than the timeout of the IOC order,
 		// which should never be the case
 		if (!m_responded) {
-			log( LogType.ORDER_TIMEOUT, "id=%s  cryptoid=%s   order timed out with %s shares filled and status %s", order.orderId(), order.cryptoId(), filledShares, status);
+			log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
+					order.orderId(), filledShares, status);
 
 			// if order is still live, cancel the order
 			if (!status.isComplete() && !status.isCanceled() ) {
@@ -743,8 +745,8 @@ public class MyTransaction {
 					Util.toJsonMsg( code, RefCode.REJECTED, text, msg),
 					400,
 					null);
-			log( LogType.REJECTED, "id=%s  cryptoid=%s  orderQty=%s  orderPrc=%s  reason=%s",
-					order.orderId(), order.cryptoId(), order.totalQty(), order.lmtPrice(), msg);
+			log( LogType.REJECTED, "id=%s  orderQty=%s  orderPrc=%s  reason=%s",
+					order.orderId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
 		}
 
@@ -773,6 +775,11 @@ public class MyTransaction {
 		if (fireblocks) {
 			try {
 				String id;
+				
+				// for testing
+				if (m_map.getBool("fail") ) {
+					throw new Exception("Blockchain transaction failed intentially during testing"); 
+				}
 
 				// buy
 				if (order.action() == Action.BUY) {
@@ -834,17 +841,39 @@ public class MyTransaction {
 
 		respond( code, refCode, "filled", stockTokenQty);
 
-		log( logType, "id=%s  cryptoid=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-				order.orderId(), order.cryptoId(), order.action(), order.totalQty(),
+		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+				order.orderId(), order.action(), order.totalQty(),
 				S.fmt4(filledShares), order.lmtPrice(),
 				Main.m_config.commission(), tds, hash);
 	}
 
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
-		String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
-				order.walletAddr(), order.orderId() );
-		alert( "UNWIND ORDER", body);
+		try {
+			String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
+					order.walletAddr(), order.orderId() );
+			alert( "UNWIND ORDER", body);
+			
+			// don't unwind order in auto-fill mode which is for testing only
+			if (Main.m_config.autoFill() ) {
+				S.out( "Not unwinding order in auto-fill mode");
+				return;
+			}
+
+			Contract contract = new Contract();
+			contract.conid( m_map.getRequiredInt("conid") );
+			contract.exchange( m_main.getExchange( contract.conid() ) );
+			
+			order.flipSide();
+			order.orderId(0);
+			order.orderType(OrderType.MKT);
+			
+			m_main.orderController().placeOrModifyOrder(contract, order, null);
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			alert( "Error occurred while unwinding order", e.getMessage() );
+		}
 	}
 
 	public void respondOk() {
@@ -869,16 +898,8 @@ public class MyTransaction {
 		return respondFull( response, 200, null);
 	}
 
-	private void respondFmt(JSONArray ar) {
-		respondFull( ar, 200, null, true);
-	}
-
-	synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
-		return respondFull(response, responseCode, headers, false);
-	}
-	
 	/** @param responseCode is 200 or 400 */
-	synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers, boolean fmtArray) {
+	synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;
 		}
@@ -895,12 +916,6 @@ public class MyTransaction {
 			}
 			
 			String data = response.toString();
-			
-			// format array, one item on each line
-			if (fmtArray) {
-				data = data.replaceAll( ",\\{", ",\n{");
-			}
-			
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
 		}
@@ -912,12 +927,17 @@ public class MyTransaction {
 		return true;
 	}
 
+	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
+	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
 	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
 		catch( RefException e) {
-			boolean responded = respondFull( e.toJson(), 400, null);  // return false if we already responded
+			boolean responded = respondFull( 
+					e.toJson(), 
+					400, 
+					null);  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
 			if (responded || e.code() != RefCode.TIMED_OUT) {
@@ -930,8 +950,7 @@ public class MyTransaction {
 			respondFull( 
 					RefException.eToJson(e, RefCode.UNKNOWN),
 					400,
-					null
-				);
+					null);
 		}
 	}
 
@@ -1039,13 +1058,15 @@ public class MyTransaction {
 			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
 
 		jedis.hset( "8314", "bid", "128.20");
-		jedis.hset( "8314", "ask", "128.20");
+		jedis.hset( "8314", "ask", "128.30");
 		jedis.hset( "13824", "bid", "148.48");
-		jedis.hset( "13824", "ask", "148.48");
+		jedis.hset( "13824", "ask", "148.58");
 		jedis.hset( "13977", "bid", "116.05");
-		jedis.hset( "13977", "ask", "116.05");
+		jedis.hset( "13977", "ask", "116.15");
 		jedis.hset( "265598", "bid", "165.03");
-		jedis.hset( "265598", "ask", "165.03");
+		jedis.hset( "265598", "ask", "165.13");
+		jedis.hset( "320227571", "bid", "318.57");
+		jedis.hset( "320227571", "ask", "328.57");
 		
 		respondOk();
 	}

@@ -29,11 +29,10 @@ public class TestMany {
 		
 		boolean side = r.nextBoolean();
 		
-		String cryptoId = String.valueOf( r.nextInt() );
 		
 		double priceOffset = -2;
 		
-		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell", cryptoId);
+		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell");
 		MyJsonObject map = TestErrors.sendData( data);
 		synchronized( lock) {
 			S.out( map);
