@@ -11,7 +11,8 @@ public class TestRedeem extends TestCase {
 	
 	public void test1() throws Exception {
 		MyHttpClient cli = new MyHttpClient(prod, 8383);
-		cli.get("api/redemptions/redeem/" + wallet);
+		cli.addHeader("Cookie", Cookie.cookie).get("api/redemptions/redeem/" + wallet);
 		S.out( cli.readString() );
+		assertEquals(200, cli.getResponseCode() );
 	}
 }

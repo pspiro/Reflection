@@ -3,6 +3,8 @@
 
 package com.ib.client;
 
+/** Signal can come before or after client starts waiting, and client will still receive signal.
+ *  I don't see the purpose of this over just using a synchronized queue */
 public class EJavaSignal {
 	private final Object monitor = new Object();
 	private boolean open = false;

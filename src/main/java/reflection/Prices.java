@@ -3,9 +3,9 @@ package reflection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
-import java.util.Random;
 
-import com.ib.client.Decimal;
+import org.json.simple.JSONObject;
+
 import com.ib.client.Order;
 import com.ib.client.Types.Action;
 
@@ -74,7 +74,7 @@ public class Prices {
 		}
 	}
 
-	public Json toJson(int conid) throws RefException {
+	public JSONObject toJson(int conid) throws RefException {
 		return Util.toJsonMsg( "bid", anyBid(), "ask", anyAsk() );
 	}
 	

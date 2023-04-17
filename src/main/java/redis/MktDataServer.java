@@ -170,7 +170,7 @@ public class MktDataServer {
 	/** Create pipeline if necessary and add the tick to the queue 
 	 * @throws Exception */
 	synchronized void tick(PRun run) throws Exception {
-		m_redis.startPipeline( m_config.redisBatchTime(), e -> m_log.log(e) );
+		m_redis.startPipeline( m_config.redisBatchTime(), e -> m_log.log(e) ); // there's a hole here; it's possible that the pipeline was started previous and terminates in between these two calls
 		m_redis.runOnPipeline(run);
 	}
 

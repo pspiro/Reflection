@@ -91,10 +91,15 @@ public class MyHttpClient {
 		// content-length found?
 		String lenStr = m_respHeaders.get( "content-length");
 		if (S.isNotNull( lenStr) ) {
-			int len = Integer.valueOf( lenStr); 
-			char[] ar = new char[len];
-			br.read( ar, 0, len);
-			m_data = new String( ar);
+			int len = Integer.valueOf( lenStr);
+			StringBuilder sb = new StringBuilder();
+			while (len > 0) {
+				char[] ar = new char[len];
+				int read = br.read( ar, 0, len);
+				sb.append(ar, 0, read);
+				len -= read;
+			}
+			m_data = sb.toString();
 			return;
 		}
 
@@ -128,7 +133,7 @@ public class MyHttpClient {
 	}
 
 	/** e.g. post2( "/api", */
-	public void post( String url, String data) throws Exception {
+	public MyHttpClient post( String url, String data) throws Exception {
 		addHeader( "Content-length", "" + data.length() );
 
 		StringBuilder sb = new StringBuilder();
@@ -137,6 +142,7 @@ public class MyHttpClient {
 		sb.append( data);
 		
 		write( sb.toString() );
+		return this;
 	}
 
 	public void get() throws Exception {

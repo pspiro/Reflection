@@ -228,7 +228,6 @@ public class Order {
     private double  m_competeAgainstBestOffset;
     private double  m_midOffsetAtWhole;
     private double  m_midOffsetAtHalf;
-	private String m_cryptoId;
 	private String m_walletAddr;
 	private String m_stablecoinAddr;
 	private String m_stockTokenAddr;
@@ -772,12 +771,6 @@ public class Order {
         return (int) (m_permId ^ (m_permId >>> 32));
     }
 
-    public void cryptoId(String v) {
-		m_cryptoId = v;
-	}
-	public String cryptoId() {
-		return m_cryptoId;
-	}
 	public void walletAddr(String v) {
 		m_walletAddr = v;
 	}
@@ -788,8 +781,7 @@ public class Order {
 
 	/** Log entry for order. */
 	public String getOrderLog(Contract contract) {
-		return String.format( "wallet=%s  cryptoid=%s  %s",
-				m_walletAddr, m_cryptoId, getCheckLog(contract) );
+		return String.format( "wallet=%s  %s",	m_walletAddr, getCheckLog(contract) );
 	}
 
 	/** Log entry for order or what-if. */
@@ -819,6 +811,10 @@ public class Order {
 	
     public int roundedQty() {
 		return (int)Math.round(m_totalQuantity + .0001);  // add a bit so that 4.99999 rounds to 1
+	}
+
+    public void flipSide() {
+    	action( action() == Action.BUY ? Action.SELL : Action.BUY); 
 	}
 
 }

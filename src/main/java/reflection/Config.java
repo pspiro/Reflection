@@ -2,13 +2,15 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.time.Duration;
 import java.util.ArrayList;
+
+import org.json.simple.JSONObject;
 
 import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
+import redis.clients.jedis.Jedis;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -57,7 +59,7 @@ public class Config {
 	private String mintHtml;
 	private String mintBusd;
 	private String mintEth;
-	private boolean approveAll;  // approve all orders without placing them on the exchange; for paper trading only
+	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
 	private int redisQueryInterval;
 	private double minTokenPosition; // minimum token position to display in portfolio section
 	private int siweTimeout; // max time between issuedAt field and now
@@ -80,7 +82,7 @@ public class Config {
 	
 	public boolean useFireblocks() { return useFireblocks; }
 	
-	public boolean approveAll() { return approveAll; }
+	public boolean autoFill() { return autoFill; }
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
 
@@ -147,7 +149,7 @@ public class Config {
 		this.mintHtml = m_tab.getRequiredString("mintHtml");
 		this.mintBusd = m_tab.getRequiredString("mintBusd");
 		this.mintEth = m_tab.getRequiredString("mintEth");
-		this.approveAll = m_tab.getBoolean("approveAll");
+		this.autoFill = m_tab.getBoolean("autoFill");
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		
@@ -192,17 +194,24 @@ public class Config {
 		}
 	}
 
-	public Json toJson() throws Exception {
+	public JSONObject toJson() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		
 		for (Field field : Config.class.getDeclaredFields() ) {
-			list.add( field.getName() );
-			list.add( field.get( this) );
+			Object obj = field.get(this);
+			if (obj != null && isPrimitive(obj.getClass()) ) {
+				list.add( field.getName() );
+				list.add(obj);
+			}
 		}
 		
 		return Util.toJsonMsg( list.toArray() );
 	}
 
+	private boolean isPrimitive(Class clas) {
+		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class;
+	}
+	
 	/** Populate google sheet from database. */
 	void pullBackendConfig(MySqlConnection database) throws Exception {
 		Main.require( S.isNotNull( backendConfigTab), RefCode.UNKNOWN, "'backendConfigTab' setting missing from Reflection configuration");
@@ -439,5 +448,9 @@ public class Config {
 
 	public long sessionTimeout() {
 		return sessionTimeout;
+	}
+	
+	Jedis createJedis() {
+		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
 	}
 }

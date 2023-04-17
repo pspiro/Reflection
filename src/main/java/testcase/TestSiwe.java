@@ -94,7 +94,7 @@ public class TestSiwe extends TestCase {
 
 		// test successful siwe/me
 		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		cli.addHeader("Cookie", "mycookie=abcde; " + cookie).get("/siwe/me");
 		S.out( cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();

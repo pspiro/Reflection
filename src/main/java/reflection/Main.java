@@ -23,7 +23,6 @@ import com.ib.client.OrderState;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -33,6 +32,7 @@ import fireblocks.Rusd;
 import fireblocks.Transfer;
 import json.MyJsonObject;
 import redis.MyRedis;
+import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
@@ -55,7 +55,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 
-	private MyRedis m_redis;
+	private MyRedis m_redis;  // used for periodically querying the prices 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
@@ -102,7 +102,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
-		if (m_config.approveAll() ) {
+		if (m_config.autoFill() ) {
 			S.out( "The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
 			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
 				return;
@@ -459,9 +459,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
 	Prices getPrices(int conid) throws JedisException {
-		// inside the runnable, it will check to make sure that we have a redis connection
-		Map<String, String> map = m_redis.query( jedis -> jedis.hgetAll( String.valueOf(conid) ) );
-		return new Prices(map);
+		// create a new redis connection; this is not as fast as if we keep the connection open
+		// if you do that, make sure to synchronize the calls, and don't share w/ the existing MyRedis
+		// because you get: Cannot use Jedis when in Pipeline. Please use Pipeline or reset jedis state.
+		return new Prices( 
+				m_config.createJedis().hgetAll( String.valueOf(conid) ) 
+		);
 	}
 
 	public void handleMint(HttpExchange exchange) throws IOException {
@@ -566,51 +569,46 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
-			.respond( new Json( m_stocks) );
+		getURI(exch);
+		new BackendTransaction(this, exch)
+			.respond( m_stocks);
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
 		new BackendTransaction(this, exch)
 			.handleReqPositions(uri);
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleGetStockWithPrice( uri);
 	}
 
 	private void handleGetPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleGetPrice( uri);
 	}
 
 	private void handleOrder(HttpExchange exch, boolean whatIf) {
-		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-		
-		new BackendTransaction( this, exch)
+		getURI(exch);
+		new BackendTransaction(this, exch)
 			.backendOrder(whatIf);
 	}
 
 	private void handleRedeem(HttpExchange exch) {
 		String uri = getURI(exch);
-		S.out( "Received %s", uri);
-
-		new BackendTransaction( this, exch)
+		new BackendTransaction(this, exch)
 			.handleRedeem(uri);
 	}
 	
+	/** Note this returns URI in all lower case */
 	private static String getURI(HttpExchange exch) {
-		return exch.getRequestURI().toString().toLowerCase();
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		S.out( "Handling %s", uri);
+		return uri;
 	}
 
 	/** this seems useless since you can still be left with .000001 */

@@ -31,7 +31,7 @@ public class EReader extends Thread {
     private final Deque<EMessage> m_msgQueue = new LinkedList<>();
 	private boolean m_startupReader;  // just reads the first message, could help for debugging
     
-    protected boolean isUseV100Plus() {
+    protected boolean isUseV100Plus() {  // always returns true
 		return m_clientSocket.isUseV100Plus();
 	}
 
@@ -121,16 +121,20 @@ public class EReader extends Thread {
     }
 
 	private EMessage readSingleMessage() throws IOException {
+		// always true
 		if (isUseV100Plus()) {
 			int msgSize = 0;
 			try {
 				msgSize = m_clientSocket.readInt();
 			} 
 			catch (Exception ex) {
-				if (ex instanceof EOFException) {
+				ex.printStackTrace();
+				if (ex instanceof EOFException) {  // probably we should always disconnect, for any exception type
 					parent().connectionError();
 					parent().eDisconnect();
+					S.out("Disconnecting");
 				}
+				S.out( "Returning null from exception"); 
 				return null;
 			}
 
@@ -149,6 +153,9 @@ public class EReader extends Thread {
 						
 			return new EMessage(buf, buf.length);
 		}
+		
+		// we never come here
+		S.out( "**Impossible code to reach**");
 		
 		if (m_iBufLen == 0) {
 			m_iBufLen = appendIBuf();
@@ -177,8 +184,9 @@ public class EReader extends Thread {
 				m_iBufLen += appendIBuf();
 			}
 		
-		if (msgSize == 0)
+		if (msgSize == 0) {
 			return null;
+		}
 		
 		
 		EMessage msg = new EMessage(m_iBuf, msgSize);
