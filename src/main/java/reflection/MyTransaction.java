@@ -1014,7 +1014,9 @@ public class MyTransaction {
 	/** Validate the cookie or throw exception, and update the access time on the cookie 
 	 * @param userAddr */
 	void validateCookie(String walletAddr) throws Exception {
-		String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+		String cookie = m_map.get("cookie");
+		
+		//String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 		Main.require( 
 				cookie != null && cookie.split("=").length >= 2, 
 				RefCode.INVALID_REQUEST, 

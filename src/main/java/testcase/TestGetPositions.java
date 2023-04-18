@@ -19,6 +19,8 @@ public class TestGetPositions extends TestCase {
 	public void testStockPos() throws Exception {
 		MyHttpClient cli = new MyHttpClient(host, 8383);
 		cli.get("?msg=getpositions");
+		assertEquals(200, cli.getResponseCode());
+
 		MyJsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 
@@ -31,11 +33,13 @@ public class TestGetPositions extends TestCase {
 	public void testTokenPos() throws Exception {
 		MyHttpClient cli = new MyHttpClient(host, 8383);
 		cli.get("/api/reflection-api/positions/" + wallet);
+		assertEquals(200, cli.getResponseCode());
 		MyJsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 		
 		MyJsonObject item = ar.getJsonObj(0);
 		item.display();
+
 		assertTrue( item.getString("symbol").length() > 0 );
 		assertTrue( item.getDouble("quantity") > 0);
 		assertTrue( item.getDouble("price") > 0);

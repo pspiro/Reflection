@@ -163,7 +163,16 @@ public class TestBackendOrder extends TestCase {
 	
 	static MyJsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-		cli.addHeader("Cookie", Cookie.cookie).post( "/api/reflection-api/order", Util.toJson(data) );
+		//cli.addHeader("Cookie", Cookie.cookie)
+		cli.post( "/api/reflection-api/order", addCookie( Util.toJson(data) ) );
+		
 		return cli.readMyJsonObject();
+	}
+
+	private static String addCookie(String data) throws Exception {
+		MyJsonObject obj = MyJsonObject.parse(data);
+		obj.put("cookie", Cookie.cookie);
+		return obj.toString();
+		
 	}
 }

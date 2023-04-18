@@ -64,7 +64,8 @@ public class TestSiwe extends TestCase {
 				"1", 
 				5,      // chainId 
 				nonce,
-				DateTimeFormatter.ISO_INSTANT.format( Instant.now() ) )
+				//DateTimeFormatter.ISO_INSTANT.format( Instant.now().minusSeconds(3600) ) )
+				DateTimeFormatter.ISO_INSTANT.format( Instant.now() ) )  // add a test for this
 				.statement("Sign in to Reflection.")
 				.build();
 		
@@ -75,6 +76,7 @@ public class TestSiwe extends TestCase {
 		// test siwe/signin
 		cli = new MyHttpClient("localhost", 8383);
 		cli.post("/siwe/signin", signedMsgSent.toString() );
+		//S.out( cli.readMyJsonObject() );
 		assertEquals( 200, cli.getResponseCode() );
 		String cookie = cli.getHeaders().get("set-cookie");
 		assertTrue( cookie != null && cookie.split("=").length >= 2);
