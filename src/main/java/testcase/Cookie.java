@@ -1,17 +1,16 @@
 package testcase;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 
 import http.MyHttpClient;
 import junit.framework.Assert;
+import junit.framework.TestCase;
 import reflection.SiweUtil;
 import reflection.Util;
 
-public class Cookie {
+public class Cookie extends TestCase {
 	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	static String cookie;
 
