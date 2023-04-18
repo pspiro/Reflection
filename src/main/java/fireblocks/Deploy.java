@@ -12,6 +12,8 @@ import tw.util.IStream;
 import tw.util.S;
 import static fireblocks.Accounts.instance;
 
+import java.io.IOException;
+
 public class Deploy {
 	// it seems that you have to wait or call w/ the same Admin
 	// if you need the first transaction to finish because
@@ -20,8 +22,6 @@ public class Deploy {
 	
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
-		S.out( "Deploying system");
-		
 		Config config = new Config();
 		config.readFromSpreadsheet("Dev-config");
 		Util.require(config.useFireblocks(), "Turn on Fireblocks");
@@ -34,6 +34,14 @@ public class Deploy {
 			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
 			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
 		}
+
+		//deployAll(config, rusd, busd);
+		deployStockTokens(config, rusd);
+	}
+	
+	private static void deployAll(Config config, Rusd rusd, Busd busd) throws Exception {
+		S.out( "Deploying system");
+		
 
 		// deploy RUSD and update spreadsheet
 		Util.require( "deploy".equals( rusd.address() ), "RUSD must be set to 'deploy'");
@@ -56,6 +64,12 @@ public class Deploy {
 				instance.getAddress( "Admin2"), 
 				true
 		);
+		
+		deployStockTokens(config, rusd);
+		Test.run(busd, rusd);
+	}
+	
+	static void deployStockTokens(Config config, Rusd rusd) throws Exception {
 
 		// deploy stock tokens that are active and have an empty token address
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
@@ -63,7 +77,7 @@ public class Deploy {
 				// deploy stock token
 				StockToken token = StockToken.deploy( 
 						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
-						row.getValue( "Contract Name"),
+						row.getValue( "Contract Name"),  // wrong, this should get pulled from master symbols tab
 						row.getValue( "Contract Symbol"),
 						rusd.address()
 				);
@@ -74,7 +88,6 @@ public class Deploy {
 			}
 		}
 		
-		Test.run(busd, rusd);
 	}
 
 	// move this into Erc20? Or let it return a
