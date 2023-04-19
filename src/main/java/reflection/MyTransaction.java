@@ -828,7 +828,7 @@ public class MyTransaction {
 			}
 			catch( Exception e) {
 				e.printStackTrace();
-				log( LogType.ERROR, "Fireblocks failed for order %i - %s", order.orderId(), e.getMessage() );
+				log( LogType.ERROR, "Fireblocks failed for order %s - %s", order.orderId(), e.getMessage() );
 				respond( code, RefCode.BLOCKCHAIN_FAILED, text, "Blockchain transaction failed; please try again");
 				unwindOrder(order);
 				return;
