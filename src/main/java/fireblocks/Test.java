@@ -3,6 +3,7 @@ package fireblocks;
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
 /** Tests all BUSD and StockToken features */
@@ -15,32 +16,37 @@ public class Test {
 	
 	static Accounts accounts = Accounts.instance;
 	//static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	static String userAddr = "0x1cB79caf8c86f04bD31C4AD1f43A5ba17d61BD35";	
+	//static String userAddr = "0x1cB79caf8c86f04bD31C4AD1f43A5ba17d61BD35";	
+	static String userAddr = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 
 	public static void main(String[] args) throws Exception {
 		accounts.setAdmins( "Admin1,Admin2");
 		
 		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
+		config.readFromSpreadsheet("Dev-config");
 
-		run( config.newBusd(), config.newRusd() );
+		run( config, config.newBusd(), config.newRusd() );
 	}
 	
-	static void run(Busd busd, Rusd rusd) throws Exception {
+	static void run(Config config, Busd busd, Rusd rusd) throws Exception {
 		accounts.setAdmins( "Admin1,Admin2");
-		
-		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
+
+		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );
+		S.out( "Buying/sell GOOG stock token with address %s", stock.address() );
 		
+		String id;
 		
 		// ----- Bob -----------------------------
 		
+		// only Bob can buy with BUSD because only Bob can approve that
+		
 		// mint BUSD for user Bob
-		busd.mint(
+		id = busd.mint(
 				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				1);
-
+		
 		// user to approve buying with BUSD; you must wait for this
 		busd.approve(
 				accounts.getId( "Bob"),
@@ -54,17 +60,19 @@ public class Test {
 				1,
 				stock,
 				1);
-
 		//S.input("Check balances, should be 1 BUSD in RefWallet");
 		
 		// ----- 0x450e -----------------------------
+		
+		// anyone can buy with RUSD because no approval is necessary
 		
 		// let user buy stock with zero RUSD
 		rusd.buyStockWithRusd(
 				userAddr,
 				0, 
 				stock, 
-				1);
+				101);
+		//S.input( "bought stock with 0 RUSD");
 		
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
@@ -72,13 +80,15 @@ public class Test {
 				1,
 				stock,
 				1);
-		
+		//S.input( "sold stock for 1 RUSD");
+
 		// buy stock for 1 RUSD
 		rusd.buyStockWithRusd(
 				userAddr,
 				1, 
 				stock, 
 				1);
+		//S.input( "bought stock for 1 RUSD");
 				
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
@@ -86,12 +96,15 @@ public class Test {
 				1,
 				stock,
 				1);
+
+		//S.input( "sold stock for 1 RUSD");
 		
 		// redeem (sell) RUSD for BUSD
 		rusd.sellRusd(
 				userAddr,
 				busd,
 				1);
+		//S.input( "redeemed");
 	}
 
 }

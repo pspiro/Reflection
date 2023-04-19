@@ -66,7 +66,7 @@ public class Deploy {
 		);
 		
 		deployStockTokens(config, rusd);
-		Test.run(busd, rusd);
+		Test.run(config, busd, rusd);
 	}
 	
 	static void deployStockTokens(Config config, Rusd rusd) throws Exception {
