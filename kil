@@ -6,7 +6,7 @@ elif (( ${#1} < 4 )); then
 echo "pattern match must have at least four characters"
 else
 echo "Killing these processes:"
-ps ax | grep $1 | grep -v grep 
+ps ax | grep $1 | grep -v grep | grep -v kil
 echo ""
 
 ps ax | grep $1 | grep -v grep | awk '{print $1}' | xargs kill

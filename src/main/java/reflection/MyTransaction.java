@@ -1014,18 +1014,18 @@ public class MyTransaction {
 	/** Validate the cookie or throw exception, and update the access time on the cookie 
 	 * @param userAddr */
 	void validateCookie(String walletAddr) throws Exception {
+		//String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");  // the old way, when pulling from the header
+		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
 		String cookie = m_map.get("cookie");
-		
-		//String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
-		Main.require( 
-				cookie != null && cookie.split("=").length >= 2, 
-				RefCode.INVALID_REQUEST, 
-				"Null or malformed cookie: " + cookie);
+		Main.require(cookie != null, RefCode.INVALID_REQUEST, "Null cookie");
 
-		// parse cookie which has two fields, signature and message
-		MyJsonObject siweMsg = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) )
+		String decoded = URLDecoder.decode(cookie);
+		Util.require(cookie.split("=").length >= 2, "Malformed cookie, no '=': " + cookie);
+		
+		// parse cookie (in header, it has two fields, signature and message; in map, it has only message)
+		MyJsonObject siweMsg = MyJsonObject.parse( decoded.split("=")[1])
 				.getObj("message");
-		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
+		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + decoded);
 		
 		// find session object
 		Session session = SiweTransaction.sessionMap.get( siweMsg.getString("address") );

@@ -98,6 +98,17 @@ public class TestBackendOrder extends TestCase {
 		double filled = map.getDouble( "filled");
 		assertEquals( 100.0, filled);
 	}
+
+	public void testNullCookie() throws Exception {
+		String data = orderData( 3);
+
+		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+		cli.post( "/api/reflection-api/order", Util.toJson(data) );
+		MyJsonObject map = cli.readMyJsonObject();            
+		String text = map.getString( "text");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "Null cookie", text);
+	}
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
