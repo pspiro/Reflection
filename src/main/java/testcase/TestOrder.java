@@ -137,7 +137,7 @@ public class TestOrder extends TestCase {
 	}
 	
 	public static String orderData(double offset, String side) {
-		return String.format( "{ 'msg': 'order', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11 }",
+		return String.format( "{ 'msg': 'order', 'currency': 'busd', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'wallet': '0xb95bf9C71e030FA3D8c0940456972885DB60843F', 'tds': 1.11 }",
 				side, Double.valueOf( curPrice + offset) );
 	}
 }
