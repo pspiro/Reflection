@@ -186,7 +186,7 @@ public class Fireblocks {
 	
 	/** Assume address starts with 0x */
 	public static String padAddr(String addr) throws RefException {
-		Main.require( addr != null && addr.length() == 42, RefCode.UNKNOWN, "Invalid address %s", addr);
+		Main.require( addr != null && addr.length() == 42, RefCode.INVALID_REQUEST, "Invalid address %s", addr);
 		return padLeft( addr.substring(2) );
 	}
 
@@ -247,7 +247,7 @@ public class Fireblocks {
 				}
 			}
 			else {
-				Util.require( false, "Unknown type " + type);
+				Util.require( false, "Unexpected Fireblocks parameter type " + type);
 			}
 		}
 		
@@ -314,7 +314,7 @@ public class Fireblocks {
 		
 		MyJsonObject obj = fb.transactToObj();
 		String str = obj.getString("message");
-		Main.require( S.isNull( str), RefCode.UNKNOWN, "Error on Fireblocks.call  msg=%s  code=%s",
+		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.call  msg=%s  code=%s",
 				str, obj.getString("code") );
 		return new RetVal( obj.getString("id") );
 	}
@@ -346,15 +346,15 @@ public class Fireblocks {
 			
 			String status = trans.getString("status");
 			if ("COMPLETED".equals(status) ) {
-				throw new RefException( RefCode.UNKNOWN, "Transaction completed with no transaction hash");
+				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction completed with no transaction hash");
 			}
 			
 			if ("FAILED".equals(status) ) {
-				throw new RefException( RefCode.UNKNOWN, "Transaction failed - %s", trans.getString("subStatus") );
+				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction failed - %s", trans.getString("subStatus") );
 			}
 		}
 		
-		throw new RefException( RefCode.UNKNOWN, "Timed out waiting for transaction hash"); // should never happen
+		throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Timed out waiting for transaction hash"); // should never happen
 	}
 	
 	static void initMap() {

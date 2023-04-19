@@ -27,12 +27,12 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
+import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.Transfer;
 import json.MyJsonObject;
 import redis.MyRedis;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
@@ -48,7 +48,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	enum Status {
 		Connected, Disconnected
 	};
-
+	
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
 	final static MySqlConnection m_database = new MySqlConnection();
@@ -98,15 +98,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		
 		if (m_config.useFireblocks() ) {
 			m_rusd = m_config.newRusd();
+			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
 		}
 
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
 		if (m_config.autoFill() ) {
-			S.out( "The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
-			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
-				return;
-			}
+			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
+//			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
+//				return;
+//			}
 		}
 		
 		S.out( "Reading stock list from google sheet");

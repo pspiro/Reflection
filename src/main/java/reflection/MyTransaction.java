@@ -45,6 +45,9 @@ import util.LogType;
 
 /** This class handles events from the Backend. See subclass */
 public class MyTransaction {
+	enum Stablecoin {
+		RUSD, BUSD
+	}
 	enum MsgType {
 		checkHours,
 		checkOrder,
@@ -59,7 +62,6 @@ public class MyTransaction {
 		getPrice,
 		mint,
 		order,
-		orderFb,
 		pullBackendConfig,
 		pullFaq,
 		pushBackendConfig,
@@ -169,13 +171,10 @@ public class MyTransaction {
 				getAllPrices();
 				break;
 			case order:
-				order( false, false);
-				break;
-			case orderFb:
-				order( false, true);
+				order( false);
 				break;
 			case checkOrder:
-				order( true, false);
+				order( true);
 				break;
 			case checkHours:
 				checkHours();
@@ -462,7 +461,7 @@ public class MyTransaction {
 	}
 
 	/** Top-level method. */
-	void order(boolean whatIf, boolean fireblocks) throws Exception {
+	void order(boolean whatIf) throws Exception {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
@@ -486,6 +485,9 @@ public class MyTransaction {
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 
+		// validate that we have it; will be used later
+		m_map.getEnumParam("currency", Stablecoin.values() );  // case ignored
+
 		String wallet = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
@@ -506,10 +508,6 @@ public class MyTransaction {
 		}
 		double orderPrice = Util.round( prePrice);  // round to two decimals
 		
-		if (fireblocks) {
-			m_map.getRequiredParam("currency");
-		}
-
 		Contract contract = new Contract();
 		contract.conid( conid);
 		contract.exchange( m_main.getExchange( conid) );
@@ -552,10 +550,10 @@ public class MyTransaction {
 
 				// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
 				if (order.roundedQty() == 0) {
-					respondToOrder(order, 0, false, OrderStatus.Filled, fireblocks);
+					respondToOrder(order, 0, false, OrderStatus.Filled);
 				}
 				else {
-					submitOrder(  contract, order, fireblocks);
+					submitOrder(  contract, order);
 				}
 			}
 		});
@@ -648,17 +646,15 @@ public class MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "checkorder timed out") );
 	}
 
-	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws RefException {
+	private void submitOrder( Contract contract, Order order) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// very dangerous!
 		if (Main.m_config.autoFill() ) {
-			S.out( "Auto-filling order  id=%s", order.orderId() );
-			respond( code, RefCode.OK, "filled", order.totalQty() );
-
 			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
 					Main.m_config.commission(), 0, "");
+			respondToOrder( order, Math.round( order.totalQuantity() ), false, OrderStatus.Filled); // you might want to sometimes pass false here when testing
 			return;
 		}
 
@@ -676,7 +672,7 @@ public class MyTransaction {
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 
 					if (status.isComplete() ) {
-						respondToOrder( order, shares.value(), false, status, fireblocks);
+						respondToOrder( order, shares.value(), false, status);
 					}
 				});
 			}
@@ -709,10 +705,10 @@ public class MyTransaction {
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown, fireblocks) );
+		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
 	}
 
-	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status, boolean fireblocks) throws Exception {
+	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
 		// this could happen if our timeout is lower than the timeout of the IOC order,
 		// which should never be the case
 		if (!m_responded) {
@@ -725,7 +721,7 @@ public class MyTransaction {
 				m_main.orderController().cancelOrder( order.orderId(), "", null);
 			}
 
-			respondToOrder( order, filledShares, true, status, fireblocks);
+			respondToOrder( order, filledShares, true, status);
 		}
 	}
 
@@ -733,7 +729,7 @@ public class MyTransaction {
 	 *  Access to m_responded is synchronized.
 	 *  In the case where order qty < .5 and we didn't submit an order,
 	 *  orderStatus will be Filled. */
-	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status, boolean fireblocks) throws Exception {
+	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status) throws Exception {
 		if (m_responded) {
 			return;    // this happens when the timeout occurs after an order is filled, which is normal
 		}
@@ -772,7 +768,7 @@ public class MyTransaction {
 		double tds = 0;     // the tds tax paid by Indian residents
 		String hash = "";   // the blockchain hashcode
 
-		if (fireblocks) {
+		if (fireblocks()) {
 			try {
 				String id;
 				
@@ -785,8 +781,8 @@ public class MyTransaction {
 				if (order.action() == Action.BUY) {
 					double stablecoinAmt = stockTokenQty * order.lmtPrice() + Main.m_config.commission();
 					
-					// buy with RUSD
-					if (m_map.getParam("currency").toLowerCase().equals( "rusd") ) {
+					// buy with RUSD?
+					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
 						id = m_main.rusd().buyStockWithRusd(
 								order.walletAddr(), 
 								stablecoinAmt,
@@ -832,7 +828,7 @@ public class MyTransaction {
 			}
 			catch( Exception e) {
 				e.printStackTrace();
-				log( LogType.ERROR, "Fireblocks failed for order %i - %s", order.orderId(), e.getMessage() );
+				log( LogType.ERROR, "Fireblocks failed for order %s - %s", order.orderId(), e.getMessage() );
 				respond( code, RefCode.BLOCKCHAIN_FAILED, text, "Blockchain transaction failed; please try again");
 				unwindOrder(order);
 				return;
@@ -845,6 +841,10 @@ public class MyTransaction {
 				order.orderId(), order.action(), order.totalQty(),
 				S.fmt4(filledShares), order.lmtPrice(),
 				Main.m_config.commission(), tds, hash);
+	}
+	
+	private boolean fireblocks() throws RefException {
+		return Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks");
 	}
 
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
@@ -1014,18 +1014,22 @@ public class MyTransaction {
 	/** Validate the cookie or throw exception, and update the access time on the cookie 
 	 * @param userAddr */
 	void validateCookie(String walletAddr) throws Exception {
-		//String cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");  // the old way, when pulling from the header
+		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
 		String cookie = m_map.get("cookie");
+		if (cookie == null) {
+			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+		}
 		Main.require(cookie != null, RefCode.INVALID_REQUEST, "Null cookie");
-
-		String decoded = URLDecoder.decode(cookie);
-		Util.require(cookie.split("=").length >= 2, "Malformed cookie, no '=': " + cookie);
+		
+		// un-do the URL encoding
+		cookie = URLDecoder.decode(cookie);
+		Main.require(cookie.split("=").length >= 2, RefCode.INVALID_REQUEST, "Malformed cookie, no '=': " + cookie);
 		
 		// parse cookie (in header, it has two fields, signature and message; in map, it has only message)
-		MyJsonObject siweMsg = MyJsonObject.parse( decoded.split("=")[1])
+		MyJsonObject siweMsg = MyJsonObject.parse( cookie.split("=")[1])
 				.getObj("message");
-		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + decoded);
+		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
 		
 		// find session object
 		Session session = SiweTransaction.sessionMap.get( siweMsg.getString("address") );

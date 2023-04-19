@@ -54,7 +54,7 @@ public class BackendTransaction extends MyTransaction {
 			String wallet = m_map.getRequiredParam("wallet_public_key");
 			m_map.put( "wallet", wallet); // you can remove this when orders are no longer being passed through the back-end
 
-			order(whatIf, false);
+			order(whatIf);
 		});
     }
 
