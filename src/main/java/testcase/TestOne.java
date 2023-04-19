@@ -1,21 +1,17 @@
 package testcase;
 
-import static testcase.TestOrder.orderData;
-import static testcase.TestOrder.post;
-
-import fireblocks.Accounts;
 import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.RefCode;
 
 public class TestOne extends TestCase {
-	public void testFillBuy() throws Exception {
-		String data = orderData( 3);
-		MyJsonObject map = post( data);
-		String code = map.getString( "code");
-		String text = map.getString( "text");
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 100.0, filled);
+	public void testWhatIfSuccess() throws Exception {
+		double price = TestWhatIf.curPrice + 2;
+		
+		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '%s' }", price); 
+		MyJsonObject map = TestWhatIf.post( data);
+		String ret = (String)map.get( "code");
+		String text = (String)map.get( "text");
+		assertEquals( RefCode.OK.toString(), ret);
 	}
 }

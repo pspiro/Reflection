@@ -107,7 +107,7 @@ public class MyTransaction {
 
 	void parseMsg() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
-		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
+		require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			S.out( "Received GET request %s", uri);
@@ -331,7 +331,7 @@ public class MyTransaction {
 
 	/** Top-level message handler */
 	private void getAllStocks() throws RefException {
-		require( !m_main.stocks().isEmpty(), RefCode.UNKNOWN, "We don't have the list of stocks");
+		require( !m_main.stocks().isEmpty(), RefCode.NO_STOCKS, "We don't have the list of stocks");
 
 		S.out( "Returning all stocks");
 		respond(m_main.stocks());
@@ -350,7 +350,7 @@ public class MyTransaction {
 
 		m_main.orderController().reqContractDetails(contract, list -> {
 			wrap( () -> {
-				require( list.size() > 0, RefCode.UNKNOWN, "No such stock");
+				require( list.size() > 0, RefCode.NO_SUCH_STOCK, "No such stock");
 
 				JSONArray whole = new JSONArray();
 
@@ -469,10 +469,7 @@ public class MyTransaction {
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
 		m_main.getStock(conid);  // throws exception if conid is invalid
 
-		String side = m_map.getParam( "side");
-		if (S.isNull( side) ) {
-			side = m_map.getRequiredParam("action");
-		}
+		String side = m_map.getRequiredParam( "action");
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
 		double quantity = m_map.getRequiredDouble( "quantity");
@@ -490,7 +487,8 @@ public class MyTransaction {
 
 		String wallet = null;
 		if (!whatIf) {
-			wallet = m_map.getRequiredParam("wallet");
+			//wallet = m_map.getRequiredParam("wallet");
+			wallet = m_map.getRequiredParam("wallet_public_key");
 			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		}
 
@@ -523,9 +521,8 @@ public class MyTransaction {
 		order.outsideRth( true);
 		order.walletAddr( wallet);
 		order.stockTokenAddr( m_main.getSmartContractId(conid) );
-
-		S.out( "Requesting contract details for %s on %s", conid, contract.exchange() );
-
+		
+		// request contract details (prints to stdout)
 		insideAnyHours( contract, inside -> {
 			require( inside, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
@@ -542,7 +539,6 @@ public class MyTransaction {
 					order.totalQuantity(1);
 				}
 
-				log( LogType.CHECK, order.getCheckLog(contract) );
 				submitWhatIf( contract, order);
 			}
 			else {
@@ -572,6 +568,7 @@ public class MyTransaction {
 			// for testing
 			if (Main.m_config.autoFill() ) {
 				runnable.run(true);
+				return;
 			}
 			
 			if (!inside && etf.equals( m_main.getType( contract.conid() ) ) ) {
@@ -611,7 +608,7 @@ public class MyTransaction {
 		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
 	}
 
-	private void submitWhatIf( Contract contract, final Order order) throws RefException {
+	private void submitWhatIf( Contract contract, final Order order) throws Exception {
 		// check trading hours first since it is a nicer error message
 
 		// submit what-if order
@@ -768,7 +765,7 @@ public class MyTransaction {
 		double tds = 0;     // the tds tax paid by Indian residents
 		String hash = "";   // the blockchain hashcode
 
-		if (fireblocks()) {
+		if (Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks") ) {
 			try {
 				String id;
 				
@@ -843,10 +840,6 @@ public class MyTransaction {
 				Main.m_config.commission(), tds, hash);
 	}
 	
-	private boolean fireblocks() throws RefException {
-		return Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks");
-	}
-
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
 		try {
@@ -1059,22 +1052,25 @@ public class MyTransaction {
 	
 	/** top-level method; set some prices for use in test systems */
 	void onSeedPrices() {
-		Jedis jedis = Main.m_config.redisPort() == 0
-			? new Jedis( Main.m_config.redisHost() )  // use full connection string
-			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
-
-		jedis.hset( "8314", "bid", "128.20");
-		jedis.hset( "8314", "ask", "128.30");
-		jedis.hset( "13824", "bid", "148.48");
-		jedis.hset( "13824", "ask", "148.58");
-		jedis.hset( "13977", "bid", "116.05");
-		jedis.hset( "13977", "ask", "116.15");
-		jedis.hset( "265598", "bid", "165.03");
-		jedis.hset( "265598", "ask", "165.13");
-		jedis.hset( "320227571", "bid", "318.57");
-		jedis.hset( "320227571", "ask", "328.57");
-		
-		respondOk();
+		wrap( () -> {
+			Jedis jedis = Main.m_config.redisPort() == 0
+				? new Jedis( Main.m_config.redisHost() )  // use full connection string
+				: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
+	
+			jedis.hset( "8314", "bid", "128.20");
+			jedis.hset( "8314", "ask", "128.30");
+			jedis.hset( "13824", "bid", "148.48");
+			jedis.hset( "13824", "ask", "148.58");
+			jedis.hset( "13977", "bid", "116.05");
+			jedis.hset( "13977", "ask", "116.15");
+			jedis.hset( "265598", "bid", "165.03");
+			jedis.hset( "265598", "ask", "165.13");
+			jedis.hset( "320227571", "bid", "318.57");
+			jedis.hset( "320227571", "ask", "328.57");
+			
+			m_map.put("admin", "true");
+			getAllPrices();
+		});
 	}
 }
 

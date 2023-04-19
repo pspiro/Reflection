@@ -17,7 +17,6 @@ import junit.framework.TestCase;
 	   TestGetPositions.class,
 	   TestGtable.class,
 	   TestMyRedis.class,
-	   TestOrder.class,
 	   TestOutsideHours.class,
 	   TestPrices.class,
 	   TestRedeem.class,

@@ -43,7 +43,7 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	// missing walletId
-	public void testOrder2() throws Exception {
+	public void testMissingWallet() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83' }";
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
@@ -53,7 +53,7 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	// reject order; price too low
-	public void testOrder3() throws Exception {
+	public void testPriceTooLow() throws Exception {
 		String data = orderData( -1);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
@@ -77,7 +77,7 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; price too high; IB won't accept it
 	// this test will fail if autoFill is turned on
-	public void testOrder4() throws Exception {
+	public void testPriceTooHigh() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '200', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testmaxamtbuy' }";		
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
@@ -137,7 +137,7 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '138', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '148', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'cryptoid': 'testfracshares' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -168,7 +168,7 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	static String orderData(double offset, String side) {
-		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': '100', 'price': '%s', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11 }",
+		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': '100', 'price': '%s', 'wallet_public_key': '0xb016711702D3302ceF6cEb62419abBeF5c44450e', 'tds': 1.11, 'currency': 'busd' }",
 				side, Double.valueOf( curPrice + offset) );
 	}
 	
@@ -183,6 +183,8 @@ public class TestBackendOrder extends TestCase {
 	private static String addCookie(String data) throws Exception {
 		MyJsonObject obj = MyJsonObject.parse(data);
 		obj.put("cookie", Cookie.cookie);
+		obj.put("noFireblocks", true);
+		obj.put("currency", "busd");
 		return obj.toString();
 		
 	}

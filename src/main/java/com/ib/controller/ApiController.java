@@ -57,6 +57,7 @@ import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
+import reflection.Util;
 import tw.util.S;
 
 public class ApiController implements EWrapper {
@@ -458,7 +459,7 @@ public class ApiController implements EWrapper {
 	private void internalReqContractDetails( Contract contract, final IInternalHandler processor) {
 		int reqId = m_reqId++;
 		
-		S.out( "requesting %s %s %s", reqId, contract.conid(), contract.symbol() );
+		S.out( "Requesting contract details  %s  %s", reqId, contract.conid() );
 		
 		m_contractDetailsMap.put( reqId, processor);
 		
@@ -932,11 +933,13 @@ public class ApiController implements EWrapper {
         void handle(int errorCode, String errorMsg);
     }
 
-	public void placeOrModifyOrder(Contract contract, final Order order, final IOrderHandler handler) {
+	public void placeOrModifyOrder(Contract contract, final Order order, final IOrderHandler handler) throws Exception {
 		if (!checkConnection())
 			return;
 
 		// when placing new order, assign new order id
+		Util.require( order.orderId() == 0, "Modifying orders is not supported");
+		
 		if (order.orderId() == 0) {
 			order.orderId( nextOrderId() );
 			if (handler != null) {

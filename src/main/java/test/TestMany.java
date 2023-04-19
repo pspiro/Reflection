@@ -2,9 +2,6 @@ package test;
 
 import java.util.Random;
 
-import json.MyJsonObject;
-import testcase.TestErrors;
-import testcase.TestOrder;
 import tw.util.S;
 
 public class TestMany {
@@ -32,11 +29,13 @@ public class TestMany {
 		
 		double priceOffset = -2;
 		
-		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell");
-		MyJsonObject map = TestErrors.sendData( data);
-		synchronized( lock) {
-			S.out( map);
-		}
+		// change this to use BackendOrder
+		
+//		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell");
+//		MyJsonObject map = TestErrors.sendData( data);
+//		synchronized( lock) {
+//			S.out( map);
+//		}
 //		String code = (String)map.get( "code");
 //		String text = (String)map.get( "text");		
 	}
