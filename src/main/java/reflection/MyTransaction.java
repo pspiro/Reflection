@@ -648,17 +648,15 @@ public class MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "checkorder timed out") );
 	}
 
-	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws RefException {
+	private void submitOrder( Contract contract, Order order, boolean fireblocks) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// very dangerous!
 		if (Main.m_config.autoFill() ) {
-			S.out( "Auto-filling order  id=%s", order.orderId() );
-			respond( code, RefCode.OK, "filled", order.totalQty() );
-
 			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
 					Main.m_config.commission(), 0, "");
+			respondToOrder( order, Math.round( order.totalQuantity() ), false, OrderStatus.Filled, fireblocks); // you might want to sometimes pass false here when testing
 			return;
 		}
 
