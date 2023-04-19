@@ -129,12 +129,12 @@ public class EReader extends Thread {
 			} 
 			catch (Exception ex) {
 				ex.printStackTrace();
-				if (ex instanceof EOFException) {  // probably we should always disconnect, for any exception type
+				if (ex instanceof IOException) {  // probably we should always disconnect, for any exception type
 					parent().connectionError();
 					parent().eDisconnect();
 					S.out("Disconnecting");
 				}
-				S.out( "Returning null from exception"); 
+				S.out( "Returning null from exception but not disconnecting?"); 
 				return null;
 			}
 
