@@ -104,10 +104,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
 		if (m_config.autoFill() ) {
-			S.out( "The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
-			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
-				return;
-			}
+			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
+//			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
+//				return;
+//			}
 		}
 		
 		S.out( "Reading stock list from google sheet");
