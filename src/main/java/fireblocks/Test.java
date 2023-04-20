@@ -6,7 +6,7 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
-/** Tests all BUSD and StockToken features */
+/** Tests all RUSD, BUSD and StockToken features */
 public class Test {
 	// it seems that you have to wait or call w/ the same Admin
 	// if you need the first transaction to finish because
@@ -42,7 +42,7 @@ public class Test {
 		// only Bob can buy with BUSD because only Bob can approve that
 		
 		// mint BUSD for user Bob
-		id = busd.mint(
+		busd.mint(
 				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				1);

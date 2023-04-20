@@ -11,7 +11,8 @@ import reflection.SiweUtil;
 import reflection.Util;
 
 public class Cookie extends TestCase {
-	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
+	//static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	static String cookie;
 
 	static {

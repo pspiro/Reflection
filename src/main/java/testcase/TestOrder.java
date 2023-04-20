@@ -31,7 +31,7 @@ public class TestOrder extends TestCase {
 	
 	// reject order; price too high; IB rejects it
 	public void testBuyTooHigh() throws Exception {
-		String data = orderData( 100, "BUY");
+		String data = orderData( 100, "BUY", wallet);
 		MyJsonObject map = post( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -52,7 +52,7 @@ public class TestOrder extends TestCase {
 	
 	// reject order; sell price too high; RefAPI rejects it
 	public void testSellTooHigh() throws Exception {
-		String data = orderData( 1, "SELL");		
+		String data = orderData( 1, "SELL", wallet);		
 		MyJsonObject map = post( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -63,7 +63,7 @@ public class TestOrder extends TestCase {
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellPriceTooLow() throws Exception {
-		String data = orderData( -30, "SELL");
+		String data = orderData( -30, "SELL", wallet);
 		MyJsonObject map = post( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -84,7 +84,7 @@ public class TestOrder extends TestCase {
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
-		String data = orderData( -3, "sell");
+		String data = orderData( -3, "sell", wallet);
 		MyJsonObject map = post( data);
 		String code = (String)map.getString( "code");
 		String text = map.getString( "text");
@@ -133,11 +133,11 @@ public class TestOrder extends TestCase {
 	}
 	
 	static String orderData(double offset) {
-		return orderData( offset, "buy");
+		return orderData( offset, "buy", wallet);
 	}
 	
-	public static String orderData(double offset, String side) {
-		return String.format( "{ 'msg': 'order', 'currency': 'busd', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'wallet': '0xb95bf9C71e030FA3D8c0940456972885DB60843F', 'tds': 1.11 }",
-				side, Double.valueOf( curPrice + offset) );
+	public static String orderData(double offset, String side, String wallet) {
+		return String.format( "{ 'msg': 'order', 'currency': 'busd', 'conid': '8314', 'side': '%s', 'quantity': '100', 'price': '%s', 'wallet': '%s', 'tds': 1.11 }",
+				side, Double.valueOf( curPrice + offset), wallet);
 	}
 }

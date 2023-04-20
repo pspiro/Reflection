@@ -355,5 +355,12 @@ public class MoralisServer {
 		return "0";
 	}
 	
+	public static MyJsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
+		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
+				moralis, contract, chain, owner, spender);
+		S.out("***" + url);
+		return MyJsonObject.parse( querySync(url) );
+	}
+	
 	
 }

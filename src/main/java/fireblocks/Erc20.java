@@ -57,15 +57,24 @@ public class Erc20 {
 	}
 	
 	/** Takes decimal string */
+	public double fromBlockchain(String amt) {
+		return fromBlockchain( amt, m_decimals);
+	}
+	
 	public static double fromBlockchain(String amt, int power) {
 		return new BigDecimal(amt).divide( ten.pow(power) ).doubleValue(); 
 	}
 	
+	public static double fromBlockchainHex(String amt, int power) {
+		return new BigDecimal( new BigInteger(amt,16) )
+				.divide( ten.pow(power) )
+				.doubleValue(); 
+	}
+	
 	/** Returns the number of this token held by wallet */ 
 	public double reqPosition(String wallet) throws Exception {
-		return fromBlockchain(
-				MoralisServer.reqPosition(wallet, m_address),
-				m_decimals);
+		return fromBlockchain( MoralisServer.reqPosition(wallet, m_address) ); 
 	}
+	
 
 }

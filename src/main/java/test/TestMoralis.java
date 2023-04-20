@@ -1,20 +1,21 @@
 package test;
 
-import positions.MoralisServer;
+import reflection.Config;
+import testcase.Cookie;
 import tw.util.S;
 
 public class TestMoralis {
 	static String chain = "0x5";
-	static String apple = "0x29c6f774536dFc3343e2e8D804Ed233690083299";
-	//static String myWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	static String myWallet = "0xb95bf9c71e030fa3d8c0940456972885db60843f";
+	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	//static String wallet = "0xb95bf9c71e030fa3d8c0940456972885db60843f";
+	
 	
 	public static void main(String[] args) throws Exception {
-		for (int i = 0; i < 10; i++) {
-			S.out( "query");
-			MoralisServer.reqPositions(myWallet);
-			S.out( "  done");
-		}
+		//pos = MoralisServer.reqPositions(wallet);
+		//S.out( StockToken.fromBlockchainHex("145660ddc59b3fc", 6) );
+		Config config = Config.readFrom("Desktop-config");
+		S.out( config.newBusd().getAllowance(Cookie.wallet, config.rusdAddr() ) );
+
 	}
 	
 }

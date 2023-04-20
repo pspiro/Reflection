@@ -167,4 +167,8 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	public Object get(String tag) {
 		return getString(tag);
 	}
+
+	public void remove(String tag) {
+		m_obj.remove(tag);
+	}
 }

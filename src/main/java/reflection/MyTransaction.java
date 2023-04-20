@@ -36,6 +36,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
 import json.MyJsonObject;
+import positions.MoralisServer;
 import redis.clients.jedis.Jedis;
 import reflection.SiweTransaction.Session;
 import tw.google.Auth;
@@ -70,7 +71,7 @@ public class MyTransaction {
 		refreshStocks,
 		seedPrices,
 		terminate,
-		test,
+		testAlert,
 		;
 
 		public static String allValues() {
@@ -222,7 +223,7 @@ public class MyTransaction {
 			case getPositions:
 				getStockPositions();
 				break;
-			case test:
+			case testAlert:
 				onTest();
 				break;
 			case seedPrices:
@@ -485,13 +486,19 @@ public class MyTransaction {
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 
-		// validate that we have it; will be used later
-		m_map.getEnumParam("currency", Stablecoin.values() );  // case ignored
-
 		String wallet = null;
 		if (!whatIf) {
 			wallet = m_map.getRequiredParam("wallet");
 			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			
+			// check the token position as well; use StockToken.reqPosition();
+			
+			// if buying with BUSD, make sure the approval went through
+			if (fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
+				require(approvedAmt >= amt, RefCode.INSUFFICIENT_FUNDS,
+						"The approved amount of BUSD (%s) is insufficient", approvedAmt); 
+			}
 		}
 
 		// make sure user is signed in with SIWE and session is not expired
@@ -826,7 +833,7 @@ public class MyTransaction {
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
-			catch( Exception e) {
+			catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
 				e.printStackTrace();
 				log( LogType.ERROR, "Fireblocks failed for order %s - %s", order.orderId(), e.getMessage() );
 				respond( code, RefCode.BLOCKCHAIN_FAILED, text, "Blockchain transaction failed; please try again");
@@ -850,16 +857,16 @@ public class MyTransaction {
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
 	private void unwindOrder(Order order) {
 		try {
-			String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
-					order.walletAddr(), order.orderId() );
-			alert( "UNWIND ORDER", body);
-			
 			// don't unwind order in auto-fill mode which is for testing only
 			if (Main.m_config.autoFill() ) {
 				S.out( "Not unwinding order in auto-fill mode");
 				return;
 			}
 
+			String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
+					order.walletAddr(), order.orderId() );
+			alert( "UNWIND ORDER", body);
+			
 			Contract contract = new Contract();
 			contract.conid( m_map.getRequiredInt("conid") );
 			contract.exchange( m_main.getExchange( contract.conid() ) );

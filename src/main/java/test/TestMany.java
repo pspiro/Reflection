@@ -32,11 +32,11 @@ public class TestMany {
 		
 		double priceOffset = -2;
 		
-		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell");
-		MyJsonObject map = TestErrors.sendData( data);
-		synchronized( lock) {
-			S.out( map);
-		}
+//		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell", wallet);
+//		MyJsonObject map = TestErrors.sendData( data);
+//		synchronized( lock) {
+//			S.out( map);
+//		}
 //		String code = (String)map.get( "code");
 //		String text = (String)map.get( "text");		
 	}

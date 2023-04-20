@@ -108,6 +108,12 @@ public class Config {
 	public String rusdAddr() { return rusdAddr; }
 	public String busdAddr() { return busdAddr; }
 	public double minTokenPosition() { return minTokenPosition; }
+	
+	public static Config readFrom(String tab) throws Exception {
+		Config config = new Config();
+		config.readFromSpreadsheet("Desktop-config");
+		return config;
+	}
 
 	public void readFromSpreadsheet(String tabName) throws Exception {
 		m_tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
