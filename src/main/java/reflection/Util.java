@@ -31,7 +31,15 @@ public class Util {
 	
 
 	public static void main(String[] args) throws RefException {
-		executeEvery( 2000, () -> S.out("lkj") );
+		double a = .3;
+		double b = .1 + .1 + .1;
+		S.out( a >= b);
+		S.out( isGtEq(a, b) );
+	}
+
+	/** Do a decimal compare down to six digits */
+	public static boolean isGtEq(double stabPos, double totalOrderAmt) {
+		return stabPos - totalOrderAmt >= -.000001;
 	}
 
 	/** Typical format of hours string is:
@@ -304,4 +312,6 @@ public class Util {
 	public static String isoNow() {
 		return DateTimeFormatter.ISO_INSTANT.format( Instant.now() );
 	}
+
+	
 }

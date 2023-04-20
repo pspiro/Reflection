@@ -57,8 +57,4 @@ public class Busd extends Erc20 {
 		);
 	}
 
-	public double getAllowance(String wallet, String spender) throws Exception {
-		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
-	}
-	
 }

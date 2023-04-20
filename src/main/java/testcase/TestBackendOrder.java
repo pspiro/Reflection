@@ -41,8 +41,16 @@ public class TestBackendOrder extends TestCase {
 	
 	// missing walletId
 	public void testMissingWallet() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83' }";
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'tokenPrice': '83' }";
 		MyJsonObject map = sendData( data);
+		
+//		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+//		//cli.addHeader("Cookie", Cookie.cookie)
+//		String obj = Cookie.addCookie( Util.toJson(data) );
+//		cli.post( "/api/reflection-api/order",  );
+//		
+		
+		
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -51,7 +59,7 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '200', 'cryptoid': 'testmaxamtbuy' }";		
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }";		
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -62,7 +70,7 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; price too low
 	public void testBuyTooLow() throws Exception {
-		String data = orderData( -1);
+		String data = orderData( -1, "BUY", 10);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -74,18 +82,18 @@ public class TestBackendOrder extends TestCase {
 	
 	// sell order price to high
 	public void testSellTooHigh() throws Exception {
-		String data = orderData( 1, "SELL");
+		String data = orderData( 1, "SELL", 10);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
-		S.out("sell too high %s %s", code, text);
+		S.out("sellTooHigh %s %s", code, text);
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
 		assertEquals( Prices.TOO_HIGH, text);
 	}
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellPriceTooLow() throws Exception {
-		String data = orderData( -30, "SELL");
+		String data = orderData( -30, "SELL", 100);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
@@ -96,18 +104,18 @@ public class TestBackendOrder extends TestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		String data = orderData( 3);
+		String data = orderData( 3, "BUY", 10);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "fill buy %s %s", code, text);
 		assertEquals( RefCode.OK.toString(), code);
 		double filled = map.getDouble( "filled");
-		assertEquals( 100.0, filled);
+		assertEquals( 10.0, filled);
 	}
 
 	public void testNullCookie() throws Exception {
-		String data = orderData( 3);
+		String data = orderData( 3, "BUY", 100);
 
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
 		cli.post( "/api/reflection-api/order", Util.toJson(data) );
@@ -119,32 +127,32 @@ public class TestBackendOrder extends TestCase {
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
-		String data = orderData( -3, "sell");
+		String data = orderData( -3, "sell", 100);
 		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
-		S.out( "fill sell %s %s", code, text);
+		S.out( "fillSell %s %s", code, text);
 		assertEquals( RefCode.OK.toString(), code);
 		double filled = map.getDouble( "filled");
 		assertEquals( 100.0, filled);
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'price': '138', 'cryptoid': 'testmaxamtbuy' }";
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }";
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'price': '138', 'cryptoid': 'testmaxamtsell' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '138' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -153,14 +161,14 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'price': '138' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'price': '138' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -168,32 +176,16 @@ public class TestBackendOrder extends TestCase {
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 	}
 	
-
-	
-	static String orderData(double offset) {
-		return orderData( offset, "buy");
-	}
-	
-	static String orderData(double offset, String side) {
-		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': '100', 'price': '%s', 'tds': 1.11 }",
-				side, Double.valueOf( curPrice + offset) );
+	static String orderData(double offset, String side, double qty) {
+		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+				side, qty, Double.valueOf( curPrice + offset) );
 	}
 	
 	static MyJsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
 		//cli.addHeader("Cookie", Cookie.cookie)
-		cli.post( "/api/reflection-api/order", addCookie( Util.toJson(data) ) );
+		cli.post( "/api/reflection-api/order", Cookie.addCookie( Util.toJson(data) ) );
 		
 		return cli.readMyJsonObject();
-	}
-
-	private static String addCookie(String data) throws Exception {
-		MyJsonObject obj = MyJsonObject.parse(data);
-		obj.put("cookie", Cookie.cookie);
-		obj.put("wallet_public_key", Cookie.wallet);
-		obj.put("currency", "BUSD");
-		obj.put("noFireblocks", true);   // interesting
-		return obj.toString();
-		
 	}
 }

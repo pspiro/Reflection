@@ -71,10 +71,13 @@ public class Erc20 {
 				.doubleValue(); 
 	}
 	
-	/** Returns the number of this token held by wallet */ 
-	public double reqPosition(String wallet) throws Exception {
+	/** Sends a query to Moralis */
+	public double getAllowance(String wallet, String spender) throws Exception {
+		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
+	}
+
+	/** Returns the number of this token held by wallet; sends a query to Moralis */ 
+	public double getPosition(String wallet) throws Exception {
 		return fromBlockchain( MoralisServer.reqPosition(wallet, m_address) ); 
 	}
-	
-
 }

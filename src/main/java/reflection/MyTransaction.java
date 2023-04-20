@@ -34,7 +34,9 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import fireblocks.Erc20;
 import fireblocks.Fireblocks;
+import fireblocks.StockToken;
 import json.MyJsonObject;
 import positions.MoralisServer;
 import redis.clients.jedis.Jedis;
@@ -483,28 +485,49 @@ public class MyTransaction {
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 		
+		double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
+		
+		String stockTokenAddress = m_main.getSmartContractId(conid);
+		Main.require(Util.isValidAddress(stockTokenAddress), RefCode.INVALID_REQUEST, "Invalid stock token address %s", stockTokenAddress);
+
 		String wallet = null;
 		if (!whatIf) {
 			//wallet = m_map.getRequiredParam("wallet");
 			wallet = m_map.getRequiredParam("wallet_public_key");
 			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
-			// check the token position as well; use StockToken.reqPosition();
-			
-			// if buying with BUSD, make sure the approval went through
-			
+			// if buying with BUSD, check the "approved" amount of BUSD; this CANNOT be done
+			// for what-if because the approval is done after the what-if;
 			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-				double totalOrderAmt = m_map.getDouble( "price");  // including commission 
 				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
-				require(approvedAmt >= totalOrderAmt, RefCode.INSUFFICIENT_FUNDS,
-						"The approved amount of BUSD (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_FUNDS,
+						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 			}
+			
+			// confirm that the user has enough stablecoin or stock token in their wallet
+			// since this sends a query, let's do it only once (could be either what-if or not)
+			// note: if these are slowing things down, we could do these checks if the Fireblocks fails
+			if (side == "buy") {
+				double balance = stablecoin().getPosition(wallet);
+				require( Util.isGtEq(balance, totalOrderAmt), 
+						RefCode.INSUFFICIENT_FUNDS,
+						"The stablecoin balance (%s) is less than the total order amount (%s)", 
+						balance, totalOrderAmt);
+			}
+			else {
+				double balance = new StockToken(stockTokenAddress).getPosition(wallet);
+				require( Util.isGtEq(balance, quantity), 
+						RefCode.INSUFFICIENT_FUNDS,
+						"The stock token balance (%s) is less than the order quantity (%s)", 
+						balance, quantity);
+			}
+			
 		}
 
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
 		validateCookie(wallet);
-
+		
 		// calculate order price
 		double prePrice;
 		if (side == "buy") {
@@ -529,7 +552,7 @@ public class MyTransaction {
 		order.transmit( true);
 		order.outsideRth( true);
 		order.walletAddr( wallet);
-		order.stockTokenAddr( m_main.getSmartContractId(conid) );
+		order.stockTokenAddr(stockTokenAddress);
 		
 		// request contract details (prints to stdout)
 		insideAnyHours( contract, inside -> {
@@ -543,7 +566,7 @@ public class MyTransaction {
 
 			// if the user submitted an order for < .5 shares, we round to zero so no order is placed
 			if (whatIf) {
-				// for what-if, submit it with at least qty of 1 to make sure it is a valid order
+				// but for what-if, submit it with at least qty of 1 to make sure it is a valid order
 				if (order.roundedQty() == 0) {
 					order.totalQuantity(1);
 				}
@@ -564,6 +587,11 @@ public class MyTransaction {
 		});
 	}
 
+	private Erc20 stablecoin() throws Exception {
+		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD
+				? Main.m_config.newBusd() : Main.m_config.newRusd();
+	}
+	
 	interface Inside {
 		void run(boolean inside) throws Exception;
 	}
@@ -774,7 +802,7 @@ public class MyTransaction {
 		double tds = 0;     // the tds tax paid by Indian residents
 		String hash = "";   // the blockchain hashcode
 
-		if (Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks") ) {
+		if (fireblocks() ) {
 			try {
 				String id;
 				
@@ -783,16 +811,17 @@ public class MyTransaction {
 					throw new Exception("Blockchain transaction failed intentially during testing"); 
 				}
 
+				double stablecoinAmt = m_map.getDouble("price");
+				
 				// buy
 				if (order.action() == Action.BUY) {
-					double stablecoinAmt = stockTokenQty * order.lmtPrice() + Main.m_config.commission();
 					
 					// buy with RUSD?
 					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
 						id = m_main.rusd().buyStockWithRusd(
 								order.walletAddr(), 
 								stablecoinAmt,
-								order.stockTokenAddr(), 
+								order.newStockToken(),
 								stockTokenQty
 						);
 					}
@@ -803,7 +832,7 @@ public class MyTransaction {
 								order.walletAddr(),
 								Main.m_config.newBusd(),
 								stablecoinAmt,
-								order.stockTokenAddr(), 
+								order.newStockToken(), 
 								stockTokenQty
 						);
 					}
@@ -811,13 +840,10 @@ public class MyTransaction {
 				
 				// sell
 				else {
-					double preAmt = stockTokenQty * order.lmtPrice() - Main.m_config.commission();
-					tds = .01 * preAmt;
-					double stablecoinAmt = preAmt - tds;
 					id = m_main.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
-							order.stockTokenAddr(),
+							order.newStockToken(),
 							stockTokenQty
 					);
 				}

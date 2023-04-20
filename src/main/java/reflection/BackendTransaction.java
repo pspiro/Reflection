@@ -133,12 +133,12 @@ public class BackendTransaction extends MyTransaction {
 
 			setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
-			double rusdPos = rusd.reqPosition(userAddr);
+			double rusdPos = rusd.getPosition(userAddr);
 			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			
 			log( LogType.REDEEM, "%s is selling %s RUSD", userAddr, rusdPos);
 
-			double busdPos = busd.reqPosition( Accounts.instance.getAddress("RefWallet") );
+			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
 				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos)
 					.waitForHash();

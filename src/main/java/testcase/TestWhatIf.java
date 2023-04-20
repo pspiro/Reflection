@@ -6,13 +6,14 @@ import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
 import reflection.Util;
+import tw.util.S;
 
 public class TestWhatIf extends TestCase {
 	// what-if
 	
 	// missing conid
 	public void testMissingConid() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'action': 'buy', 'quantity': '100', 'price': '83' }"; 
+		String data = "{ 'msg': 'checkorder', 'action': 'buy', 'quantity': '100', 'tokenPrice': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -22,7 +23,7 @@ public class TestWhatIf extends TestCase {
 
 	// missing side
 	public void testMissingAction() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'quantity': '100', 'price': '83' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'quantity': '100', 'tokenPrice': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -32,7 +33,7 @@ public class TestWhatIf extends TestCase {
 
 	// missing quantity
 	public void testMissingQty() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'price': '83' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'tokenPrice': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -42,7 +43,7 @@ public class TestWhatIf extends TestCase {
 
 	// negative quantity 
 	public void testWhatIf35() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '-100', 'price': '83' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '-100', 'tokenPrice': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -62,7 +63,7 @@ public class TestWhatIf extends TestCase {
 
 	// negative price 
 	public void testNegativePrice() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '-83' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'tokenPrice': '-83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -72,7 +73,7 @@ public class TestWhatIf extends TestCase {
 
 	// price too low 
 	public void testPriceTooLow() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '30' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'tokenPrice': '30' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -85,7 +86,7 @@ public class TestWhatIf extends TestCase {
 //	public void testWhatIf7() throws Exception {
 //		double price = curPrice + 1;
 //		
-//		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1000000', 'price': '%s' }", price); 
+//		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1000000', 'tokenPrice': '%s' }", price); 
 //		MyJsonObject map = sendData( data);
 //		String ret = (String)map.get( "code");
 //		String text = (String)map.get( "text");
@@ -94,35 +95,36 @@ public class TestWhatIf extends TestCase {
 //	}
 
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'price': '133' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'tokenPrice': '133' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'price': '133' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'tokenPrice': '133' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 	
 	public void testFracSize()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
+		S.out( "testFracSize %s", map);
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testFracSize2()  throws Exception {  // rounded 
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'tokenPrice': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -136,7 +138,7 @@ public class TestWhatIf extends TestCase {
 	public void testWhatIfSuccess() throws Exception {
 		double price = curPrice + 2;
 		
-		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '%s' }", price); 
+		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'tokenPrice': '%s' }", price); 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");

@@ -78,8 +78,15 @@ public class Cookie extends TestCase {
 		obj.put("cookie", Cookie.cookie);
 		obj.put("noFireblocks", true);
 		obj.put("currency", "busd");
-		return obj.toString();
+		obj.put("wallet_public_key", Cookie.wallet);
 		
+		double price = obj.getDouble("tokenPrice");
+		double qty = obj.getDouble("quantity");
+		double comm = obj.getDouble("commission");
+		double total = obj.getString("action").equals("buy")
+				? price * qty + comm : price * qty - comm;
+		obj.put("price", total);
+		return obj.toString();
 	}
 
 }

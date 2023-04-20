@@ -1,10 +1,11 @@
 package testcase;
 
-import static testcase.TestOrder.orderData;
-import static testcase.TestOrder.post;
+import static testcase.TestBackendOrder.orderData;
+import static testcase.TestBackendOrder.sendData;
 
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import reflection.Prices;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -13,15 +14,13 @@ public class TestOne extends TestCase {
 		//Config.readFrom("Desktop-config").newBusd().mint(1, wallet, 800).waitForHash();
 	}
 
-	// test what-if success as well
-	public void testFillBuy() throws Exception {
-		String data = orderData( 3, "BUY", Cookie.wallet);
-		MyJsonObject map = post( data);
+	public void testSellTooHigh() throws Exception {
+		String data = orderData( 1, "SELL", 100);
+		MyJsonObject map = sendData( data);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
-		S.out( "testFillBuy: " + text);
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 100.0, filled);
+		S.out("sellTooHigh %s %s", code, text);
+		assertEquals( RefCode.INVALID_PRICE.toString(), code);
+		assertEquals( Prices.TOO_HIGH, text);
 	}
 }

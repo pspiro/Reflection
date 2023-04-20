@@ -1,13 +1,11 @@
 package fireblocks;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
-import json.MyJsonObject;
-import reflection.Main;
-import reflection.RefCode;
-import reflection.RefException;
-import reflection.Util;
+import reflection.Config;
+import testcase.Cookie;
+import tw.google.GTable;
+import tw.google.NewSheet;
 import tw.util.S;
 
 public class StockToken extends Erc20 {
@@ -32,6 +30,23 @@ public class StockToken extends Erc20 {
 	
 	public StockToken( String address) {    // you might want to add the name here
 		super( address, stockTokenDecimals);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Accounts.instance.setAdmins( "Admin1,Admin2");
+
+		Config config = new Config();
+		config.readFromSpreadsheet("Desktop-config");
+
+		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
+		
+		// mint 1000 IBM stock token into cookie wallet
+		String id = config.newRusd().buyStockWithRusd( 
+				Cookie.wallet,
+				0,
+				new StockToken( tab.get( "IBM") ),
+				1000);
+		Fireblocks.getTransHash(id, 60);
 	}
 	
 	// 0: default

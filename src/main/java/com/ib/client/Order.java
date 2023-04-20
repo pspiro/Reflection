@@ -792,7 +792,7 @@ public class Order {
 	public String stablecoinAddr() {
 		return m_stablecoinAddr;
 	}
-	public StockToken stockTokenAddr() {
+	public StockToken newStockToken() {
 		return new StockToken( m_stockTokenAddr);
 	}
 	
