@@ -43,6 +43,16 @@ public class ParamMap extends HashMap<String, String> {
 		}
 	}		
 
+	double getDouble(String tag) throws RefException {
+		try {
+			String val = getParam(tag);
+			return S.isNull(val) ? 0 : Double.valueOf(val);
+		}
+		catch( NumberFormatException e) {
+			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' must be a number", tag);
+		}
+	}		
+
 	<T extends Enum<T>> T getEnumParam(String tag, T[] values) throws RefException {
 		try {
 			return S.getEnum( getRequiredParam( tag), values);

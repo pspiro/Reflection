@@ -476,13 +476,13 @@ public class MyTransaction {
 		double quantity = m_map.getRequiredDouble( "quantity");
 		require( quantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
 
-		double price = m_map.getRequiredDouble( "price");
+		double price = m_map.getRequiredDouble( "tokenPrice");
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
 		double amt = price * quantity;
 		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
-
+		
 		String wallet = null;
 		if (!whatIf) {
 			//wallet = m_map.getRequiredParam("wallet");
@@ -492,10 +492,12 @@ public class MyTransaction {
 			// check the token position as well; use StockToken.reqPosition();
 			
 			// if buying with BUSD, make sure the approval went through
-			if (fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+			
+			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+				double totalOrderAmt = m_map.getDouble( "price");  // including commission 
 				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
-				require(approvedAmt >= amt, RefCode.INSUFFICIENT_FUNDS,
-						"The approved amount of BUSD (%s) is insufficient", approvedAmt); 
+				require(approvedAmt >= totalOrderAmt, RefCode.INSUFFICIENT_FUNDS,
+						"The approved amount of BUSD (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 			}
 		}
 
@@ -1048,7 +1050,7 @@ public class MyTransaction {
 		// check for expiration
 		Main.require( 
 				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.INVALID_REQUEST,
+				RefCode.SESSION_EXPIRED,
 				"Session has expired");
 		
 		// confirm no wallet or same wallet
