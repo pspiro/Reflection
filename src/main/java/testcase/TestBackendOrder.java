@@ -40,7 +40,7 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	// missing walletId
-	public void testOrder2() throws Exception {
+	public void testMissingWallet() throws Exception {
 		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '83' }";
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
@@ -105,6 +105,17 @@ public class TestBackendOrder extends TestCase {
 		double filled = map.getDouble( "filled");
 		assertEquals( 100.0, filled);
 	}
+
+	public void testNullCookie() throws Exception {
+		String data = orderData( 3);
+
+		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+		cli.post( "/api/reflection-api/order", Util.toJson(data) );
+		MyJsonObject map = cli.readMyJsonObject();            
+		String text = map.getString( "text");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "Null cookie", text);
+	}
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
@@ -133,7 +144,7 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '138', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -142,14 +153,14 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'price': '138', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'price': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'price': '138', 'cryptoid': 'testfracshares' }"; 
+		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'price': '138' }"; 
 		MyJsonObject map = sendData( data);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
@@ -181,6 +192,7 @@ public class TestBackendOrder extends TestCase {
 		obj.put("cookie", Cookie.cookie);
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("currency", "BUSD");
+		obj.put("noFireblocks", true);   // interesting
 		return obj.toString();
 		
 	}

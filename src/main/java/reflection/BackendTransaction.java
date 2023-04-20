@@ -33,27 +33,7 @@ public class BackendTransaction extends MyTransaction {
 	public void backendOrder(boolean whatIf) {
 		wrap( () -> {
 			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
-			
 			parseMsg();
-
-	   		// some should be written to the log file
-	        // String = m_map.get("symbol": "META",
-			// String = m_map.getRequiredParam("currency");
-			// String smartcontractid = m_map.getRequiredParam("smartcontractid");
-			// double spread = m_map.getRequiredDouble("spread"); //??????????
-			// double commission = m_map.getRequiredDouble("commission");
-
-//			int conid = m_map.getRequiredInt("conid");
-//			double quantity = m_map.getRequiredDouble("quantity");
-//			double price = m_map.getRequiredDouble("price");
-
-			String side = m_map.getRequiredParam("action");
-			require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
-			m_map.put( "side", side);
-
-			String wallet = m_map.getRequiredParam("wallet_public_key");
-			m_map.put( "wallet", wallet); // you can remove this when orders are no longer being passed through the back-end
-
 			order(whatIf);
 		});
     }

@@ -1385,6 +1385,10 @@ public abstract class EClient {
             notConnected();
             return;
         }
+        
+        S.out( "Submitting %s  id=%s  side=%s  qty=%s  conid=%s  price=%s",
+        		order.whatIf() ? "what-if" : "order",
+        		id, order.action(), order.totalQty(), contract.conid(), order.lmtPrice() );
 
         if (m_serverVersion < MIN_SERVER_VER_SCALE_ORDERS) {
         	if (order.scaleInitLevelSize() != Integer.MAX_VALUE ||

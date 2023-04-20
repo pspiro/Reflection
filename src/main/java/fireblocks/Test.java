@@ -15,15 +15,16 @@ public class Test {
 	
 	
 	static Accounts accounts = Accounts.instance;
-	//static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	//static String userAddr = "0x1cB79caf8c86f04bD31C4AD1f43A5ba17d61BD35";	
-	static String userAddr = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
+	//static String userAddr = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 
 	public static void main(String[] args) throws Exception {
 		accounts.setAdmins( "Admin1,Admin2");
 		
 		Config config = new Config();
-		config.readFromSpreadsheet("Dev-config");
+		config.readFromSpreadsheet("Desktop-config");
+
 
 		run( config, config.newBusd(), config.newRusd() );
 	}
@@ -40,6 +41,13 @@ public class Test {
 		// ----- Bob -----------------------------
 		
 		// only Bob can buy with BUSD because only Bob can approve that
+		
+		rusd.buyStockWithRusd(
+				userAddr,
+				0, 
+				stock, 
+				101);
+		System.exit(0);
 		
 		// mint BUSD for user Bob
 		busd.mint(
@@ -59,7 +67,8 @@ public class Test {
 				busd,
 				1,
 				stock,
-				1);
+				100);
+
 		//S.input("Check balances, should be 1 BUSD in RefWallet");
 		
 		// ----- 0x450e -----------------------------

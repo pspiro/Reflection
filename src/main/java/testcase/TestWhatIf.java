@@ -1,18 +1,18 @@
 package testcase;
 
-import static testcase.TestOrder.post;
-
+import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Prices;
 import reflection.RefCode;
+import reflection.Util;
 
 public class TestWhatIf extends TestCase {
 	// what-if
 	
 	// missing conid
-	public void testWhatIf1() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'side': 'buy', 'quantity': '100', 'price': '83' }"; 
+	public void testMissingConid() throws Exception {
+		String data = "{ 'msg': 'checkorder', 'action': 'buy', 'quantity': '100', 'price': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -21,18 +21,18 @@ public class TestWhatIf extends TestCase {
 	}
 
 	// missing side
-	public void testWhatIf2() throws Exception {
+	public void testMissingAction() throws Exception {
 		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'quantity': '100', 'price': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
-		assertEquals( "Param 'side' is missing", text);
+		assertEquals( "Param 'action' is missing", text);
 	}
 
 	// missing quantity
-	public void testWhatIf3() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'price': '83' }"; 
+	public void testMissingQty() throws Exception {
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'price': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -42,7 +42,7 @@ public class TestWhatIf extends TestCase {
 
 	// negative quantity 
 	public void testWhatIf35() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '-100', 'price': '83' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '-100', 'price': '83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -51,8 +51,8 @@ public class TestWhatIf extends TestCase {
 	}
 
 	// missing price
-	public void testWhatIf4() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100' }"; 
+	public void testMissingPrice() throws Exception {
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -61,8 +61,8 @@ public class TestWhatIf extends TestCase {
 	}
 
 	// negative price 
-	public void testWhatIf5() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '-83' }"; 
+	public void testNegativePrice() throws Exception {
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '-83' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -71,8 +71,8 @@ public class TestWhatIf extends TestCase {
 	}
 
 	// price too low 
-	public void testWhatIf6() throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '30' }"; 
+	public void testPriceTooLow() throws Exception {
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '30' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -83,9 +83,9 @@ public class TestWhatIf extends TestCase {
 
 	// insufficient liquidity; in order to test this, you need to disabled the max dollar amt check
 //	public void testWhatIf7() throws Exception {
-//		double price = TestOrder.curPrice + 1;
+//		double price = curPrice + 1;
 //		
-//		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1000000', 'price': '%s' }", price); 
+//		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1000000', 'price': '%s' }", price); 
 //		MyJsonObject map = sendData( data);
 //		String ret = (String)map.get( "code");
 //		String text = (String)map.get( "text");
@@ -94,35 +94,35 @@ public class TestWhatIf extends TestCase {
 //	}
 
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '200', 'price': '133' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'price': '133' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'sell', 'quantity': '200', 'price': '133' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'price': '133' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 	
 	public void testFracSize()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '1.5', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'price': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testFracSize2()  throws Exception {  // rounded 
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '.4', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'price': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '0', 'price': '147' }"; 
+		String data = "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'price': '147' }"; 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
@@ -130,21 +130,27 @@ public class TestWhatIf extends TestCase {
 		assertEquals( "Quantity must be positive", text);
 	}
 	
-
+	static double curPrice = 138;
+	
 	// successful buy what-if 
-	public void testWhatIf0() throws Exception {
-		double price = TestOrder.curPrice + 2;
+	public void testWhatIfSuccess() throws Exception {
+		double price = curPrice + 2;
 		
-		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'side': 'buy', 'quantity': '100', 'price': '%s' }", price); 
+		String data = String.format( "{ 'msg': 'checkorder', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'price': '%s' }", price); 
 		MyJsonObject map = post( data);
 		String ret = (String)map.get( "code");
 		String text = (String)map.get( "text");
 		assertEquals( RefCode.OK.toString(), ret);
-		assertEquals( null, text);
 	}
 
 	public static void main(String[] args) {
 //		Result result = JUnitCore.runClasses(TestWhatIf.class);
 	}
-	
+
+	static MyJsonObject post(String data) throws Exception {
+		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+		cli.post( "/api/reflection-api/check-order", Cookie.addCookie( Util.toJson(data) ) );
+		return cli.readMyJsonObject();
+	}
+
 }

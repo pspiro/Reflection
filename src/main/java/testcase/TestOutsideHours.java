@@ -1,8 +1,8 @@
 package testcase;
 
 import java.util.Date;
-import java.util.HashMap;
 
+import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.MyTransaction;
@@ -38,12 +38,14 @@ public class TestOutsideHours extends TestCase {
 	}
 
 	public static MyJsonObject testHours( int conid, String time) throws Exception {
-		double price = TestOrder.curPrice + 5;
+		double price = TestWhatIf.curPrice + 5;
 		if (conid == QQQ) price = 318*1.05;
 				
 		String format = "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
-		String data = String.format( format, conid, price, time); 
-		return TestOrder.post( data);
+		String data = String.format( format, conid, price, time);
+
+		// adds cookie and currency
+		return Cookie.postOrder( data);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */

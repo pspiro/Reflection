@@ -1,10 +1,13 @@
 package testcase;
 
+import java.net.URLDecoder;
+
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 
 import http.MyHttpClient;
+import json.MyJsonObject;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import reflection.SiweUtil;
@@ -53,6 +56,30 @@ public class Cookie extends TestCase {
 		
 		cookie = cli.getHeaders().get("set-cookie");
 	}
+	
+	public static void main(String[] args) throws Exception {
+		String str = "{\"smartcontractid\":\"0x5195729466e481de3c63860034fc89efa5fbbb8f\",\"symbol\":\"AAPL (Apple)\",\"tds\":0,\"quantity\":0.030117,\"cookie\":\"__Host_authToken0xb95bf9C71e030FA3D8c0940456972885DB60843F5=%7B%22address%22%3A%220xb95bf9C71e030FA3D8c0940456972885DB60843F%22%2C%22chainId%22%3A5%2C%22domain%22%3A%22localhost%22%2C%22statement%22%3A%22Sign%20in%20with%20Ethereum.%22%2C%22issuedAt%22%3A%222023-04-18T16%3A38%3A50.330Z%22%2C%22uri%22%3A%22http%3A%2F%2Flocalhost%22%2C%22version%22%3A%221%22%2C%22nonce%22%3A%22lQ7ew6PhuZzMSy1eQNRX%22%7D\",\"tokenPrice\":166.0202,\"spread\":0.006,\"price\":6,\"action\":\"buy\",\"currency\":\"busd\",\"commission\":1,\"conid\":265598,\"wallet_public_key\":\"0xb95bf9C71e030FA3D8c0940456972885DB60843F\",\"timestamp\":0}";
+		MyJsonObject obj = MyJsonObject.parse(str);
+		String cookie = obj.getString("cookie");
+		//S.out(cookie);
+		MyJsonObject siweMsg = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) )
+				.getObj("message");
+		
+	}
+	
+	static MyJsonObject postOrder(String data) throws Exception {
+		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
+		cli.post( "/api/reflection-api/order", addCookie( Util.toJson(data) ) );
+		return cli.readMyJsonObject();
+	}
 
+	static String addCookie(String data) throws Exception {
+		MyJsonObject obj = MyJsonObject.parse(data);
+		obj.put("cookie", Cookie.cookie);
+		obj.put("noFireblocks", true);
+		obj.put("currency", "busd");
+		return obj.toString();
+		
+	}
 
 }

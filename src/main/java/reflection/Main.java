@@ -326,7 +326,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 					break;
 			}
 
-			S.out( "RECEIVED %s %s %s", id, errorCode, errorMsg);
+			S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
 		}
 
 		@Override public void show(String string) {
@@ -619,7 +619,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	// VERY BAD AND INEFFICIENT. ps
 	public HashMap getStockByTokAddr(String addr) throws RefException {
-		require(Util.isValidAddress(addr), RefCode.UNKNOWN, "Invalid address %s when getting stock by tok addr", addr);
+		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
 		
 		for (Object obj : m_stocks) {
 			HashMap stock = (HashMap)obj;

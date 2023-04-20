@@ -395,7 +395,7 @@ public class S {
 		}
 	}
 	
-	/** take string with comma, format with comma and two decimals */
+	/** take string with , format with , and two decimals */
 	public static String fmt( String v) {
 		return v != null ? fmt2( Double.parseDouble( v.replaceAll( ",", "") ) ) : null;
 	}

@@ -215,7 +215,7 @@ public class Monitor {
 			Stock stock = new Stock();
 			if ("Y".equals( row.getValue( "Active") ) ) {
 				Record record = getOrCreate( row.getInt("Conid") );
-				record.m_symbol = row.getValue("Symbol");
+				record.m_symbol = row.getValue("ContractSymbol");
 				record.m_address = row.getValue("Token Address");  
 				record.m_active = "Y";
 				record.m_tokens = -1;

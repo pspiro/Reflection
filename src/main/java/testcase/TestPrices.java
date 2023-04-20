@@ -11,7 +11,7 @@ import tw.util.S;
 
 public class TestPrices extends TestCase{
 	
-	static double curPrice = TestOrder.curPrice;
+	static double curPrice = 183;
 	static double offset = .7;
 	
 	public void testOne() throws Exception {
