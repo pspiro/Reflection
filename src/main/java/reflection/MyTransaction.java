@@ -37,6 +37,7 @@ import com.sun.net.httpserver.HttpExchange;
 import fireblocks.Erc20;
 import fireblocks.Fireblocks;
 import fireblocks.StockToken;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
 import redis.clients.jedis.Jedis;
@@ -73,6 +74,7 @@ public class MyTransaction {
 		seedPrices,
 		terminate,
 		testAlert,
+		wallet,
 		;
 
 		public static String allValues() {
@@ -226,7 +228,21 @@ public class MyTransaction {
 				break;
 			case seedPrices:
 				onSeedPrices();
+				break;
+			case wallet:
+				onShowWallet();
+				break;
 		}
+	}
+
+	private void onShowWallet() throws Exception {
+		String wallet = m_map.getRequiredParam("address");
+
+		JSONObject obj = new JSONObject();
+		obj.put( "Native token balance", MoralisServer.getNativeBalance(wallet) );
+		obj.put( "Allowance", Main.m_config.newBusd().getAllowance(wallet, Main.m_config.rusdAddr() ) );
+		obj.put( "Positions", MoralisServer.reqPositions(wallet).getArray() );
+		respond(obj);
 	}
 
 	private void onTest() {

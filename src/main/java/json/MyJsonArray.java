@@ -24,6 +24,10 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 		return new MyJsonArray( new JSONParser().parse( text) );
 	}
 	
+	public JSONArray getArray() {
+		return m_ar;
+	}
+	
 	public int size() {
 		return m_ar.size();
 	}
