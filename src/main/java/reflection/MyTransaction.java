@@ -500,7 +500,7 @@ public class MyTransaction {
 			// for what-if because the approval is done after the what-if;
 			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
 				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
-				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_FUNDS,
+				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
 						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 			}
 			

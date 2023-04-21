@@ -64,6 +64,7 @@ public class Config {
 	private double minTokenPosition; // minimum token position to display in portfolio section
 	private int siweTimeout; // max time between issuedAt field and now
 	private int sessionTimeout; // session times out after this amount of inactivity
+	private boolean produceErrors;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -108,6 +109,7 @@ public class Config {
 	public String rusdAddr() { return rusdAddr; }
 	public String busdAddr() { return busdAddr; }
 	public double minTokenPosition() { return minTokenPosition; }
+	public boolean produceErrors() { return produceErrors; }
 	
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
@@ -158,6 +160,7 @@ public class Config {
 		this.autoFill = m_tab.getBoolean("autoFill");
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
+		this.produceErrors = m_tab.getBoolean("produceErrors");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");

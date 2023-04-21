@@ -354,6 +354,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public static void require(boolean b, RefCode code, String errMsg, Object... params) throws RefException {
+		// in test mode, 1 out of 8 calls will return an error
+		if (m_config.produceErrors() ) {
+			int rnd = new Random(System.currentTimeMillis()).nextInt();
+			if (rnd % 8 == 1) b = false;
+		}
 		if (!b) {
 			throw new RefException( code, errMsg, params);
 		}
