@@ -508,20 +508,20 @@ public class MyTransaction {
 		// confirm that the user has enough stablecoin or stock token in their wallet
 		// since this sends a query, let's do it only once (could be either what-if or not)
 		// note: if these are slowing things down, we could do these checks if the Fireblocks fails
-		if (side == "buy") {
-			double balance = stablecoin().getPosition(wallet);
-			require( Util.isGtEq(balance, totalOrderAmt), 
-					RefCode.INSUFFICIENT_FUNDS,
-					"The stablecoin balance (%s) is less than the total order amount (%s)", 
-					balance, totalOrderAmt);
-		}
-		else {
-			double balance = new StockToken(stockTokenAddress).getPosition(wallet);
-			require( Util.isGtEq(balance, quantity), 
-					RefCode.INSUFFICIENT_FUNDS,
-					"The stock token balance (%s) is less than the order quantity (%s)", 
-					balance, quantity);
-		}
+//		if (side == "buy") {
+//			double balance = stablecoin().getPosition(wallet);
+//			require( Util.isGtEq(balance, totalOrderAmt), 
+//					RefCode.INSUFFICIENT_FUNDS,
+//					"The stablecoin balance (%s) is less than the total order amount (%s)", 
+//					balance, totalOrderAmt);
+//		}
+//		else {
+//			double balance = new StockToken(stockTokenAddress).getPosition(wallet);
+//			require( Util.isGtEq(balance, quantity), 
+//					RefCode.INSUFFICIENT_FUNDS,
+//					"The stock token balance (%s) is less than the order quantity (%s)", 
+//					balance, quantity);
+//		}
 		
 
 		// make sure user is signed in with SIWE and session is not expired
@@ -568,11 +568,11 @@ public class MyTransaction {
 			
 			// if buying with BUSD, check the "approved" amount of BUSD; this CANNOT be done
 			// for what-if because the approval is done after the what-if;
-			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
-				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
-						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
-			}
+//			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+//				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
+//				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
+//						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+//			}
 			
 			log( LogType.ORDER, order.getOrderLog(contract) );
 
