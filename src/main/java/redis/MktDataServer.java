@@ -2,6 +2,7 @@ package redis;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
 
@@ -17,10 +18,10 @@ import com.ib.controller.ApiController.TopMktDataAdapter;
 import http.SimpleTransaction;
 import json.StringJson;
 import redis.MyRedis.PRun;
-import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.MyTransaction.ExRunnable;
+import reflection.Stock;
 import reflection.Util;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -140,16 +141,26 @@ public class MktDataServer {
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
+		// read master list of symbols and map conid to entry
+		HashMap<Integer,ListEntry> map = Main.readMasterSymbols();
+
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
-			StringJson obj = new StringJson();
+			Stock stock = new Stock();
 			if ("Y".equals( row.getValue( "Active") ) ) {
-				obj.put( "symbol", row.getValue("ContractSymbol") );
-				obj.put( "conid", row.getValue("Conid") );
-				m_stocks.add( obj);
+				int conid = Integer.valueOf( row.getValue("Conid") );
+
+				stock.put( "conid", String.valueOf( conid) );
+				
+				ListEntry masterRow = map.get(conid);
+				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
+				stock.put( "symbol", masterRow.getValue("Symbol") );
+				stock.put( "type", masterRow.getValue("Type") ); // Stock, ETF, ETF-24
+				stock.put( "exchange", masterRow.getValue("Exchange") );
+
+				m_stocks.add( stock);
 			}
 		}
 	}
-
 
 	class MdConnectionMgr extends ConnectionMgr {
 		MdConnectionMgr( String host, int port, int clientId) {

@@ -40,6 +40,7 @@ import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.util.MyException;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
@@ -168,15 +169,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_stocks.clear();
 		readStockListFromSheet();
 	}
+	
+	public static HashMap<Integer, ListEntry> readMasterSymbols() throws Exception {
+		HashMap<Integer,ListEntry> map = new HashMap<>();
+		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
+			map.put( entry.getInt("Conid"), entry);
+		}
+		return map;
+	}
 
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = new HashMap<>();
-		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
-			map.put( entry.getInt("Conid"), entry);
-		}
+		HashMap<Integer,ListEntry> map = readMasterSymbols();
 		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();

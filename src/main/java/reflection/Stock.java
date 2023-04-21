@@ -24,7 +24,7 @@ import org.json.simple.JSONObject;
 	"exchangeTime",
  *    
  *    */
-class Stock extends JSONObject {
+public class Stock extends JSONObject {
 	Prices m_prices = Prices.NULL;
 
 	void setPrices( Prices prices) {
