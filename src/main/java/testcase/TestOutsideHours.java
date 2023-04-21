@@ -38,14 +38,13 @@ public class TestOutsideHours extends TestCase {
 	}
 
 	public static MyJsonObject testHours( int conid, String time) throws Exception {
-		double price = TestWhatIf.curPrice + 5;
+		double price = TestBackendOrder.curPrice + 5;
 		if (conid == QQQ) price = 318*1.05;
 				
-		String format = "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }";
-		String data = String.format( format, conid, price, time);
-
-		// adds cookie and currency
-		return Cookie.postOrder( data);
+		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
+				conid, price, time);
+		MyJsonObject obj = TestBackendOrder.orderData(data);  // adds the cookie
+		return TestBackendOrder.sendData(obj);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */

@@ -22,7 +22,6 @@ import junit.framework.TestCase;
 	   TestRedeem.class,
 	   TestSiwe.class,
 	   TestUnwindOrder.class,
-	   TestWhatIf.class,
 })
 public class TestAll extends TestCase {
 }

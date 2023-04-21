@@ -67,14 +67,7 @@ public class Cookie extends TestCase {
 		
 	}
 	
-	static MyJsonObject postOrder(String data) throws Exception {
-		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-		cli.post( "/api/reflection-api/order", addCookie( Util.toJson(data) ) );
-		return cli.readMyJsonObject();
-	}
-
-	static String addCookie(String data) throws Exception {
-		MyJsonObject obj = MyJsonObject.parse(data);
+	static MyJsonObject addCookie(MyJsonObject obj) throws Exception {
 		obj.put("cookie", Cookie.cookie);
 		obj.put("noFireblocks", true);
 		obj.put("currency", "busd");
@@ -86,7 +79,7 @@ public class Cookie extends TestCase {
 		double total = obj.getString("action").equals("buy")
 				? price * qty + comm : price * qty - comm;
 		obj.put("price", total);
-		return obj.toString();
+		return obj;
 	}
 
 }

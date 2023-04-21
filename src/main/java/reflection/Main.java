@@ -143,8 +143,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
-		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
-		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
+		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
@@ -598,10 +597,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			.handleGetPrice( uri);
 	}
 
-	private void handleOrder(HttpExchange exch, boolean whatIf) {
+	private void handleOrder(HttpExchange exch) {
 		getURI(exch);
 		new BackendTransaction(this, exch)
-			.backendOrder(whatIf);
+			.backendOrder();
 	}
 
 	private void handleRedeem(HttpExchange exch) {

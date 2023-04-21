@@ -53,7 +53,6 @@ public class MyTransaction {
 	}
 	enum MsgType {
 		checkHours,
-		checkOrder,
 		disconnect,
 		dump,
 		getAllPrices,
@@ -108,6 +107,7 @@ public class MyTransaction {
 
 	// you could encapsulate all these methods in MyExchange
 
+	/** keys are all lower case */
 	void parseMsg() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
@@ -128,7 +128,6 @@ public class MyTransaction {
 			}
 		}
 
-		// POST request
 		else {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
@@ -174,10 +173,7 @@ public class MyTransaction {
 				getAllPrices();
 				break;
 			case order:
-				order( false);
-				break;
-			case checkOrder:
-				order( true);
+				order();
 				break;
 			case checkHours:
 				checkHours();
@@ -464,7 +460,7 @@ public class MyTransaction {
 	}
 
 	/** Top-level method. */
-	void order(boolean whatIf) throws Exception {
+	void order() throws Exception {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
@@ -489,40 +485,28 @@ public class MyTransaction {
 		
 		String stockTokenAddress = m_main.getSmartContractId(conid);
 		Main.require(Util.isValidAddress(stockTokenAddress), RefCode.INVALID_REQUEST, "Invalid stock token address %s", stockTokenAddress);
-
-		String wallet = null;
-		if (!whatIf) {
-			//wallet = m_map.getRequiredParam("wallet");
-			wallet = m_map.getRequiredParam("wallet_public_key");
-			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-			
-			// if buying with BUSD, check the "approved" amount of BUSD; this CANNOT be done
-			// for what-if because the approval is done after the what-if;
-			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
-				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
-						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
-			}
-			
-			// confirm that the user has enough stablecoin or stock token in their wallet
-			// since this sends a query, let's do it only once (could be either what-if or not)
-			// note: if these are slowing things down, we could do these checks if the Fireblocks fails
-			if (side == "buy") {
-				double balance = stablecoin().getPosition(wallet);
-				require( Util.isGtEq(balance, totalOrderAmt), 
-						RefCode.INSUFFICIENT_FUNDS,
-						"The stablecoin balance (%s) is less than the total order amount (%s)", 
-						balance, totalOrderAmt);
-			}
-			else {
-				double balance = new StockToken(stockTokenAddress).getPosition(wallet);
-				require( Util.isGtEq(balance, quantity), 
-						RefCode.INSUFFICIENT_FUNDS,
-						"The stock token balance (%s) is less than the order quantity (%s)", 
-						balance, quantity);
-			}
-			
+		
+		String wallet = m_map.getRequiredParam("wallet_public_key");
+		require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		
+		// confirm that the user has enough stablecoin or stock token in their wallet
+		// since this sends a query, let's do it only once (could be either what-if or not)
+		// note: if these are slowing things down, we could do these checks if the Fireblocks fails
+		if (side == "buy") {
+			double balance = stablecoin().getPosition(wallet);
+			require( Util.isGtEq(balance, totalOrderAmt), 
+					RefCode.INSUFFICIENT_FUNDS,
+					"The stablecoin balance (%s) is less than the total order amount (%s)", 
+					balance, totalOrderAmt);
 		}
+		else {
+			double balance = new StockToken(stockTokenAddress).getPosition(wallet);
+			require( Util.isGtEq(balance, quantity), 
+					RefCode.INSUFFICIENT_FUNDS,
+					"The stock token balance (%s) is less than the order quantity (%s)", 
+					balance, quantity);
+		}
+		
 
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
@@ -548,7 +532,6 @@ public class MyTransaction {
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
 		order.allOrNone(true);  // all or none, we don't want partial fills
-		order.whatIf( whatIf);
 		order.transmit( true);
 		order.outsideRth( true);
 		order.walletAddr( wallet);
@@ -563,26 +546,26 @@ public class MyTransaction {
 			// explain why there are no prices which should never happen otherwise
 			Prices prices = m_main.getPrices( contract.conid() );
 			prices.checkOrderPrice( order, orderPrice, Main.m_config);
+			
+			// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
+			// * or check that ANY price is pretty recent, to we know prices are updating
+			
+			// if buying with BUSD, check the "approved" amount of BUSD; this CANNOT be done
+			// for what-if because the approval is done after the what-if;
+			if (side == "buy" && fireblocks() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+				double approvedAmt = Main.m_config.newBusd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
+				require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
+						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+			}
+			
+			log( LogType.ORDER, order.getOrderLog(contract) );
 
-			// if the user submitted an order for < .5 shares, we round to zero so no order is placed
-			if (whatIf) {
-				// but for what-if, submit it with at least qty of 1 to make sure it is a valid order
-				if (order.roundedQty() == 0) {
-					order.totalQuantity(1);
-				}
-
-				submitWhatIf( contract, order);
+			// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
+			if (order.roundedQty() == 0) {
+				respondToOrder(order, 0, false, OrderStatus.Filled);
 			}
 			else {
-				log( LogType.ORDER, order.getOrderLog(contract) );
-
-				// if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
-				if (order.roundedQty() == 0) {
-					respondToOrder(order, 0, false, OrderStatus.Filled);
-				}
-				else {
-					submitOrder(  contract, order);
-				}
+				submitOrder(  contract, order);
 			}
 		});
 	}

@@ -15,12 +15,5 @@ public class TestOne extends TestCase {
 	}
 
 	public void testSellTooHigh() throws Exception {
-		String data = orderData( 1, "SELL", 100);
-		MyJsonObject map = sendData( data);
-		String code = map.getString( "code");
-		String text = map.getString( "text");
-		S.out("sellTooHigh %s %s", code, text);
-		assertEquals( RefCode.INVALID_PRICE.toString(), code);
-		assertEquals( Prices.TOO_HIGH, text);
 	}
 }

@@ -18,10 +18,15 @@ import tw.util.S;
 
 public class TestBackendOrder extends TestCase {
 	static double curPrice = 135.75; // Double.valueOf( jedis.hget("8314", "last") );
+	static double approved;
 	
 	static {
 		try {
 			seed();
+
+			Config config = Config.readFrom("Desktop-config");
+			approved = config.newBusd().getAllowance(Cookie.wallet, config.rusdAddr() );
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -41,14 +46,9 @@ public class TestBackendOrder extends TestCase {
 	
 	// missing walletId
 	public void testMissingWallet() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '100', 'tokenPrice': '83' }";
-		MyJsonObject map = sendData( data);
-		
-//		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-//		//cli.addHeader("Cookie", Cookie.cookie)
-//		String obj = Cookie.addCookie( Util.toJson(data) );
-//		cli.post( "/api/reflection-api/order",  );
-//		
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '83' }");
+		MyJsonObject map = sendData(obj);
+		map.remove("wallet_public_key");
 		
 		
 		String ret = map.getString( "code");
@@ -59,8 +59,8 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }";		
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "testOrder4: %s", map);
@@ -70,8 +70,8 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; price too low
 	public void testBuyTooLow() throws Exception {
-		String data = orderData( -1, "BUY", 10);
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData( -1, "BUY", 10);
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( code + " " + text);
@@ -82,8 +82,8 @@ public class TestBackendOrder extends TestCase {
 	
 	// sell order price to high
 	public void testSellTooHigh() throws Exception {
-		String data = orderData( 1, "SELL", 10);
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData( 1, "SELL", 10);
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out("sellTooHigh %s %s", code, text);
@@ -93,8 +93,8 @@ public class TestBackendOrder extends TestCase {
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellPriceTooLow() throws Exception {
-		String data = orderData( -30, "SELL", 100);
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData( -30, "SELL", 100);
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out("sell too low %s %s", code, text);
@@ -104,8 +104,8 @@ public class TestBackendOrder extends TestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		String data = orderData( 3, "BUY", 10);
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData( 3, "BUY", 10);
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "fill buy %s %s", code, text);
@@ -115,11 +115,11 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testNullCookie() throws Exception {
-		String data = orderData( 3, "BUY", 100);
-
-		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-		cli.post( "/api/reflection-api/order", Util.toJson(data) );
-		MyJsonObject map = cli.readMyJsonObject();            
+		MyJsonObject obj = orderData( 3, "BUY", 10);
+		obj.remove("cookie");
+		
+		MyHttpClient cli = sendData2(obj);
+		MyJsonObject map = cli.readMyJsonObject();
 		String text = map.getString( "text");
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( "Null cookie", text);
@@ -127,8 +127,8 @@ public class TestBackendOrder extends TestCase {
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
-		String data = orderData( -3, "sell", 100);
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData( -3, "sell", 10);
+		MyJsonObject map = sendData(obj);
 		String code = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "fillSell %s %s", code, text);
@@ -138,22 +138,22 @@ public class TestBackendOrder extends TestCase {
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }";
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
+		MyJsonObject map = sendData(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"; 
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
+		MyJsonObject map = sendData(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"; 
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"); 
+		MyJsonObject map = sendData(obj);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
 		S.out( "testFracShares %s %s", ret, text);
@@ -161,31 +161,42 @@ public class TestBackendOrder extends TestCase {
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"; 
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"); 
+		MyJsonObject map = sendData(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		String data = "{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"; 
-		MyJsonObject map = sendData( data);
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"); 
+		MyJsonObject map = sendData(obj);
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
 		assertEquals( "Quantity must be positive", text);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 	}
 	
-	static String orderData(double offset, String side, double qty) {
-		return String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
-				side, qty, Double.valueOf( curPrice + offset) );
+	static MyJsonObject orderData(String json) throws Exception {
+		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
+		Cookie.addCookie(obj);
+		return obj;
 	}
 	
-	static MyJsonObject sendData( String data) throws Exception {
+	static MyJsonObject orderData(double offset, String side, double qty) throws Exception {
+		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+				side, qty, Double.valueOf( curPrice + offset) );
+		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
+		Cookie.addCookie(obj);
+		return obj;
+	}
+	
+	static MyJsonObject sendData( MyJsonObject obj) throws Exception {
+		return sendData2(obj).readMyJsonObject();
+	}
+	
+	static MyHttpClient sendData2( MyJsonObject obj) throws Exception {
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-		//cli.addHeader("Cookie", Cookie.cookie)
-		cli.post( "/api/reflection-api/order", Cookie.addCookie( Util.toJson(data) ) );
-		
-		return cli.readMyJsonObject();
+		cli.post( "/api/reflection-api/order", obj.toString() ); 
+		return cli;
 	}
 }
