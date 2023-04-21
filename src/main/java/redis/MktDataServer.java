@@ -143,12 +143,8 @@ public class MktDataServer {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			StringJson obj = new StringJson();
 			if ("Y".equals( row.getValue( "Active") ) ) {
-				obj.put( "symbol", row.getValue("Symbol") );
+				obj.put( "symbol", row.getValue("ContractSymbol") );
 				obj.put( "conid", row.getValue("Conid") );
-				obj.put( "smartcontractid", row.getValue("TokenAddress") );
-				obj.put( "description", row.getValue("Description") );
-				obj.put( "type", row.getValue("Type") );
-				obj.put( "exchange", row.getValue("Exchange") );
 				m_stocks.add( obj);
 			}
 		}
