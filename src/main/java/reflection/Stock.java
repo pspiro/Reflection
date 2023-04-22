@@ -25,7 +25,7 @@ import org.json.simple.JSONObject;
  *    
  *    */
 public class Stock extends JSONObject {
-	Prices m_prices = Prices.NULL;
+	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {
 		m_prices = prices;

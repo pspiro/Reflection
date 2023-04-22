@@ -138,7 +138,7 @@ public class MktDataServer {
 		requestPrices();
 	}
 
-	// let it fall back to read from a flatfile if this fails. pas
+	// let it fall back to read from a flatfile if this fails. pas  you could share this code w/ same method from Main
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		// read master list of symbols and map conid to entry
@@ -190,8 +190,8 @@ public class MktDataServer {
 		}
 
 		for (Object obj : m_stocks) {
-			StringJson stock = (StringJson)obj;  
-			String conidStr = stock.get("conid");
+			Stock stock = (Stock)obj;  
+			String conidStr = stock.getString("conid");
 			String exchange = "SMART"; //stock.get("exchange");  // exchange would be pulled from the master symbol table
 			
 
