@@ -43,7 +43,6 @@ public class MySqlConnection {
 		return set;
 	}
 	
-	/** json tags will be same as column names */
 	public JSONArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
 		ResultSet res = query(sql, params);
 		

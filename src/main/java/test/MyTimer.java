@@ -2,7 +2,6 @@ package test;
 
 import tw.util.S;
 
-/** Used for timing events */
 public class MyTimer {
 	static long start;
 	public static void start() {
