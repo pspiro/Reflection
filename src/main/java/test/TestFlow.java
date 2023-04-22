@@ -15,8 +15,8 @@ public class TestFlow {
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		
-		Busd busd = config.newBusd();
-		Rusd rusd = config.newRusd();
+		Busd busd = config.busd();
+		Rusd rusd = config.rusd();
 
 		busd.mint(
 				instance.getId( "Admin1"),

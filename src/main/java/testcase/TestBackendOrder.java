@@ -25,7 +25,7 @@ public class TestBackendOrder extends TestCase {
 			seed();
 
 			Config config = Config.readFrom("Desktop-config");
-			approved = config.newBusd().getAllowance(Cookie.wallet, config.rusdAddr() );
+			approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -46,7 +46,7 @@ public class TestBackendOrder extends TestCase {
 	
 	// missing walletId
 	public void testMissingWallet() throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '83' }");
+		MyJsonObject obj = orderData(2, "BUY", 10);
 		MyJsonObject map = sendData(obj);
 		map.remove("wallet_public_key");
 		
@@ -134,7 +134,7 @@ public class TestBackendOrder extends TestCase {
 		S.out( "fillSell %s %s", code, text);
 		assertEquals( RefCode.OK.toString(), code);
 		double filled = map.getDouble( "filled");
-		assertEquals( 100.0, filled);
+		assertEquals( 10.0, filled);
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {

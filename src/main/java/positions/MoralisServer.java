@@ -9,10 +9,10 @@ import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpServer;
 
+import fireblocks.Erc20;
 import http.SimpleTransaction;
 import json.MyJsonArray;
 import json.MyJsonObject;
@@ -358,8 +358,14 @@ public class MoralisServer {
 	public static MyJsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
 		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
 				moralis, contract, chain, owner, spender);
-		S.out("***" + url);
 		return MyJsonObject.parse( querySync(url) );
+	}
+	
+	public static double getNativeBalance(String address) throws Exception {
+		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
+		return Erc20.fromBlockchain(
+				MyJsonObject.parse( querySync(url) ).getString("balance"),
+				18);
 	}
 	
 	

@@ -43,6 +43,7 @@ import reflection.Config.RefApiConfig;
 import test.MyTimer;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.util.MyException;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
@@ -55,7 +56,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
-	private static boolean m_simulated;
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
@@ -64,8 +64,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final String m_tabName;
 	private       String m_faqs;
 	
-	static boolean simulated() { return m_simulated; }
-
 	JSONArray stocks() { return m_stocks; }
 
 	public static void main(String[] args) {
@@ -86,7 +84,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-	Main(String tabName) throws Exception {
+	public Main(String tabName) throws Exception {
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -182,15 +180,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_stocks.clear();
 		readStockListFromSheet();
 	}
+	
+	public static HashMap<Integer, ListEntry> readMasterSymbols() throws Exception {
+		HashMap<Integer,ListEntry> map = new HashMap<>();
+		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
+			map.put( entry.getInt("Conid"), entry);
+		}
+		return map;
+	}
 
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = new HashMap<>();
-		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
-			map.put( entry.getInt("Conid"), entry);
-		}
+		HashMap<Integer,ListEntry> map = readMasterSymbols();
 		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
@@ -231,11 +234,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return stock;
 	}
 
-	Rusd rusd() throws Exception { 
-		return m_config.newRusd(); 
-	}
-
-
 
 	/** Manage the connection from this client to TWS. */
 	class ConnectionMgr implements IConnectionHandler {
@@ -262,6 +260,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		synchronized void startTimer() {
 			if (m_timer == null) {
 				m_timer = new Timer();
+				S.out( "creating timer " + m_timer.hashCode() + " (only one)" );
 				m_timer.schedule(new TimerTask() {
 					@Override public void run() {
 						onTimer();
@@ -289,7 +288,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 		
 		synchronized void connectNow() throws Exception {
-			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s...", m_host, m_port, m_clientId);
+			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
 			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
 				throw new Exception("Could not connect to TWS");
 			}
@@ -599,38 +598,32 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		getURI(exch);
-		new BackendTransaction(this, exch)
-			.respond( m_stocks);
+		new BackendTransaction(this, exch).respond( m_stocks);
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleReqPositions(uri);
+		new BackendTransaction(this, exch).handleReqPositions(uri);
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleGetStockWithPrice( uri);
+		new BackendTransaction(this, exch).handleGetStockWithPrice( uri);
 	}
 
 	private void handleGetPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleGetPrice( uri);
+		new BackendTransaction(this, exch).handleGetPrice( uri);
 	}
 
 	private void handleOrder(HttpExchange exch) {
 		getURI(exch);
-		new BackendTransaction(this, exch)
-			.backendOrder();
+		new OrderTransaction(this, exch).backendOrder();
 	}
 
 	private void handleRedeem(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleRedeem(uri);
+		new BackendTransaction(this, exch).handleRedeem(uri);
 	}
 	
 	private void handleGetFaqs(HttpExchange exch) {

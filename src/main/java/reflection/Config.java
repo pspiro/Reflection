@@ -401,11 +401,13 @@ public class Config {
 		return mintEth;
 	}
 
-	public Rusd newRusd() throws Exception {
+	/** This causes a dependency that we might not want to have. 
+	 * @throws Exception */
+	public Rusd rusd() throws Exception {
 		return new Rusd( rusdAddr, rusdDecimals);
 	}
 
-	public Busd newBusd() {
+	public Busd busd() {
 		return new Busd( busdAddr, busdDecimals);
 	}
 

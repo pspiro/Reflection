@@ -25,15 +25,10 @@ public class Wallet {
 			pos.display();
 			S.out();
 		}
+
 		
-		MoralisServer.reqAllowance(config.newBusd().address(), myWallet, config.newRusd().address() )
-			.display();
+		S.out( "Allowance: %s", config.busd().getAllowance(myWallet, config.rusdAddr() ) );
+		S.out( "Native token balance: %s", MoralisServer.getNativeBalance(myWallet) );
 	}
-	
-//	public static void main(String[] args) {
-//		S.out("busd: " + fromBlockchainHex("145660ddc59b3fc000", 18) );
-//		S.out("stock: " + fromBlockchainHex("19e285848b0f0000", 18) );
-//	}
-	
 }
 

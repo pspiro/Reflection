@@ -18,7 +18,7 @@ public class FundWallet {
 //		config.readFromSpreadsheet("Test-config");
 		config.readFromSpreadsheet("Desktop-config");
 
-		run( config.newBusd(), config.newRusd() );
+		run( config.busd(), config.rusd() );
 	}
 	
 	static void run(Busd busd, Rusd rusd) throws Exception {

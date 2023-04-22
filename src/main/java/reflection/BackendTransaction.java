@@ -29,15 +29,6 @@ public class BackendTransaction extends MyTransaction {
 		super(main,exch);
 	}
 	
-/** Msg received directly from Frontend via nginx */
-	public void backendOrder() {
-		wrap( () -> {
-			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
-			parseMsg();
-			order();
-		});
-    }
-
 	/** Used by the portfolio section on the dashboard
 	 *  We're returning the token positions from the blockchain, not IB positions */
 	public void handleReqPositions(String uri) {
@@ -128,8 +119,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			validateCookie(userAddr);
 
-			Rusd rusd = Main.m_config.newRusd();
-			Busd busd = Main.m_config.newBusd();
+			Rusd rusd = Main.m_config.rusd();
+			Busd busd = Main.m_config.busd();
 
 			setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
@@ -140,7 +131,7 @@ public class BackendTransaction extends MyTransaction {
 
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
-				rusd.sellRusd(userAddr, Main.m_config.newBusd(), rusdPos)
+				rusd.sellRusd(userAddr, Main.m_config.busd(), rusdPos)
 					.waitForHash();
 				
 				// QUESTION: can we send back a partial response before the hash is ready using chunks or WebSockets?

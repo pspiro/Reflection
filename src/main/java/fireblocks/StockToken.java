@@ -41,7 +41,7 @@ public class StockToken extends Erc20 {
 		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
 		
 		// mint 1000 IBM stock token into cookie wallet
-		String id = config.newRusd().buyStockWithRusd( 
+		String id = config.rusd().buyStockWithRusd( 
 				Cookie.wallet,
 				0,
 				new StockToken( tab.get( "IBM") ),

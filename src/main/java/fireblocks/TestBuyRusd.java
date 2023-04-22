@@ -11,7 +11,7 @@ public class TestBuyRusd {
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		
-		Busd busd = config.newBusd();
+		Busd busd = config.busd();
 		
 		Rusd rusd = new Rusd("", 6);
 		

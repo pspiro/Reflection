@@ -26,7 +26,7 @@ public class Test {
 		config.readFromSpreadsheet("Desktop-config");
 
 
-		run( config, config.newBusd(), config.newRusd() );
+		run( config, config.busd(), config.rusd() );
 	}
 	
 	static void run(Config config, Busd busd, Rusd rusd) throws Exception {

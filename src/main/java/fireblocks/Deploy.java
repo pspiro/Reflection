@@ -26,8 +26,8 @@ public class Deploy {
 		config.readFromSpreadsheet("Dev-config");
 		Util.require(config.useFireblocks(), "Turn on Fireblocks");
 		
-		Rusd rusd = config.newRusd();
-		Busd busd = config.newBusd();
+		Rusd rusd = config.rusd();
+		Busd busd = config.busd();
 		
 		// deploy BUSD? (for testing only)
 		if ("deploy".equals( busd.address() ) ) {
