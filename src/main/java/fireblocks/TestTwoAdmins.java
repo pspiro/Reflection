@@ -18,7 +18,7 @@ public class TestTwoAdmins {
 		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
 		stock = new StockToken( tab.get( "GOOG") );
 
-		rusd = config.newRusd();
+		rusd = config.rusd();
 		busd = config.newBusd();
 		
 		prepare("Bob");

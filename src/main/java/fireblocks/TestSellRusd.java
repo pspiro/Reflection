@@ -19,7 +19,7 @@ public class TestSellRusd {
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		
-		Rusd rusd = config.newRusd();
+		Rusd rusd = config.rusd();
 		Busd busd = config.newBusd();
 		
 		Accounts accounts = Accounts.instance;

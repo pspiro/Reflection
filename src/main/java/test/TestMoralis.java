@@ -13,9 +13,12 @@ public class TestMoralis {
 	public static void main(String[] args) throws Exception {
 		//S.out( MoralisServer.reqPosition(wallet, "0x61a0b5510998f633063d4ad4e5e1d737a24dfb3c") );
 		//S.out( StockToken.fromBlockchainHex("145660ddc59b3fc", 6) );
-		S.out( MoralisServer.getNativeBalance(wallet) );
+//		S.out( MoralisServer.getNativeBalance(wallet) );
 		Config config = Config.readFrom("Desktop-config");
-		S.out( config.newBusd().getAllowance(wallet, config.rusdAddr() ) );
+		while(true) {
+			S.out( config.newBusd().getAllowance(wallet, config.rusdAddr() ) );
+			S.sleep(200);
+		}
 
 	}
 	

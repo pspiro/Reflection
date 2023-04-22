@@ -50,23 +50,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Connected, Disconnected
 	};
 	
-	private final static Random rnd = new Random( System.currentTimeMillis() );
-	final static Config m_config = new RefApiConfig();
-	final static MySqlConnection m_database = new MySqlConnection();
+	private static final Random rnd = new Random( System.currentTimeMillis() );
+	static final Config m_config = new RefApiConfig();
+	static final MySqlConnection m_database = new MySqlConnection();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
-	private static boolean m_simulated;
 
-	private MyRedis m_redis;  // used for periodically querying the prices 
+	private final MyRedis m_redis;  // used for periodically querying the prices 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
-	private String m_tabName;
-	private Rusd m_rusd;  // you could move this into Config
+	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
+	private final String m_tabName;
 	
-	Rusd rusd() { return m_rusd; }
-
-	static boolean simulated() { return m_simulated; }
-
 	JSONArray stocks() { return m_stocks; }
 
 	public static void main(String[] args) {
@@ -75,7 +69,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				throw new Exception( "You must specify a config tab name");
 			}
 
-			new Main().run( args[0] );
+			new Main( args[0] );
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
@@ -87,7 +81,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-	private void run(String tabName) throws Exception {
+	public Main(String tabName) throws Exception {
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -98,7 +92,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 		
 		if (m_config.useFireblocks() ) {
-			m_rusd = m_config.newRusd();
 			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
 		}
 
@@ -249,6 +242,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		synchronized void startTimer() {
 			if (m_timer == null) {
 				m_timer = new Timer();
+				S.out( "creating timer " + m_timer.hashCode() + " (only one)" );
 				m_timer.schedule(new TimerTask() {
 					@Override public void run() {
 						onTimer();
@@ -276,7 +270,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 		
 		synchronized void connectNow() throws Exception {
-			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s...", m_host, m_port, m_clientId);
+			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
 			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
 				throw new Exception("Could not connect to TWS");
 			}
@@ -581,38 +575,32 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		getURI(exch);
-		new BackendTransaction(this, exch)
-			.respond( m_stocks);
+		new BackendTransaction(this, exch).respond( m_stocks);
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleReqPositions(uri);
+		new BackendTransaction(this, exch).handleReqPositions(uri);
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleGetStockWithPrice( uri);
+		new BackendTransaction(this, exch).handleGetStockWithPrice( uri);
 	}
 
 	private void handleGetPrice(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleGetPrice( uri);
+		new BackendTransaction(this, exch).handleGetPrice( uri);
 	}
 
 	private void handleOrder(HttpExchange exch) {
 		getURI(exch);
-		new BackendTransaction(this, exch)
-			.backendOrder();
+		new OrderTransaction(this, exch).backendOrder();
 	}
 
 	private void handleRedeem(HttpExchange exch) {
 		String uri = getURI(exch);
-		new BackendTransaction(this, exch)
-			.handleRedeem(uri);
+		new BackendTransaction(this, exch).handleRedeem(uri);
 	}
 	
 	/** Note this returns URI in all lower case */

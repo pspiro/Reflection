@@ -1,9 +1,13 @@
 package testcase;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import http.MyHttpClient;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import tw.util.S;
 
 public class TestGetPositions extends TestCase {
 	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
@@ -14,6 +18,25 @@ public class TestGetPositions extends TestCase {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) {
+		Timer timmer = new Timer();
+		timmer.schedule(new TimerTask() {
+			public void run() {
+				S.out( "hello");
+			}
+		}, 0);
+		timmer.schedule(new TimerTask() {
+			public void run() {
+				S.out( "hello");
+			}
+		}, 0);
+		timmer.schedule(new TimerTask() {
+			public void run() {
+				S.out( "hello");
+			}
+		}, 0, 3000);
 	}
 	
 	public void testStockPos() throws Exception {
