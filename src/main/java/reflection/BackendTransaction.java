@@ -172,5 +172,4 @@ public class BackendTransaction extends MyTransaction {
 		}
 		return 0;
 	}
-
 }

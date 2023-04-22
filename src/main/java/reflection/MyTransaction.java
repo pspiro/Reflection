@@ -199,15 +199,15 @@ public class MyTransaction {
 			case pushBackendConfig:
 				pushBackendConfig();
 				break;
-			case pullBackendConfig:
-				pullBackendConfig();
-				break;
-			case pullFaq:
-				pullFaq();
-				break;
-			case pushFaq:
-				pushFaq();
-				break;
+//			case pullBackendConfig:
+//				pullBackendConfig();
+//				break;
+//			case pullFaq:
+//				pullFaq();
+//				break;
+//			case pushFaq:
+//				pushFaq();
+//				break;
 			case terminate:
 				terminate();
 				break;
@@ -274,31 +274,10 @@ public class MyTransaction {
 	}
 
 	/** Top-level message handler */
-	private void pushFaq() throws Exception {
-		S.out( "Pushing FAQ");
-		Main.m_config.pushFaq( Main.m_database);
-		respondOk();
-	}
-
-	/** Top-level message handler */
-	private void pullFaq() throws Exception {
-		S.out( "Pulling FAQ");
-		Main.m_config.pullFaq( Main.m_database);
-		respondOk();
-	}
-
-	/** Top-level message handler */
 	private void pushBackendConfig() throws Exception {
 		S.out( "Pushing backend config from google sheet to database");
-		Main.m_config.pushBackendConfig( Main.m_database);
+		Main.m_config.pushBackendConfig( m_main.sqlConnection() );
 		respondOk();
-	}
-
-	/** Top-level message handler */
-	private void pullBackendConfig() throws Exception {
-		S.out( "Pulling backend config from database to google sheet");
-		Main.m_config.pullBackendConfig( Main.m_database);
-		respond( code, RefCode.OK);
 	}
 
 	/** Top-level message handler */
@@ -316,8 +295,9 @@ public class MyTransaction {
 
 	/** Top-level message handler */
 	void refreshConfig() throws Exception {
-		S.out( "Refreshing config from google sheet");
+		S.out( "Refreshing config and FAQs from google sheet");
 		Main.m_config.readFromSpreadsheet(m_main.tabName() );
+		m_main.readFaqsFromSheet();
 		respond( Main.m_config.toJson() );
 	}
 

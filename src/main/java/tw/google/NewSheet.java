@@ -499,6 +499,11 @@ public class NewSheet {
 					String val = getValue( tag);
 					return S.isNotNull( val) ? Integer.valueOf( val) : 0; 
 				}
+
+				public boolean getBool(String tag) throws MyException {
+					String val = getValue(tag);
+					return "true".equalsIgnoreCase(val) || "Y".equalsIgnoreCase(val); 
+				}
 			}
 
 		}

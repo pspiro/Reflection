@@ -2,6 +2,7 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
@@ -400,8 +401,6 @@ public class Config {
 		return mintEth;
 	}
 
-	/** This causes a dependency that we might not want to have. 
-	 * @throws Exception */
 	public Rusd newRusd() throws Exception {
 		return new Rusd( rusdAddr, rusdDecimals);
 	}
@@ -461,5 +460,9 @@ public class Config {
 	
 	Jedis createJedis() {
 		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
+	}
+	
+	public MySqlConnection sqlConnection() throws SQLException {
+		return new MySqlConnection().connect( postgresUrl, postgresUser, postgresPassword );
 	}
 }

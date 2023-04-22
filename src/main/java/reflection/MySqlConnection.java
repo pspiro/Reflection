@@ -3,8 +3,11 @@ package reflection;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.postgresql.util.PSQLException;
 
 import tw.util.S;
@@ -38,6 +41,23 @@ public class MySqlConnection {
 			throw new Exception( "No rows returned");
 		}
 		return set;
+	}
+	
+	/** json tags will be same as column names */
+	public JSONArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
+		ResultSet res = query(sql, params);
+		
+		ResultSetMetaData meta = res.getMetaData();
+
+		JSONArray ar = new JSONArray();
+		while (res.next() ) {
+			JSONObject obj = new JSONObject();
+			for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
+				obj.put( res.getMetaData().getColumnLabel(i), res.getObject(i) );
+			}
+			ar.add(obj);
+		}
+		return ar;
 	}
 	
 	public ResultSet query(String sql, Object... params) throws Exception {

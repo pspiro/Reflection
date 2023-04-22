@@ -1,6 +1,6 @@
 package test;
 
-import java.sql.SQLException;
+import org.json.simple.JSONObject;
 
 import reflection.MySqlConnection;
 import tw.util.S;
@@ -8,7 +8,7 @@ import tw.util.S;
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 
-	public static void main(String[] args) throws SQLException {
+	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
 			S.out( "usage: TestPostgres host port db_name user password");
 			return;
@@ -25,6 +25,8 @@ public class TestPostgres {
 		
 		MySqlConnection conn = new MySqlConnection();
 		conn.connect( url, user, password);
-		S.out( "Completed");
+		
+//		JSONObject json = conn.queryToJson("select question, answer from frequently_asked_questions where is_active = true");
+//		S.out( json);
 	}
 }

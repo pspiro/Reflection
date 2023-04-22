@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -38,6 +40,7 @@ import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
+import test.MyTimer;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -51,19 +54,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
-	final static MySqlConnection m_database = new MySqlConnection();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	private static boolean m_simulated;
 
-	private MyRedis m_redis;  // used for periodically querying the prices 
+	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
-	private String m_tabName;
-	private Rusd m_rusd;  // you could move this into Config
+	private       ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
+	private final String m_tabName;
+	private       String m_faqs;
 	
-	Rusd rusd() { return m_rusd; }
-
 	static boolean simulated() { return m_simulated; }
 
 	JSONArray stocks() { return m_stocks; }
@@ -74,7 +74,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				throw new Exception( "You must specify a config tab name");
 			}
 
-			new Main().run( args[0] );
+			new Main( args[0] );
 		}
 		catch( BindException e) {
 			S.out( "The application is already running");
@@ -86,7 +86,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 
-	private void run(String tabName) throws Exception {
+	Main(String tabName) throws Exception {
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -97,7 +97,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 		
 		if (m_config.useFireblocks() ) {
-			m_rusd = m_config.newRusd();
 			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
 		}
 
@@ -105,40 +104,39 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// make user approve it during startup
 		if (m_config.autoFill() ) {
 			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
-//			if (!S.input( "Are you sure? (yes/no)").equals( "yes") ) {
-//				return;
-//			}
 		}
 		
-		S.out( "Reading stock list from google sheet");
+		MyTimer.next( "Reading stock list from google sheet");
 		readStockListFromSheet();
-		S.out( "  done");
-
-		S.out( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
-		m_database.connect( m_config.postgresUrl(), m_config.postgresUser(), m_config.postgresPassword() );
-		S.out( "  done");
+		
+		MyTimer.next( "Reading FAQ's from google sheet");
+		readFaqsFromSheet();
+		
+		// check database connection and read faqs
+		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
+		sqlConnection();
 
 		// if port is zero, host contains connection string, otherwise host and port are used
 		if (m_config.redisPort() == 0) {
-			S.out( "Connecting to redis with connection %s", m_config.redisHost() );
+			MyTimer.next( "Connecting to redis with connection %s", m_config.redisHost() );
 			Util.require( JedisURIHelper.isValid( URI.create(m_config.redisHost() ) ), "redis connect string is invalid" );
 			m_redis = new MyRedis(m_config.redisHost() );
 		}
 		else {
-			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
+			MyTimer.next( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
 			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		}
 		m_redis.connect(); // this is not required but we want to bail out if redis is not running
-		S.out( "  done");
 
-		S.out( "Starting stock price query thread every n ms");
+		MyTimer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 
-		S.out( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
+		MyTimer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/mint", exch -> handleMint(exch) );
+		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
@@ -153,7 +151,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
-		S.out( "  done");
+		MyTimer.done();
 
 		// connect to TWS
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
@@ -163,6 +161,22 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
 
+	/** You could shave 300 ms by sharing the same Book as Config */ 
+	@SuppressWarnings("unchecked")
+	void readFaqsFromSheet() throws Exception {
+		JSONArray ar = new JSONArray();
+		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "FAQ").fetchRows() ) {
+			JSONObject obj = new JSONObject();
+			if (row.getBool("Active") ) {
+				obj.put( "question", row.getValue("Question") );
+				obj.put( "answer", row.getValue("Answer") );
+				ar.add(obj);
+			}
+		}
+		require( ar.size() > 0, RefCode.NO_FAQS, "You must have at least one active FAQ");
+		m_faqs = ar.toString();
+	}
+	
 	/** Refresh list of stocks and re-request market data. */
 	void refreshStockList() throws Exception {
 		m_stocks.clear();
@@ -216,6 +230,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
 	}
+
+	Rusd rusd() throws Exception { 
+		return m_config.newRusd(); 
+	}
+
 
 
 	/** Manage the connection from this client to TWS. */
@@ -415,7 +434,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		try {
 			log( LogType.TRADE, "id=%s  %s %s shares of %s (%s) at %s on %s  %s %s %s %s %s", msgValues);
-			m_database.insert( "trades", dbValues);
+
+			sqlConnection().insert( "trades", dbValues);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -436,10 +456,14 @@ public class Main implements HttpHandler, ITradeReportHandler {
 					rpt.currency()
 			};
 
-			m_database.insert( "commissions", vals);
+			sqlConnection().insert( "commissions", vals);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	MySqlConnection sqlConnection() throws SQLException {
+		return m_config.sqlConnection();
 	}
 
 	public ApiController orderController() {
@@ -609,6 +633,24 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			.handleRedeem(uri);
 	}
 	
+	private void handleGetFaqs(HttpExchange exch) {
+		quickResponse(exch, m_faqs);  // we can do a quick response because we already have the json
+	}
+	
+	/** This can be used to serve static json stored in a string
+	 *  @param data must be in json format */
+	private void quickResponse(HttpExchange exch, String data) {
+		try (OutputStream outputStream = exch.getResponseBody() ) {
+			exch.getResponseHeaders().add( "Content-Type", "application/json");
+			exch.sendResponseHeaders( 200, data.length() );
+			outputStream.write(data.getBytes());
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, "Exception while sending FAQ");
+		}
+	}
+
 	/** Note this returns URI in all lower case */
 	private static String getURI(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
