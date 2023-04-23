@@ -275,9 +275,9 @@ public class Config {
 		boolean first = true;
 
 		for (ListEntry row : tab.fetchRows() ) {
-			String tag = row.getValue( "Tag");
-			String value = row.getValue( "Value");
-			String type = row.getValue("Type");
+			String tag = row.getString( "Tag");
+			String value = row.getString( "Value");
+			String type = row.getString("Type");
 			
 			// don't update database with null values; do that manually if needed
 			// this is to protect against wiping out config values by mistake
@@ -298,7 +298,7 @@ public class Config {
 				
 			}
 			else if ("2".equals( type) ) {
-				String description = row.getValue( "Description");
+				String description = row.getString( "Description");
 				insertOrUpdate( database, tag, value, description);
 				
 			}
@@ -375,8 +375,8 @@ public class Config {
 		
 		Tab tab = NewSheet.getTab( NewSheet.Reflection, "FAQ");
 		for (ListEntry row : tab.fetchRows() ) {
-			String q = row.getValue("Question");
-			String a = row.getValue("Answer");
+			String q = row.getString("Question");
+			String a = row.getString("Answer");
 			
 			if (S.isNotNull(q) && S.isNotNull(a) ) {
 				db.insert("frequently_asked_questions", id++, q, a, true);
@@ -466,5 +466,9 @@ public class Config {
 	
 	public MySqlConnection sqlConnection() throws SQLException {
 		return new MySqlConnection().connect( postgresUrl, postgresUser, postgresPassword );
+	}
+	
+	public String backendConfigTab() {
+		return backendConfigTab;
 	}
 }

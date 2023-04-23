@@ -47,8 +47,8 @@ public class EventFetcher {
 		
 		ListEntry[] rows = NewSheet.getTab( NewSheet.Reflection, "Symbols").fetchRows(false);
 		for (ListEntry row : rows) {
-			String symbol = row.getValue("Symbol");
-			String token = row.getValue( "TokenAddress").toLowerCase();
+			String symbol = row.getString("Symbol");
+			String token = row.getString( "TokenAddress").toLowerCase();
 			int conid = row.getInt("Conid");
 			
 			if (S.isNotNull( symbol) ) {

@@ -33,8 +33,8 @@ public class GTable extends HashMap<String,String> {
 		
 		// build map
 		for ( ListEntry row : m_tab.fetchRows() ) {
-			String tag = row.getValue( m_col1);
-			String val = row.getValue( m_col2);
+			String tag = row.getString( m_col1);
+			String val = row.getString( m_col2);
 			if (tag != null && val != null) {
 				super.put( m_caseSensitive ? tag : tag.toLowerCase(), val);
 			}
@@ -97,7 +97,7 @@ public class GTable extends HashMap<String,String> {
 			// if value has changed, updated existing row
 			else if (!newVal.equals( curVal) ) {
 				for ( ListEntry row : m_tab.fetchRows() ) {
-					if (tag.equals( row.getValue( m_col1) ) ) {
+					if (tag.equals( row.getString( m_col1) ) ) {
 						row.setValue(m_col2, newVal);
 						row.update();
 					}

@@ -163,4 +163,18 @@ public class BackendTransaction extends MyTransaction {
 		}
 		return 0;
 	}
+
+	/** Top-level method */
+	public void handleGetType2Config() {
+		wrap( () -> {
+			parseMsg();
+			String key = m_map.get("key");
+			if (key != null) {
+				respond( key, m_main.type2Config().get(key) );
+			}
+			else {
+				respond(m_main.type2Config() );
+			}
+		});
+	}
 }

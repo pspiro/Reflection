@@ -146,16 +146,16 @@ public class MktDataServer {
 
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
-			if ("Y".equals( row.getValue( "Active") ) ) {
-				int conid = Integer.valueOf( row.getValue("Conid") );
+			if ("Y".equals( row.getString( "Active") ) ) {
+				int conid = Integer.valueOf( row.getString("Conid") );
 
 				stock.put( "conid", String.valueOf( conid) );
 				
 				ListEntry masterRow = map.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
-				stock.put( "symbol", masterRow.getValue("Symbol") );
-				stock.put( "type", masterRow.getValue("Type") ); // Stock, ETF, ETF-24
-				stock.put( "exchange", masterRow.getValue("Exchange") );
+				stock.put( "symbol", masterRow.getString("Symbol") );
+				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
+				stock.put( "exchange", masterRow.getString("Exchange") );
 
 				m_stocks.add( stock);
 			}

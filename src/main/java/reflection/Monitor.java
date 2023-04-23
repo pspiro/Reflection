@@ -213,10 +213,10 @@ public class Monitor {
 		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
-			if ("Y".equals( row.getValue( "Active") ) ) {
+			if ("Y".equals( row.getString( "Active") ) ) {
 				Record record = getOrCreate( row.getInt("Conid") );
-				record.m_symbol = row.getValue("ContractSymbol");
-				record.m_address = row.getValue("Token Address");  
+				record.m_symbol = row.getString("ContractSymbol");
+				record.m_address = row.getString("Token Address");  
 				record.m_active = "Y";
 				record.m_tokens = -1;
 				record.m_position = -1;

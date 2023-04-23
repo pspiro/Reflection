@@ -48,7 +48,7 @@ public class NewSheet {
 		
 		ListEntry[] rows = tab.fetchRows();
 		for (ListEntry row : rows) {
-			S.out( row.getValue("Symbol") );
+			S.out( row.getString("Symbol") );
 		}
 	}
 	
@@ -200,7 +200,7 @@ public class NewSheet {
 			/** Find and return the row when the value in the "col" column is equal to value. */
 			public ListEntry findRow( String col, String value) throws Exception {
 				for ( ListEntry row : fetchRows() ) {
-					if (value.equals( row.getValue( col) ) ) {
+					if (value.equals( row.getString( col) ) ) {
 						return row;
 					}
 				}
@@ -444,7 +444,7 @@ public class NewSheet {
 					Tab.this.insert( this);
 				}
 	
-				public String getValue( String tag) throws MyException {
+				public String getString( String tag) throws MyException {
 					int i = getIndex( tag);
 					return i > m_row.size() - 1 ? "" : m_row.get( i).toString();
 				}
@@ -486,7 +486,7 @@ public class NewSheet {
 
 				/** Return date in yyyy-mm-dd format. */ 
 				public String getDate(String tag) throws Exception {
-					return S.formatDate( getValue( tag) );
+					return S.formatDate( getString( tag) );
 				}
 
 				public boolean hasTag(String tag) {
@@ -495,14 +495,19 @@ public class NewSheet {
 
 				/** Returns zero for null value. 
 				 * @throws MyException */
-				public int getInt(String tag) throws MyException {
-					String val = getValue( tag);
+				public int getInt(String tag) throws Exception {
+					String val = getString( tag);
 					return S.isNotNull( val) ? Integer.valueOf( val) : 0; 
 				}
 
 				public boolean getBool(String tag) throws MyException {
-					String val = getValue(tag);
+					String val = getString(tag);
 					return "true".equalsIgnoreCase(val) || "Y".equalsIgnoreCase(val); 
+				}
+
+				public double getDouble(String tag) throws Exception {
+					String val = getString(tag);
+					return S.isNotNull(val) ? Double.valueOf(val) : 0.0;
 				}
 			}
 

@@ -63,6 +63,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private       ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private       String m_faqs;
+	private String m_type1Config; 
+	private MyJsonObject m_type2Config; 
 	
 	JSONArray stocks() { return m_stocks; }
 
@@ -85,30 +87,31 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public Main(String tabName) throws Exception {
+		m_tabName = tabName;
+
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
 
-		// read config settings from google sheet
-		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-		m_config.readFromSpreadsheet(tabName);
-		m_tabName = tabName;
-		S.out( "  done");
+		// read config settings from google sheet; this must go first since other items depend on it
+		MyTimer.next("Reading config tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		readConfigurations();
+		MyTimer.done();
 		
-		if (m_config.useFireblocks() ) {
-			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
-		}
-
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
 		if (m_config.autoFill() ) {
 			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
 		}
 		
+		if (m_config.useFireblocks() ) {
+			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
+		}
+
 		MyTimer.next( "Reading stock list from google sheet");
 		readStockListFromSheet();
 		
-		MyTimer.next( "Reading FAQ's from google sheet");
-		readFaqsFromSheet();
+		MyTimer.next( "Reading configuration tabs from google sheet");
+		readConfigurations();
 		
 		// check database connection and read faqs
 		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
@@ -135,6 +138,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/mint", exch -> handleMint(exch) );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
+		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
+		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
@@ -159,20 +164,43 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
 
+	void readConfigurations() throws Exception {
+		// share the same Book for faster reading
+		Main.m_config.readFromSpreadsheet( tabName() );  // must go first
+		readFaqsFromSheet();
+		m_type1Config = readConfig(1).toString();
+		m_type2Config = readConfig(2);
+	}
+
 	/** You could shave 300 ms by sharing the same Book as Config */ 
 	@SuppressWarnings("unchecked")
 	void readFaqsFromSheet() throws Exception {
 		JSONArray ar = new JSONArray();
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "FAQ").fetchRows() ) {
-			JSONObject obj = new JSONObject();
 			if (row.getBool("Active") ) {
-				obj.put( "question", row.getValue("Question") );
-				obj.put( "answer", row.getValue("Answer") );
+				JSONObject obj = new JSONObject();
+				obj.put( "question", row.getString("Question") );
+				obj.put( "answer", row.getString("Answer") );
 				ar.add(obj);
 			}
 		}
-		require( ar.size() > 0, RefCode.NO_FAQS, "You must have at least one active FAQ");
+		require( ar.size() > 0, RefCode.CONFIG_ERROR, "You must have at least one active FAQ");
 		m_faqs = ar.toString();
+	}
+
+	/** You could shave 300 ms by sharing the same Book as Config */ 
+	@SuppressWarnings("unchecked")
+	MyJsonObject readConfig(int type) throws Exception {
+		MyJsonObject obj = new MyJsonObject();
+		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.backendConfigTab() ).fetchRows() ) {
+			if (row.getInt("Type") == type) {
+				obj.put( 
+						row.getString("Tag"),  // type-1 entries are all double 
+						type == 1 ? row.getDouble("Value") : row.getString("Value") );  // type-2 are all string
+			}
+		}
+		require( obj.size() > 0, RefCode.CONFIG_ERROR, "Type-%s config settings are missing", type);
+		return obj;
 	}
 	
 	/** Refresh list of stocks and re-request market data. */
@@ -197,18 +225,18 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
-			if ("Y".equals( row.getValue( "Active") ) ) {
-				int conid = Integer.valueOf( row.getValue("Conid") );
+			if ("Y".equals( row.getString( "Active") ) ) {
+				int conid = Integer.valueOf( row.getString("Conid") );
 
 				stock.put( "conid", String.valueOf( conid) );
-				stock.put( "smartcontractid", row.getValue("TokenAddress") );
+				stock.put( "smartcontractid", row.getString("TokenAddress") );
 				
 				ListEntry masterRow = map.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
-				stock.put( "symbol", masterRow.getValue("Symbol") );
-				stock.put( "description", masterRow.getValue("Description") );
-				stock.put( "type", masterRow.getValue("Type") ); // Stock, ETF, ETF-24
-				stock.put( "exchange", masterRow.getValue("Exchange") );
+				stock.put( "symbol", masterRow.getString("Symbol") );
+				stock.put( "description", masterRow.getString("Description") );
+				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
+				stock.put( "exchange", masterRow.getString("Exchange") );
 
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);
@@ -627,9 +655,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 	
 	private void handleGetFaqs(HttpExchange exch) {
+		getURI(exch);
 		quickResponse(exch, m_faqs);  // we can do a quick response because we already have the json
 	}
 	
+	private void handleGetType1Config(HttpExchange exch) {
+		getURI(exch);
+		quickResponse(exch, m_type1Config);
+	}
+
 	/** This can be used to serve static json stored in a string
 	 *  @param data must be in json format */
 	private void quickResponse(HttpExchange exch, String data) {
@@ -667,6 +701,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			}
 		}
 		return null;
+	}
+	
+	MyJsonObject type2Config() {
+		return m_type2Config;
 	}
 }
 

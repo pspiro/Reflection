@@ -73,12 +73,12 @@ public class Deploy {
 
 		// deploy stock tokens that are active and have an empty token address
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
-			if ("Y".equals( row.getValue( "Active") ) && S.isNull( row.getValue( "Token Address") ) ) {
+			if ("Y".equals( row.getString( "Active") ) && S.isNull( row.getString( "Token Address") ) ) {
 				// deploy stock token
 				StockToken token = StockToken.deploy( 
 						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
-						row.getValue( "Contract Name"),  // wrong, this should get pulled from master symbols tab
-						row.getValue( "Contract Symbol"),
+						row.getString( "Contract Name"),  // wrong, this should get pulled from master symbols tab
+						row.getString( "Contract Symbol"),
 						rusd.address()
 				);
 				

@@ -308,9 +308,8 @@ public class MyTransaction {
 	/** Top-level message handler */
 	void refreshConfig() throws Exception {
 		S.out( "Refreshing config and FAQs from google sheet");
-		Main.m_config.readFromSpreadsheet(m_main.tabName() );
-		m_main.readFaqsFromSheet();
-		respond( Main.m_config.toJson() );
+		m_main.readConfigurations();
+		respondOk();
 	}
 
 	/** Top-level message handler */

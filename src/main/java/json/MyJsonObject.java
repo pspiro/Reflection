@@ -171,4 +171,8 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	public void remove(String tag) {
 		m_obj.remove(tag);
 	}
+
+	public int size() {
+		return m_obj.size();
+	}
 }
