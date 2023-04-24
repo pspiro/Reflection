@@ -1,19 +1,33 @@
 package testcase;
 
-import static testcase.TestBackendOrder.orderData;
-import static testcase.TestBackendOrder.sendData;
+import java.lang.reflect.Field;
+
+import org.json.simple.JSONArray;
 
 import json.MyJsonObject;
 import junit.framework.TestCase;
-import reflection.Prices;
+import reflection.Config;
 import reflection.RefCode;
 import tw.util.S;
 
 public class TestOne extends TestCase {
-	public static void main(String[] args) {
-		//Config.readFrom("Desktop-config").newBusd().mint(1, wallet, 800).waitForHash();
+	int a;
+	private int b;
+	protected int c;
+	
+	public static void main(String[] args) throws Exception {
 	}
 
-	public void testSellTooHigh() throws Exception {
+	public void testFillBuy() throws Exception {
+		MyJsonObject obj = TestOrder.orderData( 3, "BUY", 10);
+		obj.remove("noFireblocks");
+		
+		MyJsonObject map = TestOrder.sendData(obj);
+		String code = map.getString( "code");
+		String text = map.getString( "text");
+		S.out( "fill buy %s %s", code, text);
+		assertEquals( RefCode.OK.toString(), code);
+		double filled = map.getDouble( "filled");
+		assertEquals( 10.0, filled);
 	}
 }

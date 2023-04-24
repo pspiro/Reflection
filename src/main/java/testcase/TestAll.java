@@ -8,7 +8,7 @@ import junit.framework.TestCase;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	   TestBackendOrder.class,
+	   TestOrder.class,
 	   TestBackendMsgs.class,
 	   TestConfig.class,
 	   TestConfigSheet.class,

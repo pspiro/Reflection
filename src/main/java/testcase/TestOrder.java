@@ -16,7 +16,7 @@ import reflection.SiweUtil;
 import reflection.Util;
 import tw.util.S;
 
-public class TestBackendOrder extends TestCase {
+public class TestOrder extends TestCase {
 	static double curPrice = 135.75; // Double.valueOf( jedis.hget("8314", "last") );
 	static double approved;
 	
