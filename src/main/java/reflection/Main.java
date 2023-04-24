@@ -145,8 +145,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> handleMint(exch) );
-		server.createContext("/favicon", exch -> quickResponse(exch, "") ); // respond w/ empty response
+		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
+		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
 		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
@@ -172,7 +173,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	private void handleGetConfigurations(HttpExchange exch) {
 		//new BackendTransaction(this, exch).handleGetType2Config() );
-		quickResponse(exch, "OK");
+		quickResponse(exch, "not implemented yet", 200);
 	}
 
 	void readConfigurations() throws Exception {
@@ -662,20 +663,20 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	
 	private void handleGetFaqs(HttpExchange exch) {
 		getURI(exch);
-		quickResponse(exch, m_faqs);  // we can do a quick response because we already have the json
+		quickResponse(exch, m_faqs, 200);  // we can do a quick response because we already have the json
 	}
 	
 	private void handleGetType1Config(HttpExchange exch) {
 		getURI(exch);
-		quickResponse(exch, m_type1Config);
+		quickResponse(exch, m_type1Config, 200);  // we can do a quick response because we already have the json
 	}
 
 	/** This can be used to serve static json stored in a string
 	 *  @param data must be in json format */
-	private void quickResponse(HttpExchange exch, String data) {
+	private void quickResponse(HttpExchange exch, String data, int code) {
 		try (OutputStream outputStream = exch.getResponseBody() ) {
 			exch.getResponseHeaders().add( "Content-Type", "application/json");
-			exch.sendResponseHeaders( 200, data.length() );
+			exch.sendResponseHeaders( code, data.length() );
 			outputStream.write(data.getBytes());
 		}
 		catch (Exception e) {

@@ -16,18 +16,29 @@ public class TestOne extends TestCase {
 	protected int c;
 	
 	public static void main(String[] args) throws Exception {
+		new Sub().test();
+	}
+	
+	static class Sub extends TestOne {
+		int d;
 	}
 
-	public void testFillBuy() throws Exception {
-		MyJsonObject obj = TestOrder.orderData( 3, "BUY", 10);
-		obj.remove("noFireblocks");
+	public void test() throws Exception {
+		JSONArray list = new JSONArray();
 		
-		MyJsonObject map = TestOrder.sendData(obj);
-		String code = map.getString( "code");
-		String text = map.getString( "text");
-		S.out( "fill buy %s %s", code, text);
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 10.0, filled);
+		for (Field field : TestOne.class.getDeclaredFields() ) {
+			Object obj = field.get(this);
+			if (obj != null && isPrimitive(obj.getClass()) ) {
+				list.add( field.getName() );
+				list.add(obj);
+			}
+		}
+
+		S.out( list);
 	}
+
+	private boolean isPrimitive(Class clas) {
+		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class;
+	}
+
 }
