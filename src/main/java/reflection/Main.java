@@ -31,7 +31,6 @@ import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
-import fireblocks.Rusd;
 import fireblocks.Transfer;
 import json.MyJsonObject;
 import redis.MyRedis;
@@ -41,9 +40,9 @@ import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
 import test.MyTimer;
+import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
-import tw.util.MyException;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
@@ -56,6 +55,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
+	static GTable failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
@@ -182,6 +182,10 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		readFaqsFromSheet();
 		m_type1Config = readConfig(1).toString();
 		m_type2Config = readConfig(2);
+		
+		if (m_config.produceErrors() != null && !m_config.produceErrors().equals("no") ) {
+			failCodes = new GTable( NewSheet.Reflection, "Error-codes", "Code", "Fail");
+		}
 	}
 
 	/** You could shave 300 ms by sharing the same Book as Config */ 
@@ -412,9 +416,17 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public static void require(boolean b, RefCode code, String errMsg, Object... params) throws RefException {
 		// in test mode, 1 out of 8 calls will return an error
-		if (m_config.produceErrors() ) {
-			int rnd = new Random(System.currentTimeMillis()).nextInt();
-			if (rnd % 8 == 1) b = false;
+		if (S.isNotNull( m_config.produceErrors() ) ) {
+			if (m_config.produceErrors().equals("yes") ) {
+				String ans = failCodes.get(code);
+				if ("fail".equals(ans) ) {
+					b = false;
+				}
+			}
+			else if (m_config.produceErrors().equals("random") ) {
+				int rnd = new Random(System.currentTimeMillis()).nextInt();
+				if (rnd % 8 == 1) b = false;
+			}
 		}
 		if (!b) {
 			throw new RefException( code, errMsg, params);
@@ -713,6 +725,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	MyJsonObject type2Config() {
 		return m_type2Config;
 	}
+	
 }
 
 

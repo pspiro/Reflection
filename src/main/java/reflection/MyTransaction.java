@@ -672,20 +672,20 @@ public class MyTransaction {
 		if (cookie == null) {
 			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 		}
-		Main.require(cookie != null, RefCode.INVALID_REQUEST, "Null cookie");
+		Main.require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie");
 		
 		// un-do the URL encoding
 		cookie = URLDecoder.decode(cookie);
-		Main.require(cookie.split("=").length >= 2, RefCode.INVALID_REQUEST, "Malformed cookie, no '=': " + cookie);
+		Main.require(cookie.split("=").length >= 2, RefCode.VALIDATION_FAILED, "Malformed cookie, no '=': " + cookie);
 		
 		// parse cookie (in header, it has two fields, signature and message; in map, it has only message)
 		MyJsonObject siweMsg = MyJsonObject.parse( cookie.split("=")[1])
 				.getObj("message");
-		Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
+		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "Malformed cookie: " + cookie);
 		
 		// find session object
 		Session session = SiweTransaction.sessionMap.get( siweMsg.getString("address") );
-		Main.require(session != null, RefCode.INVALID_REQUEST, "No session object found for address " + siweMsg.getString("address") );
+		Main.require(session != null, RefCode.VALIDATION_FAILED, "No session object found for address " + siweMsg.getString("address") );
 
 		// valiate nonce
 		Main.require(
@@ -696,7 +696,7 @@ public class MyTransaction {
 		// check for expiration
 		Main.require( 
 				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.SESSION_EXPIRED,
+				RefCode.SESSION_EXPIRED,  // this is normal; all the others are not normal
 				"Session has expired");
 		
 		// confirm no wallet or same wallet
