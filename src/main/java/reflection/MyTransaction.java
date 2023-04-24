@@ -696,7 +696,7 @@ public class MyTransaction {
 		// check for expiration
 		Main.require( 
 				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.VALIDATION_FAILED,
+				RefCode.SESSION_EXPIRED,
 				"Session has expired");
 		
 		// confirm no wallet or same wallet
