@@ -110,9 +110,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		MyTimer.next( "Reading stock list from google sheet");
 		readStockListFromSheet();
 		
-		MyTimer.next( "Reading configuration tabs from google sheet");
-		readConfigurations();
-		
 		// check database connection and read faqs
 		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		sqlConnection();
@@ -415,14 +412,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public static void require(boolean b, RefCode code, String errMsg, Object... params) throws RefException {
-		// in test mode, 1 out of 8 calls will return an error
 		if (S.isNotNull( m_config.produceErrors() ) ) {
-			if (m_config.produceErrors().equals("yes") ) {
+			// in yes mode, look to the "Error-codes" tab
+			if (m_config.produceErrors().equals("yes") && failCodes != null) {
 				String ans = failCodes.get(code);
 				if ("fail".equals(ans) ) {
 					b = false;
 				}
 			}
+			// in random mode, 1 out of 8 calls will return an error
 			else if (m_config.produceErrors().equals("random") ) {
 				int rnd = new Random(System.currentTimeMillis()).nextInt();
 				if (rnd % 8 == 1) b = false;
