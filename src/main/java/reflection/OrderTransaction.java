@@ -225,6 +225,7 @@ public class OrderTransaction extends MyTransaction {
 		if (fireblocks() ) {
 			try {
 				String id;
+				S.out( "Starting Fireblocks protocol");
 				
 				// for testing
 				if (m_map.getBool("fail") ) {

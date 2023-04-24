@@ -180,7 +180,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleReqTrades(HttpExchange exch) {
 		wrap( () -> {
-			
+			respondOk();
 		});
 	}
 }

@@ -24,12 +24,6 @@ public class Util {
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
-	static HttpHandler nullHandler = new HttpHandler() {
-		@Override public void handle(HttpExchange exch) throws IOException {
-		}
-	};
-	
-
 	public static void main(String[] args) throws RefException {
 		double a = .3;
 		double b = .1 + .1 + .1;

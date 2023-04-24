@@ -145,7 +145,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> handleMint(exch) );
-		server.createContext("/favicon", Util.nullHandler); // ignore these requests
+		server.createContext("/favicon", exch -> quickResponse(exch, "") ); // respond w/ empty response
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
 		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
@@ -168,6 +168,11 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		S.out( "  done");
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
+	}
+
+	private void handleGetConfigurations(HttpExchange exch) {
+		//new BackendTransaction(this, exch).handleGetType2Config() );
+		quickResponse(exch, "OK");
 	}
 
 	void readConfigurations() throws Exception {
@@ -529,15 +534,16 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		);
 	}
 
-	public void handleMint(HttpExchange exchange) throws IOException {
+	// move this into BackendTransaction
+	public void handleMint(HttpExchange exchange) throws IOException { 
 		String response;
 
 		try {
 			String uri = getURI(exchange);
-			Util.require( uri.length() < 4000, "URI is too long");
+			Main.require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 
 			String[] parts = uri.split("/");
-			Util.require( parts.length == 3, "Format of URL should be https://reflection.trade/mint/0x...  where the last piece of the URL is your wallet address");
+			Main.require( parts.length == 3, RefCode.INVALID_REQUEST, "Format of URL should be https://reflection.trade/mint/0x...  where the last piece of the URL is your wallet address");
 
 			mint( parts[2]);
 			response = m_config.mintHtml();
