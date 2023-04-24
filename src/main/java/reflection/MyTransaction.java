@@ -690,19 +690,19 @@ public class MyTransaction {
 		// valiate nonce
 		Main.require(
 				session.nonce().equals( siweMsg.getString("nonce") ),
-				RefCode.INVALID_REQUEST,
+				RefCode.VALIDATION_FAILED,
 				"Nonce does not match");
 
 		// check for expiration
 		Main.require( 
 				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.SESSION_EXPIRED,
+				RefCode.VALIDATION_FAILED,
 				"Session has expired");
 		
 		// confirm no wallet or same wallet
 		Main.require( 
 				walletAddr == null || walletAddr.equalsIgnoreCase(siweMsg.getString("address") ), 
-				RefCode.INVALID_REQUEST, 
+				RefCode.VALIDATION_FAILED, 
 				"The address on the message does not match the address of the session");
 		
 		// update expiration time
