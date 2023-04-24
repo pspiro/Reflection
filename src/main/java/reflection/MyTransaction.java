@@ -93,10 +93,12 @@ public class MyTransaction {
 	protected HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
 	protected ParamMap m_map = new ParamMap();
+	protected String uri;
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
 		m_exchange = exchange;
+		uri = Main.getURI(m_exchange);  // this prints it out
 	}
 
 	void handle() {
@@ -110,11 +112,9 @@ public class MyTransaction {
 
 	/** keys are all lower case */
 	void parseMsg() throws Exception {
-		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
-			S.out( "Received GET request %s", uri);
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
 			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present. Valid requests are " + MsgType.allValues() );
@@ -144,7 +144,7 @@ public class MyTransaction {
 	            	}
 	            }
 
-	            S.out( "Received POST request " + jsonObject);
+	            S.out( "  received POST request " + jsonObject);
 			}
 			catch( RefException e) {  // catch the above require() call
 				throw e;

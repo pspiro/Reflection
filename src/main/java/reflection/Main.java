@@ -131,26 +131,32 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		MyTimer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
+		
+		
+		// /api/crypto-transactions  all trades, I think not used
+		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
+
 
 		MyTimer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
-		server.createContext("/favicon", Util.nullHandler); // ignore these requests
+		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
+		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
+		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
+		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> handleMint(exch) );
-		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
+		server.createContext("/favicon", Util.nullHandler); // ignore these requests
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
-		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
+		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
-		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
-		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
+		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
-		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
-		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
+		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
+		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqTrades(exch) );
+		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -625,33 +631,27 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		getURI(exch);
 		new BackendTransaction(this, exch).respond( m_stocks);
 	}
 
 	private void handleReqTokenPositions(HttpExchange exch) {
-		String uri = getURI(exch);
-		new BackendTransaction(this, exch).handleReqPositions(uri);
+		new BackendTransaction(this, exch).handleReqPositions();
 	}
 
 	private void handleGetStockWithPrice(HttpExchange exch) {
-		String uri = getURI(exch);
-		new BackendTransaction(this, exch).handleGetStockWithPrice( uri);
+		new BackendTransaction(this, exch).handleGetStockWithPrice();
 	}
 
 	private void handleGetPrice(HttpExchange exch) {
-		String uri = getURI(exch);
-		new BackendTransaction(this, exch).handleGetPrice( uri);
+		new BackendTransaction(this, exch).handleGetPrice();
 	}
 
 	private void handleOrder(HttpExchange exch) {
-		getURI(exch);
 		new OrderTransaction(this, exch).backendOrder();
 	}
 
 	private void handleRedeem(HttpExchange exch) {
-		String uri = getURI(exch);
-		new BackendTransaction(this, exch).handleRedeem(uri);
+		new BackendTransaction(this, exch).handleRedeem();
 	}
 	
 	private void handleGetFaqs(HttpExchange exch) {
@@ -679,7 +679,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	/** Note this returns URI in all lower case */
-	private static String getURI(HttpExchange exch) {
+	static String getURI(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
 		S.out( "Handling %s", uri);
 		return uri;

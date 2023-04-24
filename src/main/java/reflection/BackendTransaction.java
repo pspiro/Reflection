@@ -31,7 +31,7 @@ public class BackendTransaction extends MyTransaction {
 	
 	/** Used by the portfolio section on the dashboard
 	 *  We're returning the token positions from the blockchain, not IB positions */
-	public void handleReqPositions(String uri) {
+	public void handleReqPositions() {
 		wrap( () -> {
 			// get wallet address (last token in URI)
 			String address = Util.getLastToken(uri, "/");
@@ -78,7 +78,7 @@ public class BackendTransaction extends MyTransaction {
 		"bid": 128.5
 		}
 	 */
-	public void handleGetStockWithPrice(String uri) {
+	public void handleGetStockWithPrice() {
 		wrap( () -> {
 			String last = Util.getLastToken(uri, "/");
 			require( !last.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
@@ -104,7 +104,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 	
 	/** Backend-style msg; conid is last parameter */
-	public void handleGetPrice(String uri) {
+	public void handleGetPrice() {
 		wrap( () -> {
 			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
 			returnPrice(conid);
@@ -112,7 +112,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 	
 	/** Redeem (sell) RUSD */ 
-	public void handleRedeem(String uri) {
+	public void handleRedeem() {
 		wrap( () -> {
 			String userAddr = Util.getLastToken(uri, "/");
 			require( Util.isValidAddress(userAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
@@ -175,6 +175,12 @@ public class BackendTransaction extends MyTransaction {
 			else {
 				respond(m_main.type2Config() );
 			}
+		});
+	}
+
+	public void handleReqTrades(HttpExchange exch) {
+		wrap( () -> {
+			
 		});
 	}
 }
