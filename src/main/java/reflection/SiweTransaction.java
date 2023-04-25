@@ -91,22 +91,24 @@ public class SiweTransaction extends MyTransaction {
 				// free pass, used for testing
 			}
 			else {
+				// better would be to catch it and throw RefException; this return UNKNOWN code
 				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
 			}
 			
 			// verify issuedAt is not too far in future or past
-			Instant createdAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
+			Instant issuedAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
 			Instant now = Instant.now();
+			long duration = Duration.between( issuedAt, now).toMillis(); 
 			Main.require(
-					Duration.between( createdAt, now).toMillis() <= Main.m_config.siweTimeout(),
+					duration <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
 					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  duration=%s  max=%s",
-					createdAt, now, Duration.between( createdAt, now).toMillis(), Main.m_config.siweTimeout() );
+					issuedAt, now, duration, Main.m_config.siweTimeout() );
 			Main.require(
-					Duration.between( now, createdAt).toMillis() <= Main.m_config.siweTimeout(),
+					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
 					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  duration=%s  max=%s",
-					createdAt, now, Duration.between( now, createdAt).toMillis(), Main.m_config.siweTimeout() );
+					issuedAt, now, Duration.between( now, issuedAt).toMillis(), Main.m_config.siweTimeout() );
 			
 			// store session object; let the nonce be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
