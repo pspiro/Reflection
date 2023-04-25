@@ -24,7 +24,7 @@ public class TestOrder extends TestCase {
 		try {
 			seed();
 
-			Config config = Config.readFrom("Desktop-config");
+			Config config = Config.readFrom("Dt-config");
 			approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
@@ -33,7 +33,7 @@ public class TestOrder extends TestCase {
 	}
 
 	private static void seed() throws Exception {
-		Config config = Config.readFrom("Desktop-config");
+		Config config = Config.readFrom("Dt-config");
 
 		Jedis jedis = config.redisPort() == 0
 				? new Jedis( config.redisHost() )  // use full connection string

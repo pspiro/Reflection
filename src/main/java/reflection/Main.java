@@ -153,7 +153,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
-		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqTrades(exch) );
+		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/", this);
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
@@ -506,6 +506,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		}
 	}
 	
+	/** This creates a new connection every time. You could take approach like Redis where you keep it open */
 	MySqlConnection sqlConnection() throws SQLException {
 		return m_config.sqlConnection();
 	}

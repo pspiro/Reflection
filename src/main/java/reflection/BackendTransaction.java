@@ -16,10 +16,10 @@ import fireblocks.Busd;
 import fireblocks.Erc20;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
-import io.netty.util.Timeout;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
+import tw.util.S;
 import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
@@ -178,9 +178,16 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	public void handleReqTrades(HttpExchange exch) {
+	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
-			respondOk();
+			parseMsg();
+			
+			String addr = m_map.get("wallet_public_key");
+			String where = S.isNotNull(addr) 
+					? String.format( "where lower(wallet_public_key)='%s'", addr.toLowerCase() )
+					: "";
+			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at", where);
+			respond(json);
 		});
 	}
 }
