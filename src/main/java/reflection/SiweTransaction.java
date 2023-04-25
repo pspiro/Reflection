@@ -100,13 +100,13 @@ public class SiweTransaction extends MyTransaction {
 			Main.require(
 					Duration.between( createdAt, now).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s",
-					createdAt, now);
+					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  duration=%s  max=%s",
+					createdAt, now, Duration.between( createdAt, now).toMillis(), Main.m_config.siweTimeout() );
 			Main.require(
 					Duration.between( now, createdAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s",
-					createdAt, now);
+					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  duration=%s  max=%s",
+					createdAt, now, Duration.between( now, createdAt).toMillis(), Main.m_config.siweTimeout() );
 			
 			// store session object; let the nonce be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
