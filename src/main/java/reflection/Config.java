@@ -114,7 +114,7 @@ public class Config {
 	
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Desktop-config");
+		config.readFromSpreadsheet(tab);
 		return config;
 	}
 
