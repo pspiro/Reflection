@@ -117,15 +117,15 @@ public class MyTransaction {
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			// get right side of ? in URL
 			String[] parts = uri.split("\\?");
-			require( parts.length ==2, RefCode.INVALID_REQUEST, "No request present. Valid requests are " + MsgType.allValues() );
-
-			// build map of tag/value, expecting tag=value&tag=value
-			String[] params = parts[1].split( "&");
-			//map.parseJson( )
-			for (String param : params) {
-				String[] pair = param.split( "=");
-				require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
-				m_map.put( pair[0], pair[1]);
+			if (parts.length >= 2) {
+				// build map of tag/value, expecting tag=value&tag=value
+				String[] params = parts[1].split( "&");
+				//map.parseJson( )
+				for (String param : params) {
+					String[] pair = param.split( "=");
+					require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
+					m_map.put( pair[0], pair[1]);
+				}
 			}
 		}
 
@@ -559,7 +559,7 @@ public class MyTransaction {
 		}
 		
 		// can't throw an exeption here
-		Exception e = new Exception("respond(Object...) called with wrong number of params");
+		Exception e = new Exception("MyTransaction.respond(Object...) called with wrong number of parameters");
 		e.printStackTrace();
 		return respondFull( RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
 	}

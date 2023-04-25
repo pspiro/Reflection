@@ -180,9 +180,9 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_type1Config = readConfig(1).toString();
 		m_type2Config = readConfig(2);
 		
-		if (m_config.produceErrors() != null && !m_config.produceErrors().equals("no") ) {
-			failCodes = new GTable( NewSheet.Reflection, "Error-codes", "Code", "Fail");
-		}
+		failCodes = S.isNotNull( m_config.errorCodesTab() )
+			? new GTable( NewSheet.Reflection, m_config.errorCodesTab(), "Code", "Fail")
+			: null;
 	}
 
 	/** You could shave 300 ms by sharing the same Book as Config */ 
@@ -412,20 +412,15 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	}
 
 	public static void require(boolean b, RefCode code, String errMsg, Object... params) throws RefException {
-		if (S.isNotNull( m_config.produceErrors() ) ) {
-			// in yes mode, look to the "Error-codes" tab
-			if (m_config.produceErrors().equals("yes") && failCodes != null) {
-				String ans = failCodes.get(code);
-				if ("fail".equals(ans) ) {
-					b = false;
-				}
-			}
-			// in random mode, 1 out of 8 calls will return an error
-			else if (m_config.produceErrors().equals("random") ) {
-				int rnd = new Random(System.currentTimeMillis()).nextInt();
-				if (rnd % 8 == 1) b = false;
-			}
+		// simulate failed error code?
+		if (failCodes != null && "fail".equals( failCodes.get(code.toString() ) ) ) {
+			b = false;
 		}
+			// in random mode, 1 out of 8 calls will return an error
+//			if (m_config.produceErrors().equals("random") ) {
+//				int rnd = new Random(System.currentTimeMillis()).nextInt();
+//				if (rnd % 8 == 1) b = false;
+//			}
 		if (!b) {
 			throw new RefException( code, errMsg, params);
 		}

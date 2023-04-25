@@ -173,7 +173,7 @@ public class BackendTransaction extends MyTransaction {
 				respond( key, m_main.type2Config().get(key) );
 			}
 			else {
-				respond(m_main.type2Config() );
+				respond(m_main.type2Config().toJsonObj() );
 			}
 		});
 	}

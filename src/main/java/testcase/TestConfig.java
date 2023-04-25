@@ -14,6 +14,8 @@ import reflection.MySqlConnection;
 import tw.util.S;
 
 public class TestConfig extends TestCase {
+	//static String host = "34.125.38.193"; //http://reflection.trading";
+	static String host = "localhost"; //http://reflection.trading";
 	
 	public void testConnection() throws Exception {
 		String data = "{ 'msg': 'getconnectionstatus' }"; 
@@ -35,21 +37,22 @@ public class TestConfig extends TestCase {
 	}
 
 	public void testBackendConfigs() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		MyHttpClient cli = new MyHttpClient(host, 8383);
 		MyJsonArray ar = cli.get("/api/faqs").readMyJsonArray();
 		S.out( ar.getJsonObj(0) );
 		assertTrue( ar.size() > 3);
 
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient(host, 8383);
 		JSONObject obj = cli.get("/api/system-configurations/last").readJsonObject();
 		S.out( obj.get("min_order_size"));
-		assertTrue( obj.size() > 3);
+		assertTrue( obj.size() > 5);
 		
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient(host, 8383);
 		obj = cli.get("/api/configurations").readJsonObject();
-		assertTrue( obj.size() > 3);
+		S.out( obj);
+		assertTrue( obj.size() > 5);
 		
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient(host, 8383);
 		obj = cli.get("/api/configurations?key=whitepaper_text").readJsonObject();
 		S.out( obj);
 		assertEquals(1, obj.size() );
