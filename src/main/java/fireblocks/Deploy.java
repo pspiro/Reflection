@@ -29,43 +29,39 @@ public class Deploy {
 		Rusd rusd = config.rusd();
 		Busd busd = config.busd();
 		
+		S.out( "Deploying system");
+
 		// deploy BUSD? (for testing only)
 		if ("deploy".equals( busd.address() ) ) {
 			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
 			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
 		}
+		
+		// deploy RUSD if not already a valid address
+		if ("deploy".equals( rusd.address() ) ) {
+			rusd.deploy( 
+					"c:/work/smart-contracts/build/contracts/rusd.json",
+					instance.getAddress( "RefWallet"),
+					instance.getAddress( "Admin1")	);
+			config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
 
-		//deployAll(config, rusd, busd);
-		deployStockTokens(config, rusd);
-	}
-	
-	private static void deployAll(Config config, Rusd rusd, Busd busd) throws Exception {
-		S.out( "Deploying system");
-		
+			// let RefWallet approve RUSD to transfer BUSD
+			busd.approve( 
+					instance.getId( "RefWallet"), // called by
+					rusd.address(), // approving
+					1000000000); // $1B
 
-		// deploy RUSD and update spreadsheet
-		Util.require( "deploy".equals( rusd.address() ), "RUSD must be set to 'deploy'");
-		rusd.deploy( 
-				"c:/work/smart-contracts/build/contracts/rusd.json",
-				instance.getAddress( "RefWallet"),
-				instance.getAddress( "Admin1")
-		);
-		config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
-		
-		// let RefWallet approve RUSD to transfer BUSD
-		busd.approve( 
-				instance.getId( "RefWallet"), // called by
-				rusd.address(), // approving
-				1000000000  // $1B
-		);
-		
-		// add a second owner
-		rusd.addOrRemoveAdmin(
-				instance.getAddress( "Admin2"), 
-				true
-		);
+			// add a second owner
+			rusd.addOrRemoveAdmin(
+					instance.getAddress( "Admin2"), 
+					true);
+		}
+		else {
+			Util.require( Util.isValidAddress(rusd.address() ), "RUSD must be valid or set to 'deploy'");
+		}
 		
 		deployStockTokens(config, rusd);
+		
 		Test.run(config, busd, rusd);
 	}
 	

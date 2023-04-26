@@ -47,10 +47,8 @@ public class TestOrder extends TestCase {
 	// missing walletId
 	public void testMissingWallet() throws Exception {
 		MyJsonObject obj = orderData(2, "BUY", 10);
+		obj.remove("wallet_public_key");
 		MyJsonObject map = sendData(obj);
-		map.remove("wallet_public_key");
-		
-		
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);

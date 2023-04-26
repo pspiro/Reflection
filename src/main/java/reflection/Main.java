@@ -42,6 +42,7 @@ import reflection.Config.RefApiConfig;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 import util.DateLogFile;
@@ -55,7 +56,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	private final static Random rnd = new Random( System.currentTimeMillis() );
 	final static Config m_config = new RefApiConfig();
 	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
-	static GTable failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
+	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
@@ -94,7 +95,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 		// read config settings from google sheet; this must go first since other items depend on it
 		MyTimer.next("Reading config tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-		readConfigurations();
+		readSpreadsheet();
 		MyTimer.done();
 		
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
@@ -107,9 +108,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
 		}
 
-		MyTimer.next( "Reading stock list from google sheet");
-		readStockListFromSheet();
-		
 		// check database connection and read faqs
 		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		sqlConnection();
@@ -173,23 +171,32 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		quickResponse(exch, "not implemented yet", 200);
 	}
 
-	void readConfigurations() throws Exception {
-		// share the same Book for faster reading
-		Main.m_config.readFromSpreadsheet( tabName() );  // must go first
-		readFaqsFromSheet();
-		m_type1Config = readConfig(1).toString();
-		m_type2Config = readConfig(2);
+	void readSpreadsheet() throws Exception {
+		Book book = NewSheet.getBook(NewSheet.Reflection);
 		
-		failCodes = S.isNotNull( m_config.errorCodesTab() )
-			? new GTable( NewSheet.Reflection, m_config.errorCodesTab(), "Code", "Fail")
+		// read RefAPI config
+		Main.m_config.readFromSpreadsheet( book, m_tabName );  // must go first
+
+		// read Backend config (used by Frontend)
+		readFaqsFromSheet(book);
+		m_type1Config = readConfig(book, 1).toString();
+		m_type2Config = readConfig(book, 2);
+
+		// read list of RefCodes where we want to simulate failure
+		m_failCodes = S.isNotNull( m_config.errorCodesTab() )
+			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
+		
+		MyTimer.next("Reading stock list");
+		readStockListFromSheet(book);
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config */ 
+	/** You could shave 300 ms by sharing the same Book as Config 
+	 * @param book */ 
 	@SuppressWarnings("unchecked")
-	void readFaqsFromSheet() throws Exception {
+	void readFaqsFromSheet(Book book) throws Exception {
 		JSONArray ar = new JSONArray();
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "FAQ").fetchRows() ) {
+		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
 			if (row.getBool("Active") ) {
 				JSONObject obj = new JSONObject();
 				obj.put( "question", row.getString("Question") );
@@ -201,11 +208,12 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		m_faqs = ar.toString();
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config */ 
+	/** You could shave 300 ms by sharing the same Book as Config 
+	 * @param book */ 
 	@SuppressWarnings("unchecked")
-	MyJsonObject readConfig(int type) throws Exception {
+	MyJsonObject readConfig(Book book, int type) throws Exception {
 		MyJsonObject obj = new MyJsonObject();
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.backendConfigTab() ).fetchRows() ) {
+		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {
 			if (row.getInt("Type") == type) {
 				obj.put( 
 						row.getString("Tag"),  // type-1 entries are all double 
@@ -216,27 +224,13 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		return obj;
 	}
 	
-	/** Refresh list of stocks and re-request market data. */
-	void refreshStockList() throws Exception {
-		m_stocks.clear();
-		readStockListFromSheet();
-	}
-	
-	public static HashMap<Integer, ListEntry> readMasterSymbols() throws Exception {
-		HashMap<Integer,ListEntry> map = new HashMap<>();
-		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
-			map.put( entry.getInt("Conid"), entry);
-		}
-		return map;
-	}
-
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
-	private void readStockListFromSheet() throws Exception {
+	private void readStockListFromSheet(Book book) throws Exception {
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = readMasterSymbols();
+		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
 		
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
+		for (ListEntry row : book.getTab( m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
 			if ("Y".equals( row.getString( "Active") ) ) {
 				int conid = Integer.valueOf( row.getString("Conid") );
@@ -255,6 +249,14 @@ public class Main implements HttpHandler, ITradeReportHandler {
 				m_stockMap.put( conid, stock);
 			}
 		}
+	}
+
+	public static HashMap<Integer, ListEntry> readMasterSymbols(Book book) throws Exception {
+		HashMap<Integer,ListEntry> map = new HashMap<>();
+		for (ListEntry entry : book.getTab( "Master-symbols").fetchRows(false) ) {
+			map.put( entry.getInt("Conid"), entry);
+		}
+		return map;
 	}
 
 	String getExchange( int conid) throws RefException {
@@ -413,7 +415,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public static void require(boolean b, RefCode code, String errMsg, Object... params) throws RefException {
 		// simulate failed error code?
-		if (failCodes != null && "fail".equals( failCodes.get(code.toString() ) ) ) {
+		if (m_failCodes != null && "fail".equals( m_failCodes.get(code.toString() ) ) ) {
 			b = false;
 		}
 			// in random mode, 1 out of 8 calls will return an error
@@ -517,10 +519,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 
 	public ConnectionMgr orderConnMgr() {
 		return m_orderConnMgr;
-	}
-
-	public String tabName() {
-		return m_tabName;
 	}
 
 	void dump() {

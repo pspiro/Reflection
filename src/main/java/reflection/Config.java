@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import redis.clients.jedis.Jedis;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
@@ -118,8 +119,16 @@ public class Config {
 		return config;
 	}
 
+	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
+		readFromSpreadsheet( book.getTab(tabName) );
+	}
+
 	public void readFromSpreadsheet(String tabName) throws Exception {
-		m_tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
+		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
+	}
+	
+	private void readFromSpreadsheet(Tab tab) throws Exception {
+		m_tab = new GTable( tab, "Tag", "Value", true);
 		
 		// user experience parameters
 		this.buySpread = m_tab.getDouble( "buySpread");

@@ -3,6 +3,7 @@ package reflection;
 import static reflection.Main.log;
 import static reflection.Main.require;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
@@ -178,6 +179,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	@SuppressWarnings("unchecked")
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
@@ -186,8 +188,19 @@ public class BackendTransaction extends MyTransaction {
 			String where = S.isNotNull(addr) 
 					? String.format( "where lower(wallet_public_key)='%s'", addr.toLowerCase() )
 					: "";
-			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at", where);
+			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at desc", where);
+			json.forEach( obj -> fix( (HashMap)obj, "created_at" ) );
+			json.forEach( obj -> fix( (HashMap)obj, "updated_at" ) );  // these can be removed after we switch from *
 			respond(json);
 		});
+	}
+
+	/** Convert timestamps from Timestamp to integer seconds since epoch */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void fix(HashMap obj, String tag) {
+		Timestamp ts = (Timestamp)obj.get(tag);  //<<<move this into RefAPI
+		if (ts != null) {
+			obj.put(tag, ts.getTime() / 1000); 
+		}
 	}
 }
