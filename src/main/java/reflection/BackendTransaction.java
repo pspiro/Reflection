@@ -191,20 +191,11 @@ public class BackendTransaction extends MyTransaction {
 					? String.format( "where lower(wallet_public_key)='%s'", addr.toLowerCase() )
 					: "";
 			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at desc", where);
-			json.remove("created_at");
-			json.remove("updated_at");
-//			json.forEach( obj -> fix( (HashMap)obj, "created_at" ) );
-//			json.forEach( obj -> fix( (HashMap)obj, "updated_at" ) );  // these can be removed after we switch from *
+			json.forEach( obj -> {
+				((HashMap)obj).remove("created_at");
+				((HashMap)obj).remove("updated_at");
+			});
 			respond(json);
 		});
-	}
-
-	/** Convert timestamps from Timestamp to integer seconds since epoch */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void fix(HashMap obj, String tag) {
-		Timestamp ts = (Timestamp)obj.get(tag);  //<<<move this into RefAPI
-		if (ts != null) {
-			obj.put(tag, ts.getTime() / 1000); 
-		}
 	}
 }
