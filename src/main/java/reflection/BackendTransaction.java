@@ -185,12 +185,16 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			
 			String addr = m_map.get("wallet_public_key");
+			Main.require( S.isNull(addr) || Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", addr);
+			
 			String where = S.isNotNull(addr) 
 					? String.format( "where lower(wallet_public_key)='%s'", addr.toLowerCase() )
 					: "";
 			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at desc", where);
-			json.forEach( obj -> fix( (HashMap)obj, "created_at" ) );
-			json.forEach( obj -> fix( (HashMap)obj, "updated_at" ) );  // these can be removed after we switch from *
+			json.remove("created_at");
+			json.remove("updated_at");
+//			json.forEach( obj -> fix( (HashMap)obj, "created_at" ) );
+//			json.forEach( obj -> fix( (HashMap)obj, "updated_at" ) );  // these can be removed after we switch from *
 			respond(json);
 		});
 	}
