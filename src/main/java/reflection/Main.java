@@ -415,6 +415,8 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		// simulate failed error code?
 		if (failCodes != null && "fail".equals( failCodes.get(code.toString() ) ) ) {
 			b = false;
+			S.out( "Force-failing " + code + " " + errMsg);
+			errMsg += " (force-fail)";
 		}
 			// in random mode, 1 out of 8 calls will return an error
 //			if (m_config.produceErrors().equals("random") ) {

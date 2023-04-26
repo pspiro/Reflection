@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import org.json.simple.JSONObject;
 
 import com.moonstoneid.siwe.SiweMessage;
+import com.moonstoneid.siwe.error.SiweException;
 
 import http.MyHttpClient;
 import json.MyJsonObject;
@@ -44,6 +45,159 @@ public class TestSiwe extends TestCase {
 	 *  * there might be better ways to sign the message than SIWE, other libs that give you more control 
 	 */
 
+	static String myWalletAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	static String signature = "102268";  // special sig that will always pass
+
+	
+	static SiweMessage msg(String nonce, Instant time) throws SiweException {  
+		return new SiweMessage.Builder(
+			"Reflection.trading", 
+			myWalletAddress, 
+			"http://localhost", 
+			"1", 
+			5,      // chainId 
+			nonce,
+			DateTimeFormatter.ISO_INSTANT.format(time) )
+			.statement("Sign in to Reflection.")
+			.build();
+	}
+
+	public void testSiweFailPast() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		
+		// confirm nonce
+		assertEquals( 20, nonce.length() );
+		
+		SiweMessage siweMsg = msg(nonce, Instant.now().minusSeconds(22) );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "past " + cli.readMyJsonObject() );
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "TIMED_OUT", cli.readMyJsonObject().get("code") );
+	}
+	
+	public void testSiweFailFut() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		
+		// confirm nonce
+		assertEquals( 20, nonce.length() );
+		
+		SiweMessage siweMsg = msg(nonce, Instant.now().minusSeconds(22) );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "fut " + cli.readMyJsonObject() );
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "TIMED_OUT", cli.readMyJsonObject().get("code") );
+	}
+	
+	public void testFailSig() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		
+		// confirm nonce
+		assertEquals( 20, nonce.length() );
+		
+		SiweMessage siweMsg = msg(nonce, Instant.now().plusSeconds(22) );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature + "a");
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "failSig " + cli.readMyJsonObject() );
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "UNKNOWN", cli.readMyJsonObject().get("code") );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+	}
+	
+	public void testFailDup() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		
+		// confirm nonce
+		assertEquals( 20, nonce.length() );
+		
+		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "failDup " + cli.readMyJsonObject() );
+		assertEquals( 200, cli.getResponseCode() );
+
+		// test siwe/signin again
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "failDup " + cli.readMyJsonObject() );
+		assertEquals( 400, cli.getResponseCode() );
+	}
+	
+	public void testFailTimeout() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		assertEquals( 20, nonce.length() );
+		
+		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		assertEquals( 200, cli.getResponseCode() );
+		String cookie = cli.getHeaders().get("set-cookie");
+		
+		// siwe/me
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		assertEquals( 200, cli.getResponseCode() );
+
+		S.sleep(2000);
+		
+		// fail siwe/me
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		S.out( cli.readMyJsonObject() );
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( false, cli.readMyJsonObject().getBool("loggedIn") ); 
+	}
+	
 	public void testSiweSignin() throws Exception {
 		// test siwe/init
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
@@ -54,20 +208,7 @@ public class TestSiwe extends TestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		String myWalletAddress = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-		String signature = "102268";  // special sig that will always pass
-
-		SiweMessage siweMsg = new SiweMessage.Builder(
-				"Reflection.trading", 
-				myWalletAddress, 
-				"http://localhost", 
-				"1", 
-				5,      // chainId 
-				nonce,
-				//DateTimeFormatter.ISO_INSTANT.format( Instant.now().minusSeconds(3600) ) )
-				DateTimeFormatter.ISO_INSTANT.format( Instant.now() ) )  // add a test for this
-				.statement("Sign in to Reflection.")
-				.build();
+		SiweMessage siweMsg = msg(nonce, Instant.now() );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -76,7 +217,6 @@ public class TestSiwe extends TestCase {
 		// test siwe/signin
 		cli = new MyHttpClient("localhost", 8383);
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		//S.out( cli.readMyJsonObject() );
 		assertEquals( 200, cli.getResponseCode() );
 		String cookie = cli.getHeaders().get("set-cookie");
 		assertTrue( cookie != null && cookie.split("=").length >= 2);
@@ -88,16 +228,10 @@ public class TestSiwe extends TestCase {
 		assertEquals( myWalletAddress, msg3.getString("address"));
 		assertEquals( nonce, msg3.getString("nonce"));
 
-		// a second attemp to sign in with the same nonce should fail
-		cli = new MyHttpClient("localhost", 8383);
-		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( cli.readString() );
-		assertEquals( 400, cli.getResponseCode() );
-
 		// test successful siwe/me
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("Cookie", "mycookie=abcde; " + cookie).get("/siwe/me");
-		S.out( cli.readString() );
+		S.out( "me " + cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
@@ -133,16 +267,9 @@ public class TestSiwe extends TestCase {
 		assertEquals( "Nonce", cli.readMyJsonObject().getString("message").substring(0,5) );
 
 		// test another successful me
-		S.sleep(1000);
+		S.sleep(500);
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
 		assertEquals( 200, cli.getResponseCode() );
-
-		// test timed out session
-		S.sleep(3000);
-		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "Session has expired", cli.readMyJsonObject().getString("message") );
 	}
 }

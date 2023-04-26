@@ -98,17 +98,16 @@ public class SiweTransaction extends MyTransaction {
 			// verify issuedAt is not too far in future or past
 			Instant issuedAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
 			Instant now = Instant.now();
-			long duration = Duration.between( issuedAt, now).toMillis(); 
 			Main.require(
-					duration <= Main.m_config.siweTimeout(),
+					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  duration=%s  max=%s",
-					issuedAt, now, duration, Main.m_config.siweTimeout() );
+					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",
+					issuedAt, now, Main.m_config.siweTimeout() );
 			Main.require(
 					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  duration=%s  max=%s",
-					issuedAt, now, Duration.between( now, issuedAt).toMillis(), Main.m_config.siweTimeout() );
+					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
+					issuedAt, now, Main.m_config.siweTimeout() );
 			
 			// store session object; let the nonce be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
