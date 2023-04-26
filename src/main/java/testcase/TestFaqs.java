@@ -11,7 +11,7 @@ public class TestFaqs extends TestCase {
 		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
 		MyJsonArray obj = cli.get( "/api/faqs").readMyJsonArray();
 		obj.display();
-		assertTrue(false);
+		assertTrue(obj.size() > 3);
 		
 	}
 }

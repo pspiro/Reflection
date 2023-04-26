@@ -69,7 +69,6 @@ public class MyTransaction {
 		pushBackendConfig,
 		pushFaq,
 		refreshConfig,
-		refreshStocks,
 		seedPrices,
 		terminate,
 		testAlert,
@@ -86,7 +85,7 @@ public class MyTransaction {
 	static final String code = "code";
 	static final String text = "text";
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
-	public static final String etf = "ETF";  // must match type column from spreadsheet
+	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
 	private static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's
 	
 	protected Main m_main;
@@ -181,9 +180,6 @@ public class MyTransaction {
 				break;
 			case getAllStocks:
 				getAllStocks();
-				break;
-			case refreshStocks:
-				refreshStocks();
 				break;
 			case getConfig:
 				getConfig();
@@ -308,14 +304,7 @@ public class MyTransaction {
 	/** Top-level message handler */
 	void refreshConfig() throws Exception {
 		S.out( "Refreshing config and FAQs from google sheet");
-		m_main.readConfigurations();
-		respondOk();
-	}
-
-	/** Top-level message handler */
-	void refreshStocks() throws Exception {
-		S.out( "Refreshing stock list from google sheet");
-		m_main.refreshStockList();
+		m_main.readSpreadsheet();
 		respondOk();
 	}
 
@@ -470,13 +459,14 @@ public class MyTransaction {
 	void insideAnyHours( Contract contract, Inside runnable) {
 		insideHours( contract, inside -> {
 			
-			// for testing
-			if (Main.m_config.autoFill() ) {
+			// if auto-fill is on, always return true, UNLESS simtime is passed
+			// which means this is called by a test script
+			if (Main.m_config.autoFill() && m_map.get("simtime") == null) {
 				runnable.run(true);
 				return;
 			}
 			
-			if (!inside && etf.equals( m_main.getType( contract.conid() ) ) ) {
+			if (!inside && etf24.equals( m_main.getType( contract.conid() ) ) ) {
 				contract.exchange(ibeos);
 				insideHours( contract, runnable);
 			}

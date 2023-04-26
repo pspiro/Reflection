@@ -41,14 +41,14 @@ public class TestOutsideHours extends TestCase {
 		double price = TestOrder.curPrice + 5;
 		if (conid == QQQ) price = 318*1.05;
 				
-		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'side': 'buy', 'quantity': '1', 'price': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
+		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'action': 'buy', 'quantity': '1', 'tokenPrice': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
 				conid, price, time);
-		MyJsonObject obj = TestOrder.orderData(data);  // adds the cookie
-		return TestOrder.sendData(obj);
+		MyJsonObject order = TestOrder.orderData(data);  // adds the cookie
+		return TestOrder.sendData(order);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */
-	public void testStk0()  throws Exception {
+	public void testStkPreOpen()  throws Exception {
 		MyJsonObject map = testHours( IBM, "3:59");
 
 		String ret = (String)map.get( "code");
@@ -99,7 +99,7 @@ public class TestOutsideHours extends TestCase {
 	
 	}
 	
-	public void testEtf0()  throws Exception {
+	public void testEtfPreOpen()  throws Exception {
 		MyJsonObject map = testHours( QQQ, "3:59");
 
 		String ret = (String)map.get( "code");

@@ -14,7 +14,7 @@ public class Wallet {
 
 	
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Desktop-config");
+		Config config = Config.readFrom("Dt-config");
 
 		MyJsonArray poss = MoralisServer.reqPositions(myWallet);
 		

@@ -57,8 +57,6 @@ public class SiweTransaction extends MyTransaction {
 	/** Frontend requests nonce to build SIWE message.
 	 *  Generate the nonce, save it, and return it */
 	public void handleSiweInit() {
-		Main.getURI(m_exchange);
-		
 		String nonce = Utils.generateNonce();
 		
 		// save the nonce; only saved nonces are valid in the signin message, and only once 
@@ -71,8 +69,6 @@ public class SiweTransaction extends MyTransaction {
 	 *  The response contains a Set-Cookie header with the SIWE message and signature */
 	public void handleSiweSignin() {
 		wrap( () -> {
-			Main.getURI(m_exchange);
-			
             MyJsonObject signedMsg = new MyJsonObject(
             		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );
             

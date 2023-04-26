@@ -23,7 +23,7 @@ public class Test {
 		accounts.setAdmins( "Admin1,Admin2");
 		
 		Config config = new Config();
-		config.readFromSpreadsheet("Desktop-config");
+		config.readFromSpreadsheet("Dt-config");
 
 
 		run( config, config.busd(), config.rusd() );

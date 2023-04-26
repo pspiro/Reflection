@@ -24,7 +24,7 @@ public class TestOrder extends TestCase {
 		try {
 			seed();
 
-			Config config = Config.readFrom("Desktop-config");
+			Config config = Config.readFrom("Dt-config");
 			approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
@@ -33,7 +33,7 @@ public class TestOrder extends TestCase {
 	}
 
 	private static void seed() throws Exception {
-		Config config = Config.readFrom("Desktop-config");
+		Config config = Config.readFrom("Dt-config");
 
 		Jedis jedis = config.redisPort() == 0
 				? new Jedis( config.redisHost() )  // use full connection string
@@ -47,10 +47,8 @@ public class TestOrder extends TestCase {
 	// missing walletId
 	public void testMissingWallet() throws Exception {
 		MyJsonObject obj = orderData(2, "BUY", 10);
+		obj.remove("wallet_public_key");
 		MyJsonObject map = sendData(obj);
-		map.remove("wallet_public_key");
-		
-		
 		String ret = map.getString( "code");
 		String text = map.getString( "text");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);

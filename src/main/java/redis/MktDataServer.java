@@ -16,7 +16,6 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 
 import http.SimpleTransaction;
-import json.StringJson;
 import redis.MyRedis.PRun;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
@@ -24,6 +23,7 @@ import reflection.MyTransaction.ExRunnable;
 import reflection.Stock;
 import reflection.Util;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 import util.DateLogFile;
@@ -141,10 +141,11 @@ public class MktDataServer {
 	// let it fall back to read from a flatfile if this fails. pas  you could share this code w/ same method from Main
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet() throws Exception {
+		Book book = NewSheet.getBook(NewSheet.Reflection);
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = Main.readMasterSymbols();
+		HashMap<Integer,ListEntry> map = Main.readMasterSymbols(book);
 
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
+		for (ListEntry row : book.getTab( m_config.symbolsTab() ).fetchRows(false) ) {
 			Stock stock = new Stock();
 			if ("Y".equals( row.getString( "Active") ) ) {
 				int conid = Integer.valueOf( row.getString("Conid") );

@@ -36,7 +36,7 @@ public class StockToken extends Erc20 {
 		Accounts.instance.setAdmins( "Admin1,Admin2");
 
 		Config config = new Config();
-		config.readFromSpreadsheet("Desktop-config");
+		config.readFromSpreadsheet("Dt-config");
 
 		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
 		

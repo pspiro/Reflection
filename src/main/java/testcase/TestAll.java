@@ -13,15 +13,16 @@ import junit.framework.TestCase;
 	   TestConfig.class,
 	   TestConfigSheet.class,
 	   TestErrors.class,
+	   TestFaqs.class,
 	   TestFireblocks.class,
 	   TestGetPositions.class,
 	   TestGtable.class,
 	   TestMyRedis.class,
+//	   TestOne.class,
 	   TestOutsideHours.class,
 	   TestPrices.class,
 	   TestRedeem.class,
 	   TestSiwe.class,
-	   TestFaqs.class,
 	   TestUnwindOrder.class,
 })
 public class TestAll extends TestCase {

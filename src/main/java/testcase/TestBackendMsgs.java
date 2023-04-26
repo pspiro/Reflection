@@ -1,9 +1,16 @@
 package testcase;
 
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.HashMap;
+
+import org.json.simple.JSONArray;
+
 import http.MyHttpClient;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import reflection.Config;
 import tw.util.S;
 
 public class TestBackendMsgs extends TestCase {
@@ -61,5 +68,25 @@ public class TestBackendMsgs extends TestCase {
 		double ask = Double.valueOf( obj.getString("ask") );		
 		assertTrue( bid > 100 && bid < 200);
 		assertTrue( ask > 100 && bid < 200);
+	}
+	
+	public void testGetCryptos() throws Exception {
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/api/crypto-transactions");
+		MyJsonArray ar = cli.readMyJsonArray();
+		S.out( "all crypto");
+		S.out( ar.getJsonObj(0) );
+		assertEquals( 200, cli.getResponseCode() );
+		assertTrue( ar.size() > 1);
+	}
+	
+	public void testGetCryptosByAddr() throws Exception {
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet);
+		MyJsonArray ar = cli.readMyJsonArray();
+		S.out( "crypto by addr");
+		S.out( ar.getJsonObj(0));
+		assertEquals( 200, cli.getResponseCode() );
+		assertTrue( ar.size() > 1);
 	}
 }

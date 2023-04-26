@@ -3,6 +3,7 @@ package tw.google;
 import java.util.HashMap;
 
 import reflection.Util.Ex;
+import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -25,11 +26,15 @@ public class GTable extends HashMap<String,String> {
 	}
 	
 	public GTable( String sheetId, String tabName, String col1, String col2, boolean caseSensitive) throws Exception {
+		this( NewSheet.getTab( sheetId, tabName), col1, col2, caseSensitive);
+	}
+	
+	public GTable( Tab tab, String col1, String col2, boolean caseSensitive) throws Exception {
 		m_col1 = col1;
 		m_col2 = col2;
 		m_caseSensitive = caseSensitive;
 		
-		m_tab = NewSheet.getTab( sheetId, tabName);
+		m_tab = tab;
 		
 		// build map
 		for ( ListEntry row : m_tab.fetchRows() ) {

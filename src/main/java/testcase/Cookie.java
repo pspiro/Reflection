@@ -12,11 +12,12 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 import reflection.SiweUtil;
 import reflection.Util;
+import tw.util.S;
 
 public class Cookie extends TestCase {
-	public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
-	//static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	static String cookie;
+	//public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
+	public static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	public static String cookie;
 
 	static {
 		try {
@@ -55,6 +56,7 @@ public class Cookie extends TestCase {
 		assertEquals( 200, cli.getResponseCode() );
 		
 		cookie = cli.getHeaders().get("set-cookie");
+		S.out( "received cookie: " + cookie);
 	}
 	
 	public static void main(String[] args) throws Exception {
