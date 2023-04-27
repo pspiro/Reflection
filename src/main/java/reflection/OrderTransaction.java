@@ -285,6 +285,7 @@ public class OrderTransaction extends MyTransaction {
 
 				// try to figure out why the order failed
 				
+				// fireblocks has failed; try to determin why and respond() to client
 				wrap( () -> {
 					double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
 					String side = action();
@@ -316,7 +317,8 @@ public class OrderTransaction extends MyTransaction {
 					throw e;
 				});
 					
-				unwindOrder(order);
+				// FB has failed, we have responded, now unwind the order
+				unwindOrder(order, filledShares);
 				
 				return;
 			}
@@ -348,8 +350,9 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 	
-	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. */
-	private void unwindOrder(Order order) {
+	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. 
+	 * @param filledShares */
+	private void unwindOrder(Order order, double filledShares) {
 		try {
 			// don't unwind order in auto-fill mode which is for testing only
 			if (Main.m_config.autoFill() ) {
@@ -368,6 +371,12 @@ public class OrderTransaction extends MyTransaction {
 			order.flipSide();
 			order.orderId(0);
 			order.orderType(OrderType.MKT);
+			
+			// this should never be the case since the orders are AON, but just in case that changes...
+			if (filledShares < order.totalQuantity() ) {
+				S.out( "WARNING: filled shared was less that total order qty when unwinding order"); 
+				order.totalQuantity(filledShares);
+			}
 			
 			m_main.orderController().placeOrModifyOrder(contract, order, null);
 		}
