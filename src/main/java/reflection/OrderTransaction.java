@@ -43,7 +43,7 @@ public class OrderTransaction extends MyTransaction {
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
 		m_main.getStock(conid);  // throws exception if conid is invalid
 
-		String side = action();;
+		String side = action();
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
 		quantity = m_map.getRequiredDouble( "quantity");
@@ -381,6 +381,10 @@ public class OrderTransaction extends MyTransaction {
 		return Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks");
 	}
 
+	String action() throws RefException { 
+		return m_map.getRequiredParam("action"); 
+	}
+	
 	
 
 }

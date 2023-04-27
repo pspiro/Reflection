@@ -62,7 +62,9 @@ public class Erc20 {
 	}
 	
 	public static double fromBlockchain(String amt, int power) {
-		return new BigDecimal(amt).divide( ten.pow(power) ).doubleValue(); 
+		return S.isNotNull(amt)
+				? new BigDecimal(amt).divide( ten.pow(power) ).doubleValue()
+				: 0.0;
 	}
 	
 	public static double fromBlockchainHex(String amt, int power) {

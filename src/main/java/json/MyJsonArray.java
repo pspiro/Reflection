@@ -14,9 +14,8 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	private JSONArray m_ar;
 	
 	public static void main(String[] args) throws Exception {
-		MyJsonObject.parse( "{ \"a\":[ 4,5,6], \"b\": { \"c\": 7 } }").display();
-		S.out( "-----");
-		MyJsonArray.parse( "[ 4,[5,6],7,{\"a\":8,\"b\":9},{\"a\":8,\"b\":9}]").display();
+		MyJsonArray ar = new MyJsonArray(null);
+		ar.forEach( item -> item.get(null) );
 	}
 	
 	public static MyJsonArray parse( String text) throws Exception {

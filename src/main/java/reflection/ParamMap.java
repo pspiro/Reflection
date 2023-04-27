@@ -3,7 +3,7 @@ package reflection;
 import java.util.HashMap;
 
 import json.MyJsonObject;
-import reflection.MyTransaction.MsgType;
+import reflection.OldStyleTransaction.MsgType;
 import tw.util.S;
 
 /** Values are returned lower case, interned, although the intern() didn't seem to work. */

@@ -26,7 +26,6 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Accounts;
@@ -48,7 +47,7 @@ import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
 
-public class Main implements HttpHandler, ITradeReportHandler {
+public class Main implements ITradeReportHandler {
 	enum Status {
 		Connected, Disconnected
 	};
@@ -153,7 +152,7 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/", this);
+		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
 		MyTimer.done();
@@ -275,6 +274,19 @@ public class Main implements HttpHandler, ITradeReportHandler {
 		Stock stock = m_stockMap.get( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
+	}
+
+	// VERY BAD AND INEFFICIENT; build a map. pas
+	public HashMap getStockByTokAddr(String addr) throws RefException {
+		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
+		
+		for (Object obj : m_stocks) {
+			HashMap stock = (HashMap)obj;
+			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
+				return stock;
+			}
+		}
+		return null;
 	}
 
 
@@ -402,11 +414,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 			m_controller.dump();
 		}
 
-	}
-
-	/** Handle HTTP msg synchronously */
-	@Override public synchronized void handle(HttpExchange exch) throws IOException {  // we could/should reduce the amount of synchronization, especially if there are messages that don't require the API
-		new MyTransaction( this, exch).handle();
 	}
 
 	static String tos(OrderState orderState) {
@@ -701,19 +708,6 @@ public class Main implements HttpHandler, ITradeReportHandler {
 	/** this seems useless since you can still be left with .000001 */
 	static double round(double val) {
 		return Math.round( val * 100) / 100.;
-	}
-
-	// VERY BAD AND INEFFICIENT. ps
-	public HashMap getStockByTokAddr(String addr) throws RefException {
-		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
-		
-		for (Object obj : m_stocks) {
-			HashMap stock = (HashMap)obj;
-			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
-				return stock;
-			}
-		}
-		return null;
 	}
 	
 	MyJsonObject type2Config() {
