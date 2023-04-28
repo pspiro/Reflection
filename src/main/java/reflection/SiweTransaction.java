@@ -126,8 +126,6 @@ public class SiweTransaction extends MyTransaction {
 	 *  This is a keep-alive; we should verify that the timer has not expired */
 	public void handleSiweMe() {
 		wrap( () -> {
-			Main.getURI(m_exchange);
-			
 			// check for cookie header
 			String cookie = findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 			S.out( "  cookie:" + cookie);

@@ -810,7 +810,7 @@ public class Order {
     }
 	
     public int roundedQty() {
-		return (int)Math.round(m_totalQuantity + .0001);  // add a bit so that 4.99999 rounds to 1
+		return (int)Math.round(m_totalQuantity);
 	}
 
     public void flipSide() {

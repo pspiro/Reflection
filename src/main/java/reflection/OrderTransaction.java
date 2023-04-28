@@ -1,6 +1,7 @@
 package reflection;
 
 import static reflection.Main.log;
+import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import com.ib.client.Contract;
@@ -19,7 +20,7 @@ import tw.util.S;
 import util.LogType;
 
 public class OrderTransaction extends MyTransaction {
-	private double quantity;
+	private double desiredQuantity;
 	private String stockTokenAddress;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
@@ -46,14 +47,14 @@ public class OrderTransaction extends MyTransaction {
 		String side = action();
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
-		quantity = m_map.getRequiredDouble( "quantity");
-		require( quantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
+		desiredQuantity = m_map.getRequiredDouble( "quantity");
+		require( desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
 
 		double price = m_map.getRequiredDouble( "tokenPrice");
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
-		double amt = price * quantity;
-		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
+		double amt = price * desiredQuantity;
+		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 		
 		stockTokenAddress = m_main.getSmartContractId(conid);
@@ -69,10 +70,10 @@ public class OrderTransaction extends MyTransaction {
 		// calculate order price
 		double prePrice;
 		if (side == "buy") {
-			prePrice = price - price * Main.m_config.minBuySpread();
+			prePrice = price - price * m_config.minBuySpread();
 		}
 		else {
-			prePrice = price + price * Main.m_config.minSellSpread();
+			prePrice = price + price * m_config.minSellSpread();
 		}
 		double orderPrice = Util.round( prePrice);  // round to two decimals
 		
@@ -82,7 +83,7 @@ public class OrderTransaction extends MyTransaction {
 
 		Order order = new Order();
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
-		order.totalQuantity( quantity);
+		order.totalQuantity( desiredQuantity);
 		order.lmtPrice( orderPrice);
 		order.tif( TimeInForce.IOC);
 		order.allOrNone(true);  // all or none, we don't want partial fills
@@ -99,7 +100,7 @@ public class OrderTransaction extends MyTransaction {
 			// do this after checking trading hours because that would
 			// explain why there are no prices which should never happen otherwise
 			Prices prices = m_main.getPrices( contract.conid() );
-			prices.checkOrderPrice( order, orderPrice, Main.m_config);
+			prices.checkOrderPrice( order, orderPrice, m_config);
 			
 			// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
 			// * or check that ANY price is pretty recent, to we know prices are updating
@@ -110,6 +111,14 @@ public class OrderTransaction extends MyTransaction {
 			if (order.roundedQty() == 0) {
 				respondToOrder(order, 0, false, OrderStatus.Filled);
 			}
+			// AUTO-FILL - for testing only
+			else if (m_config.autoFill() ) {
+				require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
+				log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+						order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
+						m_config.commission(), 0, "");
+				respondToOrder( order, order.totalQuantity(), false, OrderStatus.Filled); // you might want to sometimes pass false here when testing
+			}
 			else {
 				submitOrder(  contract, order);
 			}
@@ -119,15 +128,6 @@ public class OrderTransaction extends MyTransaction {
 
 	private void submitOrder( Contract contract, Order order) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
-
-		// very dangerous!
-		if (Main.m_config.autoFill() ) {
-			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
-					Main.m_config.commission(), 0, "");
-			respondToOrder( order, Math.round( order.totalQuantity() ), false, OrderStatus.Filled); // you might want to sometimes pass false here when testing
-			return;
-		}
 
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
@@ -176,7 +176,7 @@ public class OrderTransaction extends MyTransaction {
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
+		setTimer( m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
 	}
 	
 	/** This is called when order status is "complete" or when timeout occurs.
@@ -239,7 +239,7 @@ public class OrderTransaction extends MyTransaction {
 					
 					// buy with RUSD?
 					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-						id = Main.m_config.rusd().buyStockWithRusd(
+						id = m_config.rusd().buyStockWithRusd(
 								order.walletAddr(), 
 								stablecoinAmt,
 								order.newStockToken(),
@@ -249,9 +249,9 @@ public class OrderTransaction extends MyTransaction {
 					
 					// buy with BUSD
 					else {
-						id = Main.m_config.rusd().buyStock(
+						id = m_config.rusd().buyStock(
 								order.walletAddr(),
-								Main.m_config.busd(),
+								m_config.busd(),
 								stablecoinAmt,
 								order.newStockToken(), 
 								stockTokenQty
@@ -261,7 +261,7 @@ public class OrderTransaction extends MyTransaction {
 				
 				// sell
 				else {
-					id = Main.m_config.rusd().sellStockForRusd(
+					id = m_config.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
 							order.newStockToken(),
@@ -301,15 +301,15 @@ public class OrderTransaction extends MyTransaction {
 					}
 					else {
 						double balance = new StockToken(stockTokenAddress).getPosition(wallet);
-						require( Util.isGtEq(balance, quantity), 
+						require( Util.isGtEq(balance, desiredQuantity), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stock token balance (%s) is less than the order quantity (%s)", 
-								balance, quantity);
+								balance, desiredQuantity);
 					}
 	
 					// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
 					if (side == "buy" && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-						double approvedAmt = Main.m_config.busd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
+						double approvedAmt = m_config.busd().getAllowance( wallet, m_config.rusdAddr() ); 
 						require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
 								"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 					}
@@ -329,7 +329,7 @@ public class OrderTransaction extends MyTransaction {
 		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.action(), order.totalQty(),
 				S.fmt4(filledShares), order.lmtPrice(),
-				Main.m_config.commission(), tds, hash);
+				m_config.commission(), tds, hash);
 	}	
 	
 
@@ -355,7 +355,7 @@ public class OrderTransaction extends MyTransaction {
 	private void unwindOrder(Order order, double filledShares) {
 		try {
 			// don't unwind order in auto-fill mode which is for testing only
-			if (Main.m_config.autoFill() ) {
+			if (m_config.autoFill() ) {
 				S.out( "Not unwinding order in auto-fill mode");
 				return;
 			}
@@ -387,7 +387,7 @@ public class OrderTransaction extends MyTransaction {
 	}
 
 	private boolean fireblocks() throws RefException {
-		return Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks");
+		return m_config.useFireblocks() && !m_map.getBool("noFireblocks");
 	}
 
 	String action() throws RefException { 

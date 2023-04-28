@@ -72,7 +72,7 @@ public class Config {
 	protected boolean useFireblocks;
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
-	private String moralisPlatform;
+	private String moralisPlatform;  // always lower case
 	private String platformBase;
 	protected String rusdAddr;
 	private String busdAddr;
@@ -178,7 +178,7 @@ public class Config {
 			this.rusdAddr = m_tab.getRequiredString("rusdAddr"); 
 			this.busdAddr = m_tab.getRequiredString("busdAddr");
 			this.platformBase = m_tab.getRequiredString("platformBase");
-			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform");
+			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 			this.rusdDecimals = m_tab.getRequiredInt("rusdDecimals");
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
@@ -479,5 +479,9 @@ public class Config {
 	
 	public String backendConfigTab() {
 		return backendConfigTab;
+	}
+
+	public boolean isProduction() {
+		return "polygon".equals(moralisPlatform) || "MATIC".equals(platformBase);  
 	}
 }
