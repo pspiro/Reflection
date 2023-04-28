@@ -38,6 +38,15 @@ public class Test {
 		
 		String id;
 		
+		id = rusd.buyStockWithRusd(
+				userAddr,
+				0, 
+				stock, 
+				101);
+		Fireblocks.getTransHash(id, 60);
+		
+		System.exit(0);
+		
 		// ----- Bob -----------------------------
 		
 		// only Bob can buy with BUSD because only Bob can approve that

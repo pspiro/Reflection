@@ -157,7 +157,7 @@ public abstract class MyTransaction {
 
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	void wrap( ExRunnable runnable) {
+	void wrap( ExRunnable runnable) {   // another name for this might be "mustRespond()"
 		try {
 			runnable.run();
 		}

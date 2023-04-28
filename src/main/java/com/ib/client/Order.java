@@ -816,5 +816,9 @@ public class Order {
     public void flipSide() {
     	action( action() == Action.BUY ? Action.SELL : Action.BUY); 
 	}
+    
+    public boolean isBuy() {
+    	return action() == Action.BUY;
+    }
 
 }

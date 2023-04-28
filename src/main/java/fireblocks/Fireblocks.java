@@ -324,7 +324,8 @@ public class Fireblocks {
 	}
 	
 	/** Query the transaction from Fireblocks until it contains the txHash value
-	 *  which is the blockchain transaction has; takes about 13 seconds. 
+	 *  which is the blockchain transaction has; takes about 13 seconds
+	 *  We get the hash in the CONFIRMING status; it eventually goes to COMPLETED status
 	 *  
 	 *  PERFORMANCE NOTE - we get a response 3-5 seconds sooner here than 
 	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message
@@ -346,7 +347,7 @@ public class Fireblocks {
 			
 			String status = trans.getString("status");
 			if ("COMPLETED".equals(status) ) {
-				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction completed with no transaction hash");
+				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction completed with no transaction hash");  // should never happen
 			}
 			
 			if ("FAILED".equals(status) ) {

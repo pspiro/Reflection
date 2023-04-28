@@ -3,6 +3,10 @@ package reflection;
 import static reflection.Main.log;
 import static reflection.Main.require;
 
+import java.sql.SQLException;
+
+import static reflection.Main.m_config;
+
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
@@ -53,7 +57,7 @@ public class OrderTransaction extends MyTransaction {
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
 		double amt = price * quantity;
-		double maxAmt = side == "buy" ? Main.m_config.maxBuyAmt() : Main.m_config.maxSellAmt();
+		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 		
 		stockTokenAddress = m_main.getSmartContractId(conid);
@@ -69,10 +73,10 @@ public class OrderTransaction extends MyTransaction {
 		// calculate order price
 		double prePrice;
 		if (side == "buy") {
-			prePrice = price - price * Main.m_config.minBuySpread();
+			prePrice = price - price * m_config.minBuySpread();
 		}
 		else {
-			prePrice = price + price * Main.m_config.minSellSpread();
+			prePrice = price + price * m_config.minSellSpread();
 		}
 		double orderPrice = Util.round( prePrice);  // round to two decimals
 		
@@ -99,7 +103,7 @@ public class OrderTransaction extends MyTransaction {
 			// do this after checking trading hours because that would
 			// explain why there are no prices which should never happen otherwise
 			Prices prices = m_main.getPrices( contract.conid() );
-			prices.checkOrderPrice( order, orderPrice, Main.m_config);
+			prices.checkOrderPrice( order, orderPrice, m_config);
 			
 			// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
 			// * or check that ANY price is pretty recent, to we know prices are updating
@@ -121,10 +125,10 @@ public class OrderTransaction extends MyTransaction {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// very dangerous!
-		if (Main.m_config.autoFill() ) {
+		if (m_config.autoFill() ) {
 			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
-					Main.m_config.commission(), 0, "");
+					m_config.commission(), 0, "");
 			respondToOrder( order, Math.round( order.totalQuantity() ), false, OrderStatus.Filled); // you might want to sometimes pass false here when testing
 			return;
 		}
@@ -176,7 +180,7 @@ public class OrderTransaction extends MyTransaction {
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( Main.m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
+		setTimer( m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
 	}
 	
 	/** This is called when order status is "complete" or when timeout occurs.
@@ -239,7 +243,7 @@ public class OrderTransaction extends MyTransaction {
 					
 					// buy with RUSD?
 					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-						id = Main.m_config.rusd().buyStockWithRusd(
+						id = m_config.rusd().buyStockWithRusd(
 								order.walletAddr(), 
 								stablecoinAmt,
 								order.newStockToken(),
@@ -249,9 +253,9 @@ public class OrderTransaction extends MyTransaction {
 					
 					// buy with BUSD
 					else {
-						id = Main.m_config.rusd().buyStock(
+						id = m_config.rusd().buyStock(
 								order.walletAddr(),
-								Main.m_config.busd(),
+								m_config.busd(),
 								stablecoinAmt,
 								order.newStockToken(), 
 								stockTokenQty
@@ -261,7 +265,7 @@ public class OrderTransaction extends MyTransaction {
 				
 				// sell
 				else {
-					id = Main.m_config.rusd().sellStockForRusd(
+					id = m_config.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
 							order.newStockToken(),
@@ -277,6 +281,10 @@ public class OrderTransaction extends MyTransaction {
 				// polling every one second; either put them in a queue or use the Fireblocks
 				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
+				
+				insertCryptoTrans(null, order, hash);
+				
+				
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
 			catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
@@ -287,19 +295,17 @@ public class OrderTransaction extends MyTransaction {
 				
 				wrap( () -> {
 					double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
-					String side = action();
-					String wallet = m_map.getParam("wallet_public_key");
 
 					// confirm that the user has enough stablecoin or stock token in their wallet
-					if (side == "buy") {
-						double balance = stablecoin().getPosition(wallet);
+					if (order.isBuy() ) {
+						double balance = stablecoin().getPosition( order.walletAddr() );
 						require( Util.isGtEq(balance, totalOrderAmt), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stablecoin balance (%s) is less than the total order amount (%s)", 
 								balance, totalOrderAmt);
 					}
 					else {
-						double balance = new StockToken(stockTokenAddress).getPosition(wallet);
+						double balance = new StockToken(stockTokenAddress).getPosition( order.walletAddr() );
 						require( Util.isGtEq(balance, quantity), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stock token balance (%s) is less than the order quantity (%s)", 
@@ -307,8 +313,8 @@ public class OrderTransaction extends MyTransaction {
 					}
 	
 					// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-					if (side == "buy" && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-						double approvedAmt = Main.m_config.busd().getAllowance( wallet, Main.m_config.rusdAddr() ); 
+					if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+						double approvedAmt = m_config.busd().getAllowance( order.walletAddr(), m_config.rusdAddr() ); 
 						require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
 								"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 					}
@@ -327,9 +333,37 @@ public class OrderTransaction extends MyTransaction {
 		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.action(), order.totalQty(),
 				S.fmt4(filledShares), order.lmtPrice(),
-				Main.m_config.commission(), tds, hash);
+				m_config.commission(), tds, hash);
 	}	
 	
+
+	private void insertCryptoTrans(Contract contract, Order order, String transId) throws Exception {
+		
+		m_config.sqlConnection().insertPairs("crypto_transactions",
+				"crypto_transaction_id", transId,
+				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
+				"wallet_public_key", order.walletAddr(),
+				"symbol", contract.symbol(),
+				"conid", contract.conid(),
+				"action", order.action(),
+				"quantity", order.totalQty(),
+				"price", order.lmtPrice(),
+				"commission", m_config.commission(), // not so good, we should get it from the order. pas
+				"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),
+				//"status",
+				//"ip_address",
+				//"city",
+				//"country",
+				// "crypto_id",
+				"currency", m_map.getEnumParam("currency", Stablecoin.values() )
+			);
+				// "tds", m_map.getDouble("tds") // add this, we should record it. pas
+				
+				// add orderId (client order id)
+				// stock fill size
+				
+				
+	}
 
 	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
 		// this could happen if our timeout is lower than the timeout of the IOC order,
@@ -352,7 +386,7 @@ public class OrderTransaction extends MyTransaction {
 	private void unwindOrder(Order order) {
 		try {
 			// don't unwind order in auto-fill mode which is for testing only
-			if (Main.m_config.autoFill() ) {
+			if (m_config.autoFill() ) {
 				S.out( "Not unwinding order in auto-fill mode");
 				return;
 			}
@@ -378,7 +412,7 @@ public class OrderTransaction extends MyTransaction {
 	}
 
 	private boolean fireblocks() throws RefException {
-		return Main.m_config.useFireblocks() && !m_map.getBool("noFireblocks");
+		return m_config.useFireblocks() && !m_map.getBool("noFireblocks");
 	}
 
 	String action() throws RefException { 

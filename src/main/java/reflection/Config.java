@@ -480,4 +480,10 @@ public class Config {
 	public String backendConfigTab() {
 		return backendConfigTab;
 	}
+	public double buySpread() {
+		return buySpread;
+	}
+	public double sellSpread() {
+		return sellSpread;
+	}
 }
