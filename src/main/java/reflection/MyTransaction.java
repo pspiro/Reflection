@@ -90,7 +90,7 @@ public abstract class MyTransaction {
 	            	}
 	            }
 
-	            S.out( "  received POST request " + jsonObject);
+	            S.out( "  parsed POST request " + jsonObject);
 			}
 			catch( RefException e) {  // catch the above require() call
 				throw e;
@@ -274,8 +274,8 @@ public abstract class MyTransaction {
 		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
 	}
 
-	/** Validate the cookie or throw exception, and update the access time on the cookie 
-	 * @param userAddr */
+	/** Validate the cookie or throw exception, and update the access time on the cookie.
+	 *  They could just send the nonce, it's the only part of the cookie we are using */
 	void validateCookie(String walletAddr) throws Exception {
 		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>

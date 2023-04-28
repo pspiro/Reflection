@@ -70,9 +70,9 @@ public class SiweTransaction extends MyTransaction {
 	public void handleSiweSignin() {
 		wrap( () -> {
             MyJsonObject signedMsg = new MyJsonObject(
-            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // or we could call parseMsg() here, but it's working this way
+            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // parseMsg() won't work here because it assumes all values are strings
             
-            S.out( "Received signed msg: %s", signedMsg);
+            S.out( "  received signed msg: %s", signedMsg);
 			
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
@@ -140,16 +140,29 @@ public class SiweTransaction extends MyTransaction {
 			// the cookie has two parts: tag=value
 			// the tag is __Host_authToken<address><chainid>
 			// the value is json with two fields, signature and message
+			// the value is URL-encoded and must be decoded
+			String[] split = cookie.split("=");
+			Main.require( split.length == 2, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
+			
+			String cookieHeader = split[0];
+			String cookieBody = URLDecoder.decode( split[1] );
+			S.out( "Cookie header: " + cookieHeader);
+			S.out( "Cookie body: " + cookieBody);
 
-			// parse cookie
-			Main.require( cookie.split("=").length >= 2, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
-
-			MyJsonObject signedSiweMsg = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
+			MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
 			MyJsonObject siweMsg = signedSiweMsg.getObj("message");
 			Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
 			
+			// match address from cookie header with address from cookie body
+			String headerAddress = cookieHeader.substring(16, 16+42);
+			String bodyAddress = siweMsg.getString("address");
+			if (!headerAddress.equalsIgnoreCase(bodyAddress) ) {
+				failedMe( "Header address (%s) does not match body address (%s)");
+				return;
+			}
+			
 			// find session object
-			Session session = sessionMap.get( siweMsg.getString("address") );
+			Session session = sessionMap.get( bodyAddress);
 			if (session == null) {
 				failedMe( "No session object found for address " + siweMsg.getString("address") );
 				return;
