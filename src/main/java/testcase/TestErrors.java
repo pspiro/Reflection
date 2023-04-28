@@ -8,7 +8,7 @@ import reflection.Util;
 import tw.util.S;
 
 public class TestErrors extends TestCase {
-	String text = "text";
+	String message = "message";
 	String code = "code";
 	
 	static String prod = "34.125.38.193";
@@ -26,23 +26,23 @@ public class TestErrors extends TestCase {
 		String data = "{ 'nomsg': 'nodata', }";
 		
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertEquals( "Param 'msg' is missing", map.get( text) ); 
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertEquals( "Param 'msg' is missing", map.getString(message) ); 
 	}
 	
 	public void testMissingMsg() throws Exception {
 		String data = "{ 'nomsg': 'nodata' }";
 		
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertEquals( "Param 'msg' is missing", map.get( text) ); 
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertEquals( "Param 'msg' is missing", map.getString(message) ); 
 	}
 	
 	public void testInvalidMsg() throws Exception {
 		String data = "{ 'msg': 'notamsg' }";
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertStartsWith( "Param 'msg' has invalid value", map.get( text) ); 
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertStartsWith( "Param 'msg' has invalid value", map.getString(message) ); 
 	}
 	
 	public static void assertStartsWith(String expected, Object actual) {
@@ -52,24 +52,24 @@ public class TestErrors extends TestCase {
 	public void testJson2() throws Exception {
 		String data = "{ 'msg': 'value' ";
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertTrue( ((String)(map.get( text))).startsWith( "Error parsing json") );
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertTrue( ((String)(map.getString(message))).startsWith( "Error parsing json") );
 	}
 	
 	// invalid conid
 	public void testCheckHours() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '-5' }";
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertEquals( "Param 'conid' must be positive integer", map.get( text) ); 
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertEquals( "Param 'conid' must be positive integer", map.getString(message) ); 
 	}
 	
 	// missing conid
 	public void testCheckHours2() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conidd': '33' }";
 		MyJsonObject map = sendData( data);
-		assertEquals( RefCode.INVALID_REQUEST.toString(), map.get( code) );
-		assertEquals( "Param 'conid' is missing", map.get( text) ); 
+		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
+		assertEquals( "Param 'conid' is missing", map.getString(message) ); 
 	}
 	
 	// no such conid
@@ -77,15 +77,15 @@ public class TestErrors extends TestCase {
 		String data = "{ 'msg': 'checkhours', 'conid': '83' }";
 		MyJsonObject map = sendData( data);
 		S.out( map);
-		assertEquals( RefCode.NO_SUCH_STOCK.toString(), map.get( code) );
-		assertEquals( "Unknown conid 83", map.get( text) ); 
+		assertEquals( RefCode.NO_SUCH_STOCK.toString(), map.getString(code) );
+		assertEquals( "Unknown conid 83", map.getString(message) ); 
 	}
 	
 	// all valid
 	public void testCheckHours4() throws Exception {
 		String data = "{ 'msg': 'checkhours', 'conid': '8314' }";
 		MyJsonObject map = sendData( data);
-		String hours = (String)map.get( "hours");
+		String hours = (String)map.getString( "hours");
 		assertTrue( hours.equals( "liquid") || hours.equals( "illiquid") || hours.equals( "closed") );
 	}
 	

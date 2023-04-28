@@ -307,5 +307,9 @@ public class Util {
 		return DateTimeFormatter.ISO_INSTANT.format( Instant.now() );
 	}
 
+	public static boolean isPrimitive(Class clas) {
+		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class || clas == Boolean.class || clas == Float.class;
+	}
+	
 	
 }

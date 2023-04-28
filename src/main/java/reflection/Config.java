@@ -11,6 +11,7 @@ import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
+import redis.MyRedis;
 import redis.clients.jedis.Jedis;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -218,7 +219,7 @@ public class Config {
 		
 		for (Field field : Config.class.getDeclaredFields() ) {
 			Object obj = field.get(this);
-			if (obj != null && isPrimitive(obj.getClass()) ) {
+			if (obj != null && Util.isPrimitive(obj.getClass()) ) {
 				list.add( field.getName() );
 				list.add(obj);
 			}
@@ -227,10 +228,6 @@ public class Config {
 		return Util.toJsonMsg( list.toArray() );
 	}
 
-	private boolean isPrimitive(Class clas) {
-		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class || clas == Boolean.class || clas == Float.class;
-	}
-	
 	/** Populate google sheet from database. */
 	void pullBackendConfig(MySqlConnection database) throws Exception {
 		Main.require( S.isNotNull( backendConfigTab), RefCode.UNKNOWN, "'backendConfigTab' setting missing from Reflection configuration");
@@ -469,8 +466,12 @@ public class Config {
 		return sessionTimeout;
 	}
 	
-	Jedis createJedis() {
+	public Jedis newJedis() {
 		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
+	}
+	
+	public MyRedis newRedis() {
+		return redisPort == 0 ? new MyRedis(redisHost) : new MyRedis(redisHost, redisPort);
 	}
 	
 	public MySqlConnection sqlConnection() throws SQLException {

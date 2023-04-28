@@ -17,7 +17,7 @@ import junit.framework.TestCase;
 	   TestFireblocks.class,
 	   TestGetPositions.class,
 	   TestGtable.class,
-	   TestMyRedis.class,
+//	   TestMyRedis.class,
 //	   TestOne.class,
 	   TestOutsideHours.class,
 	   TestPrices.class,

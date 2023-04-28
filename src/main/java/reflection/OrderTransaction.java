@@ -193,7 +193,7 @@ public class OrderTransaction extends MyTransaction {
 		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
 			String msg = timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.";
 			respondFull( 
-					Util.toJsonMsg( code, RefCode.REJECTED, text, msg),
+					Util.toJsonMsg( code, RefCode.REJECTED, message, msg),
 					400,
 					null);
 			log( LogType.REJECTED, "id=%s  orderQty=%s  orderPrc=%s  reason=%s",
@@ -279,8 +279,8 @@ public class OrderTransaction extends MyTransaction {
 				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				
-				// insertCryptoTrans(order, hash);
-				
+				// insert transaction into database
+				insertCryptoTrans(order, hash);
 				
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
@@ -341,32 +341,33 @@ public class OrderTransaction extends MyTransaction {
 		return new StockToken( m_stock.getSmartContractId() );
 	}
 
-	private void insertCryptoTrans(Order order, String transId) throws Exception {
-		
-		m_config.sqlConnection().insertPairs("crypto_transactions",
-				"crypto_transaction_id", transId,
-				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
-				"wallet_public_key", order.walletAddr(),
-				"symbol", m_stock.getSymbol(),
-				"conid", m_stock.getConid(),
-				"action", order.action(),
-				"quantity", order.totalQty(),
-				"price", order.lmtPrice(),
-				"commission", m_config.commission(), // not so good, we should get it from the order. pas
-				"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),
-				//"status",
-				//"ip_address",
-				//"city",
-				//"country",
-				// "crypto_id",
-				"currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString()
-			);
-				// "tds", m_map.getDouble("tds") // add this, we should record it. pas
-				
-				// add orderId (client order id)
-				// stock fill size
-				
-				
+	/** Insert record into crypto_transactions table.
+	 *  An error here should not disrupt the flow, we should just log it and move on */
+	private void insertCryptoTrans(Order order, String transId) {
+		try {
+			m_config.sqlConnection().insertPairs("crypto_transactions",
+					"crypto_transaction_id", transId,
+					"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
+					"wallet_public_key", order.walletAddr(),
+					"symbol", m_stock.getSymbol(),
+					"conid", m_stock.getConid(),
+					"action", order.action(),
+					"quantity", order.totalQty(),
+					"price", order.lmtPrice(),
+					"commission", m_config.commission(), // not so good, we should get it from the order. pas
+					"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),
+					//"status",
+					//"ip_address",
+					//"city",
+					//"country",
+					// "crypto_id",
+					"currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString()
+				);
+		}
+		catch (Exception e) {
+			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );
+			e.printStackTrace();
+		}
 	}
 
 	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status) throws Exception {

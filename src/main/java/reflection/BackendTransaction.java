@@ -171,7 +171,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			String key = m_map.get("key");
 			if (key != null) {
-				respond( key, m_main.type2Config().get(key) );
+				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {
 				respond(m_main.type2Config().toJsonObj() );

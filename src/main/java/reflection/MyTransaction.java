@@ -31,13 +31,13 @@ import util.LogType;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction {
-	enum Stablecoin {
+	public enum Stablecoin {
 		RUSD, BUSD
 	}
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
-	static final String text = "text";
+	static final String message = "message";
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
 	static final String ibeos = "IBEOS";  // IB exchange w/ 24 hour trading for ETF's

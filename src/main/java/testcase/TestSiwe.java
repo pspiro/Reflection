@@ -83,7 +83,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "past " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.readMyJsonObject().get("code") );
+		assertEquals( "TIMED_OUT", cli.readMyJsonObject().getString("code") );
 	}
 	
 	public void testSiweFailFut() throws Exception {
@@ -107,7 +107,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "fut " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.readMyJsonObject().get("code") );
+		assertEquals( "TIMED_OUT", cli.readMyJsonObject().getString("code") );
 	}
 	
 	public void testFailSig() throws Exception {
@@ -131,7 +131,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failSig " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "UNKNOWN", cli.readMyJsonObject().get("code") );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		assertEquals( "UNKNOWN", cli.readMyJsonObject().getString("code") );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
 	}
 	
 	public void testFailDup() throws Exception {

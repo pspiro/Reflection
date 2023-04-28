@@ -38,6 +38,6 @@ public class TestMany {
 //			S.out( map);
 //		}
 //		String code = (String)map.get( "code");
-//		String text = (String)map.get( "text");		
+//		String text = (String)map.get( "message");		
 	}
 }

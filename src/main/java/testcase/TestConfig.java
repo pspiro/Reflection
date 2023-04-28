@@ -20,20 +20,20 @@ public class TestConfig extends TestCase {
 	public void testConnection() throws Exception {
 		String data = "{ 'msg': 'getconnectionstatus' }"; 
 		MyJsonObject map = sendData( data);
-		assertEquals( "true", map.get("orderConnectedToTWS") );
-		assertEquals( "true", map.get("orderConnectedToBroker") );		
+		assertEquals( "true", map.getString("orderConnectedToTWS") );
+		assertEquals( "true", map.getString("orderConnectedToBroker") );		
 	}
 	
 	public void testRefAPIConfig() throws Exception {
 		String data = "{ 'msg': 'getconfig' }"; 
 		MyJsonObject map = sendData( data);
-		assertEquals( "18", map.get( "busdDecimals") );
+		assertEquals( "18", map.getString( "busdDecimals") );
 	}
 
 	public void testRefreshConfig() throws Exception {
 		String data = "{ 'msg': 'refreshconfig' }"; 
 		MyJsonObject map = sendData( data);
-		assertEquals( "OK", map.get( "code") );
+		assertEquals( "OK", map.getString( "code") );
 	}
 
 	public void testBackendConfigs() throws Exception {

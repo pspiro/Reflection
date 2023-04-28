@@ -41,14 +41,7 @@ public class Test {
 		// ----- Bob -----------------------------
 		
 		// only Bob can buy with BUSD because only Bob can approve that
-		
-		rusd.buyStockWithRusd(
-				userAddr,
-				0, 
-				stock, 
-				101);
-		System.exit(0);
-		
+				
 		// mint BUSD for user Bob
 		busd.mint(
 				accounts.getId( "Admin1"),

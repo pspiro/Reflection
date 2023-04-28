@@ -348,8 +348,11 @@ public class OldStyleTransaction extends MyTransaction {
 			jedis.hset( "265598", "ask", "165.13");
 			jedis.hset( "320227571", "bid", "318.57");
 			jedis.hset( "320227571", "ask", "328.57");
+
+			// update the prices on the objects
+			m_main.queryAllPrices();
 			
-			m_map.put("admin", "true");
+			// respond with prices
 			getAllPrices();
 		});
 	}

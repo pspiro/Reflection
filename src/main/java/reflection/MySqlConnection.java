@@ -60,14 +60,14 @@ public class MySqlConnection {
 	}
 	
 	public ResultSet query(String sql, Object... params) throws Exception {
-		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
+		Util.require( connection != null, "you must connect to the database");
 		String fullSql = String.format( sql, params);
 		return connection.createStatement().executeQuery(fullSql);
 	}
 	
 	/** Do not do Strin.format() substitutions on sql. */
 	public void execute( String sql) throws Exception {
-		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
+		Util.require( connection != null, "you must connect to the database");
 		connection.createStatement().executeUpdate(sql);
 	}
 	
@@ -100,7 +100,7 @@ public class MySqlConnection {
 	/** If column names are not given, you can (must) give any number of columns starting with the first.
 	 *  Single-quotes in the values are supported */  
 	public void insert( String table, String[] columnNames, Object... values) throws Exception {
-		Main.require( connection != null, RefCode.UNKNOWN, "you must connect to the database");
+		Util.require( connection != null, "you must connect to the database");
 
 		// build values string
 		StringBuilder valStr = new StringBuilder();
@@ -109,6 +109,7 @@ public class MySqlConnection {
 				valStr.append(',');
 			}
 			if (val != null) {
+				Util.require( Util.isPrimitive(val.getClass()), "Cannot insert non-primitive type " + val.getClass() );
 				String str = val instanceof String 
 						? String.format( "'%s'", Util.dblQ((String)val))  // double-up the single-quotes 
 						: val.toString(); 
@@ -122,7 +123,7 @@ public class MySqlConnection {
 		String sql;
 		
 		if (columnNames != null) {
-			Main.require( columnNames.length == values.length, RefCode.UNKNOWN, "mismatched column/values when inserting");
+			Util.require( columnNames.length == values.length, "mismatched column/values when inserting");
 
 			sql = String.format( "insert into %s (%s) values (%s)", 
 					table,

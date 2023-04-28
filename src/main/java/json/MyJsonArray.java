@@ -13,11 +13,6 @@ import tw.util.S;
 public class MyJsonArray implements Iterable<MyJsonObject> { 
 	private JSONArray m_ar;
 	
-	public static void main(String[] args) throws Exception {
-		MyJsonArray ar = new MyJsonArray(null);
-		ar.forEach( item -> item.get(null) );
-	}
-	
 	public static MyJsonArray parse( String text) throws Exception {
 		Util.require( isArray(text), "Error: not a json array: " + text);
 		return new MyJsonArray( new JSONParser().parse( text) );

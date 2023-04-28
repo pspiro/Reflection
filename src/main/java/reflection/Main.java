@@ -544,7 +544,7 @@ public class Main implements ITradeReportHandler {
 		// if you do that, make sure to synchronize the calls, and don't share w/ the existing MyRedis
 		// because you get: Cannot use Jedis when in Pipeline. Please use Pipeline or reset jedis state.
 		return new Prices( 
-				m_config.createJedis().hgetAll( String.valueOf(conid) ) 
+				m_config.newJedis().hgetAll( String.valueOf(conid) ) 
 		);
 	}
 
@@ -642,13 +642,6 @@ public class Main implements ITradeReportHandler {
 			log( LogType.ERROR, e.getMessage() );
 		}
 	}
-
-	// frontend expects an error msg like this
-//		{
-//		"statusCode": 400,
-//		"message": "Bad Request"
-//		}
-
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		new BackendTransaction(this, exch).respond( m_stocks);
