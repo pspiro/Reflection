@@ -484,4 +484,12 @@ public class Config {
 	public boolean isProduction() {
 		return "polygon".equals(moralisPlatform) || "MATIC".equals(platformBase);  
 	}
+	
+	public double buySpread() {
+		return buySpread;
+	}
+
+	public double sellSpread() {
+		return sellSpread;
+	}
 }

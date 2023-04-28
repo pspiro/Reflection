@@ -24,9 +24,15 @@ public class Transactions {
 
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
+		config.readFromSpreadsheet("Dt-config");
 		
-		getTransactions( Accounts.instance.getAddress( "Bob") );
+		
+		//getTransactions( Accounts.instance.getAddress( "Bob") );
+		String id = "52825b17-18e5-4148-9b52-91e2d1a0c841";
+		while (true) {
+			S.out( getTransaction(id) );
+			S.sleep(1000);
+		}
 	}
 
 	public static void getTransactions(String wallet) throws Exception {

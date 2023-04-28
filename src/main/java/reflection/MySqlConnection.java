@@ -72,9 +72,29 @@ public class MySqlConnection {
 	}
 	
 	/** Don't call execute because the sql string could have percent signs in it
+	 *  This version will break if table columns are changed
 	 *  (e.g. FAQ table. */
 	public void insert( String table, Object... values) throws Exception {
 		insert( table, null, values);
+	}
+
+	/** Don't call execute because the sql string could have percent signs in it
+	 *  (e.g. FAQ table. */
+	public void insertPairs( String table, Object... pairs) throws Exception {
+		Util.require( pairs.length % 2 == 0, "Error: MySqlConnection.insertPairs()");
+		
+		int len = pairs.length / 2;
+		
+		String[] names = new String[len];
+		Object[] vals = new Object[len];
+		
+		int n = 0;
+		for (int i = 0; i < len; i++) {
+			names[i] = (String)pairs[n++];
+			vals[i] = pairs[n++];
+		}
+		
+		insert( table, names, vals);
 	}
 
 	/** If column names are not given, you can (must) give any number of columns starting with the first.

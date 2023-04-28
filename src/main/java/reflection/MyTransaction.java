@@ -46,23 +46,23 @@ public abstract class MyTransaction {
 	protected HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
 	protected ParamMap m_map = new ParamMap();
-	protected String uri;
+	protected String m_uri;
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
 		m_exchange = exchange;
-		uri = Main.getURI(m_exchange);  // this prints it out
+		m_uri = Main.getURI(m_exchange);  // this prints it out
 	}
 
 	// you could encapsulate all these methods in MyExchange
 
 	/** keys are all lower case */
 	void parseMsg() throws Exception {
-		require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
+		require( m_uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			// get right side of ? in URL
-			String[] parts = uri.split("\\?");
+			String[] parts = m_uri.split("\\?");
 			if (parts.length >= 2) {
 				// build map of tag/value, expecting tag=value&tag=value
 				String[] params = parts[1].split( "&");
@@ -157,7 +157,7 @@ public abstract class MyTransaction {
 
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	void wrap( ExRunnable runnable) {
+	void wrap( ExRunnable runnable) {   // another name for this might be "mustRespond()"
 		try {
 			runnable.run();
 		}

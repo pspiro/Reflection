@@ -4,6 +4,10 @@ import static reflection.Main.log;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.sql.SQLException;
+
+import static reflection.Main.m_config;
+
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
@@ -277,6 +281,10 @@ public class OrderTransaction extends MyTransaction {
 				// polling every one second; either put them in a queue or use the Fireblocks
 				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
+				
+				//insertCryptoTrans(null, order, hash);
+				
+				
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
 			}
 			catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
@@ -285,22 +293,20 @@ public class OrderTransaction extends MyTransaction {
 
 				// try to figure out why the order failed
 				
-				// fireblocks has failed; try to determin why and respond() to client
+				// fireblocks has failed; try to determine why and respond() to client
 				wrap( () -> {
 					double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
-					String side = action();
-					String wallet = m_map.getParam("wallet_public_key");
 
 					// confirm that the user has enough stablecoin or stock token in their wallet
-					if (side == "buy") {
-						double balance = stablecoin().getPosition(wallet);
+					if (order.isBuy() ) {
+						double balance = stablecoin().getPosition( order.walletAddr() );
 						require( Util.isGtEq(balance, totalOrderAmt), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stablecoin balance (%s) is less than the total order amount (%s)", 
 								balance, totalOrderAmt);
 					}
 					else {
-						double balance = new StockToken(stockTokenAddress).getPosition(wallet);
+						double balance = new StockToken(stockTokenAddress).getPosition( order.walletAddr() );
 						require( Util.isGtEq(balance, desiredQuantity), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stock token balance (%s) is less than the order quantity (%s)", 
@@ -308,12 +314,13 @@ public class OrderTransaction extends MyTransaction {
 					}
 	
 					// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-					if (side == "buy" && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
-						double approvedAmt = m_config.busd().getAllowance( wallet, m_config.rusdAddr() ); 
+					if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+						double approvedAmt = m_config.busd().getAllowance( order.walletAddr(), m_config.rusdAddr() ); 
 						require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
 								"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
 					}
 
+					// we don't know why it failed, so throw the Fireblocks error
 					throw e;
 				});
 					
@@ -332,6 +339,34 @@ public class OrderTransaction extends MyTransaction {
 				m_config.commission(), tds, hash);
 	}	
 	
+
+	private void insertCryptoTrans(Contract contract, Order order, String transId) throws Exception {
+		
+		m_config.sqlConnection().insertPairs("crypto_transactions",
+				"crypto_transaction_id", transId,
+				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
+				"wallet_public_key", order.walletAddr(),
+				"symbol", contract.symbol(),
+				"conid", contract.conid(),
+				"action", order.action(),
+				"quantity", order.totalQty(),
+				"price", order.lmtPrice(),
+				"commission", m_config.commission(), // not so good, we should get it from the order. pas
+				"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),
+				//"status",
+				//"ip_address",
+				//"city",
+				//"country",
+				// "crypto_id",
+				"currency", m_map.getEnumParam("currency", Stablecoin.values() )
+			);
+				// "tds", m_map.getDouble("tds") // add this, we should record it. pas
+				
+				// add orderId (client order id)
+				// stock fill size
+				
+				
+	}
 
 	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
 		// this could happen if our timeout is lower than the timeout of the IOC order,

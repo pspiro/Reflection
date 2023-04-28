@@ -35,7 +35,7 @@ public class BackendTransaction extends MyTransaction {
 	public void handleReqPositions() {
 		wrap( () -> {
 			// get wallet address (last token in URI)
-			String address = Util.getLastToken(uri, "/");
+			String address = Util.getLastToken(m_uri, "/");
 			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
 			// query positions from Moralis
@@ -81,9 +81,9 @@ public class BackendTransaction extends MyTransaction {
 	 */
 	public void handleGetStockWithPrice() {
 		wrap( () -> {
-			String last = Util.getLastToken(uri, "/");
-			require( !last.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
-			int conid = Integer.valueOf(last);
+			String conidStr = Util.getLastToken(m_uri, "/");
+			require( !conidStr.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
+			int conid = Integer.valueOf(conidStr);
 			
 			Stock stock = m_main.getStock(conid);
 			
@@ -107,7 +107,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Backend-style msg; conid is last parameter */
 	public void handleGetPrice() {
 		wrap( () -> {
-			int conid = Integer.valueOf( Util.getLastToken(uri, "/") );
+			int conid = Integer.valueOf( Util.getLastToken(m_uri, "/") );
 			returnPrice(conid);
 		});
 	}
@@ -115,7 +115,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			String userAddr = Util.getLastToken(uri, "/");
+			String userAddr = Util.getLastToken(m_uri, "/");
 			require( Util.isValidAddress(userAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
 			validateCookie(userAddr);
@@ -179,23 +179,43 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	@SuppressWarnings("unchecked")
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
 			
-			String addr = m_map.get("wallet_public_key");
-			Main.require( S.isNull(addr) || Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", addr);
+			String wallet = m_map.get("wallet_public_key");
+			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
 			
-			String where = S.isNotNull(addr) 
-					? String.format( "where lower(wallet_public_key)='%s'", addr.toLowerCase() )
+			String where = S.isNotNull(wallet) 
+					? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
 					: "";
-			JSONArray json = m_main.sqlConnection().queryToJson( "select * from crypto_transactions %s order by created_at desc", where);
-			json.forEach( obj -> {
-				((HashMap)obj).remove("created_at");
-				((HashMap)obj).remove("updated_at");
-			});
-			respond(json);
+			respond(trim(m_main.sqlConnection().queryToJson( 
+					"select * from crypto_transactions %s order by created_at desc", 
+					where) ) );
 		});
 	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private JSONArray trim(JSONArray json) {
+		json.forEach( obj -> {
+			((HashMap)obj).remove("created_at");
+			((HashMap)obj).remove("updated_at");
+		});
+		return json;
+	}
+
+	public void handleGetUserByWallet() {
+		wrap( () -> {
+			String wallet = Util.getLastToken(m_uri, "/");
+			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
+			
+			JSONArray ar = m_main.sqlConnection().queryToJson(
+					"select * from users where lower(wallet_public_key) = '%s'", 
+					wallet.toLowerCase() );
+			Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", wallet);
+			
+			respond( (JSONObject)trim( ar).get(0) );
+		});
+	}
+	
 }
