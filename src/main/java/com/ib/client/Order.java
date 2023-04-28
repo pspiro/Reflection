@@ -17,7 +17,6 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.client.Types.TriggerMethod;
 import com.ib.client.Types.VolatilityType;
 
-import fireblocks.StockToken;
 import tw.util.S;
 
 public class Order {
@@ -230,7 +229,6 @@ public class Order {
     private double  m_midOffsetAtHalf;
 	private String m_walletAddr;
 	private String m_stablecoinAddr;
-	private String m_stockTokenAddr;
 	
 	// getters
     public Action  action()                         { return Action.get(m_action); }
@@ -791,13 +789,6 @@ public class Order {
 	}
 	public String stablecoinAddr() {
 		return m_stablecoinAddr;
-	}
-	public StockToken newStockToken() {
-		return new StockToken( m_stockTokenAddr);
-	}
-	
-	public void stockTokenAddr(String v) {
-		m_stockTokenAddr = v;
 	}
 	
 	/** Return totalQuantity rounded to three decimal places. */

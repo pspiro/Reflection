@@ -77,6 +77,9 @@ public class OldStyleTransaction extends MyTransaction {
 			case mint:
 				mint();
 				break;
+			case getPrice:
+				getPrice();
+				break;
 			case getAllPrices:
 				getAllPrices();
 				break;
@@ -322,6 +325,11 @@ public class OldStyleTransaction extends MyTransaction {
 			}
 		});
 	}
+	
+	private void getPrice() throws RefException {
+		int conid = m_map.getRequiredInt( "conid");
+		returnPrice(conid);
+	}	
 
 	/** Top-level method; set some prices for use in test systems */
 	void onSeedPrices() {

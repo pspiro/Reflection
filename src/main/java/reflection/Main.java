@@ -236,7 +236,10 @@ public class Main implements ITradeReportHandler {
 				int conid = Integer.valueOf( row.getString("Conid") );
 
 				stock.put( "conid", String.valueOf( conid) );
-				stock.put( "smartcontractid", row.getString("TokenAddress") );
+				
+				String address = row.getString("TokenAddress");
+				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
+				stock.put( "smartcontractid", address);
 				
 				ListEntry masterRow = map.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
@@ -261,10 +264,6 @@ public class Main implements ITradeReportHandler {
 
 	String getExchange( int conid) throws RefException {
 		return getStock(conid).getString("exchange");
-	}
-
-	String getSmartContractId( int conid) throws RefException {
-		return getStock(conid).getString("smartcontractid");
 	}
 
 	String getType( int conid) throws RefException {

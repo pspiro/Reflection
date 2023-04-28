@@ -25,7 +25,7 @@ import util.LogType;
 
 public class OrderTransaction extends MyTransaction {
 	private double desiredQuantity;
-	private String stockTokenAddress;
+	private Stock m_stock;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -46,7 +46,7 @@ public class OrderTransaction extends MyTransaction {
 
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
-		m_main.getStock(conid);  // throws exception if conid is invalid
+		m_stock = m_main.getStock(conid);  // throws exception if conid is invalid
 
 		String side = action();
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
@@ -61,8 +61,6 @@ public class OrderTransaction extends MyTransaction {
 		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
 		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
 		
-		stockTokenAddress = m_main.getSmartContractId(conid);
-		Main.require(Util.isValidAddress(stockTokenAddress), RefCode.INVALID_REQUEST, "Invalid stock token address %s", stockTokenAddress);
 		
 		String wallet = m_map.getRequiredParam("wallet_public_key");
 		require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
@@ -94,7 +92,6 @@ public class OrderTransaction extends MyTransaction {
 		order.transmit( true);
 		order.outsideRth( true);
 		order.walletAddr( wallet);
-		order.stockTokenAddr(stockTokenAddress);
 		
 		// request contract details (prints to stdout)
 		insideAnyHours( contract, inside -> {
@@ -246,7 +243,7 @@ public class OrderTransaction extends MyTransaction {
 						id = m_config.rusd().buyStockWithRusd(
 								order.walletAddr(), 
 								stablecoinAmt,
-								order.newStockToken(),
+								newStockToken(),
 								stockTokenQty
 						);
 					}
@@ -257,7 +254,7 @@ public class OrderTransaction extends MyTransaction {
 								order.walletAddr(),
 								m_config.busd(),
 								stablecoinAmt,
-								order.newStockToken(), 
+								newStockToken(), 
 								stockTokenQty
 						);
 					}
@@ -268,7 +265,7 @@ public class OrderTransaction extends MyTransaction {
 					id = m_config.rusd().sellStockForRusd(
 							order.walletAddr(),
 							stablecoinAmt,
-							order.newStockToken(),
+							newStockToken(),
 							stockTokenQty
 					);
 				}
@@ -282,7 +279,7 @@ public class OrderTransaction extends MyTransaction {
 				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				
-				//insertCryptoTrans(null, order, hash);
+				insertCryptoTrans(order, hash);
 				
 				
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
@@ -306,7 +303,7 @@ public class OrderTransaction extends MyTransaction {
 								balance, totalOrderAmt);
 					}
 					else {
-						double balance = new StockToken(stockTokenAddress).getPosition( order.walletAddr() );
+						double balance = newStockToken().getPosition( order.walletAddr() );
 						require( Util.isGtEq(balance, desiredQuantity), 
 								RefCode.INSUFFICIENT_FUNDS,
 								"The stock token balance (%s) is less than the order quantity (%s)", 
@@ -340,14 +337,18 @@ public class OrderTransaction extends MyTransaction {
 	}	
 	
 
-	private void insertCryptoTrans(Contract contract, Order order, String transId) throws Exception {
+	private StockToken newStockToken() {
+		return new StockToken( m_stock.getSmartContractId() );
+	}
+
+	private void insertCryptoTrans(Order order, String transId) throws Exception {
 		
 		m_config.sqlConnection().insertPairs("crypto_transactions",
 				"crypto_transaction_id", transId,
 				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
 				"wallet_public_key", order.walletAddr(),
-				"symbol", contract.symbol(),
-				"conid", contract.conid(),
+				"symbol", m_stock.getSymbol(),
+				"conid", m_stock.getConid(),
 				"action", order.action(),
 				"quantity", order.totalQty(),
 				"price", order.lmtPrice(),

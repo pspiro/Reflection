@@ -34,9 +34,23 @@ public class Stock extends JSONObject {
 		put( "ask", Main.round( prices.anyAsk() ) );
 	}
 
-	Prices prices() { return m_prices; }
+	Prices prices() { 
+		return m_prices; 
+	}
 
 	public String getString(String key) {
 		return (String)super.get(key);
+	}
+	
+	public String getSmartContractId() {
+		return getString("smartcontractid");
+	}
+
+	public String getSymbol() {
+		return getString("symbol");
+	}
+
+	public String getConid() {
+		return getString("conid");
 	}
 }
