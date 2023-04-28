@@ -169,6 +169,7 @@ public class SiweTransaction extends MyTransaction {
 			// update expiration time
 			session.update();
 			
+			S.out( "  loggedIn=true");
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
@@ -182,6 +183,7 @@ public class SiweTransaction extends MyTransaction {
 	}
 	
 	void failedMe(String text) {
+		S.out( "  " + text);
 		respondFull( Util.toJsonMsg( "loggedIn", false, "message", text), 400, null);
 	}
 
