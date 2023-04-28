@@ -279,7 +279,7 @@ public class OrderTransaction extends MyTransaction {
 				// callback mechanism
 				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				
-				insertCryptoTrans(order, hash);
+				// insertCryptoTrans(order, hash);
 				
 				
 				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
@@ -359,7 +359,7 @@ public class OrderTransaction extends MyTransaction {
 				//"city",
 				//"country",
 				// "crypto_id",
-				"currency", m_map.getEnumParam("currency", Stablecoin.values() )
+				"currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString()
 			);
 				// "tds", m_map.getDouble("tds") // add this, we should record it. pas
 				
