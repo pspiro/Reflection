@@ -13,6 +13,7 @@ import com.moonstoneid.siwe.error.SiweException;
 import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import reflection.Config;
 import reflection.SiweUtil;
 import tw.util.S;
 

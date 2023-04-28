@@ -63,6 +63,7 @@ public class EReader extends Thread {
             }
         }
         catch ( Exception ex ) {
+        	// sometimes it goes into an infinite loop here with error CONNECT_FAIL, it retries every one second but never succeeds even though tws is running. pas
         	//if (parent().isConnected()) {
         		if( ex instanceof EOFException ) {
             		eWrapper().error(EClientErrors.NO_VALID_ID, EClientErrors.BAD_LENGTH.code(),

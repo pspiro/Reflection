@@ -70,7 +70,7 @@ public class SiweTransaction extends MyTransaction {
 	public void handleSiweSignin() {
 		wrap( () -> {
             MyJsonObject signedMsg = new MyJsonObject(
-            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );
+            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // or we could call parseMsg() here, but it's working this way
             
             S.out( "Received signed msg: %s", signedMsg);
 			
@@ -97,8 +97,9 @@ public class SiweTransaction extends MyTransaction {
 			Main.require(
 					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",
-					issuedAt, now, Main.m_config.siweTimeout() );
+					"Oops, you waited a bit too long; please sign in again");
+					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
+					//issuedAt, now, Main.m_config.siweTimeout() );
 			Main.require(
 					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,

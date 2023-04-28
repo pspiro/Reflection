@@ -314,7 +314,8 @@ public abstract class MyTransaction {
 		Main.require( 
 				walletAddr == null || walletAddr.equalsIgnoreCase(siweMsg.getString("address") ), 
 				RefCode.VALIDATION_FAILED, 
-				"The address on the message does not match the address of the session");
+				"The address on the message (%s) does not match the address of the session (%s)",
+				walletAddr, siweMsg.getString("address") );
 		
 		// update expiration time
 		session.update();

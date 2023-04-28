@@ -40,7 +40,7 @@ public class OrderTransaction extends MyTransaction {
 		});
     }
 
-	void order() throws Exception {
+	private void order() throws Exception {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 

@@ -140,6 +140,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> handleMint(exch) );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
+		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );

@@ -227,8 +227,7 @@ public class Order {
     private double  m_competeAgainstBestOffset;
     private double  m_midOffsetAtWhole;
     private double  m_midOffsetAtHalf;
-	private String m_walletAddr;
-	private String m_stablecoinAddr;
+	private String m_walletAddr; // you could move this to OrderTransaction if desired, it's not really part of the order
 	
 	// getters
     public Action  action()                         { return Action.get(m_action); }
@@ -786,9 +785,6 @@ public class Order {
 	public String getCheckLog(Contract contract) {
 		return String.format( "%s %.3f %s (%s) at %.2f",
 				m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
-	}
-	public String stablecoinAddr() {
-		return m_stablecoinAddr;
 	}
 	
 	/** Return totalQuantity rounded to three decimal places. */

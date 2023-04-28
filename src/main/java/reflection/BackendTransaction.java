@@ -115,24 +115,24 @@ public class BackendTransaction extends MyTransaction {
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			String userAddr = Util.getLastToken(m_uri, "/");
-			require( Util.isValidAddress(userAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			String walletAddr = Util.getLastToken(m_uri, "/");
+			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
-			validateCookie(userAddr);
+			validateCookie(walletAddr);
 
 			Rusd rusd = Main.m_config.rusd();
 			Busd busd = Main.m_config.busd();
 
 			setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
-			double rusdPos = rusd.getPosition(userAddr);
+			double rusdPos = rusd.getPosition(walletAddr);
 			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			
-			log( LogType.REDEEM, "%s is selling %s RUSD", userAddr, rusdPos);
+			log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
 
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
-				rusd.sellRusd(userAddr, Main.m_config.busd(), rusdPos)
+				rusd.sellRusd(walletAddr, Main.m_config.busd(), rusdPos)
 					.waitForHash();
 				
 				// QUESTION: can we send back a partial response before the hash is ready using chunks or WebSockets?
@@ -142,7 +142,7 @@ public class BackendTransaction extends MyTransaction {
 			else {
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
-						userAddr, rusdPos, busdPos, (rusdPos - busdPos) );
+						walletAddr, rusdPos, busdPos, (rusdPos - busdPos) );
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
 				throw new RefException( RefCode.INSUFFICIENT_FUNDS, str);
 			}
@@ -216,6 +216,11 @@ public class BackendTransaction extends MyTransaction {
 			
 			respond( (JSONObject)trim( ar).get(0) );
 		});
+	}
+
+	public void handleWalletUpdate() {
+		S.out( "  ignoring");
+		respondOk();
 	}
 	
 }
