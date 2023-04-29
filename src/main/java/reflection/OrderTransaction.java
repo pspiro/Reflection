@@ -351,7 +351,7 @@ public class OrderTransaction extends MyTransaction {
 					"wallet_public_key", order.walletAddr(),
 					"symbol", m_stock.getSymbol(),
 					"conid", m_stock.getConid(),
-					"action", order.action(),
+					"action", order.action().toString(),
 					"quantity", order.totalQty(),
 					"price", order.lmtPrice(),
 					"commission", m_config.commission(), // not so good, we should get it from the order. pas
