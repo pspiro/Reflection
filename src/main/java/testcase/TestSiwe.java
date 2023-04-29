@@ -12,12 +12,10 @@ import com.moonstoneid.siwe.error.SiweException;
 
 import http.MyHttpClient;
 import json.MyJsonObject;
-import junit.framework.TestCase;
-import reflection.Config;
 import reflection.SiweUtil;
 import tw.util.S;
 
-public class TestSiwe extends TestCase {
+public class TestSiwe extends MyTestCase {
 	/* 
 	 * Client			Server
 	 * 		siweInit -->
@@ -84,7 +82,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "past " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.readMyJsonObject().getString("code") );
+		assertEquals( "TIMED_OUT", cli.getCode() );
 	}
 	
 	public void testSiweFailFut() throws Exception {
@@ -108,7 +106,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "fut " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.readMyJsonObject().getString("code") );
+		assertEquals( "TIMED_OUT", cli.getCode() );
 	}
 	
 	public void testFailSig() throws Exception {
@@ -132,7 +130,7 @@ public class TestSiwe extends TestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failSig " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "UNKNOWN", cli.readMyJsonObject().getString("code") );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		assertEquals( "UNKNOWN", cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
 	}
 	
 	public void testFailDup() throws Exception {
@@ -165,31 +163,31 @@ public class TestSiwe extends TestCase {
 	}
 	
 	public void testFailTimeout() throws Exception {
-		// test siwe/init
+		// send siwe/init
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );
-		
+
+		// create siwe message
 		SiweMessage siweMsg = msg(nonce, Instant.now() );
-		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
-		// siwe/signin
+		// send siwe/signin
 		cli = new MyHttpClient("localhost", 8383);
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		assertEquals( 200, cli.getResponseCode() );
 		String cookie = cli.getHeaders().get("set-cookie");
 		
-		// siwe/me
+		// send siwe/me
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
 		assertEquals( 200, cli.getResponseCode() );
 
-		S.sleep(2000);
+		S.sleep(3000);
 		
 		// fail siwe/me
 		cli = new MyHttpClient("localhost", 8383);
@@ -205,9 +203,7 @@ public class TestSiwe extends TestCase {
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
-		
-		// confirm nonce
-		assertEquals( 20, nonce.length() );
+		assertEquals( 20, nonce.length() );  // confirm nonce
 		
 		SiweMessage siweMsg = msg(nonce, Instant.now() );
 		
@@ -239,38 +235,71 @@ public class TestSiwe extends TestCase {
 		MyJsonObject meSiweMsg = meResponseMsg.getObj("message");
 		assertEquals( myWalletAddress, meSiweMsg.getString("address") );
 		assertEquals( nonce, meSiweMsg.getString("nonce"));
-		
-		// test siwe/me w/ no cookie
-		cli = new MyHttpClient("localhost", 8383);
-		cli.get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "No cookie header in request", cli.readMyJsonObject().getString("message") );
-		
-		// test siwe/me wrong address
-		JSONObject badSignedObj = MyJsonObject.parse("""
-				 { "signature": "signature", "message": { "address": "0xwrongaddress" } }
-				""").toJsonObj();
-		
-		String badCookie = String.format( "__Host_authToken%s%s=%s", "0xwrongaddress", 5, URLEncoder.encode(badSignedObj.toString() ) );
-		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("cookie", badCookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "No session object found for address 0xwrongaddress", cli.readMyJsonObject().getString("message") );
-		
-		// test siwe/me wrong nonce
-		badSignedObj = MyJsonObject.parse("""
-				 { "signature": "signature", "message": { "address": "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "nonce": "badnonce" } }
-				""").toJsonObj();		
-		badCookie = String.format( "__Host_authToken%s%s=%s", "0xwrongaddress", 5, URLEncoder.encode(badSignedObj.toString() ) );
-		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("cookie", badCookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "Nonce", cli.readMyJsonObject().getString("message").substring(0,5) );
-
+				
 		// test another successful me
 		S.sleep(500);
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
 		assertEquals( 200, cli.getResponseCode() );
 	}
+	
+	public void testFailCookie() throws Exception {
+		// test siwe/init
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/init");
+		String nonce = cli.readMyJsonObject().getString("nonce");
+		SiweMessage siweMsg = msg(nonce, Instant.now() );
+
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		cli = new MyHttpClient("localhost", 8383);
+		cli.post("/siwe/signin", signedMsgSent.toString() );
+		String cookie = cli.getHeaders().get("set-cookie");
+		MyJsonObject signedMsgRec = MyJsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
+		MyJsonObject msg3 = signedMsgRec.getObj("message");
+
+		// test siwe/me w/ no cookie
+		cli = new MyHttpClient("localhost", 8383);
+		cli.get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( "No cookie header in /siwe/me request", cli.getMessage() );
+		
+		// test mismatched cookie header and body address
+		JSONObject badSignedObj = MyJsonObject.parse("""
+				 { "signature": "signature", "message": { "address": "0x0000000000000000000000000000000000000001" } }
+				""").toJsonObj();
+		
+		String badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000005=%s", URLEncoder.encode(badSignedObj.toString() ) );
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		startsWith( "Header address", cli.getMessage() );
+
+		// test cookie not found
+		badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000015=%s", URLEncoder.encode(badSignedObj.toString() ) );
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		startsWith( "No session object found", cli.getMessage() );
+		
+		// test siwe/me wrong nonce
+		badSignedObj = MyJsonObject.parse("""
+				 { "signature": "signature", "message": { "address": "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "nonce": "badnonce" } }
+				""").toJsonObj();		
+		badCookie = String.format( "__Host_authToken0xb016711702D3302ceF6cEb62419abBeF5c44450e5=%s", URLEncoder.encode(badSignedObj.toString() ) );
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		assertEquals( 400, cli.getResponseCode() );
+		startsWith( "Cookie nonce", cli.getMessage() );
+
+		// test a successful me
+		S.sleep(500);
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		assertEquals( 200, cli.getResponseCode() );
+	}
+	
 }

@@ -194,4 +194,13 @@ public class MyHttpClient {
 		read();
 		return m_responseCode;
 	}
+
+	/** The messages can change; it's better to create a custom code and use getCode() */
+	public String getMessage() throws Exception {
+		return readMyJsonObject().getString("message");
+	}
+	
+	public String getCode() throws Exception {
+		return readMyJsonObject().getString("code");
+	}
 }

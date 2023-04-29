@@ -13,10 +13,9 @@ import reflection.RefCode;
 import reflection.Util;
 import tw.util.S;
 
-public class TestOrder extends TestCase {
+public class TestOrder extends MyTestCase {
 	static double curPrice = 128.15; // Double.valueOf( jedis.hget("8314", "last") );
 	static double approved;
-	static Config config;
 	
 	static {
 		try {
@@ -24,7 +23,6 @@ public class TestOrder extends TestCase {
 //			MyHttpClient cli = new MyHttpClient("localhost", 8383);
 //			cli.get("?msg=seedPrices");
 
-			config = Config.readFrom("Dt-config");
 			approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {

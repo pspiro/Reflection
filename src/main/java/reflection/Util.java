@@ -311,5 +311,9 @@ public class Util {
 		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class || clas == Boolean.class || clas == Float.class;
 	}
 	
+	public static String left( String str, int max) {
+		return str.substring( 0, Math.min(str.length(), max) );
+	}
+	
 	
 }

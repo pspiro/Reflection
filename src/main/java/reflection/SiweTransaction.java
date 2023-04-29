@@ -129,13 +129,8 @@ public class SiweTransaction extends MyTransaction {
 		wrap( () -> {
 			// check for cookie header
 			String cookie = findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+			Main.require( cookie != null, RefCode.INVALID_REQUEST, "No cookie header in /siwe/me request");
 			S.out( "  cookie:" + cookie);
-			
-			// no cookie 
-			if (cookie == null) {
-				failedMe( "No cookie header in request");
-				return;
-			}
 			
 			// the cookie has two parts: tag=value
 			// the tag is __Host_authToken<address><chainid>
@@ -154,31 +149,29 @@ public class SiweTransaction extends MyTransaction {
 			Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
 			
 			// match address from cookie header with address from cookie body
-			String headerAddress = cookieHeader.substring(16, 16+42);
+			String headerAddress = cookieHeader.length() >= 58 ? cookieHeader.substring(16, 58) : "";
 			String bodyAddress = siweMsg.getString("address");
-			if (!headerAddress.equalsIgnoreCase(bodyAddress) ) {
-				failedMe( "Header address (%s) does not match body address (%s)");
-				return;
-			}
+			Main.require( 
+					headerAddress.equalsIgnoreCase(bodyAddress), 
+					RefCode.INVALID_REQUEST,
+					"Header address (%s) does not match body address (%s)",
+					headerAddress, bodyAddress);
 			
 			// find session object
 			Session session = sessionMap.get( bodyAddress);
-			if (session == null) {
-				failedMe( "No session object found for address " + siweMsg.getString("address") );
-				return;
-			}
+			Main.require( session != null, RefCode.INVALID_REQUEST, "No session object found for address " + siweMsg.getString("address") );
 			
 			// validate nonce
-			if (!session.nonce().equals( siweMsg.getString("nonce") ) ) {
-				failedMe( "Nonce " + siweMsg.getString("nonce") + " does not match " + session.nonce() );
-				return;
-			}
+			Main.require( 
+					session.nonce().equals( siweMsg.getString("nonce") ),
+					RefCode.INVALID_REQUEST,
+					"Cookie nonce (%s) does not match session nonce (%s)",
+					siweMsg.getString("nonce"), session.nonce() );
 			
 			// check expiration
-			if (System.currentTimeMillis() - session.lastTime() > Main.m_config.sessionTimeout() ) {
-				failedMe( "Session has expired");
-				return;
-			}
+			Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
+					RefCode.SESSION_EXPIRED,
+					"Session has expired");
 			
 			// update expiration time
 			session.update();
@@ -189,7 +182,6 @@ public class SiweTransaction extends MyTransaction {
 			response.put("message", siweMsg);
 			respond(response);
 		});
-
 	}
 	
 	void handleSiweSignout() {
@@ -201,10 +193,6 @@ public class SiweTransaction extends MyTransaction {
 		respondFull( Util.toJsonMsg( "loggedIn", false, "message", text), 400, null);
 	}
 
-	public static void main(String[] args) {
-		
-	}
-	
 	/** Find the cookie header that starts with name */
 	static String findCookie(Headers headers, String name) {
 		if (headers != null) {
