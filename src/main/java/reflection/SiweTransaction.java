@@ -106,9 +106,14 @@ public class SiweTransaction extends MyTransaction {
 					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
 					issuedAt, now, Main.m_config.siweTimeout() );
 			
-			// store session object; let the nonce be the key for the session 
+			Main.require(
+					S.isNotNull( siweMsg.getAddress() ),
+					RefCode.INVALID_REQUEST,
+					"Null address during siwe/signin");
+			
+			// store session object; let the wallet address be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
-			sessionMap.put( siweMsg.getAddress(), session);
+			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
 		
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
@@ -174,7 +179,7 @@ public class SiweTransaction extends MyTransaction {
 				wallet, bodyAddress);
 		
 		// find session object
-		Session session = sessionMap.get( bodyAddress);
+		Session session = sessionMap.get( bodyAddress.toLowerCase() );
 		Main.require( session != null, RefCode.VALIDATION_FAILED, "No session object found for address " + siweMsg.getString("address") );
 		
 		// validate nonce
