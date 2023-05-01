@@ -182,16 +182,15 @@ public class BackendTransaction extends MyTransaction {
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
-			
 			String wallet = m_map.get("wallet_public_key");
 			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
-			
-			String where = S.isNotNull(wallet) 
-					? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
-					: "";
-			respond(trim(m_main.sqlConnection().queryToJson( 
-					"select * from crypto_transactions %s order by created_at desc", 
-					where) ) );
+
+			m_main.sqlConnection( conn -> {
+				String where = S.isNotNull(wallet) 
+						? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
+						: "";
+				respond(trim(conn.queryToJson("select * from crypto_transactions %s order by created_at desc", where) ) );
+			});
 		});
 	}
 
@@ -209,12 +208,14 @@ public class BackendTransaction extends MyTransaction {
 			String wallet = Util.getLastToken(m_uri, "/");
 			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
 			
-			JSONArray ar = m_main.sqlConnection().queryToJson(
-					"select * from users where lower(wallet_public_key) = '%s'", 
-					wallet.toLowerCase() );
-			Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", wallet);
-			
-			respond( (JSONObject)trim( ar).get(0) );
+			m_main.sqlConnection( conn -> {
+				JSONArray ar = conn.queryToJson(
+						"select * from users where lower(wallet_public_key) = '%s'", 
+						wallet.toLowerCase() );
+				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", wallet);
+				
+				respond( (JSONObject)trim( ar).get(0) );
+			});
 		});
 	}
 

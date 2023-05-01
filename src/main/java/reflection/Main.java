@@ -38,6 +38,7 @@ import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
+import reflection.MySqlConnection.SqlRunnable;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -107,9 +108,9 @@ public class Main implements ITradeReportHandler {
 			Accounts.instance.setAdmins( "Admin1,Admin2");  // better to pull from config or just use Admin*
 		}
 
-		// check database connection and read faqs
+		// check database connection to make sure it's there
 		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
-		sqlConnection();
+		sqlConnection( conn -> {} );
 
 		// if port is zero, host contains connection string, otherwise host and port are used
 		if (m_config.redisPort() == 0) {
@@ -491,7 +492,7 @@ public class Main implements ITradeReportHandler {
 		try {
 			log( LogType.TRADE, "id=%s  %s %s shares of %s (%s) at %s on %s  %s %s %s %s %s", msgValues);
 
-			sqlConnection().insert( "trades", dbValues);
+			sqlConnection( conn -> conn.insert( "trades", dbValues) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -512,15 +513,15 @@ public class Main implements ITradeReportHandler {
 					rpt.currency()
 			};
 
-			sqlConnection().insert( "commissions", vals);
+			sqlConnection( conn -> conn.insert( "commissions", vals) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	/** This creates a new connection every time. You could take approach like Redis where you keep it open */
-	MySqlConnection sqlConnection() throws SQLException {
-		return m_config.sqlConnection();
+	void sqlConnection(SqlRunnable runnable) throws Exception {
+		m_config.sqlConnection(runnable);
 	}
 
 	public ApiController orderController() {

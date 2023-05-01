@@ -345,7 +345,8 @@ public class OrderTransaction extends MyTransaction {
 	 *  An error here should not disrupt the flow, we should just log it and move on */
 	private void insertCryptoTrans(Order order, String transId) {
 		try {
-			m_config.sqlConnection().insertPairs("crypto_transactions",
+			m_config.sqlConnection( conn -> 
+				conn.insertPairs("crypto_transactions",
 					"crypto_transaction_id", transId,
 					"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
 					"wallet_public_key", order.walletAddr(),
@@ -362,7 +363,8 @@ public class OrderTransaction extends MyTransaction {
 					//"country",
 					// "crypto_id",
 					"currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString()
-				);
+				)
+			);
 		}
 		catch (Exception e) {
 			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );

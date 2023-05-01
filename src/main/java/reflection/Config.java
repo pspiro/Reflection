@@ -13,6 +13,7 @@ import fireblocks.Rusd;
 import junit.framework.TestCase;
 import redis.MyRedis;
 import redis.clients.jedis.Jedis;
+import reflection.MySqlConnection.SqlRunnable;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
@@ -474,8 +475,10 @@ public class Config {
 		return redisPort == 0 ? new MyRedis(redisHost) : new MyRedis(redisHost, redisPort);
 	}
 	
-	public MySqlConnection sqlConnection() throws SQLException {
-		return new MySqlConnection().connect( postgresUrl, postgresUser, postgresPassword );
+	public void sqlConnection(SqlRunnable runnable) throws Exception {
+		try ( MySqlConnection conn = new MySqlConnection().connect( postgresUrl, postgresUser, postgresPassword ) ) {
+			runnable.run(conn);
+		}
 	}
 	
 	public String backendConfigTab() {

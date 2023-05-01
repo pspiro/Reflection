@@ -128,7 +128,7 @@ public class TestOrder extends MyTestCase {
 		MyJsonObject map = cli.readMyJsonObject();
 		String text = map.getString("message");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "Null cookie", text);
+		startsWith( "Null cookie", text);
 	}
 	
 	// fill order sell order

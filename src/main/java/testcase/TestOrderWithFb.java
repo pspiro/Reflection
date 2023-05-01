@@ -48,7 +48,8 @@ public class TestOrderWithFb extends TestCase {
 
 	/** test inserting and reading back entry to crypto_transactions table */
 	public void testCryptoTrans() throws Exception {
-		config.sqlConnection().insertPairs("crypto_transactions",
+		config.sqlConnection( conn -> {
+			conn.insertPairs("crypto_transactions",
 				"crypto_transaction_id", "trans id",
 				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
 				"wallet_public_key", Cookie.wallet,
@@ -59,12 +60,11 @@ public class TestOrderWithFb extends TestCase {
 				"price", 34.567,
 				"commission", .1, // not so good, we should get it from the order. pas
 				"spread", config.buySpread(),
-				"currency", Stablecoin.BUSD.toString()
-			);
+				"currency", Stablecoin.BUSD.toString() );
 		
-		ResultSet ts = config.sqlConnection().queryNext( "select * from crypto_transactions where id = (select max(id) from crypto_transactions)");
-		assertEquals("SUCCESS", ts.getString("symbol") );
-				
+			ResultSet ts = conn.queryNext( "select * from crypto_transactions where id = (select max(id) from crypto_transactions)");
+			assertEquals("SUCCESS", ts.getString("symbol") );
+		});
 	}
 	
 }

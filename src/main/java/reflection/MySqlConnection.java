@@ -12,8 +12,12 @@ import org.postgresql.util.PSQLException;
 
 import tw.util.S;
 
-public class MySqlConnection {
+public class MySqlConnection implements AutoCloseable {
 	private Connection connection;
+	
+	public Connection getConnection() {
+		return connection;
+	}
 	
 	public void startTransaction() throws SQLException {
 		connection.setAutoCommit(false);
@@ -166,5 +170,13 @@ public class MySqlConnection {
 				throw e;
 			}
 		}
+	}
+	
+	public interface SqlRunnable {
+		public void run(MySqlConnection conn) throws Exception;
+	}
+
+	@Override public void close() throws Exception {
+		connection.close();
 	}
 }
