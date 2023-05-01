@@ -13,10 +13,9 @@
 			</resource>
 			
 			<!-- this entry and the file in the resources folder is needed for google secrets -->
-			<!-- delete this
-			resource>
+			<resource>
 				<directory>src/main/META-INF</directory>
-			</resource-->
+			</resource>
 		</resources>	
 
 		<plugins>
