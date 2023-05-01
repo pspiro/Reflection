@@ -36,6 +36,10 @@ public class Deploy {
 			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
 			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
 		}
+		else {
+			Util.require( Util.isValidAddress( busd.address() ), "RUSD must be valid or set to 'deploy'");
+		}
+
 		
 		// deploy RUSD if not already a valid address
 		if ("deploy".equals( rusd.address() ) ) {
@@ -57,7 +61,7 @@ public class Deploy {
 					true);
 		}
 		else {
-			Util.require( Util.isValidAddress(rusd.address() ), "RUSD must be valid or set to 'deploy'");
+			Util.require( Util.isValidAddress( rusd.address() ), "RUSD must be valid or set to 'deploy'");
 		}
 		
 		deployStockTokens(config, rusd);

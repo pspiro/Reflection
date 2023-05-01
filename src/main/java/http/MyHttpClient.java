@@ -11,6 +11,7 @@ import org.json.simple.parser.JSONParser;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import reflection.RefCode;
 import reflection.Util;
 import tw.util.IStream;
 import tw.util.S;
@@ -200,7 +201,9 @@ public class MyHttpClient {
 		return readMyJsonObject().getString("message");
 	}
 	
-	public String getCode() throws Exception {
-		return readMyJsonObject().getString("code");
+	// let this return the enum
+	public RefCode getCode() throws Exception {
+		String code = readMyJsonObject().getString("code");
+		return S.isNull( code) ? null : Util.getEnum( code, RefCode.values() );
 	}
 }

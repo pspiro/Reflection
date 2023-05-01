@@ -183,8 +183,8 @@ public class MoralisServer {
 			S.out( "Received logs");
 	        for (MyJsonObject log : msg.getAr( "logs") ) {
 	        	String token = log.getString( "address").toLowerCase();
-	        	String from = S.right( log.getString( "topic1"), 42).toLowerCase();
-	        	String to = S.right( log.getString( "topic2"), 42).toLowerCase();
+	        	String from = Util.right( log.getString( "topic1"), 42).toLowerCase();
+	        	String to = Util.right( log.getString( "topic2"), 42).toLowerCase();
 	        	double val = Util.hexToDec( log.getString( "data"), 16);
 	        	String hash = log.getString( "transactionHash").toLowerCase();
 	        	S.out( "  %s %s %s %s %s", block, token, from, to, val);  // formats w/ two dec.		        	

@@ -1,6 +1,7 @@
 package testcase;
 
 import http.MyHttpClient;
+import reflection.RefCode;
 import tw.util.S;
 
 public class TestRedeem extends MyTestCase {
@@ -14,6 +15,7 @@ public class TestRedeem extends MyTestCase {
 			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
 		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( RefCode.INVALID_REQUEST, cli.getCode() );
 		
 		// wrong address (must match cookie)
 		String wallet = ("0xaaa" + Cookie.wallet).substring(0, 42);
@@ -22,6 +24,7 @@ public class TestRedeem extends MyTestCase {
 			.get("/api/redemptions/redeem/" + wallet);
 		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
 		
 		// wrong nonce
 	}

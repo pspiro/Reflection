@@ -52,9 +52,9 @@ public class Main implements ITradeReportHandler {
 		Connected, Disconnected
 	};
 	
-	private final static Random rnd = new Random( System.currentTimeMillis() );
-	final static Config m_config = new RefApiConfig();
-	private static DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
+	private static final Random rnd = new Random( System.currentTimeMillis() );
+	static final Config m_config = new RefApiConfig();
+	private static final DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
@@ -150,7 +150,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
+		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
@@ -664,10 +664,6 @@ public class Main implements ITradeReportHandler {
 		new OrderTransaction(this, exch).backendOrder();
 	}
 
-	private void handleRedeem(HttpExchange exch) {
-		new BackendTransaction(this, exch).handleRedeem();
-	}
-	
 	private void handleGetFaqs(HttpExchange exch) {
 		getURI(exch);
 		quickResponse(exch, m_faqs, 200);  // we can do a quick response because we already have the json

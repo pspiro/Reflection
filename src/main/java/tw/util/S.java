@@ -849,22 +849,4 @@ public class S {
 		}		
 	}
 	
-	// see lookup by ordinal in TWS API types
-	
-	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */
-	public static <T extends Enum<T>> T getEnum(String text, T[] values) throws IllegalArgumentException {
-		for (T val : values) {
-			if (val.toString().equalsIgnoreCase(text) ) {
-				return val;
-			}
-		}
-		String str = String.format( "'%s' is not a valid value for enum %s", text, values[0].getClass().getName() );
-		throw new IllegalArgumentException( str);
-	}
-
-	public static String right(String str, int i) {
-		return str.substring( str.length() - i);
-	}
-	
-
 }

@@ -1,8 +1,8 @@
 package redis;
 
+import reflection.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
-import tw.util.S;
 
 public class MktDataConfig {
 
@@ -34,7 +34,7 @@ public class MktDataConfig {
 
 		this.redisHost = tab.getRequiredString( "redisHost");
 		this.redisPort = tab.getRequiredInt( "redisPort");
-		this.mode = S.getEnum( tab.get( "paperMode"), Mode.values() );
+		this.mode = Util.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getRequiredInt( "twsMdPort");
 		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");

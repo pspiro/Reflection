@@ -16,6 +16,8 @@ public class Prices {
 	
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
 	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
+	public static String NO_PRICE = "There is no %s price in the market. Please try your order again later.";
+	
 	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
 	
 	private double m_bid;
@@ -65,11 +67,11 @@ public class Prices {
 
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
 		if (order.action() == Action.BUY) {
-			Main.require( validAsk(), RefCode.NO_PRICES, "No ask price");
+			Main.require( validAsk(), RefCode.NO_PRICES, NO_PRICE, "ask");
 			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, TOO_LOW);  // this is displayed to user
 		}
 		else {
-			Main.require( validBid(), RefCode.NO_PRICES, "No bid price");
+			Main.require( validBid(), RefCode.NO_PRICES, NO_PRICE, "bid");  // this should not happen because if the exchange is open, there should be a bid, and if the exchange is closed, they would receive an error telling them so; but, it happens in testing with autoFill
 			Main.require( orderPrice <= m_bid, RefCode.INVALID_PRICE, TOO_HIGH);  // this is displayed to user
 		}
 	}

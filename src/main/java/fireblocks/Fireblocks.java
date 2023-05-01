@@ -355,7 +355,7 @@ public class Fireblocks {
 			}
 		}
 		
-		throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Timed out waiting for transaction hash"); // should never happen
+		throw new RefException( RefCode.TIMED_OUT, "Timed out waiting for transaction hash"); // should never happen
 	}
 	
 	static void initMap() {

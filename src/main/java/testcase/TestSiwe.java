@@ -12,6 +12,7 @@ import com.moonstoneid.siwe.error.SiweException;
 
 import http.MyHttpClient;
 import json.MyJsonObject;
+import reflection.RefCode;
 import reflection.SiweUtil;
 import tw.util.S;
 
@@ -82,7 +83,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "past " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.getCode() );
+		assertEquals( RefCode.TIMED_OUT, cli.getCode() );
 	}
 	
 	public void testSiweFailFut() throws Exception {
@@ -106,7 +107,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "fut " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "TIMED_OUT", cli.getCode() );
+		assertEquals( RefCode.TIMED_OUT, cli.getCode() );
 	}
 	
 	public void testFailSig() throws Exception {
@@ -130,7 +131,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failSig " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "UNKNOWN", cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		assertEquals( RefCode.UNKNOWN, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
 	}
 	
 	public void testFailDup() throws Exception {
@@ -265,7 +266,8 @@ public class TestSiwe extends MyTestCase {
 		cli = new MyHttpClient("localhost", 8383);
 		cli.get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( "No cookie header in /siwe/me request", cli.getMessage() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		startsWith( "Null cookie", cli.getMessage() );
 		
 		// test mismatched cookie header and body address
 		JSONObject badSignedObj = MyJsonObject.parse("""
@@ -276,13 +278,15 @@ public class TestSiwe extends MyTestCase {
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		startsWith( "Header address", cli.getMessage() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		startsWith( "Cookie header wallet address", cli.getMessage() );
 
 		// test cookie not found
 		badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000015=%s", URLEncoder.encode(badSignedObj.toString() ) );
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
 		startsWith( "No session object found", cli.getMessage() );
 		
 		// test siwe/me wrong nonce
@@ -293,6 +297,7 @@ public class TestSiwe extends MyTestCase {
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
 		startsWith( "Cookie nonce", cli.getMessage() );
 
 		// test a successful me

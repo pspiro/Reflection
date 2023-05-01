@@ -275,50 +275,18 @@ public abstract class MyTransaction {
 	}
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
-	 *  They could just send the nonce, it's the only part of the cookie we are using */
-	void validateCookie(String walletAddr) throws Exception {
+	 *  They could just send the nonce, it's the only part of the cookie we are using
+	 *  @param walletAddr could be null */
+	MyJsonObject validateCookie(String walletAddr) throws Exception {
 		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
 		String cookie = m_map.get("cookie");
 		if (cookie == null) {
 			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 		}
-		Main.require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie");
+		Main.require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on message requring validation");
 		
-		// un-do the URL encoding
-		cookie = URLDecoder.decode(cookie);
-		Main.require(cookie.split("=").length >= 2, RefCode.VALIDATION_FAILED, "Malformed cookie, no '=': " + cookie);
-		
-		// parse cookie (in header, it has two fields, signature and message; in map, it has only message)
-		MyJsonObject siweMsg = MyJsonObject.parse( cookie.split("=")[1])
-				.getObj("message");
-		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "Malformed cookie: " + cookie);
-		
-		// find session object
-		Session session = SiweTransaction.sessionMap.get( siweMsg.getString("address") );
-		Main.require(session != null, RefCode.VALIDATION_FAILED, "No session object found for address " + siweMsg.getString("address") );
-
-		// valiate nonce
-		Main.require(
-				session.nonce().equals( siweMsg.getString("nonce") ),
-				RefCode.VALIDATION_FAILED,
-				"Nonce does not match");
-
-		// check for expiration
-		Main.require( 
-				System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.SESSION_EXPIRED,  // this is normal; all the others are not normal
-				"Session has expired");
-		
-		// confirm no wallet or same wallet
-		Main.require( 
-				walletAddr == null || walletAddr.equalsIgnoreCase(siweMsg.getString("address") ), 
-				RefCode.VALIDATION_FAILED, 
-				"The address on the message (%s) does not match the address of the session (%s)",
-				walletAddr, siweMsg.getString("address") );
-		
-		// update expiration time
-		session.update();
+		return SiweTransaction.validateCookie( cookie, walletAddr);
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */

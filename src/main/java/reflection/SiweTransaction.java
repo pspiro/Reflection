@@ -97,7 +97,7 @@ public class SiweTransaction extends MyTransaction {
 			Main.require(
 					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TIMED_OUT,
-					"Oops, you waited a bit too long; please sign in again");
+					"You waited a bit too long; please sign in again");
 					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
 					//issuedAt, now, Main.m_config.siweTimeout() );
 			Main.require(
@@ -125,63 +125,74 @@ public class SiweTransaction extends MyTransaction {
 	
 	/** Frontend sends GET request with the cookie from the signin message sent in the header
 	 *  This is a keep-alive; we should verify that the timer has not expired */
+	@SuppressWarnings("unchecked")
 	public void handleSiweMe() {
 		wrap( () -> {
-			// check for cookie header
-			String cookie = findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
-			Main.require( cookie != null, RefCode.INVALID_REQUEST, "No cookie header in /siwe/me request");
-			S.out( "  cookie:" + cookie);
-			
-			// the cookie has two parts: tag=value
-			// the tag is __Host_authToken<address><chainid>
-			// the value is json with two fields, signature and message
-			// the value is URL-encoded and must be decoded
-			String[] split = cookie.split("=");
-			Main.require( split.length == 2, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
-			
-			String cookieHeader = split[0];
-			String cookieBody = URLDecoder.decode( split[1] );
-			S.out( "Cookie header: " + cookieHeader);
-			S.out( "Cookie body: " + cookieBody);
+			MyJsonObject siweMsg = validateCookie( null);
 
-			MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
-			MyJsonObject siweMsg = signedSiweMsg.getObj("message");
-			Main.require( siweMsg != null, RefCode.INVALID_REQUEST, "Malformed cookie: " + cookie);
-			
-			// match address from cookie header with address from cookie body
-			String headerAddress = cookieHeader.length() >= 58 ? cookieHeader.substring(16, 58) : "";
-			String bodyAddress = siweMsg.getString("address");
-			Main.require( 
-					headerAddress.equalsIgnoreCase(bodyAddress), 
-					RefCode.INVALID_REQUEST,
-					"Header address (%s) does not match body address (%s)",
-					headerAddress, bodyAddress);
-			
-			// find session object
-			Session session = sessionMap.get( bodyAddress);
-			Main.require( session != null, RefCode.INVALID_REQUEST, "No session object found for address " + siweMsg.getString("address") );
-			
-			// validate nonce
-			Main.require( 
-					session.nonce().equals( siweMsg.getString("nonce") ),
-					RefCode.INVALID_REQUEST,
-					"Cookie nonce (%s) does not match session nonce (%s)",
-					siweMsg.getString("nonce"), session.nonce() );
-			
-			// check expiration
-			Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-					RefCode.SESSION_EXPIRED,
-					"Session has expired");
-			
-			// update expiration time
-			session.update();
-			
 			S.out( "  loggedIn=true");
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
 			respond(response);
 		});
+	}
+	
+	/** @param cookie could come from header or message body
+	 *  @param wallet may be null */ 
+	static MyJsonObject validateCookie( String cookie, String wallet) throws Exception {
+		// the cookie has two parts: tag=value
+		// the tag is __Host_authToken<address><chainid>
+		// the value is json with two fields, signature and message
+		// the value is URL-encoded and must be decoded
+		String[] split = cookie.split("=");
+		Main.require( split.length == 2, RefCode.VALIDATION_FAILED, "Malformed cookie: " + cookie);
+		
+		String cookieHeader = split[0];
+		String cookieBody = URLDecoder.decode( split[1] );
+		S.out( "Cookie header: " + cookieHeader);
+		S.out( "Cookie body: " + cookieBody);
+
+		MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
+		MyJsonObject siweMsg = signedSiweMsg.getObj("message");
+		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "No message in cookie: " + cookie);
+		
+		// match address from cookie header with address from cookie body
+		String headerAddress = cookieHeader.length() >= 58 ? cookieHeader.substring(16, 58) : "";
+		String bodyAddress = siweMsg.getString("address");
+		Main.require( 
+				headerAddress.equalsIgnoreCase(bodyAddress), 
+				RefCode.VALIDATION_FAILED,
+				"Cookie header wallet address (%s) does not match cookie body wallet address (%s)",
+				headerAddress, bodyAddress);
+		
+		// match address from message
+		Main.require( 
+				wallet == null || wallet.equalsIgnoreCase(bodyAddress), 
+				RefCode.VALIDATION_FAILED,
+				"Message wallet address (%s) does not match cookie wallet address (%s)",
+				wallet, bodyAddress);
+		
+		// find session object
+		Session session = sessionMap.get( bodyAddress);
+		Main.require( session != null, RefCode.VALIDATION_FAILED, "No session object found for address " + siweMsg.getString("address") );
+		
+		// validate nonce
+		Main.require( 
+				session.nonce().equals( siweMsg.getString("nonce") ),
+				RefCode.VALIDATION_FAILED,
+				"Cookie nonce (%s) does not match session nonce (%s)",
+				siweMsg.getString("nonce"), session.nonce() );
+		
+		// check expiration
+		Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
+				RefCode.SESSION_EXPIRED,
+				"Session has expired");
+		
+		// update expiration time
+		session.update();
+		
+		return siweMsg;
 	}
 	
 	void handleSiweSignout() {

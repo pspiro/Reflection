@@ -55,7 +55,7 @@ public class ParamMap extends HashMap<String, String> {
 
 	<T extends Enum<T>> T getEnumParam(String tag, T[] values) throws RefException {
 		try {
-			return S.getEnum( getRequiredParam( tag), values);
+			return Util.getEnum( getRequiredParam( tag), values);
 		}
 		catch( IllegalArgumentException e) {			
 			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' has invalid value; valid values are %s", tag, MsgType.allValues() );

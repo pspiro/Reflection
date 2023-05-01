@@ -123,7 +123,7 @@ public class BackendTransaction extends MyTransaction {
 			Rusd rusd = Main.m_config.rusd();
 			Busd busd = Main.m_config.busd();
 
-			setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
+			//setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
 			double rusdPos = rusd.getPosition(walletAddr);
 			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
@@ -139,7 +139,7 @@ public class BackendTransaction extends MyTransaction {
 				
 				respond( code, RefCode.OK);  // wait for completion. pas 
 			}
-			else {
+			else {  // we don't use require here because we want to call alert()
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
 						walletAddr, rusdPos, busdPos, (rusdPos - busdPos) );

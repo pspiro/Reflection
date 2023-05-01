@@ -2,6 +2,7 @@ package positions;
 
 import java.util.HashSet;
 
+import reflection.Util;
 import tw.util.S;
 
 public class PosUtil {
@@ -9,7 +10,7 @@ public class PosUtil {
 
 	/** Return a string of length 42 starting with 0x */
 	static String formatWallet(String str) {
-		return "0x" + S.right( str, 40).toLowerCase();
+		return "0x" + Util.right( str, 40).toLowerCase();
 	}
 
 	/** Create null database entries for each block. */
