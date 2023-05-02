@@ -11,6 +11,7 @@ import org.json.simple.parser.JSONParser;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import junit.framework.TestCase;
 import reflection.RefCode;
 import reflection.Util;
 import tw.util.IStream;
@@ -205,5 +206,9 @@ public class MyHttpClient {
 	public RefCode getCode() throws Exception {
 		String code = readMyJsonObject().getString("code");
 		return S.isNull( code) ? null : Util.getEnum( code, RefCode.values() );
+	}
+
+	public void checkResponseCode(int code) throws Exception {
+		TestCase.assertEquals(code, getResponseCode() );
 	}
 }

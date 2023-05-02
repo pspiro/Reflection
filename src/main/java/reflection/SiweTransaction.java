@@ -139,7 +139,7 @@ public class SiweTransaction extends MyTransaction {
 	public void handleSiweMe() {
 		wrap( () -> {
 			ArrayList<String> cookies = authCookies();
-			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on message requring validation");
+			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
 //			if (cookies.size() > 1) {
 //				m_main.log( LogType.SIWE, "Warning: receiving /siwe/me with multiple cookies is unexpected");
@@ -236,7 +236,7 @@ public class SiweTransaction extends MyTransaction {
 		wrap( () -> {
 			for (String cookie : authCookies() ) {
 				String address = address(cookie);
-				if (sessionMap.remove(address) != null) {
+				if (sessionMap.remove(address) != null) {  // alternatively, we could update the session to be false
 					S.out( "  %s has been signed out", address);
 				}
 			}

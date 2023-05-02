@@ -20,23 +20,23 @@ import reflection.RefCode;
 import reflection.SiweUtil;
 import tw.util.S;
 
-public class TestOne extends TestCase {
+public class TestOne extends MyTestCase {
 	public void testSiweSignin() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		MyHttpClient cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 		
-		SiweMessage siweMsg = TestSiwe.msg(nonce, Instant.now() );
+		SiweMessage siweMsg = TestSiwe.createSiweMsg(nonce, Instant.now() );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", TestSiwe.signature);
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
-		
+
 		// test siwe/signin
-		cli = new MyHttpClient("localhost", 8383);
+		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		assertEquals( 200, cli.getResponseCode() );
 		String cookie = cli.getHeaders().get("set-cookie");
@@ -50,8 +50,9 @@ public class TestOne extends TestCase {
 		assertEquals( nonce, msg3.getString("nonce"));
 
 		// test successful siwe/me
-		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		cli = cli();
+		cli.addHeader("Cookie", "mycookie=abcde; " + cookie)  // how is this working???
+			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();
@@ -59,19 +60,5 @@ public class TestOne extends TestCase {
 		MyJsonObject meSiweMsg = meResponseMsg.getObj("message");
 		assertEquals( TestSiwe.myWalletAddress, meSiweMsg.getString("address") );
 		assertEquals( nonce, meSiweMsg.getString("nonce"));
-		
-		String badCookie = String.format( "__Host_authToken%s5=abc", TestSiwe.myWalletAddress);
-		cookie = badCookie + "; " + cookie;
-				
-		cli = new MyHttpClient("localhost", 8383);
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		S.out( "me " + cli.readString() );
-		assertEquals( 200, cli.getResponseCode() );
-		meResponseMsg = cli.readMyJsonObject();
-		assertTrue( meResponseMsg.getBool("loggedIn") );
-		meSiweMsg = meResponseMsg.getObj("message");
-		assertEquals( TestSiwe.myWalletAddress, meSiweMsg.getString("address") );
-		assertEquals( nonce, meSiweMsg.getString("nonce"));
-		
-	}		
+	}
 }

@@ -38,9 +38,6 @@ public class BackendTransaction extends MyTransaction {
 			String address = Util.getLastToken(m_uri, "/");
 			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
-			// validate cookie
-			validateCookie( address);			
-			
 			// query positions from Moralis
 			setTimer( Main.m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			MyJsonArray positions = MoralisServer.reqPositions(address);

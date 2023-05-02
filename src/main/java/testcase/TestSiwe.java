@@ -51,7 +51,7 @@ public class TestSiwe extends MyTestCase {
 	static String signature = "102268";  // special sig that will always pass
 
 	
-	static SiweMessage msg(String nonce, Instant time) throws SiweException {  
+	static SiweMessage createSiweMsg(String nonce, Instant time) throws SiweException {  
 		return new SiweMessage.Builder(
 			"Reflection.trading", 
 			myWalletAddress, 
@@ -74,7 +74,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = msg(nonce, Instant.now().minusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(22) );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -98,7 +98,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = msg(nonce, Instant.now().minusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(22) );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -122,7 +122,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = msg(nonce, Instant.now().plusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().plusSeconds(22) );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature + "a");
@@ -146,7 +146,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -174,7 +174,7 @@ public class TestSiwe extends MyTestCase {
 		assertEquals( 20, nonce.length() );
 
 		// create siwe message
-		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
@@ -200,6 +200,29 @@ public class TestSiwe extends MyTestCase {
 		assertEquals( false, cli.readMyJsonObject().getBool("loggedIn") ); 
 	}
 	
+	public void testSiweSignout() throws Exception {
+		// siwe/init, get nonce
+		String nonce = cli().get("/siwe/init").readMyJsonObject().getString("nonce");
+		
+		SiweMessage siweMsg = TestSiwe.createSiweMsg(nonce, Instant.now() );
+		
+		JSONObject signedMsgSent = new JSONObject();
+		signedMsgSent.put( "signature", TestSiwe.signature);
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// siwe/signin, get cookie
+		String cookie = cli().post("/siwe/signin", signedMsgSent.toString() ).getHeaders().get("set-cookie");
+		
+		// test successful siwe/me
+		cli().addHeader("Cookie", cookie).get("/siwe/me").checkResponseCode(200);
+		
+		// sign out
+		cli().addHeader("Cookie", cookie).get("/siwe/signout").checkResponseCode(200);
+		
+		// test failed siwe/me
+		cli().addHeader("Cookie", cookie).get("/siwe/me").checkResponseCode(400);
+	}
+	
 	public void testSiweSignin() throws Exception {
 		// test siwe/init
 		MyHttpClient cli = cli();
@@ -208,7 +231,7 @@ public class TestSiwe extends MyTestCase {
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 		
-		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -230,7 +253,8 @@ public class TestSiwe extends MyTestCase {
 
 		// test successful siwe/me
 		cli = cli();
-		cli.addHeader("Cookie", "mycookie=abcde; " + cookie).get("/siwe/me");
+		cli.addHeader("Cookie", "mycookie=abcde; " + cookie)  // add an unrelated cookie for fun
+			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
 		MyJsonObject meResponseMsg = cli.readMyJsonObject();
@@ -259,7 +283,7 @@ public class TestSiwe extends MyTestCase {
 		MyHttpClient cli = cli();
 		cli.get("/siwe/init");
 		String nonce = cli.readMyJsonObject().getString("nonce");
-		SiweMessage siweMsg = msg(nonce, Instant.now() );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
