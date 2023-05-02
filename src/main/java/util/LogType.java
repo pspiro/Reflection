@@ -24,4 +24,5 @@ public enum LogType {
 	TIMEOUT,		// msg timed out but we responded anyway
 	TRADE,			// trade report received
 	WALLET,
+	SIWE
 }

@@ -28,6 +28,8 @@ public class Cookie extends TestCase {
 	}
 
 	public static void signIn(String address) throws Exception {
+		S.out( "SIGNING IN WITH COOKIE CLASS WALLET " + address);
+		
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
 		
 		// send siwe/init

@@ -36,4 +36,11 @@ public class TestRedeem extends MyTestCase {
 		S.out( "redeem: " + cli.readString() );
 		assertEquals(200, cli.getResponseCode() );  // confirm that Cookie wallet has some RUSD in it
 	}
+	
+	public void testFailNoCookie() throws Exception {
+		MyHttpClient cli = new MyHttpClient(host, 8383);
+		cli.get("/api/redemptions/redeem/" + Cookie.wallet);
+		S.out( "fail: " + cli.readString() );
+		assertEquals(400, cli.getResponseCode() );  // confirm that Cookie wallet has some RUSD in it
+	}
 }

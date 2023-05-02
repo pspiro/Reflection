@@ -281,9 +281,9 @@ public abstract class MyTransaction {
 		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
 		String cookie = m_map.get("cookie");
-		if (cookie == null) {
-			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
-		}
+//		if (cookie == null) {  // we could pull from the cookie header if desired, but then you have to look for the one with the matching address because there could be multiple __Auth cookies
+//			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
+//		}
 		Main.require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on message requring validation");
 		
 		return SiweTransaction.validateCookie( cookie, walletAddr);

@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +25,7 @@ import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>();
-	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map   
+	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map wallet address to Session   
 					// it would be better to store this in the Redis; give it a key so you can see or wipe out all 
 	
 	static class Session {
@@ -48,6 +49,9 @@ public class SiweTransaction extends MyTransaction {
 			m_lastTime = System.currentTimeMillis();
 		}
 		
+		@Override public String toString() {
+			return m_nonce;
+		}
 	}
 	
 	public SiweTransaction(Main main, HttpExchange exch) {
@@ -114,6 +118,7 @@ public class SiweTransaction extends MyTransaction {
 			// store session object; let the wallet address be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
 			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
+			S.out( "  mapping %s to %s", siweMsg.getAddress(), session);
 		
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
@@ -133,7 +138,14 @@ public class SiweTransaction extends MyTransaction {
 	@SuppressWarnings("unchecked")
 	public void handleSiweMe() {
 		wrap( () -> {
-			MyJsonObject siweMsg = validateCookie( null);
+			ArrayList<String> cookies = authCookies();
+			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on message requring validation");
+			
+//			if (cookies.size() > 1) {
+//				m_main.log( LogType.SIWE, "Warning: receiving /siwe/me with multiple cookies is unexpected");
+//			}
+			
+			MyJsonObject siweMsg = validateAnyCookie( cookies);
 
 			S.out( "  loggedIn=true");
 			JSONObject response = new JSONObject();
@@ -141,6 +153,25 @@ public class SiweTransaction extends MyTransaction {
 			response.put("message", siweMsg);
 			respond(response);
 		});
+	}
+
+	/** Return the Siwe message for the valid cookie; there should be only one 
+	 * @throws RefException */
+	static MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
+		for (String cookie : cookies) {
+			try {
+				return validateCookie( cookie, null);
+			}
+			catch( Exception e) {
+				S.out( "  failed to validate cookie with address %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+			}
+		}
+
+//		for (String cookie : cookies) {
+//			S.out(cookie);
+//		}
+		
+		throw new RefException( RefCode.VALIDATION_FAILED, "No valid cookies in /siwe/me message");  // this is normal
 	}
 	
 	/** @param cookie could come from header or message body
@@ -200,32 +231,60 @@ public class SiweTransaction extends MyTransaction {
 		return siweMsg;
 	}
 	
+	/** Sign out all sign-in users (there should be only one) */
 	void handleSiweSignout() {
-		respondOk();
+		wrap( () -> {
+			for (String cookie : authCookies() ) {
+				String address = address(cookie);
+				if (sessionMap.remove(address) != null) {
+					S.out( "  %s has been signed out", address);
+				}
+			}
+			
+			respondOk();
+		});
 	}
 	
+	private ArrayList<String> authCookies() {
+		return SiweTransaction.findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
+	}
+
 	void failedMe(String text) {
 		S.out( "  " + text);
 		respondFull( Util.toJsonMsg( "loggedIn", false, "message", text), 400, null);
 	}
 
-	/** Find the cookie header that starts with name */
-	static String findCookie(Headers headers, String name) {
+//	public static String findWalletCookie(Headers headers, String name, String address) {
+//		for (String cookie : findCookies( headers, name) ) {
+//			if (cookie.length() >= 58 && address(cookie)
+//		}
+//		
+//	}
+	
+	/** Return lower-case wallet address from __Host_authToken cookie */
+	private static String address(String cookie) {
+		return cookie.substring(16, 58).toLowerCase();
+	}
+
+	/** Find the cookie header that starts with name. You can have multiple cookies with the same name */
+	public static ArrayList<String> findCookies(Headers headers, String name) {
+		ArrayList<String> list = new ArrayList<>();
+		
 		if (headers != null) {
-			List<String> listOfCookies = headers.get( "Cookie");
-			if (listOfCookies != null) {
-				for (String cookies : listOfCookies) {
+			List<String> allCookies = headers.get( "Cookie");  // it seems there is usually only one Cookie header w/ all the different cookies in it separated by ;
+			if (allCookies != null) {
+				for (String cookies : allCookies) {
 					StringTokenizer st = new StringTokenizer(cookies, ";");
 					while (st.hasMoreTokens() ) {
 						String cookie = st.nextToken().trim();
 						if (cookie.startsWith(name) ) {
-							return cookie;
+							list.add(cookie);
 						}
 					}
 				}
 			}
 		}
-		return null;
+		return list;
 	}
 
 }
