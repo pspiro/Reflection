@@ -384,12 +384,9 @@ public class OldStyleTransaction extends MyTransaction {
 		respond(whole);
 	}
 
-}
+	/** Respond with build date/time */
+	public void about() {
+		wrap( () -> respond( "Built", Util.readResource( Main.class, "version.txt") ) );
+	}
 
-// with 2 sec timeout, we see timeout occur before fill is returned
-// add tests for partial fill, no fill
-// confirm that TWS does not accept fractional shares
-// test w/ a short timeout to see the timeout happen, ideally with 0 shares and partial fill
-// test exception during fireblocks part
-// IOC timeout seems to be 3-4 seconds
-// don't store commission in two places in db
+}
