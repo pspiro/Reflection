@@ -103,7 +103,7 @@ public class TestOrder extends MyTestCase {
 		// this won't work because you have to 
 		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
 		
-		MyJsonObject map = TestOrder.postDataToObj(obj);
+		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "fill buy %s %s", code, text);
@@ -185,7 +185,7 @@ public class TestOrder extends MyTestCase {
 	
 	static MyJsonObject orderData(String json) throws Exception {
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		Cookie.addCookie(obj);
+		addCookie(obj);
 		return obj;
 	}
 	
@@ -193,17 +193,30 @@ public class TestOrder extends MyTestCase {
 		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
 				side, qty, Double.valueOf( curPrice + offset) );
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		Cookie.addCookie(obj);
+		addCookie(obj);
 		return obj;
 	}
 	
+	static MyJsonObject addCookie(MyJsonObject obj) throws Exception {
+		obj.put("cookie", Cookie.cookie);
+		obj.put("noFireblocks", true);
+		obj.put("currency", "busd");
+		obj.put("wallet_public_key", Cookie.wallet);
+		
+		double price = obj.getDouble("tokenPrice");
+		double qty = obj.getDouble("quantity");
+		double comm = obj.getDouble("commission");
+		double total = obj.getString("action").equals("buy")
+				? price * qty + comm : price * qty - comm;
+		obj.put("price", total);
+		return obj;
+	}
+
 	static MyJsonObject postDataToObj( MyJsonObject obj) throws Exception {
 		return postData(obj).readMyJsonObject();
 	}
 	
 	static MyHttpClient postData( MyJsonObject obj) throws Exception {
-		MyHttpClient cli = new MyHttpClient( "localhost", 8383);
-		cli.post( "/api/reflection-api/order", obj.toString() ); 
-		return cli;
+		return cli().post( "/api/reflection-api/order", obj.toString() ); 
 	}
 }

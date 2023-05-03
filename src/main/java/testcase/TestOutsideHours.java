@@ -2,9 +2,7 @@ package testcase;
 
 import java.util.Date;
 
-import http.MyHttpClient;
 import json.MyJsonObject;
-import junit.framework.TestCase;
 import reflection.MyTransaction;
 import reflection.RefCode;
 import reflection.RefException;
@@ -12,7 +10,7 @@ import reflection.Util;
 import tw.util.S;
 
 // this should be before open, after close, and on days that the exchange is closed
-public class TestOutsideHours extends TestCase {
+public class TestOutsideHours extends MyTestCase {
 	static int QQQ = 320227571;
 	static int IBM = 8314;
 	

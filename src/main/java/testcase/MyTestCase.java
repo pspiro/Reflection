@@ -1,6 +1,7 @@
 package testcase;
 
 import http.MyHttpClient;
+import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.Util;
@@ -17,7 +18,7 @@ public class MyTestCase extends TestCase {
 		}
 	}
 	
-	MyHttpClient cli() throws Exception {
+	static MyHttpClient cli() throws Exception {
 		return new MyHttpClient("localhost", 8383);
 	}
 

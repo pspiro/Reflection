@@ -118,6 +118,8 @@ public class BackendTransaction extends MyTransaction {
 			String walletAddr = Util.getLastToken(m_uri, "/");
 			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
+			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
+			parseMsg();
 			validateCookie(walletAddr);
 
 			Rusd rusd = Main.m_config.rusd();

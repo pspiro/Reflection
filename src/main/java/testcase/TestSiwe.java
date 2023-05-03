@@ -214,13 +214,13 @@ public class TestSiwe extends MyTestCase {
 		String cookie = cli().post("/siwe/signin", signedMsgSent.toString() ).getHeaders().get("set-cookie");
 		
 		// test successful siwe/me
-		cli().addHeader("Cookie", cookie).get("/siwe/me").checkResponseCode(200);
+		cli().addHeader("Cookie", cookie).get("/siwe/me").assertResponseCode(200);
 		
 		// sign out
-		cli().addHeader("Cookie", cookie).get("/siwe/signout").checkResponseCode(200);
+		cli().addHeader("Cookie", cookie).get("/siwe/signout").assertResponseCode(200);
 		
 		// test failed siwe/me
-		cli().addHeader("Cookie", cookie).get("/siwe/me").checkResponseCode(400);
+		cli().addHeader("Cookie", cookie).get("/siwe/me").assertResponseCode(400);
 	}
 	
 	public void testSiweSignin() throws Exception {
