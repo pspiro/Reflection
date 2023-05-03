@@ -182,7 +182,7 @@ public class SiweTransaction extends MyTransaction {
 		// the value is json with two fields, signature and message
 		// the value is URL-encoded and must be decoded
 		String[] split = cookie.split("=");
-		Main.require( split.length == 2, RefCode.VALIDATION_FAILED, "Malformed cookie: " + cookie);
+		Main.require( split.length == 2, RefCode.VALIDATION_FAILED, "Malformed cookie");
 		
 		String cookieHeader = split[0];
 		String cookieBody = URLDecoder.decode( split[1] );
@@ -191,7 +191,7 @@ public class SiweTransaction extends MyTransaction {
 
 		MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
 		MyJsonObject siweMsg = signedSiweMsg.getObj("message");
-		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "No message in cookie: " + cookie);
+		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "No message in cookie");  // this happens in the pre-signin /siwe/me request
 		
 		// match address from cookie header with address from cookie body
 		String headerAddress = cookieHeader.length() >= 58 ? cookieHeader.substring(16, 58) : "";
@@ -222,7 +222,7 @@ public class SiweTransaction extends MyTransaction {
 		
 		// check expiration
 		Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
-				RefCode.SESSION_EXPIRED,
+				RefCode.VALIDATION_FAILED,
 				"Session has expired");
 		
 		// update expiration time
