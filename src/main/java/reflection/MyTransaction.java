@@ -51,7 +51,7 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uri = Main.getURI(m_exchange);  // this prints it out
+		m_uri = Main.getURI(m_exchange);  // all lower case
 	}
 
 	// you could encapsulate all these methods in MyExchange
@@ -62,7 +62,7 @@ public abstract class MyTransaction {
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			// get right side of ? in URL
-			String[] parts = m_uri.split("\\?");
+			String[] parts = m_uri.split("\\?");  // already lower case
 			if (parts.length >= 2) {
 				// build map of tag/value, expecting tag=value&tag=value
 				String[] params = parts[1].split( "&");
@@ -86,7 +86,7 @@ public abstract class MyTransaction {
 	            	require( key instanceof String, RefCode.INVALID_REQUEST, "Invalid JSON, key is not a string");
 
 	            	if (value != null) {
-	            		m_map.put( (String)key, value.toString() );
+	            		m_map.put( (String)key, value.toString() );  // tags are mixed case
 	            	}
 	            }
 
