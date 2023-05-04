@@ -113,16 +113,10 @@ public class Main implements ITradeReportHandler {
 		sqlConnection( conn -> {} );
 
 		// if port is zero, host contains connection string, otherwise host and port are used
-		if (m_config.redisPort() == 0) {
-			MyTimer.next( "Connecting to redis with connection %s", m_config.redisHost() );
-			Util.require( JedisURIHelper.isValid( URI.create(m_config.redisHost() ) ), "redis connect string is invalid" );
-			m_redis = new MyRedis(m_config.redisHost() );
-		}
-		else {
-			MyTimer.next( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
-		}
+		MyTimer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
+		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		m_redis.connect(); // this is not required but we want to bail out if redis is not running
+		m_redis.setName("RefAPI");
 
 		MyTimer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
