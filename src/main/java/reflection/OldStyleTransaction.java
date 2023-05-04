@@ -154,23 +154,23 @@ public class OldStyleTransaction extends MyTransaction {
 		Busd busd = Main.m_config.busd();
 		
 		// should group these differently
-		for (MyJsonObject item : MoralisServer.reqPositions(wallet) ) {
-			String addr = item.getString("token_address");
-			if (addr.equals( rusd.address() ) ) {
-				obj.put( "RUSD", rusd.fromBlockchain( item.getString("balance") ) );
-			}
-			else if (addr.equals( busd.address() ) ) {
-				obj.put( "BUSD", busd.fromBlockchain( item.getString("balance") ) );
-			}
-			else {
-				HashMap stock = m_main.getStockByTokAddr(addr);
-				if (stock != null) {
-					obj.put( stock.get("symbol"), Erc20.fromBlockchain( 
-							item.getString("balance"), 
-							StockToken.stockTokenDecimals)); 
-				}
-			}
-		}
+//		for (MyJsonObject item : MoralisServer.reqPositions(wallet) ) {
+//			String addr = item.getString("token_address");
+//			if (addr.equals( rusd.address() ) ) {
+//				obj.put( "RUSD", rusd.fromBlockchain( item.getString("balance") ) );
+//			}
+//			else if (addr.equals( busd.address() ) ) {
+//				obj.put( "BUSD", busd.fromBlockchain( item.getString("balance") ) );
+//			}
+//			else {
+//				HashMap stock = m_main.getStockByTokAddr(addr);
+//				if (stock != null) {
+//					obj.put( stock.get("symbol"), Erc20.fromBlockchain( 
+//							item.getString("balance"), 
+//							StockToken.stockTokenDecimals)); 
+//				}
+//			}
+//		}
 		
 		respond(obj);
 	}

@@ -1,0 +1,44 @@
+package positions;
+
+import java.util.HashMap;
+
+import fireblocks.Erc20;
+import json.MyJsonObject;
+import tw.util.S;
+
+/** Get token positions */
+public class Wallet {
+	private String m_address;
+	private HashMap<String, Double> m_map;
+	
+	public Wallet(String address) {
+		m_address = address;
+	}
+
+	/** Only send the request the first time 
+	 * @throws Exception */
+	public double getBalance(String token) throws Exception {
+		if (m_map == null) {
+			m_map = reqPositionsMap(m_address);
+		}
+		Double val = m_map.get(token);
+		return val != null ? val : 0.;
+	}
+
+	/** Returns a map of contract address (lower case) to position (double) */ 
+	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
+		HashMap<String,Double> map = new HashMap<>();
+		
+		for (MyJsonObject token : MoralisServer.reqPositionsList(wallet) ) {
+			String addr = token.getString("token_address");			
+			String balance = token.getString("balance");
+			if (S.isNotNull(addr) && S.isNotNull(balance) ) {
+				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, token.getInt("decimals") ) );
+			}
+		}
+		
+		return map;
+	}
+
+	
+}

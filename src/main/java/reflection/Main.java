@@ -146,25 +146,27 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
-		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
+		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time 
+		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time
+		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
-		MyTimer.done();
 
 		// connect to TWS
+		MyTimer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
-		S.out( "  done");
+		MyTimer.done();
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
@@ -660,10 +662,6 @@ public class Main implements ITradeReportHandler {
 
 	private void handleGetPrice(HttpExchange exch) {
 		new BackendTransaction(this, exch).handleGetPrice();
-	}
-
-	private void handleOrder(HttpExchange exch) {
-		new OrderTransaction(this, exch).backendOrder();
 	}
 
 	private void handleGetFaqs(HttpExchange exch) {

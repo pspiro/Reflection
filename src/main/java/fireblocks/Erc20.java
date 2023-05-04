@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import positions.MoralisServer;
+import positions.Wallet;
 import reflection.RefException;
 import tw.util.S;
 
@@ -78,8 +79,9 @@ public class Erc20 {
 		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
 	}
 
-	/** Returns the number of this token held by wallet; sends a query to Moralis */ 
-	public double getPosition(String wallet) throws Exception {
-		return fromBlockchain( MoralisServer.reqPosition(wallet, m_address) ); 
+	/** Returns the number of this token held by wallet; sends a query to Moralis
+	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
+	public double getPosition(String walletAddr) throws Exception {
+		return new Wallet(walletAddr).getBalance(m_address); 
 	}
 }

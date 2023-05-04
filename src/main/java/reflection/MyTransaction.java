@@ -108,7 +108,7 @@ public abstract class MyTransaction {
 		respond( code, RefCode.OK);
 	}
 
-	/** @param data is an array of key/value pairs */
+	/** @param data is an array of key/value pairs, does not work with objects */
 	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
 		if (data.length > 1 && data.length % 2 == 0) {
 			return respondFull( Util.toJsonMsg( data), 200, null);

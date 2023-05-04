@@ -5,10 +5,12 @@ import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.simple.JSONObject;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -332,7 +334,7 @@ public class MoralisServer {
 		decimals : 18,
 		name : Reflection BUSD,
 		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
-	public static MyJsonArray reqPositions(String wallet) throws Exception {
+	public static MyJsonArray reqPositionsList(String wallet) throws Exception {
 		String url = String.format("%s/%s/erc20?chain=%s",
 				moralis, wallet, chain);
 		String ret = querySync(url);
@@ -343,16 +345,7 @@ public class MoralisServer {
 		}
 
 		return MyJsonArray.parse( ret);
-	}
-	
-	public static String reqPosition(String wallet, String token) throws Exception {
-		MyJsonArray ar = reqPositions(wallet);
-		for (MyJsonObject obj : ar) {
-			if (obj.getString("token_address").equalsIgnoreCase(token) ) {
-				return obj.getString("balance");
-			}
-		}
-		return "0";
+		
 	}
 	
 	public static MyJsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
@@ -367,6 +360,7 @@ public class MoralisServer {
 				MyJsonObject.parse( querySync(url) ).getString("balance"),
 				18);
 	}
+	
 	
 	
 }

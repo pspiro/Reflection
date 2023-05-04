@@ -74,10 +74,10 @@ public class Config {
 	protected boolean useFireblocks;
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
-	private String moralisPlatform;  // always lower case
+	private String moralisPlatform;  // lower case
 	private String platformBase;
-	protected String rusdAddr;
-	private String busdAddr;
+	protected String rusdAddr; // lower case
+	private String busdAddr; // lower case
 	private int rusdDecimals;
 	private int busdDecimals;
 	private GTable m_tab;
@@ -110,8 +110,8 @@ public class Config {
 	public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
-	public String rusdAddr() { return rusdAddr; }
-	public String busdAddr() { return busdAddr; }
+	public String rusdAddr() { return rusdAddr; }  // lower case
+	public String busdAddr() { return busdAddr; }  // lower case
 	public double minTokenPosition() { return minTokenPosition; }
 	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
 	
@@ -177,8 +177,8 @@ public class Config {
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.rusdAddr = m_tab.getRequiredString("rusdAddr"); 
-			this.busdAddr = m_tab.getRequiredString("busdAddr");
+			this.rusdAddr = m_tab.getRequiredString("rusdAddr").toLowerCase(); 
+			this.busdAddr = m_tab.getRequiredString("busdAddr").toLowerCase();
 			this.platformBase = m_tab.getRequiredString("platformBase");
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 			this.rusdDecimals = m_tab.getRequiredInt("rusdDecimals");
