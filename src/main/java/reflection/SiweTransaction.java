@@ -155,7 +155,7 @@ public class SiweTransaction extends MyTransaction {
 		});
 	}
 
-	/** Return the Siwe message for the valid cookie; there should be only one 
+	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
 	 * @throws RefException */
 	static MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
@@ -244,26 +244,14 @@ public class SiweTransaction extends MyTransaction {
 			respondOk();
 		});
 	}
-	
-	private ArrayList<String> authCookies() {
-		return SiweTransaction.findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
-	}
 
-	void failedMe(String text) {
-		S.out( "  " + text);
-		respondFull( Util.toJsonMsg( "loggedIn", false, "message", text), 400, null);
-	}
-
-//	public static String findWalletCookie(Headers headers, String name, String address) {
-//		for (String cookie : findCookies( headers, name) ) {
-//			if (cookie.length() >= 58 && address(cookie)
-//		}
-//		
-//	}
-	
 	/** Return lower-case wallet address from __Host_authToken cookie */
 	private static String address(String cookie) {
 		return cookie.substring(16, 58).toLowerCase();
+	}
+	
+	private ArrayList<String> authCookies() {
+		return SiweTransaction.findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
 	}
 
 	/** Find the cookie header that starts with name. You can have multiple cookies with the same name */
