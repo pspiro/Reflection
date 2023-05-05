@@ -230,23 +230,29 @@ public class BackendTransaction extends MyTransaction {
 			rusd.put( "name", "RUSD");
 			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
 			rusd.put( "tooltip", "tooltip"); // pull from config
+			rusd.put( "buttonTooltip", "tooltip"); // pull from config
 			
 			MyJsonObject busd = new MyJsonObject();
 			busd.put( "name", "USDC");
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
-			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
 			busd.put( "tooltip", "tooltip"); // pull from config
+			busd.put( "buttonTooltip", "tooltip"); // pull from config
+			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
+			busd.put( "stablecoin", true);
 			
 			MyJsonObject base = new MyJsonObject();
 			base.put( "name", "MATIC");  // pull from config
 			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
 			base.put( "tooltip", "tooltip"); // pull from config
 			
+			JSONArray ar = new JSONArray();
+			ar.add(rusd);
+			ar.add(busd);
+			ar.add(base);
+			
 			JSONObject obj = new JSONObject();
 			obj.put( "refresh", 2000);
-			obj.put( "rusd", rusd);
-			obj.put( "stablecoin", busd);
-			obj.put( "nativeToken", base);
+			obj.put( "tokens", ar);
 
 			respond(obj);
 		});
