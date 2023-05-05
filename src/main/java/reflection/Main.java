@@ -80,6 +80,7 @@ public class Main implements ITradeReportHandler {
 		catch( BindException e) {
 			S.out( "The application is already running");
 			e.printStackTrace();
+			System.exit(0);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
