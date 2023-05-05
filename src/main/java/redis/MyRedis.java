@@ -1,8 +1,11 @@
 package redis;
 
+import java.net.URI;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.exceptions.JedisException;
+import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Util;
 
 /** Facilitates reconnecting to Jedis if connection is lost.
@@ -10,19 +13,30 @@ import reflection.Util;
  *  Handle the pipeline and set a timer to sync the pipeline  */
 public class MyRedis {
 	private Jedis m_jedis;
-	final private String m_host;
+	final private String m_hostOrURI;
 	final private int m_port;
 	private Pipeline m_pipeline;
+	private String m_name;
 	
-	public MyRedis(String host, int port) {
-		m_host = host;
-		m_port = port;
+	/** You should only use this if you are leaving the connection open */
+	public void setName( String name) {
+		m_name = name;
+		if (m_jedis != null) {
+			m_jedis.clientSetname(name);
+		}
 	}
 	
-	/** We use a connection string with password, etc */
-	public MyRedis(String host) {
-		m_host = host;
-		m_port = 0;
+	public MyRedis(String uri) throws Exception {
+		this( uri, 0);
+	}
+	
+	public MyRedis(String hostOrURI, int port) throws Exception {
+		m_hostOrURI = hostOrURI;
+		m_port = port;
+		
+		if (m_port == 0) {
+			Util.require( JedisURIHelper.isValid(URI.create(hostOrURI)), "redis connect string is invalid" );
+		}
 	}
 	
 	/** NOTE: you should have your try/catch outside the scope of the run() call
@@ -40,11 +54,23 @@ public class MyRedis {
 			return runnable.run(m_jedis);
 		}
 		catch( JedisException e) {
-			m_jedis = null;
-			m_pipeline = null;
+			disconnect();
 			throw e;
 		}
 	}
+
+	/** Do NOT throw an exception on disconnect */
+	public void disconnect() {
+		if (m_jedis != null) {
+			try {
+				m_jedis.disconnect();
+			}
+			catch( Exception e) { } // swallow it
+		}
+		m_jedis = null;
+		m_pipeline = null;
+	}
+
 
 	/** Use this version when all the queries are done at once. */
 	public void pipeline( PRun runnable) {
@@ -127,8 +153,11 @@ public class MyRedis {
 	private synchronized void checkConnection() {
 		if (m_jedis == null) {
 			m_jedis = m_port == 0
-				? new Jedis(m_host)
-				: new Jedis(m_host, m_port);
+				? new Jedis(m_hostOrURI)
+				: new Jedis(m_hostOrURI, m_port);
+			if (m_name != null) {
+				m_jedis.clientSetname(m_name);
+			}
 		}
 	}
 	

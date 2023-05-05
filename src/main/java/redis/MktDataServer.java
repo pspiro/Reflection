@@ -89,14 +89,9 @@ public class MktDataServer {
 		
 		// if redis port is zero, host contains the full URI;
 		// otherwise, we use host and port
-		if (m_config.redisPort() == 0) {
-			S.out( "Connecting to redis server with URI %s", m_config.redisHost() );
-			m_redis = new MyRedis(m_config.redisHost());
-		}
-		else {
-			S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
-		}
+		S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
+		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
+		m_redis.setName("MktDataServer");
 		m_redis.connect();  // test the connection, let it fail now
 		S.out( "  done");
 		

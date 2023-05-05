@@ -471,8 +471,8 @@ public class Config {
 		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
 	}
 	
-	public MyRedis newRedis() {
-		return redisPort == 0 ? new MyRedis(redisHost) : new MyRedis(redisHost, redisPort);
+	public MyRedis newRedis() throws Exception {
+		return new MyRedis(redisHost, redisPort);
 	}
 	
 	public void sqlConnection(SqlRunnable runnable) throws Exception {
