@@ -80,11 +80,11 @@ public class Main implements ITradeReportHandler {
 		catch( BindException e) {
 			S.out( "The application is already running");
 			e.printStackTrace();
-			System.exit(0);
+			System.exit(1);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			System.exit(0);  // we need this because listening on the port will keep the app alive
+			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
