@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# this file gets modified when we run the program, but we don't want to keep the changes
+git restore .googfiles/StoredCredential
+
 git pull
 mvn package
-./restart $1
+# ./kil reflection.Main
+# curl http://localhost:8383/?msg=terminate
+#sleep 3
+# nohup java -cp target/Reflection-0.0.2-jar-with-dependencies.jar reflection.Main Dev-config > refapi.log 2>&1 &
+sudo systemctl restart refapi
