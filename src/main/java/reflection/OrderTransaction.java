@@ -311,7 +311,7 @@ public class OrderTransaction extends MyTransaction {
 					}
 	
 					// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-					if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD) {
+					if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
 						double approvedAmt = m_config.busd().getAllowance( order.walletAddr(), m_config.rusdAddr() ); 
 						require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
 								"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 

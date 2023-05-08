@@ -15,13 +15,9 @@ public class RedisServer {
 		HashMap<String,String> values = new HashMap<>();
 		values.put( "bid", "22");
 		values.put( "ask", "23");
+		values.put( "last", "24");
 		jedis.xadd( "ibm", StreamEntryID.NEW_ENTRY, values);
 
-		// it somehow is putting a map, how does it do that?, as if each item i
-		values.put( "bid", "24");
-		values.put( "pop", "25");
-		jedis.xadd( "ibm", StreamEntryID.NEW_ENTRY, values);
-		
 		getLast( "ibm");
 	}
 	private static void getLast(String stream) {
@@ -30,3 +26,24 @@ public class RedisServer {
 		
 	}
 }
+
+/*
+ * xadd <name> <id> <key> <val> <key> <val> ...
+ * use * for id
+ * 
+ *  xlen <name> returns length (# of entries) of stream
+ *  
+ * xrange <name> <from> <to> count <n>
+ * xrevrange
+ * use - and + for first and beyond last
+ * xrevrange + -
+ * 
+ * xread count <n> streams <name> <name> ... <start-id> <start-id>  ...
+ * returns the next entry after start-id
+ * use id 0 for all, e.g. stream ibm ge 0 0
+ * 
+ * xread block <n> streams <name> 
+ * use id $ for last to always block
+ * 
+ * 
+*/

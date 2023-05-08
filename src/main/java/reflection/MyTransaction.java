@@ -32,7 +32,7 @@ import util.LogType;
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction {
 	public enum Stablecoin {
-		RUSD, BUSD
+		RUSD, USDC
 	}
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
@@ -300,7 +300,7 @@ public abstract class MyTransaction {
 
 	/** Top-level method. */
 	protected Erc20 stablecoin() throws Exception {
-		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.BUSD
+		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC
 				? Main.m_config.busd() : Main.m_config.rusd();
 	}
 	

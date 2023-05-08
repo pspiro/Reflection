@@ -60,7 +60,7 @@ public class TestOrderWithFb extends TestCase {
 				"price", 34.567,
 				"commission", .1, // not so good, we should get it from the order. pas
 				"spread", config.buySpread(),
-				"currency", Stablecoin.BUSD.toString() );
+				"currency", Stablecoin.USDC.toString() );
 		
 			ResultSet ts = conn.queryNext( "select * from crypto_transactions where id = (select max(id) from crypto_transactions)");
 			assertEquals("SUCCESS", ts.getString("symbol") );
