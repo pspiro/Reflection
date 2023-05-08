@@ -1,9 +1,9 @@
 package reflection;
 
 import static reflection.Main.log;
+import static reflection.Main.m_config;
 import static reflection.Main.require;
 
-import java.sql.Timestamp;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
@@ -14,12 +14,10 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
 import fireblocks.Busd;
-import fireblocks.Erc20;
 import fireblocks.Rusd;
-import fireblocks.StockToken;
-import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
+import positions.Wallet;
 import tw.util.S;
 import util.LogType;
 
@@ -39,24 +37,19 @@ public class BackendTransaction extends MyTransaction {
 			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
 			// query positions from Moralis
-			setTimer( Main.m_config.timeout(), () -> timedOut( "request for token positions timed out") );
-			MyJsonArray positions = MoralisServer.reqPositions(address);
+			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			
 			JSONArray retVal = new JSONArray();
 			
-			for (MyJsonObject position : positions) {
-				HashMap stock = m_main.getStockByTokAddr( position.getString("token_address") );
+			for (HashMap.Entry<String,Double> entry : Wallet.reqPositionsMap(address).entrySet() ) {
+				HashMap stock = m_main.getStockByTokAddr( entry.getKey() );
 
-				double balance = Erc20.fromBlockchain(
-						(String)position.getString("balance"), 
-						StockToken.stockTokenDecimals);
-				
-				if (stock != null && balance >= Main.m_config.minTokenPosition() ) {
+				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
 					JSONObject resp = new JSONObject();
 					resp.put("conId", stock.get("conid") );
 					resp.put("symbol", stock.get("symbol") );
 					resp.put("price", getPrice(stock) );
-					resp.put("quantity", balance); 
+					resp.put("quantity", entry.getValue() ); 
 					retVal.add(resp);
 				}
 			}
@@ -97,7 +90,7 @@ public class BackendTransaction extends MyTransaction {
 			});
 			
 			// if we timed out, respond with the prices anyway
-			setTimer( Main.m_config.timeout(), () -> {
+			setTimer( m_config.timeout(), () -> {
 				log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
 				respond(stock);
 			});
@@ -122,10 +115,10 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			validateCookie(walletAddr);
 
-			Rusd rusd = Main.m_config.rusd();
-			Busd busd = Main.m_config.busd();
+			Rusd rusd = m_config.rusd();
+			Busd busd = m_config.busd();
 
-			//setTimer( Main.m_config.timeout(), () -> timedOut( "redemption request timed out") );
+			//setTimer( m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
 			double rusdPos = rusd.getPosition(walletAddr);
 			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
@@ -134,12 +127,12 @@ public class BackendTransaction extends MyTransaction {
 
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {
-				rusd.sellRusd(walletAddr, Main.m_config.busd(), rusdPos)
+				rusd.sellRusd(walletAddr, m_config.busd(), rusdPos)
 					.waitForHash();
 				
 				// QUESTION: can we send back a partial response before the hash is ready using chunks or WebSockets?
 				
-				respond( code, RefCode.OK);  // wait for completion. pas 
+				respondOk();  // wait for completion. pas 
 			}
 			else {  // we don't use require here because we want to call alert()
 				String str = String.format( 
@@ -185,7 +178,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			String wallet = m_map.get("wallet_public_key");
-			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
+			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
 
 			m_main.sqlConnection( conn -> {
 				String where = S.isNotNull(wallet) 
@@ -208,7 +201,7 @@ public class BackendTransaction extends MyTransaction {
 	public void handleGetUserByWallet() {
 		wrap( () -> {
 			String wallet = Util.getLastToken(m_uri, "/");
-			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid: %s", wallet);
+			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
 			
 			m_main.sqlConnection( conn -> {
 				JSONArray ar = conn.queryToJson(
@@ -222,8 +215,47 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	public void handleWalletUpdate() {
-		S.out( "  ignoring");
+		S.out( "  ignoring, but you should update the time in the users table");
 		respondOk();
+	}
+
+	public void handleMyWallet() {
+		wrap( () -> {
+			String walletAddr = Util.getLastToken(m_uri, "/");
+			Main.require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "The wallet address is invalid");
+			
+			Wallet wallet = new Wallet(walletAddr);
+			
+			MyJsonObject rusd = new MyJsonObject();
+			rusd.put( "name", "RUSD");
+			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
+			rusd.put( "tooltip", "tooltip"); // pull from config
+			rusd.put( "buttonTooltip", "tooltip"); // pull from config
+			
+			MyJsonObject busd = new MyJsonObject();
+			busd.put( "name", "USDC");
+			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
+			busd.put( "tooltip", "tooltip"); // pull from config
+			busd.put( "buttonTooltip", "tooltip"); // pull from config
+			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
+			busd.put( "stablecoin", true);
+			
+			MyJsonObject base = new MyJsonObject();
+			base.put( "name", "MATIC");  // pull from config
+			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
+			base.put( "tooltip", "tooltip"); // pull from config
+			
+			JSONArray ar = new JSONArray();
+			ar.add(rusd);
+			ar.add(busd);
+			ar.add(base);
+			
+			JSONObject obj = new JSONObject();
+			obj.put( "refresh", 2000);
+			obj.put( "tokens", ar);
+
+			respond(obj);
+		});
 	}
 	
 }

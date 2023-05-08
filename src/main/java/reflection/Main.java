@@ -80,10 +80,11 @@ public class Main implements ITradeReportHandler {
 		catch( BindException e) {
 			S.out( "The application is already running");
 			e.printStackTrace();
+			System.exit(1);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			System.exit(0);  // we need this because listening on the port will keep the app alive
+			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
@@ -113,16 +114,10 @@ public class Main implements ITradeReportHandler {
 		sqlConnection( conn -> {} );
 
 		// if port is zero, host contains connection string, otherwise host and port are used
-		if (m_config.redisPort() == 0) {
-			MyTimer.next( "Connecting to redis with connection %s", m_config.redisHost() );
-			Util.require( JedisURIHelper.isValid( URI.create(m_config.redisHost() ) ), "redis connect string is invalid" );
-			m_redis = new MyRedis(m_config.redisHost() );
-		}
-		else {
-			MyTimer.next( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-			m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
-		}
+		MyTimer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
+		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		m_redis.connect(); // this is not required but we want to bail out if redis is not running
+		m_redis.setName("RefAPI");
 
 		MyTimer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
@@ -146,25 +141,27 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
-		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch) );
+		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
 		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time 
+		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time
+		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
-		MyTimer.done();
 
 		// connect to TWS
+		MyTimer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
-		S.out( "  done");
+		MyTimer.done();
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
@@ -662,10 +659,6 @@ public class Main implements ITradeReportHandler {
 		new BackendTransaction(this, exch).handleGetPrice();
 	}
 
-	private void handleOrder(HttpExchange exch) {
-		new OrderTransaction(this, exch).backendOrder();
-	}
-
 	private void handleGetFaqs(HttpExchange exch) {
 		getURI(exch);
 		quickResponse(exch, m_faqs, 200);  // we can do a quick response because we already have the json
@@ -708,7 +701,7 @@ public class Main implements ITradeReportHandler {
 	
 }
 
-
+//no change
 
 // Issues
 // high: put in a check if an order fills after a timeout; that's a WARNING and ALERT for someone to do something, or for the program to close out the position

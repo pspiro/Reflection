@@ -15,7 +15,7 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	
 	public static MyJsonArray parse( String text) throws Exception {
 		Util.require( isArray(text), "Error: not a json array: " + text);
-		return new MyJsonArray( new JSONParser().parse( text) );
+		return new MyJsonArray( (JSONArray)new JSONParser().parse( text) );
 	}
 	
 	public JSONArray getArray() {
@@ -26,8 +26,8 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 		return m_ar.size();
 	}
 
-	public MyJsonArray( Object obj) {
-		m_ar = (JSONArray)obj;
+	public MyJsonArray( JSONArray obj) {
+		m_ar = obj;
 	}
 	
 	@Override public String toString() {  // this class sucks. pas

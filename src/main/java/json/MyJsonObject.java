@@ -43,7 +43,7 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	}
 
 	public MyJsonArray getAr(String key) {
-		return new MyJsonArray( m_obj.get( key) );
+		return new MyJsonArray( (JSONArray)m_obj.get( key) );
 	}
 
 	public MyJsonObject getObj(String key) throws Exception {

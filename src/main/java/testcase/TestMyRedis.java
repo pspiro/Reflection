@@ -21,13 +21,13 @@ public class TestMyRedis extends TestCase {
 	}
 
 	
-	public void testSetAndGet() {
+	public void testSetAndGet() throws Exception {
 		MyRedis redis = config.newRedis();
 		redis.run( jedis -> jedis.set( "a", "b") );
 		assertEquals( "b", redis.query( jedis -> jedis.get( "a") ) );
 	}
 	
-	public void testBreak1() {
+	public void testBreak1() throws Exception {
 		MyRedis redis = config.newRedis();
 		
 		//Util.executeIn(2500, () -> redis.run( jedis -> jedis.disconnect()));
@@ -54,7 +54,7 @@ public class TestMyRedis extends TestCase {
 	Response<String> obj1;
 	Response<String> obj2;
 
-	public void testPipeline1() {
+	public void testPipeline1() throws Exception {
 		MyRedis redis = config.newRedis();
 		
 		redis.pipeline( pipeline -> {
