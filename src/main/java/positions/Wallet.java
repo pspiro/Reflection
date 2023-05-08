@@ -25,7 +25,7 @@ public class Wallet {
 		return val != null ? val : 0.;
 	}
 
-	/** Returns a map of contract address (lower case) to position (double) */ 
+	/** Returns a map of contract address (lower case) -> position (Double) */ 
 	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
 		

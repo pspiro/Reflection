@@ -76,6 +76,7 @@ public class Prices {
 		}
 	}
 
+	/** Returns bid/ask only */
 	public JSONObject toJson(int conid) throws RefException {
 		return Util.toJsonMsg( "bid", anyBid(), "ask", anyAsk() );
 	}

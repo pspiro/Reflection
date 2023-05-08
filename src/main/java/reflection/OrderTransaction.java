@@ -100,7 +100,7 @@ public class OrderTransaction extends MyTransaction {
 			// check that we have prices and that they are within bounds;
 			// do this after checking trading hours because that would
 			// explain why there are no prices which should never happen otherwise
-			Prices prices = m_main.getPrices( contract.conid() );
+			Prices prices = m_main.getStock(conid).prices();
 			prices.checkOrderPrice( order, orderPrice, m_config);
 			
 			// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas

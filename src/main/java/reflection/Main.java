@@ -140,12 +140,22 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
+		
+		// remove these after code change in Frontend
 		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );
 		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
-		server.createContext("/api/reflection-api/get-price", exch -> handleGetPrice(exch) );
+		server.createContext("/api/reflection-api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
+		server.createContext("/api/reflection-api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+		
+		server.createContext("/api/positions", exch -> handleReqTokenPositions(exch) );
+		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
+		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
+		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
+		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+		
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
@@ -538,16 +548,6 @@ public class Main implements ITradeReportHandler {
 		m_config.dump();
 	}
 
-	/** This returns json tags of bid/ask but it might be returning other prices if bid/ask is not available. */
-	Prices getPrices(int conid) throws JedisException {
-		// create a new redis connection; this is not as fast as if we keep the connection open
-		// if you do that, make sure to synchronize the calls, and don't share w/ the existing MyRedis
-		// because you get: Cannot use Jedis when in Pipeline. Please use Pipeline or reset jedis state.
-		return new Prices( 
-				m_config.newJedis().hgetAll( String.valueOf(conid) ) 
-		);
-	}
-
 	// move this into BackendTransaction
 	public void handleMint(HttpExchange exchange) throws IOException { 
 		String response;
@@ -649,14 +649,6 @@ public class Main implements ITradeReportHandler {
 
 	private void handleReqTokenPositions(HttpExchange exch) {
 		new BackendTransaction(this, exch).handleReqPositions();
-	}
-
-	private void handleGetStockWithPrice(HttpExchange exch) {
-		new BackendTransaction(this, exch).handleGetStockWithPrice();
-	}
-
-	private void handleGetPrice(HttpExchange exch) {
-		new BackendTransaction(this, exch).handleGetPrice();
 	}
 
 	private void handleGetFaqs(HttpExchange exch) {

@@ -291,10 +291,10 @@ public abstract class MyTransaction {
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
 	void returnPrice(int conid) throws RefException {
-		Prices prices = m_main.getPrices( conid);
+		Prices prices = m_main.getStock(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
-		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.bid(), prices.ask(), conid);
+		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
 		respond( prices.toJson(conid) );
 	}
 

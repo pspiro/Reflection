@@ -91,8 +91,9 @@ public class BackendTransaction extends MyTransaction {
 			
 			// if we timed out, respond with the prices anyway
 			setTimer( m_config.timeout(), () -> {
-				log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
-				respond(stock);
+				if (respond(stock) ) {
+					log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
+				}
 			});
 		});
 	}
@@ -118,6 +119,7 @@ public class BackendTransaction extends MyTransaction {
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();
 
+			// not needed, waitForHash() will itself eventually timeout
 			//setTimer( m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
 			double rusdPos = rusd.getPosition(walletAddr);

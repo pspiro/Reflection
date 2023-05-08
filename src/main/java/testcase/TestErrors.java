@@ -27,7 +27,7 @@ public class TestErrors extends TestCase {
 		
 		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
-		assertEquals( "Param 'msg' is missing", map.getString(message) ); 
+		assertEquals( "The 'msg' parameter is missing or the URI path is invalid", map.getString(message) ); 
 	}
 	
 	public void testMissingMsg() throws Exception {
@@ -35,7 +35,7 @@ public class TestErrors extends TestCase {
 		
 		MyJsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
-		assertEquals( "Param 'msg' is missing", map.getString(message) ); 
+		assertEquals( "The 'msg' parameter is missing or the URI path is invalid", map.getString(message) ); 
 	}
 	
 	public void testInvalidMsg() throws Exception {

@@ -466,10 +466,11 @@ public class Config {
 	public long sessionTimeout() {
 		return sessionTimeout;
 	}
-	
-	public Jedis newJedis() {
-		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
-	}
+
+	// no good, the connection has to be closed, use a wrapper
+//	public Jedis newJedis() {
+//		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
+//	}
 	
 	public MyRedis newRedis() throws Exception {
 		return new MyRedis(redisHost, redisPort);

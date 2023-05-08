@@ -71,6 +71,7 @@ public class OldStyleTransaction extends MyTransaction {
 	}
 
 	private void handleMsg() throws Exception {
+		Main.require( S.isNotNull(m_map.getParam("msg") ), RefCode.INVALID_REQUEST, "The 'msg' parameter is missing or the URI path is invalid");
 
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
