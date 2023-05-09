@@ -157,7 +157,7 @@ public class SiweTransaction extends MyTransaction {
 
 	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
 	 * @throws RefException */
-	static MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
+	private static MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
 			try {
 				return validateCookie( cookie, null);

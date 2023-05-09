@@ -40,5 +40,9 @@ public class Wallet {
 		return map;
 	}
 
+	public double getNativeTokenBalance() throws Exception {
+		return MoralisServer.getNativeBalance(m_address);
+	}
+
 	
 }

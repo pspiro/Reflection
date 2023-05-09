@@ -255,7 +255,6 @@ public class BackendTransaction extends MyTransaction {
 			JSONObject obj = new JSONObject();
 			obj.put( "refresh", 2000);
 			obj.put( "tokens", ar);
-
 			respond(obj);
 		});
 	}

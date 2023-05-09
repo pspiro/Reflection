@@ -6,7 +6,6 @@ import static reflection.Main.require;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Timer;
@@ -23,7 +22,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Erc20;
 import json.MyJsonObject;
-import reflection.SiweTransaction.Session;
+import test.MyTimer;
 import tw.google.Auth;
 import tw.google.TwMail;
 import tw.util.S;
@@ -47,6 +46,7 @@ public abstract class MyTransaction {
 	protected boolean m_responded;  // only respond once per transaction
 	protected ParamMap m_map = new ParamMap();
 	protected String m_uri;
+	protected MyTimer m_timer = new MyTimer();
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		m_main = main;
@@ -132,6 +132,8 @@ public abstract class MyTransaction {
 			return false;
 		}
 		
+		m_timer.done();
+		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
@@ -184,7 +186,12 @@ public abstract class MyTransaction {
 
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {
+		long start = System.currentTimeMillis();
 		void run() throws Exception;
+		
+		private static void time() {
+			S.out( "Completed in %s ms", System.currentTimeMillis() - start);
+		}
 	}
 
 	void setTimer( long ms, ExRunnable runnable) {

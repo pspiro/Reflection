@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import positions.Wallet;
 import reflection.Util;
 import tw.util.S;
 
@@ -55,6 +56,10 @@ public class Accounts {
 	 *  other tokens (like Bitcoin) would have a different addresses. */
 	public String getAddress(String accountName) throws Exception {
 		return getAddress( getId(accountName) );
+	}
+	
+	public Wallet getWallet(String accountName) throws Exception {
+		return new Wallet(getAddress(accountName));
 	}
 	
 	public synchronized String getAddress(int accountId) throws Exception {

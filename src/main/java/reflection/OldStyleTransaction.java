@@ -5,7 +5,6 @@ import static reflection.Main.require;
 import static reflection.Util.round;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import org.json.simple.JSONArray;
@@ -15,15 +14,13 @@ import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 import com.ib.client.Decimal;
 import com.ib.client.Types.SecType;
+import com.ib.controller.AccountSummaryTag;
+import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Busd;
-import fireblocks.Erc20;
 import fireblocks.Rusd;
-import fireblocks.StockToken;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import positions.MoralisServer;
 import redis.clients.jedis.Jedis;
 import tw.util.S;
@@ -41,6 +38,7 @@ public class OldStyleTransaction extends MyTransaction {
 		getDescription,
 		getPositions,
 		getPrice,
+		getCashBal,
 		mint,
 		pullBackendConfig,
 		pullFaq,
@@ -123,22 +121,28 @@ public class OldStyleTransaction extends MyTransaction {
 			case wallet:
 				onShowWallet();
 				break;
-//			case getAllStocks:
-//				getAllStocks();
-//				break;
-//			case pushBackendConfig:
-//				pushBackendConfig();
-//				break;
-//			case pullBackendConfig:
-//				pullBackendConfig();
-//				break;
-//			case pullFaq:
-//				pullFaq();
-//				break;
-//			case pushFaq:
-//				pushFaq();
-//				break;
+			case getCashBal:
+				onCashBal();
+				break;
 		}
+	}
+
+	private void onCashBal() {
+		wrap( () -> {
+			JSONObject obj = new JSONObject();
+			
+			m_main.orderController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
+				@Override public void accountSummary(String account, AccountSummaryTag tag, String value, String currency) {
+					obj.put( tag.toString(), value);
+				}
+				@Override public void accountSummaryEnd() {
+					m_main.orderController().cancelAccountSummary(this);					
+					respond( obj);
+				}
+			});
+			
+			setTimer( Main.m_config.timeout(), () -> timedOut( "onCashBal() timed out") ); 
+		});
 	}
 
 	/** Return json showing balance, allowance, and stock token positions */

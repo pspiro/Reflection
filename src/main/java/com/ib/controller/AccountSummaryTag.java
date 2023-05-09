@@ -42,5 +42,17 @@ public enum AccountSummaryTag {
 	// misc
 	HighestSeverity,				// A measure of how close the account is to liquidation
 	DayTradesRemaining,				// The Number of Open/Close trades one could do before Pattern Day Trading is detected; a value of "-1" means user can do unlimited day trades.
-	Leverage,						// GrossPositionValue / NetLiquidation
+	Leverage;						// GrossPositionValue / NetLiquidation
+	
+	public static AccountSummaryTag[] nice = {
+			NetLiquidation,
+			TotalCashValue,
+			SettledCash,	
+			AccruedCash,	
+			BuyingPower,	
+			EquityWithLoanValue,
+			GrossPositionValue,	
+			RegTEquity,
+			RegTMargin,
+	};
 }
