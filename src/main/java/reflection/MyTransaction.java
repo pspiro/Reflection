@@ -132,7 +132,7 @@ public abstract class MyTransaction {
 			return false;
 		}
 		
-		m_timer.done();
+		m_timer.done(m_uri);
 		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {

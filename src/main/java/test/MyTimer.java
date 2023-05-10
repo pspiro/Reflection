@@ -13,10 +13,16 @@ public class MyTimer {
 		if (start > 0) {
 			done();
 		}
+		
 		S.out(format, params);
 		start = System.currentTimeMillis();
 	}
 
+	public void done(String str) {
+		S.out( "  completed %s in %s ms", str, System.currentTimeMillis() - start );
+		start = 0;
+	}
+	
 	public void done() {
 		S.out( "  done in %s ms", System.currentTimeMillis() - start );
 		start = 0;

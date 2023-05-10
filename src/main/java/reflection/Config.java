@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
 
+import com.ib.client.Types.TimeInForce;
+
 import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
@@ -69,6 +71,7 @@ public class Config {
 	private int siweTimeout; // max time between issuedAt field and now
 	private int sessionTimeout; // session times out after this amount of inactivity
 	private String errorCodesTab;  // valid values are yes, no, random
+	private TimeInForce tif;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -114,6 +117,7 @@ public class Config {
 	public String busdAddr() { return busdAddr; }  // lower case
 	public double minTokenPosition() { return minTokenPosition; }
 	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
+	public TimeInForce tif() { return tif; }
 	
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
@@ -162,17 +166,20 @@ public class Config {
 		this.postgresUser = m_tab.get( "postgresUser");
 		this.postgresPassword = m_tab.get( "postgresPassword");
 
+		// mint
+		this.mintHtml = m_tab.getRequiredString("mintHtml");
+		this.mintBusd = m_tab.getRequiredString("mintBusd");
+		this.mintEth = m_tab.getRequiredString("mintEth");
+
 		// additional data
 		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
 		this.commission = m_tab.getDouble( "commission");
-		this.mintHtml = m_tab.getRequiredString("mintHtml");
-		this.mintBusd = m_tab.getRequiredString("mintBusd");
-		this.mintEth = m_tab.getRequiredString("mintEth");
 		this.autoFill = m_tab.getBoolean("autoFill");
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
+		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -207,6 +214,7 @@ public class Config {
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
+		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {
@@ -472,6 +480,7 @@ public class Config {
 //		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
 //	}
 	
+	/** WARNING: the connection has to be closed */
 	public MyRedis newRedis() throws Exception {
 		return new MyRedis(redisHost, redisPort);
 	}
@@ -496,5 +505,17 @@ public class Config {
 
 	public double sellSpread() {
 		return sellSpread;
+	}
+
+	enum Tooltip {
+		rusdBalance,
+		busdBalance,
+		baseBalance,
+		redeemButton,
+		approveButton,
+	}
+	
+	public String getTooltip(Tooltip tag) {
+		return m_tab.get(tag.toString());
 	}
 }
