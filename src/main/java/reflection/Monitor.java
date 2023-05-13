@@ -6,24 +6,30 @@ import java.util.HashMap;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 
 import fireblocks.Erc20;
+import fireblocks.Fireblocks;
 import fireblocks.StockToken;
 import http.MyHttpClient;
 import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.MoralisServer;
+import positions.Wallet;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyTable;
 import tw.util.MyTableModel;
 import tw.util.NewLookAndFeel;
 import tw.util.S;
+import tw.util.VerticalPanel;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -34,15 +40,21 @@ public class Monitor {
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
-	static final String abi = Util.toJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 	
 
 	Records m_records = new Records();
 	RecMap m_recMap = new RecMap();
 	JFrame m_frame = new JFrame();
 	Mod m_mod = new Mod();
+	private JTextField m_usdc = new JTextField(10);
+	private JTextField m_rusd = new JTextField(10);
+	private JTextField m_usdc2 = new JTextField(10);
+	private JTextField m_nativeToken = new JTextField(10);
+	private JTextField m_admin1 = new JTextField(10);
+	private JTextField m_admin2 = new JTextField(10);
+	private JTextField m_cash = new JTextField(10);
+	
 	final static Config m_config = new Config();
-	//MyHttpClient client = new MyHttpClient("34.125.38.193", 8383);  // will have to move to localhost or go through nginx
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
@@ -76,12 +88,29 @@ public class Monitor {
 		JPanel butPanel = new JPanel();
 		butPanel.add(but);
 		
+		JPanel refPanel = new JPanel();
+		refPanel.setBorder( new TitledBorder("Native Token Balances") );
+		refPanel.add( new JLabel("RefWallet"));
+		refPanel.add( m_nativeToken);
+		refPanel.add( new JLabel("Admin1"));
+		refPanel.add( m_admin1);
+		refPanel.add( new JLabel("Admin2"));
+		refPanel.add( m_admin2);
+		
+		VerticalPanel rusdPanel = new VerticalPanel();
+		rusdPanel.setBorder( new TitledBorder("RUSD"));
+		rusdPanel.add( "RUSD Outstanding", m_rusd);
+		rusdPanel.add( "USDC in RefWallet", m_usdc2);
+		rusdPanel.add( "Cash in brokerage", m_cash);
+		
 		m_frame.add( scroll);
+		m_frame.add(rusdPanel, BorderLayout.EAST);
 		m_frame.add(butPanel, BorderLayout.NORTH);
 		m_frame.setTitle( "Reflection Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 800, 1000);
 		m_frame.setVisible(true);
+		m_frame.add(refPanel, BorderLayout.SOUTH);
 		
 		refresh();
 	}
@@ -111,17 +140,35 @@ public class Monitor {
 		for (Record rec : m_records) {
 			if (S.isNotNull(rec.m_address) ) {
 				S.out( "Querying totalSupply for %s", rec.m_symbol);
-				String supply = MoralisServer.contractCall( rec.m_address, "totalSupply", abi);
-				Util.require( supply != null, "Moralis contract call returned null");
-				rec.m_tokens = Erc20.fromBlockchain(
-						supply.replaceAll("\"", ""), // strip quotes
-						StockToken.stockTokenDecimals
-				);
+				rec.m_tokens = new StockToken( rec.m_address).queryTotalSupply();
 			}
 		}
 		SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
-	}
+		
+		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
+		double usdc = refWallet.getBalance(m_config.busdAddr());
+		SwingUtilities.invokeLater( () -> m_usdc.setText( S.fmt2(usdc) ) );
+		SwingUtilities.invokeLater( () -> m_usdc2.setText( S.fmt2(usdc) ) );
+
+		double nativeBal = refWallet.getNativeTokenBalance();
+		SwingUtilities.invokeLater( () -> m_nativeToken.setText( S.fmt2(nativeBal) ) );
+
+		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeTokenBalance();
+		SwingUtilities.invokeLater( () -> m_admin1.setText( S.fmt2(admin1Bal) ) );
+
+		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeTokenBalance();
+		SwingUtilities.invokeLater( () -> m_admin2.setText( S.fmt2(admin2Bal) ) );
+
+		double rusd = m_config.rusd().queryTotalSupply();
+		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
+		
+		double val = new MyHttpClient("localhost", 8383)
+				.get( "/?msg=getCashBal")
+				.readMyJsonObject()
+				.getDouble("TotalCashValue");
+		SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
+	}
 
 
 	private Record getOrCreate(int conid) {
@@ -133,7 +180,6 @@ public class Monitor {
 		}
 		return rec;
 	}
-
 
 
 	class Mod extends MyTableModel {

@@ -18,6 +18,7 @@ import fireblocks.Rusd;
 import json.MyJsonObject;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config.Tooltip;
 import tw.util.S;
 import util.LogType;
 
@@ -231,21 +232,21 @@ public class BackendTransaction extends MyTransaction {
 			MyJsonObject rusd = new MyJsonObject();
 			rusd.put( "name", "RUSD");
 			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
-			rusd.put( "tooltip", "tooltip"); // pull from config
-			rusd.put( "buttonTooltip", "tooltip"); // pull from config
+			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
+			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
 			MyJsonObject busd = new MyJsonObject();
 			busd.put( "name", "USDC");
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
-			busd.put( "tooltip", "tooltip"); // pull from config
-			busd.put( "buttonTooltip", "tooltip"); // pull from config
+			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
+			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
 			busd.put( "stablecoin", true);
 			
 			MyJsonObject base = new MyJsonObject();
 			base.put( "name", "MATIC");  // pull from config
 			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
-			base.put( "tooltip", "tooltip"); // pull from config
+			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JSONArray ar = new JSONArray();
 			ar.add(rusd);
@@ -255,7 +256,6 @@ public class BackendTransaction extends MyTransaction {
 			JSONObject obj = new JSONObject();
 			obj.put( "refresh", 2000);
 			obj.put( "tokens", ar);
-
 			respond(obj);
 		});
 	}

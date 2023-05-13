@@ -87,11 +87,12 @@ public class OrderTransaction extends MyTransaction {
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
 		order.totalQuantity( desiredQuantity);
 		order.lmtPrice( orderPrice);
-		order.tif( TimeInForce.IOC);
+		order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
 		order.allOrNone(true);  // all or none, we don't want partial fills
 		order.transmit( true);
 		order.outsideRth( true);
 		order.walletAddr( wallet);
+		
 		
 		// request contract details (prints to stdout)
 		insideAnyHours( contract, inside -> {
@@ -144,6 +145,7 @@ public class OrderTransaction extends MyTransaction {
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 
 					if (status.isComplete() ) {
+						order.permId(permId);
 						respondToOrder( order, shares.value(), false, status);
 					}
 				});
@@ -196,8 +198,8 @@ public class OrderTransaction extends MyTransaction {
 					Util.toJsonMsg( code, RefCode.REJECTED, message, msg),
 					400,
 					null);
-			log( LogType.REJECTED, "id=%s  orderQty=%s  orderPrc=%s  reason=%s",
-					order.orderId(), order.totalQty(), order.lmtPrice(), msg);
+			log( LogType.REJECTED, "id=%s  permId=%s  orderQty=%s  orderPrc=%s  reason=%s",
+					order.orderId(), order.permId(), order.totalQty(), order.lmtPrice(), msg);
 			return;
 		}
 

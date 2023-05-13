@@ -10,6 +10,7 @@ import org.asynchttpclient.Response;
 
 import json.MyJsonArray;
 import json.MyJsonObject;
+import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
@@ -359,5 +360,9 @@ public class Fireblocks {
 	}
 	
 	static void initMap() {
+	}
+	
+	public static Wallet getWallet(String account) throws Exception {
+		return Accounts.instance.getWallet(account);
 	}
 }

@@ -48,6 +48,12 @@ public class MyRedis {
 		});
 	}
 	
+	public <T> T singleQuery( Jrt<T> runnable) {
+		T t = query(runnable);
+		disconnect();
+		return t;
+	}
+	
 	public <T> T query( Jrt<T> runnable) {
 		try {
 			checkConnection();

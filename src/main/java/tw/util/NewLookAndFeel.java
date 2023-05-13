@@ -67,10 +67,8 @@ public class NewLookAndFeel extends MetalLookAndFeel {
 	
 	
 	public static class NewTextFieldUI extends BasicTextFieldUI {
-	    private static final NewTextFieldUI UI = new NewTextFieldUI();
-
 	    public static ComponentUI createUI(JComponent c) {
-	        return UI;
+	        return new NewTextFieldUI();
 	    }
 
 		@Override public Dimension getPreferredSize(JComponent c) {

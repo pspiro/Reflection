@@ -1,29 +1,26 @@
 package fireblocks;
 
-import positions.MoralisServer;
 import reflection.Config;
-import reflection.Main;
 import tw.util.S;
 
 /** This class represents any non-RUSD stablecoin */ 
 public class Busd extends Erc20 {
 	static final String mintKeccak = "40c10f19";
 	
-//	public static void main(String[] args) throws Exception {
-//		Accounts.instance.setAdmins( "Admin1,Admin2");
-//		
-//		Config config = new Config();
-//		config.readFromSpreadsheet("Test-config");
-//		
-//		Accounts.instance.read();
-//
-//		Busd busd = config.newBusd();
-//		busd.mint( 
-//				Accounts.instance.getId( "Owner"),
-//				"0x6DEC8dE8B148952584f52F9AC89A2d6A5A26932f",
-//				1);
-//		
-//	}
+	public static void main(String[] args) throws Exception {
+		Accounts.instance.setAdmins( "Admin1,Admin2");
+		//Accounts.instance.read();
+		
+		Config config = Config.readFrom("Dev-config");
+
+		Busd busd = config.busd();
+		busd.mint( 
+				Accounts.instance.getId( "Owner"),
+				"0xb016711702D3302ceF6cEb62419abBeF5c44450e",
+				//"0xd953DC148f3A1019132FBD75Ee515E3F786f6634",
+				20000);
+		
+	}
 
 	public Busd( String address, int decimals) {
 		super( address, decimals);

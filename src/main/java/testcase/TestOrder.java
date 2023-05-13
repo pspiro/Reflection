@@ -6,6 +6,7 @@ import java.util.Date;
 import http.MyHttpClient;
 import json.MyJsonObject;
 import junit.framework.TestCase;
+import redis.MyRedis;
 import redis.clients.jedis.Jedis;
 import reflection.Config;
 import reflection.Prices;
@@ -15,7 +16,7 @@ import tw.util.S;
 
 public class TestOrder extends MyTestCase {
 	static double curPrice = 128.15; // Double.valueOf( jedis.hget("8314", "last") );
-	static double approved;
+//	static double approved;
 	
 	static {
 		try {
@@ -23,7 +24,10 @@ public class TestOrder extends MyTestCase {
 //			MyHttpClient cli = new MyHttpClient("localhost", 8383);
 //			cli.get("?msg=seedPrices");
 
-			approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
+			curPrice = config.newRedis().singleQuery( jedis -> Double.valueOf( jedis.hget("8314", "last") ) );
+			S.out( "Current IBM price is %s", curPrice);
+
+		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -192,6 +196,14 @@ public class TestOrder extends MyTestCase {
 	static MyJsonObject orderData(double offset, String side, double qty) throws Exception {
 		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
 				side, qty, Double.valueOf( curPrice + offset) );
+		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
+		addCookie(obj);
+		return obj;
+	}
+	
+	static MyJsonObject orderData2(double price, String side, double qty) throws Exception {
+		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+				side, qty, price);
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
 		addCookie(obj);
 		return obj;

@@ -6,10 +6,12 @@ import java.math.BigInteger;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.RefException;
+import reflection.Util;
 import tw.util.S;
 
 public class Erc20 {
 	static final String approveKeccak = "095ea7b3";
+	static final String totalSupplyAbi = Util.toJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	protected String m_address;
 	protected int m_decimals;
@@ -83,5 +85,13 @@ public class Erc20 {
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
 		return new Wallet(walletAddr).getBalance(m_address); 
+	}
+	
+	public double queryTotalSupply() throws Exception {
+		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
+		Util.require( supply != null, "Moralis total supply returned null for " + m_address);
+		return fromBlockchain(
+				supply.replaceAll("\"", ""), // strip quotes
+				m_decimals);
 	}
 }

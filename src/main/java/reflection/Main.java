@@ -93,11 +93,13 @@ public class Main implements ITradeReportHandler {
 
 		// create log file folder and open log file
 		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
+		
+		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet; this must go first since other items depend on it
-		MyTimer.next("Reading config tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		timer.next("Reading from google spreadsheet %s", tabName, NewSheet.Reflection);
 		readSpreadsheet();
-		MyTimer.done();
+		timer.done();
 		
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
@@ -110,16 +112,16 @@ public class Main implements ITradeReportHandler {
 		}
 
 		// check database connection to make sure it's there
-		MyTimer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
+		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		sqlConnection( conn -> {} );
 
 		// if port is zero, host contains connection string, otherwise host and port are used
-		MyTimer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
+		timer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
 		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		m_redis.connect(); // this is not required but we want to bail out if redis is not running
 		m_redis.setName("RefAPI");
 
-		MyTimer.next( "Starting stock price query thread every n ms");
+		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		
@@ -127,7 +129,7 @@ public class Main implements ITradeReportHandler {
 		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
 
 
-		MyTimer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
+		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
@@ -168,10 +170,10 @@ public class Main implements ITradeReportHandler {
 		server.start();
 
 		// connect to TWS
-		MyTimer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
+		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
-		MyTimer.done();
+		timer.done();
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
@@ -197,7 +199,6 @@ public class Main implements ITradeReportHandler {
 			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
 		
-		MyTimer.next("Reading stock list");
 		readStockListFromSheet(book);
 	}
 
