@@ -156,10 +156,16 @@ public abstract class MyTransaction {
 		m_responded = true;
 		return true;
 	}
+	
+	/** Execute runnable, wrapped, in a different thread so current thread can be freed up */
+	void wrapLater( ExRunnable runnable) {
+		new Thread( () -> wrap( () -> runnable.run() ) ).start();
+	}
+	
 
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	void wrap( ExRunnable runnable) {   // another name for this might be "mustRespond()"
+	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
@@ -170,8 +176,11 @@ public abstract class MyTransaction {
 					null);  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
-			if (responded || e.code() != RefCode.TIMED_OUT) {
+			if (responded) {
 				log( LogType.ERROR, e.toString() );
+			}
+			else if (e.code() != RefCode.TIMED_OUT) {
+				log( LogType.ERROR, e.toString() + " (error after response)");
 			}
 		}
 		catch( Exception e) {
@@ -240,7 +249,7 @@ public abstract class MyTransaction {
 			// which means this is called by a test script
 			if (Main.m_config.autoFill() && m_map.get("simtime") == null) {
 				runnable.run(true);
-				return;
+				return;    // this should real go BEFORE the insideHours() call. pas
 			}
 			
 			if (!inside && etf24.equals( m_main.getType( contract.conid() ) ) ) {

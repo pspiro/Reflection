@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -459,12 +460,15 @@ public class ApiController implements EWrapper {
 	private void internalReqContractDetails( Contract contract, final IInternalHandler processor) {
 		int reqId = m_reqId++;
 		
-		S.out( "Requesting contract details  %s  %s", reqId, contract.conid() );
-		
 		m_contractDetailsMap.put( reqId, processor);
+		
+		int i = new Random().nextInt() % 1000;
+		S.out( "***Requesting contract details  %s  %s  %s", reqId, contract.conid(), i );
+		
 		
 		m_orderHandlers.put(reqId, new IOrderHandler() { 
 			public void handle(int errorCode, String errorMsg) {
+				S.out( "****** handled error end %s", i);
 				processor.contractDetailsEnd();
 			}
 

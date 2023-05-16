@@ -34,7 +34,7 @@ public class SiweTransaction extends MyTransaction {
 		
 		public Session(String nonce) {
 			m_nonce = nonce;
-			m_lastTime = System.xcurrentTimeMillis();
+			m_lastTime = System.currentTimeMillis();
 		}
 
 		public String nonce() {

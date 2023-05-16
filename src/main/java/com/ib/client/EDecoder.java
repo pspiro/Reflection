@@ -172,7 +172,7 @@ class EDecoder implements ObjectInput {
     	}
     	
     	int msgId = readInt();
-    	//S.out( "---received msgid %s", msgId);
+    	//S.out( "------RECEIVED API MSG WITH ID %s", msgId);
     	
     	// begin IB message id processing
 

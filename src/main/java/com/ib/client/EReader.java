@@ -122,89 +122,36 @@ public class EReader extends Thread {
     }
 
 	private EMessage readSingleMessage() throws IOException {
-		// always true
-		if (isUseV100Plus()) {
-			int msgSize = 0;
-			try {
-				msgSize = m_clientSocket.readInt();
-			} 
-			catch (Exception ex) {
-				ex.printStackTrace();
-				if (ex instanceof IOException) {  // probably we should always disconnect, for any exception type
-					parent().connectionError();
-					parent().eDisconnect();
-					S.out("Disconnecting");
-				}
-				S.out( "Returning null from exception but not disconnecting?"); 
-				return null;
+		// read message size
+		int msgSize = 0;
+		try {
+			msgSize = m_clientSocket.readInt();
+		} 
+		catch (Exception ex) {
+			ex.printStackTrace();
+			if (ex instanceof IOException) {  // probably we should always disconnect, for any exception type
+				parent().connectionError();
+				parent().eDisconnect();
+				S.out("Disconnecting");
 			}
-
-			if (msgSize > MAX_MSG_LENGTH) {
-				throw new InvalidMessageLengthException("message is too long: "
-						+ msgSize);
-			}
-			
-			byte[] buf = new byte[msgSize];
-			
-			int offset = 0;
-			
-			while (offset < msgSize) {
-				offset += m_clientSocket.read(buf, offset, msgSize - offset);
-			}
-						
-			return new EMessage(buf, buf.length);
-		}
-		
-		// we never come here
-		S.out( "**Impossible code to reach**");
-		
-		if (m_iBufLen == 0) {
-			m_iBufLen = appendIBuf();
-		}
-				
-		int msgSize;
-		
-		while (true)
-			try {
-				msgSize = 0;
-				if (m_iBufLen > 0) {
-				  try (EDecoder decoder = new EDecoder(m_clientSocket.serverVersion(), defaultWrapper)) {
-				    msgSize = decoder.processMsg(new EMessage(m_iBuf, m_iBufLen));
-				  }
-				}
-				break;
-			} catch (IOException e) {
-				if (m_iBufLen >= m_iBuf.length * 3/4) {
-					byte[] tmp = new byte[m_iBuf.length * 2];
-					
-					System.arraycopy(m_iBuf, 0, tmp, 0, m_iBuf.length);
-					
-					m_iBuf = tmp;
-				}
-				
-				m_iBufLen += appendIBuf();
-			}
-		
-		if (msgSize == 0) {
+			S.out( "Returning null from exception but not disconnecting?"); 
 			return null;
 		}
 		
+		if (msgSize > MAX_MSG_LENGTH) {
+			throw new InvalidMessageLengthException("message is too long: "
+					+ msgSize);
+		}
 		
-		EMessage msg = new EMessage(m_iBuf, msgSize);
+		byte[] buf = new byte[msgSize];
 		
-		System.arraycopy(Arrays.copyOfRange(m_iBuf, msgSize, m_iBuf.length), 0, m_iBuf, 0, m_iBuf.length - msgSize);
+		int offset = 0;
 		
-		m_iBufLen -= msgSize;
-		
-		if (m_iBufLen < IN_BUF_SIZE_DEFAULT && m_iBuf.length > IN_BUF_SIZE_DEFAULT) {
-			byte[] tmp = new byte[IN_BUF_SIZE_DEFAULT];
-			
-			System.arraycopy(m_iBuf, 0, tmp, 0, tmp.length);
-			
-			m_iBuf = tmp;
-		}			
-		
-		return msg;
+		while (offset < msgSize) {
+			offset += m_clientSocket.read(buf, offset, msgSize - offset);
+		}
+					
+		return new EMessage(buf, buf.length);
 	}
 
 	protected int appendIBuf() throws IOException {

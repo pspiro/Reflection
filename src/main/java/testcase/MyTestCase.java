@@ -7,11 +7,11 @@ import reflection.Config;
 import reflection.Util;
 
 public class MyTestCase extends TestCase {
-	static Config config;
+	static Config m_config;
 	
 	static {
 		try {
-			config = Config.readFrom("Dt-config");
+			m_config = Config.readFrom("Dt-config");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

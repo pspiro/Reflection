@@ -4,28 +4,24 @@ import static reflection.Main.log;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
-import java.sql.SQLException;
-
-import static reflection.Main.m_config;
-
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.OrderStatus;
 import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
-import com.ib.client.Types.TimeInForce;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Fireblocks;
 import fireblocks.StockToken;
-import reflection.MyTransaction.Stablecoin;
 import tw.util.S;
 import util.LogType;
 
 public class OrderTransaction extends MyTransaction {
-	private double desiredQuantity;
+	private double m_desiredQuantity;
 	private Stock m_stock;
+	private double m_stablecoinAmt;
+	private double m_tds;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -39,6 +35,9 @@ public class OrderTransaction extends MyTransaction {
 			order();
 		});
     }
+	
+	// you have to make sure that the timeout doesn't happen and respond 0 while we are waiting
+	// for the 
 
 	private void order() throws Exception {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
@@ -51,16 +50,15 @@ public class OrderTransaction extends MyTransaction {
 		String side = action();
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 
-		desiredQuantity = m_map.getRequiredDouble( "quantity");
-		require( desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
+		m_desiredQuantity = m_map.getRequiredDouble( "quantity");
+		require( m_desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
 
 		double price = m_map.getRequiredDouble( "tokenPrice");
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
-		double amt = price * desiredQuantity;
+		double preCommAmt = price * m_desiredQuantity;
 		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
-		require( amt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( amt), S.formatPrice( maxAmt) ); // this is displayed to user
-		
+		require( preCommAmt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
 		
 		String wallet = m_map.getRequiredParam("wallet_public_key");
 		require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Wallet address is invalid");
@@ -70,13 +68,9 @@ public class OrderTransaction extends MyTransaction {
 		validateCookie(wallet);
 		
 		// calculate order price
-		double prePrice;
-		if (side == "buy") {
-			prePrice = price - price * m_config.minBuySpread();
-		}
-		else {
-			prePrice = price + price * m_config.minSellSpread();
-		}
+		double prePrice = side == "buy" 
+			? price - price * m_config.minBuySpread()
+			: price + price * m_config.minSellSpread();
 		double orderPrice = Util.round( prePrice);  // round to two decimals
 		
 		Contract contract = new Contract();
@@ -85,14 +79,28 @@ public class OrderTransaction extends MyTransaction {
 
 		Order order = new Order();
 		order.action( side == "buy" ? Action.BUY : Action.SELL);
-		order.totalQuantity( desiredQuantity);
+		order.totalQuantity( m_desiredQuantity);
 		order.lmtPrice( orderPrice);
 		order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
 		order.allOrNone(true);  // all or none, we don't want partial fills
 		order.transmit( true);
 		order.outsideRth( true);
 		order.walletAddr( wallet);
+
+		// check TDS calculation
+		m_tds = m_map.getDouble("tds");
+		double myTds = order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
+		require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
+		m_stablecoinAmt = m_map.getRequiredDouble("price");
+		
+		double myStablecoinAmt = order.isBuy()
+			? preCommAmt + m_config.commission()
+			: preCommAmt - m_config.commission() - m_tds;
+		require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calulated amount of %s", m_stablecoinAmt, myStablecoinAmt);
+		
+		// confirm that the user has enough stablecoin or stock token in their wallet
+		requireSufficientStablecoin(order);		
 		
 		// request contract details (prints to stdout)
 		insideAnyHours( contract, inside -> {
@@ -179,17 +187,21 @@ public class OrderTransaction extends MyTransaction {
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( m_config.orderTimeout(), () -> onTimeout( order, shares.value(), OrderStatus.Unknown) );
+		setTimer( m_config.orderTimeout(), () -> onOrderTimeout( order, shares.value(), OrderStatus.Unknown) );
 	}
+	
+	boolean m_respondedToOrder;
 	
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized.
 	 *  In the case where order qty < .5 and we didn't submit an order,
 	 *  orderStatus will be Filled. */
-	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status) throws Exception {
-		if (m_responded) {
-			return;    // this happens when the timeout occurs after an order is filled, which is normal
-		}
+	private void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status) {
+		// make sure we only call this once
+//		if (m_respondedToOrder) {
+//			return;    // this happens when the timeout occurs after an order is filled, which is normal
+//		}
+//		m_respondedToOrder = true; // needed? can we ensure that this is called exactly once?
 
 		// no shares filled and order size >= .5?
 		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
@@ -222,112 +234,108 @@ public class OrderTransaction extends MyTransaction {
 			refCode = RefCode.OK;
 		}
 
-		double tds = 0;     // the tds tax paid by Indian residents
 		String hash = "";   // the blockchain hashcode
 
 		if (fireblocks() ) {
-			try {
-				String id;
-				S.out( "Starting Fireblocks protocol");
-				
-				// for testing
-				if (m_map.getBool("fail") ) {
-					throw new Exception("Blockchain transaction failed intentially during testing"); 
-				}
+			Util.execute( () -> performFireblocks() );
+		}
+		else {
+			respond( code, refCode, "filled", stockTokenQty);
 
-				double stablecoinAmt = m_map.getDouble("price");
+			log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+					order.orderId(), order.action(), order.totalQty(),
+					S.fmt4(filledShares), order.lmtPrice(),
+					m_config.commission(), m_tds, hash);
+		}
+	}
+	
+	void performFireblocks() {
+		try {
+			String id;
+			S.out( "Starting Fireblocks protocol");
+			
+			// test 
+			if (m_map.getBool("fail") ) {
+				throw new Exception("Blockchain transaction failed intentially during testing"); 
+			}
+
+			// buy
+			if (order.action() == Action.BUY) {
 				
-				// buy
-				if (order.action() == Action.BUY) {
-					
-					// buy with RUSD?
-					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-						id = m_config.rusd().buyStockWithRusd(
-								order.walletAddr(), 
-								stablecoinAmt,
-								newStockToken(),
-								stockTokenQty
-						);
-					}
-					
-					// buy with BUSD
-					else {
-						id = m_config.rusd().buyStock(
-								order.walletAddr(),
-								m_config.busd(),
-								stablecoinAmt,
-								newStockToken(), 
-								stockTokenQty
-						);
-					}
-				}
-				
-				// sell
-				else {
-					id = m_config.rusd().sellStockForRusd(
-							order.walletAddr(),
-							stablecoinAmt,
+				// buy with RUSD?
+				if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
+					id = m_config.rusd().buyStockWithRusd(
+							order.walletAddr(), 
+							m_stablecoinAmt,
 							newStockToken(),
 							stockTokenQty
 					);
 				}
-
-				// it would be better if we could send back the response in two blocks, one
-				// when the order fills and one when the blockchain transaction is completed
-
-				// wait for the transaction to be signed
-				// this won't be good if we have multiple orders pending since each one is
-				// polling every one second; either put them in a queue or use the Fireblocks
-				// callback mechanism
-				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
 				
-				// insert transaction into database
-				insertCryptoTrans(order, hash);
-				
-				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
+				// buy with BUSD
+				else {
+					id = m_config.rusd().buyStock(
+							order.walletAddr(),
+							m_config.busd(),
+							m_stablecoinAmt,
+							newStockToken(), 
+							stockTokenQty
+					);
+				}
 			}
-			catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
-				e.printStackTrace();
-				log( LogType.ERROR, "Fireblocks failed for order %s - %s", order.orderId(), e.getMessage() );
-
-				// try to figure out why the order failed
-				
-				// fireblocks has failed; try to determine why and respond() to client
-				wrap( () -> {
-					double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
-
-					// confirm that the user has enough stablecoin or stock token in their wallet
-					if (order.isBuy() ) {
-						double balance = stablecoin().getPosition( order.walletAddr() );
-						require( Util.isGtEq(balance, totalOrderAmt), 
-								RefCode.INSUFFICIENT_FUNDS,
-								"The stablecoin balance (%s) is less than the total order amount (%s)", 
-								balance, totalOrderAmt);
-					}
-					else {
-						double balance = newStockToken().getPosition( order.walletAddr() );
-						require( Util.isGtEq(balance, desiredQuantity), 
-								RefCode.INSUFFICIENT_FUNDS,
-								"The stock token balance (%s) is less than the order quantity (%s)", 
-								balance, desiredQuantity);
-					}
-	
-					// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-					if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
-						double approvedAmt = m_config.busd().getAllowance( order.walletAddr(), m_config.rusdAddr() ); 
-						require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
-								"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
-					}
-
-					// we don't know why it failed, so throw the Fireblocks error
-					throw e;
-				});
-					
-				// FB has failed, we have responded, now unwind the order
-				unwindOrder(order, filledShares);
-				
-				return;
+			
+			// sell
+			else {
+				id = m_config.rusd().sellStockForRusd(
+						order.walletAddr(),
+						m_stablecoinAmt,
+						newStockToken(),
+						stockTokenQty
+				);
 			}
+
+			// it would be better if we could send back the response in two blocks, one
+			// when the order fills and one when the blockchain transaction is completed
+
+			// wait for the transaction to be signed
+			// this won't be good if we have multiple orders pending since each one is
+			// polling every one second; either put them in a queue or use the Fireblocks
+			// callback mechanism
+			hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
+			
+			// insert transaction into database
+			insertCryptoTrans(order, hash);
+			
+			log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
+		}
+		catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
+			e.printStackTrace();
+			log( LogType.ERROR, "Fireblocks failed for order %s - %s", order.orderId(), e.getMessage() );
+
+			// try to figure out why the order failed
+			
+			// fireblocks has failed; try to determine why and respond() to client
+			wrap( () -> {
+				double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
+				
+				// confirm that the user has enough stablecoin or stock token in their wallet
+				requireSufficientStablecoin(order); // check this again; it could have changes since the order was placed
+
+				// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
+				if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
+					double approvedAmt = m_config.busd().getAllowance( order.walletAddr(), m_config.rusdAddr() ); 
+					require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
+							"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+				}
+
+				// we don't know why it failed, so throw the Fireblocks error
+				throw e;
+			});
+				
+			// FB has failed, we have responded, now unwind the order
+			unwindOrder(order, filledShares);
+			
+			return;
 		}
 
 		respond( code, refCode, "filled", stockTokenQty);
@@ -335,9 +343,26 @@ public class OrderTransaction extends MyTransaction {
 		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.action(), order.totalQty(),
 				S.fmt4(filledShares), order.lmtPrice(),
-				m_config.commission(), tds, hash);
+				m_config.commission(), m_tds, hash);
 	}	
-	
+
+	/** Confirm that the user has enough stablecoin or stock token in their wallet */
+	private void requireSufficientStablecoin(Order order) throws Exception {
+		if (order.isBuy() ) {
+			double balance = stablecoin().getPosition( order.walletAddr() );
+			require( Util.isGtEq(balance, m_stablecoinAmt ), 
+					RefCode.INSUFFICIENT_FUNDS,
+					"The stablecoin balance (%s) is less than the total order amount (%s)", 
+					balance, m_stablecoinAmt );
+		}
+		else {
+			double balance = newStockToken().getPosition( order.walletAddr() );
+			require( Util.isGtEq(balance, m_desiredQuantity), 
+					RefCode.INSUFFICIENT_FUNDS,
+					"The stock token balance (%s) is less than the order quantity (%s)", 
+					balance, m_desiredQuantity);
+		}
+	}
 
 	private StockToken newStockToken() {
 		return new StockToken( m_stock.getSmartContractId() );
@@ -374,7 +399,7 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 
-	private synchronized void onTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
+	private synchronized void onOrderTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
 		// this could happen if our timeout is lower than the timeout of the IOC order,
 		// which should never be the case
 		if (!m_responded) {

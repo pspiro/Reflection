@@ -50,10 +50,6 @@ public class OldStyleTransaction extends MyTransaction {
 		testAlert,
 		wallet,
 		;
-
-		public static String allValues() {
-			return Arrays.asList( values() ).toString();
-		}
 	}
 
 	OldStyleTransaction(Main main, HttpExchange exchange) {

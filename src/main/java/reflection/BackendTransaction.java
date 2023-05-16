@@ -91,15 +91,17 @@ public class BackendTransaction extends MyTransaction {
 			});
 			
 			// if we timed out, respond with the prices anyway
-			setTimer( m_config.timeout(), () -> {
-				if (respond(stock) ) {
-					log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
-				}
-			});
+			setTimer( 4000, () -> timedOut( "handleGetStockWithPrice timed out") );
+
+//			setTimer( m_config.timeout(), () -> {
+//				if (respond(stock) ) {
+//					log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
+//				}
+//			});
 		});
 	}
 	
-	/** Backend-style msg; conid is last parameter */
+	/** Backend-style msg; conid is last parameter */  // when is this used? pas
 	public void handleGetPrice() {
 		wrap( () -> {
 			int conid = Integer.valueOf( Util.getLastToken(m_uri, "/") );
