@@ -20,6 +20,7 @@ import redis.MyRedis.PRun;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.MyTransaction.ExRunnable;
+import test.MyTimer;
 import reflection.Stock;
 import reflection.Util;
 import tw.google.NewSheet;
@@ -41,7 +42,7 @@ public class MktDataServer {
 	//final static int SpyConid = 756733;
 	
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private MdConnectionMgr m_mdConnMgr;
+	private final MdConnectionMgr m_mdConnMgr;
 	private String m_tabName;
 	private MyRedis m_redis;
 	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
@@ -59,7 +60,7 @@ public class MktDataServer {
 			// ensure that application is not already running
 			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
 			
-			new MktDataServer().run( args);
+			new MktDataServer(args);
 		}
 		catch (Exception e) {
 			m_log.log( e);
@@ -67,7 +68,7 @@ public class MktDataServer {
 		}
 	}
 
-	private void run(String[] args) throws Exception {
+	private MktDataServer(String[] args) throws Exception {
 		String tabName = args[0];
 		
 		// create log file folder and open log file
@@ -77,19 +78,19 @@ public class MktDataServer {
 			m_debug = true;
 			log( "debug mode=true");
 		}
+		
+		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet 
-		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		timer.next("Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
 		m_config.readFromSpreadsheet(tabName);
-		S.out( "  done");
 		
-		S.out( "Reading stock list from google sheet");
+		timer.next( "Reading stock list from google sheet");
 		readStockListFromSheet();
-		S.out( "  done");
-		
+
 		// if redis port is zero, host contains the full URI;
 		// otherwise, we use host and port
-		S.out( "Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
+		timer.next("Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
 		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
 		m_redis.setName("MktDataServer");
 		m_redis.connect();  // test the connection, let it fail now
@@ -97,13 +98,15 @@ public class MktDataServer {
 		
 		// check every few seconds to see if we are in extended trading hours or not
 		// we could check with every tick but that is a lot of expensive time operations
+		timer.next( "Checking trading hours");
 		checkTime(true);
 		Util.executeEvery( 5000, () -> checkTime(false) ); 
 
 		// connect to TWS
+		timer.next("Connecting to TWS");
 		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
 		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
-		//m_mdConnMgr.startTimer();
+		timer.done();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
 	}
@@ -193,9 +196,11 @@ public class MktDataServer {
 			// for ETF's request price on SMART and IBEOS
 			// ETF's that trade 24 hours per day have type ETF-24
 			if (stock.get("type").equals("ETF-24") ) {
+				if (m_debug) S.out( "  requesting ETF prices for %s", stock.getConid() );
 				requestEtfPrice( stock.getConid() );
 			}
 			else {
+				if (m_debug) S.out( "  requesting stock prices for %s", stock.getConid() );
 				requestStockPrice( stock.getConid(), exchange);
 			}
 		}

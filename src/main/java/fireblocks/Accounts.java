@@ -67,7 +67,9 @@ public class Accounts {
 		if (address == null) {
 			S.out("Querying wallet address for %s", accountId);
 			String url = String.format("/v1/vault/accounts/%s/%s/addresses", accountId, Fireblocks.platformBase);
-			address = Fireblocks.getArray(url).getJsonObj(0).getString("address");
+			 MyJsonArray ar = Fireblocks.getArray(url);
+			 Util.require(ar.size() > 0, "The wallet does not have an address for the native token; add some native token to the wallet");
+			 address = ar.getJsonObj(0).getString("address");
 			m_addressMap.put( accountId, address);
 		}
 		return address;

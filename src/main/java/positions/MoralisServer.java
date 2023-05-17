@@ -4,13 +4,13 @@ package positions;
 import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.sql.ResultSet;
-import java.util.HashMap;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.json.simple.JSONObject;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -66,7 +66,8 @@ public class MoralisServer {
 	// double-check the synchronization
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
+		reqPositionsList( Wallet.test).display();
 	}
 	
 	void run(String[] args) throws Exception {
@@ -268,12 +269,32 @@ public class MoralisServer {
 	}
 	
 	public static MyJsonObject queryTransaction( String transactionHash, String chain) throws Exception {
-		String url = String.format( "https://deep-index.moralis.io/api/v2/transaction/%s?chain=%s",
-				transactionHash, chain);
+		String url = String.format( "%s/transaction/%s?chain=%s",
+				moralis, transactionHash, chain);
 		return MyJsonObject.parse( querySync( url) );
 	}
 
+	/** Send the query; if there is an UnknownHostException, try again as it
+	 *  may resolve the second time */
 	public static String querySync(String url) {
+		try {
+			return querySync_(url);
+		}
+		catch( CompletionException e) {
+			// we saw this: java.util.concurrent.CompletionException: java.net.UnknownHostException: This is usually a temporary error during hostname resolution and means that the local server did not receive a response from an authoritative server (deep-index.moralis.io)
+			// a few times, maybe if we try again it will resolve
+			if (e.getCause() != null && e.getCause() instanceof UnknownHostException) {
+				S.out( "Moralis query failed with UnknownHostException, wait 500 ms and try again");
+				S.sleep(500);
+				return querySync_(url);
+			}
+			else {
+				throw e;
+			}
+		}
+	}
+	
+	private static String querySync_(String url) {
 		StringHolder holder = new StringHolder();
 
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?

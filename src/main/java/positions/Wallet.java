@@ -8,6 +8,8 @@ import tw.util.S;
 
 /** Get token positions */
 public class Wallet {
+	static String test = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";  // for testing only
+	
 	private String m_address;
 	private HashMap<String, Double> m_map;
 	

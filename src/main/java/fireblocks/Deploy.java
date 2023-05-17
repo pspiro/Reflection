@@ -41,7 +41,7 @@ public class Deploy {
 		}
 
 		
-		// deploy RUSD if not already a valid address
+		// deploy RUSD (if set to "deploy")
 		if ("deploy".equals( rusd.address() ) ) {
 			rusd.deploy( 
 					"c:/work/smart-contracts/build/contracts/rusd.json",

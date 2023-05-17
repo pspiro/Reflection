@@ -81,7 +81,9 @@ class ConnectionMgr implements IConnectionHandler {
 		stopTimer();
 	}
 	
-	/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+	/** Ready to start sending messages.
+	 *  Overridden in subclass
+	 *  Anyone that uses requestid must check for this  */
 	@Override public synchronized void onRecNextValidId(int id) {
 		// we really don't care if we get this because we are using random
 		// order id's; it's because sometimes, after a reconnect or if TWS
