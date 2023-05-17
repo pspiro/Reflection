@@ -22,6 +22,7 @@ public class OrderTransaction extends MyTransaction {
 	private Stock m_stock;
 	private double m_stablecoinAmt;
 	private double m_tds;
+	boolean m_respondedToOrder;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -188,14 +189,32 @@ public class OrderTransaction extends MyTransaction {
 		setTimer( m_config.orderTimeout(), () -> onOrderTimeout( order, shares.value(), OrderStatus.Unknown) );
 	}
 	
+	private synchronized void onOrderTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
+		// this could happen if our timeout is lower than the timeout of the IOC order,
+		// which should never be the case
+		if (!m_respondedToOrder) {
+			log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
+					order.orderId(), filledShares, status);
+
+			// if order is still live, cancel the order
+			if (!status.isComplete() && !status.isCanceled() ) {
+				S.out( "Canceling order %s on timeout", order.orderId() );
+				m_main.orderController().cancelOrder( order.orderId(), "", null);
+			}
+
+			respondToOrder( order, filledShares, true, status);
+		}
+	}
+	
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized.
 	 *  In the case where order qty < .5 and we didn't submit an order,
 	 *  orderStatus will be Filled. */
 	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout, OrderStatus status) throws Exception {
-		if (m_responded) {
+		if (m_respondedToOrder) {
 			return;    // this happens when the timeout occurs after an order is filled, which is normal
 		}
+		m_respondedToOrder = true;
 
 		// no shares filled and order size >= .5?
 		if (filledShares == 0 && status != OrderStatus.Filled) {  // Filled status w/ zero shares means order size was < .5
@@ -381,23 +400,6 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 
-	private synchronized void onOrderTimeout(Order order, double filledShares, OrderStatus status) throws Exception {
-		// this could happen if our timeout is lower than the timeout of the IOC order,
-		// which should never be the case
-		if (!m_responded) {
-			log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
-					order.orderId(), filledShares, status);
-
-			// if order is still live, cancel the order
-			if (!status.isComplete() && !status.isCanceled() ) {
-				S.out( "Canceling order %s on timeout", order.orderId() );
-				m_main.orderController().cancelOrder( order.orderId(), "", null);
-			}
-
-			respondToOrder( order, filledShares, true, status);
-		}
-	}
-	
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. 
 	 * @param filledShares */
 	private void unwindOrder(Order order, double filledShares) {
