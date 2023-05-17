@@ -28,7 +28,6 @@ import util.LogType;
 
 public class OldStyleTransaction extends MyTransaction {
 	enum MsgType {
-		checkHours,
 		disconnect,
 		dump,
 		getAllPrices,
@@ -50,10 +49,6 @@ public class OldStyleTransaction extends MyTransaction {
 		testAlert,
 		wallet,
 		;
-
-		public static String allValues() {
-			return Arrays.asList( values() ).toString();
-		}
 	}
 
 	OldStyleTransaction(Main main, HttpExchange exchange) {
@@ -82,9 +77,6 @@ public class OldStyleTransaction extends MyTransaction {
 				break;
 			case getAllPrices:
 				getAllPrices();
-				break;
-			case checkHours:
-				checkHours();
 				break;
 			case getDescription:
 				getDescription();
@@ -297,41 +289,6 @@ public class OldStyleTransaction extends MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "getDescription timed out") );
 	}
 
-	/** Top-level method, could be used for debugging */
-	private void checkHours() throws RefException {
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-
-		int conid = m_map.getRequiredInt( "conid");
-		require( conid > 0, RefCode.INVALID_REQUEST, "Param 'conid' must be positive integer");
-
-		S.out( "Returning trading hours for %s", conid);
-		Contract contract = new Contract();
-		contract.conid( conid);
-		contract.exchange( m_main.getExchange( conid) );
-
-		m_main.orderController().reqContractDetails(contract, list -> processHours( conid, list) );
-
-		setTimer( Main.m_config.timeout(), () -> timedOut( "checkHours timed out") );
-	}
-
-	private void processHours(int conid, List<ContractDetails> list) {
-		wrap( () -> {
-			require( !list.isEmpty(), RefCode.NO_SUCH_STOCK, "No contract details found for conid %s", conid);
-
-			ContractDetails deets = list.get(0);
-
-			if (inside( deets, deets.liquidHours() ) ) {
-				respond( "hours", "liquid");
-			}
-			else if (inside( deets, deets.tradingHours() ) ) {
-				respond( "hours", "illiquid");
-			}
-			else {
-				respond( "hours", "closed");
-			}
-		});
-	}
-	
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
 		returnPrice(conid);

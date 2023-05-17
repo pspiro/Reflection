@@ -15,16 +15,17 @@ import reflection.Util;
 import tw.util.S;
 
 public class TestOrder extends MyTestCase {
-	static double curPrice = 128.15; // Double.valueOf( jedis.hget("8314", "last") );
+	static double curPrice;
+	static boolean m_noFireblocks = true;
 //	static double approved;
 	
 	static {
 		try {
-			//seed();
 //			MyHttpClient cli = new MyHttpClient("localhost", 8383);
 //			cli.get("?msg=seedPrices");
 
-			curPrice = config.newRedis().singleQuery( jedis -> Double.valueOf( jedis.hget("8314", "last") ) );
+			curPrice = m_config.newRedis().singleQuery( 
+					jedis -> Double.valueOf( jedis.hget("8314", "bid") ) );
 			S.out( "Current IBM price is %s", curPrice);
 
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
@@ -34,16 +35,6 @@ public class TestOrder extends MyTestCase {
 		}
 	}
 
-	private static void seed() throws Exception {
-		Jedis jedis = config.redisPort() == 0
-				? new Jedis( config.redisHost() )  // use full connection string
-				: new Jedis( config.redisHost(), config.redisPort() );
-		
-		jedis.hset( "8314", "bid", "" + curPrice);
-		jedis.hset( "8314", "ask", "" + curPrice);
-		jedis.hset( "8314", "last", "" + curPrice);
-	}
-	
 	// missing walletId
 	public void testMissingWallet() throws Exception {
 		MyJsonObject obj = orderData(2, "BUY", 10);
@@ -55,6 +46,11 @@ public class TestOrder extends MyTestCase {
 		assertEquals( text, "Param 'wallet_public_key' is missing");
 	}
 	
+	private static double getCurPrice() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
 		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
@@ -194,7 +190,7 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	static MyJsonObject orderData(double offset, String side, double qty) throws Exception {
-		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, Double.valueOf( curPrice + offset) );
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
 		addCookie(obj);
@@ -211,15 +207,22 @@ public class TestOrder extends MyTestCase {
 	
 	static MyJsonObject addCookie(MyJsonObject obj) throws Exception {
 		obj.put("cookie", Cookie.cookie);
-		obj.put("noFireblocks", true);
-		obj.put("currency", "busd");
+		obj.put("currency", "USDC");
 		obj.put("wallet_public_key", Cookie.wallet);
+		
+		obj.put("noFireblocks", m_noFireblocks);
 		
 		double price = obj.getDouble("tokenPrice");
 		double qty = obj.getDouble("quantity");
-		double comm = obj.getDouble("commission");
-		double total = obj.getString("action").equals("buy")
-				? price * qty + comm : price * qty - comm;
+		double amt = price * qty;
+		boolean buy = obj.getString("action").equalsIgnoreCase("BUY");
+		
+		double tds = (amt - m_config.commission() ) * .01;
+		if (!buy) {
+			obj.put("tds", tds);
+		}
+		
+		double total = buy ? amt + m_config.commission() : amt - m_config.commission() - tds;
 		obj.put("price", total);
 		return obj;
 	}

@@ -7,6 +7,7 @@ import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -32,8 +33,13 @@ public class Util {
 	}
 
 	/** Do a decimal compare down to six digits */
-	public static boolean isGtEq(double stabPos, double totalOrderAmt) {
-		return stabPos - totalOrderAmt >= -.000001;
+	public static boolean isGtEq(double larger, double smaller) {
+		return larger - smaller >= -.000001;
+	}
+
+	/** Do a decimal compare down to four digits */
+	public static boolean isEq(double d1, double d2, double tolerance) {
+		return Math.abs(d1 - d2) < tolerance;
 	}
 
 	/** Typical format of hours string is:
@@ -207,7 +213,7 @@ public class Util {
 		return sb.toString();
 	}
 	
-	/** Execute the runnable in a new thread. */
+	/** Execute the runnable in a new thread aka invokeLater. */
 	public static void execute( Runnable runnable) {
 		new Thread(runnable).start();
 	}
@@ -329,5 +335,10 @@ public class Util {
 		String str = String.format( "'%s' is not a valid value for enum %s", text, values[0].getClass().getName() );
 		throw new IllegalArgumentException( str);
 	}
+	
+	public static String allEnumValues(Object[] values) {
+		return Arrays.asList(values).toString();
+	}
+	
 	
 }

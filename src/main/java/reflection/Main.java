@@ -63,7 +63,8 @@ public class Main implements ITradeReportHandler {
 	private final String m_tabName;
 	private       String m_faqs;
 	private String m_type1Config; 
-	private MyJsonObject m_type2Config; 
+	private MyJsonObject m_type2Config;
+	TradingHours m_tradingHours; 
 	
 	JSONArray stocks() { return m_stocks; }
 
@@ -122,6 +123,8 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
+		timer.next( "Starting trading hours query thread every n ms");
+		m_tradingHours.startQuery();
 		
 		// /api/crypto-transactions  all trades, I think not used
 		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
@@ -273,10 +276,6 @@ public class Main implements ITradeReportHandler {
 
 	String getExchange( int conid) throws RefException {
 		return getStock(conid).getString("exchange");
-	}
-
-	String getType( int conid) throws RefException {
-		return getStock(conid).getString("type");
 	}
 
 	Stock getStock( int conid) throws RefException {
