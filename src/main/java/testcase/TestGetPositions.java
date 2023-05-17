@@ -9,16 +9,9 @@ import json.MyJsonObject;
 import junit.framework.TestCase;
 import tw.util.S;
 
-public class TestGetPositions extends TestCase {
+public class TestGetPositions extends MyTestCase {
 	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	static String host = "localhost"; // prod = "34.125.38.193";
-	
-	static {
-		try {
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 	
 	public static void main(String[] args) {
 		Timer timmer = new Timer();
@@ -40,7 +33,7 @@ public class TestGetPositions extends TestCase {
 	}
 	
 	public void testStockPos() throws Exception {
-		MyHttpClient cli = new MyHttpClient(host, 8383);
+		MyHttpClient cli = cli();
 		cli.get("?msg=getpositions");
 		assertEquals(200, cli.getResponseCode());
 
@@ -54,7 +47,7 @@ public class TestGetPositions extends TestCase {
 	}
 	
 	public void testTokenPos() throws Exception {
-		MyHttpClient cli = new MyHttpClient(host, 8383);
+		MyHttpClient cli = cli();
 		cli.get("/api/reflection-api/positions/" + wallet);
 		assertEquals(200, cli.getResponseCode());
 		MyJsonArray ar = cli.readMyJsonArray();

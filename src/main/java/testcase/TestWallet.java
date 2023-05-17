@@ -1,6 +1,7 @@
 package testcase;
 
 import http.MyHttpClient;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import positions.Wallet;
 
@@ -32,20 +33,26 @@ public class TestWallet extends MyTestCase {
 		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
 		obj.display("My Wallet");
 		
-		assertTrue( obj.getInt("refresh") >= 100);
-
-		MyJsonObject tok = obj.getObj("nativeToken");
-		assertEquals("MATIC", tok.getString("name"));
-		assertTrue( tok.getDouble("balance") > 0 );
+		assertTrue( obj.getInt("refresh") > 100);
 		
-		tok = obj.getObj("rusd");
+		MyJsonArray ar = obj.getAr("tokens");
+		
+		MyJsonObject tok;
+		
+		tok = ar.getJsonObj(0);
 		assertEquals("RUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
-		
-		tok = obj.getObj("stablecoin");
+
+		tok = ar.getJsonObj(1);
 		assertEquals("USDC", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 		assertTrue( tok.getDouble("approvedBalance") > 0 );
+
+		tok = ar.getJsonObj(2);
+		assertEquals("MATIC", tok.getString("name"));
+		assertTrue( tok.getDouble("balance") > 0 );
+		
+		
 		
 	}
 }

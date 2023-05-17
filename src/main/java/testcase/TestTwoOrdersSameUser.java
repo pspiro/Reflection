@@ -1,5 +1,5 @@
 package testcase;
 
-public class TestTwoOrdersSameUser {
-
+public class TestTwoOrdersSameUser extends MyTestCase {
+	// write this
 }

@@ -8,27 +8,16 @@ import redis.clients.jedis.Response;
 import reflection.Config;
 import tw.util.S;
 
-public class TestMyRedis extends TestCase {
-	static Config config;
-	
-	static {
-		try {
-			config = Config.readFrom("Dt-config");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
+public class TestMyRedis extends MyTestCase {
 	
 	public void testSetAndGet() throws Exception {
-		MyRedis redis = config.newRedis();
+		MyRedis redis = m_config.newRedis();
 		redis.run( jedis -> jedis.set( "a", "b") );
 		assertEquals( "b", redis.query( jedis -> jedis.get( "a") ) );
 	}
 	
 	public void testBreak1() throws Exception {
-		MyRedis redis = config.newRedis();
+		MyRedis redis = m_config.newRedis();
 		
 		//Util.executeIn(2500, () -> redis.run( jedis -> jedis.disconnect()));
 		
@@ -55,7 +44,7 @@ public class TestMyRedis extends TestCase {
 	Response<String> obj2;
 
 	public void testPipeline1() throws Exception {
-		MyRedis redis = config.newRedis();
+		MyRedis redis = m_config.newRedis();
 		
 		redis.pipeline( pipeline -> {
 			pipeline.set( "c", "d");
@@ -72,7 +61,7 @@ public class TestMyRedis extends TestCase {
 	}
 
 	public void testPipeline2() throws Exception {
-		MyRedis redis = config.newRedis();
+		MyRedis redis = m_config.newRedis();
 
 		redis.startPipeline(500, ex -> ex.printStackTrace() );
 		redis.runOnPipeline( pipeline -> pipeline.set( "m1", "m2") );

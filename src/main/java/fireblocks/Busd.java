@@ -38,7 +38,7 @@ public class Busd extends Erc20 {
 				toBlockchain( amt) 
 		};
 		
-		return Fireblocks.call2( accountId, m_address, mintKeccak, paramTypes, params, "BUSD mint");
+		return Fireblocks.call2( accountId, m_address, mintKeccak, paramTypes, params, "Stablecoin mint");
 	}
 	
 	/** For testing only, as we cannot deploy the real stablecoin */

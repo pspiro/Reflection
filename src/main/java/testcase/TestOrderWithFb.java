@@ -11,17 +11,7 @@ import reflection.MyTransaction.Stablecoin;
 import reflection.RefCode;
 import tw.util.S;
 
-public class TestOrderWithFb extends TestCase {
-	static Config config;
-	
-	static {
-		try {
-			config = Config.readFrom("Dt-config");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+public class TestOrderWithFb extends MyTestCase {
 	
 	// you must give some allowance to the wallet which means you must use Bob
 //	public void testFillBuy() throws Exception {
@@ -48,7 +38,7 @@ public class TestOrderWithFb extends TestCase {
 
 	/** test inserting and reading back entry to crypto_transactions table */
 	public void testCryptoTrans() throws Exception {
-		config.sqlConnection( conn -> {
+		m_config.sqlConnection( conn -> {
 			conn.insertPairs("crypto_transactions",
 				"crypto_transaction_id", "trans id",
 				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
@@ -59,7 +49,7 @@ public class TestOrderWithFb extends TestCase {
 				"quantity", 12.345,
 				"price", 34.567,
 				"commission", .1, // not so good, we should get it from the order. pas
-				"spread", config.buySpread(),
+				"spread", m_config.buySpread(),
 				"currency", Stablecoin.USDC.toString() );
 		
 			ResultSet ts = conn.queryNext( "select * from crypto_transactions where id = (select max(id) from crypto_transactions)");

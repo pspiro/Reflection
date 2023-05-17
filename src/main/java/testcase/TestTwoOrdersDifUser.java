@@ -4,12 +4,13 @@ import json.MyJsonObject;
 import reflection.RefCode;
 import tw.util.S;
 
+// finish this
 public class TestTwoOrdersDifUser extends TestOrder {
 	boolean done1 = true;
 	boolean done2 = true;
 	
 	static {
-		m_noFireblocks = false;
+		//m_noFireblocks = false;
 	}
 
 	public static void main(String[] args) throws InterruptedException {

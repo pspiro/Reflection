@@ -1,14 +1,7 @@
 package testcase;
 
-import java.sql.ResultSet;
-import java.util.Date;
-
 import http.MyHttpClient;
 import json.MyJsonObject;
-import junit.framework.TestCase;
-import redis.MyRedis;
-import redis.clients.jedis.Jedis;
-import reflection.Config;
 import reflection.Prices;
 import reflection.RefCode;
 import reflection.Util;
@@ -26,7 +19,7 @@ public class TestOrder extends MyTestCase {
 
 			curPrice = m_config.newRedis().singleQuery( 
 					jedis -> Double.valueOf( jedis.hget("8314", "bid") ) );
-			S.out( "Current IBM price is %s", curPrice);
+			S.out( "TestOrder: Current IBM price is %s", curPrice);
 
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			

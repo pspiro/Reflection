@@ -41,7 +41,7 @@ public class Erc20 {
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
 		return Fireblocks.call2( accountId, m_address, 
-				Rusd.approveKeccak, paramTypes, params, "BUSD approve");
+				Rusd.approveKeccak, paramTypes, params, "Stablecoin approve");
 		
 	}
 

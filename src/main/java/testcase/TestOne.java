@@ -5,19 +5,12 @@ import reflection.RefCode;
 import tw.util.S;
 
 public class TestOne extends MyTestCase {
-	public void testFillBuy() throws Exception {
-		MyJsonObject obj = TestOrder.orderData( -1, "SELL", 2);
-		obj.display();
-		
-		// this won't work because you have to 
-		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
-		
+	public void testFracShares()  throws Exception {
+		MyJsonObject obj = TestOrder.orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"); 
 		MyJsonObject map = TestOrder.postDataToObj(obj);
-		String code = map.getString( "code");
+		String ret = map.getString( "code");
 		String text = map.getString("message");
-		S.out( "fill buy %s %s", code, text);
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 2, filled);
+		S.out( "testFracShares %s %s", ret, text);
+		assertEquals( RefCode.OK.toString(), ret);
 	}
 }
