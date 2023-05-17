@@ -341,9 +341,9 @@ public class OrderTransaction extends MyTransaction {
 
 		respond( code, refCode, "filled", stockTokenQty);
 
-		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  stockTokenQty=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.action(), order.totalQty(),
-				S.fmt4(filledShares), order.lmtPrice(),
+				S.fmt4(filledShares), stockTokenQty, order.lmtPrice(),
 				m_config.commission(), m_tds, hash);
 	}
 	
