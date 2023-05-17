@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -36,7 +35,6 @@ import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlRunnable;
 import test.MyTimer;
@@ -408,8 +406,13 @@ public class Main implements ITradeReportHandler {
 					S.out( "You can't get market data in your paper account while logged into your production account");
 					break;
 			}
-
-			S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
+			
+			if (
+					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
+					errorCode != 2106		// HMDS data farm connection is OK:ushmds
+			) {
+				S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
+			}
 		}
 
 		@Override public void show(String string) {
