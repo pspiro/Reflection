@@ -56,10 +56,6 @@ public class TradingHours {
 		});
 	}
 	
-	String getType( int conid) throws RefException {
-		return m_main.getStock(conid).getString("type");
-	}
-
     /** If simTime is set, return today's date and simTime, otherwise return now */
     private Date getNow(String simTime) throws ParseException {
 		return S.isNull( simTime) 
@@ -70,7 +66,7 @@ public class TradingHours {
 	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS. */
-	boolean insideAnyHours( Contract contract, String simTime) throws Exception {
+	boolean insideAnyHours( Contract contract, boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
 		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
@@ -81,7 +77,7 @@ public class TradingHours {
 
 		boolean inside = insideHours( contract, now);
 			
-		if (!inside && "ETF-24".equals( getType( contract.conid() ) ) ) {
+		if (!inside && is24Hour) {
 			contract.exchange("IBEOS");
 			inside = insideHours( contract, now);
 		}
@@ -92,6 +88,9 @@ public class TradingHours {
 	/** Return true if now is inside trading hours OR liquid hours. */
 	boolean insideHours( Contract contract, Date now) throws Exception {  // change to return boolean
 		ContractDetails deets = m_map.get(contract.exchange());
+		synchronized( m_map) {
+			deets = m_map.get(contract.exchange());
+		}
 		Util.require( deets != null, "Error: no contract details for " + contract.exchange() );
 
 		// no good, you can't change the values in the map;

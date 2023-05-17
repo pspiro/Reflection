@@ -64,7 +64,7 @@ public class Main implements ITradeReportHandler {
 	private       String m_faqs;
 	private String m_type1Config; 
 	private MyJsonObject m_type2Config;
-	TradingHours m_tradingHours; 
+	TradingHours m_tradingHours = new TradingHours(this); 
 	
 	JSONArray stocks() { return m_stocks; }
 
@@ -259,6 +259,7 @@ public class Main implements ITradeReportHandler {
 				stock.put( "description", masterRow.getString("Description") );
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
+				stock.put( "is24hour", masterRow.getBool("24-Hour") );
 
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);

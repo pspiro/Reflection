@@ -18,7 +18,7 @@ import tw.util.S;
 import util.LogType;
 
 public class OrderTransaction extends MyTransaction {
-	private double m_desiredQuantity;
+	private double m_desiredQuantity;  // same as Order.m_totalQuantity
 	private Stock m_stock;
 	private double m_stablecoinAmt;
 	private double m_tds;
@@ -104,7 +104,7 @@ public class OrderTransaction extends MyTransaction {
 		requireSufficientStablecoin(order);		
 		
 		// request contract details (prints to stdout)
-		require( m_main.m_tradingHours.insideAnyHours( contract, null), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+		require( m_main.m_tradingHours.insideAnyHours( contract, m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
@@ -138,6 +138,7 @@ public class OrderTransaction extends MyTransaction {
 	private void submitOrder( Contract contract, Order order) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
+		// place order for rounded quantity
 		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
@@ -341,8 +342,8 @@ public class OrderTransaction extends MyTransaction {
 
 		respond( code, refCode, "filled", stockTokenQty);
 
-		log( logType, "id=%s  action=%s  orderQty=%s  filled=%s  stockTokenQty=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-				order.orderId(), order.action(), order.totalQty(),
+		log( logType, "id=%s  action=%s  desiredQty=%s  roundedQty=%s  filled=%s  stockTokenQty=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+				order.orderId(), order.action(), order.totalQty(), order.roundedQty(),
 				S.fmt4(filledShares), stockTokenQty, order.lmtPrice(),
 				m_config.commission(), m_tds, hash);
 	}
@@ -381,7 +382,7 @@ public class OrderTransaction extends MyTransaction {
 					"symbol", m_stock.getSymbol(),
 					"conid", m_stock.getConid(),
 					"action", order.action().toString(),
-					"quantity", order.totalQty(),
+					"quantity", order.totalQty(),  // same as m_desiredQuantity
 					"price", order.lmtPrice(),
 					"commission", m_config.commission(), // not so good, we should get it from the order. pas
 					"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),

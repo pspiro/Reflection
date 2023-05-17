@@ -85,8 +85,8 @@ public class BackendTransaction extends MyTransaction {
 			contract.conid(conid);
 			contract.exchange( m_main.getExchange( conid) );
 			
-			boolean inside = m_main.m_tradingHours.insideAnyHours( contract, null);
-			stock.put( "exchangeStatus", inside ? "open" : "closed");
+			boolean inside = m_main.m_tradingHours.insideAnyHours( contract, stock.getBool("is24hour"), null);
+			stock.put( "exchangeStatus", inside ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
 		});
@@ -170,6 +170,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Return transactions for a specific user or for all users */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
