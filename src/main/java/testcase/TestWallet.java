@@ -9,7 +9,7 @@ public class TestWallet extends MyTestCase {
 	
 	public void testBadWallet() throws Exception {
 		Wallet wallet = new Wallet(empty);
-		assertEquals( 0., wallet.getBalance( config.rusdAddr() ) );
+		assertEquals( 0., wallet.getBalance( m_config.rusdAddr() ) );
 	}
 	
 	public void testBadToken() throws Exception {
@@ -19,12 +19,12 @@ public class TestWallet extends MyTestCase {
 	
 	public void testPosQuery() throws Exception {
 		Wallet wallet = new Wallet(Cookie.wallet);
-		assertTrue( wallet.getBalance(config.rusdAddr() ) > 0);
-		assertTrue( wallet.getBalance(config.busdAddr() ) > 0);
-		assertTrue( wallet.getBalance(config.busdAddr() ) > 0);
+		assertTrue( wallet.getBalance(m_config.rusdAddr() ) > 0);
+		assertTrue( wallet.getBalance(m_config.busdAddr() ) > 0);
+		assertTrue( wallet.getBalance(m_config.busdAddr() ) > 0);
 		
-		assertEquals( wallet.getBalance(config.rusdAddr() ), config.rusd().getPosition(Cookie.wallet) );
-		assertEquals( wallet.getBalance(config.busdAddr() ), config.busd().getPosition(Cookie.wallet) );
+		assertEquals( wallet.getBalance(m_config.rusdAddr() ), m_config.rusd().getPosition(Cookie.wallet) );
+		assertEquals( wallet.getBalance(m_config.busdAddr() ), m_config.busd().getPosition(Cookie.wallet) );
 	}
 
 	public void testMyWallet() throws Exception {

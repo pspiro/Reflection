@@ -156,10 +156,16 @@ public abstract class MyTransaction {
 		m_responded = true;
 		return true;
 	}
+	
+	/** Execute runnable, wrapped, in a different thread so current thread can be freed up */
+	void wrapLater( ExRunnable runnable) {
+		new Thread( () -> wrap( () -> runnable.run() ) ).start();
+	}
+	
 
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	void wrap( ExRunnable runnable) {   // another name for this might be "mustRespond()"
+	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
@@ -170,8 +176,11 @@ public abstract class MyTransaction {
 					null);  // return false if we already responded
 
 			// display log except for timeouts where we have already responded
-			if (responded || e.code() != RefCode.TIMED_OUT) {
+			if (responded) {
 				log( LogType.ERROR, e.toString() );
+			}
+			else if (e.code() != RefCode.TIMED_OUT) {
+				log( LogType.ERROR, e.toString() + " (error after response)");
 			}
 		}
 		catch( Exception e) {
@@ -223,62 +232,6 @@ public abstract class MyTransaction {
 		catch( Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	
-	interface Inside {
-		void run(boolean inside) throws Exception;
-	}
-	
-	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
-	 *  check IBEOS and change the exchange on the contract passed in to IBEOS.
-	 *  Note that the callback is wrapped */
-	void insideAnyHours( Contract contract, Inside runnable) {
-		insideHours( contract, inside -> {
-			
-			// if auto-fill is on, always return true, UNLESS simtime is passed
-			// which means this is called by a test script
-			if (Main.m_config.autoFill() && m_map.get("simtime") == null) {
-				runnable.run(true);
-				return;
-			}
-			
-			if (!inside && etf24.equals( m_main.getType( contract.conid() ) ) ) {
-				contract.exchange(ibeos);
-				insideHours( contract, runnable);
-			}
-			else {
-				runnable.run(inside);
-			}
-		});
-	}
-
-	/** Call true or false on the Inside runnable */
-	void insideHours( Contract contract, Inside runnable) {
-		m_main.orderController().reqContractDetails(contract, list -> {
-			wrap( () -> {
-				require( !list.isEmpty(), RefCode.INVALID_REQUEST, "No contract details");
-
-				ContractDetails deets = list.get(0);
-				deets.simTime( m_map.getParam("simtime") );  // this is for use by the test scripts in TestOutsideHours only
-
-				runnable.run( inside( deets) );
-			});
-		});
-	}
-	
-
-	/** Return true if we are current inside trading hours OR liquid hours.
-	 *  When running test scripts, simTime param will be set and used. */
-	static boolean inside( ContractDetails deets) throws Exception {
-		return inside( deets, deets.tradingHours() ) ||
-			   inside( deets, deets.liquidHours() );
-	}
-
-	/** Return true if we are inside the specified hours; uses deets.simTime if set.
-	 * @throws Exception */
-	static boolean inside(ContractDetails deets, String hours) throws Exception {
-		return Util.inside( deets.getNow(), deets.conid(), hours, deets.timeZoneId() );
 	}
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.

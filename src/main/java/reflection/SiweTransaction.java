@@ -223,7 +223,7 @@ public class SiweTransaction extends MyTransaction {
 		// check expiration
 		Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
 				RefCode.VALIDATION_FAILED,
-				"Session has expired");
+				"Your session has expired; please sign in again and resubmit your request");
 		
 		// update expiration time
 		session.update();

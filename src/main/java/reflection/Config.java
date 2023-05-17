@@ -144,6 +144,7 @@ public class Config {
 		this.maxBuyAmt = m_tab.getDouble( "maxBuyAmt");
 		this.maxSellAmt = m_tab.getDouble( "maxSellAmt");
 		this.minTokenPosition = m_tab.getDouble("minTokenPosition");
+		this.commission = m_tab.getDouble( "commission");
 
 		// TWS connection
 		this.twsOrderHost = m_tab.get( "twsOrderHost");
@@ -174,7 +175,6 @@ public class Config {
 		// additional data
 		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
-		this.commission = m_tab.getDouble( "commission");
 		this.autoFill = m_tab.getBoolean("autoFill");
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");

@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -36,7 +35,6 @@ import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
-import redis.clients.jedis.util.JedisURIHelper;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlRunnable;
 import test.MyTimer;
@@ -65,7 +63,8 @@ public class Main implements ITradeReportHandler {
 	private final String m_tabName;
 	private       String m_faqs;
 	private String m_type1Config; 
-	private MyJsonObject m_type2Config; 
+	private MyJsonObject m_type2Config;
+	TradingHours m_tradingHours = new TradingHours(this); 
 	
 	JSONArray stocks() { return m_stocks; }
 
@@ -124,6 +123,8 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
+		timer.next( "Starting trading hours query thread every n ms");
+		m_tradingHours.startQuery();
 		
 		// /api/crypto-transactions  all trades, I think not used
 		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
@@ -258,6 +259,7 @@ public class Main implements ITradeReportHandler {
 				stock.put( "description", masterRow.getString("Description") );
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
+				stock.put( "is24hour", masterRow.getBool("24-Hour") );
 
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);
@@ -275,10 +277,6 @@ public class Main implements ITradeReportHandler {
 
 	String getExchange( int conid) throws RefException {
 		return getStock(conid).getString("exchange");
-	}
-
-	String getType( int conid) throws RefException {
-		return getStock(conid).getString("type");
 	}
 
 	Stock getStock( int conid) throws RefException {
@@ -408,8 +406,13 @@ public class Main implements ITradeReportHandler {
 					S.out( "You can't get market data in your paper account while logged into your production account");
 					break;
 			}
-
-			S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
+			
+			if (
+					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
+					errorCode != 2106		// HMDS data farm connection is OK:ushmds
+			) {
+				S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
+			}
 		}
 
 		@Override public void show(String string) {

@@ -255,12 +255,4 @@ public class ContractDetails {
         sb.append( '\n');
     }
 
-    public static DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
-
-    /** If simTime is set, return today's date and simTime, otherwise return now */
-    public Date getNow() throws ParseException {
-		return S.isNull( m_simTime) 
-				? new Date()
-				: dateAndTime.parse( S.userDate(new Date()) + " " + m_simTime);
-	}
 }

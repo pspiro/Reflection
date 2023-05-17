@@ -85,21 +85,14 @@ public class BackendTransaction extends MyTransaction {
 			contract.conid(conid);
 			contract.exchange( m_main.getExchange( conid) );
 			
-			insideAnyHours( contract, inside -> {
-				stock.put( "exchangeStatus", inside ? "open" : "closed");
-				respond(stock);
-			});
+			boolean inside = m_main.m_tradingHours.insideAnyHours( contract, stock.getBool("is24hour"), null);
+			stock.put( "exchangeStatus", inside ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
-			// if we timed out, respond with the prices anyway
-			setTimer( m_config.timeout(), () -> {
-				if (respond(stock) ) {
-					log( LogType.TIMEOUT, "handleGetStockWithPrice timed out");
-				}
-			});
+			respond(stock);
 		});
 	}
 	
-	/** Backend-style msg; conid is last parameter */
+	/** Backend-style msg; conid is last parameter */  // when is this used? pas
 	public void handleGetPrice() {
 		wrap( () -> {
 			int conid = Integer.valueOf( Util.getLastToken(m_uri, "/") );
@@ -177,6 +170,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Return transactions for a specific user or for all users */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();

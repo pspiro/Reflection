@@ -14,15 +14,18 @@ import org.json.simple.JSONObject;
  * The tags are:
 	"smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
 	"symbol": "IBM",
-	"ask": 128.6,
 	"description": "International Business Machines",
 	"conid": "8314",
 	"exchange": "SMART",
 	"type": "Stock",
-	"bid": 128.5
+	"is24hour": boolean
 	"exchangeStatus",
 	"exchangeTime",
- *    
+	
+	"bid": 128.5
+	"ask": 128.6,
+	
+    
  *    */
 public class Stock extends JSONObject {
 	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
@@ -40,6 +43,11 @@ public class Stock extends JSONObject {
 
 	public String getString(String key) {
 		return (String)super.get(key);
+	}
+
+	public boolean getBool(String key) {
+		Boolean val = (Boolean)super.get(key);
+		return val != null ? val : false;
 	}
 	
 	public String getSmartContractId() {

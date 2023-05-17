@@ -15,8 +15,8 @@ import reflection.Util;
 import tw.util.S;
 
 public class Cookie extends MyTestCase {
-	//public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
-	public static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
+	//public static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	public static String cookie;  // that's right, the cookie is a string, not an object
 
 	static {
