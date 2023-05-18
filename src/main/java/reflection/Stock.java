@@ -61,4 +61,8 @@ public class Stock extends JSONObject {
 	public String getConid() {
 		return getString("conid");
 	}
+	
+	public boolean is24Hour() {
+		return getBool("is24hour");
+	}
 }

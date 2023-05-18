@@ -155,7 +155,8 @@ public class MktDataServer {
 				stock.put( "symbol", masterRow.getString("Symbol") );
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
-
+				stock.put( "is24hour", masterRow.getBool("24-Hour") );
+				
 				m_stocks.add( stock);
 			}
 		}
@@ -190,26 +191,24 @@ public class MktDataServer {
 
 		for (Object obj : m_stocks) {
 			Stock stock = (Stock)obj;  
-			String exchange = "SMART"; //stock.get("exchange");  // exchange would be pulled from the master symbol table
-			
 
 			// for ETF's request price on SMART and IBEOS
 			// ETF's that trade 24 hours per day have type ETF-24
-			if (stock.get("type").equals("ETF-24") ) {
-				if (m_debug) S.out( "  requesting ETF prices for %s", stock.getConid() );
-				requestEtfPrice( stock.getConid() );
+			if (stock.is24Hour() ) {
+				if (m_debug) S.out( "  requesting dual prices for %s", stock.getConid() );
+				requestDualPrices( stock.getConid() );
 			}
 			else {
 				if (m_debug) S.out( "  requesting stock prices for %s", stock.getConid() );
-				requestStockPrice( stock.getConid(), exchange);
+				requestStockPrice( stock.getConid() );
 			}
 		}
 	}
 	
-	private void requestStockPrice(String conid, String exchange) {
+	private void requestStockPrice(String conid) {
 		final Contract contract = new Contract();
 		contract.conid( Integer.valueOf( conid) );
-		contract.exchange( exchange);
+		contract.exchange( "SMART");
 
 		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
@@ -219,7 +218,7 @@ public class MktDataServer {
 	}
 
 	/** Request prices on both SMART and IBEOS, and then filter based on time */
-	private void requestEtfPrice( String conid) {
+	private void requestDualPrices( String conid) {  // an aggregator would be a little better?
 		final Contract contract = new Contract();
 		contract.conid( Integer.valueOf( conid) );
 

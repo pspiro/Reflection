@@ -212,8 +212,10 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	public void handleWalletUpdate() {
-		S.out( "  ignoring, but you should update the time in the users table");
-		respondOk();
+		wrap( () -> {
+			parseMsg();    // look to see what parameters are being passed; at lease we should update the time  
+			respondOk();
+		});
 	}
 
 	public void handleMyWallet() {
