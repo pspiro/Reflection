@@ -3,6 +3,7 @@ package fireblocks;
 import java.math.BigDecimal;
 
 import reflection.Config;
+import reflection.Util;
 import testcase.Cookie;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -56,6 +57,10 @@ public class StockToken extends Erc20 {
 	// i passed refWallet but it acted like i used Test1 account; that was the sending address
 
 	static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
+		Util.require( S.isNotNull( name), "Null name" );
+		Util.require( S.isNotNull( symbol), "Null synmbol" );
+		Util.require( S.isNotNull( rusdAddr), "Null rusdAddr" );
+
 		S.out( "Deploying stock token from %s  name=%s  symbol=%s", filename, name, symbol);
 		
 		String[] paramTypes = { "string", "string", "address" };

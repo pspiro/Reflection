@@ -44,7 +44,7 @@ public class TestOrderWithFb extends MyTestCase {
 				"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
 				"wallet_public_key", Cookie.wallet,
 				"symbol", "SUCCESS",
-				"conid", 8314,
+				"conid", 265598,
 				"action", "BUY",
 				"quantity", 12.345,
 				"price", 34.567,

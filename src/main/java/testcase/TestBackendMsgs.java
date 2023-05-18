@@ -36,7 +36,7 @@ public class TestBackendMsgs extends TestCase {
 	
 	public void testGetStockWithPrice() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-stock-with-price/8314");
+		cli.get("/api/reflection-api/get-stock-with-price/265598");
 		MyJsonObject obj = cli.readMyJsonObject();
 		assertEquals( 200, cli.getResponseCode() );
 		
@@ -45,7 +45,7 @@ public class TestBackendMsgs extends TestCase {
 		
 		assertEquals( "IBM", obj.getString("symbol") );
 		assertEquals( "Stock", obj.getString("type") );
-		assertEquals( "8314", obj.getString("conid") );
+		assertEquals( "265598", obj.getString("conid") );
 		assertEquals( "open", obj.getString("exchangeStatus") );
 		assertTrue( bid > 100 && bid < 200);
 		assertTrue( ask > 100 && bid < 200);
@@ -53,7 +53,7 @@ public class TestBackendMsgs extends TestCase {
 	
 	public void testGetPrice() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-price/8314");
+		cli.get("/api/reflection-api/get-price/265598");
 		MyJsonObject obj = cli.readMyJsonObject();
 		assertEquals( 200, cli.getResponseCode() );
 		

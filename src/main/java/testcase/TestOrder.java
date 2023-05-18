@@ -18,13 +18,14 @@ public class TestOrder extends MyTestCase {
 //			cli.get("?msg=seedPrices");
 
 			curPrice = m_config.newRedis().singleQuery( 
-					jedis -> Double.valueOf( jedis.hget("8314", "bid") ) );
+					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );
 			S.out( "TestOrder: Current IBM price is %s", curPrice);
 
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(0);
 		}
 	}
 
@@ -39,14 +40,9 @@ public class TestOrder extends MyTestCase {
 		assertEquals( text, "Param 'wallet_public_key' is missing");
 	}
 	
-	private static double getCurPrice() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
 		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -137,21 +133,21 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"); 
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"); 
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -160,14 +156,14 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"); 
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"); 
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 
 	public void testZeroShares()  throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '8314', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"); 
+		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"); 
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -178,32 +174,31 @@ public class TestOrder extends MyTestCase {
 	
 	static MyJsonObject orderData(String json) throws Exception {
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		addCookie(obj);
+		addRequiredFields(obj);
 		return obj;
 	}
 	
 	static MyJsonObject orderData(double offset, String side, double qty) throws Exception {
-		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
+		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, Double.valueOf( curPrice + offset) );
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		addCookie(obj);
+		addRequiredFields(obj);
 		return obj;
 	}
 	
 	static MyJsonObject orderData2(double price, String side, double qty) throws Exception {
-		String json = String.format( "{ 'conid': '8314', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
 				side, qty, price);
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		addCookie(obj);
+		addRequiredFields(obj);
 		return obj;
 	}
 	
-	static MyJsonObject addCookie(MyJsonObject obj) throws Exception {
+	static MyJsonObject addRequiredFields(MyJsonObject obj) throws Exception {
 		obj.put("cookie", Cookie.cookie);
 		obj.put("currency", "USDC");
 		obj.put("wallet_public_key", Cookie.wallet);
-		
-		obj.put("noFireblocks", m_noFireblocks);
+		obj.put("noFireblocks", true);
 		
 		double price = obj.getDouble("tokenPrice");
 		double qty = obj.getDouble("quantity");

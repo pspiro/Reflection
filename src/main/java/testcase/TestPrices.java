@@ -15,7 +15,7 @@ public class TestPrices extends TestCase{
 	
 	public void testOne() throws Exception {
 		
-		String data = "{ 'msg': 'getprice', 'conid': '8314' }"; 
+		String data = "{ 'msg': 'getprice', 'conid': '265598' }"; 
 		MyJsonObject map = sendData( data);
 		S.out( "bid=%s  ask=%s", map.getDouble( "bid"), map.getDouble( "ask") );
 		double bid = map.getDouble( "bid");
@@ -41,10 +41,10 @@ public class TestPrices extends TestCase{
 		mine.display();
 
 //		map.display();
-//		Object obj = map.get( "8314");
+//		Object obj = map.get( "265598");
 //		S.out( obj.getClass() + " " + obj);
 
-//		HashMap ibm = (HashMap)map.get( "8314");
+//		HashMap ibm = (HashMap)map.get( "265598");
 //		double bid = (Double)ibm.get( "bid");
 //		double ask =  (Double)ibm.get( "ask");
 //		

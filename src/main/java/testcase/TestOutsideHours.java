@@ -12,7 +12,7 @@ import tw.util.S;
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends MyTestCase {
 	static int QQQ = 320227571;
-	static int IBM = 8314;
+	static int IBM = 265598;
 	
 	@SuppressWarnings("deprecation")   // run this test again with a different time zone
 	public void testExchHours() throws RefException {
