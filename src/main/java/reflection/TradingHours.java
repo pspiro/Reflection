@@ -21,6 +21,7 @@ public class TradingHours {
 
     private Main m_main;
 	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours
+	private boolean m_started;
 	
 	enum StockType {
 		Stock, Etf, Etf24
@@ -29,14 +30,22 @@ public class TradingHours {
 	TradingHours(Main main) {
 		m_main = main;
 	}
-	
-	public void startQuery() {
-		Util.executeEvery( interval, () -> {
-			query( stockConid, "SMART", StockType.Stock);
-			query( etf24Conid, "IBEOS", StockType.Etf24);
-		});
-	}
 
+	/** This could get called multiple times if there is a disconnect/reconnect */
+	void startQuery() {
+		if (!m_started) {
+			m_started = true;
+
+			S.out( "Starting trading hours query thread every one hour");
+			
+			Util.executeEvery( interval, () -> {
+				S.out( "Querying for trading hours now");
+				query( stockConid, "SMART", StockType.Stock);
+				query( etf24Conid, "IBEOS", StockType.Etf24);
+			});
+		}
+	}
+	
 	private void query(int conid, String exchange, StockType stockType) {
 		Contract contract = new Contract();
 		contract.conid(conid);
