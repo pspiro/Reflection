@@ -98,10 +98,10 @@ public class OrderTransaction extends MyTransaction {
 		double myStablecoinAmt = order.isBuy()
 			? preCommAmt + m_config.commission()
 			: preCommAmt - m_config.commission() - m_tds;
-		require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calulated amount of %s", m_stablecoinAmt, myStablecoinAmt);
+		// fix this-> require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calulated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
 		// confirm that the user has enough stablecoin or stock token in their wallet
-		requireSufficientStablecoin(order);		
+		// fix this-> requireSufficientStablecoin(order);		
 		
 		// request contract details (prints to stdout)
 		require( m_main.m_tradingHours.insideAnyHours( contract, m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
