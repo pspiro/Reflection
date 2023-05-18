@@ -75,7 +75,7 @@ public class TradingHours {
 	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS. */
-	boolean insideAnyHours( Contract contract, boolean is24Hour, String simTime) throws Exception {
+	boolean insideAnyHours( boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
 		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
@@ -84,27 +84,23 @@ public class TradingHours {
 		
 		Date now = getNow(simTime);
 
-		boolean inside = insideHours( contract, now);
+		boolean inside = insideHours( "SMART", now);
 			
 		if (!inside && is24Hour) {
-			contract.exchange("IBEOS");
-			inside = insideHours( contract, now);
+			inside = insideHours( "IBEOS", now);
 		}
 		
 		return inside;
 	}
 
 	/** Return true if now is inside trading hours OR liquid hours. */
-	boolean insideHours( Contract contract, Date now) throws Exception {  // change to return boolean
-		ContractDetails deets = m_map.get(contract.exchange());
+	boolean insideHours( String exchange, Date now) throws Exception {  // change to return boolean
+		ContractDetails deets;
 		synchronized( m_map) {
-			deets = m_map.get(contract.exchange());
+			deets = m_map.get(exchange);
 		}
-		Util.require( deets != null, "Error: no contract details for " + contract.exchange() );
+		Util.require( deets != null, "Error: no contract details for exchange " + exchange);
 
-		// no good, you can't change the values in the map;
-		// if simTime, make a copy
-		// hours.simTime(simTime);  // this is for use by the test scripts in TestOutsideHours only
 		return inside( deets, deets.tradingHours(), now ) ||
 			   inside( deets, deets.liquidHours(), now );
 	}

@@ -104,7 +104,7 @@ public class OrderTransaction extends MyTransaction {
 		// fix this-> requireSufficientStablecoin(order);		
 		
 		// request contract details (prints to stdout)
-		require( m_main.m_tradingHours.insideAnyHours( contract, m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+		require( m_main.m_tradingHours.insideAnyHours( m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
