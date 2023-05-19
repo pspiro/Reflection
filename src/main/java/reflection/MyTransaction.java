@@ -147,7 +147,7 @@ public abstract class MyTransaction {
 			return false;
 		}
 		
-		out( "completed in %s ms", m_timer.time() );
+		out( "  completed in %s ms", m_timer.time() );
 		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {

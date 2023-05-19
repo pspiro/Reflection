@@ -165,6 +165,10 @@ public class TestOutsideHours extends MyTestCase {
 
 		S.out( "testEtf4 " + text);
 		assertEquals( RefCode.OK.toString(), ret);
-	}	
+	}
+	
+	public void testShowHours() throws Exception {
+		cli().get( "/?msg=getTradingHours").readMyJsonObject().display();
+	}
 
 }

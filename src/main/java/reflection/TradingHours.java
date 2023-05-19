@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.json.simple.JSONObject;
+
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 
@@ -109,6 +111,19 @@ public class TradingHours {
 	/** Return true if now is inside the specified hours */
 	static boolean inside(ContractDetails deets, String hours, Date now) throws Exception {
 		return Util.inside( now, deets.conid(), hours, deets.timeZoneId() );
+	}
+
+	public JSONObject getHours() {
+		JSONObject obj = new JSONObject();
+		
+		m_map.forEach( (item1, deets) -> {
+			JSONObject inner = new JSONObject();
+			inner.put( "Trading hours", deets.tradingHours() );
+			inner.put( "Liquid hours", deets.liquidHours() );
+			obj.put( item1, inner);
+		});
+
+		return obj;
 	}
 	
 }

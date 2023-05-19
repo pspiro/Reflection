@@ -301,6 +301,11 @@ public class BackendTransaction extends MyTransaction {
 
 		log( LogType.MINT, "Minted to %s", dest);
 	}
+
+	/** Respond with build date/time */
+	public void about() {
+		wrap( () -> respond( "Built", Util.readResource( Main.class, "version.txt") ) );
+	}
 	
 	
 }

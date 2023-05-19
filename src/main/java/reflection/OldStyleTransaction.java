@@ -32,6 +32,7 @@ public class OldStyleTransaction extends MyTransaction {
 		dump,
 		getAllPrices,
 		getAllStocks,
+		getTradingHours(),
 		getConfig,
 		getConnectionStatus,
 		getDescription,
@@ -68,6 +69,9 @@ public class OldStyleTransaction extends MyTransaction {
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
 		switch (msgType) { // this could be switched to polymorphism if desired
+			case getTradingHours:
+				getTradingHours();
+				break;
 			case getPrice:
 				getPrice();
 				break;
@@ -115,22 +119,25 @@ public class OldStyleTransaction extends MyTransaction {
 		}
 	}
 
+	private void getTradingHours() {
+		respond( m_main.m_tradingHours.getHours() );
+	}
+
+	/** I think this is by the Monitor  */ 
 	private void onCashBal() {
-		wrap( () -> {
-			JSONObject obj = new JSONObject();
-			
-			m_main.orderController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
-				@Override public void accountSummary(String account, AccountSummaryTag tag, String value, String currency) {
-					obj.put( tag.toString(), value);
-				}
-				@Override public void accountSummaryEnd() {
-					m_main.orderController().cancelAccountSummary(this);					
-					respond( obj);
-				}
-			});
-			
-			setTimer( Main.m_config.timeout(), () -> timedOut( "onCashBal() timed out") ); 
+		JSONObject obj = new JSONObject();
+		
+		m_main.orderController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
+			@Override public void accountSummary(String account, AccountSummaryTag tag, String value, String currency) {
+				obj.put( tag.toString(), value);
+			}
+			@Override public void accountSummaryEnd() {
+				m_main.orderController().cancelAccountSummary(this);					
+				respond( obj);
+			}
 		});
+		
+		setTimer( Main.m_config.timeout(), () -> timedOut( "onCashBal() timed out") ); 
 	}
 
 	/** Return json showing balance, allowance, and stock token positions */
@@ -283,34 +290,33 @@ public class OldStyleTransaction extends MyTransaction {
 		returnPrice(conid);
 	}	
 
-	/** Top-level method; set some prices for use in test systems */
-	void onSeedPrices() {
-		wrap( () -> {
-			Jedis jedis = Main.m_config.redisPort() == 0
-				? new Jedis( Main.m_config.redisHost() )  // use full connection string
-				: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
-	
-			jedis.hset( "8314", "bid", "128.20");
-			jedis.hset( "8314", "ask", "128.30");
-			jedis.hset( "13824", "bid", "148.48");
-			jedis.hset( "13824", "ask", "148.58");
-			jedis.hset( "13977", "bid", "116.05");
-			jedis.hset( "13977", "ask", "116.15");
-			jedis.hset( "265598", "bid", "165.03");
-			jedis.hset( "265598", "ask", "165.13");
-			jedis.hset( "320227571", "bid", "318.57");
-			jedis.hset( "320227571", "ask", "328.57");
-			jedis.hset( "73128548", "bid", "341.03");
-			jedis.hset( "73128548", "ask", "342.05");
-			jedis.hset( "72063691", "bid", "328.55");
-			jedis.hset( "72063691", "ask", "330.55");
-			
-			// update the prices on the objects
-			m_main.queryAllPrices();
-			
-			// respond with prices
-			getAllPrices();
-		});
+	/** Top-level method; set some prices for use in test systems 
+	 * @throws RefException */
+	void onSeedPrices() throws RefException {
+		Jedis jedis = Main.m_config.redisPort() == 0
+			? new Jedis( Main.m_config.redisHost() )  // use full connection string
+			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
+
+		jedis.hset( "8314", "bid", "128.20");
+		jedis.hset( "8314", "ask", "128.30");
+		jedis.hset( "13824", "bid", "148.48");
+		jedis.hset( "13824", "ask", "148.58");
+		jedis.hset( "13977", "bid", "116.05");
+		jedis.hset( "13977", "ask", "116.15");
+		jedis.hset( "265598", "bid", "165.03");
+		jedis.hset( "265598", "ask", "165.13");
+		jedis.hset( "320227571", "bid", "318.57");
+		jedis.hset( "320227571", "ask", "328.57");
+		jedis.hset( "73128548", "bid", "341.03");
+		jedis.hset( "73128548", "ask", "342.05");
+		jedis.hset( "72063691", "bid", "328.55");
+		jedis.hset( "72063691", "ask", "330.55");
+		
+		// update the prices on the objects
+		m_main.queryAllPrices();
+		
+		// respond with prices
+		getAllPrices();
 	}
 
 	/** Top-level message, return prices for debugging */
@@ -333,11 +339,6 @@ public class OldStyleTransaction extends MyTransaction {
 		}
 
 		respond(whole);
-	}
-
-	/** Respond with build date/time */
-	public void about() {
-		wrap( () -> respond( "Built", Util.readResource( Main.class, "version.txt") ) );
 	}
 
 }
