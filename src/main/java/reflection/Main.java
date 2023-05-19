@@ -470,7 +470,7 @@ public class Main implements ITradeReportHandler {
 				contract.symbol(),
 				exec.price(),
 				exec.permId(),
-				exec.cumQty(),
+				exec.cumQty().toDouble(),
 				contract.conid(),
 				exec.exchange(),
 				exec.avgPrice(),
