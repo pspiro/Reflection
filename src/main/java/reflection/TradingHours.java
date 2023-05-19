@@ -56,6 +56,7 @@ public class TradingHours {
 				Util.require( !list.isEmpty(), "ERROR: No contract details for " + contract.conid() );
 				ContractDetails deets = list.get(0);
 				synchronized(m_map) {
+					S.out( "Mapping exchange hours for %s", exchange);
 					m_map.put( exchange, deets);
 				}
 			}
