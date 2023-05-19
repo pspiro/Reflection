@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,8 +17,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.ib.client.Contract;
-import com.ib.client.ContractDetails;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Erc20;
@@ -47,11 +46,27 @@ public abstract class MyTransaction {
 	protected ParamMap m_map = new ParamMap();
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
+	protected String m_id;
+	private String m_header; // used for coding the output
+	
 
 	MyTransaction( Main main, HttpExchange exchange) {
+		this( main, exchange, null);
+	}
+
+	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uri = Main.getURI(m_exchange);  // all lower case
+		m_header = header;
+		m_id = header == null ? Util.id(3) : Util.id(3) + " " + header;		
+		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
+	}
+
+	/** Note this returns URI in all lower case */
+	String getURI(HttpExchange exch) {
+		String uri = exch.getRequestURI().toString().toLowerCase();
+		out( "Handling %s", uri);
+		return uri;
 	}
 
 	// you could encapsulate all these methods in MyExchange
@@ -90,7 +105,7 @@ public abstract class MyTransaction {
 	            	}
 	            }
 
-	            S.out( "  parsed POST request " + jsonObject);
+	            out( "  parsed POST request " + jsonObject);
 			}
 			catch( RefException e) {  // catch the above require() call
 				throw e;
@@ -132,7 +147,7 @@ public abstract class MyTransaction {
 			return false;
 		}
 		
-		m_timer.done(m_uri);
+		out( "completed in %s ms", m_timer.time() );
 		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
@@ -197,10 +212,6 @@ public abstract class MyTransaction {
 	public interface ExRunnable {
 		long start = System.currentTimeMillis();
 		void run() throws Exception;
-		
-		private static void time() {
-			S.out( "Completed in %s ms", System.currentTimeMillis() - start);
-		}
 	}
 
 	void setTimer( long ms, ExRunnable runnable) {
@@ -254,7 +265,7 @@ public abstract class MyTransaction {
 		Prices prices = m_main.getStock(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
-		S.out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
+		out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
 		respond( prices.toJson(conid) );
 	}
 
@@ -262,6 +273,15 @@ public abstract class MyTransaction {
 	protected Erc20 stablecoin() throws Exception {
 		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC
 				? Main.m_config.busd() : Main.m_config.rusd();
+	}
+	
+	/** We need this version because some strings have % characters in them */ 
+	void out( Object format) {
+		S.out( m_id + " " + format);
+	}
+	
+	void out( String format, Object... params) {
+		S.out( m_id + " " + format, params);
 	}
 	
 }

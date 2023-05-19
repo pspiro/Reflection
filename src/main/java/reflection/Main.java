@@ -134,11 +134,11 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-		server.createContext("/mint", exch -> handleMint(exch) );
+		server.createContext("/mint", exch -> new BackendTransaction(this, exch).handleMint() );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
-		server.createContext("/api/system-configurations/last", exch -> handleGetType1Config(exch) );
+		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		
 		// remove these after code change in Frontend
@@ -158,7 +158,7 @@ public class Main implements ITradeReportHandler {
 		
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
-		server.createContext("/api/faqs", exch -> handleGetFaqs(exch) );
+		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time
@@ -173,11 +173,6 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
-	}
-
-	private void handleGetConfigurations(HttpExchange exch) {
-		//new BackendTransaction(this, exch).handleGetType2Config() );
-		quickResponse(exch, "not implemented yet", 200);
 	}
 
 	void readSpreadsheet() throws Exception {
@@ -409,7 +404,7 @@ public class Main implements ITradeReportHandler {
 					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
 					errorCode != 2106		// HMDS data farm connection is OK:ushmds
 			) {
-				S.out( "Received API error  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
+				S.out( "Received API message  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
 			}
 		}
 
@@ -550,52 +545,6 @@ public class Main implements ITradeReportHandler {
 		m_config.dump();
 	}
 
-	// move this into BackendTransaction
-	public void handleMint(HttpExchange exchange) throws IOException { 
-		String response;
-
-		try {
-			String uri = getURI(exchange);
-			Main.require( uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
-
-			String[] parts = uri.split("/");
-			Main.require( parts.length == 3, RefCode.INVALID_REQUEST, "Format of URL should be https://reflection.trade/mint/0x...  where the last piece of the URL is your wallet address");
-
-			mint( parts[2]);
-			response = m_config.mintHtml();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			response = "An error occurred - " + e.getMessage();
-		}
-
-		//String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
-		try (OutputStream outputStream = exchange.getResponseBody() ) {
-			exchange.getResponseHeaders().add( "Content-Type", "text/html");
-			exchange.sendResponseHeaders( 200, response.length() );
-			outputStream.write( response.getBytes() );
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			log( LogType.ERROR, "Exception while responding with html");
-		}
-	}
-
-	/** Transfer some BUSD and ETH to the user's wallet */
-	static void mint( String dest) throws Exception {
-		Util.require(dest.length() == 42, "The wallet address is invalid");
-
-		S.out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
-		String id1 = Transfer.transfer( Fireblocks.testBusd, 1, dest, m_config.mintBusd(), "Transfer BUSD");
-		S.out( "  FB id is %s", id1);
-
-		S.out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
-		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
-		S.out( "  FB id is %s", id2);
-
-		log( LogType.MINT, "Minted to %s", dest);
-	}
-
 	/** Used to query prices from Redis. */
 	static class PriceQuery {
 		Stock m_stock;
@@ -649,19 +598,11 @@ public class Main implements ITradeReportHandler {
 		new BackendTransaction(this, exch).respond( m_stocks);
 	}
 
-	private void handleGetFaqs(HttpExchange exch) {
-		getURI(exch);
-		quickResponse(exch, m_faqs, 200);  // we can do a quick response because we already have the json
-	}
-	
-	private void handleGetType1Config(HttpExchange exch) {
-		getURI(exch);
-		quickResponse(exch, m_type1Config, 200);  // we can do a quick response because we already have the json
-	}
-
 	/** This can be used to serve static json stored in a string
 	 *  @param data must be in json format */
 	private void quickResponse(HttpExchange exch, String data, int code) {
+		new BackendTransaction(this, exch); // print out uri
+		
 		try (OutputStream outputStream = exch.getResponseBody() ) {
 			exch.getResponseHeaders().add( "Content-Type", "application/json");
 			exch.sendResponseHeaders( code, data.length() );
@@ -671,13 +612,6 @@ public class Main implements ITradeReportHandler {
 			e.printStackTrace();
 			log( LogType.ERROR, "Exception while sending FAQ");
 		}
-	}
-
-	/** Note this returns URI in all lower case */
-	static String getURI(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
-		S.out( "Handling %s", uri);
-		return uri;
 	}
 
 	/** this seems useless since you can still be left with .000001 */

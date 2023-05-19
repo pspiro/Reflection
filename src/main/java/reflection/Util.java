@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Random;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,14 +23,12 @@ import com.sun.net.httpserver.HttpHandler;
 import tw.util.S;
 
 public class Util {
+	static Random rnd = new Random();
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
 	public static void main(String[] args) throws RefException {
-		double a = .3;
-		double b = .1 + .1 + .1;
-		S.out( a >= b);
-		S.out( isGtEq(a, b) );
+		S.out( id(3) );
 	}
 
 	/** Do a decimal compare down to six digits */
@@ -339,6 +338,14 @@ public class Util {
 	public static String allEnumValues(Object[] values) {
 		return Arrays.asList(values).toString();
 	}
-	
+
+	/** Return an id of n chars where each char is between a and z */
+	static String id(int n) {
+		StringBuilder b = new StringBuilder();
+		for (int i = 0; i < 3; i++) 
+			b.append( (char)('a' + rnd.nextInt(26) ) );
+		return b.toString();
+	}
+
 	
 }

@@ -38,7 +38,6 @@ public class OldStyleTransaction extends MyTransaction {
 		getPositions,
 		getPrice,
 		getCashBal,
-		mint,
 		pullBackendConfig,
 		pullFaq,
 		pushBackendConfig,
@@ -53,7 +52,7 @@ public class OldStyleTransaction extends MyTransaction {
 
 	OldStyleTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
-		S.out( "  ***FOR DEBUG OR ADMIN ONLY***");
+		out( "  ***FOR DEBUG OR ADMIN ONLY***");
 	}
 
 	void handle() {
@@ -69,9 +68,6 @@ public class OldStyleTransaction extends MyTransaction {
 		MsgType msgType = m_map.getEnumParam( "msg", MsgType.values() );
 
 		switch (msgType) { // this could be switched to polymorphism if desired
-			case mint:
-				mint();
-				break;
 			case getPrice:
 				getPrice();
 				break;
@@ -173,7 +169,7 @@ public class OldStyleTransaction extends MyTransaction {
 	}
 
 	private void onTestAlert() {
-		S.out( "Sending test alert");
+		out( "Sending test alert");
 		alert("TEST", "This is a test of the alert system");
 		respondOk();
 	}
@@ -198,43 +194,36 @@ public class OldStyleTransaction extends MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "getPositions timed out") );
 	}
 
-	/** Top-level message handler. This version takes wallet param; you can also call
-	 *  reflection.trading/mint/0xxxx.xxx */
-	private void mint() throws Exception {
-		Main.mint( m_map.getRequiredParam( "wallet") );
-		respond( code, "OK");
-	}
-
 	/** Simulate disconnect to test reconnect */
 	private void disconnect() {
-		S.out( "simulating disconnecting");
+		out( "simulating disconnecting");
 		m_main.orderConnMgr().disconnect();
 		respondOk();
 	}
 
 	/** Top-level message handler */
 //	private void pushBackendConfig() throws Exception {
-//		S.out( "Pushing backend config from google sheet to database");
+//		out( "Pushing backend config from google sheet to database");
 //		Main.m_config.pushBackendConfig( m_main.sqlConnection() );
 //		respondOk();
 //	}
 
 	/** Top-level message handler, show TWS connection status */
 	private void getConnStatus() {
-		S.out( "Sending connection status");
+		out( "Sending connection status");
 		respond( "orderConnectedToTWS", m_main.orderController().isConnected(),
 				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection() );
 	}
 
 	/** Top-level message handler, return RefAPI config */
 	void getConfig() throws Exception {
-		S.out( "Sending config");
+		out( "Sending config");
 		respond( Main.m_config.toJson() );
 	}
 
 	/** Top-level message handler, refresh all config and stock tokens */
 	void refreshConfig() throws Exception {
-		S.out( "Refreshing config and FAQs from google sheet");
+		out( "Refreshing config and FAQs from google sheet");
 		m_main.readSpreadsheet();
 		respondOk();
 	}
@@ -251,7 +240,7 @@ public class OldStyleTransaction extends MyTransaction {
 	private void getDescription() throws RefException {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 
-		S.out( "Returning stock description");
+		out( "Returning stock description");
 		Contract contract = new Contract();
 		contract.secType( SecType.STK);
 		contract.symbol( m_map.getRequiredParam("symbol").replace( '_', ' ') );

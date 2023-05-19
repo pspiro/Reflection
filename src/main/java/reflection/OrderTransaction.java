@@ -25,7 +25,7 @@ public class OrderTransaction extends MyTransaction {
 	boolean m_respondedToOrder;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
-		super(main, exch);
+		super(main, exch, "ORD");
  	}
 	
 	/** Msg received directly from Frontend via nginx */
@@ -144,7 +144,7 @@ public class OrderTransaction extends MyTransaction {
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 
 				wrap( () -> {
-					S.out( "  order status  id=%s  status=%s", order.orderId(), status);
+					out( "  order status  id=%s  status=%s", order.orderId(), status);
 
 					// save the number of shares filled
 					shares.value( filled.toDouble() );
@@ -199,7 +199,7 @@ public class OrderTransaction extends MyTransaction {
 
 			// if order is still live, cancel the order
 			if (!status.isComplete() && !status.isCanceled() ) {
-				S.out( "Canceling order %s on timeout", order.orderId() );
+				out( "Canceling order %s on timeout", order.orderId() );
 				m_main.orderController().cancelOrder( order.orderId(), "", null);
 			}
 
@@ -253,7 +253,7 @@ public class OrderTransaction extends MyTransaction {
 		if (fireblocks() ) {
 			try {
 				String id;
-				S.out( "Starting Fireblocks protocol");
+				out( "Starting Fireblocks protocol");
 				
 				// for testing
 				if (m_map.getBool("fail") ) {
@@ -407,7 +407,7 @@ public class OrderTransaction extends MyTransaction {
 		try {
 			// don't unwind order in auto-fill mode which is for testing only
 			if (m_config.autoFill() ) {
-				S.out( "Not unwinding order in auto-fill mode");
+				out( "Not unwinding order in auto-fill mode");
 				return;
 			}
 
@@ -425,7 +425,7 @@ public class OrderTransaction extends MyTransaction {
 			
 			// this should never be the case since the orders are AON, but just in case that changes...
 			if (filledShares < order.totalQuantity() ) {
-				S.out( "WARNING: filled shared was less that total order qty when unwinding order"); 
+				out( "WARNING: filled shared was less that total order qty when unwinding order"); 
 				order.totalQuantity(filledShares);
 			}
 			

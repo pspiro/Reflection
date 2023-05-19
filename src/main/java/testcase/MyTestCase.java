@@ -9,6 +9,8 @@ import reflection.Util;
 public class MyTestCase extends TestCase {
 	static Config m_config;
 	
+	protected MyHttpClient cli;	
+	
 	static {
 		try {
 			m_config = Config.readFrom("Dt-config");

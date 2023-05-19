@@ -64,16 +64,15 @@ public class TestSiwe extends MyTestCase {
 			.build();
 	}
 
-	public void testSiweFailPast() throws Exception {
+	public void testFailSessionExpired() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
-		
-		// confirm nonce
-		assertEquals( 20, nonce.length() );
-		
+		assertEquals( 20, nonce.length() );  // confirm nonce
+
+		// the server uses the time on the message itself, not the actual elapsed time
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(22) );
 		
 		JSONObject signedMsgSent = new JSONObject();
@@ -90,7 +89,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testSiweFailFut() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
@@ -114,7 +113,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailSig() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
@@ -138,7 +137,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailDup() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
@@ -167,7 +166,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailTimeout() throws Exception {
 		// send siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
@@ -225,7 +224,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testSiweSignin() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
@@ -280,7 +279,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailCookie() throws Exception {
 		// test siwe/init
-		MyHttpClient cli = cli();
+		cli = cli();
 		cli.get("/siwe/init");
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );

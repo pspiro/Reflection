@@ -19,8 +19,12 @@ public class MyTimer {
 	}
 
 	public void done(String str) {
-		S.out( "  completed %s in %s ms", str, System.currentTimeMillis() - start );
+		S.out( "  completed %s in %s ms", str, time() );
 		start = 0;
+	}
+	
+	public long time() {
+		return System.currentTimeMillis() - start;
 	}
 	
 	public void done() {

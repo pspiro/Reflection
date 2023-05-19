@@ -55,7 +55,7 @@ public class SiweTransaction extends MyTransaction {
 	}
 	
 	public SiweTransaction(Main main, HttpExchange exch) {
-		super(main,exch);
+		super(main, exch, "SIN");
 	}
 
 	/** Frontend requests nonce to build SIWE message.
@@ -76,7 +76,7 @@ public class SiweTransaction extends MyTransaction {
             MyJsonObject signedMsg = new MyJsonObject(
             		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // parseMsg() won't work here because it assumes all values are strings
             
-            S.out( "  received signed msg: %s", signedMsg);
+            out( "  received signed msg: %s", signedMsg);
 			
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
@@ -118,7 +118,7 @@ public class SiweTransaction extends MyTransaction {
 			// store session object; let the wallet address be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
 			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
-			S.out( "  mapping %s to %s", siweMsg.getAddress(), session);
+			out( "  mapping %s to %s", siweMsg.getAddress(), session);
 		
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
@@ -147,7 +147,7 @@ public class SiweTransaction extends MyTransaction {
 			
 			MyJsonObject siweMsg = validateAnyCookie( cookies);
 
-			S.out( "  loggedIn=true");
+			out( "  loggedIn=true");
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
@@ -157,13 +157,13 @@ public class SiweTransaction extends MyTransaction {
 
 	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
 	 * @throws RefException */
-	private static MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
+	private MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
 			try {
 				return validateCookie( cookie, null);
 			}
 			catch( Exception e) {
-				S.out( "  failed to validate cookie with address %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+				out( "Unexpected: there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
 			}
 		}
 
@@ -186,8 +186,8 @@ public class SiweTransaction extends MyTransaction {
 		
 		String cookieHeader = split[0];
 		String cookieBody = URLDecoder.decode( split[1] );
-		S.out( "Cookie header: " + cookieHeader);
-		S.out( "Cookie body: " + cookieBody);
+		//out( "Cookie header: " + cookieHeader);
+		//out( "Cookie body: " + cookieBody);
 
 		MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
 		MyJsonObject siweMsg = signedSiweMsg.getObj("message");
@@ -237,7 +237,7 @@ public class SiweTransaction extends MyTransaction {
 			for (String cookie : authCookies() ) {
 				String address = address(cookie);
 				if (sessionMap.remove(address) != null) {  // alternatively, we could update the session to be false
-					S.out( "  %s has been signed out", address);
+					out( "  %s has been signed out", address);
 				}
 			}
 			

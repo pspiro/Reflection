@@ -4,6 +4,8 @@ import static reflection.Main.log;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
 
 import org.json.simple.JSONArray;
@@ -14,7 +16,9 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Accounts;
 import fireblocks.Busd;
+import fireblocks.Fireblocks;
 import fireblocks.Rusd;
+import fireblocks.Transfer;
 import json.MyJsonObject;
 import positions.MoralisServer;
 import positions.Wallet;
@@ -255,5 +259,48 @@ public class BackendTransaction extends MyTransaction {
 			respond(obj);
 		});
 	}
+
+	/** This is for use outside the context of the reflection web site */
+	public void handleMint() throws IOException { 
+		String response;
+
+		try {
+			String addr = Util.getLastToken( m_uri, "/");
+			require( Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Correct usage is: .../mint/<wallet_address>");
+			mint( addr);
+			response = m_config.mintHtml();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			response = "An error occurred - " + e.getMessage();
+		}
+
+		// we can't use respond here because we want to send html, not json
+		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
+			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
+			m_exchange.sendResponseHeaders( 200, response.length() );
+			outputStream.write( response.getBytes() );
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, "Exception while responding with html");
+		}
+	}
+	
+	/** Transfer some BUSD and ETH to the user's wallet */
+	void mint( String dest) throws Exception {
+		Util.require(dest.length() == 42, "The wallet address is invalid");
+
+		out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
+		String id1 = Transfer.transfer( Fireblocks.testBusd, 1, dest, m_config.mintBusd(), "Transfer BUSD");
+		out( "FB id is %s", id1);
+
+		out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
+		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
+		out( "FB id is %s", id2);
+
+		log( LogType.MINT, "Minted to %s", dest);
+	}
+	
 	
 }
