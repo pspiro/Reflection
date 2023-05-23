@@ -173,12 +173,6 @@ public abstract class MyTransaction {
 		return true;
 	}
 	
-	/** Execute runnable, wrapped, in a different thread so current thread can be freed up */
-	void wrapLater( ExRunnable runnable) {
-		new Thread( () -> wrap( () -> runnable.run() ) ).start();
-	}
-	
-
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
 	void wrap( ExRunnable runnable) {
@@ -186,17 +180,20 @@ public abstract class MyTransaction {
 			runnable.run();
 		}
 		catch( RefException e) {
-			boolean responded = respondFull( 
-					e.toJson(), 
-					400, 
-					null);  // return false if we already responded
+			synchronized(this) {      // must synchronize access to m_responded
+				if (!m_responded) {
+					log( LogType.ERROR, e.toString() );
+				}
 
-			// display log except for timeouts where we have already responded
-			if (responded) {
-				log( LogType.ERROR, e.toString() );
-			}
-			else if (e.code() != RefCode.TIMED_OUT) {
-				log( LogType.ERROR, e.toString() + " (error after response)");
+				boolean responded = respondFull( 
+						e.toJson(), 
+						400, 
+						null);
+				
+				// display errors that occurred after the response except for timeouts since that is normal
+				if (!responded && e.code() != RefCode.TIMED_OUT) {
+					log( LogType.ERROR, e.toString() + " (ERROR IGNORED)" );
+				}
 			}
 		}
 		catch( Exception e) {
@@ -208,10 +205,9 @@ public abstract class MyTransaction {
 					null);
 		}
 	}
-
+	
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {
-		long start = System.currentTimeMillis();
 		void run() throws Exception;
 	}
 
@@ -283,6 +279,11 @@ public abstract class MyTransaction {
 	
 	void out( String format, Object... params) {
 		S.out( m_id + " " + format, params);
+	}
+
+	/** Format to log is ID LOG_TYPE FORMATTED_MSG where id is 3-digit code plus prefix */
+	void log( LogType type, String format, Object... params) {
+		Main.log( S.format( "%s %s %s", m_id, type, S.format(format, params) ) );  
 	}
 	
 }

@@ -450,6 +450,10 @@ public class Main implements ITradeReportHandler {
 		m_log.log( type, text, params);
 	}
 
+	static void log( String text) {
+		m_log.log( text);
+	}
+
 	static class Pair {
 		String m_key;
 		String m_val;

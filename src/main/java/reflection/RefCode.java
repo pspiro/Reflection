@@ -20,5 +20,6 @@ public enum RefCode {
 	NO_STOCKS,
 	VALIDATION_FAILED,
 	CONFIG_ERROR, 
-	TIMED_OUT1,
+	TOO_FAST,
+	TOO_SLOW,
 }

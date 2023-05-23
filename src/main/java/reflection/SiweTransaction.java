@@ -103,13 +103,13 @@ public class SiweTransaction extends MyTransaction {
 			Instant now = Instant.now();
 			Main.require(
 					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
-					RefCode.TIMED_OUT1,
+					RefCode.TOO_SLOW,
 					"You waited a bit too long; please sign in again");
 					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
 					//issuedAt, now, Main.m_config.siweTimeout() );
 			Main.require(
 					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
-					RefCode.TIMED_OUT,
+					RefCode.TOO_FAST,
 					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
 					issuedAt, now, Main.m_config.siweTimeout() );
 			
@@ -166,7 +166,8 @@ public class SiweTransaction extends MyTransaction {
 				return validateCookie( cookie, null);
 			}
 			catch( Exception e) {
-				out( "Unexpected: there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+				// this happens quite a bit
+				// out( "Unexpected: there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
 			}
 		}
 

@@ -14,13 +14,9 @@ public class TestOrder extends MyTestCase {
 	
 	static {
 		try {
-//			MyHttpClient cli = new MyHttpClient("localhost", 8383);
-//			cli.get("?msg=seedPrices");
-
 			curPrice = m_config.newRedis().singleQuery( 
 					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );
 			S.out( "TestOrder: Current IBM price is %s", curPrice);
-
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {

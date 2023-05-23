@@ -320,8 +320,8 @@ public class Util {
 		return str.substring( 0, Math.min(str.length(), max) );
 	}
 
-	public static String right(String str, int i) {
-		return str.substring( str.length() - i);
+	public static String right(String str, int max) {
+		return str.substring( str.length() - Math.min(str.length(), max) );
 	}
 	
 	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */
@@ -346,6 +346,5 @@ public class Util {
 			b.append( (char)('a' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
-
 	
 }

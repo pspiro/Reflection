@@ -160,7 +160,17 @@ public class S {
 				params[i] = NONE;
 			}
 		}
-		return String.format( notNull( string), params);
+		
+		try {
+			return String.format( notNull( string), params);
+		}
+		catch( Exception e) {
+			if (params != null && params.length > 0) {
+				e.printStackTrace();
+				return string + " (bad format)";
+			}
+			return string;  // this means caller did not intend for the string to be formatted
+		}
 	}
 
 	/** Double get two decimal places. */

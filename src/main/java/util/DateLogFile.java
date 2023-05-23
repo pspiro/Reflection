@@ -35,23 +35,31 @@ public class DateLogFile {
 		e.printStackTrace( new PrintStream(m_log) );
 	}
 	
-	/** Check for date change, reset to next day log file if necessary. */
 	public synchronized void log(LogType type, String text, Object... params) {
+		log( String.format( "%s %s %s", 
+				now(), 
+				type, 
+				String.format( S.notNull( text), params) ) );
+	}
+
+	/** Check for date change, reset to next day log file if necessary. */
+	public synchronized void log(String text) {
 		try {
+			S.out(text);
+
 			// if date has changed since last log msg, close the log file and create a new one
 			if (m_date != new Date().getDate() ) {
 				resetLogFile();
 				m_date = new Date().getDate();
 			}
-			String str = String.format( "%s %s %s", now(), type, String.format( S.notNull( text), params) );
-			S.out( str.substring(13) );
-			m_log.writeln( str);
+
+			m_log.writeln( now() + " " + text );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	private void resetLogFile() {
 		try {
 			String fname = String.format( "logs/%s.%s.log", m_prefix, today() );
