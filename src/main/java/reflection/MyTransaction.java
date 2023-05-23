@@ -65,7 +65,7 @@ public abstract class MyTransaction {
 	/** Note this returns URI in all lower case */
 	String getURI(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
-		out( "Handling %s", uri);
+		out( "----- %s -------------------------", uri);
 		return uri;
 	}
 
@@ -147,7 +147,6 @@ public abstract class MyTransaction {
 			return false;
 		}
 		
-		out( "  completed in %s ms", m_timer.time() );
 		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
@@ -163,6 +162,8 @@ public abstract class MyTransaction {
 			String data = response.toString();
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
+
+			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 100) );
 		}
 		catch (Exception e) {
 			e.printStackTrace();

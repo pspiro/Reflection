@@ -76,7 +76,7 @@ public class SiweTransaction extends MyTransaction {
             MyJsonObject signedMsg = new MyJsonObject(
             		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // parseMsg() won't work here because it assumes all values are strings
             
-            out( "  received signed msg: %s", signedMsg);
+            out( "received signed msg: %s", signedMsg);
 			
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
@@ -86,13 +86,16 @@ public class SiweTransaction extends MyTransaction {
 					RefCode.INVALID_REQUEST, 
 					"The nonce %s is invalid", siweMsg.getNonce() );
 			
+			out( "nonce is valid");
+			
 			// verify signature
 			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
-				// free pass, used for testing
+				out( "free pass");
 			}
 			else {
 				// better would be to catch it and throw RefException; this return UNKNOWN code
 				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
+				out( "verified");
 			}
 			
 			// verify issuedAt is not too far in future or past
@@ -100,7 +103,7 @@ public class SiweTransaction extends MyTransaction {
 			Instant now = Instant.now();
 			Main.require(
 					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
-					RefCode.TIMED_OUT,
+					RefCode.TIMED_OUT1,
 					"You waited a bit too long; please sign in again");
 					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
 					//issuedAt, now, Main.m_config.siweTimeout() );
@@ -118,7 +121,7 @@ public class SiweTransaction extends MyTransaction {
 			// store session object; let the wallet address be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
 			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
-			out( "  mapping %s to %s", siweMsg.getAddress(), session);
+			out( "mapping %s to %s", siweMsg.getAddress(), session);
 		
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
@@ -147,7 +150,7 @@ public class SiweTransaction extends MyTransaction {
 			
 			MyJsonObject siweMsg = validateAnyCookie( cookies);
 
-			out( "  loggedIn=true");
+			out( "loggedIn=true");
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
@@ -167,10 +170,6 @@ public class SiweTransaction extends MyTransaction {
 			}
 		}
 
-//		for (String cookie : cookies) {
-//			S.out(cookie);
-//		}
-		
 		throw new RefException( RefCode.VALIDATION_FAILED, "No valid cookies in /siwe/me message");  // this is normal
 	}
 	
@@ -237,7 +236,7 @@ public class SiweTransaction extends MyTransaction {
 			for (String cookie : authCookies() ) {
 				String address = address(cookie);
 				if (sessionMap.remove(address) != null) {  // alternatively, we could update the session to be false
-					out( "  %s has been signed out", address);
+					out( "%s has been signed out", address);
 				}
 			}
 			

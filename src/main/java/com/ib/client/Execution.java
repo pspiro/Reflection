@@ -111,6 +111,7 @@ public class Execution {
         m_lastLiquidity = Liquidities.None;
     }
 
+    /** never called */
     public Execution( int p_orderId, int p_clientId, String p_execId, String p_time,
                       String p_acctNumber, String p_exchange, String p_side, Decimal p_shares,
                       double p_price, int p_permId, int p_liquidation, Decimal p_cumQty,
