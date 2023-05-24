@@ -1,7 +1,7 @@
 package redis;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
@@ -16,13 +16,14 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 
 import http.SimpleTransaction;
-import redis.MyRedis.PRun;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.MyTransaction.ExRunnable;
-import test.MyTimer;
 import reflection.Stock;
+import reflection.TradingHours;
+import reflection.TradingHours.Session;
 import reflection.Util;
+import test.MyTimer;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -30,27 +31,27 @@ import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
 
+/** Puts bid, ask, last, and last time to redis; pulls bid/ask from either smart or ibeos,
+ *  depending on which session we are in. Last always comes from... */
 public class MktDataServer {
-	enum Status { 
-		Connected, Disconnected 
-	};
+	//enum Status { Connected, Disconnected };
+	enum MyTickType { Bid, Ask, Last };
 
-	private final static SimpleDateFormat hhmm = new SimpleDateFormat( "kk:mm:ss");
-	private final static Random rnd = new Random( System.currentTimeMillis() );
-	        final static MktDataConfig m_config = new MktDataConfig();
-	private final static DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
-	//final static int SpyConid = 756733;
+	private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");
+	private static final MktDataConfig m_config = new MktDataConfig();
+	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
+	static boolean m_debug = true;
 	
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr;
-	private String m_tabName;
-	private MyRedis m_redis;
-	private boolean m_insideHours; // true if we are in the normal ETF trading hours of 4am to 8pm
-	private boolean m_debug;
+	private final MyRedis m_redis;
+	private final TradingHours m_tradingHours; 
+	private final ArrayList<DualPrices> m_list = new ArrayList<>();
+	private final boolean m_testing = false;  // must be false for production
 	
 	static {
 		TimeZone zone = TimeZone.getTimeZone("America/New_York");
-		hhmm.setTimeZone( zone);			
+		hhmmEST.setTimeZone( zone);			
 	}
 
 	public static void main(String[] args) {
@@ -67,6 +68,7 @@ public class MktDataServer {
 			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
+
 
 	private MktDataServer(String[] args) throws Exception {
 		String tabName = args[0];
@@ -96,36 +98,28 @@ public class MktDataServer {
 		m_redis.connect();  // test the connection, let it fail now
 		S.out( "  done");
 		
-		// check every few seconds to see if we are in extended trading hours or not
-		// we could check with every tick but that is a lot of expensive time operations
-		timer.next( "Checking trading hours");
-		checkTime(true);
-		Util.executeEvery( 5000, () -> checkTime(false) ); 
-
+		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
+		m_tradingHours = new TradingHours(m_mdConnMgr.controller() ); // must come after ConnectionMgr
+		
 		// connect to TWS
 		timer.next("Connecting to TWS");
-		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId() );
 		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
-		timer.done();
+
+		timer.next( "Start market data update timer");
+		Util.executeEvery( m_config.redisBatchTime(), () -> updateRedis(false) ); 
+		
+		if (m_testing) {
+			Util.executeEvery( 150, () -> {
+				if (m_list.size() == 0) return;
+				int i = new Random().nextInt(m_list.size() );
+				DualPrices dual = m_list.get(i);
+				dual.tickSmart( MyTickType.Bid, new Random().nextDouble(100) ); 
+				dual.tickSmart( MyTickType.Ask, new Random().nextDouble(100) ); 
+				dual.tickSmart( MyTickType.Last, new Random().nextDouble(100) ); 
+			});
+		}
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
-	}
-
-	/** Check to see if we are in extended trading hours or not so we know which 
-	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
-	 * better would be to check against the trading hours of an actual ETF. */
-	private void checkTime(boolean log) {
-		boolean inside = m_insideHours;
-		
-		String now = hhmm.format( new Date() );
-		m_insideHours = now.compareTo("03:59:45") >= 0 && now.compareTo("19:59:40") < 0;
-		// switch over 20 sec early because we do not want to miss the flood of prices
-		// that will come when the new exchange is turned on; note that this will
-		// also cause us to miss the -1 that comes at the close of the old exchange
-		
-		if (log || inside != m_insideHours) {
-			log( "Transitioned trading hours, inside=%s", m_insideHours);
-		}
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -163,8 +157,8 @@ public class MktDataServer {
 	}
 
 	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr( String host, int port, int clientId) {
-			super( host, port, clientId);
+		MdConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
+			super( host, port, clientId, reconnectInterval);
 		}
 		
 		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
@@ -172,13 +166,11 @@ public class MktDataServer {
 			super.onRecNextValidId(id);  // we don't get this after a disconnect/reconnect, so in that case you should use onConnected()
 			wrap( () -> requestPrices() );
 		}
-	}
-
-	/** Create pipeline if necessary and add the tick to the queue 
-	 * @throws Exception */
-	synchronized void tick(PRun run) throws Exception {
-		m_redis.startPipeline( m_config.redisBatchTime(), e -> m_log.log(e) ); // there's a hole here; it's possible that the pipeline was started previous and terminates in between these two calls
-		m_redis.runOnPipeline(run);
+		
+		@Override public void onConnected() {
+			super.onConnected();
+			m_tradingHours.startQuery();
+		}
 	}
 
 	/** Might need to sync this with other API calls.  */
@@ -190,115 +182,76 @@ public class MktDataServer {
 		}
 
 		for (Object obj : m_stocks) {
-			Stock stock = (Stock)obj;  
+			Stock stock = (Stock)obj;
+			
+			final Contract contract = new Contract();
+			contract.conid( Integer.valueOf( stock.getConid() ) );
+			
+			DualPrices dual = new DualPrices( stock);
+			m_list.add( dual);
 
-			// for ETF's request price on SMART and IBEOS
-			// ETF's that trade 24 hours per day have type ETF-24
+			// request price on SMART
+			if (m_debug) S.out( "  requesting stock prices for %s on SMART", stock.getConid() );
+			contract.exchange( "SMART");
+			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+					MyTickType myTickType = getTickType(tickType);
+					if (myTickType != null) {
+						if (m_debug) S.out( "Ticking smart %s %s %s", stock.getConid(), myTickType, price);
+						dual.tickSmart(myTickType, price);
+					}
+				}
+			});
+			
+			// request price on IBEOS
 			if (stock.is24Hour() ) {
-				if (m_debug) S.out( "  requesting dual prices for %s", stock.getConid() );
-				requestDualPrices( stock.getConid() );
-			}
-			else {
-				if (m_debug) S.out( "  requesting stock prices for %s", stock.getConid() );
-				requestStockPrice( stock.getConid() );
+				if (m_debug) S.out( "  requesting stock prices for %s on IBESO", stock.getConid() );
+				contract.exchange( "IBEOS");
+				mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
+					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+						MyTickType myTickType = getTickType(tickType);
+						if (myTickType != null) {
+							if (m_debug) S.out( "Ticking ibeos %s %s %s", stock.getConid(), myTickType, price);
+							dual.tickIbeos(myTickType, price);
+						}
+					}
+				});
 			}
 		}
 	}
 	
-	private void requestStockPrice(String conid) {
-		final Contract contract = new Contract();
-		contract.conid( Integer.valueOf( conid) );
-		contract.exchange( "SMART");
-
-		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
-			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-				tickMktData( conid, tickType, price, "stock");
-			}
-		});
-	}
-
-	/** Request prices on both SMART and IBEOS, and then filter based on time */
-	private void requestDualPrices( String conid) {  // an aggregator would be a little better?
-		final Contract contract = new Contract();
-		contract.conid( Integer.valueOf( conid) );
-
-		// request price on SMART
-		contract.exchange( "SMART");
-		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
-			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-				if (m_insideHours) {
-					tickMktData(conid, tickType, price, "ETF");
+	/** Check to see if we are in extended trading hours or not so we know which 
+	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
+	 * better would be to check against the trading hours of an actual ETF. */
+	private void updateRedis(boolean log) {
+		m_redis.pipeline( pipeline -> {
+			for (DualPrices dual : m_list) {
+				try {
+					dual.send( pipeline, m_testing ? Session.Smart : m_tradingHours.getSession() );
 				}
-			}
-		});
-		
-		// request price on IBEOS
-		contract.exchange( "IBEOS");
-		mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
-			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-				if (!m_insideHours) {
-					tickMktData(conid, tickType, price, "IBEOS");
+				catch( Exception e) {
+					e.printStackTrace();
 				}
 			}
 		});
 	}
 	
-	void tickMktData(String conid, TickType tickType, double price, String contractType) {
-		wrap( () -> {
-			if (m_debug) {
-				log( "Ticking %s %s %s %s", contractType, conid, tickType, price);
-			}
-			
-			
-			String type = getTickType( tickType);
-			
-			// add a timeout for the prices to expire. pas
-			// use transactions or pipeline to speed it up. pas
-			// use expire() or pexpire()
-			
-			
-			if (type != null) {
-				if (price > 0) { 
-					String val = S.fmt3( price);
-					//S.out( "ticking %s %s=%s", conidStr, type, val);
-					tick( pipeline -> pipeline.hset( conid, type, val) ); 
-					
-					if (type.equals( "last") ) {
-						tick( pipeline -> pipeline.hset( conid, "time", String.valueOf( System.currentTimeMillis() ) ) );
-					}
-				}
-				// we get price=-1 for bid/ask when market is closed
-				else if (type == "bid" || type == "ask") {
-					log( "clearing %s %s", conid, type);
-					tick( pipeline -> pipeline.hdel( conid, type) );
-					// delete it!!! pas
-				}
-			}
-		});
-	}
-
-	/** Write to the log file. Don't throw any exception. */
-	// better would be to return TickType. pas
-	
-	static private String getTickType(TickType tickType) {
-		String type = null;
+	@SuppressWarnings("incomplete-switch")
+	static private MyTickType getTickType(TickType tickType) {
+		MyTickType type = null;
 
 		switch( tickType) {
-			case CLOSE:
-			case DELAYED_CLOSE:
-				type = "close"; // not sure what we would ever use this for
-				break;
-			case LAST:
-			case DELAYED_LAST:
-				type = "last";
-				break;
 			case BID:
 			case DELAYED_BID:
-				type = "bid";
+				type = MyTickType.Bid;
 				break;
 			case ASK:
 			case DELAYED_ASK:
-				type = "ask";
+				type = MyTickType.Ask;
+				break;
+			case LAST:
+			case DELAYED_LAST:
+				type = MyTickType.Last;
 				break;
 		}
 		return type;
@@ -320,9 +273,7 @@ public class MktDataServer {
 		return m_mdConnMgr;
 	}
 
-	public String tabName() {
-		return m_tabName;
-	}
+	/** Write to the log file. Don't throw any exception. */
 
 	void wrap( ExRunnable runnable) {
 		try {
@@ -340,6 +291,3 @@ public class MktDataServer {
 		}
 	}
 }
-
-//does pipelined() form the connection if not there?
-//does query or run on pipe really ever fail?

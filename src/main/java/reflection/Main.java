@@ -64,7 +64,7 @@ public class Main implements ITradeReportHandler {
 	private       String m_faqs;
 	private String m_type1Config; 
 	private MyJsonObject m_type2Config;
-	final TradingHours m_tradingHours = new TradingHours(this); 
+	final TradingHours m_tradingHours; 
 	
 	JSONArray stocks() { return m_stocks; }
 
@@ -167,10 +167,13 @@ public class Main implements ITradeReportHandler {
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
 
+		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		m_tradingHours = new TradingHours(orderController()); // must come after ConnectionMgr 
+
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
+		timer.done();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
