@@ -20,6 +20,10 @@ class DualPrices {
 		m_ibeos = new Prices(m_stock.getConid());
 	}
 	
+	Stock stock() {
+		return m_stock;
+	}
+	
 	boolean is24() {
 		return m_stock.is24Hour();
 	}
@@ -36,14 +40,13 @@ class DualPrices {
 		prices.tick( tickType, price);
 	}
 
-	
 	public void send(Pipeline pipeline, Session inside) {
 		if (inside == Session.Smart) {
 			m_smart.send( pipeline, m_was != Session.Smart);
 			m_was = Session.Smart;
 		}
 		else if (is24() && inside == Session.Ibeos) {
-			m_ibeos.send(pipeline, m_was != Session.Ibeos); // flush the last set of prices from
+			m_ibeos.send(pipeline, m_was != Session.Ibeos); // this won't work if last is never sent from IBEOS
 			m_was = Session.Ibeos;
 		}
 		else if (m_was != Session.None) {
@@ -52,7 +55,6 @@ class DualPrices {
 			m_was = Session.None;
 		}
 	}
-	
 	
 	
 	static public class Prices {

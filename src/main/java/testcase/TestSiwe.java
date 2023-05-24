@@ -84,7 +84,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "past " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TIMED_OUT, cli.getCode() );
+		assertEquals( RefCode.TOO_SLOW, cli.getCode() );
 	}
 	
 	public void testSiweFailFut() throws Exception {
@@ -97,7 +97,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().plusSeconds(22) );
 		
 		JSONObject signedMsgSent = new JSONObject();
 		signedMsgSent.put( "signature", signature);
@@ -108,7 +108,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "fut " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TIMED_OUT, cli.getCode() );
+		assertEquals( RefCode.TOO_FAST, cli.getCode() );
 	}
 	
 	public void testFailSig() throws Exception {

@@ -121,7 +121,7 @@ public class Main implements ITradeReportHandler {
 		m_redis.setName("RefAPI");
 
 		timer.next( "Starting stock price query thread every n ms");
-		Util.executeEvery( m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
+		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// /api/crypto-transactions  all trades, I think not used
 		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
@@ -161,7 +161,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/api/about", exch -> new OldStyleTransaction(this, exch).about() ); // report build date/time
+		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
 		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
@@ -453,6 +453,10 @@ public class Main implements ITradeReportHandler {
 		m_log.log( type, text, params);
 	}
 
+	static void log( String text) {
+		m_log.log( text);
+	}
+
 	static class Pair {
 		String m_key;
 		String m_val;
@@ -473,7 +477,7 @@ public class Main implements ITradeReportHandler {
 				contract.symbol(),
 				exec.price(),
 				exec.permId(),
-				exec.cumQty(),
+				exec.cumQty().toDouble(),
 				contract.conid(),
 				exec.exchange(),
 				exec.avgPrice(),

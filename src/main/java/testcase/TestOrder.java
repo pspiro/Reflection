@@ -14,13 +14,9 @@ public class TestOrder extends MyTestCase {
 	
 	static {
 		try {
-//			MyHttpClient cli = new MyHttpClient("localhost", 8383);
-//			cli.get("?msg=seedPrices");
-
 			curPrice = m_config.newRedis().singleQuery( 
 					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );
 			S.out( "TestOrder: Current IBM price is %s", curPrice);
-
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
@@ -31,7 +27,7 @@ public class TestOrder extends MyTestCase {
 
 	// missing walletId
 	public void testMissingWallet() throws Exception {
-		MyJsonObject obj = orderData(2, "BUY", 10);
+		MyJsonObject obj = orderData("BUY", 10, 2);
 		obj.remove("wallet_public_key");
 		MyJsonObject map = postDataToObj(obj);
 		String ret = map.getString( "code");
@@ -53,7 +49,7 @@ public class TestOrder extends MyTestCase {
 	
 	// reject order; price too low
 	public void testBuyTooLow() throws Exception {
-		MyJsonObject obj = orderData( -1, "BUY", 10);
+		MyJsonObject obj = orderData( "BUY", 10, -1);
 		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -65,7 +61,7 @@ public class TestOrder extends MyTestCase {
 	
 	// sell order price to high
 	public void testSellTooHigh() throws Exception {
-		MyJsonObject obj = orderData( 1, "SELL", 10);
+		MyJsonObject obj = orderData( "SELL", 10, 1);
 		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -76,7 +72,7 @@ public class TestOrder extends MyTestCase {
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellPriceTooLow() throws Exception {
-		MyJsonObject obj = orderData( -30, "SELL", 100);
+		MyJsonObject obj = orderData( "SELL", 100, -30);
 		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -87,7 +83,7 @@ public class TestOrder extends MyTestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		MyJsonObject obj = TestOrder.orderData( 3, "BUY", 10);
+		MyJsonObject obj = TestOrder.orderData( "BUY", 10, 3);
 		
 		// this won't work because you have to 
 		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
@@ -110,7 +106,7 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testNullCookie() throws Exception {
-		MyJsonObject obj = orderData( 3, "BUY", 10);
+		MyJsonObject obj = orderData( "BUY", 10, 3);
 		obj.remove("cookie");
 		
 		MyHttpClient cli = postData(obj);
@@ -122,7 +118,7 @@ public class TestOrder extends MyTestCase {
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
-		MyJsonObject obj = orderData( -3, "sell", 10);
+		MyJsonObject obj = orderData( "sell", 10, -3);
 		MyJsonObject map = postDataToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -147,19 +143,18 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testFracShares()  throws Exception {
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '1.5', 'tokenPrice': '138' }"); 
+		MyJsonObject obj = orderData("BUY", 1.5, 2); 
 		MyJsonObject map = postDataToObj(obj);
-		String ret = map.getString( "code");
-		String text = map.getString("message");
-		S.out( "testFracShares %s %s", ret, text);
-		assertEquals( RefCode.OK.toString(), ret);
+		S.out( "testFracShares " + map.toString() ); 
+		assertEquals( RefCode.OK.toString(), map.getString( "code") );
+		assertEquals( 1.5, map.getDouble( "filled") );
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '.4', 'tokenPrice': '138' }"); 
+		MyJsonObject obj = orderData("BUY", .4, 2); 
 		MyJsonObject map = postDataToObj(obj);
-		String ret = map.getString( "code");
-		assertEquals( RefCode.OK.toString(), ret);
+		assertEquals( RefCode.OK.toString(), map.getString( "code") );
+		assertEquals( .4, map.getDouble( "filled") );
 	}
 
 	public void testZeroShares()  throws Exception {
@@ -178,16 +173,12 @@ public class TestOrder extends MyTestCase {
 		return obj;
 	}
 	
-	static MyJsonObject orderData(double offset, String side, double qty) throws Exception {
-		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
-				side, qty, Double.valueOf( curPrice + offset) );
-		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
-		addRequiredFields(obj);
-		return obj;
+	static MyJsonObject orderData(String side, double qty, double offset) throws Exception {
+		return orderData2( side, qty, curPrice + offset);
 	}
 	
-	static MyJsonObject orderData2(double price, String side, double qty) throws Exception {
-		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s', 'tds': 1.11 }",
+	static MyJsonObject orderData2(String side, double qty, double price) throws Exception {
+		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, price);
 		MyJsonObject obj = MyJsonObject.parse( Util.toJson(json) );
 		addRequiredFields(obj);

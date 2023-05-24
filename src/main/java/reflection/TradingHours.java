@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
+import org.json.simple.JSONObject;
+
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 import com.ib.controller.ApiController;
@@ -36,7 +38,7 @@ public class TradingHours {
 
 			S.out( "Starting trading hours query thread every one hour");
 			
-			Util.executeEvery( interval, () -> {
+			Util.executeEvery( 0, interval, () -> {
 				S.out( "Querying for trading hours now");
 				query( stockConid, "SMART");
 				query( etf24Conid, "IBEOS");
@@ -99,7 +101,7 @@ public class TradingHours {
 		synchronized( m_map) {
 			deets = m_map.get(exchange);
 		}
-		Util.require( deets != null, "Error: no contract details for exchange " + exchange);
+		Util.require( deets != null, "Error: no contract details for exchange " + exchange); // this can happen at startup if the mkt data update thread starts before the trading hours have returned
 
 		return inside( deets, deets.tradingHours(), now ) ||
 			   inside( deets, deets.liquidHours(), now );
@@ -110,12 +112,29 @@ public class TradingHours {
 		return Util.inside( now, deets.conid(), hours, deets.timeZoneId() );
 	}
 
-	public Session getSession() throws Exception {
+	/** We can update this to be more specific and consider conid if necessary */
+	public Session getSession(Stock stock) throws Exception {
 		Date now = new Date();
 		
 		return insideHours( "SMART", now)
 				? Session.Smart
-				: insideHours( "IBEOS", now) ? Session.Ibeos : Session.None;
+				: stock.is24Hour() && insideHours( "IBEOS", now) 
+					? Session.Ibeos 
+					: Session.None;
+	}
+
+	public JSONObject getHours() {
+		JSONObject obj = new JSONObject();
+		
+		m_map.forEach( (item1, deets) -> {
+			JSONObject inner = new JSONObject();
+			inner.put( "Trading hours", deets.tradingHours() );
+			inner.put( "Liquid hours", deets.liquidHours() );
+			obj.put( item1, inner);
+		});
+
+		return obj;
+
 	}
 	
 }

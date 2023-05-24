@@ -228,7 +228,7 @@ public class Util {
 	static Timer m_timer;
 	
 	/** Execute the runnable in a new thread now and every period ms forever. */
-	public static synchronized void executeEvery( int period, Runnable runnable) {
+	public static synchronized void executeEvery( int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
 			m_timer = new Timer();
 		}
@@ -239,7 +239,7 @@ public class Util {
 			}
 		};
 		
-		m_timer.schedule( task, 0, period);
+		m_timer.schedule( task, wait, period);
 	}
 
 	public static String getenv(String env) throws RefException {
@@ -320,8 +320,8 @@ public class Util {
 		return str.substring( 0, Math.min(str.length(), max) );
 	}
 
-	public static String right(String str, int i) {
-		return str.substring( str.length() - i);
+	public static String right(String str, int max) {
+		return str.substring( str.length() - Math.min(str.length(), max) );
 	}
 	
 	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */
@@ -346,6 +346,5 @@ public class Util {
 			b.append( (char)('a' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
-
 	
 }

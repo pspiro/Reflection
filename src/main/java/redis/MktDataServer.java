@@ -40,14 +40,14 @@ public class MktDataServer {
 	private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");
 	private static final MktDataConfig m_config = new MktDataConfig();
 	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
-	static boolean m_debug = true;
+	static boolean m_debug = false;
 	
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr;
 	private final MyRedis m_redis;
 	private final TradingHours m_tradingHours; 
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();
-	private final boolean m_testing = false;  // must be false for production
+	private final boolean m_testing = false;  // must be false for production; this is used to put lots of fake prices out
 	
 	static {
 		TimeZone zone = TimeZone.getTimeZone("America/New_York");
@@ -105,11 +105,13 @@ public class MktDataServer {
 		timer.next("Connecting to TWS");
 		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
 
+		// give it 500 ms to get the trading hours; if it's too slow, you'll see a harmless exception
 		timer.next( "Start market data update timer");
-		Util.executeEvery( m_config.redisBatchTime(), () -> updateRedis(false) ); 
+		Util.executeEvery( 500, m_config.redisBatchTime(), () -> updateRedis(false) ); 
 		
+		// put out lots of fake prices
 		if (m_testing) {
-			Util.executeEvery( 150, () -> {
+			Util.executeEvery( 1000, 150, () -> {
 				if (m_list.size() == 0) return;
 				int i = new Random().nextInt(m_list.size() );
 				DualPrices dual = m_list.get(i);
@@ -222,12 +224,15 @@ public class MktDataServer {
 	
 	/** Check to see if we are in extended trading hours or not so we know which 
 	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
-	 * better would be to check against the trading hours of an actual ETF. */
+	 * better would be to check against the trading hours of an actual ETF. 
+	 * @throws Exception */
 	private void updateRedis(boolean log) {
 		m_redis.pipeline( pipeline -> {
 			for (DualPrices dual : m_list) {
 				try {
-					dual.send( pipeline, m_testing ? Session.Smart : m_tradingHours.getSession() );
+					dual.send( pipeline, m_testing 
+							? Session.Smart 
+							: m_tradingHours.getSession(dual.stock()) );
 				}
 				catch( Exception e) {
 					e.printStackTrace();

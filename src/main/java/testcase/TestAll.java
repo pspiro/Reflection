@@ -21,6 +21,7 @@ import junit.framework.TestCase;
 	   TestPrices.class,
 	   TestRedeem.class,
 	   TestSiwe.class,
+	   TestStrings.class,
 	   TestTwoOrdersDifUser.class,
 	   TestTwoOrdersSameUser.class,	   
 	   TestUnwindOrder.class,
