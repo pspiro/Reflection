@@ -5,9 +5,22 @@ import json.MyJsonObject;
 import reflection.RefCode;
 import tw.util.S;
 
+/** You must have some RUSD for these tests to pass */
 public class TestRedeem extends MyTestCase {
 	
 	static String host = "localhost"; // "34.125.38.193";
+
+	public void testMyAfter() throws Exception {
+		MyHttpClient cli = cli();
+		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		obj.display("My Wallet");
+		
+		assertTrue( obj.getInt("refresh") > 100);
+		
+		MyJsonObject tok = obj.getAr("tokens").getJsonObj(0);
+		startsWith("RUSD", tok.getString("name"));
+		assertTrue( tok.getDouble("balance") > 0 );
+	}
 	
 	public void testRedeem() throws Exception {
 		MyJsonObject payload = new MyJsonObject();
@@ -19,6 +32,18 @@ public class TestRedeem extends MyTestCase {
 		assertEquals(200, cli.getResponseCode() );  // confirm that Cookie wallet has some RUSD in it
 	}
 	
+	public void testMyBefore() throws Exception {
+		MyHttpClient cli = cli();
+		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		obj.display("My Wallet");
+		
+		assertTrue( obj.getInt("refresh") > 100);
+		
+		MyJsonObject tok = obj.getAr("tokens").getJsonObj(0);
+		startsWith("RUSD", tok.getString("name"));
+		assertTrue( tok.getDouble("balance") > 0 );
+	}
+
 	public void testFailAddress() throws Exception {
 		// invalid address (wrong length)
 		MyHttpClient cli = cli();
