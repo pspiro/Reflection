@@ -28,7 +28,10 @@ public class Util {
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
 	public static void main(String[] args) throws RefException {
-		S.out( id(3) );
+		S.out( substring((String)null, 1, 1) );
+		S.out( substring("abc", 5, 5) );
+		S.out( substring("abc", 2, 3) );
+		S.out( substring("abc", 2, 5) );
 	}
 
 	/** Do a decimal compare down to six digits */
@@ -316,12 +319,28 @@ public class Util {
 		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class || clas == Boolean.class || clas == Float.class;
 	}
 	
+//	public static String toLowerCase(String address) {
+//		return notNull(address).toLowerCase();
+//	}
+	
+	/** Clip the bounds, don't throw exception, handle null string */
 	public static String left( String str, int max) {
+		str = S.notNull(str);
 		return str.substring( 0, Math.min(str.length(), max) );
 	}
 
+	/** Clip the bounds, don't throw exception, handle null string */
 	public static String right(String str, int max) {
+		str = S.notNull(str);
 		return str.substring( str.length() - Math.min(str.length(), max) );
+	}
+
+	/** Clip the bounds, don't throw exception, handle null string */
+	public static String substring(String str, int start, int end) {
+		str = S.notNull(str);
+		return str.substring(
+				Math.min(start, str.length() ),
+				Math.min(end, str.length() ) );
 	}
 	
 	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */

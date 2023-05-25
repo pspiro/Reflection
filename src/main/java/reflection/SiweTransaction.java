@@ -104,7 +104,7 @@ public class SiweTransaction extends MyTransaction {
 			Main.require(
 					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TOO_SLOW,
-					"You waited a bit too long; please sign in again");
+					"You waited too long to sign in; please sign in again");
 					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
 					//issuedAt, now, Main.m_config.siweTimeout() );
 			Main.require(
@@ -131,7 +131,7 @@ public class SiweTransaction extends MyTransaction {
 			
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
-			
+		
 			respondFull( Util.toJsonMsg( code, "OK"), 200, headers);
 		});
 	}
@@ -144,13 +144,13 @@ public class SiweTransaction extends MyTransaction {
 			ArrayList<String> cookies = authCookies();
 			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
-//			if (cookies.size() > 1) {
-//				m_main.log( LogType.SIWE, "Warning: receiving /siwe/me with multiple cookies is unexpected");
-//			}
+			if (cookies.size() > 1) {
+				out( "Warning: receiving /siwe/me with multiple cookies is unexpected");
+				out( cookies);
+			}
 			
 			MyJsonObject siweMsg = validateAnyCookie( cookies);
 
-			out( "loggedIn=true");
 			JSONObject response = new JSONObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
@@ -167,7 +167,7 @@ public class SiweTransaction extends MyTransaction {
 			}
 			catch( Exception e) {
 				// this happens quite a bit
-				// out( "Unexpected: there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+				out( "Unexpected, there was an invalid cookie for %s", address(cookie) );  // this should not happen if we have only one cookie as we expect
 			}
 		}
 
@@ -235,8 +235,8 @@ public class SiweTransaction extends MyTransaction {
 	void handleSiweSignout() {
 		wrap( () -> {
 			for (String cookie : authCookies() ) {
-				String address = address(cookie);
-				if (sessionMap.remove(address) != null) {  // alternatively, we could update the session to be false
+				String address = S.notNull(address(cookie));
+				if (sessionMap.remove(address.toLowerCase()) != null) {  // alternatively, we could update the session to be false
 					out( "%s has been signed out", address);
 				}
 			}
@@ -247,7 +247,7 @@ public class SiweTransaction extends MyTransaction {
 
 	/** Return lower-case wallet address from __Host_authToken cookie */
 	private static String address(String cookie) {
-		return cookie.substring(16, 58).toLowerCase();
+		return Util.substring(cookie, 16, 58).toLowerCase();
 	}
 	
 	private ArrayList<String> authCookies() {
