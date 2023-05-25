@@ -88,7 +88,9 @@ public class MyRedis {
 		});
 	}
 
-	/** This has severe limitation of only one pipeline at a time.
+	/** Currently not used.
+	 * 
+	 *  This has severe limitation of only one pipeline at a time.
 	 *  Use this version when all the queries are spread out over time
 	 *  @param batchTimeMs is time until we call sync
 	 *  @param handler will handle exceptions during sync */
@@ -109,6 +111,9 @@ public class MyRedis {
 			}
 	}
 	
+	/** Currently not used; 
+	 * 
+	 *  goes along with startPipeline() */
 	public void runOnPipeline( PRun runnable) throws Exception {
 		Util.require( m_jedis != null, "No connection");
 		Util.require( m_pipeline != null, "Not in pipeline");

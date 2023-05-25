@@ -64,7 +64,7 @@ public class TestSiwe extends MyTestCase {
 			.build();
 	}
 
-	public void testFailSessionExpired() throws Exception {
+	public void testFailTooSlow() throws Exception {
 		// test siwe/init
 		cli = cli();
 		cli.get("/siwe/init");
@@ -82,33 +82,17 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "past " + cli.readMyJsonObject() );
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TOO_SLOW, cli.getCode() );
-	}
-	
-	public void testSiweFailFut() throws Exception {
-		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String cookie = cli.getHeaders().get("set-cookie");
 		
-		// confirm nonce
-		assertEquals( 20, nonce.length() );
-		
-		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().plusSeconds(22) );
-		
-		JSONObject signedMsgSent = new JSONObject();
-		signedMsgSent.put( "signature", signature);
-		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
-
-		// test siwe/signin
+		// send siwe/me
 		cli = cli();
-		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "fut " + cli.readMyJsonObject() );
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		S.out( "fail too slow " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TOO_FAST, cli.getCode() );
+		assertEquals( RefCode.TOO_SLOW, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		startsWith( "You waited", cli.getMessage() );
+		
 	}
 	
 	public void testFailSig() throws Exception {
@@ -130,9 +114,16 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "failSig " + cli.readMyJsonObject() );
+		assertEquals( 200, cli.getResponseCode() );
+		String cookie = cli.getHeaders().get("set-cookie");
+		
+		// send siwe/me
+		cli = cli();
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		S.out( "fail dup " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.UNKNOWN, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		assertEquals( "Invalid signature.", cli.getMessage() );
 	}
 	
 	public void testFailDup() throws Exception {
@@ -160,7 +151,13 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin again
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "failDup " + cli.readMyJsonObject() );
+		assertEquals( 200, cli.getResponseCode() );
+		String cookie = cli.getHeaders().get("set-cookie");
+		
+		// send siwe/me
+		cli = cli();
+		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		S.out( "fail dup " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 	}
 	

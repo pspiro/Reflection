@@ -1,6 +1,5 @@
 package reflection;
 
-import static reflection.Main.log;
 import static reflection.Main.require;
 
 import java.io.InputStreamReader;
@@ -8,7 +7,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -47,7 +45,6 @@ public abstract class MyTransaction {
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_id;
-	private String m_header; // used for coding the output
 	
 
 	MyTransaction( Main main, HttpExchange exchange) {
@@ -57,7 +54,6 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_header = header;
 		m_id = header == null ? Util.id(3) : Util.id(3) + " " + header;		
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}

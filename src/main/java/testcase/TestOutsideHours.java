@@ -12,7 +12,8 @@ import tw.util.S;
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends MyTestCase {
 	static int QQQ = 320227571;
-	static int IBM = 265598;
+	static int AAPL = 265598;
+	static int IBM = 8314;
 	
 	@SuppressWarnings("deprecation")   // run this test again with a different time zone
 	public void testExchHours() throws RefException {
@@ -85,25 +86,25 @@ public class TestOutsideHours extends MyTestCase {
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
-	public void testStk4() throws Exception {
+	public void testPostClose() throws Exception {
 		MyJsonObject map = testHours( IBM, "20:00");
 
 		String ret = (String)map.getString("code");
 		String text = (String)map.getString("message");
 
-		S.out( "testStk4 " + text);
+		S.out( "testPostClose " + text);
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
 		assertEquals( MyTransaction.exchangeIsClosed, text);
 	
 	}
 	
-	public void testEtfPreOpen()  throws Exception {
-		MyJsonObject map = testHours( QQQ, "3:59");
+	public void testPreOpen()  throws Exception {
+		MyJsonObject map = testHours( IBM, "3:59");
 
 		String ret = (String)map.getString("code");
 		String text = (String)map.getString("message");
 
-		S.out(text);
+		S.out( "testPreOpen " + text);
 		assertEquals( RefCode.EXCHANGE_CLOSED.toString(), ret);
 		assertEquals( MyTransaction.exchangeIsClosed, text);
 	}

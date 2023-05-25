@@ -228,7 +228,7 @@ public class Util {
 	static Timer m_timer;
 	
 	/** Execute the runnable in a new thread now and every period ms forever. */
-	public static synchronized void executeEvery( int period, Runnable runnable) {
+	public static synchronized void executeEvery( int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
 			m_timer = new Timer();
 		}
@@ -239,7 +239,7 @@ public class Util {
 			}
 		};
 		
-		m_timer.schedule( task, 0, period);
+		m_timer.schedule( task, wait, period);
 	}
 
 	public static String getenv(String env) throws RefException {

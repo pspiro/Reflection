@@ -19,16 +19,19 @@ class ConnectionMgr implements IConnectionHandler {
 	private Timer m_timer;
 	private boolean m_ibConnection;
 	private final ApiController m_controller = new ApiController( this, null, null);
+	private long m_reconnectInterval;
+	
 	boolean ibConnection() { return m_ibConnection; }
 
 	public ApiController controller() { 
 		return m_controller;
 	}
 	
-	ConnectionMgr( String host, int port, int clientId) {
+	ConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
 		m_host = host;
 		m_port = port;
 		m_clientId = clientId;
+		m_reconnectInterval = reconnectInterval;
 	}
 
 	synchronized void startTimer() {
@@ -39,7 +42,7 @@ class ConnectionMgr implements IConnectionHandler {
 				@Override public void run() {
 					onTimer();
 				}
-			}, 0, MktDataServer.m_config.reconnectInterval() );
+			}, 0, m_reconnectInterval);
 		}
 	}
 

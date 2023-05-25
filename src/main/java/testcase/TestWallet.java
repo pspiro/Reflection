@@ -22,7 +22,6 @@ public class TestWallet extends MyTestCase {
 		Wallet wallet = new Wallet(Cookie.wallet);
 		assertTrue( wallet.getBalance(m_config.rusdAddr() ) > 0);
 		assertTrue( wallet.getBalance(m_config.busdAddr() ) > 0);
-		assertTrue( wallet.getBalance(m_config.busdAddr() ) > 0);
 		
 		assertEquals( wallet.getBalance(m_config.rusdAddr() ), m_config.rusd().getPosition(Cookie.wallet) );
 		assertEquals( wallet.getBalance(m_config.busdAddr() ), m_config.busd().getPosition(Cookie.wallet) );
@@ -39,9 +38,9 @@ public class TestWallet extends MyTestCase {
 		
 		MyJsonObject tok;
 		
-		tok = ar.getJsonObj(0);
-		assertEquals("RUSD", tok.getString("name"));
-		assertTrue( tok.getDouble("balance") > 0 );
+//		tok = ar.getJsonObj(0);  // moved to TestRedeem
+//		assertEquals("RUSD", tok.getString("name"));
+//		assertTrue( tok.getDouble("balance") > 0 );
 
 		tok = ar.getJsonObj(1);
 		assertEquals("USDC", tok.getString("name"));

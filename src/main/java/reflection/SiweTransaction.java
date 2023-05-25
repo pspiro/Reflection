@@ -1,5 +1,6 @@
 package reflection;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -14,6 +15,7 @@ import java.util.StringTokenizer;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.util.Utils;
@@ -25,6 +27,8 @@ import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>();
+	private static final HashMap<String,Exception> errors = new HashMap();
+	
 	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map wallet address to Session   
 					// it would be better to store this in the Redis; give it a key so you can see or wipe out all 
 	
@@ -68,9 +72,9 @@ public class SiweTransaction extends MyTransaction {
 		
 		respond( "nonce", nonce );   // how to tie this to the nonce received below?
 	}
-	
+
 	/** Frontend sends POST msg with siwe message and signature; we should verify
-	 *  The response contains a Set-Cookie header with the SIWE message and signature */
+	 *  The response contains a Set-Cookie header with the SIWE message and signature */ 
 	public void handleSiweSignin() {
 		wrap( () -> {
             MyJsonObject signedMsg = new MyJsonObject(
@@ -79,50 +83,22 @@ public class SiweTransaction extends MyTransaction {
             out( "received signed msg: %s", signedMsg);
 			
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
+			Exception error = null;
 			
-			// validate and remove the nonce so it is no longer valid
-			Main.require( 
-					validNonces.remove(siweMsg.getNonce() ), 
-					RefCode.INVALID_REQUEST, 
-					"The nonce %s is invalid", siweMsg.getNonce() );
-			
-			out( "nonce is valid");
-			
-			// verify signature
-			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
-				out( "free pass");
+			// now that we have a message, any error we encounter, we still send the cookie
+			try {
+				validate(siweMsg, signedMsg.getString( "signature") );
+
+				// store session object; let the wallet address be the key for the session 
+				Session session = new Session( siweMsg.getNonce() );
+				sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
+				out( "mapping %s to %s", siweMsg.getAddress(), session);
 			}
-			else {
-				// better would be to catch it and throw RefException; this return UNKNOWN code
-				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
-				out( "verified");
+			catch( Exception e) {
+				errors.put(siweMsg.getAddress().toLowerCase(), e);
 			}
-			
-			// verify issuedAt is not too far in future or past
-			Instant issuedAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
-			Instant now = Instant.now();
-			Main.require(
-					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
-					RefCode.TOO_SLOW,
-					"You waited a bit too long; please sign in again");
-					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
-					//issuedAt, now, Main.m_config.siweTimeout() );
-			Main.require(
-					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
-					RefCode.TOO_FAST,
-					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
-					issuedAt, now, Main.m_config.siweTimeout() );
-			
-			Main.require(
-					S.isNotNull( siweMsg.getAddress() ),
-					RefCode.INVALID_REQUEST,
-					"Null address during siwe/signin");
-			
-			// store session object; let the wallet address be the key for the session 
-			Session session = new Session( siweMsg.getNonce() );
-			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
-			out( "mapping %s to %s", siweMsg.getAddress(), session);
-		
+
+
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
 					siweMsg.getAddress(), 
@@ -136,6 +112,43 @@ public class SiweTransaction extends MyTransaction {
 		});
 	}
 	
+	private void validate(SiweMessage siweMsg, String signature) throws Exception {
+		// validate and remove the nonce so it is no longer valid
+		Main.require( 
+				validNonces.remove(siweMsg.getNonce() ), 
+				RefCode.INVALID_REQUEST, 
+				"The nonce %s is invalid", siweMsg.getNonce() );
+		
+		// verify signature
+		if (signature.equals("102268") && siweMsg.getChainId() == 5) {
+			out( "free pass");
+		}
+		else {
+			// better would be to catch it and throw RefException; this returns UNKNOWN code
+			siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signature);  // we should not take the domain and nonce from here. pas
+		}
+		
+		// verify issuedAt is not too far in future or past
+		Instant issuedAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
+		Instant now = Instant.now();
+		Main.require(
+				Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
+				RefCode.TOO_SLOW,
+				"You waited a bit too long; please sign in again");
+				// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
+				//issuedAt, now, Main.m_config.siweTimeout() );
+		Main.require(
+				Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
+				RefCode.TOO_FAST,
+				"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
+				issuedAt, now, Main.m_config.siweTimeout() );
+		
+		Main.require(
+				S.isNotNull( siweMsg.getAddress() ),
+				RefCode.INVALID_REQUEST,
+				"Null address during siwe/signin");
+	}
+
 	/** Frontend sends GET request with the cookie from the signin message sent in the header
 	 *  This is a keep-alive; we should verify that the timer has not expired */
 	@SuppressWarnings("unchecked")
@@ -144,9 +157,9 @@ public class SiweTransaction extends MyTransaction {
 			ArrayList<String> cookies = authCookies();
 			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
-//			if (cookies.size() > 1) {
-//				m_main.log( LogType.SIWE, "Warning: receiving /siwe/me with multiple cookies is unexpected");
-//			}
+			if (cookies.size() > 1) {
+				out("Warning: receiving /siwe/me with multiple cookies is unexpected");
+			}
 			
 			MyJsonObject siweMsg = validateAnyCookie( cookies);
 
@@ -160,7 +173,7 @@ public class SiweTransaction extends MyTransaction {
 
 	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
 	 * @throws RefException */
-	private MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
+	private MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws Exception {
 		for (String cookie : cookies) {
 			try {
 				return validateCookie( cookie, null);
@@ -168,6 +181,18 @@ public class SiweTransaction extends MyTransaction {
 			catch( Exception e) {
 				// this happens quite a bit
 				// out( "Unexpected: there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+			}
+		}
+		
+		// no valid cookie found; see if we can find an error to display from a failed /siwe/signin
+		for (String cookie : cookies) {
+			String[] split = cookie.split("=");
+			Main.require( split.length == 2, RefCode.VALIDATION_FAILED, "Malformed cookie");
+			String cookieHeader = split[0];
+			String address = cookieHeader.length() >= 58 ? cookieHeader.substring(16, 58) : "";
+			Exception e = errors.remove(address.toLowerCase());
+			if (e != null) {
+				throw e;
 			}
 		}
 
@@ -236,7 +261,7 @@ public class SiweTransaction extends MyTransaction {
 		wrap( () -> {
 			for (String cookie : authCookies() ) {
 				String address = address(cookie);
-				if (sessionMap.remove(address) != null) {  // alternatively, we could update the session to be false
+				if (sessionMap.remove(address.toLowerCase()) != null) {  // alternatively, we could update the session to be false
 					out( "%s has been signed out", address);
 				}
 			}

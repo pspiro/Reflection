@@ -6,7 +6,7 @@ import json.MyJsonObject;
 import junit.framework.TestCase;
 import tw.util.S;
 
-public class TestBackendMsgs extends TestCase {
+public class TestBackendMsgs extends MyTestCase {
 //	server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 //	server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 
@@ -43,7 +43,7 @@ public class TestBackendMsgs extends TestCase {
 		double bid = Double.valueOf( obj.getString("bid") );		
 		double ask = Double.valueOf( obj.getString("ask") );		
 		
-		assertEquals( "IBM", obj.getString("symbol") );
+		startsWith( "AAPL", obj.getString("symbol") );
 		assertEquals( "Stock", obj.getString("type") );
 		assertEquals( "265598", obj.getString("conid") );
 		assertEquals( "open", obj.getString("exchangeStatus") );
