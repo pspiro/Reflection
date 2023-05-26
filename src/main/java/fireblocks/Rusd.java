@@ -51,7 +51,7 @@ public class Rusd extends Erc20 {
 		String[] paramTypes = { "address", "address" };
 		Object[] params = { refWallet, adminAddr };
 		
-		m_address = Deploy.deploy( 
+		m_address = deploy( 
 				filename, 
 				Accounts.instance.getId( "Owner"), 
 				paramTypes, 

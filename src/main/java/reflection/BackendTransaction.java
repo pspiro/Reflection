@@ -306,6 +306,12 @@ public class BackendTransaction extends MyTransaction {
 	public void about() {
 		wrap( () -> respond( "Built", Util.readResource( Main.class, "version.txt") ) );
 	}
+
+	public void handleHotStocks() {
+		wrap( () -> {
+			respond( m_main.hotStocks() );
+		});
+	}
 	
 	
 }

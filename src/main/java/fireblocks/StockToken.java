@@ -70,7 +70,7 @@ public class StockToken extends Erc20 {
 				rusdAddr
 		};
 
-		String address = Deploy.deploy(
+		String address = deploy(
 				filename, 
 				Accounts.instance.getId("Owner"), 
 				paramTypes, 

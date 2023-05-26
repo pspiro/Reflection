@@ -39,7 +39,6 @@ public class Deploy {
 		else {
 			Util.require( Util.isValidAddress( busd.address() ), "RUSD must be valid or set to 'deploy'");
 		}
-
 		
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equals( rusd.address() ) ) {
@@ -64,13 +63,6 @@ public class Deploy {
 			Util.require( Util.isValidAddress( rusd.address() ), "RUSD must be valid or set to 'deploy'");
 		}
 		
-		deployStockTokens(config, rusd);
-		
-		Test.run(config, busd, rusd);
-	}
-	
-	static void deployStockTokens(Config config, Rusd rusd) throws Exception {
-
 		// deploy stock tokens that are active and have an empty token address
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
 			if ("Y".equals( row.getString( "Active") ) && S.isNull( row.getString( "Token Address") ) ) {
@@ -88,57 +80,7 @@ public class Deploy {
 			}
 		}
 		
-	}
-
-	// move this into Erc20? Or let it return a
-
-	/** The wallet associated w/ ownerAcctId becomes the owner of the deployed contract.
-	 *  The parameters passed here are the passed to the constructor of the smart contract
-	 *  being deployed. The whole thing takes 30 seconds.
-	 *  @return the deployed contract address */
-	public static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
-		S.out( "Deploying contract from %s", filename);
-		
-		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-		String bytecode = MyJsonObject.parse( new IStream(filename).readAll() )
-				.getString("bytecode");
-		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
-//		String bytecode = new IStream(filename).readln();
-		
-		String id = Fireblocks.call( ownerAcctId, "0x0", bytecode, paramTypes, params, note);
-		
-		// if there's an error, you got message and code
-		
-		//{"message":"Source is invalid","code":1427}		
-		
-		// it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
-		S.out( "  fireblocks id is %s", id);
-
-		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.getTransHash( id, 60);
-		S.out( "  blockchain transaction hash is %s", txHash);
-
-		S.out( "  waiting for deployed address");
-		return getDeployedAddress(txHash);
-	}
-	
-
-	/** Query the blockchain transaction through Moralis until the transaction
-	 *  is there AND it contains the receipt_contract_address field;
-	 *  takes about 17 seconds. */
-	static String getDeployedAddress(String txHash) throws Exception {
-		for (int i = 0; i < 3*60; i++) {
-			if (i > 0) S.sleep(1000);
-			
-			S.out( "    querying...");
-			MyJsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
-			String addr = obj.getString("receipt_contract_address");
-			if (S.isNotNull(addr) ) {
-				S.out( "contract deployed to " + addr);
-				return addr;
-			}
-		}
-		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		
+		//Test.run(config, busd, rusd);
 	}
 	
 }

@@ -2,6 +2,8 @@ package reflection;
 
 import org.json.simple.JSONObject;
 
+import tw.util.S;
+
 /** All values are string, including conid, except bid and ask
  *  which are doubles. This object lives in the m_stockMap
  *  map and also in the m_stocks array. Each stock is itself
@@ -27,7 +29,7 @@ import org.json.simple.JSONObject;
 	
     
  *    */
-public class Stock extends JSONObject {
+public class Stock extends JSONObject implements Comparable<Stock> {
 	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {
@@ -64,5 +66,13 @@ public class Stock extends JSONObject {
 	
 	public boolean is24Hour() {
 		return getBool("is24hour");
+	}
+
+	public boolean isHot() {
+		return getBool("isHot");
+	}
+
+	@Override public int compareTo(Stock o) {
+		return S.notNull(getSymbol()).compareTo(S.notNull(o.getSymbol()));
 	}
 }

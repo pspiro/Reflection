@@ -45,7 +45,7 @@ public class Busd extends Erc20 {
 	void deploy(String filename) throws Exception {
 		S.out( "Deploying BUSD from owner");
 		
-		m_address = Deploy.deploy( 
+		m_address = deploy( 
 				filename, 
 				Accounts.instance.getId( "Owner"), 
 				new String[0], 

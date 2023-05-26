@@ -1,12 +1,10 @@
 package reflection;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,8 +26,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Accounts;
-import fireblocks.Fireblocks;
-import fireblocks.Transfer;
 import json.MyJsonObject;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
@@ -59,6 +55,7 @@ public class Main implements ITradeReportHandler {
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JSONArray m_hotStocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private       ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private       String m_faqs;
@@ -155,7 +152,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
 		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		
+		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
@@ -254,11 +251,19 @@ public class Main implements ITradeReportHandler {
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
 				stock.put( "is24hour", masterRow.getBool("24-Hour") );
+				stock.put( "isHot", masterRow.getBool("Hot") );
 
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);
+
+				if (stock.isHot() ) {
+					m_hotStocks.add( stock);
+				}
 			}
 		}
+		
+		m_stocks.sort(null);
+		m_hotStocks.sort(null);
 	}
 
 	public static HashMap<Integer, ListEntry> readMasterSymbols(Book book) throws Exception {
@@ -628,6 +633,10 @@ public class Main implements ITradeReportHandler {
 	
 	MyJsonObject type2Config() {
 		return m_type2Config;
+	}
+
+	public JSONArray hotStocks() {
+		return m_hotStocks;
 	}
 	
 }
