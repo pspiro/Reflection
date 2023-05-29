@@ -312,6 +312,21 @@ public class BackendTransaction extends MyTransaction {
 			respond( m_main.hotStocks() );
 		});
 	}
-	
+
+	public void handleWorkingOrders() {
+		wrap( () -> {
+			JSONObject order = new JSONObject();
+			order.put( "action", "buy");
+			order.put( "description", "Buy 100 shares of MSFT for $500");
+			order.put( "progress", 75);
+			
+			JSONArray ar = new JSONArray();
+			ar.add(order);
+			
+			JSONObject ret = new JSONObject();
+			ret.put( "orders", ar);
+			respond( ret);
+		});
+	}
 	
 }

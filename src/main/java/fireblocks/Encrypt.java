@@ -69,9 +69,6 @@ public class Encrypt {
 		return new String(plainText);
 	}
 	
-	static String encodeR( String str) {
-		return Base64.getEncoder().encodeToString(str.getBytes());	
-	}
 	public static String encode( String in) {
 		return encode( in.getBytes() );
 	}
@@ -87,11 +84,18 @@ public class Encrypt {
 		}
 		return str;
 	}
-	
-	public static String getSHA(String input) throws Exception {
+
+	/** Returns result as hex; you might want it in Base64, see below */
+	public static String getSHA256(String input) throws Exception {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		byte[] bytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
 		return bytesToHex( bytes);
+	}
+	
+	public static String getSHA1(String input) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("SHA-1");
+		byte[] bytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
+		return Base64.getEncoder().encodeToString(bytes);
 	}
 	
 	static String bytesToHex(byte[] hash) {

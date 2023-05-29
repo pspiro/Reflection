@@ -80,7 +80,7 @@ public class Fireblocks {
 		long expire = start + 30;
 
 		// toJson removes spaces in the values, not good
-		String bodyHash = Encrypt.getSHA(body);
+		String bodyHash = Encrypt.getSHA256(body);
 		//S.out( "Body hash: %s", bodyHash);
 
 		String header = toJson( "{ 'alg': 'RS256', 'typ': 'JWT' }");

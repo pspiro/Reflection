@@ -93,7 +93,10 @@ public class OrderTransaction extends MyTransaction {
 		double myTds = order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
 		// fix this -> require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
-		m_stablecoinAmt = m_map.getRequiredDouble("price");
+		m_stablecoinAmt = m_map.getDouble("amount");  // change to getRequiredDouble()
+		if (S.isNull(m_stablecoinAmt) ) {  // remove this after backend is rolled out
+			m_stablecoinAmt = m_map.getRequiredDouble("price");
+		}
 		
 		double myStablecoinAmt = order.isBuy()
 			? preCommAmt + m_config.commission()
