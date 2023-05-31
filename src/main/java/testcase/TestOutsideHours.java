@@ -2,6 +2,7 @@ package testcase;
 
 import java.util.Date;
 
+import http.MyHttpClient;
 import json.MyJsonObject;
 import reflection.MyTransaction;
 import reflection.RefCode;
@@ -36,14 +37,14 @@ public class TestOutsideHours extends MyTestCase {
 		return new Date( year - 1900, month - 1, day, hr, min);
 	}
 
-	public static MyJsonObject testHours( int conid, String time) throws Exception {
+	public MyJsonObject testHours( int conid, String time) throws Exception {
 		double price = TestOrder.curPrice + 5;
 		if (conid == QQQ) price = 318*1.05;
 				
 		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'action': 'buy', 'quantity': '1', 'tokenPrice': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
 				conid, price, time);
 		MyJsonObject order = TestOrder.orderData(data);  // adds the cookie
-		return TestOrder.postDataToObj(order);
+		return postOrderToObj(order);
 	}
 
 	/** These tests have to be run on a day that the exchange is open, i.e. not Saturday */

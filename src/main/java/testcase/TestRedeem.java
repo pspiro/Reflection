@@ -33,8 +33,7 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testMyBefore() throws Exception {
-		MyHttpClient cli = cli();
-		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		MyJsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
@@ -46,8 +45,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void testFailAddress() throws Exception {
 		// invalid address (wrong length)
-		MyHttpClient cli = cli();
-		cli.addHeader("Cookie", Cookie.cookie)
+		cli().addHeader("Cookie", Cookie.cookie)
 			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
 		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
@@ -64,8 +62,7 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testFailNoCookie() throws Exception {
-		MyHttpClient cli = cli();
-		cli.get("/api/redemptions/redeem/" + Cookie.wallet);
+		cli().get("/api/redemptions/redeem/" + Cookie.wallet);
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
 	}

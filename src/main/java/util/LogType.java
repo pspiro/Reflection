@@ -16,7 +16,7 @@ public enum LogType {
 	ORDER_TIMEOUT,
 	PARTIAL_FILL,	// order was partially filled
 	REDEEM, 
-	REJECTED,		// order was rejected
+	FAILED,		// order was rejected
 	RESTART,		// application was restarted
 	SUBMIT,
 	TERMINATE,

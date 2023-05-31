@@ -1,6 +1,7 @@
 package testcase;
 
 import http.MyHttpClient;
+import json.MyJsonArray;
 import json.MyJsonObject;
 import reflection.Prices;
 import reflection.RefCode;
@@ -29,7 +30,7 @@ public class TestOrder extends MyTestCase {
 	public void testMissingWallet() throws Exception {
 		MyJsonObject obj = orderData("BUY", 10, 2);
 		obj.remove("wallet_public_key");
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
@@ -39,18 +40,25 @@ public class TestOrder extends MyTestCase {
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
 		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "testOrder4: %s", map);
 		assertEquals( RefCode.REJECTED.toString(), code);  // fails if auto-fill is on
 		assertEquals( "Reason unknown", text);
+		
+		assertEquals(200, cli.getResponseCode() );
+		assertEquals(RefCode.OK, cli.getCode() );
+
+		MyJsonObject ret = getLiveMessage();
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Sold 10", ret.getString("text") );
 	}
 	
 	// reject order; price too low
 	public void testBuyTooLow() throws Exception {
 		MyJsonObject obj = orderData( "BUY", 10, -1);
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( code + " " + text);
@@ -62,7 +70,7 @@ public class TestOrder extends MyTestCase {
 	// sell order price to high
 	public void testSellTooHigh() throws Exception {
 		MyJsonObject obj = orderData( "SELL", 10, 1);
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out("sellTooHigh %s %s", code, text);
@@ -73,7 +81,7 @@ public class TestOrder extends MyTestCase {
 	// reject order; sell price too low; IB rejects it
 	public void testSellPriceTooLow() throws Exception {
 		MyJsonObject obj = orderData( "SELL", 100, -30);
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out("sell too low %s %s", code, text);
@@ -88,13 +96,13 @@ public class TestOrder extends MyTestCase {
 		// this won't work because you have to 
 		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
 		
-		MyJsonObject map = postDataToObj(obj);
-		String code = map.getString( "code");
-		String text = map.getString("message");
-		S.out( "fill buy %s %s", code, text);
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 10.0, filled);
+		MyJsonObject map = postOrderToObj(obj);
+		assertEquals( 200, cli.getResponseCode() );
+		assertEquals( RefCode.OK, cli.getCode() );
+		
+		MyJsonObject ret = getLiveMessage();
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Bought 10", ret.getString("text") );
 
 		// this part won't work if Fireblocks is turned off
 //		ResultSet res = TestOrder.config.sqlConnection().queryNext( "select * from crypto_transactions where id = (select max(id) from crypto_transactions)");
@@ -109,7 +117,7 @@ public class TestOrder extends MyTestCase {
 		MyJsonObject obj = orderData( "BUY", 10, 3);
 		obj.remove("cookie");
 		
-		MyHttpClient cli = postData(obj);
+		MyHttpClient cli = postOrder(obj);
 		MyJsonObject map = cli.readMyJsonObject();
 		String text = map.getString("message");
 		assertEquals( 400, cli.getResponseCode() );
@@ -119,47 +127,73 @@ public class TestOrder extends MyTestCase {
 	// fill order sell order
 	public void testFillSell() throws Exception {
 		MyJsonObject obj = orderData( "sell", 10, -3);
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "fillSell %s %s", code, text);
-		assertEquals( RefCode.OK.toString(), code);
-		double filled = map.getDouble( "filled");
-		assertEquals( 10.0, filled);
+		assertEquals(200, cli.getResponseCode() );
+		assertEquals(RefCode.OK, cli.getCode() );
+
+		MyJsonObject ret = getLiveMessage();
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Sold 10", ret.getString("text") );
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
 		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
 		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'sell', 'quantity': '200', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
+	MyJsonObject getLiveOrders() throws Exception {
+		MyJsonObject obj = cli().get("/api/working-orders/" + Cookie.wallet)
+				.readMyJsonObject();
+		S.out( obj);
+		return obj;
+	}
+	
+	MyJsonArray getLiveMessages() throws Exception {
+		return getLiveOrders().getAr("messages");
+	}
+	
+	MyJsonObject getLiveMessage() throws Exception {
+		return getLiveMessages().getJsonObj(0);
+	}
+	
 	public void testFracShares()  throws Exception {
 		MyJsonObject obj = orderData("BUY", 1.5, 2); 
-		MyJsonObject map = postDataToObj(obj);
-		S.out( "testFracShares " + map.toString() ); 
-		assertEquals( RefCode.OK.toString(), map.getString( "code") );
-		assertEquals( 1.5, map.getDouble( "filled") );
+		MyJsonObject map = postOrderToObj(obj);
+		assertEquals(200, cli.getResponseCode() );
+		assertEquals(RefCode.OK, cli.getCode() );
+
+		MyJsonObject ret = getLiveMessage();
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Bought 1.50", ret.getString("text") );
 	}
 
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
 		MyJsonObject obj = orderData("BUY", .4, 2); 
-		MyJsonObject map = postDataToObj(obj);
-		assertEquals( RefCode.OK.toString(), map.getString( "code") );
-		assertEquals( .4, map.getDouble( "filled") );
+		MyJsonObject map = postOrderToObj(obj);
+
+		assertEquals(200, cli.getResponseCode() );
+		assertEquals(RefCode.OK, cli.getCode() );
+
+		MyJsonObject ret = getLiveMessage();
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Bought .4", ret.getString("text") );
 	}
 
 	public void testZeroShares()  throws Exception {
 		MyJsonObject obj = orderData("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"); 
-		MyJsonObject map = postDataToObj(obj);
+		MyJsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "zero shares: " + text);
@@ -204,13 +238,5 @@ public class TestOrder extends MyTestCase {
 		double total = buy ? amt + m_config.commission() : amt - m_config.commission() - tds;
 		obj.put("price", total);
 		return obj;
-	}
-
-	static MyJsonObject postDataToObj( MyJsonObject obj) throws Exception {
-		return postData(obj).readMyJsonObject();
-	}
-	
-	static MyHttpClient postData( MyJsonObject obj) throws Exception {
-		return cli().post( "/api/reflection-api/order", obj.toString() ); 
 	}
 }

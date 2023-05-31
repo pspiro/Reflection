@@ -22,7 +22,7 @@ public class TestTwoOrdersSameUser extends MyTestCase {
 	
 	void buy1(String id) {
 		try {
-			MyJsonObject map = TestOrder.postDataToObj( orderData( 3, "BUY", 2) );
+			MyJsonObject map = postOrderToObj( orderData( 3, "BUY", 2) );
 			
 			String code = map.getString( "code");
 			String message = map.getString("message");

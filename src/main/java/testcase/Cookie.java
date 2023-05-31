@@ -30,7 +30,7 @@ public class Cookie extends MyTestCase {
 	public static void signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);
 		
-		MyHttpClient cli = cli();
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
 		
 		// send siwe/init
 		cli.get("/siwe/init");

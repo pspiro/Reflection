@@ -110,19 +110,10 @@ public class EventFetcher {
 	}
 	
 	public synchronized void increment(String wallet, String token, double val) {
-		Balances walletMap = getOrCreateBalances( wallet);
-		walletMap.increment( token, val);
+		Balances obj = Util.getOrCreate( m_walletMap, wallet, () -> new Balances() );
+		obj.increment( token, val);
 	}
 	
-	private synchronized Balances getOrCreateBalances(String wallet) {
-		Balances balances = (Balances)m_walletMap.get( wallet);
-		if (balances == null) {
-			balances = new Balances();
-			m_walletMap.put( wallet, balances);
-		}
-		return balances;
-	}
-
 	private String processEventLog( String json, String token) throws Exception {
 		MyJsonObject obj = MyJsonObject.parse( json);
 		

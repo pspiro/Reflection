@@ -1,12 +1,13 @@
 package reflection;
 
-import static reflection.Main.log;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -315,16 +316,47 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleWorkingOrders() {
 		wrap( () -> {
-			JSONObject order = new JSONObject();
-			order.put( "action", "buy");
-			order.put( "description", "Buy 100 shares of MSFT for $500");
-			order.put( "progress", 75);
+			String address = Util.getLastToken(m_uri, "/");
+			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
-			JSONArray ar = new JSONArray();
-			ar.add(order);
+			JSONArray orders = new JSONArray();
+			JSONArray messages = new JSONArray();
+
+			List<LiveOrder> walletOrders = liveOrders.get(address.toLowerCase());
+			if (walletOrders != null) {
+				Iterator<LiveOrder> iter = walletOrders.iterator();
+				while (iter.hasNext() ) {
+					LiveOrder liveOrder = iter.next();
+					if (liveOrder.status() == LiveOrderStatus.Working) {
+						JSONObject jsonOrder = new JSONObject();
+						jsonOrder.put( "action", liveOrder.action() );
+						jsonOrder.put( "description", liveOrder.description() );
+						jsonOrder.put( "progress", liveOrder.progress() );
+						orders.add(jsonOrder);
+					}
+					else {
+						// if the order is completed, display a message and remove it from the list
+						JSONObject msg = new JSONObject();
+						msg.put( "type", liveOrder.msgType() );  // remove this, it's not used. pas 
+						msg.put( "text", liveOrder.description() );
+						msg.put( "status", liveOrder.status().toString() );
+						if (liveOrder.errorCode() != null) {
+							msg.put( "errorCode", liveOrder.errorCode().toString() );
+						}
+						messages.add(msg);
+						iter.remove();
+						
+						// if we just removed the last one, let the empty list stay in the liveOrders map,
+						// it's not hurting anyone
+						
+						// by the way, if the user is running two browsers, only one of them will get the message
+					}
+				}
+			}
 			
 			JSONObject ret = new JSONObject();
-			ret.put( "orders", ar);
+			ret.put( "orders", orders);
+			ret.put( "messages", messages);
 			respond( ret);
 		});
 	}

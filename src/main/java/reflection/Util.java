@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -17,8 +18,6 @@ import java.util.TimerTask;
 import org.json.simple.JSONObject;
 
 import com.ib.client.Decimal;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import tw.util.S;
 
@@ -364,6 +363,21 @@ public class Util {
 		for (int i = 0; i < 3; i++) 
 			b.append( (char)('a' + rnd.nextInt(26) ) );
 		return b.toString();
+	}
+
+	public interface Creator<T> {
+		T instance();
+	}
+	
+	public static <Tag,Val> Val getOrCreate(HashMap<Tag,Val> map, Tag tag, Creator<Val> creator) {
+		synchronized(map) {
+			Val val = map.get(tag);
+			if (val == null) {
+				val = creator.instance();
+				map.put( tag, val);
+			}
+			return val;
+		}
 	}
 	
 }

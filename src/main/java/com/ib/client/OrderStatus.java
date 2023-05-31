@@ -14,6 +14,7 @@ public enum OrderStatus {
 	Filled,
 	Inactive,
 	PendingSubmit,
+	Timeout,
 	Unknown;
 
     public static OrderStatus get(String apiString) {

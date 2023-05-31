@@ -43,7 +43,7 @@ public class Order {
 
     // primary attributes
     private String      m_action = "BUY";
-    private double      m_totalQuantity;
+    private double      m_totalQuantity;  // total decimal desired quantity
     private int         m_displaySize;
     private String      m_orderType = "LMT";
     private double      m_lmtPrice = Double.MAX_VALUE;
@@ -227,7 +227,7 @@ public class Order {
     private double  m_competeAgainstBestOffset;
     private double  m_midOffsetAtWhole;
     private double  m_midOffsetAtHalf;
-	private String m_walletAddr; // you could move this to OrderTransaction if desired, it's not really part of the order
+	private OrderStatus m_status = OrderStatus.Unknown;
 	
 	// getters
     public Action  action()                         { return Action.get(m_action); }
@@ -768,30 +768,18 @@ public class Order {
         return (int) (m_permId ^ (m_permId >>> 32));
     }
 
-	public void walletAddr(String v) {
-		m_walletAddr = v;
-	}
-	
-	public String walletAddr() { 
-		return m_walletAddr; 
+	/** Log entry for order */ 
+	public String getOrderLog(Contract contract, String walletAddr) {
+		return String.format( "wallet=%s %s %.3f %s (%s) at %.2f",
+				walletAddr, m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
 	}
 
-	/** Log entry for order. */
-	public String getOrderLog(Contract contract) {
-		return String.format( "wallet=%s  %s",	m_walletAddr, getCheckLog(contract) );
-	}
-
-	/** Log entry for order or what-if. */
-	public String getCheckLog(Contract contract) {
-		return String.format( "%s %.3f %s (%s) at %.2f",
-				m_action, m_totalQuantity, contract.conid(), contract.symbol(), m_lmtPrice);
-	}
-	
 	/** Return totalQuantity rounded to three decimal places. */
     public String totalQty() { 
     	return S.fmt3(m_totalQuantity); 
     }
     
+    /** total decimal desired quantity */
     public double totalQuantity() { 
     	return m_totalQuantity; 
     }
@@ -807,5 +795,11 @@ public class Order {
     public boolean isBuy() {
     	return action() == Action.BUY;
     }
+	public void status(OrderStatus status) {
+		m_status = status;
+	}
+	public OrderStatus status() {
+		return m_status;
+	}
 
 }

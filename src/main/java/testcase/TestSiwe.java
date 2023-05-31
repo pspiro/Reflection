@@ -66,8 +66,7 @@ public class TestSiwe extends MyTestCase {
 
 	public void testFailSessionExpired() throws Exception {
 		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
@@ -113,8 +112,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailSig() throws Exception {
 		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		
@@ -128,8 +126,7 @@ public class TestSiwe extends MyTestCase {
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
 		// test siwe/signin
-		cli = cli();
-		cli.post("/siwe/signin", signedMsgSent.toString() );
+		cli().post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failSig " + cli.readMyJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.UNKNOWN, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
@@ -137,8 +134,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailDup() throws Exception {
 		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		
@@ -166,8 +162,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailTimeout() throws Exception {
 		// send siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );
@@ -279,8 +274,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testFailCookie() throws Exception {
 		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		String nonce = cli.readMyJsonObject().getString("nonce");
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 
