@@ -139,12 +139,12 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		
 		// remove these after code change in Frontend
-		server.createContext("/api/reflection-api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
-		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/reflection-api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
-		server.createContext("/api/reflection-api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
-		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+//		server.createContext("/api/reflection-api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
+//		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
+//		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+//		server.createContext("/api/reflection-api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
+//		server.createContext("/api/reflection-api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
+//		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
