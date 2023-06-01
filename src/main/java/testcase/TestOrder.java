@@ -100,7 +100,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
-		MyJsonObject ret = getLiveMessage(map.getString("id");
+		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Bought 10", ret.getString("text") );
 
