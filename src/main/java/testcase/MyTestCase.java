@@ -35,5 +35,9 @@ public class MyTestCase extends TestCase {
 	MyJsonObject postOrderToObj( MyJsonObject obj) throws Exception {
 		return postOrder(obj).readMyJsonObject();
 	}
+
+	String postOrderToId( MyJsonObject obj) throws Exception {
+		return postOrder(obj).readMyJsonObject().getString("id");
+	}
 	
 }

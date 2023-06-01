@@ -32,65 +32,6 @@ public abstract class MyTransaction {
 		RUSD, USDC
 	}
 	
-	enum LiveOrderStatus { Working, Filled, Failed };
-
-	static class LiveOrder {
-		private long m_finished;  // don't keep them forever. pas
-		private String m_description;  // either order description or error description
-		private String m_action;
-		private boolean m_done;
-		private LiveOrderStatus m_status;
-		private int m_progress;
-		private RefCode m_errorCode;
-
-		LiveOrder(String action, String description) {
-			m_action = action;
-			m_description = description;
-			m_status = LiveOrderStatus.Working;
-		}
-		
-		void failed(Exception e) {
-			m_status = LiveOrderStatus.Failed;
-
-			m_description = e.getMessage();
-			if (e instanceof RefException) {
-				m_errorCode = ((RefException)e).code();
-			}
-			m_finished = System.currentTimeMillis();
-		}
-
-		void filled(double stockTokenQty) {
-			m_status = LiveOrderStatus.Filled;
-			m_description = m_description
-					.replace("Buy", "Bought")
-					.replace("Sell", "Sold");
-			m_finished = System.currentTimeMillis();
-		}
-
-		public String action() {
-			return m_action;
-		}
-
-		public String description() {
-			return m_description;
-		}
-
-		public int progress() {
-			return 25;
-		}
-
-		public String msgType() {
-			return m_status == LiveOrderStatus.Failed ? "error" : "message";
-		}
-
-		public LiveOrderStatus status() {
-			return m_status;
-		}
-
-		public RefCode errorCode() {
-			return m_errorCode;
-		}
-	}
 	static HashMap<String,Vector<LiveOrder>> liveOrders = new HashMap<>();  // use Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
 	
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled

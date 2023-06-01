@@ -24,6 +24,7 @@ import json.MyJsonObject;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
+import reflection.LiveOrder.LiveOrderStatus;
 import tw.util.S;
 import util.LogType;
 
@@ -328,22 +329,12 @@ public class BackendTransaction extends MyTransaction {
 				while (iter.hasNext() ) {
 					LiveOrder liveOrder = iter.next();
 					if (liveOrder.status() == LiveOrderStatus.Working) {
-						JSONObject jsonOrder = new JSONObject();
-						jsonOrder.put( "action", liveOrder.action() );
-						jsonOrder.put( "description", liveOrder.description() );
-						jsonOrder.put( "progress", liveOrder.progress() );
-						orders.add(jsonOrder);
+						orders.add( liveOrder.getWorkingOrder() );
 					}
 					else {
+						
 						// if the order is completed, display a message and remove it from the list
-						JSONObject msg = new JSONObject();
-						msg.put( "type", liveOrder.msgType() );  // remove this, it's not used. pas 
-						msg.put( "text", liveOrder.description() );
-						msg.put( "status", liveOrder.status().toString() );
-						if (liveOrder.errorCode() != null) {
-							msg.put( "errorCode", liveOrder.errorCode().toString() );
-						}
-						messages.add(msg);
+						messages.add( liveOrder.getCompletedOrder() );
 						iter.remove();
 						
 						// if we just removed the last one, let the empty list stay in the liveOrders map,

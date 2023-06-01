@@ -50,7 +50,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(200, cli.getResponseCode() );
 		assertEquals(RefCode.OK, cli.getCode() );
 
-		MyJsonObject ret = getLiveMessage();
+		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Sold 10", ret.getString("text") );
 	}
@@ -100,7 +100,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
-		MyJsonObject ret = getLiveMessage();
+		MyJsonObject ret = getLiveMessage(map.getString("id");
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Bought 10", ret.getString("text") );
 
@@ -134,7 +134,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(200, cli.getResponseCode() );
 		assertEquals(RefCode.OK, cli.getCode() );
 
-		MyJsonObject ret = getLiveMessage();
+		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Sold 10", ret.getString("text") );
 	}
@@ -164,8 +164,14 @@ public class TestOrder extends MyTestCase {
 		return getLiveOrders().getAr("messages");
 	}
 	
-	MyJsonObject getLiveMessage() throws Exception {
-		return getLiveMessages().getJsonObj(0);
+	MyJsonObject getLiveMessage(String id) throws Exception {
+		MyJsonArray msgs = getLiveMessages();
+		for (MyJsonObject msg : msgs) {
+			if (msg.getString("id").equals(id) ) {
+				return msg;
+			}
+		}
+		throw new Exception("No live order found with id " + id);
 	}
 	
 	public void testFracShares()  throws Exception {
@@ -174,7 +180,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(200, cli.getResponseCode() );
 		assertEquals(RefCode.OK, cli.getCode() );
 
-		MyJsonObject ret = getLiveMessage();
+		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Bought 1.50", ret.getString("text") );
 	}
@@ -186,7 +192,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(200, cli.getResponseCode() );
 		assertEquals(RefCode.OK, cli.getCode() );
 
-		MyJsonObject ret = getLiveMessage();
+		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Bought .4", ret.getString("text") );
 	}

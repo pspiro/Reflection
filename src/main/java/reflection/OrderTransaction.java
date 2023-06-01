@@ -125,7 +125,8 @@ public class OrderTransaction extends MyTransaction {
 		
 		// now it is up to the live order system to report success or failure
 		walletLiveOrders().add( m_liveOrder);
-		respondOk();
+
+		respond( code, RefCode.OK, "id", m_liveOrder.id() );
 		
 		// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
 		if (order.roundedQty() == 0) {
