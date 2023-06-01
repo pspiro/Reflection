@@ -1,5 +1,7 @@
 package reflection;
 
+import java.util.Random;
+
 import org.json.simple.JSONObject;
 
 // probably this should be a JSONObject
@@ -67,12 +69,13 @@ class LiveOrder {
 		return m_id;
 	}
 
+	static Random r = new Random();
 	public JSONObject getWorkingOrder() {
 		JSONObject order = new JSONObject();
 		order.put( "id", m_id);
 		order.put( "action", m_action);
 		order.put( "description", m_description);
-		order.put( "progress", m_progress);
+		order.put( "progress", r.nextInt(101) ); //m_progress);
 		return order;
 	}
 
