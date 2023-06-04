@@ -328,6 +328,9 @@ public class BackendTransaction extends MyTransaction {
 				Iterator<LiveOrder> iter = walletOrders.iterator();
 				while (iter.hasNext() ) {
 					LiveOrder liveOrder = iter.next();
+					
+					//liveOrder.updateStatus();
+					
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
 					}

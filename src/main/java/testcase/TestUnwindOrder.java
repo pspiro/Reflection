@@ -30,7 +30,7 @@ public class TestUnwindOrder extends TestCase {
 		// place order
 		MyJsonObject obj = new MyHttpClient( host, 8383)
 				.addHeader("Cookie", Cookie.cookie)
-				.post( "/api/reflection-api/order", Util.toJson(data) )
+				.post( "/api/order", Util.toJson(data) )
 				.readMyJsonObject();
 
 		// get new pos; should be higher

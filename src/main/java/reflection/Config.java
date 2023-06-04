@@ -27,14 +27,14 @@ import tw.util.S;
 public class Config {
 	
 	// user experience parameters
-	private double maxBuyAmt = 15000; // max buy amt in dollars
-	private double maxSellAmt = 15000; // max sell amt in dollars
-	private double minBuySpread = .004;  // as pct of price
-	private double minSellSpread = .004;  // as pct of price
+	private double maxBuyAmt; // max buy amt in dollars
+	private double maxSellAmt; // max sell amt in dollars
+	private double minBuySpread;  // as pct of price
+	private double minSellSpread;  // as pct of price
 
 	// needed by back-end server
-	private double buySpread = .005;  // as pct of price
-	private double sellSpread = .005;  // as pct of price
+	private double buySpread;  // as pct of price
+	private double sellSpread;  // as pct of price
 	
 	// 
 //	private double commission;
@@ -208,8 +208,8 @@ public class Config {
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
 		require( minSellSpread > 0 && minSellSpread < .05 && minSellSpread < sellSpread, "minSellSpread");
-		require( maxBuyAmt > 0 && maxBuyAmt < 100000, "maxBuyAmt");
-		require( maxSellAmt > 0 && maxSellAmt < 100000, "maxSellAmt");
+		require( maxBuyAmt > 0 && maxBuyAmt <= 100000, "maxBuyAmt");
+		require( maxSellAmt > 0 && maxSellAmt <= 100000, "maxSellAmt");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");

@@ -42,8 +42,10 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return text != null && text.trim().startsWith("{");
 	}
 
+	/** If the key does not exist, it returns an empty array */
 	public MyJsonArray getAr(String key) {
-		return new MyJsonArray( (JSONArray)m_obj.get( key) );
+		JSONArray array = (JSONArray)m_obj.get(key);
+		return array != null ? new MyJsonArray(array) : new MyJsonArray(); 
 	}
 
 	public MyJsonObject getObj(String key) throws Exception {
@@ -61,6 +63,12 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 		return val != null ? val.toString() : ""; 
 	}
 	
+	/** Returns zero for null value. */
+	public long getLong(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Long.parseLong( str) : 0;
+	}
+
 	/** Returns zero for null value. */
 	public int getInt( String key) {
 		String str = getString( key);
@@ -171,4 +179,5 @@ public class MyJsonObject {  // replace or combine w/ TypedJson
 	public int size() {
 		return m_obj.size();
 	}
+
 }

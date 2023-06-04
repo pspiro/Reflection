@@ -28,7 +28,7 @@ public class TestRefApiSpeed2 {
 
 	private static void reqBackend() throws Exception {
 		MyHttpClient client = new MyHttpClient("34.125.38.193", 8383);
-		client.get( "api/reflection-api/get-stock-with-price/8314");
+		client.get( "api/get-stock-with-price/8314");
 		S.out( client.readString() );
 		
 	}
@@ -36,7 +36,7 @@ public class TestRefApiSpeed2 {
 	/** THIS EXECUTES IN HALF THE TIME!!! */
 	private static void reqRefAPI() throws Exception {
 		MyHttpClient client = new MyHttpClient("34.125.38.193", 8383);
-		client.get( "api/reflection-api/get-all-stocks");
+		client.get( "api/get-all-stocks");
 		S.out( client.readString() );
 		
 	}

@@ -23,15 +23,6 @@ public class TestFlow {
 				instance.getAddress("Bob"),
 				1);
 		
-		/*
-		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/reflection-api/get-stock-with-price", exch -> handleGetStockWithPrice(exch) );
-		server.createContext("/api/reflection-api/order", exch -> handleOrder(exch, false) );
-		server.createContext("/api/reflection-api/check-order", exch -> handleOrder(exch, true) );
-		server.createContext("/api/reflection-api/positions", exch -> handleReqTokenPositions(exch) );		
-		server.createContext("/api/redemptions/redeem", exch -> handleRedeem(exch) );
-		 */
 		
 		MyHttpClient cli = new MyHttpClient(prod, 8383);
 		//cli.get("api/redemptions/redeem/" + wallet);

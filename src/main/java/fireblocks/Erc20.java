@@ -34,7 +34,7 @@ public class Erc20 {
 	
 	/** Approve some wallet to spend on behalf of another
 	 *  NOTE: you must wait for the response */
-	RetVal approve(int accountId, String spenderAddr, double amt) throws Exception {
+	public RetVal approve(int accountId, String spenderAddr, double amt) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
@@ -121,7 +121,7 @@ public class Erc20 {
 		S.out( "  fireblocks id is %s", id);
 
 		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.getTransHash( id, 60);
+		String txHash = Fireblocks.getTransHash( id, 60, 1000);
 		S.out( "  blockchain transaction hash is %s", txHash);
 
 		S.out( "  waiting for deployed address");
