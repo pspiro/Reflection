@@ -1,6 +1,7 @@
 package fireblocks;
 
 import http.SimpleTransaction;
+import reflection.Config;
 import tw.util.S;
 
 public class Webhook {
@@ -10,11 +11,12 @@ public class Webhook {
 			return;
 		}
 		
+		//WebhookConfig config = WebhookConfig.readFrom(null);
+		
 		SimpleTransaction.listen(args[0], Integer.valueOf(args[1]), trans -> process(trans) );
 	}
 
 	private static Object process(SimpleTransaction trans) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

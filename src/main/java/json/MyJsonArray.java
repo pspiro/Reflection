@@ -11,7 +11,7 @@ import tw.util.S;
 
 /** Array of object only. */
 public class MyJsonArray implements Iterable<MyJsonObject> { 
-	private JSONArray m_ar;
+	private final JSONArray m_ar;
 	
 	public static MyJsonArray parse( String text) throws Exception {
 		Util.require( isArray(text), "Error: not a json array: " + text);
@@ -26,8 +26,12 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 		return m_ar.size();
 	}
 
-	public MyJsonArray( JSONArray obj) {
-		m_ar = obj;
+	public MyJsonArray( JSONArray ar) {
+		m_ar = ar;
+	}
+	
+	public MyJsonArray() {
+		m_ar = new JSONArray();
 	}
 	
 	@Override public String toString() {  // this class sucks. pas
@@ -66,4 +70,16 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 	public static boolean isArray(String ret) {
 		return ret != null && ret.trim().startsWith("[");
 	}
+	
+	/** Return the item in the array that has tag=value (where value is a string) */
+	public MyJsonObject find(String tag, String value) throws Exception {
+		for (MyJsonObject item : this) {
+			if (value.equals( item.getString(tag) ) ) {
+				return item;
+			}
+		}
+		return null;
+	}
+
+	
 }

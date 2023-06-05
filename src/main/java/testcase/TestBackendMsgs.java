@@ -7,14 +7,14 @@ import junit.framework.TestCase;
 import tw.util.S;
 
 public class TestBackendMsgs extends MyTestCase {
-//	server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-//	server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+//	server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+//	server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 
 	String host = "localhost";
 	
 	public void testGetAllStocks() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-all-stocks");
+		cli.get("/api/get-all-stocks");
 		MyJsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 		MyJsonObject item = ar.getJsonObj(0);
@@ -25,7 +25,7 @@ public class TestBackendMsgs extends MyTestCase {
 	
 	public void testGetStocksWithPrices() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-stocks-with-prices");
+		cli.get("/api/get-stocks-with-prices");
 		MyJsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 		MyJsonObject item = ar.getJsonObj(0);
@@ -36,7 +36,7 @@ public class TestBackendMsgs extends MyTestCase {
 	
 	public void testGetStockWithPrice() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-stock-with-price/265598");
+		cli.get("/api/get-stock-with-price/265598");
 		MyJsonObject obj = cli.readMyJsonObject();
 		assertEquals( 200, cli.getResponseCode() );
 		
@@ -53,7 +53,7 @@ public class TestBackendMsgs extends MyTestCase {
 	
 	public void testGetPrice() throws Exception {
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/reflection-api/get-price/265598");
+		cli.get("/api/get-price/265598");
 		MyJsonObject obj = cli.readMyJsonObject();
 		assertEquals( 200, cli.getResponseCode() );
 		

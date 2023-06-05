@@ -21,13 +21,13 @@ public class Cookie extends MyTestCase {
 
 	static {
 		try {
-			signIn(wallet);
+			cookie = signIn(wallet);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static void signIn(String address) throws Exception {
+	public static String signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);
 		
 		MyHttpClient cli = new MyHttpClient("localhost", 8383);
@@ -57,8 +57,8 @@ public class Cookie extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		assertEquals( 200, cli.getResponseCode() );
 		
-		cookie = cli.getHeaders().get("set-cookie");
-		S.out( "received cookie: " + cookie);
+		return cli.getHeaders().get("set-cookie");
+		//S.out( "received cookie: " + cookie);
 	}
 	
 	public static void main(String[] args) throws Exception {

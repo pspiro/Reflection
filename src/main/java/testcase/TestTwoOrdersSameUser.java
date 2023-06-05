@@ -42,7 +42,7 @@ public class TestTwoOrdersSameUser extends MyTestCase {
 	}
 
 	private MyJsonObject orderData(int offset, String side, int qty) throws Exception {
-		MyJsonObject data = TestOrder.orderData(side, qty, offset);
+		MyJsonObject data = TestOrder.createOrder(side, qty, offset);
 		data.remove("noFireblocks");
 		return data;
 	}

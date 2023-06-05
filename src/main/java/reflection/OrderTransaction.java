@@ -13,8 +13,10 @@ import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.Fireblocks;
 import fireblocks.StockToken;
+import fireblocks.Transactions;
+import json.MyJsonObject;
+import reflection.LiveOrder.FireblocksStatus;
 import tw.util.S;
 import util.LogType;
 
@@ -248,8 +250,12 @@ public class OrderTransaction extends MyTransaction {
 		require(
 				filledShares > 0 || order.status() == OrderStatus.Filled,
 				timeout ? RefCode.TIMED_OUT : RefCode.UNKNOWN,
-				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");				
+				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");
+		
 
+		// ----- the order has been filled or partially filled -----
+
+		
 		double stockTokenQty;  // quantity of stock tokens to swap
 		LogType logType;  // fill or partial fill
 
@@ -265,92 +271,11 @@ public class OrderTransaction extends MyTransaction {
 			logType = LogType.FILLED;
 		}
 
-		String hash = "";   // the blockchain hashcode
+		String hash = fireblocks() ? processFireblocks(order, stockTokenQty, filledShares) : null;
 
-		if (fireblocks() ) {
-			try {
-				String id;
-				out( "Starting Fireblocks protocol");
-				
-				// for testing
-				if (m_map.getBool("fail") ) {
-					throw new Exception("Blockchain transaction failed intentially during testing"); 
-				}
+		m_liveOrder.filled();
 
-				// buy
-				if (order.action() == Action.BUY) {
-					
-					// buy with RUSD?
-					if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-						id = m_config.rusd().buyStockWithRusd(
-								m_walletAddr, 
-								m_stablecoinAmt,
-								newStockToken(),
-								stockTokenQty
-						);
-					}
-					
-					// buy with BUSD
-					else {
-						id = m_config.rusd().buyStock(
-								m_walletAddr,
-								m_config.busd(),
-								m_stablecoinAmt,
-								newStockToken(), 
-								stockTokenQty
-						);
-					}
-				}
-				
-				// sell
-				else {
-					id = m_config.rusd().sellStockForRusd(
-							m_walletAddr,
-							m_stablecoinAmt,
-							newStockToken(),
-							stockTokenQty
-					);
-				}
-
-				// it would be better if we could send back the response in two blocks, one
-				// when the order fills and one when the blockchain transaction is completed
-
-				// wait for the transaction to be signed
-				// this won't be good if we have multiple orders pending since each one is
-				// polling every one second; either put them in a queue or use the Fireblocks
-				// callback mechanism
-				hash = Fireblocks.getTransHash(id, 60);  // do we really need to wait this long? pas
-				
-				// insert transaction into database
-				insertCryptoTrans(order, hash);
-				
-				log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
-			}
-			catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
-				e.printStackTrace();
-
-				// FB has failed, unwind the order
-				unwindOrder(order, filledShares);
-
-				// fireblocks has failed; try to determine why
-				double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
-				
-				// confirm that the user has enough stablecoin or stock token in their wallet
-				requireSufficientStablecoin(order); // check this again; it could have changes since the order was placed
-
-				// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-				if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
-					double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
-					require( Util.isGtEq(approvedAmt, totalOrderAmt), RefCode.INSUFFICIENT_ALLOWANCE,
-							"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
-				}
-
-				// we don't know why it failed, so throw the Fireblocks error
-				throw e;
-			}
-		}
-
-		m_liveOrder.filled(stockTokenQty);  // Fireblocks either succeeded or we skipped it
+		//m_liveOrder.filled(stockTokenQty);  // Fireblocks either succeeded or we skipped it
 
 		log( logType, "id=%s  action=%s  desiredQty=%s  roundedQty=%s  filled=%s  stockTokenQty=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
 				order.orderId(), order.action(), order.totalQty(), order.roundedQty(),
@@ -358,6 +283,124 @@ public class OrderTransaction extends MyTransaction {
 				m_config.commission(), m_tds, hash);
 	}
 	
+	private String processFireblocks(Order order, double stockTokenQty, double filledShares) throws Exception {
+		try {
+			String hash = null;
+			String id;
+			out( "Starting Fireblocks protocol");
+			
+			// for testing
+			if (m_map.getBool("fail") ) {
+				throw new Exception("Blockchain transaction failed intentially during testing"); 
+			}
+
+			// buy
+			if (order.action() == Action.BUY) {
+				
+				// buy with RUSD?
+				if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
+					id = m_config.rusd().buyStockWithRusd(
+							m_walletAddr, 
+							m_stablecoinAmt,
+							newStockToken(),
+							stockTokenQty
+					);
+				}
+				
+				// buy with BUSD
+				else {
+					id = m_config.rusd().buyStock(
+							m_walletAddr,
+							m_config.busd(),
+							m_stablecoinAmt,
+							newStockToken(), 
+							stockTokenQty
+					);
+				}
+			}
+			
+			// sell
+			else {
+				id = m_config.rusd().sellStockForRusd(
+						m_walletAddr,
+						m_stablecoinAmt,
+						newStockToken(),
+						stockTokenQty
+				);
+			}
+			
+			//m_liveOrder.fireblocksId(id);
+
+			// it would be better if we could send back the response in two blocks, one
+			// when the order fills and one when the blockchain transaction is completed
+
+			// wait for the transaction to be signed
+			// this won't be good if we have multiple orders pending since each one is
+			// polling every one second; either put them in a queue or use the Fireblocks
+			// Webhook
+
+			// query FB until the status is final, updating the LiveOrder status each time
+			while( true) {
+				MyJsonObject trans = Transactions.getTransaction(id);
+				
+				if (hash == null && S.isNotNull(trans.getString("txHash") ) ) {
+					hash = trans.getString("txHash");
+				}
+
+				FireblocksStatus status = Util.getEnum( trans.getString("status"), FireblocksStatus.values() );
+				
+				if (status == FireblocksStatus.COMPLETED) {
+					break;
+				}
+			
+				require( 
+						!status.failed(),  
+						RefCode.BLOCKCHAIN_FAILED, 
+						"Transaction failed - %s", trans.getString("subStatus") );
+
+				m_liveOrder.updateFrom(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
+
+				S.sleep(1000);  // !!!!!!!! MAKE SURE YOU ARE NOT TIEING UP THE WEB THREAD OR IB THREAD; HOW DID YOU FIX THAT???
+			}
+			
+			// insert transaction into database
+			insertCryptoTrans(order, hash);
+			
+			log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
+			return hash;
+		}
+		catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
+			if (e instanceof RefException) {
+				S.out( e.getMessage() );
+			}
+			else {
+				e.printStackTrace();
+			}
+
+			// unwind the order first and foremost; now throw an exception so the LiveOrder will get updated with the error text
+			unwindOrder(order, filledShares);
+
+			// fireblocks has failed; try to determine why
+			
+			// confirm that the user has enough stablecoin or stock token in their wallet
+			requireSufficientStablecoin(order); // check this again; it could have changes since the order was placed
+
+			// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
+			if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
+				double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
+				double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
+				require( 
+						Util.isGtEq(approvedAmt, totalOrderAmt), 
+						RefCode.INSUFFICIENT_ALLOWANCE,
+						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+			}
+
+			// we don't know why it failed, so throw the Fireblocks error
+			throw e;
+		}
+
+	}
+
 	/** Confirm that the user has enough stablecoin or stock token in their wallet */
 	private void requireSufficientStablecoin(Order order) throws Exception {
 		if (order.isBuy() ) {

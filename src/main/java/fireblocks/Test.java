@@ -22,9 +22,7 @@ public class Test {
 	public static void main(String[] args) throws Exception {
 		accounts.setAdmins( "Admin1,Admin2");
 		
-		Config config = new Config();
-		config.readFromSpreadsheet("Dt-config");
-
+		Config config = Config.readFrom("Dt-config");
 
 		run( config, config.busd(), config.rusd() );
 	}

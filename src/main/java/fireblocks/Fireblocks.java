@@ -333,12 +333,11 @@ public class Fireblocks {
 	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message
 	 *  
 	 *  The Moralis is WAY MORE delayed, even	. */
-	public static String getTransHash(String fireblocksId, int tries) throws Exception {
+	public static String getTransHash(String fireblocksId, int tries, int ms) throws Exception {
 		// it always takes at least a few seconds, I think
-		S.sleep(3000);
 		
 		for (int i = 0; i < tries; i++) {
-			if (i > 0) S.sleep(1000);
+			S.sleep(ms);
 			MyJsonObject trans = Transactions.getTransaction( fireblocksId);
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
 			

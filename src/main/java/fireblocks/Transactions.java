@@ -18,6 +18,10 @@ public class Transactions {
 		return Fireblocks.fetchArray( "/v1/transactions/?");
 	}
 
+	public static MyJsonArray getSince(long start) throws Exception {
+		return Fireblocks.fetchArray( "/v1/transactions/?after=" + start);
+	}
+
 	public static MyJsonObject getTransaction(String id) throws Exception {
 		return Fireblocks.fetchObject( "/v1/transactions/" + id);
 	}
@@ -25,14 +29,11 @@ public class Transactions {
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
-		
-		getTransactions().display();
-		//getTransactions( Accounts.instance.getAddress( "Bob") );
-//		String id = "52825b17-18e5-4148-9b52-91e2d1a0c841";
-//		while (true) {
-//			S.out( getTransaction(id) );
-//			S.sleep(1000);
-//		}
+
+		long createdAt  = 1685635887444L;
+		//long lastUpdated = 1685635938014L;
+		//getSince(createdAt).display();
+		getTransaction("lkjsdflkj").display();
 	}
 
 	public static void getTransactions(String wallet) throws Exception {

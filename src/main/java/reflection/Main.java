@@ -133,34 +133,25 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> new BackendTransaction(this, exch).handleMint() );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
+		server.createContext("/api/working-orders", exch -> new BackendTransaction(this, exch).handleWorkingOrders() );
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
-		
-		// remove these after code change in Frontend
-//		server.createContext("/api/reflection-api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
-//		server.createContext("/api/reflection-api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-//		server.createContext("/api/reflection-api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-//		server.createContext("/api/reflection-api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
-//		server.createContext("/api/reflection-api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
-//		server.createContext("/api/reflection-api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		
+		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
+		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
+		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
+		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
 		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
-		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
-		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
-		server.createContext("/api/working-orders", exch -> new BackendTransaction(this, exch).handleWorkingOrders() );
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch ->  new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
-		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -231,6 +222,11 @@ public class Main implements ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet(Book book) throws Exception {
+		// clear out exist data; this is needed in case refreshConfig() is being called
+		m_stocks.clear();
+		m_stockMap.clear();
+		m_hotStocks.clear();
+		
 		// read master list of symbols and map conid to entry
 		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
 		
