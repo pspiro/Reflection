@@ -194,7 +194,7 @@ public class TestOrder extends MyTestCase {
 
 		MyJsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
-		startsWith( "Bought .4", ret.getString("text") );
+		startsWith( "Bought 0.4", ret.getString("text") );
 	}
 
 	public void testZeroShares()  throws Exception {

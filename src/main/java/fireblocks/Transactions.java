@@ -15,24 +15,24 @@ public class Transactions {
 	}
 
 	public static MyJsonArray getTransactions() throws Exception {
-		return Fireblocks.getArray( "/v1/transactions");
+		return Fireblocks.fetchArray( "/v1/transactions/?");
 	}
 
 	public static MyJsonObject getTransaction(String id) throws Exception {
-		return Fireblocks.getObject( "/v1/transactions/" + id);
+		return Fireblocks.fetchObject( "/v1/transactions/" + id);
 	}
 
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
 		
-		
+		getTransactions().display();
 		//getTransactions( Accounts.instance.getAddress( "Bob") );
-		String id = "52825b17-18e5-4148-9b52-91e2d1a0c841";
-		while (true) {
-			S.out( getTransaction(id) );
-			S.sleep(1000);
-		}
+//		String id = "52825b17-18e5-4148-9b52-91e2d1a0c841";
+//		while (true) {
+//			S.out( getTransaction(id) );
+//			S.sleep(1000);
+//		}
 	}
 
 	public static void getTransactions(String wallet) throws Exception {
@@ -45,7 +45,7 @@ public class Transactions {
 		String url = String.format("/v1/transactions?sourceId=%s&limit=%s&after=%s",
 				5, 9, since);
 		
-		for (MyJsonObject obj : Fireblocks.getArray( url) ) {
+		for (MyJsonObject obj : Fireblocks.fetchArray( url) ) {
 			obj.getObj("source").display();
 			S.out( obj.getString("destinationAddress") );
 			S.out( obj.getString("note"));

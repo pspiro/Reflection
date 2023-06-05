@@ -69,8 +69,8 @@ public class Deploy {
 				// deploy stock token
 				StockToken token = StockToken.deploy( 
 						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
-						row.getString( "Contract Name"),  // wrong, this should get pulled from master symbols tab
-						row.getString( "Contract Symbol"),
+						row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
+						row.getString( "Token Symbol"),
 						rusd.address()
 				);
 				

@@ -58,7 +58,7 @@ public class StockToken extends Erc20 {
 
 	static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		Util.require( S.isNotNull( name), "Null name" );
-		Util.require( S.isNotNull( symbol), "Null synmbol" );
+		Util.require( S.isNotNull( symbol), "Null symbol" );
 		Util.require( S.isNotNull( rusdAddr), "Null rusdAddr" );
 
 		S.out( "Deploying stock token from %s  name=%s  symbol=%s", filename, name, symbol);

@@ -80,7 +80,8 @@ public class Rusd extends Erc20 {
 		);
 	}
 	
-	/** Buy with either RUSD or BUSD */
+	/** Buy with either RUSD or BUSD
+	 * @return id */
 	public String buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 

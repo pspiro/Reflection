@@ -158,7 +158,7 @@ public class Fireblocks {
 	}
 
 	/** Call a Fireblocks GET endpoint, return json object */
-	public static MyJsonObject getObject(String endpoint) throws Exception {
+	public static MyJsonObject fetchObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.operation( "GET");
@@ -166,7 +166,7 @@ public class Fireblocks {
 	}
 
 	/** Call a Fireblocks GET endpoint, return the string (could be array) */
-	public static MyJsonArray getArray(String endpoint) throws Exception {
+	public static MyJsonArray fetchArray(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.operation( "GET");
@@ -274,6 +274,7 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
+	/** Returns FB id */
 	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		return call2(fromAcct, addr, callData, paramTypes, params, note).id();
 	}

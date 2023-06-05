@@ -32,7 +32,7 @@ public abstract class MyTransaction {
 		RUSD, USDC
 	}
 	
-	static HashMap<String,Vector<LiveOrder>> liveOrders = new HashMap<>();  // use Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
+	static HashMap<String,Vector<LiveOrder>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
 	
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";

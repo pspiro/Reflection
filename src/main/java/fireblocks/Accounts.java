@@ -29,7 +29,7 @@ public class Accounts {
 	public synchronized void read() throws Exception {
 		if (!m_read) {
 			S.out( "Querying Fireblocks accounts");
-			m_accounts = Fireblocks.getObject("/v1/vault/accounts_paged")
+			m_accounts = Fireblocks.fetchObject("/v1/vault/accounts_paged")
 					.getAr("accounts");
 			m_read = true;
 		}
@@ -67,7 +67,7 @@ public class Accounts {
 		if (address == null) {
 			S.out("Querying wallet address for %s", accountId);
 			String url = String.format("/v1/vault/accounts/%s/%s/addresses", accountId, Fireblocks.platformBase);
-			 MyJsonArray ar = Fireblocks.getArray(url);
+			 MyJsonArray ar = Fireblocks.fetchArray(url);
 			 Util.require(ar.size() > 0, "The wallet does not have an address for the native token; add some native token to the wallet");
 			 address = ar.getJsonObj(0).getString("address");
 			m_addressMap.put( accountId, address);
