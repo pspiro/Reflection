@@ -222,6 +222,11 @@ public class Main implements ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 	@SuppressWarnings("unchecked")
 	private void readStockListFromSheet(Book book) throws Exception {
+		// clear out exist data; this is needed in case refreshConfig() is being called
+		m_stocks.clear();
+		m_stockMap.clear();
+		m_hotStocks.clear();
+		
 		// read master list of symbols and map conid to entry
 		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
 		
