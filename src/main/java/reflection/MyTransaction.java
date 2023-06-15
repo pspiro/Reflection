@@ -118,6 +118,7 @@ public abstract class MyTransaction {
 			}
 		}
 	}
+	
 	public void respondOk() {
 		respond( code, RefCode.OK);
 	}
@@ -284,5 +285,13 @@ public abstract class MyTransaction {
 	void log( LogType type, String format, Object... params) {
 		Main.log( S.format( "%s %s %s", m_id, type, S.format(format, params) ) );  
 	}
+
+	/** Assumes the wallet address is the last token in the URI */
+	public String getWalletFromUri() throws RefException {
+		String address = Util.getLastToken(m_uri, "/");
+		require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		return address;
+	}
+	
 	
 }

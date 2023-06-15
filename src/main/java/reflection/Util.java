@@ -26,13 +26,6 @@ public class Util {
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
-	public static void main(String[] args) throws RefException {
-		S.out( substring((String)null, 1, 1) );
-		S.out( substring("abc", 5, 5) );
-		S.out( substring("abc", 2, 3) );
-		S.out( substring("abc", 2, 5) );
-	}
-
 	/** Do a decimal compare down to six digits */
 	public static boolean isGtEq(double larger, double smaller) {
 		return larger - smaller >= -.000001;
@@ -71,6 +64,11 @@ public class Util {
 			
 			String[] sessions = hours.split( ";");
 			for (String session : sessions) {
+				// protect against strings starting with ; (which I saw once) or having ;; or ; ;
+				if (session == null || S.isNull(session.trim()) ) {
+					continue;
+				}
+				
 				String[] sessionSpan = session.split( "-");
 				String sessionStart = sessionSpan[0];
 				
@@ -93,6 +91,15 @@ public class Util {
 		catch( Exception e) {
 			throw new RefException( RefCode.UNKNOWN, "Invalid trading hours for conid %s: %s", conid, hours);
 		}
+	}
+	
+	public static void main(String[] args) throws RefException {
+		boolean a = inside( 
+				new Date(), 
+				8314, 
+				";20230604:2000-20230605:0330;;20230615:0800-20230615:1000; ;20230606:2000-20230607:0330;20230607:2000-20230608:0330;20230608:2000-20230609:0330",
+				null);
+		S.out(a);
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {

@@ -18,8 +18,8 @@ public class TestOutsideHours extends MyTestCase {
 	
 	@SuppressWarnings("deprecation")   // run this test again with a different time zone
 	public void testExchHours() throws RefException {
-		String str = "20220807:CLOSED;"
-				+ "20220916:0900-20220916:1600;"
+		String str = ";20220807:CLOSED;"
+				+ "20220916:0900-20220916:1600;;"
 				+ "20220918:0930-20220918:1600";
 		
 		String tz = "America/New_York";

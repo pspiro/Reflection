@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 	   TestOrder.class,
 	   TestOutsideHours.class,
 	   TestPrices.class,
+	   TestProfile.class,
 	   TestRedeem.class,
 	   TestSiwe.class,
 	   TestStrings.class,

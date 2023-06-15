@@ -1,0 +1,58 @@
+package testcase;
+
+import json.MyJsonObject;
+import reflection.Config;
+
+public class TestProfile extends MyTestCase {
+	public void testSetProfile() throws Exception {
+		String json = """
+{
+"name": "john glick",
+"address": "addresss",
+"email": "emaill",
+"phone": "8383838383",
+"pan_number": "pann",
+"wallet_public_key": "0xb016711702D3302ceF6cEb62419abBeF5c44450g"
+}
+		""";
+		
+		Config c = Config.readFrom("Dt-config");
+		c.sqlConnection( conn -> { 
+			conn.execute("delete from users where name = 'john glick'");
+		});
+		
+		cli().post("/api/update-profile", json);
+		cli.assertResponseCode(200);
+		
+		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
+		MyJsonObject obj = cli.readMyJsonObject();
+		assertEquals( "john glick", obj.getString("name") );
+		assertEquals( "addresss", obj.getString("address") );
+		assertEquals( "emaill", obj.getString("email") );
+		assertEquals( "8383838383", obj.getString("phone") );
+		assertEquals( "pann", obj.getString("pan_number") );
+		
+		String json2 = """
+{
+"name": "timmy",
+"address": "hot",
+"email": "code",
+"phone": "open",
+"pan_number": "closed",
+"wallet_public_key": "0xb016711702D3302ceF6cEb62419abBeF5c44450g"
+}
+		""";
+		
+		cli().post("/api/update-profile", json2);
+		cli.assertResponseCode(200);
+		
+		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
+		obj = cli.readMyJsonObject();
+		assertEquals( "timmy", obj.getString("name") );
+		assertEquals( "hot", obj.getString("address") );
+		assertEquals( "cold", obj.getString("email") );
+		assertEquals( "open", obj.getString("phone") );
+		assertEquals( "closed", obj.getString("pan_number") );
+		
+	}
+}

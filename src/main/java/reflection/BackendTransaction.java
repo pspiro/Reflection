@@ -40,15 +40,14 @@ public class BackendTransaction extends MyTransaction {
 	public void handleReqPositions() {
 		wrap( () -> {
 			// get wallet address (last token in URI)
-			String address = Util.getLastToken(m_uri, "/");
-			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			String walletAddr = getWalletFromUri();
 			
 			// query positions from Moralis
 			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			
 			JSONArray retVal = new JSONArray();
 			
-			for (HashMap.Entry<String,Double> entry : Wallet.reqPositionsMap(address).entrySet() ) {
+			for (HashMap.Entry<String,Double> entry : Wallet.reqPositionsMap(walletAddr).entrySet() ) {
 				HashMap stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
@@ -109,8 +108,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			String walletAddr = Util.getLastToken(m_uri, "/");
-			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			String walletAddr = getWalletFromUri();
 			
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
@@ -122,7 +120,7 @@ public class BackendTransaction extends MyTransaction {
 			// not needed, waitForHash() will itself eventually timeout
 			//setTimer( m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
-			double rusdPos = rusd.getPosition(walletAddr);
+			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
 			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			
 			log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
@@ -203,14 +201,13 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleGetUserByWallet() {
 		wrap( () -> {
-			String wallet = Util.getLastToken(m_uri, "/");
-			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
+			String walletAddr = getWalletFromUri();
 			
 			m_main.sqlConnection( conn -> {
 				JSONArray ar = conn.queryToJson(
 						"select * from users where lower(wallet_public_key) = '%s'", 
-						wallet.toLowerCase() );
-				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", wallet);
+						walletAddr.toLowerCase() );
+				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", walletAddr);
 				
 				respond( (JSONObject)trim( ar).get(0) );
 			});
@@ -226,8 +223,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleMyWallet() {
 		wrap( () -> {
-			String walletAddr = Util.getLastToken(m_uri, "/");
-			Main.require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "The wallet address is invalid");
+			String walletAddr = getWalletFromUri();
 			
 			Wallet wallet = new Wallet(walletAddr);
 			
@@ -314,20 +310,22 @@ public class BackendTransaction extends MyTransaction {
 			respond( m_main.hotStocks() );
 		});
 	}
-
+	
 	public void handleWorkingOrders() {
 		wrap( () -> {
-			String address = Util.getLastToken(m_uri, "/");
-			require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			String walletAddr = getWalletFromUri();
 			
 			JSONArray orders = new JSONArray();
 			JSONArray messages = new JSONArray();
 
-			List<LiveOrder> walletOrders = liveOrders.get(address.toLowerCase());
+			List<LiveOrder> walletOrders = liveOrders.get(walletAddr.toLowerCase());
 			if (walletOrders != null) {
 				Iterator<LiveOrder> iter = walletOrders.iterator();
 				while (iter.hasNext() ) {
 					LiveOrder liveOrder = iter.next();
+					
+					//liveOrder.updateStatus();
+					
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
 					}
@@ -351,5 +349,77 @@ public class BackendTransaction extends MyTransaction {
 			respond( ret);
 		});
 	}
+
+	public void handleGetProfile() {
+		wrap( () -> {
+			String walletAddr = getWalletFromUri();
+			
+			m_main.sqlConnection( conn -> {
+				JSONArray ar = conn.queryToJson(
+						"select name, address, email, phone, pan_number from users where wallet_public_key = '%s'", 
+						walletAddr.toLowerCase() );
+				
+				JSONObject obj = ar.size() == 0 
+						? new JSONObject() 
+						: (JSONObject)ar.get(0);
+				
+				respond(obj);
+			});
+		});
+	}
+	
+	public void handleUpdateProfile() {
+		wrap( () -> {
+			parseMsg();
+			
+			String walletAddr = m_map.getRequiredParam("wallet_public_key");
+			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			
+			m_main.sqlConnection( conn -> {
+				JSONArray ar = conn.queryToJson(
+						"select name, address, email, phone, pan_number from users where wallet_public_key = '%s'", 
+						walletAddr.toLowerCase() );
+				
+				if (ar.size() == 0) {
+					S.out( "  inserting new profile for %s", walletAddr);
+					conn.insertPairs("users",
+							"name", m_map.getRequiredParam("name"), 
+							"address", m_map.getRequiredParam("address"), 
+							"email", m_map.getRequiredParam("email"), 
+							"phone", S.notNull(m_map.getParam("phone")), 
+							"pan_number", m_map.getRequiredParam("pan_number"),
+							"wallet_public_key", walletAddr,
+							"active", true // required field
+						);
+				}
+				else {
+					S.out( "  updating existing profile for %s", walletAddr);
+					JSONObject obj = (JSONObject)ar.get(0);
+					// update
+				}				
+			});
+			respondOk();
+		});
+	}
 	
 }
+
+				
+//				
+//				JSONArray ar = conn.queryToJson("select * name, address, email, phone, pan_number from users where wallet = '%s'", address.toLowerCase() );
+//				
+//				if (ar.size() == )
+//				//require( ar.size() == 1, RefCode.UPDATE_PROFILE, "Please update your profile before submitting an order");
+//				
+//				MyJsonObject obj = 
+//				Profile profile = new Profile(ar.getJsonObj(0) );
+//			});
+//		});
+//	}
+//
+//	public void handleUpdateProfile() {
+//	}
+//	
+//}
+// YOU MAY NEED TO REQUIRE SIGN-IN BEFORE ACCEPTING UPDATE-PROFILE
+	

@@ -22,4 +22,5 @@ public enum RefCode {
 	CONFIG_ERROR, 
 	TOO_FAST,
 	TOO_SLOW,
+	UPDATE_PROFILE
 }
