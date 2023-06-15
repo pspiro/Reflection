@@ -20,6 +20,7 @@ import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.MyTransaction.ExRunnable;
 import reflection.Stock;
+import reflection.Stocks;
 import reflection.TradingHours;
 import reflection.TradingHours.Session;
 import reflection.Util;
@@ -42,7 +43,7 @@ public class MktDataServer {
 	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	static boolean m_debug = false;
 	
-	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final MdConnectionMgr m_mdConnMgr;
 	private final MyRedis m_redis;
 	private final TradingHours m_tradingHours; 
@@ -88,7 +89,7 @@ public class MktDataServer {
 		m_config.readFromSpreadsheet(tabName);
 		
 		timer.next( "Reading stock list from google sheet");
-		readStockListFromSheet();
+		m_stocks.readFromSheet(m_config);
 
 		// if redis port is zero, host contains the full URI;
 		// otherwise, we use host and port
@@ -127,35 +128,8 @@ public class MktDataServer {
 	/** Refresh list of stocks and re-request market data. */ 
 	void refreshStockList() throws Exception {   // never called. pas
 		mdController().cancelAllTopMktData();
-		m_stocks.clear();
-		readStockListFromSheet();
+		m_stocks.readFromSheet(m_config);
 		requestPrices();
-	}
-
-	// let it fall back to read from a flatfile if this fails. pas  you could share this code w/ same method from Main
-	@SuppressWarnings("unchecked")
-	private void readStockListFromSheet() throws Exception {
-		Book book = NewSheet.getBook(NewSheet.Reflection);
-		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = Main.readMasterSymbols(book);
-
-		for (ListEntry row : book.getTab( m_config.symbolsTab() ).fetchRows(false) ) {
-			Stock stock = new Stock();
-			if ("Y".equals( row.getString( "Active") ) ) {
-				int conid = Integer.valueOf( row.getString("Conid") );
-
-				stock.put( "conid", String.valueOf( conid) );
-				
-				ListEntry masterRow = map.get(conid);
-				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
-				stock.put( "symbol", masterRow.getString("Symbol") );
-				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
-				stock.put( "exchange", masterRow.getString("Exchange") );
-				stock.put( "is24hour", masterRow.getBool("24-Hour") );
-				
-				m_stocks.add( stock);
-			}
-		}
 	}
 
 	class MdConnectionMgr extends ConnectionMgr {
@@ -183,9 +157,7 @@ public class MktDataServer {
 			mdController().reqMktDataType(MarketDataType.DELAYED);
 		}
 
-		for (Object obj : m_stocks) {
-			Stock stock = (Stock)obj;
-			
+		for (Stock stock : m_stocks) {
 			final Contract contract = new Contract();
 			contract.conid( Integer.valueOf( stock.getConid() ) );
 			

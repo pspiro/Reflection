@@ -1,4 +1,4 @@
-package reflection;
+package monitor;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
@@ -15,19 +15,20 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 
-import fireblocks.Erc20;
 import fireblocks.Fireblocks;
 import fireblocks.StockToken;
 import http.MyHttpClient;
 import json.MyJsonArray;
 import json.MyJsonObject;
-import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
+import reflection.Stocks;
+import reflection.Util;
 import tw.google.NewSheet;
-import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyTable;
 import tw.util.MyTableModel;
 import tw.util.NewLookAndFeel;
+import tw.util.NewTabbedPanel;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
@@ -103,9 +104,17 @@ public class Monitor {
 		rusdPanel.add( "USDC in RefWallet", m_usdc2);
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		
-		m_frame.add( scroll);
-		m_frame.add(rusdPanel, BorderLayout.EAST);
-		m_frame.add(butPanel, BorderLayout.NORTH);
+		JPanel mainPanel = new JPanel( new BorderLayout() );
+		mainPanel.add( scroll);
+		mainPanel.add(rusdPanel, BorderLayout.EAST);
+		mainPanel.add(butPanel, BorderLayout.NORTH);
+		
+		JPanel walletPanel = new WalletPanel();
+		
+		NewTabbedPanel tabs = new NewTabbedPanel();
+		tabs.addTab( "Main", mainPanel);
+		
+		m_frame.add( tabs);
 		m_frame.setTitle( "Reflection Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 800, 1000);
@@ -249,25 +258,17 @@ public class Monitor {
 	class RecMap extends HashMap<Integer,Record> {
 	}
 	
-
 	private void readStockListFromSheet() throws Exception {
-		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = new HashMap<>();
-		for (ListEntry entry : NewSheet.getTab( NewSheet.Reflection, "Master-symbols").fetchRows(false) ) {
-			map.put( entry.getInt("Conid"), entry);
-		}
+		Stocks stocks = new Stocks();
+		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), m_config);
 		
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, m_config.symbolsTab() ).fetchRows(false) ) {
-			Stock stock = new Stock();
-			if ("Y".equals( row.getString( "Active") ) ) {
-				Record record = getOrCreate( row.getInt("Conid") );
-				record.m_symbol = row.getString("ContractSymbol");
-				record.m_address = row.getString("Token Address");  
-				record.m_active = "Y";
-				record.m_tokens = -1;
-				record.m_position = -1;
-			}
-		}
+		stocks.stockSet().forEach( stock -> {
+			Record record = getOrCreate( stock.getConidInt() );
+			record.m_symbol = stock.getSymbol();
+			record.m_address = stock.getSmartContractId();  
+			record.m_active = "Y";
+			record.m_tokens = -1;
+			record.m_position = -1;
+		});
 	}
-	
 }

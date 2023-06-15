@@ -2,6 +2,7 @@ package reflection;
 
 import org.json.simple.JSONObject;
 
+import fireblocks.StockToken;
 import tw.util.S;
 
 /** All values are string, including conid, except bid and ask
@@ -64,6 +65,10 @@ public class Stock extends JSONObject implements Comparable<Stock> {
 		return getString("conid");
 	}
 	
+	public int getConidInt() {
+		return Integer.valueOf( getConid() );
+	}
+	
 	public boolean is24Hour() {
 		return getBool("is24hour");
 	}
@@ -74,5 +79,9 @@ public class Stock extends JSONObject implements Comparable<Stock> {
 
 	@Override public int compareTo(Stock o) {
 		return S.notNull(getSymbol()).compareTo(S.notNull(o.getSymbol()));
+	}
+
+	public double getCurTokens() throws Exception {
+		return new StockToken( getSmartContractId() ).queryTotalSupply();
 	}
 }
