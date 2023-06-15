@@ -16,9 +16,9 @@ public class Busd extends Erc20 {
 		Busd busd = config.busd();
 		busd.mint( 
 				Accounts.instance.getId( "Owner"),
-				"0xb016711702D3302ceF6cEb62419abBeF5c44450e",
+				"0xb95bf9C71e030FA3D8c0940456972885DB60843F",
 				//"0xd953DC148f3A1019132FBD75Ee515E3F786f6634",
-				20000);
+				300000);
 		
 	}
 

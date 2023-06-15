@@ -53,17 +53,15 @@ public class Main implements ITradeReportHandler {
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
-	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
-	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final JSONArray m_hotStocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private       ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private       String m_faqs;
 	private String m_type1Config; 
 	private MyJsonObject m_type2Config;
 	final TradingHours m_tradingHours; 
+	private final Stocks m_stocks = new Stocks();
 	
-	JSONArray stocks() { return m_stocks; }
+	JSONArray stocks() { return m_stocks.stocks(); }
 
 	public static void main(String[] args) {
 		try {
@@ -171,7 +169,7 @@ public class Main implements ITradeReportHandler {
 		Book book = NewSheet.getBook(NewSheet.Reflection);
 		
 		// read RefAPI config
-		Main.m_config.readFromSpreadsheet( book, m_tabName );  // must go first
+		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
 
 		// read Backend config (used by Frontend)
 		readFaqsFromSheet(book);
@@ -183,7 +181,7 @@ public class Main implements ITradeReportHandler {
 			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
 		
-		readStockListFromSheet(book);
+		m_stocks.readFromSheet(book, m_config);
 	}
 
 	/** You could shave 300 ms by sharing the same Book as Config 
@@ -219,49 +217,9 @@ public class Main implements ITradeReportHandler {
 		return obj;
 	}
 	
+	
+	
 	// let it fall back to read from a flatfile if this fails. pas
-	@SuppressWarnings("unchecked")
-	private void readStockListFromSheet(Book book) throws Exception {
-		// clear out exist data; this is needed in case refreshConfig() is being called
-		m_stocks.clear();
-		m_stockMap.clear();
-		m_hotStocks.clear();
-		
-		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
-		
-		for (ListEntry row : book.getTab( m_config.symbolsTab() ).fetchRows(false) ) {
-			Stock stock = new Stock();
-			if ("Y".equals( row.getString( "Active") ) ) {
-				int conid = Integer.valueOf( row.getString("Conid") );
-
-				stock.put( "conid", String.valueOf( conid) );
-				
-				String address = row.getString("TokenAddress");
-				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
-				stock.put( "smartcontractid", address);
-				
-				ListEntry masterRow = map.get(conid);
-				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
-				stock.put( "symbol", masterRow.getString("Symbol") );
-				stock.put( "description", masterRow.getString("Description") );
-				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
-				stock.put( "exchange", masterRow.getString("Exchange") );
-				stock.put( "is24hour", masterRow.getBool("24-Hour") );
-				stock.put( "isHot", masterRow.getBool("Hot") );
-
-				m_stocks.add( stock);
-				m_stockMap.put( conid, stock);
-
-				if (stock.isHot() ) {
-					m_hotStocks.add( stock);
-				}
-			}
-		}
-		
-		m_stocks.sort(null);
-		m_hotStocks.sort(null);
-	}
 
 	public static HashMap<Integer, ListEntry> readMasterSymbols(Book book) throws Exception {
 		HashMap<Integer,ListEntry> map = new HashMap<>();
@@ -276,7 +234,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	Stock getStock( int conid) throws RefException {
-		Stock stock = m_stockMap.get( conid);
+		Stock stock = m_stocks.stockMap().get( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
 	}
@@ -285,7 +243,7 @@ public class Main implements ITradeReportHandler {
 	public HashMap getStockByTokAddr(String addr) throws RefException {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
 		
-		for (Object obj : m_stocks) {
+		for (Object obj : m_stocks.stocks() ) {
 			HashMap stock = (HashMap)obj;
 			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
 				return stock;
@@ -548,7 +506,7 @@ public class Main implements ITradeReportHandler {
 
 	void dump() {
 		S.out( "-----Dumping Stocks-----");
-		MyJsonObject.display( m_stocks, 0, false);
+		MyJsonObject.display( m_stocks.stocks(), 0, false);
 		
 		S.out( "Dumping config");
 		m_config.dump();
@@ -584,7 +542,7 @@ public class Main implements ITradeReportHandler {
 			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>();
 			
 			m_redis.pipeline( pipeline -> {
-				for (Object stock : m_stocks) {
+				for (Object stock : m_stocks.stocks()) {
 					list.add( new PriceQuery(pipeline, (Stock)stock) );
 				}
 			});
@@ -604,7 +562,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		new BackendTransaction(this, exch).respond( m_stocks);
+		new BackendTransaction(this, exch).respond( m_stocks.stocks());
 	}
 
 	/** This can be used to serve static json stored in a string
@@ -633,7 +591,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	public JSONArray hotStocks() {
-		return m_hotStocks;
+		return m_stocks.hotStocks();
 	}
 	
 }

@@ -1,24 +1,27 @@
 package test;
 
-import java.sql.ResultSet;
+import org.json.simple.JSONObject;
 
 import reflection.Config;
-import reflection.MySqlConnection;
-import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
+		
+		JSONObject obj = new JSONObject();
+		obj.put("name", "peter");
+		obj.put("active", true);
+		
 		config.sqlConnection( conn -> {
-			conn.insertPairs( "events", 
-					"block", 32,
-					"token", "my token");
-
-			ResultSet res = conn.queryNext( "select * from events where block = 32");
-			S.out( "%s %s", res.getInt(1), res.getString(2) );
-		});
+			conn.insertJson("users", obj);
 			
+			obj.put("address", "smallville");
+			conn.updateJson("users", obj, "name = 'peter'");
+		});
+		
+		
+		
 	}
 }

@@ -2,7 +2,6 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 import org.json.simple.JSONObject;
@@ -13,8 +12,8 @@ import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
+import redis.ConfigBase;
 import redis.MyRedis;
-import redis.clients.jedis.Jedis;
 import reflection.MySqlConnection.SqlRunnable;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -24,7 +23,7 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
 import tw.util.S;
 
-public class Config {
+public class Config extends ConfigBase {
 	
 	// user experience parameters
 	private double maxBuyAmt; // max buy amt in dollars
@@ -518,4 +517,5 @@ public class Config {
 	public String getTooltip(Tooltip tag) {
 		return m_tab.get(tag.toString());
 	}
+	
 }

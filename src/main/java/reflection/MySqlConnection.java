@@ -5,6 +5,10 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -69,7 +73,7 @@ public class MySqlConnection implements AutoCloseable {
 		return connection.createStatement().executeQuery(fullSql);
 	}
 	
-	/** Do not do Strin.format() substitutions on sql. */
+	/** Do not do String.format() substitutions on sql. */
 	public void execute( String sql) throws Exception {
 		Util.require( connection != null, "you must connect to the database");
 		connection.createStatement().executeUpdate(sql);
@@ -81,7 +85,32 @@ public class MySqlConnection implements AutoCloseable {
 	public void insert( String table, Object... values) throws Exception {
 		insert( table, null, values);
 	}
+	
+	public void insertJson( String table, JSONObject json) throws Exception {
+		String[] names = new String[json.size()];
+		Object[] vals = new Object[json.size()];
 
+		int i = 0;
+		for (Object key : json.keySet() ) {
+			names[i] = (String)key;
+			vals[i++] = json.get(key);
+		}
+		insert(table, names, vals);
+	}
+	
+	/** Do not include the word 'where' in the where clause */
+	public void updateJson( String table, JSONObject json, String where) throws Exception {
+		StringBuilder values = new StringBuilder();
+		for (Object key : json.keySet() ) {
+			if (values.length() > 0) {
+				values.append(", ");
+			}
+			values.append(key + " = " + toSqlValue( json.get(key) ) );
+		}
+		
+		execute( String.format("update %s set %s where %s", table, values, where) );
+	}
+	
 	/** Don't call execute because the sql string could have percent signs in it
 	 *  (e.g. FAQ table. */
 	public void insertPairs( String table, Object... pairs) throws Exception {
@@ -114,10 +143,7 @@ public class MySqlConnection implements AutoCloseable {
 			}
 			if (val != null) {
 				Util.require( Util.isPrimitive(val.getClass()), "Cannot insert non-primitive type " + val.getClass() );
-				String str = val instanceof String 
-						? String.format( "'%s'", Util.dblQ((String)val))  // double-up the single-quotes 
-						: val.toString(); 
-				valStr.append( str);
+				valStr.append( toSqlValue(val) );
 			}
 			else {
 				valStr.append( "NULL");
@@ -141,6 +167,13 @@ public class MySqlConnection implements AutoCloseable {
 		}
 		
 		execute(sql);
+	}
+
+	/** Put strings in single quotes */
+	private String toSqlValue(Object val) {
+		return val instanceof String 
+				? String.format( "'%s'", Util.dblQ((String)val))  // double-up the single-quotes 
+				: val.toString(); 
 	}
 
 	public void dropTable(String table) throws Exception {

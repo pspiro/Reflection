@@ -4,15 +4,13 @@ import reflection.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 
-public class MktDataConfig {
-
+public class MktDataConfig extends ConfigBase {
 	// program parameters
 	private Mode mode = Mode.paper;  // paper or production
 	private String twsMdHost;  // TWS is listening on this host
 	private int twsMdPort;  // TWS is listening on this port
 	private int twsMdClientId;
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
-	private String symbolsTab;  // tab name where symbols are stored
 	private String redisHost;
 	private int redisPort;
 	private int redisBatchTime; // in ms
@@ -20,7 +18,6 @@ public class MktDataConfig {
 	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
-	public String symbolsTab() { return symbolsTab; }
 	public String redisHost() { return redisHost; }
 	public int redisPort() { return redisPort; }
 	public long reconnectInterval() { return reconnectInterval; }
