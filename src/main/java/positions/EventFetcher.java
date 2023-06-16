@@ -30,7 +30,7 @@ public class EventFetcher {
 	private final MoralisServer m_server; // not used? 
 	private int m_responsesReceived;
 	private final HashMap<String,MorStock> m_stockMap; // keys are in lower case
-	private JSONObject m_walletMap = new JSONObject(); // map wallet to token balances
+	private HashMap<String,Balances> m_walletMap = new HashMap<>(); // map wallet to token balances
 	
 	
 	public EventFetcher(MoralisServer moralisServer) throws Exception {
@@ -161,7 +161,8 @@ public class EventFetcher {
 	
 	
 	String getAllWalletsJson() { 
-		return m_walletMap.toString(); 
+		throw new RuntimeException();
+		//return m_walletMap.toString(); 
 	} 	
 
 	Balances getWalletBalances(String wallet) {

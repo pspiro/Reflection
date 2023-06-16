@@ -142,10 +142,10 @@ public class Util {
 			}
 			else {
 				if (isNumeric( val) ) {
-					obj.put( tag, val);
+					obj.put( tag.toString(), val);
 				}
 				else if (val != null) {
-					obj.put( tag, val.toString() );
+					obj.put( tag.toString(), val.toString() );
 				}
 				tag = null;
 			}

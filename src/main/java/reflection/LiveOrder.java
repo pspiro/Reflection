@@ -131,7 +131,7 @@ class LiveOrder {
 		return order;
 	}
 
-	public Object getCompletedOrder() {
+	public JSONObject getCompletedOrder() {
 		JSONObject order = new JSONObject();
 		order.put( "id", m_uid);
 		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   

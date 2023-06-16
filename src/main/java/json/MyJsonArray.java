@@ -3,11 +3,10 @@ package json;
 import java.util.Iterator;
 
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import reflection.Util;
-import tw.util.S;
 
 /** Array of object only. */
 public class MyJsonArray implements Iterable<MyJsonObject> { 
@@ -44,7 +43,7 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 
 	@Override public Iterator<MyJsonObject> iterator() {
 		return new Iterator<MyJsonObject>() {
-			Iterator<Object> iter = m_ar.iterator();
+			Iterator<JSONObject> iter = m_ar.iterator();
 			
 			@Override public boolean hasNext() {
 				return iter.hasNext();
@@ -52,7 +51,7 @@ public class MyJsonArray implements Iterable<MyJsonObject> {
 
 			@Override public MyJsonObject next() {
 				try {
-					Object obj = iter.next();
+					JSONObject obj = iter.next();
 					return obj != null ? new MyJsonObject(obj) : null;
 				}
 				catch( NullPointerException e) {

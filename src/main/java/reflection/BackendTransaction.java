@@ -4,13 +4,16 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import com.ib.client.Contract;
 import com.sun.net.httpserver.HttpExchange;
@@ -227,13 +230,13 @@ public class BackendTransaction extends MyTransaction {
 			
 			Wallet wallet = new Wallet(walletAddr);
 			
-			MyJsonObject rusd = new MyJsonObject();
+			JSONObject rusd = new JSONObject();
 			rusd.put( "name", "RUSD");
 			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
-			MyJsonObject busd = new MyJsonObject();
+			JSONObject busd = new JSONObject();
 			busd.put( "name", "USDC");
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
@@ -241,7 +244,7 @@ public class BackendTransaction extends MyTransaction {
 			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
 			busd.put( "stablecoin", true);
 			
-			MyJsonObject base = new MyJsonObject();
+			JSONObject base = new JSONObject();
 			base.put( "name", "MATIC");  // pull from config
 			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
@@ -370,34 +373,17 @@ public class BackendTransaction extends MyTransaction {
 	
 	public void handleUpdateProfile() {
 		wrap( () -> {
-			parseMsg();
+            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
+            JSONObject profile = (JSONObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 			
-			String walletAddr = m_map.getRequiredParam("wallet_public_key");
+			String walletAddr = profile.getLowerString("wallet_public_key");
 			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 			
-			m_main.sqlConnection( conn -> {
-				JSONArray ar = conn.queryToJson(
-						"select name, address, email, phone, pan_number from users where wallet_public_key = '%s'", 
-						walletAddr.toLowerCase() );
-				
-				if (ar.size() == 0) {
-					S.out( "  inserting new profile for %s", walletAddr);
-					conn.insertPairs("users",
-							"name", m_map.getRequiredParam("name"), 
-							"address", m_map.getRequiredParam("address"), 
-							"email", m_map.getRequiredParam("email"), 
-							"phone", S.notNull(m_map.getParam("phone")), 
-							"pan_number", m_map.getRequiredParam("pan_number"),
-							"wallet_public_key", walletAddr,
-							"active", true // required field
-						);
-				}
-				else {
-					S.out( "  updating existing profile for %s", walletAddr);
-					JSONObject obj = (JSONObject)ar.get(0);
-					// update
-				}				
-			});
+			// set wallet to lower case for insert
+			profile.put( "wallet_public_key", walletAddr);
+			profile.put( "active", true);
+			
+			m_main.sqlConnection( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletAddr) );
 			respondOk();
 		});
 	}

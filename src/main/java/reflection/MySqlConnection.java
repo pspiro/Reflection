@@ -74,9 +74,9 @@ public class MySqlConnection implements AutoCloseable {
 	}
 	
 	/** Do not do String.format() substitutions on sql. */
-	public void execute( String sql) throws Exception {
+	public int execute( String sql) throws Exception {
 		Util.require( connection != null, "you must connect to the database");
-		connection.createStatement().executeUpdate(sql);
+		return connection.createStatement().executeUpdate(sql);
 	}
 	
 	/** Don't call execute because the sql string could have percent signs in it
@@ -84,6 +84,12 @@ public class MySqlConnection implements AutoCloseable {
 	 *  (e.g. FAQ table. */
 	public void insert( String table, Object... values) throws Exception {
 		insert( table, null, values);
+	}
+	
+	public void insertOrUpdate( String table, JSONObject json, String where, Object... params) throws Exception {
+		if (updateJson( table, json, where, params) == 0) {
+			insertJson( table, json);
+		}
 	}
 	
 	public void insertJson( String table, JSONObject json) throws Exception {
@@ -99,7 +105,7 @@ public class MySqlConnection implements AutoCloseable {
 	}
 	
 	/** Do not include the word 'where' in the where clause */
-	public void updateJson( String table, JSONObject json, String where) throws Exception {
+	public int updateJson( String table, JSONObject json, String where, Object... params) throws Exception {
 		StringBuilder values = new StringBuilder();
 		for (Object key : json.keySet() ) {
 			if (values.length() > 0) {
@@ -108,7 +114,7 @@ public class MySqlConnection implements AutoCloseable {
 			values.append(key + " = " + toSqlValue( json.get(key) ) );
 		}
 		
-		execute( String.format("update %s set %s where %s", table, values, where) );
+		return execute( String.format("update %s set %s where %s", table, values, String.format(where, params) ) );
 	}
 	
 	/** Don't call execute because the sql string could have percent signs in it

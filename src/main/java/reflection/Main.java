@@ -242,7 +242,7 @@ public class Main implements ITradeReportHandler {
 		return stock;
 	}
 
-	// VERY BAD AND INEFFICIENT; build a map. pas
+	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
 	public HashMap getStockByTokAddr(String addr) throws RefException {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
 		

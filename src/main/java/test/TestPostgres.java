@@ -3,6 +3,7 @@ package test;
 import org.json.simple.JSONObject;
 
 import reflection.Config;
+import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -15,10 +16,14 @@ public class TestPostgres {
 		obj.put("active", true);
 		
 		config.sqlConnection( conn -> {
-			conn.insertJson("users", obj);
-			
+			conn.execute( "delete from users where name = 'peter'");
+			conn.insertOrUpdate("users", obj, "name = '%s'", "peter");
+			S.out(conn.queryToJson("select * from users where name = 'peter'"));
+
 			obj.put("address", "smallville");
-			conn.updateJson("users", obj, "name = 'peter'");
+			conn.insertOrUpdate("users", obj, "name = '%s'", "peter");
+			
+			S.out(conn.queryToJson("select * from users where name = 'peter'"));
 		});
 		
 		

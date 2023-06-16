@@ -335,7 +335,7 @@ public class OldStyleTransaction extends MyTransaction {
 			single.put( "close", round( stk.prices().close() ) );
 			single.put( "time", stk.prices().getFormattedTime() );
 
-			whole.put( stk.get("conid"), single);
+			whole.put( stk.get("conid").toString(), single);
 		}
 
 		respond(whole);

@@ -36,7 +36,7 @@ public class TestProfile extends MyTestCase {
 {
 "name": "timmy",
 "address": "hot",
-"email": "code",
+"email": "cold",
 "phone": "open",
 "pan_number": "closed",
 "wallet_public_key": "0xb016711702D3302ceF6cEb62419abBeF5c44450g"
