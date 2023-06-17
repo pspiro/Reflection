@@ -6,11 +6,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 
-import json.MyJsonArray;
-import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.RefCode;
 import reflection.Util;
@@ -50,16 +49,16 @@ public class MyHttpClient {
 		m_socket.getOutputStream().write( bytes);
 	}
 
-	public MyJsonObject readMyJsonObject() throws Exception {
-		return MyJsonObject.parse( readString() );
+	public JsonObject readMyJsonObject() throws Exception {
+		return JsonObject.parse( readString() );
 	}
 	
-	public MyJsonArray readMyJsonArray() throws Exception {
-		return MyJsonArray.parse( readString() );
+	public JsonArray readMyJsonArray() throws Exception {
+		return JsonArray.parse( readString() );
 	}
 	
-	public JSONObject readJsonObject() throws Exception {
-		return (JSONObject)new JSONParser().parse( readString() );
+	public JsonObject readJsonObject() throws Exception {
+		return (JsonObject)new JSONParser().parse( readString() );
 	}
 	
 	public String readString() throws Exception {

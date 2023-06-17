@@ -1,28 +1,29 @@
 package fireblocks;
 
-import json.MyJsonArray;
-import json.MyJsonObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import reflection.Config;
 import tw.util.S;
 
 public class Transactions {
 	static void displayLastTransactions(int n) throws Exception {
-		MyJsonArray ar = getTransactions();
+		JsonArray ar = getTransactions();
 		
 		for (int i = 0; i < n; i++) { 
 			ar.getJsonObj(i).display();
 		}
 	}
 
-	public static MyJsonArray getTransactions() throws Exception {
+	public static JsonArray getTransactions() throws Exception {
 		return Fireblocks.fetchArray( "/v1/transactions/?");
 	}
 
-	public static MyJsonArray getSince(long start) throws Exception {
+	public static JsonArray getSince(long start) throws Exception {
 		return Fireblocks.fetchArray( "/v1/transactions/?after=" + start);
 	}
 
-	public static MyJsonObject getTransaction(String id) throws Exception {
+	public static JsonObject getTransaction(String id) throws Exception {
 		return Fireblocks.fetchObject( "/v1/transactions/" + id);
 	}
 
@@ -46,8 +47,8 @@ public class Transactions {
 		String url = String.format("/v1/transactions?sourceId=%s&limit=%s&after=%s",
 				5, 9, since);
 		
-		for (MyJsonObject obj : Fireblocks.fetchArray( url) ) {
-			obj.getObj("source").display();
+		for (JsonObject obj : Fireblocks.fetchArray( url) ) {
+			obj.getObject("source").display();
 			S.out( obj.getString("destinationAddress") );
 			S.out( obj.getString("note"));
 			S.out( obj.getString("status"));

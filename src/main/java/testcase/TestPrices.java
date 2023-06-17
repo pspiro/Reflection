@@ -2,7 +2,8 @@ package testcase;
 
 import static testcase.TestErrors.sendData;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import tw.util.S;
 
 public class TestPrices extends MyTestCase{
@@ -13,7 +14,7 @@ public class TestPrices extends MyTestCase{
 	public void testOne() throws Exception {
 		
 		String data = "{ 'msg': 'getprice', 'conid': '265598' }"; 
-		MyJsonObject map = sendData( data);
+		JsonObject map = sendData( data);
 		S.out( "bid=%s  ask=%s", map.getDouble( "bid"), map.getDouble( "ask") );
 		double bid = map.getDouble( "bid");
 		assertTrue( bid >= curPrice - offset && bid <= curPrice + offset);

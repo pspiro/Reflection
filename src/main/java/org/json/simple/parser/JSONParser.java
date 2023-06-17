@@ -11,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 
 /**
@@ -273,21 +273,21 @@ public class JSONParser {
 	
 	private Map createObjectContainer(ContainerFactory containerFactory){
 		if(containerFactory == null)
-			return new JSONObject();
+			return new JsonObject();
 		Map m = containerFactory.createObjectContainer();
 		
 		if(m == null)
-			return new JSONObject();
+			return new JsonObject();
 		return m;
 	}
 	
 	private List createArrayContainer(ContainerFactory containerFactory){
 		if(containerFactory == null)
-			return new JSONArray();
+			return new JsonArray();
 		List l = containerFactory.creatArrayContainer();
 		
 		if(l == null)
-			return new JSONArray();
+			return new JsonArray();
 		return l;
 	}
 	

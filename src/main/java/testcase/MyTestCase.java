@@ -1,9 +1,10 @@
 package testcase;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import fireblocks.Accounts;
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.Util;
@@ -31,30 +32,30 @@ public class MyTestCase extends TestCase {
 		assertEquals( expected, Util.left( got, expected.length() ) );
 	}
 	
-	MyHttpClient postOrder( MyJsonObject obj) throws Exception {
+	MyHttpClient postOrder( JsonObject obj) throws Exception {
 		return cli().post( "/api/order", obj.toString() ); 
 	}
 
-	MyJsonObject postOrderToObj( MyJsonObject obj) throws Exception {
+	JsonObject postOrderToObj( JsonObject obj) throws Exception {
 		return postOrder(obj).readMyJsonObject();
 	}
 
-	String postOrderToId( MyJsonObject obj) throws Exception {
+	String postOrderToId( JsonObject obj) throws Exception {
 		return postOrder(obj).readMyJsonObject().getString("id");
 	}
 
-	MyJsonObject getLiveOrders(String address) throws Exception {
+	JsonObject getLiveOrders(String address) throws Exception {
 		return cli().get("/api/working-orders/" + address)
 				.readMyJsonObject();
 	}
 	
-	MyJsonArray getLiveMessages() throws Exception {
-		return getLiveOrders(Cookie.wallet).getAr("messages");
+	JsonArray getLiveMessages() throws Exception {
+		return getLiveOrders(Cookie.wallet).getArray("messages");
 	}
 	
-	MyJsonObject getLiveMessage(String id) throws Exception {
-		MyJsonArray msgs = getLiveMessages();
-		for (MyJsonObject msg : msgs) {
+	JsonObject getLiveMessage(String id) throws Exception {
+		JsonArray msgs = getLiveMessages();
+		for (JsonObject msg : msgs) {
 			if (msg.getString("id").equals(id) ) {
 				return msg;
 			}
@@ -62,13 +63,13 @@ public class MyTestCase extends TestCase {
 		throw new Exception("No live order found with id " + id);
 	}
 	
-	MyJsonObject getLiveMessage2(String id) throws Exception {
-		MyJsonArray msgs = getLiveMessages();
+	JsonObject getLiveMessage2(String id) throws Exception {
+		JsonArray msgs = getLiveMessages();
 		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	
-	MyJsonObject getLiveOrder(String id) throws Exception {
-		MyJsonArray msgs = getLiveOrders(Cookie.wallet).getAr("orders");
+	JsonObject getLiveOrder(String id) throws Exception {
+		JsonArray msgs = getLiveOrders(Cookie.wallet).getArray("orders");
 		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	

@@ -12,8 +12,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -26,7 +26,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Accounts;
-import json.MyJsonObject;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -57,11 +56,11 @@ public class Main implements ITradeReportHandler {
 	private final String m_tabName;
 	private       String m_faqs;
 	private String m_type1Config; 
-	private MyJsonObject m_type2Config;
+	private JsonObject m_type2Config;
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	
-	JSONArray stocks() { return m_stocks.stocks(); }
+	JsonArray stocks() { return m_stocks.stocks(); }
 
 	public static void main(String[] args) {
 		try {
@@ -191,10 +190,10 @@ public class Main implements ITradeReportHandler {
 	 * @param book */ 
 	@SuppressWarnings("unchecked")
 	void readFaqsFromSheet(Book book) throws Exception {
-		JSONArray ar = new JSONArray();
+		JsonArray ar = new JsonArray();
 		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
 			if (row.getBool("Active") ) {
-				JSONObject obj = new JSONObject();
+				JsonObject obj = new JsonObject();
 				obj.put( "question", row.getString("Question") );
 				obj.put( "answer", row.getString("Answer") );
 				ar.add(obj);
@@ -207,8 +206,8 @@ public class Main implements ITradeReportHandler {
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
 	@SuppressWarnings("unchecked")
-	MyJsonObject readConfig(Book book, int type) throws Exception {
-		MyJsonObject obj = new MyJsonObject();
+	JsonObject readConfig(Book book, int type) throws Exception {
+		JsonObject obj = new JsonObject();
 		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {
 			if (row.getInt("Type") == type) {
 				obj.put( 
@@ -509,7 +508,7 @@ public class Main implements ITradeReportHandler {
 
 	void dump() {
 		S.out( "-----Dumping Stocks-----");
-		MyJsonObject.display( m_stocks.stocks(), 0, false);
+		JsonObject.display( m_stocks.stocks(), 0, false);
 		
 		S.out( "Dumping config");
 		m_config.dump();
@@ -589,11 +588,11 @@ public class Main implements ITradeReportHandler {
 		return Math.round( val * 100) / 100.;
 	}
 	
-	MyJsonObject type2Config() {
+	JsonObject type2Config() {
 		return m_type2Config;
 	}
 
-	public JSONArray hotStocks() {
+	public JsonArray hotStocks() {
 		return m_stocks.hotStocks();
 	}
 	

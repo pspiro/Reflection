@@ -3,7 +3,8 @@ package fireblocks;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.RefCode;
@@ -106,7 +107,7 @@ public class Erc20 {
 		S.out( "Deploying contract from %s", filename);
 		
 		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-		String bytecode = MyJsonObject.parse( new IStream(filename).readAll() )
+		String bytecode = JsonObject.parse( new IStream(filename).readAll() )
 				.getString("bytecode");
 		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
 //		String bytecode = new IStream(filename).readln();
@@ -136,7 +137,7 @@ public class Erc20 {
 			if (i > 0) S.sleep(1000);
 			
 			S.out( "    querying...");
-			MyJsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
+			JsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
 			String addr = obj.getString("receipt_contract_address");
 			if (S.isNotNull(addr) ) {
 				S.out( "contract deployed to " + addr);

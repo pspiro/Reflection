@@ -5,6 +5,8 @@ import static reflection.Main.require;
 
 import java.util.Vector;
 
+import org.json.simple.JsonObject;
+
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
@@ -15,7 +17,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.StockToken;
 import fireblocks.Transactions;
-import json.MyJsonObject;
 import reflection.LiveOrder.FireblocksStatus;
 import tw.util.S;
 import util.LogType;
@@ -341,7 +342,7 @@ public class OrderTransaction extends MyTransaction {
 
 			// query FB until the status is final, updating the LiveOrder status each time
 			while( true) {
-				MyJsonObject trans = Transactions.getTransaction(id);
+				JsonObject trans = Transactions.getTransaction(id);
 				
 				if (hash == null && S.isNotNull(trans.getString("txHash") ) ) {
 					hash = trans.getString("txHash");

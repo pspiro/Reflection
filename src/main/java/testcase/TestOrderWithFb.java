@@ -2,14 +2,7 @@ package testcase;
 
 import java.sql.ResultSet;
 
-import com.ib.client.Order;
-
-import json.MyJsonObject;
-import junit.framework.TestCase;
-import reflection.Config;
 import reflection.MyTransaction.Stablecoin;
-import reflection.RefCode;
-import tw.util.S;
 
 public class TestOrderWithFb extends MyTestCase {
 	

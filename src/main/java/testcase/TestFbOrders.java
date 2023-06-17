@@ -1,10 +1,10 @@
 package testcase;
 
+import org.json.simple.JsonObject;
+
 import fireblocks.Busd;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -33,18 +33,18 @@ public class TestFbOrders extends MyTestCase {
 
 	public void testInsufficientFundsBuy() throws Exception {
 		cli().get("/api/mywallet/" + Cookie.wallet);
-		double bal = cli.readMyJsonObject().getAr("tokens").find( "name", "USDC").getDouble("balance");
+		double bal = cli.readMyJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
-		MyJsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
+		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
 		obj.remove("noFireblocks");
 		
-		MyJsonObject map = postOrderToObj(obj);
+		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
 		while(true) {
-			MyJsonObject ret = getLiveMessage2(map.getString("id"));
+			JsonObject ret = getLiveMessage2(map.getString("id"));
 			if (ret != null) {
 				S.out(ret);
 				assertEquals( "error", ret.getString("type"));
@@ -68,15 +68,15 @@ public class TestFbOrders extends MyTestCase {
 				rusd.address(),
 				1).waitForHash();
 		
-		MyJsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
+		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
 		
-		MyJsonObject map = postOrderToObj(obj);
+		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
 		while(true) {
-			MyJsonObject ret = getLiveMessage2(map.getString("id"));
+			JsonObject ret = getLiveMessage2(map.getString("id"));
 			if (ret != null) {
 				S.out(ret);
 				assertEquals( "error", ret.getString("type"));
@@ -105,12 +105,12 @@ public class TestFbOrders extends MyTestCase {
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 		
-		MyJsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
+		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
 		obj.put("wallet_public_key", address);
 		obj.put("cookie", cookie);
 		
-		MyJsonObject map = postOrderToObj(obj);
+		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
@@ -119,11 +119,11 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "Submitted order with uid %s", uid);
 		
 		while(true) {
-			MyJsonObject liveOrders = getLiveOrders(address);
+			JsonObject liveOrders = getLiveOrders(address);
 			S.out( liveOrders);
 
-			MyJsonObject msg = liveOrders.getAr("messages").find("id", uid);
-			MyJsonObject order = liveOrders.getAr("orders").find("id", uid);
+			JsonObject msg = liveOrders.getArray("messages").find("id", uid);
+			JsonObject order = liveOrders.getArray("orders").find("id", uid);
 			
 			if (msg != null) {
 				S.out("filled: " + msg);

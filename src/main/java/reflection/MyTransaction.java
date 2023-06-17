@@ -12,14 +12,13 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import org.json.simple.JSONAware;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.Erc20;
-import json.MyJsonObject;
 import test.MyTimer;
 import tw.google.Auth;
 import tw.google.TwMail;
@@ -93,7 +92,7 @@ public abstract class MyTransaction {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 
-	            JSONObject jsonObject = (JSONObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            JsonObject jsonObject = (JsonObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 
 	            for (Object key : jsonObject.keySet() ) {
 	            	Object value = jsonObject.get(key);
@@ -245,7 +244,7 @@ public abstract class MyTransaction {
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
 	 *  They could just send the nonce, it's the only part of the cookie we are using
 	 *  @param walletAddr could be null */
-	MyJsonObject validateCookie(String walletAddr) throws Exception {
+	JsonObject validateCookie(String walletAddr) throws Exception {
 		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
 		String cookie = m_map.get("cookie");

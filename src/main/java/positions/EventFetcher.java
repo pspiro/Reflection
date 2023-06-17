@@ -6,11 +6,10 @@ import static positions.MoralisServer.transferTopic;
 
 import java.util.HashMap;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 import org.postgresql.util.PSQLException;
 
-import json.MyJsonArray;
-import json.MyJsonObject;
 import reflection.MySqlConnection;
 import reflection.Util;
 import tw.google.NewSheet;
@@ -98,12 +97,7 @@ public class EventFetcher {
 
 	
 	/** Map conid to balance */
-	static class Balances extends JSONObject {
-		double getDouble(String token) {
-			Double val = (Double)get(token);
-			return val != null ? val : 0;
-		}
-		
+	static class Balances extends JsonObject {
 		void increment( String token, double val) {
 			put( token, getDouble( token) + val);
 		}
@@ -115,10 +109,10 @@ public class EventFetcher {
 	}
 	
 	private String processEventLog( String json, String token) throws Exception {
-		MyJsonObject obj = MyJsonObject.parse( json);
+		JsonObject obj = JsonObject.parse( json);
 		
-		MyJsonArray eventLogs = obj.getAr("result");
-		for (MyJsonObject event : eventLogs) {
+		JsonArray eventLogs = obj.getArray("result");
+		for (JsonObject event : eventLogs) {
 			int block = event.getInt( "block_number");
 			String top0 = event.getString("topic0");
 			

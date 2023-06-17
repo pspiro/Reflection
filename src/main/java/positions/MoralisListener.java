@@ -5,10 +5,11 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
+import org.json.simple.JsonObject;
+
 import com.sun.net.httpserver.HttpServer;
 
 import http.SimpleTransaction;
-import json.MyJsonObject;
 import reflection.MySqlConnection;
 import reflection.Util;
 import tw.util.S;
@@ -73,15 +74,15 @@ public class MoralisListener {
 	
 	void handleBlockchainEvent2( SimpleTransaction trans) {
 		try {
-			MyJsonObject msg = trans.getJson();
+			JsonObject msg = trans.getJson();
 			
-			MyJsonObject block = msg.getObj( "block");
+			JsonObject block = msg.getObject( "block");
 			if (block != null) {
 				S.out( "-----Block %s", block.getInt("number"));
 			}
 
 			S.out( "-----ERC20 transfers");
-			for (MyJsonObject transfer : msg.getAr( "erc20Transfers") ) {
+			for (JsonObject transfer : msg.getArray( "erc20Transfers") ) {
 	        	String token = transfer.getString( "contract").toLowerCase();
 	        	String from = transfer.getString( "from").toLowerCase();
 	        	String to = transfer.getString( "to").toLowerCase();
@@ -92,7 +93,7 @@ public class MoralisListener {
 			
 			S.out( "");
 			S.out( "-----Received logs");
-	        for (MyJsonObject log : msg.getAr( "logs") ) {
+	        for (JsonObject log : msg.getArray( "logs") ) {
 	        	String token = log.getString( "address").toLowerCase();
 	        	String from = Util.right( log.getString( "topic1"), 42).toLowerCase();
 	        	String to = Util.right( log.getString( "topic2"), 42).toLowerCase();

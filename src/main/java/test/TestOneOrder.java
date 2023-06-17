@@ -1,10 +1,11 @@
 package test;
 
+import org.json.simple.JsonObject;
+
 import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.StockToken;
 import fireblocks.Transactions;
-import json.MyJsonObject;
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -43,7 +44,7 @@ public class TestOneOrder {
 				100);
 		
 		while(true) {
-			MyJsonObject obj = Transactions.getTransaction(id);
+			JsonObject obj = Transactions.getTransaction(id);
 			S.out( "%s %s %s",
 					obj.getString("status"),
 					obj.getString("createdAt"),

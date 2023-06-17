@@ -1,8 +1,9 @@
 package testcase;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import junit.framework.TestCase;
 import reflection.Util;
 import tw.util.S;
@@ -28,7 +29,7 @@ public class TestUnwindOrder extends TestCase {
 				""";
 
 		// place order
-		MyJsonObject obj = new MyHttpClient( host, 8383)
+		JsonObject obj = new MyHttpClient( host, 8383)
 				.addHeader("Cookie", Cookie.cookie)
 				.post( "/api/order", Util.toJson(data) )
 				.readMyJsonObject();
@@ -46,15 +47,15 @@ public class TestUnwindOrder extends TestCase {
 	}
 
 	private double getPos(int conid) throws Exception {
-		MyJsonArray ar = new MyHttpClient(host, 8383)
+		JsonArray ar = new MyHttpClient(host, 8383)
 				.get("?msg=getpositions")
 				.readMyJsonArray();
-		MyJsonObject obj = find(ar, 8314);
+		JsonObject obj = find(ar, 8314);
 		return obj != null ? obj.getDouble("conid") : 0;
 	}
 
-	private MyJsonObject find(MyJsonArray ar, int conid) {
-		for (MyJsonObject obj : ar) {
+	private JsonObject find(JsonArray ar, int conid) {
+		for (JsonObject obj : ar) {
 			if (obj.getInt("conid") == conid) {
 				return obj;
 			}

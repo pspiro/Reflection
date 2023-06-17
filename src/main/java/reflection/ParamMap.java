@@ -2,8 +2,8 @@ package reflection;
 
 import java.util.HashMap;
 
-import json.MyJsonObject;
-import reflection.OldStyleTransaction.MsgType;
+import org.json.simple.JsonObject;
+
 import tw.util.S;
 
 /** Values are returned lower case, interned, although the intern() didn't seem to work. */
@@ -68,8 +68,8 @@ public class ParamMap extends HashMap<String, String> {
 		return str == null ? null : str.toLowerCase();
 	}
 	
-	public MyJsonObject getJsonObject(String tag) throws Exception {
+	public JsonObject getJsonObject(String tag) throws Exception {
 		String str = get(tag);
-		return str != null ? MyJsonObject.parse(str) : null;
+		return str != null ? JsonObject.parse(str) : null;
 	}
 }

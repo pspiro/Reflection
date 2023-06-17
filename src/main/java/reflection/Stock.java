@@ -1,6 +1,6 @@
 package reflection;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import fireblocks.StockToken;
 import tw.util.S;
@@ -30,7 +30,7 @@ import tw.util.S;
 	
     
  *    */
-public class Stock extends JSONObject implements Comparable<Stock> {
+public class Stock extends JsonObject implements Comparable<Stock> {
 	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {

@@ -1,10 +1,10 @@
 package json;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 /** This is a Json object where are the values are Strings.
  *  Use MyJsonObj when you are reading or parsing; use this when you are creating */
-public class StringJson extends JSONObject {
+public class StringJson extends JsonObject {
 	@Override public String get(Object key) {
 		return (String)super.get(key);
 	}

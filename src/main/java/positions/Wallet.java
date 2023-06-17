@@ -2,8 +2,9 @@ package positions;
 
 import java.util.HashMap;
 
+import org.json.simple.JsonObject;
+
 import fireblocks.Erc20;
-import json.MyJsonObject;
 import tw.util.S;
 
 /** Get token positions */
@@ -31,7 +32,7 @@ public class Wallet {
 	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
 		
-		for (MyJsonObject token : MoralisServer.reqPositionsList(wallet) ) {
+		for (JsonObject token : MoralisServer.reqPositionsList(wallet) ) {
 			String addr = token.getString("token_address");			
 			String balance = token.getString("balance");
 			if (S.isNotNull(addr) && S.isNotNull(balance) ) {

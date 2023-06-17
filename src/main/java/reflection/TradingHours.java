@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -123,11 +123,11 @@ public class TradingHours {
 					: Session.None;
 	}
 
-	public JSONObject getHours() {
-		JSONObject obj = new JSONObject();
+	public JsonObject getHours() {
+		JsonObject obj = new JsonObject();
 		
 		m_map.forEach( (item1, deets) -> {
-			JSONObject inner = new JSONObject();
+			JsonObject inner = new JsonObject();
 			inner.put( "Trading hours", deets.tradingHours() );
 			inner.put( "Liquid hours", deets.liquidHours() );
 			obj.put( item1, inner);

@@ -86,8 +86,8 @@ public class JSONValue {
      * DO NOT call this method from writeJSONString(Writer) of a class that implements both JSONStreamAware and (Map or List) with 
      * "this" as the first parameter, use JSONObject.writeJSONString(Map, Writer) or JSONArray.writeJSONString(List, Writer) instead. 
      * 
-     * @see org.json.simple.JSONObject#writeJSONString(Map, Writer)
-     * @see org.json.simple.JSONArray#writeJSONString(List, Writer)
+     * @see org.json.simple.JsonObject#writeJSONString(Map, Writer)
+     * @see org.json.simple.JsonArray#writeJSONString(List, Writer)
      * 
      * @param value
      * @param writer
@@ -142,12 +142,12 @@ public class JSONValue {
 		}
 		
 		if(value instanceof Map){
-			JSONObject.writeJSONString((Map)value, out);
+			JsonObject.writeJSONString((Map)value, out);
 			return;
 		}
 		
 		if(value instanceof List){
-			JSONArray.writeJSONString((List)value, out);
+			JsonArray.writeJSONString((List)value, out);
             return;
 		}
 		
@@ -162,8 +162,8 @@ public class JSONValue {
 	 * DO NOT call this method from toJSONString() of a class that implements both JSONAware and Map or List with 
 	 * "this" as the parameter, use JSONObject.toJSONString(Map) or JSONArray.toJSONString(List) instead. 
 	 * 
-	 * @see org.json.simple.JSONObject#toJSONString(Map)
-	 * @see org.json.simple.JSONArray#toJSONString(List)
+	 * @see org.json.simple.JsonObject#toJSONString(Map)
+	 * @see org.json.simple.JsonArray#toJSONString(List)
 	 * 
 	 * @param value
 	 * @return JSON text, or "null" if value is null or it's an NaN or an INF number.
@@ -199,10 +199,10 @@ public class JSONValue {
 			return ((JSONAware)value).toJSONString();
 		
 		if(value instanceof Map)
-			return JSONObject.toJSONString((Map)value);
+			return JsonObject.toJSONString((Map)value);
 		
 		if(value instanceof List)
-			return JSONArray.toJSONString((List)value);
+			return JsonArray.toJSONString((List)value);
 		
 		return value.toString();
 	}

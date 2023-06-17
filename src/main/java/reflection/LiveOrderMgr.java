@@ -2,9 +2,10 @@ package reflection;
 
 import java.util.HashMap;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import fireblocks.Transactions;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import tw.util.S;
 
 /** Sends query to FB up to every 1900 ms. When things get busy, we could do this evern n msg
@@ -25,9 +26,9 @@ public class LiveOrderMgr {
 		long elap = System.currentTimeMillis() - m_lastTime;
 		if (elap >= minInterval) {
 			try {
-				MyJsonArray transactions = Transactions.getSince( System.currentTimeMillis() - 3 * 60000); // 3 min
+				JsonArray transactions = Transactions.getSince( System.currentTimeMillis() - 3 * 60000); // 3 min
 				S.out( "FB transaction returned " + transactions.size() );
-				for (MyJsonObject trans : transactions) {
+				for (JsonObject trans : transactions) {
 					long createdAt = trans.getLong("createdAt"); 
 					String status = trans.getString("status");
 					String id = trans.getString("id");

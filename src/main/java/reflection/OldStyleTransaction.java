@@ -7,8 +7,8 @@ import static reflection.Util.round;
 import java.util.Arrays;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -125,7 +125,7 @@ public class OldStyleTransaction extends MyTransaction {
 
 	/** I think this is by the Monitor  */ 
 	private void onCashBal() {
-		JSONObject obj = new JSONObject();
+		JsonObject obj = new JsonObject();
 		
 		m_main.orderController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
 			@Override public void accountSummary(String account, AccountSummaryTag tag, String value, String currency) {
@@ -146,7 +146,7 @@ public class OldStyleTransaction extends MyTransaction {
 		String wallet = m_map.getRequiredParam("address");
 		Main.require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Invalid wallet address: %s", wallet);
 
-		JSONObject obj = new JSONObject();
+		JsonObject obj = new JsonObject();
 		obj.put( "Native token balance", MoralisServer.getNativeBalance(wallet) );
 		obj.put( "Allowance", Main.m_config.busd().getAllowance(wallet, Main.m_config.rusdAddr() ) );
 		
@@ -183,12 +183,12 @@ public class OldStyleTransaction extends MyTransaction {
 
 	/** Return the IB stock positions; used by the Monitor program */
 	private void getStockPositions() {
-		JSONArray ar = new JSONArray();
+		JsonArray ar = new JsonArray();
 		
 		m_main.orderController().reqPositions( new IPositionHandler() {
 			@SuppressWarnings("unchecked")
 			@Override public void position(String account, Contract contract, Decimal pos, double avgCost) {
-				JSONObject obj = new JSONObject();
+				JsonObject obj = new JsonObject();
 				obj.put( "conid", contract.conid() );
 				obj.put( "position", pos.toDouble() );
 				ar.add( obj);
@@ -258,15 +258,15 @@ public class OldStyleTransaction extends MyTransaction {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.NO_SUCH_STOCK, "No such stock");
 
-				JSONArray whole = new JSONArray();
+				JsonArray whole = new JsonArray();
 
 				for (ContractDetails deets : list) {
-					JSONObject tradingHours = new JSONObject();
+					JsonObject tradingHours = new JsonObject();
 					tradingHours.put( "tradingHours", deets.tradingHours() );
 					tradingHours.put( "liquidHours", deets.liquidHours() );
 					tradingHours.put( "timeZone", deets.timeZoneId() );
 
-					JSONObject obj = new JSONObject();
+					JsonObject obj = new JsonObject();
 					obj.put( "symbol", deets.contract().symbol() );
 					obj.put( "conid", deets.conid() );
 					obj.put( "exchange", deets.contract().exchange() );
@@ -323,12 +323,12 @@ public class OldStyleTransaction extends MyTransaction {
 	private void getAllPrices() throws RefException {
 		
 		// build the json response   // we could reuse this and just update the prices each time
-		JSONObject whole = new JSONObject();
+		JsonObject whole = new JsonObject();
 
 		for (Object obj : m_main.stocks() ) {
 			Stock stk = (Stock)obj;
 
-			JSONObject single = new JSONObject();
+			JsonObject single = new JsonObject();
 			single.put( "bid", round( stk.prices().bid() ) );
 			single.put( "ask", round( stk.prices().ask() ) );
 			single.put( "last", round( stk.prices().last() ) );

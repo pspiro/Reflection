@@ -2,7 +2,8 @@ package testcase;
 
 import java.util.concurrent.CountDownLatch;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import reflection.RefCode;
 import tw.util.S;
 
@@ -22,7 +23,7 @@ public class TestTwoOrdersSameUser extends MyTestCase {
 	
 	void buy1(String id) {
 		try {
-			MyJsonObject map = postOrderToObj( orderData( 3, "BUY", 2) );
+			JsonObject map = postOrderToObj( orderData( 3, "BUY", 2) );
 			
 			String code = map.getString( "code");
 			String message = map.getString("message");
@@ -41,8 +42,8 @@ public class TestTwoOrdersSameUser extends MyTestCase {
 		}
 	}
 
-	private MyJsonObject orderData(int offset, String side, int qty) throws Exception {
-		MyJsonObject data = TestOrder.createOrder(side, qty, offset);
+	private JsonObject orderData(int offset, String side, int qty) throws Exception {
+		JsonObject data = TestOrder.createOrder(side, qty, offset);
 		data.remove("noFireblocks");
 		return data;
 	}

@@ -2,15 +2,16 @@ package fireblocks;
 
 import java.util.HashMap;
 
-import json.MyJsonArray;
-import json.MyJsonObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import positions.Wallet;
 import reflection.Util;
 import tw.util.S;
 
 /** Works for prod and test. */
 public class Accounts {
-	private MyJsonArray m_accounts;   // create a map. pas
+	private JsonArray m_accounts;   // create a map. pas
 	private boolean m_read;
 	private String[] m_admins;
 	private int m_nextAdminIndex = -1;
@@ -30,7 +31,7 @@ public class Accounts {
 		if (!m_read) {
 			S.out( "Querying Fireblocks accounts");
 			m_accounts = Fireblocks.fetchObject("/v1/vault/accounts_paged")
-					.getAr("accounts");
+					.getArray("accounts");
 			m_read = true;
 		}
 	}
@@ -39,10 +40,10 @@ public class Accounts {
 		return Integer.valueOf( getAccount(name).getString("id") );
 	}
 	
-	MyJsonObject getAccount(String name) throws Exception {
+	JsonObject getAccount(String name) throws Exception {
 		read();
 		
-		for (MyJsonObject account : m_accounts) {
+		for (JsonObject account : m_accounts) {
 			if (account.getString("name").equals( name) ) {
 				return account;
 			}
@@ -67,7 +68,7 @@ public class Accounts {
 		if (address == null) {
 			S.out("Querying wallet address for %s", accountId);
 			String url = String.format("/v1/vault/accounts/%s/%s/addresses", accountId, Fireblocks.platformBase);
-			 MyJsonArray ar = Fireblocks.fetchArray(url);
+			 JsonArray ar = Fireblocks.fetchArray(url);
 			 Util.require(ar.size() > 0, "The wallet does not have an address for the native token; add some native token to the wallet");
 			 address = ar.getJsonObj(0).getString("address");
 			m_addressMap.put( accountId, address);

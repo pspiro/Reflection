@@ -1,6 +1,6 @@
 package test;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import reflection.Config;
 import tw.util.S;
@@ -11,7 +11,7 @@ public class TestPostgres {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
-		JSONObject obj = new JSONObject();
+		JsonObject obj = new JsonObject();
 		obj.put("name", "peter");
 		obj.put("active", true);
 		

@@ -15,11 +15,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.TableCellRenderer;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import fireblocks.Fireblocks;
 import fireblocks.StockToken;
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import positions.Wallet;
 import reflection.Config;
 import reflection.Stocks;
@@ -135,11 +136,11 @@ public class Monitor {
 	private void refresh_() throws Exception {
 		// or this whole thing can run in a browser and be fed only html?
 		S.out( "Querying stock positions");
-		MyJsonArray ar = new MyHttpClient("localhost", 8383)
+		JsonArray ar = new MyHttpClient("localhost", 8383)
 			.get("?msg=getpositions")
 			.readMyJsonArray();
 		
-		for (MyJsonObject obj : ar) {
+		for (JsonObject obj : ar) {
 			Record rec = getOrCreate( obj.getInt("conid") );
 			rec.m_position = obj.getDouble("position");
 			Util.require( rec.m_conid != 0 && rec.m_position != 0.0, "Invalid json for position query");

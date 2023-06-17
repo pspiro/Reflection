@@ -10,14 +10,13 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import json.MyJsonObject;
 import json.StringJson;
 import reflection.Main;
 import reflection.ParamMap;
@@ -118,7 +117,7 @@ public class SimpleTransaction {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            
 				JSONParser parser = new JSONParser();
-	            JSONObject jsonObject = (JSONObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            JsonObject jsonObject = (JsonObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	            
 	            for (Object key : jsonObject.keySet() ) {
 	            	Object value = jsonObject.get(key);
@@ -140,12 +139,11 @@ public class SimpleTransaction {
 		return map;
 	}	
 	
-	public MyJsonObject getJson() throws Exception {
+	public JsonObject getJson() throws Exception {
 		Main.require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.UNKNOWN, "GET not supported for this endpoint");
 		S.out( "received POST w/ len %s", m_exchange.getRequestHeaders().getFirst("content-length") );
 
-		Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-        return new MyJsonObject( new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+        return JsonObject.parse(m_exchange.getRequestBody());  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	}	
 
 	/** Only respond once for each request

@@ -1,8 +1,9 @@
 package testcase;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import positions.Wallet;
 
 public class TestWallet extends MyTestCase {
@@ -29,14 +30,14 @@ public class TestWallet extends MyTestCase {
 
 	public void testMyWallet() throws Exception {
 		MyHttpClient cli = cli();
-		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
 		
-		MyJsonArray ar = obj.getAr("tokens");
+		JsonArray ar = obj.getArray("tokens");
 		
-		MyJsonObject tok;
+		JsonObject tok;
 		
 //		tok = ar.getJsonObj(0);  // moved to TestRedeem
 //		assertEquals("RUSD", tok.getString("name"));

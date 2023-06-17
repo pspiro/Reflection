@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Order;
 import com.ib.client.Types.Action;
@@ -77,7 +77,7 @@ public class Prices {
 	}
 
 	/** Returns bid/ask only */
-	public JSONObject toJson(int conid) throws RefException {
+	public JsonObject toJson(int conid) throws RefException {
 		return Util.toJsonMsg( "bid", anyBid(), "ask", anyAsk() );
 	}
 	

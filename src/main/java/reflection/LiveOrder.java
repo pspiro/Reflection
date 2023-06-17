@@ -2,7 +2,7 @@ package reflection;
 
 import java.util.Random;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import fireblocks.Transactions;
 import tw.util.S;
@@ -122,8 +122,8 @@ class LiveOrder {
 		return m_uid;
 	}
 
-	public JSONObject getWorkingOrder() {
-		JSONObject order = new JSONObject();
+	public JsonObject getWorkingOrder() {
+		JsonObject order = new JsonObject();
 		order.put( "id", m_uid);
 		order.put( "action", m_action);
 		order.put( "description", m_description);
@@ -131,8 +131,8 @@ class LiveOrder {
 		return order;
 	}
 
-	public JSONObject getCompletedOrder() {
-		JSONObject order = new JSONObject();
+	public JsonObject getCompletedOrder() {
+		JsonObject order = new JsonObject();
 		order.put( "id", m_uid);
 		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   
 		order.put( "text", m_description);

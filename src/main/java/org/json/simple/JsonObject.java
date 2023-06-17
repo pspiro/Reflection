@@ -5,22 +5,32 @@
 package org.json.simple;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import org.json.simple.parser.JSONParser;
+
+import com.moonstoneid.siwe.SiweMessage;
+
+import reflection.SiweUtil;
+import reflection.Util;
+import tw.util.S;
 
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class JSONObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware {
+public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware {
 	
 	private static final long serialVersionUID = -503443796854799292L;
 	
 	
-	public JSONObject() {
+	public JsonObject() {
 		super();
 	}
 
@@ -144,6 +154,10 @@ public class JSONObject extends HashMap<String,Object> implements JSONAware, JSO
 		return JSONValue.escape(s);
 	}
 
+	
+	
+	
+	
 	/** Converts any object type to string or returns empty string, never null. */
 	public String getString(String key) {
 		Object val = get(key);
@@ -155,5 +169,127 @@ public class JSONObject extends HashMap<String,Object> implements JSONAware, JSO
 		Object val = get(key);
 		return val != null ? val.toString().toLowerCase() : ""; 
 	}
+
+	public static JsonObject parse( String text) throws Exception {
+		Util.require( isObject(text), "Error: not a json object: " + text);
+		return (JsonObject)new JSONParser().parse( text);
+	}
+	
+	public static JsonObject parse(InputStream is) throws Exception {
+		return (JsonObject)new JSONParser().parse( new InputStreamReader(is) );  // parseMsg() won't work here because it assumes all values are strings
+	}	
+	
+	public static boolean isObject(String text) {
+		return text != null && text.trim().startsWith("{");
+	}
+
+	/** If the key does not exist, it returns an empty array */
+	public JsonArray getArray(String key) {
+		JsonArray array = (JsonArray)get(key);
+		return array != null ? array : new JsonArray(); 
+	}
+
+	public JsonObject getObject(String key) throws Exception {
+		return (JsonObject)get(key);
+	}
+	
+	/** Returns zero for null value. */
+	public long getLong(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Long.parseLong( str) : 0;
+	}
+
+	/** Returns zero for null value. */
+	public int getInt( String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
+	}
+
+	public double getDouble(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
+	}
+	
+	public void display(String title) {
+		S.out(title);
+		display( this, 0, false);
+		System.out.println();
+	}
+
+	public void display() {
+		display( this, 0, false);
+		System.out.println();
+	}
+	
+	public static void display(Object objIn, int level, boolean arrayItem) {
+		if (objIn instanceof JsonObject) {
+			out( "{\n");
+
+			JsonObject map = ((JsonObject)objIn);
+			
+			boolean first = true;
+			for (Object key : map.keySet() ) {
+				Object val = map.get( key);
+				
+				if (val != null && val.toString().length() > 0) {
+					if (!first) {
+						out( ",\n");
+					}
+
+					out( "%s%s : ", Util.tab( level+1), key);
+					display( val, level + 1, false);
+					first = false;
+				}
+			}
+			out( "\n%s%s", Util.tab(level), "}");
+		}
+		else if (objIn instanceof JsonArray) {
+			JsonArray ar = (JsonArray)objIn;
+			
+			if (ar.size() == 0) {
+				out( "[ ]");
+			}
+			else {
+				out( "[\n%s", Util.tab(level+1) );
+				
+				boolean first = true;
+				for (Object obj : ar) {
+					if (!first) {
+						out( ", ");
+					}
+					display( obj, level + 1, true);
+					first = false;
+				}
+				out( "\n%s]", Util.tab(level) );
+			}
+		}
+		else {
+			out( objIn);
+		}
+		
+	}
+	
+	static void out( String format, Object... params) {
+		System.out.print( String.format( format, params) );
+	}
+
+	static void out( Object str) {
+		System.out.print( str);
+	}
+
+	public boolean getBool(String key) {
+		return Boolean.parseBoolean( getString(key) );
+	}
+
+	public SiweMessage getSiweMessage() throws Exception {
+		return SiweUtil.toSiweMessage(this);
+	}
+
+	public JsonObject getRequiredObj(String key) throws Exception {
+		JsonObject obj = getObject(key);
+		Util.require(obj != null, "The required key is missing from the json object: " + key);
+		return obj;
+	}
+	
 	
 }

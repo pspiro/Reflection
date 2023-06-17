@@ -4,9 +4,8 @@ import static java.lang.String.format;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.json.simple.parser.ParseException;
+import org.json.simple.JsonObject;
 
-import json.MyJsonObject;
 import tw.util.S;
 import util.StringHolder;
 
@@ -17,7 +16,7 @@ public class TestInfura {
 		String url = format( "https://mainnet.infura.io/v3/%s", api);
 	    String data = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_call\",\"params\": [{\"from\": \"0xb60e8dd61c5d32be8058bb8eb970870f07233155\",\"to\": \"0xd46e8dd67c5d32be8058bb8eb970870f07244567\",\"gas\": \"0x76c0\",\"gasPrice\": \"0x9184e72a000\",\"value\": \"0x9184e72a\",\"data\": \"0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675\"}, \"latest\"],\"id\":2}";
 	    
-	    MyJsonObject obj = MyJsonObject.parse(data);
+	    JsonObject obj = JsonObject.parse(data);
 	    obj.display();
 	    String ret = querySync( url, data);
 	    S.out( "");

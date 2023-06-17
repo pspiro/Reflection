@@ -1,11 +1,11 @@
 package reflection;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
 
 public class Profile {
-	private MyJsonObject m_object;
+	private JsonObject m_object;
 
-	public Profile(MyJsonObject object) {
+	public Profile(JsonObject object) {
 		m_object = object;
 	}
 	

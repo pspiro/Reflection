@@ -1,6 +1,7 @@
 package testcase;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import reflection.Config;
 
 public class TestProfile extends MyTestCase {
@@ -25,7 +26,7 @@ public class TestProfile extends MyTestCase {
 		cli.assertResponseCode(200);
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
-		MyJsonObject obj = cli.readMyJsonObject();
+		JsonObject obj = cli.readMyJsonObject();
 		assertEquals( "john glick", obj.getString("name") );
 		assertEquals( "addresss", obj.getString("address") );
 		assertEquals( "emaill", obj.getString("email") );

@@ -10,13 +10,17 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.json.simple.parser.JSONParser;
+
+import reflection.Util;
+
 
 /**
  * A JSON array. JSONObject supports java.util.List interface.
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class JSONArray extends ArrayList<JSONObject> implements JSONAware, JSONStreamAware {
+public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONStreamAware {
 	private static final long serialVersionUID = 3957988303675231981L;
 
     /**
@@ -102,6 +106,31 @@ public class JSONArray extends ArrayList<JSONObject> implements JSONAware, JSONS
 		return toJSONString();
 	}
 
-	
-		
+	public JsonObject getJsonObj( int i) throws Exception {
+		return super.get(i);
+	}
+
+	public static JsonArray parse( String text) throws Exception {
+		Util.require( JsonArray.isArray(text), "Error: not a json array: " + text);
+		return (JsonArray)new JSONParser().parse( text);
+	}
+
+	public static boolean isArray(String ret) {
+		return ret != null && ret.trim().startsWith("[");
+	}
+
+	public void display() {
+		JsonObject.display(this, 0, false);
+	}
+
+	/** Return the item in the array that has tag=value (where value is a string) */
+	public JsonObject find(String tag, String value) throws Exception {
+		for (JsonObject item : this) {
+			if (value.equals( item.getString(tag) ) ) {
+				return item;
+			}
+		}
+		return null;
+	}
+
 }

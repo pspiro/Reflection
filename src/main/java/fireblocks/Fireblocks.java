@@ -1,15 +1,14 @@
 package fireblocks;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.Random;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
-import json.MyJsonArray;
-import json.MyJsonObject;
 import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
@@ -60,15 +59,15 @@ public class Fireblocks {
 	
 	/** Returns the Fireblocks ID. Throws exception if there is no id */
 	String transactToId() throws Exception {
-		MyJsonObject obj = transactToObj();
+		JsonObject obj = transactToObj();
 		String id = obj.getString("id");
 		Util.require( S.isNotNull(id), "Fireblocks error: " + obj.getString("message") );
 		return id;
 	}
 		
 	/** Returns MyJsonObject */
-	MyJsonObject transactToObj() throws Exception {
-		return MyJsonObject.parse( transact() );
+	JsonObject transactToObj() throws Exception {
+		return JsonObject.parse( transact() );
 	}
 			
 	String transact() throws Exception {
@@ -150,15 +149,15 @@ public class Fireblocks {
 		S.out( body);
 		
 		if (body.startsWith( "{") ) {
-			MyJsonObject.parse(body).display();
+			JsonObject.parse(body).display();
 		}
 		else if (body.startsWith( "[")) {
-			MyJsonArray.parse(body).display();
+			JsonArray.parse(body).display();
 		}
 	}
 
 	/** Call a Fireblocks GET endpoint, return json object */
-	public static MyJsonObject fetchObject(String endpoint) throws Exception {
+	public static JsonObject fetchObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.operation( "GET");
@@ -166,15 +165,15 @@ public class Fireblocks {
 	}
 
 	/** Call a Fireblocks GET endpoint, return the string (could be array) */
-	public static MyJsonArray fetchArray(String endpoint) throws Exception {
+	public static JsonArray fetchArray(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
 		fb.operation( "GET");
 		String ret = fb.transact();
-		if (!MyJsonArray.isArray(ret) ) {
-			throw new Exception( MyJsonObject.parse(ret).getString("message") );  
+		if (!JsonArray.isArray(ret) ) {
+			throw new Exception( JsonObject.parse(ret).getString("message") );  
 		}
-		return MyJsonArray.parse(ret);
+		return JsonArray.parse(ret);
 	}
 
 	public static String padInt(int amt) {
@@ -314,7 +313,7 @@ public class Fireblocks {
 		fb.operation( "POST");
 		fb.body( body);
 		
-		MyJsonObject obj = fb.transactToObj();
+		JsonObject obj = fb.transactToObj();
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.call  msg=%s  code=%s",
 				str, obj.getString("code") );
@@ -338,7 +337,7 @@ public class Fireblocks {
 		
 		for (int i = 0; i < tries; i++) {
 			S.sleep(ms);
-			MyJsonObject trans = Transactions.getTransaction( fireblocksId);
+			JsonObject trans = Transactions.getTransaction( fireblocksId);
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
 			
 			String txHash = trans.getString("txHash");

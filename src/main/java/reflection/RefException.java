@@ -1,6 +1,6 @@
 package reflection;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import tw.util.S;
 
@@ -18,11 +18,11 @@ public class RefException extends Exception {
 		return m_code + " " + getMessage();
 	}
 
-	public JSONObject toJson() {
+	public JsonObject toJson() {
 		return eToJson(this, m_code);
 	}
 	
-	public static JSONObject eToJson(Exception e, RefCode refCode) {
+	public static JsonObject eToJson(Exception e, RefCode refCode) {
 		return Util.toJsonMsg(
 				"code", refCode.toString(), 
 				"message", e.getMessage(),

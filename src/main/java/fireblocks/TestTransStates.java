@@ -1,6 +1,7 @@
 package fireblocks;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -47,7 +48,7 @@ public class TestTransStates {
 		
 		for (int i = 0; ; i++) {
 			if (i > 0) S.sleep(1000);
-			MyJsonObject trans = Transactions.getTransaction( id);
+			JsonObject trans = Transactions.getTransaction( id);
 			S.out( "%s %s", trans.getString("status"), trans);
 			os.writeln( "%s %s", trans.getString("status"), trans);
 		}

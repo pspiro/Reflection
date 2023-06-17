@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 import org.postgresql.util.PSQLException;
 
 import tw.util.S;
@@ -51,14 +51,14 @@ public class MySqlConnection implements AutoCloseable {
 		return set;
 	}
 	
-	public JSONArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
+	public JsonArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
 		ResultSet res = query(sql, params);
 		
 		ResultSetMetaData meta = res.getMetaData();
 
-		JSONArray ar = new JSONArray();
+		JsonArray ar = new JsonArray();
 		while (res.next() ) {
-			JSONObject obj = new JSONObject();
+			JsonObject obj = new JsonObject();
 			for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
 				obj.put( res.getMetaData().getColumnLabel(i), res.getObject(i) );
 			}
@@ -86,13 +86,13 @@ public class MySqlConnection implements AutoCloseable {
 		insert( table, null, values);
 	}
 	
-	public void insertOrUpdate( String table, JSONObject json, String where, Object... params) throws Exception {
+	public void insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
 		if (updateJson( table, json, where, params) == 0) {
 			insertJson( table, json);
 		}
 	}
 	
-	public void insertJson( String table, JSONObject json) throws Exception {
+	public void insertJson( String table, JsonObject json) throws Exception {
 		String[] names = new String[json.size()];
 		Object[] vals = new Object[json.size()];
 
@@ -105,7 +105,7 @@ public class MySqlConnection implements AutoCloseable {
 	}
 	
 	/** Do not include the word 'where' in the where clause */
-	public int updateJson( String table, JSONObject json, String where, Object... params) throws Exception {
+	public int updateJson( String table, JsonObject json, String where, Object... params) throws Exception {
 		StringBuilder values = new StringBuilder();
 		for (Object key : json.keySet() ) {
 			if (values.length() > 0) {

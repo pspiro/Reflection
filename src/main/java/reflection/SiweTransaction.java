@@ -1,6 +1,5 @@
 package reflection;
 
-import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.time.Duration;
@@ -12,15 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
+import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
-import json.MyJsonObject;
 import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {
@@ -73,8 +70,7 @@ public class SiweTransaction extends MyTransaction {
 	 *  The response contains a Set-Cookie header with the SIWE message and signature */
 	public void handleSiweSignin() {
 		wrap( () -> {
-            MyJsonObject signedMsg = new MyJsonObject(
-            		new JSONParser().parse( new InputStreamReader( m_exchange.getRequestBody() ) ) );  // parseMsg() won't work here because it assumes all values are strings
+            JsonObject signedMsg = JsonObject.parse( m_exchange.getRequestBody() );  // parseMsg() won't work here because it assumes all values are strings
             
             out( "received signed msg: %s", signedMsg);
 			
@@ -149,9 +145,9 @@ public class SiweTransaction extends MyTransaction {
 				out( cookies);
 			}
 			
-			MyJsonObject siweMsg = validateAnyCookie( cookies);
+			JsonObject siweMsg = validateAnyCookie( cookies);
 
-			JSONObject response = new JSONObject();
+			JsonObject response = new JsonObject();
 			response.put("loggedIn", true);
 			response.put("message", siweMsg);
 			respond(response);
@@ -160,7 +156,7 @@ public class SiweTransaction extends MyTransaction {
 
 	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
 	 * @throws RefException */
-	private MyJsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
+	private JsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
 			try {
 				return validateCookie( cookie, null);
@@ -176,7 +172,7 @@ public class SiweTransaction extends MyTransaction {
 	
 	/** @param cookie could come from header or message body
 	 *  @param wallet may be null */ 
-	static MyJsonObject validateCookie( String cookie, String wallet) throws Exception {
+	static JsonObject validateCookie( String cookie, String wallet) throws Exception {
 		// the cookie has two parts: tag=value
 		// the tag is __Host_authToken<address><chainid>
 		// the value is json with two fields, signature and message
@@ -189,8 +185,8 @@ public class SiweTransaction extends MyTransaction {
 		//out( "Cookie header: " + cookieHeader);
 		//out( "Cookie body: " + cookieBody);
 
-		MyJsonObject signedSiweMsg = MyJsonObject.parse(cookieBody);  // signature+message
-		MyJsonObject siweMsg = signedSiweMsg.getObj("message");
+		JsonObject signedSiweMsg = JsonObject.parse(cookieBody);  // signature+message
+		JsonObject siweMsg = signedSiweMsg.getObject("message");
 		Main.require( siweMsg != null, RefCode.VALIDATION_FAILED, "No message in cookie");  // this happens in the pre-signin /siwe/me request
 		
 		// match address from cookie header with address from cookie body

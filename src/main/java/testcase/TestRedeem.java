@@ -1,7 +1,8 @@
 package testcase;
 
+import org.json.simple.JsonObject;
+
 import http.MyHttpClient;
-import json.MyJsonObject;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -12,18 +13,18 @@ public class TestRedeem extends MyTestCase {
 
 	public void testMyAfter() throws Exception {
 		MyHttpClient cli = cli();
-		MyJsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
 		
-		MyJsonObject tok = obj.getAr("tokens").getJsonObj(0);
+		JsonObject tok = obj.getArray("tokens").getJsonObj(0);
 		startsWith("RUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 	}
 	
 	public void testRedeem() throws Exception {
-		MyJsonObject payload = new MyJsonObject();
+		JsonObject payload = new JsonObject();
 		payload.put("cookie", Cookie.cookie);
 
 		MyHttpClient cli = cli();
@@ -33,12 +34,12 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testMyBefore() throws Exception {
-		MyJsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
 		
-		MyJsonObject tok = obj.getAr("tokens").getJsonObj(0);
+		JsonObject tok = obj.getArray("tokens").getJsonObj(0);
 		startsWith("RUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 	}

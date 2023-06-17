@@ -11,8 +11,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 
 import com.ib.client.Contract;
@@ -23,7 +23,6 @@ import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.Transfer;
-import json.MyJsonObject;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
@@ -48,13 +47,13 @@ public class BackendTransaction extends MyTransaction {
 			// query positions from Moralis
 			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			
-			JSONArray retVal = new JSONArray();
+			JsonArray retVal = new JsonArray();
 			
 			for (HashMap.Entry<String,Double> entry : Wallet.reqPositionsMap(walletAddr).entrySet() ) {
 				HashMap stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
-					JSONObject resp = new JSONObject();
+					JsonObject resp = new JsonObject();
 					resp.put("conId", stock.get("conid") );
 					resp.put("symbol", stock.get("symbol") );
 					resp.put("price", getPrice(stock) );
@@ -172,7 +171,7 @@ public class BackendTransaction extends MyTransaction {
 				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {
-				respond(m_main.type2Config().toJsonObj() );
+				respond(m_main.type2Config() );
 			}
 		});
 	}
@@ -194,7 +193,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private JSONArray trim(JSONArray json) {
+	private JsonArray trim(JsonArray json) {
 		json.forEach( obj -> {
 			((HashMap)obj).remove("created_at");
 			((HashMap)obj).remove("updated_at");
@@ -207,12 +206,12 @@ public class BackendTransaction extends MyTransaction {
 			String walletAddr = getWalletFromUri();
 			
 			m_main.sqlConnection( conn -> {
-				JSONArray ar = conn.queryToJson(
+				JsonArray ar = conn.queryToJson(
 						"select * from users where lower(wallet_public_key) = '%s'", 
 						walletAddr.toLowerCase() );
 				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", walletAddr);
 				
-				respond( (JSONObject)trim( ar).get(0) );
+				respond( (JsonObject)trim( ar).get(0) );
 			});
 		});
 	}
@@ -230,13 +229,13 @@ public class BackendTransaction extends MyTransaction {
 			
 			Wallet wallet = new Wallet(walletAddr);
 			
-			JSONObject rusd = new JSONObject();
+			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
 			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
-			JSONObject busd = new JSONObject();
+			JsonObject busd = new JsonObject();
 			busd.put( "name", "USDC");
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
@@ -244,17 +243,17 @@ public class BackendTransaction extends MyTransaction {
 			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
 			busd.put( "stablecoin", true);
 			
-			JSONObject base = new JSONObject();
+			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
 			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
-			JSONArray ar = new JSONArray();
+			JsonArray ar = new JsonArray();
 			ar.add(rusd);
 			ar.add(busd);
 			ar.add(base);
 			
-			JSONObject obj = new JSONObject();
+			JsonObject obj = new JsonObject();
 			obj.put( "refresh", 2000);
 			obj.put( "tokens", ar);
 			respond(obj);
@@ -318,8 +317,8 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();
 			
-			JSONArray orders = new JSONArray();
-			JSONArray messages = new JSONArray();
+			JsonArray orders = new JsonArray();
+			JsonArray messages = new JsonArray();
 
 			List<LiveOrder> walletOrders = liveOrders.get(walletAddr.toLowerCase());
 			if (walletOrders != null) {
@@ -346,7 +345,7 @@ public class BackendTransaction extends MyTransaction {
 				}
 			}
 			
-			JSONObject ret = new JSONObject();
+			JsonObject ret = new JsonObject();
 			ret.put( "orders", orders);
 			ret.put( "messages", messages);
 			respond( ret);
@@ -358,13 +357,13 @@ public class BackendTransaction extends MyTransaction {
 			String walletAddr = getWalletFromUri();
 			
 			m_main.sqlConnection( conn -> {
-				JSONArray ar = conn.queryToJson(
+				JsonArray ar = conn.queryToJson(
 						"select name, address, email, phone, pan_number from users where wallet_public_key = '%s'", 
 						walletAddr.toLowerCase() );
 				
-				JSONObject obj = ar.size() == 0 
-						? new JSONObject() 
-						: (JSONObject)ar.get(0);
+				JsonObject obj = ar.size() == 0 
+						? new JsonObject() 
+						: (JsonObject)ar.get(0);
 				
 				respond(obj);
 			});
@@ -374,7 +373,7 @@ public class BackendTransaction extends MyTransaction {
 	public void handleUpdateProfile() {
 		wrap( () -> {
             Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-            JSONObject profile = (JSONObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+            JsonObject profile = (JsonObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 			
 			String walletAddr = profile.getLowerString("wallet_public_key");
 			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");

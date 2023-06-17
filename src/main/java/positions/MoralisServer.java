@@ -11,13 +11,13 @@ import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Erc20;
 import http.SimpleTransaction;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import positions.EventFetcher.Balances;
 import reflection.Main;
 import reflection.MySqlConnection;
@@ -142,7 +142,7 @@ public class MoralisServer {
 				moralis, chain, farDate);
 		
 		String body = MoralisServer.querySync( url);
-		MyJsonObject jsonObj = MyJsonObject.parse( body);
+		JsonObject jsonObj = JsonObject.parse( body);
 		return jsonObj.getInt("block");
 	}
 
@@ -166,12 +166,12 @@ public class MoralisServer {
 	
 	void handleBlockchainEvent( SimpleTransaction trans) {
 		try {
-			MyJsonObject msg = trans.getJson();
+			JsonObject msg = trans.getJson();
 			
-			int block = msg.getObj( "block").getInt("number");
+			int block = msg.getObject( "block").getInt("number");
 
 			S.out( "Received ERC20 transfers");
-			for (MyJsonObject transfer : msg.getAr( "erc20Transfers") ) {
+			for (JsonObject transfer : msg.getArray( "erc20Transfers") ) {
 	        	String token = transfer.getString( "contract").toLowerCase();
 	        	String from = transfer.getString( "from").toLowerCase();
 	        	String to = transfer.getString( "to").toLowerCase();
@@ -184,7 +184,7 @@ public class MoralisServer {
 			
 			S.out( "");
 			S.out( "Received logs");
-	        for (MyJsonObject log : msg.getAr( "logs") ) {
+	        for (JsonObject log : msg.getArray( "logs") ) {
 	        	String token = log.getString( "address").toLowerCase();
 	        	String from = Util.right( log.getString( "topic1"), 42).toLowerCase();
 	        	String to = Util.right( log.getString( "topic2"), 42).toLowerCase();
@@ -268,10 +268,10 @@ public class MoralisServer {
 		void accept(String t) throws Exception;
 	}
 	
-	public static MyJsonObject queryTransaction( String transactionHash, String chain) throws Exception {
+	public static JsonObject queryTransaction( String transactionHash, String chain) throws Exception {
 		String url = String.format( "%s/transaction/%s?chain=%s",
 				moralis, transactionHash, chain);
-		return MyJsonObject.parse( querySync( url) );
+		return JsonObject.parse( querySync( url) );
 	}
 
 	/** Send the query; if there is an UnknownHostException, try again as it
@@ -355,30 +355,30 @@ public class MoralisServer {
 		decimals : 18,
 		name : Reflection BUSD,
 		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
-	public static MyJsonArray reqPositionsList(String wallet) throws Exception {
+	public static JsonArray reqPositionsList(String wallet) throws Exception {
 		String url = String.format("%s/%s/erc20?chain=%s",
 				moralis, wallet, chain);
 		String ret = querySync(url);
 		
 		// we expect an array; if we get an object, there must have been an error
-		if (MyJsonObject.isObject(ret) ) {
-			throw new Exception( "Moralis " + MyJsonObject.parse(ret).getString("message") );
+		if (JsonObject.isObject(ret) ) {
+			throw new Exception( "Moralis " + JsonObject.parse(ret).getString("message") );
 		}
 
-		return MyJsonArray.parse( ret);
+		return JsonArray.parse( ret);
 		
 	}
 	
-	public static MyJsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
+	public static JsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
 		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
 				moralis, contract, chain, owner, spender);
-		return MyJsonObject.parse( querySync(url) );
+		return JsonObject.parse( querySync(url) );
 	}
 	
 	public static double getNativeBalance(String address) throws Exception {
 		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
 		return Erc20.fromBlockchain(
-				MyJsonObject.parse( querySync(url) ).getString("balance"),
+				JsonObject.parse( querySync(url) ).getString("balance"),
 				18);
 	}
 	

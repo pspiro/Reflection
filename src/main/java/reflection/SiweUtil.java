@@ -1,16 +1,13 @@
 package reflection;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 
-import json.MyJsonObject;
-import tw.util.S;
-
 public class SiweUtil {
 
-	public static JSONObject toJsonObject(SiweMessage siweMsg) {
-		JSONObject msg = new JSONObject();
+	public static JsonObject toJsonObject(SiweMessage siweMsg) {
+		JsonObject msg = new JsonObject();
 		msg.put( "domain", siweMsg.getDomain() );
 		msg.put( "address", siweMsg.getAddress() );
 		msg.put( "uri", siweMsg.getUri() );
@@ -22,7 +19,7 @@ public class SiweUtil {
 		return msg;
 	}
 
-	public static SiweMessage toSiweMessage(MyJsonObject obj) throws Exception {
+	public static SiweMessage toSiweMessage(JsonObject obj) throws Exception {
 		return new SiweMessage.Builder(
 				obj.getString("domain"), 
 				obj.getString("address"), 

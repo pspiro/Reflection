@@ -2,7 +2,8 @@ package json;
 
 import java.util.Scanner;
 
-import org.json.simple.parser.ParseException;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 public class FormatJson {
 	public static void main(String[] args) throws Exception {
@@ -14,10 +15,10 @@ public class FormatJson {
 		int j = input.indexOf( "[");
 
 		if (i < j || j == -1) {
-			MyJsonObject.parse(input.substring(i)).display();
+			JsonObject.parse(input.substring(i)).display();
 		}
 		else {
-			MyJsonArray.parse(input.substring(j)).display();
+			JsonArray.parse(input.substring(j)).display();
 		}
 	}
 }

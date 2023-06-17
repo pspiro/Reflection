@@ -3,9 +3,10 @@ package positions;
 import java.sql.ResultSet;
 import java.util.HashMap;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
 import tw.util.S;
 
 /** This is a client that will query Moralis for the token balances for each wallet
@@ -43,14 +44,14 @@ public class BalanceClient {
 		// query moralis server
 	    String url = String.format( "%s/%s/erc20?chain=%s", MoralisServer.moralis, wallet, chain);
 	    String text = MoralisServer.querySync( url);
-		MyJsonArray morPositions = MyJsonArray.parse(text);
+		JsonArray morPositions = JsonArray.parse(text);
 		
 	    // query my position server
 		MyHttpClient cli = new MyHttpClient("localhost", 9393);
 		cli.get( "wallet?wallet=" + wallet);
-		MyJsonObject myWallet = cli.readMyJsonObject();
+		JsonObject myWallet = cli.readMyJsonObject();
 
-		for (MyJsonObject item : morPositions) {
+		for (JsonObject item : morPositions) {
 			String token = item.getString("token_address").toLowerCase();
 			if (m_map.containsKey(token) ) {
 				String name = item.getString("name");

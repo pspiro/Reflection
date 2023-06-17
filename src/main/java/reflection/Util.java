@@ -15,7 +15,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
@@ -132,8 +132,8 @@ public class Util {
 
 	/** Create the whole Json message, including the time.
 	 *  @param strs tag/value pairs */
-	static JSONObject toJsonMsg( Object... strs) { // get rid of this. pas
-		JSONObject obj = new JSONObject();
+	static JsonObject toJsonMsg( Object... strs) { // get rid of this. pas
+		JsonObject obj = new JsonObject();
 		
 		Object tag = null;
 		for (Object val : strs) {

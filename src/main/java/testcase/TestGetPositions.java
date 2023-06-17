@@ -3,10 +3,10 @@ package testcase;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import http.MyHttpClient;
-import json.MyJsonArray;
-import json.MyJsonObject;
-import junit.framework.TestCase;
 import tw.util.S;
 
 public class TestGetPositions extends MyTestCase {
@@ -37,10 +37,10 @@ public class TestGetPositions extends MyTestCase {
 		cli.get("?msg=getpositions");
 		assertEquals(200, cli.getResponseCode());
 
-		MyJsonArray ar = cli.readMyJsonArray();
+		JsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 
-		MyJsonObject item = ar.getJsonObj(0);
+		JsonObject item = ar.getJsonObj(0);
 		item.display();
 		assertTrue( item.getInt("conid") > 0);
 		assertTrue( item.getDouble("position") > 0);
@@ -50,10 +50,10 @@ public class TestGetPositions extends MyTestCase {
 		MyHttpClient cli = cli();
 		cli.get("/api/positions/" + wallet);
 		assertEquals(200, cli.getResponseCode());
-		MyJsonArray ar = cli.readMyJsonArray();
+		JsonArray ar = cli.readMyJsonArray();
 		assertTrue( ar.size() > 0);
 		
-		MyJsonObject item = ar.getJsonObj(0);
+		JsonObject item = ar.getJsonObj(0);
 		item.display();
 
 		assertTrue( item.getString("symbol").length() > 0 );

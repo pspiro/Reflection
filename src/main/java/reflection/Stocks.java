@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.json.simple.JSONArray;
+import org.json.simple.JsonArray;
 
 import redis.ConfigBase;
 import tw.google.NewSheet;
@@ -13,8 +13,8 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 
 public class Stocks implements Iterable<Stock> {
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
-	private final JSONArray m_stocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final JSONArray m_hotStocks = new JSONArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JsonArray m_hotStocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	
 	public void readFromSheet(ConfigBase config) throws Exception {
 		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);
@@ -64,7 +64,7 @@ public class Stocks implements Iterable<Stock> {
 		m_hotStocks.sort(null);
 	}
 
-	public JSONArray stocks() {
+	public JsonArray stocks() {
 		return m_stocks;
 	}
 	
@@ -76,7 +76,7 @@ public class Stocks implements Iterable<Stock> {
 		return m_stockMap.values();
 	}
 	
-	public JSONArray hotStocks() {
+	public JsonArray hotStocks() {
 		return m_hotStocks;
 	}
 

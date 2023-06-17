@@ -1,6 +1,7 @@
 package positions;
 
-import json.MyJsonObject;
+import org.json.simple.JsonObject;
+
 import reflection.Util;
 import tw.util.S;
 
@@ -8,7 +9,7 @@ public class TestJson {
 	public static void main(String[] args) throws Exception {
 		String json = Util.toJson( "{'a': 3, 'b': 'bob' }");
 		
-		MyJsonObject obj = MyJsonObject.parse(json);
+		JsonObject obj = JsonObject.parse(json);
 		
 		A a = new A(obj);
 		
@@ -17,9 +18,9 @@ public class TestJson {
 	}
 
 	static class A {
-		MyJsonObject obj;
+		JsonObject obj;
 
-		A(MyJsonObject o) {
+		A(JsonObject o) {
 			obj = o;
 		}
 		

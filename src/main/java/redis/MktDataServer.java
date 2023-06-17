@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
 
-import org.json.simple.JSONArray;
+import org.json.simple.JsonArray;
 
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;

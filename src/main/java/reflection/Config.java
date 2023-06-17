@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
-import org.json.simple.JSONObject;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
@@ -222,7 +222,7 @@ public class Config extends ConfigBase {
 		}
 	}
 
-	public JSONObject toJson() throws Exception {
+	public JsonObject toJson() throws Exception {
 		ArrayList<Object> list = new ArrayList<Object>();
 		
 		for (Field field : Config.class.getDeclaredFields() ) {
