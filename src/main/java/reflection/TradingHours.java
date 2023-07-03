@@ -5,6 +5,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.TimeZone;
 
 import org.json.simple.JsonObject;
 
@@ -73,7 +74,31 @@ public class TradingHours {
 				? new Date()
 				: dateAndTime.parse( S.userDate(new Date()) + " " + simTime);
 	}
-	
+    
+    private ContractDetails getDeets(String exchange) throws Exception {
+		ContractDetails deets;
+		synchronized( m_map) {
+			deets = m_map.get(exchange);
+		}
+		Util.require( deets != null, "Error: no contract details for exchange " + exchange); // this can happen at startup if the mkt data update thread starts before the trading hours have returned
+		return deets;
+    }
+    
+    public void checkSplitDates(String simTime, String startDate, String endDate) throws Exception {
+    	// catch the vast majority of checks; only stock splits will get past here
+    	if (S.isNull(startDate) && S.isNull(endDate) ) {
+    		return;
+    	}
+    	
+		TimeZone zone = getDeets("SMART").getTimeZone();
+
+		SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");
+		yyyymmdd.setTimeZone(zone);
+		String today = yyyymmdd.format( getNow(simTime) );
+
+		Main.require( S.isNull(startDate) || today.compareTo(startDate) >= 0, RefCode.PRE_SPLIT, "This contract has not started trading yet; it starts on %s", startDate); 
+		Main.require( S.isNull(endDate) || today.compareTo(endDate) <= 0, RefCode.POST_SPLIT, "The stock has split and must be converted to the new post-split smart contract"); 
+    }
 	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS. */
@@ -97,11 +122,7 @@ public class TradingHours {
 
 	/** Return true if now is inside trading hours OR liquid hours. */
 	boolean insideHours( String exchange, Date now) throws Exception {  // change to return boolean
-		ContractDetails deets;
-		synchronized( m_map) {
-			deets = m_map.get(exchange);
-		}
-		Util.require( deets != null, "Error: no contract details for exchange " + exchange); // this can happen at startup if the mkt data update thread starts before the trading hours have returned
+		ContractDetails deets = getDeets(exchange);
 
 		return inside( deets, deets.tradingHours(), now ) ||
 			   inside( deets, deets.liquidHours(), now );

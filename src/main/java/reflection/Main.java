@@ -223,14 +223,6 @@ public class Main implements ITradeReportHandler {
 	
 	// let it fall back to read from a flatfile if this fails. pas
 
-	public static HashMap<Integer, ListEntry> readMasterSymbols(Book book) throws Exception {
-		HashMap<Integer,ListEntry> map = new HashMap<>();
-		for (ListEntry entry : book.getTab( "Master-symbols").fetchRows(false) ) {
-			map.put( entry.getInt("Conid"), entry);
-		}
-		return map;
-	}
-
 	String getExchange( int conid) throws RefException {
 		return getStock(conid).getString("exchange");
 	}

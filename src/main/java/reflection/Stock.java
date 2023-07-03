@@ -1,5 +1,7 @@
 package reflection;
 
+import static reflection.Main.require;
+
 import org.json.simple.JsonObject;
 
 import fireblocks.StockToken;
@@ -83,5 +85,21 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 
 	public double getCurTokens() throws Exception {
 		return new StockToken( getSmartContractId() ).queryTotalSupply();
+	}
+	
+	public String getStartDate() {
+		return getString("startDate");
+	}
+
+	public String getEndDate() {
+		return getString("endDate");
+	}
+	
+	public double getConvertsToAmt() { 
+		return getDouble("convertsToAmt");
+	}
+
+	public String getConvertsToAddress() { 
+		return getString("convertsToAddress");
 	}
 }

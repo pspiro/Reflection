@@ -29,9 +29,9 @@ public class Stocks implements Iterable<Stock> {
 		m_hotStocks.clear();
 		
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = Main.readMasterSymbols(book);
+		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
 		
-		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(false) ) {
+		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
 			Stock stock = new Stock();
 			if ("Y".equals( row.getString( "Active") ) ) {
 				int conid = Integer.valueOf( row.getString("Conid") );
@@ -41,6 +41,10 @@ public class Stocks implements Iterable<Stock> {
 				String address = row.getString("TokenAddress");
 				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
 				stock.put( "smartcontractid", address);
+				stock.put( "startDate", row.getString("Start Date") );
+				stock.put( "endDate", row.getString("End Date") );
+				stock.put( "convertsToAmt", row.getDouble("Converts To Amt") );
+				stock.put( "convertsToAddress", row.getString( "Converts To Address") );
 				
 				ListEntry masterRow = map.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
@@ -62,6 +66,15 @@ public class Stocks implements Iterable<Stock> {
 		
 		m_stocks.sort(null);
 		m_hotStocks.sort(null);
+	}
+
+	/** @return map of conid -> ListEntry */
+	private static HashMap<Integer, ListEntry> readMasterSymbols(Book book) throws Exception {
+		HashMap<Integer,ListEntry> map = new HashMap<>();
+		for (ListEntry entry : book.getTab( "Master-symbols").fetchRows(false) ) {
+			map.put( entry.getInt("Conid"), entry);
+		}
+		return map;
 	}
 
 	public JsonArray stocks() {

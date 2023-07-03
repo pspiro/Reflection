@@ -8,7 +8,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
+import reflection.Main;
+import reflection.RefCode;
+import reflection.RefException;
 import tw.util.S;
 
 public class ContractDetails {
@@ -40,6 +44,7 @@ public class ContractDetails {
     private Decimal  m_minSize;
     private Decimal  m_sizeIncrement;
     private Decimal  m_suggestedSizeIncrement;
+    private TimeZone m_tz;
 
     // BOND values
     private String   m_cusip;
@@ -253,6 +258,16 @@ public class ContractDetails {
         sb.append( '\t');
         sb.append( val);
         sb.append( '\n');
+    }
+
+    
+    public TimeZone getTimeZone() throws RefException {
+    	if (m_tz == null) {
+			String timeZoneId = S.isNotNull( m_timeZoneId) ? m_timeZoneId : "America/New_York";
+			m_tz = TimeZone.getTimeZone(timeZoneId);
+			Main.require( m_tz != null, RefCode.UNKNOWN, "Invalid time zone id %s for conid %s", timeZoneId, conid() );
+    	}
+    	return m_tz;
     }
 
 }

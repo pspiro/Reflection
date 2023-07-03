@@ -17,7 +17,7 @@ public class TestOrder extends MyTestCase {
 		try {
 			curPrice = m_config.newRedis().singleQuery( 
 					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );
-			S.out( "TestOrder: Current IBM price is %s", curPrice);
+			S.out( "TestOrder: Current AAPL price is %s", curPrice);
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {

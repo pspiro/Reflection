@@ -108,9 +108,12 @@ public class OrderTransaction extends MyTransaction {
 		// confirm that the user has enough stablecoin or stock token in their wallet
 		// fix this-> requireSufficientStablecoin(order);		
 		
-		// request contract details (prints to stdout)
+		// check trading hours
 		require( m_main.m_tradingHours.insideAnyHours( m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
+		// check the dates (applies to stock splits only)
+		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.getStartDate(), m_stock.getEndDate() );
+		
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
 		// explain why there are no prices which should never happen otherwise

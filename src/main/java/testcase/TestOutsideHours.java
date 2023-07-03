@@ -38,12 +38,13 @@ public class TestOutsideHours extends MyTestCase {
 	}
 
 	public JsonObject testHours( int conid, String time) throws Exception {
-		double price = TestOrder.curPrice + 5;
-		if (conid == QQQ) price = 318*1.05;
-				
+		double price = m_config.newRedis().singleQuery( 
+				jedis -> Double.valueOf( jedis.hget("" + conid, "bid") ) );
+
 		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'action': 'buy', 'quantity': '1', 'tokenPrice': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
-				conid, price, time);
+				conid, price * 1.05, time);
 		JsonObject order = TestOrder.orderData(data);  // adds the cookie
+				
 		return postOrderToObj(order);
 	}
 

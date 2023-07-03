@@ -22,6 +22,7 @@ import junit.framework.TestCase;
 	   TestProfile.class,
 	   TestRedeem.class,
 	   TestSiwe.class,
+	   TestSplitDates.class,
 	   TestStrings.class,
 	   TestTwoOrdersDifUser.class,
 	   TestTwoOrdersSameUser.class,	   
