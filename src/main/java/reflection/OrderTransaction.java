@@ -109,8 +109,14 @@ public class OrderTransaction extends MyTransaction {
 		// fix this-> requireSufficientStablecoin(order);		
 		
 		// check trading hours
-		require( m_main.m_tradingHours.insideAnyHours( m_stock.getBool("is24hour"), m_map.get("simtime")), RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
-
+		require( 
+				m_main.m_tradingHours.insideAnyHours( 
+						m_stock.getBool("is24hour"), 
+						m_map.get("simtime"), 
+						() -> contract.exchange("IBEOS") ),  // this executes only if SMART is closed but IBEOS is open 
+				RefCode.EXCHANGE_CLOSED, 
+				exchangeIsClosed);
+		
 		// check the dates (applies to stock splits only)
 		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.getStartDate(), m_stock.getEndDate() );
 		

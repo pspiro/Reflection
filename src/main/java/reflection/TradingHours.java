@@ -101,8 +101,9 @@ public class TradingHours {
     }
 	
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
-	 *  check IBEOS and change the exchange on the contract passed in to IBEOS. */
-	boolean insideAnyHours( boolean is24Hour, String simTime) throws Exception {
+	 *  check IBEOS and change the exchange on the contract passed in to IBEOS
+	 *  @param run gets executed if we want to swtich to IBEOS */
+	boolean insideAnyHours( boolean is24Hour, String simTime, Runnable run) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
 		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
@@ -115,6 +116,9 @@ public class TradingHours {
 			
 		if (!inside && is24Hour) {
 			inside = insideHours( "IBEOS", now);
+			if (inside) {
+				run.run();  // let the caller switch the exchange to IBEOS
+			}
 		}
 		
 		return inside;
