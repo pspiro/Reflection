@@ -92,7 +92,7 @@ public class BackendTransaction extends MyTransaction {
 			contract.conid(conid);
 			contract.exchange( m_main.getExchange( conid) );
 			
-			boolean inside = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null);
+			boolean inside = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null, null);
 			stock.put( "exchangeStatus", inside ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
