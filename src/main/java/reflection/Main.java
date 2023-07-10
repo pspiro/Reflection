@@ -133,7 +133,8 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/working-orders", exch -> new BackendTransaction(this, exch).handleWorkingOrders() );
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
-		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
+a
+server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
