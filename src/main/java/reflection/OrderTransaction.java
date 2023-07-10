@@ -98,7 +98,10 @@ public class OrderTransaction extends MyTransaction {
 		double myTds = order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
 		// fix this -> require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
-		m_stablecoinAmt = m_map.getRequiredDouble("price");
+		m_stablecoinAmt = m_map.getDouble("amount");
+		if (m_stablecoinAmt == 0) {
+			m_stablecoinAmt = m_map.getDouble("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
+		}
 		
 		double myStablecoinAmt = order.isBuy()
 			? preCommAmt + m_config.commission()
@@ -397,12 +400,11 @@ public class OrderTransaction extends MyTransaction {
 
 			// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
 			if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
-				double totalOrderAmt = m_map.getRequiredDouble("price");  // including commission, very poorly named field
 				double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 				require( 
-						Util.isGtEq(approvedAmt, totalOrderAmt), 
+						Util.isGtEq(approvedAmt, m_stablecoinAmt), 
 						RefCode.INSUFFICIENT_ALLOWANCE,
-						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, totalOrderAmt); 
+						"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 			}
 
 			// we don't know why it failed, so throw the Fireblocks error
