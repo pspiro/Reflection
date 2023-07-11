@@ -122,7 +122,7 @@ public class Erc20 {
 		S.out( "  fireblocks id is %s", id);
 
 		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.getTransHash( id, 60, 1000);
+		String txHash = Fireblocks.waitForTransHash( id, 60, 1000);
 		S.out( "  blockchain transaction hash is %s", txHash);
 
 		S.out( "  waiting for deployed address");

@@ -47,7 +47,7 @@ public class StockToken extends Erc20 {
 				0,
 				new StockToken( tab.get( "IBM") ),
 				1000);
-		Fireblocks.getTransHash(id, 60, 1000);
+		Fireblocks.waitForTransHash(id, 60, 1000);
 	}
 	
 	// 0: default

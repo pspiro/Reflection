@@ -332,7 +332,7 @@ public class Fireblocks {
 	 *  in the Fireblocks webhook callback, at least for the CONFIRMING status message
 	 *  
 	 *  The Moralis is WAY MORE delayed, even	. */
-	public static String getTransHash(String fireblocksId, int tries, int ms) throws Exception {
+	public static String waitForTransHash(String fireblocksId, int tries, int ms) throws Exception {
 		// it always takes at least a few seconds, I think
 		
 		for (int i = 0; i < tries; i++) {
@@ -356,6 +356,31 @@ public class Fireblocks {
 		}
 		
 		throw new RefException( RefCode.TIMED_OUT, "Timed out waiting for transaction hash"); // should never happen
+	}
+	
+	public static void waitForStatus(String fireblocksId, String statusIn) throws Exception {
+		// it always takes at least a few seconds, I think
+		
+		while( true) {
+			S.sleep(1000);
+			JsonObject trans = Transactions.getTransaction( fireblocksId);
+			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
+			
+			String status = trans.getString("status");
+			Util.require( status != null, "Null Fireblocks status");
+			
+			if (status.equals( statusIn) ) {
+				return;
+			}
+			
+			if ("COMPLETED".equals(status) ) {
+				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction completed without status");  // should never happen
+			}
+			
+			if ("FAILED".equals(status) ) {
+				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction failed - %s", trans.getString("subStatus") );
+			}
+		}
 	}
 	
 	static void initMap() {

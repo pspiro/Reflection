@@ -15,7 +15,11 @@ public class RetVal {
 	
 	/** This blocks for up to 63 seconds */
 	public String waitForHash() throws Exception {
-		S.out( "  waiting for blockchain hash...");
-		return Fireblocks.getTransHash(m_id, 60, 1000);
+		return Fireblocks.waitForTransHash(m_id, 60, 1000);
+	}
+	
+	/** This blocks for up to 63 seconds */
+	public void waitForStatus(String status) throws Exception {
+		Fireblocks.waitForStatus(m_id, status);
 	}
 }
