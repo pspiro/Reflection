@@ -5,12 +5,13 @@ public enum LogType {
 	CHECK,			// check order (what-if)
 	COMMISSION,		// commission report received
 	ERROR,			// should never happen
+	FB_UPDATE,
 	FILLED,			// order was completely filled
 	INFO,
 	JEDIS,
 	MD_CONNECTION,
 	MINT,			// minted some goerli ETF for user
-	ORDER,			// received order
+	REC_ORDER,			// received order
 	ORDER_CONNECTION,
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
@@ -18,10 +19,10 @@ public enum LogType {
 	REDEEM, 
 	FAILED,		// order was rejected
 	RESTART,		// application was restarted
-	SUBMIT,
+	SUBMITTED,
 	TERMINATE,
 	TIME,			// switched to/from IBEOS hours
 	TIMEOUT,		// msg timed out but we responded anyway
 	TRADE,			// trade report received
-	WALLET,
+	WALLET, 
 }

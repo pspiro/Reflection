@@ -31,8 +31,6 @@ public abstract class MyTransaction {
 		RUSD, USDC
 	}
 	
-	static HashMap<String,Vector<LiveOrder>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
-	
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
 	static final String message = "message";
@@ -46,7 +44,7 @@ public abstract class MyTransaction {
 	protected ParamMap m_map = new ParamMap();
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
-	protected String m_id;
+	protected String m_uid;
 	
 
 	MyTransaction( Main main, HttpExchange exchange) {
@@ -56,7 +54,7 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_id = header == null ? Util.id(3) : Util.id(3) + " " + header;		
+		m_uid = header == null ? Util.id(5) : Util.id(5) + " " + header;		
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 
@@ -94,7 +92,7 @@ public abstract class MyTransaction {
 
 	            JsonObject jsonObject = (JsonObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 
-	            for (Object key : jsonObject.keySet() ) {
+	            for (Object key : jsonObject.keySet() ) {  // this is stupid to build a new map; you should just save the json object
 	            	Object value = jsonObject.get(key);
 	            	require( key instanceof String, RefCode.INVALID_REQUEST, "Invalid JSON, key is not a string");
 
@@ -273,16 +271,16 @@ public abstract class MyTransaction {
 	
 	/** We need this version because some strings have % characters in them */ 
 	void out( Object format) {
-		S.out( m_id + " " + format);
+		S.out( m_uid + " " + format);
 	}
 	
 	void out( String format, Object... params) {
-		S.out( m_id + " " + format, params);
+		S.out( m_uid + " " + format, params);
 	}
 
 	/** Format to log is ID LOG_TYPE FORMATTED_MSG where id is 3-digit code plus prefix */
 	void log( LogType type, String format, Object... params) {
-		Main.log( S.format( "%s %s %s", m_id, type, S.format(format, params) ) );  
+		Main.log( S.format( "%s %s %s", m_uid, type, S.format(format, params) ) );  
 	}
 
 	/** Assumes the wallet address is the last token in the URI */

@@ -770,8 +770,8 @@ public class Order {
 
 	/** Log entry for order */ 
 	public String getOrderLog(Contract contract, String walletAddr) {
-		return String.format( "wallet=%s  conid=%s | %s %.3f on %s at %.2f",
-				walletAddr, contract.conid(), 
+		return String.format( "wallet=%s  conid=%s  orderId=%s | %s %.3f on %s at %.2f",
+				walletAddr, contract.conid(), m_orderId,
 				m_action, m_totalQuantity, contract.exchange(), m_lmtPrice);
 	}
 

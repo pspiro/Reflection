@@ -5,8 +5,6 @@ import static reflection.Main.require;
 
 import java.util.Vector;
 
-import org.json.simple.JsonObject;
-
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
@@ -16,26 +14,26 @@ import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import fireblocks.StockToken;
-import fireblocks.Transactions;
 import reflection.LiveOrder.FireblocksStatus;
 import tw.util.S;
 import util.LogType;
 
-public class OrderTransaction extends MyTransaction {
+public class OrderTransaction extends LiveOrderTransaction {
 	private double m_desiredQuantity;  // same as Order.m_totalQuantity
 	private Stock m_stock;
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_respondedToOrder;
-	private String m_walletAddr; // you could move this to OrderTransaction if desired, it's not really part of the order
+	private String m_walletAddr;
 	private LiveOrder m_liveOrder;  // you could use existing Order class instead
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
-		super(main, exch, "ORD");
+		super(main, exch);
  	}
 	
 	/** Msg received directly from Frontend via nginx */
 	public void backendOrder() {
+		// any problem in here calls respond()
 		wrap( () -> {
 			require( "POST".equals(m_exchange.getRequestMethod() ), RefCode.INVALID_REQUEST, "order and check-order must be POST"); 
 			parseMsg();
@@ -129,37 +127,41 @@ public class OrderTransaction extends MyTransaction {
 		// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
 		// * or check that ANY price is pretty recent, to we know prices are updating
 		
-		log( LogType.ORDER, order.getOrderLog(contract, m_walletAddr) );
+		log( LogType.REC_ORDER, order.getOrderLog(contract, m_walletAddr) );
 		
 		m_liveOrder = new LiveOrder(
 				side, 
-				S.format("%s %s %s for $%s", cap(side), m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt) ); 
+				S.format("%s %s %s for $%s", cap(side), m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt),
+				m_uid); 
+		
+		respond( code, RefCode.OK, "id", m_liveOrder.uid() );
 		
 		// now it is up to the live order system to report success or failure
 		walletLiveOrders().add( m_liveOrder);
 
-		respond( code, RefCode.OK, "id", m_liveOrder.id() );
-		
-		// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
-		if (order.roundedQty() == 0) {
-			order.status(OrderStatus.Filled);
-			respondToOrder(order, 0, false);
-		}
-		// AUTO-FILL - for testing only
-		else if (m_config.autoFill() ) {
-			require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
-			log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-					order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
-					m_config.commission(), 0, "");
-			order.status(OrderStatus.Filled);
-			respondToOrder( order, order.totalQuantity(), false ); // you might want to sometimes pass false here when testing
-		}
-		else {
-			submitOrder(  contract, order);
-		}
+		shrinkWrap( () -> {
+			// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
+			if (order.roundedQty() == 0) {
+				order.status(OrderStatus.Filled);
+				onIBOrderCompleted(order, 0, false);
+			}
+			// AUTO-FILL - for testing only
+			else if (m_config.autoFill() ) {
+				require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
+				log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+						order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
+						m_config.commission(), 0, "");
+				order.status(OrderStatus.Filled);
+				onIBOrderCompleted( order, order.totalQuantity(), false ); // you might want to sometimes pass false here when testing
+			}
+			else {
+				submitOrder(  contract, order);
+			}
+		});
 	}
 
-	/** NOTE: You MUST call respondToOrder() once you come in here, so no require() */
+	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require() and no wrap(),
+	 *  only shrinkWrap()  */
 	private void submitOrder( Contract contract, Order order) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
@@ -168,7 +170,7 @@ public class OrderTransaction extends MyTransaction {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 
-				wrap( () -> {
+				shrinkWrap( () -> {
 					order.status(status);
 					out( "  order status  id=%s  status=%s", order.orderId(), status);
 
@@ -180,13 +182,13 @@ public class OrderTransaction extends MyTransaction {
 
 					if (status.isComplete() ) {
 						order.permId(permId);
-						respondToOrder( order, shares.value(), false);
+						onIBOrderCompleted( order, shares.value(), false);
 					}
 				});
 			}
 
 			@Override public void handle(int errorCode, String errorMsg) {
-				wrap( () -> {
+				shrinkWrap( () -> {
 					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", order.orderId(), errorCode, errorMsg);
 
 					// if some shares were filled, let orderStatus or timeout handle it
@@ -209,51 +211,46 @@ public class OrderTransaction extends MyTransaction {
 			}
 		});
 
-		log( LogType.SUBMIT, "wallet=%s  orderid=%s", m_walletAddr, order.orderId() );
+		log( LogType.SUBMITTED, order.getOrderLog(contract, m_walletAddr) );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
 		setTimer( m_config.orderTimeout(), () -> onOrderTimeout( order, shares.value() ) );
 	}
 	
-	/** NOTE: You MUST call respondToOrder() once you come in here, so no require() */
-	private synchronized void onOrderTimeout(Order order, double filledShares) throws Exception {
-		// this could happen if our timeout is lower than the timeout of the IOC order,
-		// which should never be the case
-		if (!m_respondedToOrder) {
-			log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
-					order.orderId(), filledShares, order.status() );
+	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require()
+	 *  this is wrapped() but it must call onIBOrderCompleted() so cannot throw an exception  */
+	private synchronized void onOrderTimeout(Order order, double filledShares) {
+		shrinkWrap( () -> {
+			if (!m_respondedToOrder) {
+				// this will happen if our timeout is lower than the timeout of the IOC order
+				log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
+						order.orderId(), filledShares, order.status() );
 
-			// if order is still live, cancel the order
-			if (!order.status().isComplete() && !order.status().isCanceled() ) {
-				out( "Canceling order %s on timeout", order.orderId() );
-				m_main.orderController().cancelOrder( order.orderId(), "", null);
+				// if order is still live, cancel the order; don't let an error here disrupt processing
+				if (!order.status().isComplete() && !order.status().isCanceled() ) {
+					try {
+						out( "Canceling order %s on timeout", order.orderId() );
+						m_main.orderController().cancelOrder( order.orderId(), "", null);
+					}
+					catch( Exception e) {
+						e.printStackTrace();
+					}
+				}
+				onIBOrderCompleted( order, filledShares, true);
 			}
+		});
+	}
 
-			respondToOrder( order, filledShares, true);
-		}
-	}
-	
 	/** We cannot throw an exception. We have already called respond(), we must now be sure to update the live order */
-	private synchronized void respondToOrder(Order order, double filledShares, boolean timeout) {
-		try {
-			respondToOrder_(order, filledShares, timeout);
-		}
-		catch( Exception e) {
-			m_liveOrder.failed(e); // you have to sync this. pas
-			
-			log( LogType.FAILED, "id=%s  permId=%s  orderQty=%s  orderPrc=%s  reason=%s",
-					order.orderId(), order.permId(), order.totalQty(), order.lmtPrice(), e.getMessage() );
-		}
-	}
-	
 	/** This is called when order status is "complete" or when timeout occurs.
 	 *  Access to m_responded is synchronized.
+	 *  This call is shrinkWrapped()
 	 *  In the case where order qty < .5 and we didn't submit an order, orderStatus will be Filled.
 	 *  You must (a) make a log entry and (b) either call m_liveOrder.filled() or throw an exception */ 
-	private void respondToOrder_(Order order, double filledShares, boolean timeout) throws Exception {
+	private synchronized void onIBOrderCompleted(Order order, double filledShares, boolean timeout) throws Exception {
 		if (m_respondedToOrder) {
-			return;    // this happens when the timeout occurs after an order is filled, which is normal
+			return;    // should never happen, but just to be safe
 		}
 		m_respondedToOrder = true;
 
@@ -280,29 +277,29 @@ public class OrderTransaction extends MyTransaction {
 			stockTokenQty = order.totalQuantity();
 			logType = LogType.FILLED;
 		}
-
-		String hash = fireblocks() ? processFireblocks(order, stockTokenQty, filledShares) : null;
-
-		m_liveOrder.filled();
-
-		//m_liveOrder.filled(stockTokenQty);  // Fireblocks either succeeded or we skipped it
-
-		log( logType, "id=%s  action=%s  desiredQty=%s  roundedQty=%s  filled=%s  stockTokenQty=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-				order.orderId(), order.action(), order.totalQty(), order.roundedQty(),
-				S.fmt4(filledShares), stockTokenQty, order.lmtPrice(),
-				m_config.commission(), m_tds, hash);
+		
+		log( logType, "orderId=%s  filledShares=%s", order.orderId(), filledShares);
+		
+		if (fireblocks() ) {
+			m_liveOrder.updateFrom(FireblocksStatus.STOCK_ORDER_FILLED);
+			processFireblocks(order, stockTokenQty, filledShares);
+		}
+		else {
+			m_liveOrder.filled();
+		}
 	}
 	
-	private String processFireblocks(Order order, double stockTokenQty, double filledShares) throws Exception {
-		try {
-			String hash = null;
-			String id;
-			out( "Starting Fireblocks protocol");
-			
+	/** Call to this method is shrinkWrapped() */
+	private void processFireblocks(Order order, double stockTokenQty, double filledShares) throws Exception {
+		try {			
 			// for testing
 			if (m_map.getBool("fail") ) {
 				throw new Exception("Blockchain transaction failed intentially during testing"); 
 			}
+
+			out( "Starting Fireblocks protocol");
+
+			String id;
 
 			// buy
 			if (order.action() == Action.BUY) {
@@ -339,56 +336,22 @@ public class OrderTransaction extends MyTransaction {
 				);
 			}
 			
-			//m_liveOrder.fireblocksId(id);
-
-			// it would be better if we could send back the response in two blocks, one
-			// when the order fills and one when the blockchain transaction is completed
-
-			// wait for the transaction to be signed
-			// this won't be good if we have multiple orders pending since each one is
-			// polling every one second; either put them in a queue or use the Fireblocks
-			// Webhook
-
-			// query FB until the status is final, updating the LiveOrder status each time
-			while( true) {
-				JsonObject trans = Transactions.getTransaction(id);
-				
-				if (hash == null && S.isNotNull(trans.getString("txHash") ) ) {
-					hash = trans.getString("txHash");
-				}
-
-				FireblocksStatus status = Util.getEnum( trans.getString("status"), FireblocksStatus.values() );
-				
-				if (status == FireblocksStatus.COMPLETED) {
-					break;
-				}
+			allLiveOrders.put(id, m_liveOrder);
 			
-				require( 
-						!status.failed(),  
-						RefCode.BLOCKCHAIN_FAILED, 
-						"Transaction failed - %s", trans.getString("subStatus") );
-
-				m_liveOrder.updateFrom(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
-
-				S.sleep(1000);  // !!!!!!!! MAKE SURE YOU ARE NOT TIEING UP THE WEB THREAD OR IB THREAD; HOW DID YOU FIX THAT???
-			}
-			
-			// insert transaction into database
-			insertCryptoTrans(order, hash);
-			
-			log( LogType.ORDER, "Order %s completed Fireblocks transaction with hash %s", order.orderId(), hash);
-			return hash;
+			// if we don't make it to here, it means there was an exception which will be picked up
+			// by shrinkWrap() and the live order will be failed()
 		}
 		catch( Exception e) {  // for FB errors, we don't need to print a stack trace; maybe throw RefException for those
-			if (e instanceof RefException) {
-				S.out( e.getMessage() );
-			}
-			else {
+			if (!(e instanceof RefException) ) {
 				e.printStackTrace();
 			}
+			
+			log( LogType.ERROR, "orderId=%s  %s", order.orderId(), e.getMessage() ); 
 
-			// unwind the order first and foremost; now throw an exception so the LiveOrder will get updated with the error text
+			// unwind the order first and foremost
 			unwindOrder(order, filledShares);
+			
+			// now throw an exception so the LiveOrder will get updated with the error text
 
 			// fireblocks has failed; try to determine why
 			
@@ -408,10 +371,10 @@ public class OrderTransaction extends MyTransaction {
 			// we don't know why it failed, so throw the Fireblocks error
 			throw e;
 		}
-
 	}
 
-	/** Confirm that the user has enough stablecoin or stock token in their wallet */
+	/** Confirm that the user has enough stablecoin or stock token in their wallet.
+	 *  This could be called before or after submitting the stock order */
 	private void requireSufficientStablecoin(Order order) throws Exception {
 		if (order.isBuy() ) {
 			double balance = stablecoin().getPosition( m_walletAddr );
@@ -431,37 +394,6 @@ public class OrderTransaction extends MyTransaction {
 
 	private StockToken newStockToken() {
 		return new StockToken( m_stock.getSmartContractId() );
-	}
-
-	/** Insert record into crypto_transactions table.
-	 *  An error here should not disrupt the flow, we should just log it and move on */
-	private void insertCryptoTrans(Order order, String transId) {
-		try {
-			m_config.sqlConnection( conn -> 
-				conn.insertPairs("crypto_transactions",
-					"crypto_transaction_id", transId,
-					"timestamp", System.currentTimeMillis() / 1000, // why do we need this and also the other dates?
-					"wallet_public_key", m_walletAddr,
-					"symbol", m_stock.getSymbol(),
-					"conid", m_stock.getConid(),
-					"action", order.action().toString(),
-					"quantity", order.totalQty(),  // same as m_desiredQuantity
-					"price", order.lmtPrice(),
-					"commission", m_config.commission(), // not so good, we should get it from the order. pas
-					"spread", order.isBuy() ? m_config.buySpread() : m_config.sellSpread(),
-					//"status",
-					//"ip_address",
-					//"city",
-					//"country",
-					// "crypto_id",
-					"currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString()
-				)
-			);
-		}
-		catch (Exception e) {
-			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );
-			e.printStackTrace();
-		}
 	}
 
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. 
@@ -517,11 +449,19 @@ public class OrderTransaction extends MyTransaction {
 		return "buy".equals(side) ? "Buy" : "Sell";
 	}
 	
-
+	private void shrinkWrap(ExRunnable runnable) {
+		try {
+			runnable.run();
+		}
+		catch( RefException e) {
+			out( e);
+			log( LogType.ERROR, e.toString() );
+			m_liveOrder.failed(e); // you have to sync this. pas
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, S.notNull( e.getMessage() ) );
+			m_liveOrder.failed(e); // you have to sync this. pas
+		}
+	}
 }
-
-
-//YOU ARE WORKING ON TWO THINGS:
-//	1. ORDER TIMEOUT COULD CAUSE FIREBLOCKS TO HAPPEN TWICE
-//	2. YOU CAN'T TIE UP THE TWS API THREAD EVER WHILE PROCESSING A RESPONSE, IN THIS CASE 
-//	   ORDER HOURS; SOLVE IT BY RE-DESIGNING THE ORDER HOURS IN THIS PARTICULAR CASE, BUT BE CAREFUL
