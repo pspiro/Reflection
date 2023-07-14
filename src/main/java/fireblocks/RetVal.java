@@ -1,7 +1,5 @@
 package fireblocks;
 
-import tw.util.S;
-
 public class RetVal {
 	private String m_id;
 

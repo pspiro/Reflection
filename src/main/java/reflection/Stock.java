@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.require;
-
 import org.json.simple.JsonObject;
 
 import fireblocks.StockToken;

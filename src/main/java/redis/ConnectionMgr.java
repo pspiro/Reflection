@@ -8,7 +8,6 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 
 import tw.util.S;
-import util.LogType;
 
 /** Manage the connection from this client to TWS. */
 // share this with Main; need logging support, reconnect interval. pas

@@ -21,7 +21,6 @@ public class Stocks implements Iterable<Stock> {
 	}
 
 	/** Use this version for better performance when reading multiple tabs from same sheet */
-	@SuppressWarnings("unchecked")
 	public void readFromSheet(Book book, ConfigBase config) throws Exception {
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();

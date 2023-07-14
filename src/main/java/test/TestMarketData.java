@@ -3,7 +3,6 @@ package test;
 import java.io.IOException;
 
 import com.ib.client.Contract;
-import com.ib.client.ContractDetails;
 import com.ib.client.MarketDataType;
 import com.ib.client.TickAttrib;
 import com.ib.client.TickType;

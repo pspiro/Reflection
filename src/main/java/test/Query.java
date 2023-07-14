@@ -20,6 +20,7 @@ public class Query {
 		}
 	}
 	
+	@SuppressWarnings("resource")
 	void run() throws Exception {
 		GTable queryTab = new GTable(NewSheet.Reflection, "Query", "Tag", "Value");
 

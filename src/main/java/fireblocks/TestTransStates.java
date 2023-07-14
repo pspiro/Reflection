@@ -12,7 +12,7 @@ public class TestTransStates {
 	static Accounts accounts = Accounts.instance;
 
 	public static void main(String[] args) throws Exception {
-		OStream os = new OStream("c:/temp/file.t");
+		try (OStream os = new OStream("c:/temp/file.t") ) {
 		
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
@@ -51,6 +51,7 @@ public class TestTransStates {
 			JsonObject trans = Transactions.getTransaction( id);
 			S.out( "%s %s", trans.getString("status"), trans);
 			os.writeln( "%s %s", trans.getString("status"), trans);
+		}
 		}
 	}
 	

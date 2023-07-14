@@ -1,5 +1,7 @@
 package fireblocks;
 
+import java.util.Scanner;
+
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -55,7 +57,7 @@ public class TestSellRusd {
 				stock,
 				1);
 
-		S.input("Check balances, should be 1 BUSD in RefWallet");
+		input("Check balances, should be 1 BUSD in RefWallet");
 
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
@@ -64,7 +66,7 @@ public class TestSellRusd {
 				stock,
 				1);
 		
-		S.input("Check balances, should be 1 BUSD in RefWallet and 1 RUSD in Bob");
+		input("Check balances, should be 1 BUSD in RefWallet and 1 RUSD in Bob");
 		
 		// redeem RUSD for BUSD
 		rusd.sellRusd(
@@ -72,4 +74,11 @@ public class TestSellRusd {
 				busd,
 				1);
 	}
+	
+	@SuppressWarnings("resource")
+	public static String input(String str) {
+		S.out( str);
+		return new Scanner(System.in).nextLine();  // do not close the stream
+	}
+
 }

@@ -134,7 +134,6 @@ public class SiweTransaction extends MyTransaction {
 	
 	/** Frontend sends GET request with the cookie from the signin message sent in the header
 	 *  This is a keep-alive; we should verify that the timer has not expired */
-	@SuppressWarnings("unchecked")
 	public void handleSiweMe() {
 		wrap( () -> {
 			ArrayList<String> cookies = authCookies();

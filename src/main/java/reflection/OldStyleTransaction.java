@@ -1,11 +1,7 @@
 package reflection;
 
-import static reflection.Main.log;
 import static reflection.Main.require;
 import static reflection.Util.round;
-
-import java.util.Arrays;
-import java.util.List;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -31,7 +27,7 @@ public class OldStyleTransaction extends MyTransaction {
 		disconnect,
 		dump,
 		getAllPrices,
-		getAllStocks,
+		//getAllStocks,
 		getTradingHours(),
 		getConfig,
 		getConnectionStatus,
@@ -39,10 +35,10 @@ public class OldStyleTransaction extends MyTransaction {
 		getPositions,
 		getPrice,
 		getCashBal,
-		pullBackendConfig,
-		pullFaq,
-		pushBackendConfig,
-		pushFaq,
+		//pullBackendConfig,
+		//pullFaq,
+		//pushBackendConfig,
+		//pushFaq,
 		refreshConfig,
 		seedPrices,
 		terminate,
@@ -141,7 +137,6 @@ public class OldStyleTransaction extends MyTransaction {
 	}
 
 	/** Return json showing balance, allowance, and stock token positions */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void onShowWallet() throws Exception {
 		String wallet = m_map.getRequiredParam("address");
 		Main.require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Invalid wallet address: %s", wallet);
@@ -186,7 +181,6 @@ public class OldStyleTransaction extends MyTransaction {
 		JsonArray ar = new JsonArray();
 		
 		m_main.orderController().reqPositions( new IPositionHandler() {
-			@SuppressWarnings("unchecked")
 			@Override public void position(String account, Contract contract, Decimal pos, double avgCost) {
 				JsonObject obj = new JsonObject();
 				obj.put( "conid", contract.conid() );

@@ -2,11 +2,8 @@ package redis;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.TimeZone;
-
-import org.json.simple.JsonArray;
 
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;
@@ -26,8 +23,6 @@ import reflection.TradingHours.Session;
 import reflection.Util;
 import test.MyTimer;
 import tw.google.NewSheet;
-import tw.google.NewSheet.Book;
-import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;

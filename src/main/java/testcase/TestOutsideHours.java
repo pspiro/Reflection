@@ -16,8 +16,7 @@ public class TestOutsideHours extends MyTestCase {
 	static int AAPL = 265598;
 	static int IBM = 8314;
 	
-	@SuppressWarnings("deprecation")   // run this test again with a different time zone
-	public void testExchHours() throws RefException {
+	public void testExchHours() throws RefException {// run this test again with a different time zone
 		String str = ";20220807:CLOSED;"
 				+ "20220916:0900-20220916:1600;;"
 				+ "20220918:0930-20220918:1600";

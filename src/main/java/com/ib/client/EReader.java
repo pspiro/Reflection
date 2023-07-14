@@ -5,7 +5,6 @@ package com.ib.client;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 
@@ -24,7 +23,6 @@ public class EReader extends Thread {
     private EClientSocket 	m_clientSocket;
     private EJavaSignal m_signal;
     private EDecoder m_processMsgsDecoder;
-    private static final EWrapper defaultWrapper = new DefaultEWrapper();
     private static final int IN_BUF_SIZE_DEFAULT = 8192;
     private byte[] m_iBuf = new byte[IN_BUF_SIZE_DEFAULT];
     private int m_iBufLen = 0;

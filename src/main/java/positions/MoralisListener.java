@@ -17,7 +17,6 @@ import tw.util.S;
 /** This app keeps the positions of all wallets in memory for fast access. */
 public class MoralisListener {
 
-	private static final int high_block = 2000000000;
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";

@@ -1,7 +1,6 @@
 package fireblocks;
 
 import http.SimpleTransaction;
-import reflection.Config;
 import tw.util.S;
 
 public class Webhook {

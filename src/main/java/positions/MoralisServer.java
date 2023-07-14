@@ -196,7 +196,7 @@ public class MoralisServer {
 			trans.respond( "OK");
 			
 			// sync this code because this method gets called by multiple threads 
-			synchronized( receivedFirst) {
+			synchronized( this) {
 				if (!receivedFirst) {
 					receivedFirst = true;
 					

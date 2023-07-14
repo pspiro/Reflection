@@ -14,6 +14,7 @@ public class TestSpeed {
 	static String dbUser = "postgres";
 	static String dbPassword = "1359";
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) throws Exception {
 		MySqlConnection db = new MySqlConnection();
 		db.connect(dbUrl, dbUser, dbPassword);

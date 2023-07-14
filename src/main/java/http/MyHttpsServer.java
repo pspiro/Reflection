@@ -2,8 +2,6 @@ package http;
 
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.security.KeyStore;
 
@@ -13,10 +11,7 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsExchange;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
 

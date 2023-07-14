@@ -18,7 +18,6 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
-import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;
 import tw.util.S;

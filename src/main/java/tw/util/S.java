@@ -30,7 +30,6 @@ import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.swing.JOptionPane;
@@ -139,14 +138,6 @@ public class S {
 
 	private static String pad(int hours) {
 		return hours < 10 ? "0" + String.valueOf( hours) : String.valueOf( hours);
-	}
-
-	private static String pad3(int hours) {
-		return hours < 10 
-			? "00" + hours 
-			: hours < 100
-				? "0" + hours
-				: String.valueOf( hours);
 	}
 
 	/** Double vals get two decimal places.
@@ -814,10 +805,6 @@ public class S {
 		S.out( String.format( "%s", Math.round(.499999999999999) ) );
 	}
 
-	public static String input(String str) {
-		out( str);
-		return new Scanner(System.in).nextLine();  // do not close the stream
-	}
 	
 
 	/** @param endsWith is case-insensitive; we need this to avoid tmp files created in the downloads folder. */

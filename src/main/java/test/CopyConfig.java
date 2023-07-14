@@ -35,7 +35,7 @@ public class CopyConfig {
 			ResultSetMetaData meta = res.getMetaData();
 			meta.getColumnCount();
 			
-			String[] vals = new String[meta.getColumnCount()];
+			Object[] vals = new String[meta.getColumnCount()];
 			for (int i = 0; i < meta.getColumnCount(); i++) {
 				vals[i] = res.getString(i+1);
 				S.out( "%s  %s", meta.getColumnName(i+1), vals[i]);

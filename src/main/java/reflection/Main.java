@@ -188,7 +188,6 @@ public class Main implements ITradeReportHandler {
 
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
-	@SuppressWarnings("unchecked")
 	void readFaqsFromSheet(Book book) throws Exception {
 		JsonArray ar = new JsonArray();
 		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
@@ -205,7 +204,6 @@ public class Main implements ITradeReportHandler {
 
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
-	@SuppressWarnings("unchecked")
 	JsonObject readConfig(Book book, int type) throws Exception {
 		JsonObject obj = new JsonObject();
 		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {

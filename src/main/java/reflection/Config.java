@@ -485,7 +485,8 @@ public class Config extends ConfigBase {
 	}
 	
 	public void sqlConnection(SqlRunnable runnable) throws Exception {
-		try ( MySqlConnection conn = new MySqlConnection().connect( postgresUrl, postgresUser, postgresPassword ) ) {
+		try ( MySqlConnection conn = new MySqlConnection() ) {
+			conn.connect( postgresUrl, postgresUser, postgresPassword);
 			runnable.run(conn);
 		}
 	}

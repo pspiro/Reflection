@@ -192,7 +192,6 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private JsonArray trim(JsonArray json) {
 		json.forEach( obj -> {
 			((HashMap)obj).remove("created_at");

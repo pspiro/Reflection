@@ -3,7 +3,6 @@ package fireblocks;
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
-import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
 /** Tests all RUSD, BUSD and StockToken features */

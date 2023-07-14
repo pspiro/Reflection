@@ -110,7 +110,6 @@ public class Monitor {
 		mainPanel.add(rusdPanel, BorderLayout.EAST);
 		mainPanel.add(butPanel, BorderLayout.NORTH);
 		
-		JPanel walletPanel = new WalletPanel();
 		
 		NewTabbedPanel tabs = new NewTabbedPanel();
 		tabs.addTab( "Main", mainPanel);

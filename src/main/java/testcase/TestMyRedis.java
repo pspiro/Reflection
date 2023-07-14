@@ -1,11 +1,7 @@
 package testcase;
 
-import junit.framework.TestCase;
 import redis.MyRedis;
-import redis.MyRedis.Prt;
-import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
-import reflection.Config;
 import tw.util.S;
 
 public class TestMyRedis extends MyTestCase {

@@ -5,10 +5,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -32,14 +28,13 @@ public class MySqlConnection implements AutoCloseable {
 		connection.setAutoCommit(true);
 	}
 
-	public MySqlConnection connect(String host, String port, String db, String user, String password) throws SQLException {
+	public void connect(String host, String port, String db, String user, String password) throws SQLException {
 		String url = String.format( "jdbc:postgresql://%s:%s/%s", host, port, db);
-		return connect( url, user, password);
+		connect( url, user, password);
 	}
 	
-	public MySqlConnection connect(String url, String user, String password) throws SQLException {
+	public void connect(String url, String user, String password) throws SQLException {
 		connection = DriverManager.getConnection(url, user, password);
-		return this;
 	}
 	
 	/** Returns with the set ready to be read; assumes there is data. */
