@@ -10,6 +10,8 @@ import reflection.RefException;
 import reflection.Util;
 import tw.util.S;
 
+// add a note here what time these 24/7 stocks are trading
+
 // this should be before open, after close, and on days that the exchange is closed
 public class TestOutsideHours extends MyTestCase {
 	static int QQQ = 320227571;
@@ -43,7 +45,7 @@ public class TestOutsideHours extends MyTestCase {
 
 		String data = String.format( "{ 'msg': 'checkorder', 'conid': '%s', 'action': 'buy', 'quantity': '1', 'tokenPrice': '%s', 'wallet': '0x747474', 'cryptoid': 'abcd', 'simtime': '%s' }", 
 				conid, price * 1.05, time);
-		JsonObject order = TestOrder.orderData(data);  // adds the cookie
+		JsonObject order = TestOrder.createOrder3(data);  // adds the cookie
 				
 		return postOrderToObj(order);
 	}

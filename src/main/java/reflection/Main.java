@@ -26,6 +26,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import fireblocks.Accounts;
+import http.MyHttpClient;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -117,6 +118,11 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
+		// check that Fireblocks server is running
+		checkFireblocksServer( "localhost", m_config.fireblocksServerPort() );
+		
+		
+		
 		// /api/crypto-transactions  all trades, I think not used
 		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
 
@@ -166,6 +172,17 @@ public class Main implements ITradeReportHandler {
 		timer.done();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
+	}
+
+	private void checkFireblocksServer(String string, int fireblocksServerPort) throws Exception {
+		try {
+			MyHttpClient client = new MyHttpClient("localhost", m_config.fireblocksServerPort() );
+			client.get();
+			Util.require( client.getResponseCode() == 200, "Error code returned from fireblocks server " + client.getResponseCode() );
+		}
+		catch( Exception e) {
+			throw new Exception("Could not connect to fireblocks server - " + e.getMessage() );
+		}
 	}
 
 	void readSpreadsheet() throws Exception {

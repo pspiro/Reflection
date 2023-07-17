@@ -26,6 +26,11 @@ public class Cookie extends MyTestCase {
 		}
 	}
 
+	public static void setNewWallet(String walletIn) throws Exception {
+		wallet = walletIn;
+		cookie = signIn(walletIn);
+	}
+
 	public static String signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);
 		

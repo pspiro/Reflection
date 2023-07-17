@@ -13,6 +13,7 @@ import java.util.List;
 import org.json.simple.parser.JSONParser;
 
 import reflection.Util;
+import tw.util.S;
 
 
 /**
@@ -131,6 +132,15 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			}
 		}
 		return null;
+	}
+
+	public void displayShort() {
+		S.out( "[{");
+		for (JsonObject item : this) {
+			S.out(item + ",");  // leaves an extra , at the end 
+		}
+		S.out("]");
+		
 	}
 
 }

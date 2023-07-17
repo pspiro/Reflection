@@ -29,7 +29,7 @@ public class SimpleTransaction {
 		void handle( SimpleTransaction trans);
 	}
 	
-	public static MyHttpHandler nullHandler = trans -> {};
+	public static MyHttpHandler nullHandler = trans -> trans.respond("OK");
 	
 	private HttpExchange m_exchange;
 	

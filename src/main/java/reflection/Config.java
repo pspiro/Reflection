@@ -83,6 +83,7 @@ public class Config extends ConfigBase {
 	private int rusdDecimals;
 	private int busdDecimals;
 	private GTable m_tab;
+	private int fireblocksServerPort;
 	
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
@@ -191,6 +192,7 @@ public class Config extends ConfigBase {
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
+			this.fireblocksServerPort = m_tab.getRequiredInt("fireblocksServerPort");
 
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
@@ -516,6 +518,10 @@ public class Config extends ConfigBase {
 	
 	public String getTooltip(Tooltip tag) {
 		return m_tab.get(tag.toString());
+	}
+
+	public int fireblocksServerPort() {
+		return fireblocksServerPort;
 	}
 	
 }

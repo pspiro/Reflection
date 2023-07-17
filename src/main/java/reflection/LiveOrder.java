@@ -37,13 +37,13 @@ class LiveOrder {
 	}
 	
 	enum FireblocksStatus {
-		STOCK_ORDER_FILLED(20), // Not a FB status
+		STOCK_ORDER_FILLED(15), // Not a FB status
 		SUBMITTED(30), // The transaction was submitted to the Fireblocks system and is being processed
-		QUEUED(50), // Transaction is queued. Pending for another transaction to be processed
+		QUEUED(45), // Transaction is queued. Pending for another transaction to be processed
 		PENDING_AUTHORIZATION(60), // The transaction is pending authorization by other users (as defined in the Transaction Authorization Policy)
-		PENDING_SIGNATURE(70), // The transaction is pending the initiator to sign the transaction
-		BROADCASTING(80), // The transaction is pending broadcast to the blockchain network
-		CONFIRMING(90), // Pending confirmation on the blockchain
+		PENDING_SIGNATURE(75), // The transaction is pending the initiator to sign the transaction
+		BROADCASTING(90), // The transaction is pending broadcast to the blockchain network
+		CONFIRMING(100), // Pending confirmation on the blockchain; it seems this is as good as complete
 		COMPLETED(100), // Successfully completed
 		CANCELLED(100), // The transaction was cancelled or rejected by the user on the Fireblocks platform or by the 3rd party service from which the funds are withdrawn
 		REJECTED(100), // The transaction was rejected by the Fireblocks system or by the 3rd party service
@@ -65,55 +65,44 @@ class LiveOrder {
 		int pct() { 
 			return m_pct; 
 		}
-		
-		boolean isFinal() {
-			return m_pct == 100;
-		}
-		
-		boolean failed() {
-			return isFinal() && this != FireblocksStatus.COMPLETED;
-		}
-		
-		LiveOrderStatus getLiveOrderStatus() {
-			if (this == FireblocksStatus.COMPLETED) {
-				return LiveOrderStatus.Filled;
-			}
-
-			// any other completion besides COMPLETED is a failure
-			return failed() ? LiveOrderStatus.Failed : LiveOrderStatus.Working;
-		}
 	}
 	
 	/** Called when the stock order is filled or we receive an update from the Fireblocks server */
 	synchronized void updateFrom(FireblocksStatus stat) {
-		if (stat == FireblocksStatus.COMPLETED) {
+		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
 			filled();
 		}
+		else if (stat.pct() == 100) {
+			fail( new Exception( "Failed with Fireblocks status " + stat) );
+		}
 		else {
-			m_status = stat.getLiveOrderStatus();
 			m_progress = stat.pct();
 		}
 	}
 
-	/** Called when an error occurs after the order is submitted to IB */
-	synchronized void failed(Exception e) {
-		m_status = LiveOrderStatus.Failed;
-
-		m_description = e.getMessage();
-		if (e instanceof RefException) {
-			m_errorCode = ((RefException)e).code();
-		}
-		m_finished = System.currentTimeMillis();
-	}
-
 	/** Called during testing if we bypass the FB processing */
 	synchronized void filled() {
-		m_status = LiveOrderStatus.Filled;
-		m_progress = 100;
-		m_description = m_description
-				.replace("Buy", "Bought")
-				.replace("Sell", "Sold");
-		m_finished = System.currentTimeMillis();
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Filled;
+			m_progress = 100;
+			m_description = m_description
+					.replace("Buy", "Bought")
+					.replace("Sell", "Sold");
+			m_finished = System.currentTimeMillis();
+		}
+	}
+
+	/** Called when an error occurs after the order is submitted to IB */
+	synchronized void fail(Exception e) {
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Failed;
+	
+			m_description = e.getMessage();
+			if (e instanceof RefException) {
+				m_errorCode = ((RefException)e).code();
+			}
+			m_finished = System.currentTimeMillis();
+		}
 	}
 
 	/** Called when the user queries status of live orders */

@@ -456,12 +456,12 @@ public class OrderTransaction extends LiveOrderTransaction {
 		catch( RefException e) {
 			out( e);
 			log( LogType.ERROR, e.toString() );
-			m_liveOrder.failed(e); // you have to sync this. pas
+			m_liveOrder.fail(e); // you have to sync this. pas
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
-			m_liveOrder.failed(e); // you have to sync this. pas
+			m_liveOrder.fail(e); // you have to sync this. pas
 		}
 	}
 }

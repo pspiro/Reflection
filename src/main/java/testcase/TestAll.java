@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 	   TestGetPositions.class,
 	   TestGtable.class,
 	   TestOrder.class,
+	   TestOrderNoAutoFill.class,
 	   TestOutsideHours.class,
 	   TestPrices.class,
 	   TestProfile.class,

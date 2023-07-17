@@ -160,7 +160,7 @@ public abstract class MyTransaction {
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
 
-			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 100) );
+			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 120) );
 		}
 		catch (Exception e) {
 			e.printStackTrace();
