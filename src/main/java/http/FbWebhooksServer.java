@@ -7,7 +7,7 @@ import org.json.simple.JsonObject;
 import tw.util.S;
 
 /** Fireblocks Webhooks server */
-public class FbServer {
+public class FbWebhooksServer {
 	public static void main(String[] args) {
 		String host = "0.0.0.0";
 		int port = Integer.valueOf( args[0]);

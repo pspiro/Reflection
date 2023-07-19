@@ -10,28 +10,37 @@ class LiveOrder {
 
 	private long m_finished;  // don't keep them forever. pas
 	private String m_description;  // either order description or error description
-	private String m_action;
+	private String m_action; // buy/sell/bought/sold
 	private LiveOrderStatus m_status;
 	private int m_progress;
 	private RefCode m_errorCode;
-	private String m_uid = Util.id(5);  // this is an id that the client can use to match up the initial order with the blockchain order status 
-	private String m_fireblocksId;
-	
+	private String m_uid;  // this is an id that the client can use to match up the initial order with the blockchain order status
+							// it is the same uid as on the OrderTransaction
 
-	LiveOrder(String action, String description) {
+	LiveOrder(String action, String description, String uid) {
 		m_action = action;
 		m_description = description;
 		m_status = LiveOrderStatus.Working;
 		m_progress = 10;
+		m_uid = uid;
+	}
+
+	public LiveOrderStatus status() {
+		return m_status;
+	}
+
+	public String uid() {
+		return m_uid;
 	}
 	
 	enum FireblocksStatus {
+		STOCK_ORDER_FILLED(15), // Not a FB status
 		SUBMITTED(30), // The transaction was submitted to the Fireblocks system and is being processed
-		QUEUED(50), // Transaction is queued. Pending for another transaction to be processed
+		QUEUED(45), // Transaction is queued. Pending for another transaction to be processed
 		PENDING_AUTHORIZATION(60), // The transaction is pending authorization by other users (as defined in the Transaction Authorization Policy)
-		PENDING_SIGNATURE(70), // The transaction is pending the initiator to sign the transaction
-		BROADCASTING(80), // The transaction is pending broadcast to the blockchain network
-		CONFIRMING(90), // Pending confirmation on the blockchain
+		PENDING_SIGNATURE(75), // The transaction is pending the initiator to sign the transaction
+		BROADCASTING(90), // The transaction is pending broadcast to the blockchain network
+		CONFIRMING(100), // Pending confirmation on the blockchain; it seems this is as good as complete
 		COMPLETED(100), // Successfully completed
 		CANCELLED(100), // The transaction was cancelled or rejected by the user on the Fireblocks platform or by the 3rd party service from which the funds are withdrawn
 		REJECTED(100), // The transaction was rejected by the Fireblocks system or by the 3rd party service
@@ -53,73 +62,48 @@ class LiveOrder {
 		int pct() { 
 			return m_pct; 
 		}
-		
-		boolean isFinal() {
-			return m_pct == 100;
-		}
-		
-		boolean failed() {
-			return isFinal() && this != FireblocksStatus.COMPLETED;
-		}
-		
-		LiveOrderStatus getLiveOrderStatus() {
-			if (this == FireblocksStatus.COMPLETED) {
-				return LiveOrderStatus.Filled;
-			}
-
-			// any other completion besides COMPLETED is a failure
-			return failed() ? LiveOrderStatus.Failed : LiveOrderStatus.Working;
-		}
 	}
 	
-	void updateFrom(FireblocksStatus stat) {
-		m_progress = stat.pct();
-		m_status = stat.getLiveOrderStatus();
+	/** Called when the stock order is filled or we receive an update from the Fireblocks server */
+	synchronized void updateFrom(FireblocksStatus stat) {
+		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
+			filled();
+		}
+		else if (stat.pct() == 100) {
+			fail( new Exception( "Failed with Fireblocks status " + stat) );
+		}
+		else {
+			m_progress = stat.pct();
+		}
 	}
-		
-	void updateStatus() {
-		try {
-			if (S.isNotNull(m_fireblocksId) ) {
-				FireblocksStatus stat = Util.getEnum(
-						LiveOrderMgr.getStatus(m_fireblocksId), 
-						FireblocksStatus.values() );
-				updateFrom(stat);
+
+	/** Called during testing if we bypass the FB processing */
+	synchronized void filled() {
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Filled;
+			m_progress = 100;
+			m_description = m_description
+					.replace("Buy", "Bought")
+					.replace("Sell", "Sold");
+			m_finished = System.currentTimeMillis();
+		}
+	}
+
+	/** Called when an error occurs after the order is submitted to IB */
+	synchronized void fail(Exception e) {
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Failed;
+	
+			m_description = e.getMessage();
+			if (e instanceof RefException) {
+				m_errorCode = ((RefException)e).code();
 			}
-			// if no FB id yet, leave it at 10%
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-			S.out( "Error: unknown Fireblocks status " + LiveOrderMgr.getStatus(m_fireblocksId) );
+			m_finished = System.currentTimeMillis();
 		}
 	}
 
-	void failed(Exception e) {
-		m_status = LiveOrderStatus.Failed;
-
-		m_description = e.getMessage();
-		if (e instanceof RefException) {
-			m_errorCode = ((RefException)e).code();
-		}
-		m_finished = System.currentTimeMillis();
-	}
-
-	void filled() {
-		m_status = LiveOrderStatus.Filled;
-		m_description = m_description
-				.replace("Buy", "Bought")
-				.replace("Sell", "Sold");
-		m_finished = System.currentTimeMillis();
-	}
-
-	public LiveOrderStatus status() {
-		return m_status;
-	}
-
-	public String id() {
-		return m_uid;
-	}
-
-	public JsonObject getWorkingOrder() {
+	/** Called when the user queries status of live orders */
+	public synchronized JsonObject getWorkingOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", m_uid);
 		order.put( "action", m_action);
@@ -128,7 +112,8 @@ class LiveOrder {
 		return order;
 	}
 
-	public JsonObject getCompletedOrder() {
+	/** Called when the user queries status of live orders */
+	public synchronized JsonObject getCompletedOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", m_uid);
 		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   
@@ -139,8 +124,8 @@ class LiveOrder {
 		}
 		return order;
 	}
-
-	public void fireblocksId(String id) {
-		m_fireblocksId = id;
-	}
 }
+
+// change CONFIRMING to 100%
+
+

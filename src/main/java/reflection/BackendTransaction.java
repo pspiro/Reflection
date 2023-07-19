@@ -22,10 +22,12 @@ import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
+import fireblocks.Transactions;
 import fireblocks.Transfer;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
+import reflection.LiveOrder.FireblocksStatus;
 import reflection.LiveOrder.LiveOrderStatus;
 import tw.util.S;
 import util.LogType;
@@ -312,45 +314,6 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	public void handleWorkingOrders() {
-		wrap( () -> {
-			String walletAddr = getWalletFromUri();
-			
-			JsonArray orders = new JsonArray();
-			JsonArray messages = new JsonArray();
-
-			List<LiveOrder> walletOrders = liveOrders.get(walletAddr.toLowerCase());
-			if (walletOrders != null) {
-				Iterator<LiveOrder> iter = walletOrders.iterator();
-				while (iter.hasNext() ) {
-					LiveOrder liveOrder = iter.next();
-					
-					//liveOrder.updateStatus();
-					
-					if (liveOrder.status() == LiveOrderStatus.Working) {
-						orders.add( liveOrder.getWorkingOrder() );
-					}
-					else {
-						
-						// if the order is completed, display a message and remove it from the list
-						messages.add( liveOrder.getCompletedOrder() );
-						iter.remove();
-						
-						// if we just removed the last one, let the empty list stay in the liveOrders map,
-						// it's not hurting anyone
-						
-						// by the way, if the user is running two browsers, only one of them will get the message
-					}
-				}
-			}
-			
-			JsonObject ret = new JsonObject();
-			ret.put( "orders", orders);
-			ret.put( "messages", messages);
-			respond( ret);
-		});
-	}
-
 	public void handleGetProfile() {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();
@@ -385,7 +348,7 @@ public class BackendTransaction extends MyTransaction {
 			respondOk();
 		});
 	}
-	
+
 }
 
 				

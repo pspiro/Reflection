@@ -8,6 +8,7 @@ import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.Util;
+import tw.util.S;
 
 public class MyTestCase extends TestCase {
 	static Config m_config;
@@ -54,7 +55,11 @@ public class MyTestCase extends TestCase {
 	}
 	
 	JsonObject getLiveMessage(String id) throws Exception {
+		// wait a tic for the order to filled, even autoFill orders take a few ms
+		S.sleep(100);
+		
 		JsonArray msgs = getLiveMessages();
+		msgs.display();
 		for (JsonObject msg : msgs) {
 			if (msg.getString("id").equals(id) ) {
 				return msg;

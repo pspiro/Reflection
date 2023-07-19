@@ -2,6 +2,7 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
+import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
@@ -14,14 +15,14 @@ public class TestFbOrders extends MyTestCase {
 	// test all possible orders and a success of buy w/ BUSD, buy w/ RUSD, and sell
 	
 	static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	static GTable tab;
+	static String bobAddr = "0xAB015EB8298E5364CEA5C8F8e084E2fc3E3b4BAF";
 	static StockToken stock;
 	static Busd busd;
 	static Rusd rusd;
 
-	static {
+	static {		
 		try {
-			tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "ContractSymbol", "TokenAddress");
+			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenName", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
 			busd = m_config.busd();
 			rusd = m_config.rusd();
@@ -56,17 +57,19 @@ public class TestFbOrders extends MyTestCase {
 	}
 
 	public void testNonApproval() throws Exception {
+		Cookie.setNewWallet(bobAddr);
+
 		// mint BUSD for user Bob
-		busd.mint(
-				accounts.getId( "Admin1"),
-				accounts.getAddress("Bob"),
-				200);
+//		busd.mint(
+//				accounts.getId( "Admin1"),
+//				accounts.getAddress("Bob"),
+//				200);
 		
 		// approve too little
 		busd.approve(
 				accounts.getId( "Bob"),
 				rusd.address(),
-				1).waitForHash();
+				.99).waitForHash();
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
@@ -133,7 +136,6 @@ public class TestFbOrders extends MyTestCase {
 			}
 			
 			assertTrue(order != null);
-			S.out(order);
 
 			S.sleep(1000);
 		}

@@ -8,49 +8,39 @@ import junit.framework.TestCase;
 import reflection.Util;
 import tw.util.S;
 
-public class TestUnwindOrder extends TestCase {
+/** This test should work if autoFill is turned off */
+public class TestUnwindOrder extends MyTestCase {
 	static String host = "localhost";
 
 	public void test() throws Exception {
 		// get starting position
-		double pos1 = getPos(8314);
+		double pos1 = getPos(265598);
 		S.out( "pos1 = " + pos1);
 		
-		String data = """
-				{ 
-				'msg': 'order', 
-				'conid': '8314',
-				'side': 'buy',
-				'quantity': '100',
-				'price': '183',
-				'fail': true,
-				'wallet': '0xb016711702D3302ceF6cEb62419abBeF5c44450e'
-				}
-				""";
-
-		// place order
-		JsonObject obj = new MyHttpClient( host, 8383)
-				.addHeader("Cookie", Cookie.cookie)
-				.post( "/api/order", Util.toJson(data) )
-				.readMyJsonObject();
+		// place order set to fail
+		JsonObject order = TestOrder.createOrder2("BUY", 100, 183);
+		order.put("fail", true);
+		
+		JsonObject obj = postOrderToObj(order);
 
 		// get new pos; should be higher
-		double pos2 = getPos(8314);
+		double pos2 = getPos(265598);
 		S.out( "pos2 = " + pos2);
 		assertTrue( pos2 > pos1);  // will not work in autoFill mode
 		
 		// wait for the unwind order to be executed
 		S.sleep(4000);
-		double pos3 = getPos(8314);
+		double pos3 = getPos(265598);
 		S.out( "pos3 = " + pos3);
 		assertTrue( pos3 == pos1);  // will not work in autoFill mode
 	}
 
+	/** Returns the stock position in IB account */
 	private double getPos(int conid) throws Exception {
-		JsonArray ar = new MyHttpClient(host, 8383)
+		JsonArray ar = cli()
 				.get("?msg=getpositions")
 				.readMyJsonArray();
-		JsonObject obj = find(ar, 8314);
+		JsonObject obj = find(ar, 265598);
 		return obj != null ? obj.getDouble("conid") : 0;
 	}
 

@@ -1,5 +1,7 @@
 package fireblocks;
 
+import java.util.Date;
+
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -31,10 +33,8 @@ public class Transactions {
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
 
-		long createdAt  = 1685635887444L;
-		//long lastUpdated = 1685635938014L;
-		//getSince(createdAt).display();
-		getTransaction("lkjsdflkj").display();
+	//	getSince(S.parseDate("7/4/2023").getTime() ).displayShort();
+		S.out( new Date(1688514612987L) ) ;
 	}
 
 	public static void getTransactions(String wallet) throws Exception {
