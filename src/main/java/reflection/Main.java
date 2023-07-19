@@ -119,7 +119,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFireblocksServer( "localhost", m_config.fireblocksServerPort() );
+		checkFbActiveServer();
 		
 		
 		
@@ -174,9 +174,9 @@ public class Main implements ITradeReportHandler {
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
 	}
 
-	private void checkFireblocksServer(String string, int fireblocksServerPort) throws Exception {
+	private void checkFbActiveServer() throws Exception {
 		try {
-			MyHttpClient client = new MyHttpClient("localhost", m_config.fireblocksServerPort() );
+			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
 			client.get();
 			Util.require( client.getResponseCode() == 200, "Error code returned from fireblocks server " + client.getResponseCode() );
 		}

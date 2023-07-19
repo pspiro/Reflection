@@ -3,9 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import http.MyHttpClient;
-import junit.framework.TestCase;
-import reflection.Util;
 import tw.util.S;
 
 /** This test should work if autoFill is turned off */

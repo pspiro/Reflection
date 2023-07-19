@@ -1,7 +1,7 @@
 package http;
 
+import java.net.BindException;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -9,6 +9,7 @@ import org.json.simple.JsonObject;
 import fireblocks.Accounts;
 import fireblocks.Transactions;
 import reflection.Config;
+import reflection.Main;
 import reflection.Util;
 import tw.util.S;
 
@@ -19,40 +20,47 @@ import tw.util.S;
  *  the Webhooks server.
  *  
  *  Note that this functionality could be included in the RefAPI but has been broken
- *  out to be able to monitor the resource usage. */
+ *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbActiveServer {
-	interface Listener {
-		void notify(Trans trans);
-	}
-
 	static Accounts accounts = Accounts.instance;
 	static HashMap<String,Trans> m_map = new HashMap<>();
-	static HashSet<Listener> m_listeners = new HashSet<>();
 	
-	static void addListener( Listener listener) {
-		m_listeners.add(listener);
-	}
-	
-
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
 	// start whenever a new order is placed
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
+		try {
+			if (args.length == 0) {
+				throw new Exception( "You must specify a config tab name");
+			}
+
+			run( args[0] );
+		}
+		catch( BindException e) {
+			S.out( "The application is already running");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.exit(2);  // we need this because listening on the port will keep the app alive
+		}
+	}
+	
+	public static void run(String tab) throws Exception {
 		S.out( "Starting FbActiveServer");
 		accounts.setAdmins( "Admin1,Admin2");
 
 		Config config = new Config();
-		config.readFromSpreadsheet("Dt-config");
+		config.readFromSpreadsheet(tab);
 
 		// don't allow two instances of the application, and give a way to 
 		// test if the application is running
-		SimpleTransaction.listen("0.0.0.0", config.fireblocksServerPort(), trans -> trans.respond("OK") );
+		SimpleTransaction.listen("0.0.0.0", config.fbServerPort(), trans -> trans.respond("OK") );
 		
-		addListener( trans -> updateRefApi(trans) );
-
 		while( true) {
-			S.sleep(2000);
+			S.sleep( config.fbPollIingInterval() );
 			
 			// this creates like ten threads for every request which doesn't seem very efficient. pas
 			// we're querying only for transactions in the last three minutes
@@ -70,27 +78,23 @@ public class FbActiveServer {
 			m_map.put(trans.id(), trans);
 
 			S.out( trans.obj() );
-
-			for (Listener listener : m_listeners) {
-				listener.notify(trans);
+			
+			try {
+				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", trans.id(), trans.status() );  
+	
+				// use MyHttpClient since this is a local transaction
+				MyHttpClient client = new MyHttpClient("localhost", 8383);
+				client.get(uri);
+				
+				Util.require( client.getResponseCode() == 200, "Error: received response code " + client.getResponseCode() );
+			}
+			catch( Exception e) {
+				S.out( "Could not update RefAPI - " + e.getMessage() );
 			}
 		}
 	}
-	
-	private static void updateRefApi(Trans trans) {
-		try {
-			String uri = String.format( "/api/fireblocks/?id=%s&status=%s", trans.id(), trans.status() );  
 
-			MyHttpClient client = new MyHttpClient("localhost", 8383);
-			client.get(uri);
-			
-			Util.require( client.getResponseCode() == 200, "Error: received response code " + client.getResponseCode() );
-		}
-		catch( Exception e) {
-			S.out( "Could not update RefAPI - " + e.getMessage() );
-		}
-	}
-
+	/** This is a Fireblocks json transaction */
 	static class Trans {
 		JsonObject m_obj;
 

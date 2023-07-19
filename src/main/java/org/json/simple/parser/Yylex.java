@@ -2,6 +2,7 @@
 
 package org.json.simple.parser;
 
+@SuppressWarnings("unused")
 class Yylex {
 
   /** This character denotes the end of file */
@@ -253,7 +254,7 @@ class Yylex {
    * the number of characters from the last newline up to the start of the 
    * matched text
    */
-  private int yycolumn;
+private int yycolumn;
 
   /** 
    * zzAtBOL == true <=> the scanner is currently at the beginning of a line

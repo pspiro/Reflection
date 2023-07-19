@@ -73,7 +73,6 @@ public class ApiController implements EWrapper {
 	private IAdvisorHandler m_advisorHandler;
 	private IScannerHandler m_scannerHandler;
 	private ITimeHandler m_timeHandler;
-	private IBulletinHandler m_bulletinHandler;
 	private IUserInfoHandler m_userInfoHandler;
 	private final Map<Integer,IInternalHandler> m_contractDetailsMap = new HashMap<>();
 	private final Map<Integer,IOptHandler> m_optionCompMap = new HashMap<>();
@@ -1280,12 +1279,6 @@ public class ApiController implements EWrapper {
 	}
 
 	public void reqBulletins( boolean allMessages, IBulletinHandler handler) {
-		if (!checkConnection())
-			return;
-
-		m_bulletinHandler = handler;
-		m_client.reqNewsBulletins( allMessages);
-		sendEOM();
 	}
 
 	public void cancelBulletins() {
@@ -1296,9 +1289,6 @@ public class ApiController implements EWrapper {
 	}
 
 	@Override public void updateNewsBulletin(int msgId, int msgType, String message, String origExchange) {
-		// tws sends bulletins even when there is no handler
-		//m_bulletinHandler.bulletin( msgId, NewsType.get( msgType), message, origExchange);
-		//recEOM();
 	}
 
 	// ---------------------------------------- Position Multi handling ----------------------------------------

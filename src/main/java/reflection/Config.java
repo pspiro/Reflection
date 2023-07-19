@@ -25,6 +25,8 @@ import tw.util.S;
 
 public class Config extends ConfigBase {
 	
+	private GTable m_tab;
+
 	// user experience parameters
 	private double maxBuyAmt; // max buy amt in dollars
 	private double maxSellAmt; // max sell amt in dollars
@@ -82,9 +84,10 @@ public class Config extends ConfigBase {
 	private String busdAddr; // lower case
 	private int rusdDecimals;
 	private int busdDecimals;
-	private GTable m_tab;
-	private int fireblocksServerPort;
+	private int fbServerPort;
+	private int fbPollIingInterval;
 	
+	public int fbPollIingInterval() { return fbPollIingInterval; }
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
 	
@@ -192,8 +195,9 @@ public class Config extends ConfigBase {
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
-			this.fireblocksServerPort = m_tab.getRequiredInt("fireblocksServerPort");
-
+			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
+			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
+			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
 			if (fireblocksApiKey.startsWith("projects/") ) {
@@ -521,8 +525,8 @@ public class Config extends ConfigBase {
 		return m_tab.get(tag.toString());
 	}
 
-	public int fireblocksServerPort() {
-		return fireblocksServerPort;
+	public int fbServerPort() {
+		return fbServerPort;
 	}
 	
 }
