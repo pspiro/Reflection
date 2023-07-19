@@ -9,7 +9,7 @@ public class TestBuyRusd {
 		String file = "C:/Work/Smart-contracts/build/contracts/RUSD.json";
 		
 		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
+		config.readFromSpreadsheet("Dt-config");
 		
 		Busd busd = config.busd();
 		
