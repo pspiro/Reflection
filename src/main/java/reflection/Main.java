@@ -119,7 +119,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFireblocksServer( "localhost", m_config.fireblocksServerPort() );
+		//checkFireblocksServer( "localhost", m_config.fireblocksServerPort() );
 		
 		
 		

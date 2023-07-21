@@ -192,7 +192,7 @@ public class Config extends ConfigBase {
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
-			this.fireblocksServerPort = m_tab.getRequiredInt("fireblocksServerPort");
+			//this.fireblocksServerPort = m_tab.getRequiredInt("fireblocksServerPort");
 
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys

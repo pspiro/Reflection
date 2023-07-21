@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.ib.controller.ApiController.IConnectionHandler;
 
+import tw.util.S;
+
 public class ConnectionAdapter implements IConnectionHandler  {
 
 	@Override
@@ -38,8 +40,10 @@ public class ConnectionAdapter implements IConnectionHandler  {
 
 	@Override
 	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-		// TODO Auto-generated method stub
-		
+		S.out( errorMsg);
+		if (errorCode == 502) {
+			S.out( "Possible duplicate API client id");
+		}
 	}
 
 	@Override

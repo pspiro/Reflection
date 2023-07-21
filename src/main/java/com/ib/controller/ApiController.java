@@ -158,7 +158,7 @@ public class ApiController implements EWrapper {
 
 	public boolean connect( String host, int port, int clientId, String connectionOpts ) {
 		if (m_client.eConnect(host, port, clientId, false) ) {
-			startMsgProcessingThread();  // << is this right??? why do we start processing thread if eConnect fails??? pas
+			startMsgProcessingThread();  // seems wrong, we start thread even if already connected
 	        sendEOM();
 	        return true;
 		}
@@ -212,7 +212,7 @@ public class ApiController implements EWrapper {
 		
 		IOrderHandler handler = m_orderHandlers.get( id);
 		if (handler != null) {
-			handler.handle( errorCode, errorMsg);
+			handler.handle( errorCode, errorMsg);  // once from here @*&   (fixed)
 		}
 
         IOrderCancelHandler orderCancelHandler = m_orderCancelHandlers.get( id);
@@ -228,11 +228,14 @@ public class ApiController implements EWrapper {
 		if (errorCode == 200) {
 			IInternalHandler hand = m_contractDetailsMap.remove( id);
 			if (hand != null) {
-				hand.contractDetailsEnd();
+				hand.contractDetailsEnd(); // once from here @*&  (fixed)
 			}
 		}
 
+		// you could make an argument that you should not call this if any of the other handlers
+		// have been called
 		m_connectionHandler.message( id, errorCode, errorMsg, advancedOrderRejectJson);
+		
 		recEOM();
 	}
 
@@ -435,6 +438,11 @@ public class ApiController implements EWrapper {
 		void contractDetails(List<ContractDetails> list);
 	}
 
+	/** Warning: the callback is called TWICE if the contract is not found  (search for "@*&")
+	 * 
+	 *  It's a bug 
+	 *  
+	 *  */
 	public void reqContractDetails( Contract contract, final IContractDetailsHandler processor) {
 		if (!checkConnection())
 			return;
@@ -459,29 +467,32 @@ public class ApiController implements EWrapper {
 	private void internalReqContractDetails( Contract contract, final IInternalHandler processor) {
 		int reqId = m_reqId++;
 		
-		S.out( "Requesting contract details  %s  %s", reqId, contract.conid() );
+		//S.out( "Requesting contract details  %s  %s", reqId, contract.conid() );
+		
+		// this is bad, we're mapping the same reqId to two separate handlers
+		// and they will BOTH get called if the contract is not found
 		
 		m_contractDetailsMap.put( reqId, processor);
 		
-		m_orderHandlers.put(reqId, new IOrderHandler() { 
-			public void handle(int errorCode, String errorMsg) {
-				processor.contractDetailsEnd();
-			}
-
-			@Override
-			public void orderState(OrderState orderState) {
-				// TODO Auto-generated method stub
-				
-			}
-	
-			@Override
-			public void orderStatus(OrderStatus status, Decimal filled,
-					Decimal remaining, double avgFillPrice, int permId,
-					int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
+//		m_orderHandlers.put(reqId, new IOrderHandler() { 
+//			public void handle(int errorCode, String errorMsg) {
+//				processor.contractDetailsEnd();
+//			}
+//
+//			@Override
+//			public void orderState(OrderState orderState) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//	
+//			@Override
+//			public void orderStatus(OrderStatus status, Decimal filled,
+//					Decimal remaining, double avgFillPrice, int permId,
+//					int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
+//				// TODO Auto-generated method stub
+//				
+//			}
+//		});
 		
 		m_client.reqContractDetails(reqId, contract);
 		sendEOM();

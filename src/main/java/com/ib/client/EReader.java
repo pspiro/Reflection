@@ -126,6 +126,7 @@ public class EReader extends Thread {
 			msgSize = m_clientSocket.readInt();
 		} 
 		catch (Exception ex) {
+			// we come here if there is duplicate API client id
 			ex.printStackTrace();
 			if (ex instanceof IOException) {  // probably we should always disconnect, for any exception type
 				parent().connectionError();

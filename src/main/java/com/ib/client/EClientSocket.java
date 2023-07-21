@@ -201,6 +201,7 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 	    eDisconnect( true );
 	}
 
+	/** This is called if we can't connect and probably if there is a disconnect */
 	private synchronized void eDisconnect( boolean resetState ) {
 	    // not connected?
 	    if( m_dis == null && m_socketTransport == null) {
