@@ -33,7 +33,6 @@ public class Test {
 		StockToken stock = new StockToken( tab.get( "GOOG") );
 		S.out( "Buying/sell GOOG stock token with address %s", stock.address() );
 		
-		String id;
 		
 		// ----- Bob -----------------------------
 		

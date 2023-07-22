@@ -27,7 +27,7 @@ public class TestSellRusd {
 		Accounts accounts = Accounts.instance;
 		accounts.read();
 
-		String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+		//String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		//String userAddr = accounts.getAddress("Bob");
 		
 		

@@ -18,7 +18,7 @@ public class TestUnwindOrder extends MyTestCase {
 		JsonObject order = TestOrder.createOrder2("BUY", 100, 183);
 		order.put("fail", true);
 		
-		JsonObject obj = postOrderToObj(order);
+		postOrderToObj(order);
 
 		// get new pos; should be higher
 		double pos2 = getPos(265598);

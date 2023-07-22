@@ -283,9 +283,9 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		String cookie = cli.getHeaders().get("set-cookie");
-		JsonObject signedMsgRec = JsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
-		JsonObject msg3 = signedMsgRec.getObject("message");
+		//String cookie = cli.getHeaders().get("set-cookie");
+		//JsonObject signedMsgRec = JsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
+		//JsonObject msg3 = signedMsgRec.getObject("message");
 
 		// test siwe/me w/ no cookie
 		cli = cli();

@@ -14,7 +14,7 @@ public class TestMany {
 					e.printStackTrace();
 				}
 			}).start();
-			S.sleep( 300);
+			S.sleep( 100);
 		}
 	}
 
@@ -24,10 +24,10 @@ public class TestMany {
 	
 	private static void sendOrder() throws Exception {
 		
-		boolean side = r.nextBoolean();
-		
-		
-		double priceOffset = -2;
+//		boolean side = r.nextBoolean();
+//		
+//		
+//		double priceOffset = -2;
 		
 //		String data = TestOrder.orderData( priceOffset, side ? "sell" : "sell", wallet);
 		// change this to use BackendOrder
