@@ -20,8 +20,6 @@ public class TestTransStates {
 		Busd busd = config.busd();
 		Rusd rusd = config.rusd();
 		
-		accounts.setAdmins( "Admin1,Admin2");
-
 		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );
 		S.out( "Buying/sell GOOG stock token with address %s", stock.address() );

@@ -16,8 +16,6 @@ public class TestSellRusd {
 	
 	
 	public static void main(String[] args) throws Exception {
-		Accounts.instance.setAdmins( "Admin1,Admin2");
-		
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 		
@@ -27,7 +25,7 @@ public class TestSellRusd {
 		Accounts accounts = Accounts.instance;
 		accounts.read();
 
-		String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+		//String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 		//String userAddr = accounts.getAddress("Bob");
 		
 		

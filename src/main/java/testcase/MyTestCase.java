@@ -19,7 +19,6 @@ public class MyTestCase extends TestCase {
 	static {
 		try {
 			m_config = Config.readFrom("Dt-config");
-			accounts.setAdmins( "Admin1,Admin2");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -7,17 +7,11 @@ public class TestBuyRusd {
 	static Accounts accounts = Accounts.instance;
 	
 	public static void main(String[] args) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
-		
-		String file = "C:/Work/Smart-contracts/build/contracts/RUSD.json";
-		
+//		String file = "C:/Work/Smart-contracts/build/contracts/RUSD.json";
+//		
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
-		
-		Busd busd = config.busd();
-		
-		Rusd rusd = config.rusd();
-		
+//		
 //		rusd.deploy(
 //				file,
 //				accounts.getAddress( "RefWallet"),				
@@ -35,9 +29,9 @@ public class TestBuyRusd {
 //				rusd.address(),
 //				2).waitForHash();
 		
-		S.out( rusd.buyRusd(
+		S.out( config.rusd().buyRusd(
 				accounts.getAddress("Bob"),
-				busd,
+				config.busd(),
 				1).id() );
 		
 //		rusd.buyRusd(

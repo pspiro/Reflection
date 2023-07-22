@@ -12,7 +12,6 @@ public class FundWallet {
 	static String userAddr = "0x1cB79caf8c86f04bD31C4AD1f43A5ba17d61BD35";	
 
 	public static void main(String[] args) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
 		
 		Config config = new Config();
 //		config.readFromSpreadsheet("Test-config");
@@ -22,7 +21,6 @@ public class FundWallet {
 	}
 	
 	static void run(Busd busd, Rusd rusd) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
 		
 		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );

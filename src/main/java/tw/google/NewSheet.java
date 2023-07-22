@@ -7,15 +7,12 @@ import java.util.List;
 
 import com.google.api.services.sheets.v4.Sheets.Spreadsheets;
 import com.google.api.services.sheets.v4.model.AddSheetRequest;
-import com.google.api.services.sheets.v4.model.AppendValuesResponse;
 import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.BatchUpdateValuesRequest;
-import com.google.api.services.sheets.v4.model.BatchUpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.Request;
 import com.google.api.services.sheets.v4.model.Sheet;
 import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
-import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -128,16 +125,15 @@ public class NewSheet {
 		
 		public void insert(String tabName, ValueRange content) throws Exception {
 			String range = String.format( "'%s'!A1:A1", tabName);
-			AppendValuesResponse res = sheets().values().append(id(), range, content)
+			sheets().values().append(id(), range, content)
 				.setValueInputOption( USER_ENTERED).execute();
-			S.out( res);
 		}
 		
 		/** This will break if any rows have been deleted or re-ordered. */
 		public void update(String tabName, ListEntry listEntry) throws Exception {
 			ValueRange content = new ValueRange().setValues( listEntry.asList() );
 			
-			UpdateValuesResponse res = sheets().values().update(id(), listEntry.getRange(), content)
+			sheets().values().update(id(), listEntry.getRange(), content)
 					.setValueInputOption( USER_ENTERED).execute();
 		}
 		
@@ -154,8 +150,7 @@ public class NewSheet {
 			BatchUpdateValuesRequest content = new BatchUpdateValuesRequest()
 					.setData(data)
 					.setValueInputOption( USER_ENTERED);
-			BatchUpdateValuesResponse res = sheets().values().batchUpdate(id(), content).execute();
-			S.out( res);
+			sheets().values().batchUpdate(id(), content).execute();
 		}
 
 		/** Row and column are 1-based. */
@@ -170,7 +165,7 @@ public class NewSheet {
 			
 			ValueRange content = new ValueRange().setValues( rows);
 			
-			UpdateValuesResponse res = sheets().values().update(id(), range, content)
+			sheets().values().update(id(), range, content)
 					.setValueInputOption( USER_ENTERED).execute();
 		}
 

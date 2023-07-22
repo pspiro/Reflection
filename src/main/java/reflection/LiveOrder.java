@@ -2,8 +2,6 @@ package reflection;
 
 import org.json.simple.JsonObject;
 
-import tw.util.S;
-
 // probably this should be a JSONObject
 class LiveOrder {
 	enum LiveOrderStatus { Working, Filled, Failed };

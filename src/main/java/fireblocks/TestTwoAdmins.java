@@ -10,8 +10,6 @@ public class TestTwoAdmins {
 	static StockToken stock;
 	
 	public static void main(String[] args) throws Exception {
-		Accounts.instance.setAdmins( "Admin1,Admin2");
-		
 		Config config = new Config();
 		config.readFromSpreadsheet("Test-config");
 

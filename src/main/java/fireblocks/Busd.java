@@ -8,7 +8,6 @@ public class Busd extends Erc20 {
 	static final String mintKeccak = "40c10f19";
 	
 	public static void main(String[] args) throws Exception {
-		Accounts.instance.setAdmins( "Admin1,Admin2");
 		//Accounts.instance.read();
 		
 		Config config = Config.readFrom("Dev-config");

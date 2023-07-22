@@ -19,21 +19,17 @@ public class Test {
 	//static String userAddr = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 
 	public static void main(String[] args) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
-		
 		Config config = Config.readFrom("Dt-config");
 
 		run( config, config.busd(), config.rusd() );
 	}
 	
 	static void run(Config config, Busd busd, Rusd rusd) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
 
 		GTable tab = new GTable( NewSheet.Reflection, config.symbolsTab(), "ContractSymbol", "TokenAddress");
 		StockToken stock = new StockToken( tab.get( "GOOG") );
 		S.out( "Buying/sell GOOG stock token with address %s", stock.address() );
 		
-		String id;
 		
 		// ----- Bob -----------------------------
 		

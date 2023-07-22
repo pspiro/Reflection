@@ -235,7 +235,6 @@ public class TwMail {
 	}
 
 	private static final SimpleDateFormat fmt = new SimpleDateFormat( "d MMM yyyy kk:mm:ss Z");
-	private static final SimpleDateFormat fmt3 = new SimpleDateFormat( "d MMM yyyy kk:mm:ss Z");
 	private static final SimpleDateFormat fmt2 = new SimpleDateFormat( "MM/dd kk:mm:ss");
 	
 	public class MyMsg implements Comparable<MyMsg> {

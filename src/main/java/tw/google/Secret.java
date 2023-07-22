@@ -19,7 +19,7 @@ import tw.util.S;
 public class Secret {
 	public static void main(String[] args) throws Exception {
 		String dad = "projects/552719427171/secrets/Daddy/versions/1";
-		String apiKey = "projects/552719427171/secrets/fireblocksApiKey/versions/1";
+		//String apiKey = "projects/552719427171/secrets/fireblocksApiKey/versions/1";
 		
 		S.out( readValue(dad) );
 	}

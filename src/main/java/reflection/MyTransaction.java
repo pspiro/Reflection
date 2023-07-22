@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.Vector;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonObject;
@@ -160,7 +159,7 @@ public abstract class MyTransaction {
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
 
-			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 120) );
+			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 200) );
 		}
 		catch (Exception e) {
 			e.printStackTrace();

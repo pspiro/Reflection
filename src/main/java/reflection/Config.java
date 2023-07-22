@@ -8,6 +8,7 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
+import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
@@ -25,6 +26,8 @@ import tw.util.S;
 
 public class Config extends ConfigBase {
 	
+	private GTable m_tab;
+
 	// user experience parameters
 	private double maxBuyAmt; // max buy amt in dollars
 	private double maxSellAmt; // max sell amt in dollars
@@ -71,6 +74,7 @@ public class Config extends ConfigBase {
 	private int sessionTimeout; // session times out after this amount of inactivity
 	private String errorCodesTab;  // valid values are yes, no, random
 	private TimeInForce tif;
+	private String fbAdmins;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -82,9 +86,10 @@ public class Config extends ConfigBase {
 	private String busdAddr; // lower case
 	private int rusdDecimals;
 	private int busdDecimals;
-	private GTable m_tab;
-	private int fireblocksServerPort;
+	private int fbServerPort;
+	private int fbPollIingInterval;
 	
+	public int fbPollIingInterval() { return fbPollIingInterval; }
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
 	
@@ -118,6 +123,7 @@ public class Config extends ConfigBase {
 	public double minTokenPosition() { return minTokenPosition; }
 	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
 	public TimeInForce tif() { return tif; }
+	public String fbAdmins() { return fbAdmins; }
 	
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
@@ -192,8 +198,10 @@ public class Config extends ConfigBase {
 			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
-			//this.fireblocksServerPort = m_tab.getRequiredInt("fireblocksServerPort");
-
+			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
+			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
+			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
+			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
 			if (fireblocksApiKey.startsWith("projects/") ) {
@@ -201,8 +209,9 @@ public class Config extends ConfigBase {
 				fireblocksPrivateKey = Secret.readValue( fireblocksPrivateKey);
 			}
 
-			// update Fireblocks static keys
+			// update Fireblocks static keys and admins
 			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
+			Accounts.instance.setAdmins( fbAdmins);
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -521,8 +530,8 @@ public class Config extends ConfigBase {
 		return m_tab.get(tag.toString());
 	}
 
-	public int fireblocksServerPort() {
-		return fireblocksServerPort;
+	public int fbServerPort() {
+		return fbServerPort;
 	}
 	
 }

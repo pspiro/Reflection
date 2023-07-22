@@ -34,8 +34,6 @@ public class StockToken extends Erc20 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Accounts.instance.setAdmins( "Admin1,Admin2");
-
 		Config config = new Config();
 		config.readFromSpreadsheet("Dt-config");
 

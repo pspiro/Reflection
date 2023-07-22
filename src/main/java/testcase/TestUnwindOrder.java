@@ -3,9 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import http.MyHttpClient;
-import junit.framework.TestCase;
-import reflection.Util;
 import tw.util.S;
 
 /** This test should work if autoFill is turned off */
@@ -21,7 +18,7 @@ public class TestUnwindOrder extends MyTestCase {
 		JsonObject order = TestOrder.createOrder2("BUY", 100, 183);
 		order.put("fail", true);
 		
-		JsonObject obj = postOrderToObj(order);
+		postOrderToObj(order);
 
 		// get new pos; should be higher
 		double pos2 = getPos(265598);

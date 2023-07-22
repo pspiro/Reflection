@@ -15,8 +15,6 @@ public class TestOneOrder {
 	static Accounts accounts = Accounts.instance;
 
 	public static void main(String[] args) throws Exception {
-		accounts.setAdmins( "Admin1,Admin2");
-		
 		Config config = Config.readFrom("Dt-config");
 		Busd busd = config.busd();
 

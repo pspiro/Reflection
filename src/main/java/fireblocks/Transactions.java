@@ -8,6 +8,8 @@ import org.json.simple.JsonObject;
 import reflection.Config;
 import tw.util.S;
 
+/** Get recent Fireblocks transactions. 
+ *  You must call Fireblocks.setKeys() before this */
 public class Transactions {
 	static void displayLastTransactions(int n) throws Exception {
 		JsonArray ar = getTransactions();
@@ -42,8 +44,8 @@ public class Transactions {
 		
 		long since = System.currentTimeMillis() - 120 * 60000;
 		
-		String admin ; //= Accounts.instance.getAdmin( wallet);
-		//int id = Accounts.instance.getId( admin);		
+		// String admin = Accounts.instance.getAdmin( wallet);
+		// int id = Accounts.instance.getId( admin);		
 		String url = String.format("/v1/transactions?sourceId=%s&limit=%s&after=%s",
 				5, 9, since);
 		
