@@ -6,10 +6,10 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Transactions;
 import reflection.Config;
-import reflection.Util;
 import tw.util.S;
 
 /** Fireblocks polling server
@@ -30,10 +30,7 @@ public class FbActiveServer {
 	
 	public static void main(String[] args) {
 		try {
-			if (args.length == 0) {
-				throw new Exception( "You must specify a config tab name");
-			}
-
+			Util.require( args.length == 1, "You must specify a config tab name");
 			run( args[0] );
 		}
 		catch( BindException e) {
@@ -61,11 +58,16 @@ public class FbActiveServer {
 			S.sleep( config.fbPollIingInterval() );
 			
 			// this creates like ten threads for every request which doesn't seem very efficient. pas
-			// we're querying only for transactions in the last three minutes
-			JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 10);
-			
-			for (JsonObject obj : ar) {
-				process( new Trans(obj) );
+			// we're querying only for transactions in the last five minutes
+			try {
+				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 5);
+				
+				for (JsonObject obj : ar) {
+					process( new Trans(obj) );
+				}
+			}
+			catch( Exception e) {
+				e.printStackTrace();
 			}
 		}
 	}

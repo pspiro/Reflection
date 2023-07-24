@@ -1,4 +1,4 @@
-package reflection;
+package common;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +19,8 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
+import reflection.RefCode;
+import reflection.RefException;
 import tw.util.S;
 
 public class Util {
@@ -44,13 +46,13 @@ public class Util {
 	 * @throws RefException */
 
 	/** These are broken out to facilitate testing. */
-	public static boolean inside( Date now, int conid, String hours, String timeZoneIdIn) throws RefException {
-		Main.require (hours != null, RefCode.UNKNOWN, "Null trading hours for %s", conid);
+	public static boolean inside( Date now, int conid, String hours, String timeZoneIdIn) throws Exception {
+		require(hours != null, "Null trading hours for %s", conid);
 
 		try {
 			String timeZoneId = S.isNotNull( timeZoneIdIn) ? timeZoneIdIn : "America/New_York";
 			TimeZone zone = TimeZone.getTimeZone(timeZoneId);
-			Main.require( zone != null, RefCode.UNKNOWN, "Invalid time zone id %s", timeZoneId);
+			require( zone != null, "Invalid time zone id %s", timeZoneId);
 
 			SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 			yyyymmdd.setTimeZone(zone);
@@ -93,7 +95,7 @@ public class Util {
 		}
 	}
 	
-	public static void main(String[] args) throws RefException {
+	public static void main(String[] args) throws Exception {
 		boolean a = inside( 
 				new Date(), 
 				8314, 
@@ -132,7 +134,7 @@ public class Util {
 
 	/** Create the whole Json message, including the time.
 	 *  @param strs tag/value pairs */
-	static JsonObject toJsonMsg( Object... strs) { // get rid of this. pas
+	public static JsonObject toJsonMsg( Object... strs) { // get rid of this. pas
 		JsonObject obj = new JsonObject();
 		
 		Object tag = null;
@@ -154,7 +156,7 @@ public class Util {
 	}
 
 	/** Numbers we will put without quotation marks; everything else gets quotation marks. */
-	private static boolean isNumeric(Object val) {
+	public static boolean isNumeric(Object val) {
 		return val instanceof Integer || val instanceof Double || val instanceof Long;
 	}
 
@@ -251,9 +253,9 @@ public class Util {
 		m_timer.schedule( task, wait, period);
 	}
 
-	public static String getenv(String env) throws RefException {
+	public static String getenv(String env) throws Exception {
 		String str = System.getenv(env);
-		Main.require( S.isNotNull( str), RefCode.MISSING_ENV_VAR, "Missing environment variable %s", env);
+		require( S.isNotNull( str), "Missing environment variable %s", env);
 		return str;
 	}
 	
@@ -273,9 +275,9 @@ public class Util {
 		return sb.toString();
 	}
 
-	public static void require(boolean test, String text) throws Exception {
+	public static void require(boolean test, String text, Object... params) throws Exception {
 		if (!test) {
-			throw new Exception( text);
+			throw new Exception( String.format( S.notNull( text), params) );
 		}
 	}
 
@@ -365,7 +367,7 @@ public class Util {
 	}
 
 	/** Return an id of n chars where each char is between a and z */
-	static String id(int n) {
+	public static String id(int n) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < n; i++) 
 			b.append( (char)('a' + rnd.nextInt(26) ) );
@@ -386,5 +388,4 @@ public class Util {
 			return val;
 		}
 	}
-	
 }

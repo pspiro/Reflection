@@ -2,10 +2,10 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyHttpClient;
 import reflection.Prices;
 import reflection.RefCode;
-import reflection.Util;
 import tw.util.S;
 
 public class TestOrder extends MyTestCase {

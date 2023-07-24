@@ -3,11 +3,11 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import fireblocks.Accounts;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
-import reflection.Util;
 import tw.util.S;
 
 public class MyTestCase extends TestCase {

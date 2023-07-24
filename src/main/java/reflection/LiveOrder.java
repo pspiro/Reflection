@@ -2,6 +2,9 @@ package reflection;
 
 import org.json.simple.JsonObject;
 
+import tw.util.S;
+import util.LogType;
+
 // probably this should be a JSONObject
 class LiveOrder {
 	enum LiveOrderStatus { Working, Filled, Failed };
@@ -21,6 +24,10 @@ class LiveOrder {
 		m_status = LiveOrderStatus.Working;
 		m_progress = 10;
 		m_uid = uid;
+	}
+	
+	private boolean isBuy() {
+		return "Buy".equals(m_action);
 	}
 
 	public LiveOrderStatus status() {
@@ -62,13 +69,15 @@ class LiveOrder {
 		}
 	}
 	
-	/** Called when the stock order is filled or we receive an update from the Fireblocks server */
+	/** Called when the stock order is filled or we receive an update from the Fireblocks server.
+	 *  The status is already logged before we come here  */
 	synchronized void updateFrom(FireblocksStatus stat) {
 		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
 			filled();
 		}
 		else if (stat.pct() == 100) {
-			fail( new Exception( "Failed with Fireblocks status " + stat) );
+			S.out( "The blockchain order failed. Possible reasons: insufficient crypto in wallet; insufficient amount was approved");
+			fail( new Exception( "The blockchain transaction failed with status " + stat) );
 		}
 		else {
 			m_progress = stat.pct();

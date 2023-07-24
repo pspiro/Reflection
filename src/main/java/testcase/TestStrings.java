@@ -1,6 +1,6 @@
 package testcase;
 
-import reflection.Util;
+import common.Util;
 import tw.util.S;
 
 public class TestStrings extends MyTestCase {

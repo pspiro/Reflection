@@ -12,6 +12,7 @@ import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 
+import common.Util;
 import http.SimpleTransaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
@@ -20,7 +21,6 @@ import reflection.Stock;
 import reflection.Stocks;
 import reflection.TradingHours;
 import reflection.TradingHours.Session;
-import reflection.Util;
 import test.MyTimer;
 import tw.google.NewSheet;
 import tw.util.S;

@@ -2,11 +2,11 @@ package redis;
 
 import java.net.URI;
 
+import common.Util;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
-import reflection.Util;
 
 /** Facilitates reconnecting to Jedis if connection is lost.
  *  And we make sure that we are catching Jedis exceptions for the calls that the user makes.

@@ -1,7 +1,7 @@
 package test;
 
+import common.Util;
 import reflection.MySqlConnection;
-import reflection.Util;
 
 public class TestInserts { //extends TestCase {
 	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";

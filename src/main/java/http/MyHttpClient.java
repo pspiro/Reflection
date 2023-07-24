@@ -10,9 +10,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 
+import common.Util;
 import junit.framework.TestCase;
 import reflection.RefCode;
-import reflection.Util;
 import tw.util.IStream;
 import tw.util.S;
 

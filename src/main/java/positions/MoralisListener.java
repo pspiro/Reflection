@@ -9,9 +9,9 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpServer;
 
+import common.Util;
 import http.SimpleTransaction;
 import reflection.MySqlConnection;
-import reflection.Util;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access. */

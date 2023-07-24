@@ -9,13 +9,12 @@ import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
-import reflection.Util;
 import tw.util.S;
-import util.StringHolder;
 
 /** This shit works. You pass in everthing ahead of time, then call transact() */
 public class Fireblocks {
@@ -81,11 +80,8 @@ public class Fireblocks {
 
 		// toJson removes spaces in the values, not good
 		String bodyHash = Encrypt.getSHA256(body);
-		//S.out( "Body hash: %s", bodyHash);
 
 		String header = toJson( "{ 'alg': 'RS256', 'typ': 'JWT' }");
-		//S.out( "Header: %s", header);
-		//S.out( "Encoded: %s", Encrypt.encode( header) );
 
 		String nonce = String.valueOf( rnd.nextInt() );
 		
@@ -98,28 +94,19 @@ public class Fireblocks {
 				+ "'bodyHash': '%s'"
 				+ "}",
 				endpoint, nonce, start, expire, s_apiKey, bodyHash) );
-		//S.out( "Payload: %s", payload);
-		//S.out( "Encoded: %s", Encrypt.encode( payload) );
 		
 		String input = String.format( "%s.%s",
 				Encrypt.encode( header),
 				Encrypt.encode( payload) );
-		//S.out( "Input:");
-		//System.out.println(input);
 		
 		Util.require( s_privateKey != null, "You must set key vals first");
 		String signed = Encrypt.signRSA( input, s_privateKey);
-		//S.out( "Sig:");
-		//System.out.println(signed);
 
 		String jwt = String.format( "%s.%s.%s",
 				Encrypt.encode( header), Encrypt.encode( payload), signed)
 				.replace( "/", "_").replace( "+", "-");
-		//System.out.println( jwt);
 		
-		//new OStream( "c:/temp/f2.t").write(body);
-		
-		StringHolder holder = new StringHolder();
+		ObjHolder holder = new ObjHolder();
 		
 		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare(operation, base + endpoint)
@@ -134,15 +121,21 @@ public class Fireblocks {
 			.thenAccept( obj -> {
 				try {
 					client.close();
-		  			holder.val = obj.getResponseBody();
-					//process(obj);
+		  			holder.val = obj;
 				}
 				catch( Exception e) {
 					e.printStackTrace();
 				}
 			}).join();
 		
-		return holder.val;
+		Util.require( holder.val.getStatusCode() == 200, "Error status code %s - %s", 
+				holder.val.getStatusCode(), holder.val.getResponseBody() );
+		
+		return holder.val.getResponseBody();
+	}
+	
+	static class ObjHolder {
+		Response val;
 	}
 
 	static void process(Response resp) throws Exception {

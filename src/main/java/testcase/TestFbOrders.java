@@ -31,6 +31,8 @@ public class TestFbOrders extends MyTestCase {
 		}
 	}
 
+	/** This test will fail. To get it to pass, update LiveOrder.updateFrom() to check for 
+	 *  insufficient crypto or insufficient approved amount */
 	public void testInsufficientFundsBuy() throws Exception {
 		cli().get("/api/mywallet/" + Cookie.wallet);
 		double bal = cli.readMyJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
@@ -55,6 +57,9 @@ public class TestFbOrders extends MyTestCase {
 		}
 	}
 
+	/** This test will fail. To get it to pass, update LiveOrder.updateFrom() to check for 
+	 *  insufficient crypto or insufficient approved amount. It's only worthwhile
+	 *  if we see this happening in real life  */
 	public void testNonApproval() throws Exception {
 		Cookie.setNewWallet(bobAddr);
 

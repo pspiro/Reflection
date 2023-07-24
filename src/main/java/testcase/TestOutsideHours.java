@@ -4,10 +4,9 @@ import java.util.Date;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import reflection.MyTransaction;
 import reflection.RefCode;
-import reflection.RefException;
-import reflection.Util;
 import tw.util.S;
 
 // add a note here what time these 24/7 stocks are trading
@@ -18,7 +17,7 @@ public class TestOutsideHours extends MyTestCase {
 	static int AAPL = 265598;
 	static int IBM = 8314;
 	
-	public void testExchHours() throws RefException {// run this test again with a different time zone
+	public void testExchHours() throws Exception {// run this test again with a different time zone
 		String str = ";20220807:CLOSED;"
 				+ "20220916:0900-20220916:1600;;"
 				+ "20220918:0930-20220918:1600";

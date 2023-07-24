@@ -17,10 +17,10 @@ import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Alerts;
+import common.Util;
 import fireblocks.Erc20;
 import test.MyTimer;
-import tw.google.Auth;
-import tw.google.TwMail;
 import tw.util.S;
 import util.LogType;
 
@@ -222,20 +222,8 @@ public abstract class MyTransaction {
 	}
 
 	/** don't throw an exception here, it should not disrupt any other process */
-	protected void alert(String subject, String body) {
-		try {
-			TwMail mail = Auth.auth().getMail();
-			mail.send(
-					"RefAPI", 
-					"peteraspiro@gmail.com", 
-					"peteraspiro@gmail.com",
-					subject,
-					body,
-					"plain");
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
+	protected static void alert(String subject, String body) {
+		Alerts.alert( "RefAPI", subject, body);
 	}
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.

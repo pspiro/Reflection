@@ -4,10 +4,10 @@ import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 
+import common.Util;
 import http.MyHttpClient;
 import junit.framework.Assert;
 import reflection.SiweUtil;
-import reflection.Util;
 import tw.util.S;
 
 public class Cookie extends MyTestCase {

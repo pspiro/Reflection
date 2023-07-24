@@ -1,7 +1,6 @@
 package positions;
 
 
-import java.io.FileNotFoundException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -11,11 +10,13 @@ import java.util.concurrent.Executors;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpServer;
 
+import common.Util;
 import fireblocks.Erc20;
 import http.SimpleTransaction;
 import positions.EventFetcher.Balances;
@@ -24,7 +25,6 @@ import reflection.MySqlConnection;
 import reflection.ParamMap;
 import reflection.RefCode;
 import reflection.RefException;
-import reflection.Util;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
@@ -317,14 +317,14 @@ public class MoralisServer {
 		return holder.val;
 	}
 
-	public static String contractCall( String contractAddress, String functionName, String abi) throws FileNotFoundException {
+	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
 		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
 				moralis, contractAddress, chain, functionName);
 		return post( url, abi);
 	}
 
-	public static String post(String url, String body) {
-		StringHolder holder = new StringHolder();
+	public static String post(String url, String body) throws Exception {
+		ObjHolder holder = new ObjHolder();
 
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client
@@ -338,14 +338,21 @@ public class MoralisServer {
 		  	.thenAccept( obj -> {
 		  		try {
 		  			client.close();
-		  			holder.val = obj.getResponseBody();
+		  			holder.val = obj;
 		  		}
 		  		catch (Exception e) {
 		  			e.printStackTrace();
 		  		}
 		  	}).join();  // the .join() makes it synchronous
-
-		return holder.val;
+		
+		Util.require( holder.val.getStatusCode() == 200, "Error status code %s - %s", 
+				holder.val.getStatusCode(), holder.val.getResponseBody() );
+		
+		return holder.val.getResponseBody();
+	}
+	
+	static class ObjHolder {
+		Response val;
 	}
 	
 	/** Fields returned:

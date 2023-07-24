@@ -18,6 +18,7 @@ import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import tw.util.S;
 
 public class SiweTransaction extends MyTransaction {

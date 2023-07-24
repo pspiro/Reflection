@@ -16,8 +16,8 @@ import org.json.simple.parser.JSONParser;
 
 import com.moonstoneid.siwe.SiweMessage;
 
+import common.Util;
 import reflection.SiweUtil;
-import reflection.Util;
 import tw.util.S;
 
 /**

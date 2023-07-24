@@ -2,10 +2,10 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.RefCode;
-import reflection.Util;
 
 public class TestErrors extends TestCase {
 	String message = "message";
