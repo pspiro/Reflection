@@ -47,6 +47,7 @@ public class TestBackendMsgs extends MyTestCase {
 		assertEquals( "Stock", obj.getString("type") );
 		assertEquals( "265598", obj.getString("conid") );
 		assertEquals( "open", obj.getString("exchangeStatus") );
+		assertEquals( "NASDAQ:AAPL", obj.getString("tradingView") );
 		assertTrue( bid > 100 && bid < 200);
 		assertTrue( ask > 100 && bid < 200);
 	}

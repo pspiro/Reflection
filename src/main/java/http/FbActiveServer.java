@@ -60,6 +60,7 @@ public class FbActiveServer {
 			// this creates like ten threads for every request which doesn't seem very efficient. pas
 			// we're querying only for transactions in the last five minutes
 			try {
+				System.out.print('.');
 				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 5);
 				
 				for (JsonObject obj : ar) {

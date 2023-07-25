@@ -54,6 +54,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "exchange", masterRow.getString("Exchange") );
 				stock.put( "is24hour", masterRow.getBool("24-Hour") );
 				stock.put( "isHot", masterRow.getBool("Hot") );
+				stock.put( "tradingView", masterRow.getString("Trading View") );
 
 				m_stocks.add( stock);
 				m_stockMap.put( conid, stock);
