@@ -100,7 +100,7 @@ public class Monitor {
 		refPanel.add( m_admin2);
 		
 		VerticalPanel rusdPanel = new VerticalPanel();
-		rusdPanel.setBorder( new TitledBorder("RUSD"));
+		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
 		rusdPanel.add( "RUSD Outstanding", m_rusd);
 		rusdPanel.add( "USDC in RefWallet", m_usdc2);
 		rusdPanel.add( "Cash in brokerage", m_cash);
@@ -117,7 +117,7 @@ public class Monitor {
 		m_frame.add( tabs);
 		m_frame.setTitle( "Reflection Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		m_frame.setSize( 800, 1000);
+		m_frame.setSize( 1000, 1000);
 		m_frame.setVisible(true);
 		m_frame.add(refPanel, BorderLayout.SOUTH);
 		

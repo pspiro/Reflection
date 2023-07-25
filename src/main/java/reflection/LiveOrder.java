@@ -2,32 +2,26 @@ package reflection;
 
 import org.json.simple.JsonObject;
 
-import tw.util.S;
-import util.LogType;
-
-// probably this should be a JSONObject
+// probably this should be a JSONObject; you could move all of this into OrderTransaction or Order
 class LiveOrder {
 	enum LiveOrderStatus { Working, Filled, Failed };
 
-	private long m_finished;  // don't keep them forever. pas
+	private OrderTransaction m_trans;
 	private String m_description;  // either order description or error description
-	private String m_action; // buy/sell/bought/sold
 	private LiveOrderStatus m_status;
 	private int m_progress;
 	private RefCode m_errorCode;
-	private String m_uid;  // this is an id that the client can use to match up the initial order with the blockchain order status
-							// it is the same uid as on the OrderTransaction
+	private long m_finished;  // don't keep them forever. pas
 
-	LiveOrder(String action, String description, String uid) {
-		m_action = action;
+	LiveOrder(OrderTransaction trans, String description) {
+		m_trans = trans;
 		m_description = description;
 		m_status = LiveOrderStatus.Working;
 		m_progress = 10;
-		m_uid = uid;
 	}
 	
 	private boolean isBuy() {
-		return "Buy".equals(m_action);
+		return m_trans.isBuy();
 	}
 
 	public LiveOrderStatus status() {
@@ -35,7 +29,7 @@ class LiveOrder {
 	}
 
 	public String uid() {
-		return m_uid;
+		return m_trans.uid();
 	}
 	
 	enum FireblocksStatus {
@@ -76,8 +70,15 @@ class LiveOrder {
 			filled();
 		}
 		else if (stat.pct() == 100) {
-			S.out( "The blockchain order failed. Possible reasons: insufficient crypto in wallet; insufficient amount was approved");
 			fail( new Exception( "The blockchain transaction failed with status " + stat) );
+			
+			// informational only; don't throw an exception
+			try {
+				m_trans.onBlockchainOrderFailed();
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+			}
 		}
 		else {
 			m_progress = stat.pct();
@@ -112,8 +113,8 @@ class LiveOrder {
 	/** Called when the user queries status of live orders */
 	public synchronized JsonObject getWorkingOrder() {
 		JsonObject order = new JsonObject();
-		order.put( "id", m_uid);
-		order.put( "action", m_action);
+		order.put( "id", uid() );
+		order.put( "action", isBuy() ? "Buy" : "Sell");
 		order.put( "description", m_description);
 		order.put( "progress", m_progress);
 		return order;
@@ -122,7 +123,7 @@ class LiveOrder {
 	/** Called when the user queries status of live orders */
 	public synchronized JsonObject getCompletedOrder() {
 		JsonObject order = new JsonObject();
-		order.put( "id", m_uid);
+		order.put( "id", uid() );
 		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   
 		order.put( "text", m_description);
 		order.put( "status", m_status.toString() );

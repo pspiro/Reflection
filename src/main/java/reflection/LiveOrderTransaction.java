@@ -70,8 +70,8 @@ public class LiveOrderTransaction extends MyTransaction {
 			LiveOrder liveOrder = allLiveOrders.get(id);
 			
 			if (liveOrder != null) {
-				liveOrder.updateFrom(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 				log( LogType.FB_UPDATE, "uid=%s  status=%s", liveOrder.uid(), status);
+				liveOrder.updateFrom(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it

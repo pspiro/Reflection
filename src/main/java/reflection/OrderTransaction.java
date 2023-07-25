@@ -20,6 +20,7 @@ import tw.util.S;
 import util.LogType;
 
 public class OrderTransaction extends LiveOrderTransaction {
+	private Order m_order;
 	private double m_desiredQuantity;  // same as Order.m_totalQuantity
 	private Stock m_stock;
 	private double m_stablecoinAmt;
@@ -31,6 +32,10 @@ public class OrderTransaction extends LiveOrderTransaction {
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
  	}
+	
+	String walletAddr() {
+		return m_walletAddr;
+	}
 	
 	/** Msg received directly from Frontend via nginx */
 	public void backendOrder() {
@@ -83,18 +88,18 @@ public class OrderTransaction extends LiveOrderTransaction {
 		contract.conid( conid);
 		contract.exchange( m_main.getExchange( conid) );
 
-		Order order = new Order();
-		order.action( side == "buy" ? Action.BUY : Action.SELL);
-		order.totalQuantity( m_desiredQuantity);
-		order.lmtPrice( orderPrice);
-		order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
-		order.allOrNone(true);  // all or none, we don't want partial fills
-		order.transmit( true);
-		order.outsideRth( true);
+		m_order = new Order();
+		m_order.action( side == "buy" ? Action.BUY : Action.SELL);
+		m_order.totalQuantity( m_desiredQuantity);
+		m_order.lmtPrice( orderPrice);
+		m_order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
+		m_order.allOrNone(true);  // all or none, we don't want partial fills
+		m_order.transmit( true);
+		m_order.outsideRth( true);
 
 		// check TDS calculation
 		m_tds = m_map.getDouble("tds");
-		double myTds = order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
+		double myTds = m_order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
 		// fix this -> require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
 		m_stablecoinAmt = m_map.getDouble("amount");
@@ -102,7 +107,7 @@ public class OrderTransaction extends LiveOrderTransaction {
 			m_stablecoinAmt = m_map.getDouble("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
 		
-		double myStablecoinAmt = order.isBuy()
+		double myStablecoinAmt = m_order.isBuy()
 			? preCommAmt + m_config.commission()
 			: preCommAmt - m_config.commission() - m_tds;
 		// fix this-> require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calulated amount of %s", m_stablecoinAmt, myStablecoinAmt);
@@ -126,17 +131,18 @@ public class OrderTransaction extends LiveOrderTransaction {
 		// do this after checking trading hours because that would
 		// explain why there are no prices which should never happen otherwise
 		Prices prices = m_main.getStock(conid).prices();
-		prices.checkOrderPrice( order, orderPrice, m_config);
+		prices.checkOrderPrice( m_order, orderPrice, m_config);
 		
 		// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
 		// * or check that ANY price is pretty recent, to we know prices are updating
 		
-		log( LogType.REC_ORDER, order.getOrderLog(contract, m_walletAddr) );
+		log( LogType.REC_ORDER, m_order.getOrderLog(contract, m_walletAddr) );
 		
-		m_liveOrder = new LiveOrder(
-				side, 
-				S.format("%s %s %s for $%s", cap(side), m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt),
-				m_uid); 
+		m_liveOrder = new LiveOrder( this, S.format("%s %s %s for $%s",
+				cap(side), 
+				m_desiredQuantity, 
+				m_stock.getSymbol(), 
+				m_stablecoinAmt) ); 
 		
 		respond( code, RefCode.OK, "id", m_liveOrder.uid() );
 		
@@ -145,38 +151,38 @@ public class OrderTransaction extends LiveOrderTransaction {
 
 		shrinkWrap( () -> {
 			// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
-			if (order.roundedQty() == 0) {
-				order.status(OrderStatus.Filled);
-				onIBOrderCompleted(order, 0, false);
+			if (m_order.roundedQty() == 0) {
+				m_order.status(OrderStatus.Filled);
+				onIBOrderCompleted(0, false);
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
 				require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
 				log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-						order.orderId(), order.action(), order.totalQty(), order.totalQty(), order.lmtPrice(),
+						m_order.orderId(), m_order.action(), m_order.totalQty(), m_order.totalQty(), m_order.lmtPrice(),
 						m_config.commission(), 0, "");
-				order.status(OrderStatus.Filled);
-				onIBOrderCompleted( order, order.totalQuantity(), false ); // you might want to sometimes pass false here when testing
+				m_order.status(OrderStatus.Filled);
+				onIBOrderCompleted( m_order.totalQuantity(), false ); // you might want to sometimes pass false here when testing
 			}
 			else {
-				submitOrder(  contract, order);
+				submitOrder(  contract);
 			}
 		});
 	}
 
 	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require() and no wrap(),
 	 *  only shrinkWrap()  */
-	private void submitOrder( Contract contract, Order order) throws Exception {
+	private void submitOrder( Contract contract) throws Exception {
 		ModifiableDecimal shares = new ModifiableDecimal();
 
 		// place order for rounded quantity
-		m_main.orderController().placeOrModifyOrder(contract, order, new OrderHandlerAdapter() {
+		m_main.orderController().placeOrModifyOrder(contract, m_order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 
 				shrinkWrap( () -> {
-					order.status(status);
-					out( "  order status  id=%s  status=%s", order.orderId(), status);
+					m_order.status(status);
+					out( "  order status  id=%s  status=%s", m_order.orderId(), status);
 
 					// save the number of shares filled
 					shares.value( filled.toDouble() );
@@ -185,15 +191,15 @@ public class OrderTransaction extends LiveOrderTransaction {
 					// better is: if canceled w/ no shares filled, let it go to handle() below
 
 					if (status.isComplete() ) {
-						order.permId(permId);
-						onIBOrderCompleted( order, shares.value(), false);
+						m_order.permId(permId);
+						onIBOrderCompleted( shares.value(), false);
 					}
 				});
 			}
 
 			@Override public void handle(int errorCode, String errorMsg) {
 				shrinkWrap( () -> {
-					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", order.orderId(), errorCode, errorMsg);
+					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", m_order.orderId(), errorCode, errorMsg);
 
 					// if some shares were filled, let orderStatus or timeout handle it
 					if (shares.nonZero() ) {
@@ -215,33 +221,33 @@ public class OrderTransaction extends LiveOrderTransaction {
 			}
 		});
 
-		log( LogType.SUBMITTED, order.getOrderLog(contract, m_walletAddr) );
+		log( LogType.SUBMITTED, m_order.getOrderLog(contract, m_walletAddr) );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
-		setTimer( m_config.orderTimeout(), () -> onOrderTimeout( order, shares.value() ) );
+		setTimer( m_config.orderTimeout(), () -> onOrderTimeout( shares.value() ) );
 	}
 	
 	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require()
 	 *  this is wrapped() but it must call onIBOrderCompleted() so cannot throw an exception  */
-	private synchronized void onOrderTimeout(Order order, double filledShares) {
+	private synchronized void onOrderTimeout(double filledShares) {
 		shrinkWrap( () -> {
 			if (!m_respondedToOrder) {
 				// this will happen if our timeout is lower than the timeout of the IOC order
 				log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
-						order.orderId(), filledShares, order.status() );
+						m_order.orderId(), filledShares, m_order.status() );
 
 				// if order is still live, cancel the order; don't let an error here disrupt processing
-				if (!order.status().isComplete() && !order.status().isCanceled() ) {
+				if (!m_order.status().isComplete() && !m_order.status().isCanceled() ) {
 					try {
-						out( "Canceling order %s on timeout", order.orderId() );
-						m_main.orderController().cancelOrder( order.orderId(), "", null);
+						out( "Canceling order %s on timeout", m_order.orderId() );
+						m_main.orderController().cancelOrder( m_order.orderId(), "", null);
 					}
 					catch( Exception e) {
 						e.printStackTrace();
 					}
 				}
-				onIBOrderCompleted( order, filledShares, true);
+				onIBOrderCompleted( filledShares, true);
 			}
 		});
 	}
@@ -252,14 +258,14 @@ public class OrderTransaction extends LiveOrderTransaction {
 	 *  This call is shrinkWrapped()
 	 *  In the case where order qty < .5 and we didn't submit an order, orderStatus will be Filled.
 	 *  You must (a) make a log entry and (b) either call m_liveOrder.filled() or throw an exception */ 
-	private synchronized void onIBOrderCompleted(Order order, double filledShares, boolean timeout) throws Exception {
+	private synchronized void onIBOrderCompleted(double filledShares, boolean timeout) throws Exception {
 		if (m_respondedToOrder) {
 			return;    // should never happen, but just to be safe
 		}
 		m_respondedToOrder = true;
 
 		require(
-				filledShares > 0 || order.status() == OrderStatus.Filled,
+				filledShares > 0 || m_order.status() == OrderStatus.Filled,
 				timeout ? RefCode.TIMED_OUT : RefCode.UNKNOWN,
 				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");
 		
@@ -273,20 +279,20 @@ public class OrderTransaction extends LiveOrderTransaction {
 		// for a filled order, the (order size - filled size) should always be <= .5
 		// if > .5, then it was a partial fill and we will use the filled size instead of the order size
 		// this way we always have max .5 shares difference between stock pos and token pos (for a single order)
-		if (order.totalQuantity() - filledShares > .5001) {
+		if (m_order.totalQuantity() - filledShares > .5001) {
 			stockTokenQty = filledShares;
 			logType = LogType.PARTIAL_FILL;  // this should never happen since we set all-or-none on the orders
 		}
 		else {
-			stockTokenQty = order.totalQuantity();
+			stockTokenQty = m_order.totalQuantity();
 			logType = LogType.FILLED;
 		}
 		
-		log( logType, "orderId=%s  filledShares=%s", order.orderId(), filledShares);
+		log( logType, "orderId=%s  filledShares=%s", m_order.orderId(), filledShares);
 		
 		if (fireblocks() ) {
 			m_liveOrder.updateFrom(FireblocksStatus.STOCK_ORDER_FILLED);
-			processFireblocks(order, stockTokenQty, filledShares);
+			processFireblocks(stockTokenQty, filledShares);
 		}
 		else {
 			m_liveOrder.filled();
@@ -294,7 +300,7 @@ public class OrderTransaction extends LiveOrderTransaction {
 	}
 	
 	/** Call to this method is shrinkWrapped() */
-	private void processFireblocks(Order order, double stockTokenQty, double filledShares) throws Exception {
+	private void processFireblocks(double stockTokenQty, double filledShares) throws Exception {
 		try {			
 			// for testing
 			if (m_map.getBool("fail") ) {
@@ -306,7 +312,7 @@ public class OrderTransaction extends LiveOrderTransaction {
 			String id;
 
 			// buy
-			if (order.action() == Action.BUY) {
+			if (m_order.action() == Action.BUY) {
 				
 				// buy with RUSD?
 				if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
@@ -350,20 +356,20 @@ public class OrderTransaction extends LiveOrderTransaction {
 				e.printStackTrace();
 			}
 			
-			log( LogType.ERROR, "orderId=%s  %s", order.orderId(), e.getMessage() ); 
+			log( LogType.ERROR, "orderId=%s  %s", m_order.orderId(), e.getMessage() ); 
 
 			// unwind the order first and foremost
-			unwindOrder(order, filledShares);
+			unwindOrder(filledShares);
 			
 			// now throw an exception so the LiveOrder will get updated with the error text
 
 			// fireblocks has failed; try to determine why
 			
 			// confirm that the user has enough stablecoin or stock token in their wallet
-			requireSufficientStablecoin(order); // check this again; it could have changes since the order was placed
+			requireSufficientStablecoin(); // check this again; it could have changes since the order was placed
 
 			// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-			if (order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
+			if (m_order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
 				double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 				require( 
 						Util.isGtEq(approvedAmt, m_stablecoinAmt), 
@@ -378,8 +384,8 @@ public class OrderTransaction extends LiveOrderTransaction {
 
 	/** Confirm that the user has enough stablecoin or stock token in their wallet.
 	 *  This could be called before or after submitting the stock order */
-	private void requireSufficientStablecoin(Order order) throws Exception {
-		if (order.isBuy() ) {
+	private void requireSufficientStablecoin() throws Exception {
+		if (m_order.isBuy() ) {
 			double balance = stablecoin().getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_stablecoinAmt ), 
 					RefCode.INSUFFICIENT_FUNDS,
@@ -401,7 +407,7 @@ public class OrderTransaction extends LiveOrderTransaction {
 
 	/** The order was filled, but the blockchain transaction failed, so we must unwind the order. 
 	 * @param filledShares */
-	private void unwindOrder(Order order, double filledShares) {
+	private void unwindOrder(double filledShares) {
 		try {
 			// don't unwind order in auto-fill mode which is for testing only
 			if (m_config.autoFill() ) {
@@ -410,24 +416,24 @@ public class OrderTransaction extends LiveOrderTransaction {
 			}
 
 			String body = String.format( "The blockchain transaction failed and the order should be unwound:  wallet=%s  orderid=%s",
-					m_walletAddr, order.orderId() );
+					m_walletAddr, m_order.orderId() );
 			alert( "UNWIND ORDER", body);
 			
 			Contract contract = new Contract();
 			contract.conid( m_map.getRequiredInt("conid") );
 			contract.exchange( m_main.getExchange( contract.conid() ) );
 			
-			order.flipSide();
-			order.orderId(0);
-			order.orderType(OrderType.MKT);
+			m_order.flipSide();
+			m_order.orderId(0);
+			m_order.orderType(OrderType.MKT);
 			
 			// this should never be the case since the orders are AON, but just in case that changes...
-			if (filledShares < order.totalQuantity() ) {
+			if (filledShares < m_order.totalQuantity() ) {
 				out( "WARNING: filled shared was less that total order qty when unwinding order"); 
-				order.totalQuantity(filledShares);
+				m_order.totalQuantity(filledShares);
 			}
 			
-			m_main.orderController().placeOrModifyOrder(contract, order, null);
+			m_main.orderController().placeOrModifyOrder(contract, m_order, null);
 		}
 		catch( Exception e) {
 			e.printStackTrace();
@@ -452,6 +458,7 @@ public class OrderTransaction extends LiveOrderTransaction {
 		return "buy".equals(side) ? "Buy" : "Sell";
 	}
 	
+	/** Like wrap, but instead of notifying the http client, we update the live order */
 	private void shrinkWrap(ExRunnable runnable) {
 		try {
 			runnable.run();
@@ -466,5 +473,17 @@ public class OrderTransaction extends LiveOrderTransaction {
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
 			m_liveOrder.fail(e); // you have to sync this. pas
 		}
+	}
+	
+	boolean isBuy() {
+		return m_order.isBuy();
+	}
+
+	public void onBlockchainOrderFailed() throws Exception {
+		log( LogType.BLOCKCHAIN_FAILED, "The blockchain order failed.  Approved=%s  BUSD=%s  RUSD=%S  StockToken=%s",
+				Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
+				Main.m_config.busd().getPosition(m_walletAddr),
+				Main.m_config.rusd().getPosition(m_walletAddr),
+				newStockToken().getPosition( m_walletAddr) );
 	}
 }

@@ -178,7 +178,7 @@ public class TestOrder extends MyTestCase {
 		}
 		
 		double total = buy ? amt + m_config.commission() : amt - m_config.commission() - tds;
-		obj.put("price", total);
+		obj.put("amount", total);
 		
 		return obj;
 	}

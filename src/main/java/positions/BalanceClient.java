@@ -54,8 +54,8 @@ public class BalanceClient {
 		for (JsonObject item : morPositions) {
 			String token = item.getString("token_address").toLowerCase();
 			if (m_map.containsKey(token) ) {
-				String name = item.getString("name");
-			    String symbol = item.getString("symbol");
+//				String name = item.getString("name");
+//			    String symbol = item.getString("symbol");
 			    double morBalance = item.getDouble("balance") / 1000000.;
 				double myBalance = myWallet.getDouble( token);
 				

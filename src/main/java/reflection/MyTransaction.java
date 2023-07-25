@@ -56,6 +56,10 @@ public abstract class MyTransaction {
 		m_uid = header == null ? Util.id(5) : Util.id(5) + " " + header;		
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
+	
+	public String uid() {
+		return m_uid;
+	}
 
 	/** Note this returns URI in all lower case */
 	String getURI(HttpExchange exch) {

@@ -24,5 +24,6 @@ public enum LogType {
 	TIME,			// switched to/from IBEOS hours
 	TIMEOUT,		// msg timed out but we responded anyway
 	TRADE,			// trade report received
-	WALLET, 
+	WALLET,
+	BLOCKCHAIN_FAILED, 
 }

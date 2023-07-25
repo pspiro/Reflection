@@ -94,12 +94,12 @@ public class TestFbOrders extends MyTestCase {
 		}
 	}
 
-	public void testFillWithFb() throws Exception {
+	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// mint BUSD for user Bob
 		busd.mint(
 				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
-				200);
+				2000);
 		
 		// user to approve buying with BUSD; you must wait for this
 		busd.approve(
@@ -117,6 +117,8 @@ public class TestFbOrders extends MyTestCase {
 		obj.put("wallet_public_key", address);
 		obj.put("cookie", cookie);
 		
+		S.out( "Sending: " + obj);
+
 		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
