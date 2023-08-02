@@ -44,20 +44,26 @@ public class MyTestCase extends TestCase {
 		return postOrder(obj).readMyJsonObject().getString("id");
 	}
 
-	JsonObject getLiveOrders(String address) throws Exception {
+	JsonObject getWorkingLiveOrder(String id) throws Exception {
+		JsonArray msgs = getAllLiveOrders(Cookie.wallet).getArray("orders");
+		return msgs != null ? msgs.find( "id", id) : null;
+	}
+
+	public JsonObject getAllLiveOrders(String address) throws Exception {
 		return cli().get("/api/working-orders/" + address)
 				.readMyJsonObject();
 	}
 	
-	JsonArray getLiveMessages() throws Exception {
-		return getLiveOrders(Cookie.wallet).getArray("messages");
+	JsonObject getLiveMessage2(String id) throws Exception {
+		JsonArray msgs = getCompletedLiveOrders();
+		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	
 	JsonObject getLiveMessage(String id) throws Exception {
 		// wait a tic for the order to filled, even autoFill orders take a few ms
 		S.sleep(100);
 		
-		JsonArray msgs = getLiveMessages();
+		JsonArray msgs = getCompletedLiveOrders();
 		msgs.display();
 		for (JsonObject msg : msgs) {
 			if (msg.getString("id").equals(id) ) {
@@ -67,14 +73,8 @@ public class MyTestCase extends TestCase {
 		throw new Exception("No live order found with id " + id);
 	}
 	
-	JsonObject getLiveMessage2(String id) throws Exception {
-		JsonArray msgs = getLiveMessages();
-		return msgs != null ? msgs.find( "id", id) : null;
-	}
-	
-	JsonObject getLiveOrder(String id) throws Exception {
-		JsonArray msgs = getLiveOrders(Cookie.wallet).getArray("orders");
-		return msgs != null ? msgs.find( "id", id) : null;
+	JsonArray getCompletedLiveOrders() throws Exception {
+		return getAllLiveOrders(Cookie.wallet).getArray("messages");
 	}
 	
 }

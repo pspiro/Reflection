@@ -33,7 +33,7 @@ public class OrderTransaction extends MyTransaction {
 	
 	
 	// live order fields
-	private String m_description = "";  // either order description or error description
+	private String m_errorText = "";  // returned with live orders if order fails
 	private LiveOrderStatus m_status = LiveOrderStatus.Working;
 	private int m_progress = 10;
 	private RefCode m_errorCode;
@@ -393,8 +393,8 @@ public class OrderTransaction extends MyTransaction {
 	private void insertToCryptoTable(String id) {
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("orderid", m_order.orderId() );  // ties the order to the trades
-			obj.put("permid", m_order.permId() );    // have to make sure this is set. pas
+			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
+			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
 			obj.put("fireblocks_id", id);
 			obj.put("timestamp", System.currentTimeMillis() / 1000);
 			obj.put("wallet_public_key", m_walletAddr);
@@ -404,7 +404,6 @@ public class OrderTransaction extends MyTransaction {
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
-			obj.put("spread", 0); // really want the average filled price here
 			obj.put("tds", m_tds);  // format this? pas
 			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
 			//"status"
@@ -415,7 +414,7 @@ public class OrderTransaction extends MyTransaction {
 			//"country"
 			// "crypto_id"
 		
-			m_main.sqlConnection( conn -> conn.insert("crypto_transactions", obj, "fireblocks_id = '%s'", id) );
+			m_main.sqlConnection( conn -> conn.insertJson("crypto_transactions", obj) );
 		} 
 		catch (Exception e) {
 			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );
@@ -531,12 +530,7 @@ public class OrderTransaction extends MyTransaction {
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
-	synchronized void onUpdateStatus(String id, FireblocksStatus stat, String hash) {
-		
-		// needed: date/time, action, qty, symbol, price
-		
-		
-		
+	synchronized void onUpdateStatus(FireblocksStatus stat) {
 		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
 			onFilled();
 		}
@@ -561,9 +555,6 @@ public class OrderTransaction extends MyTransaction {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
-			m_description = m_description
-					.replace("Buy", "Bought")
-					.replace("Sell", "Sold");
 		}
 	}
 
@@ -572,7 +563,7 @@ public class OrderTransaction extends MyTransaction {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Failed;
 	
-			m_description = e.getMessage();
+			m_errorText = e.getMessage();
 			if (e instanceof RefException) {
 				m_errorCode = ((RefException)e).code();
 			}
@@ -581,16 +572,10 @@ public class OrderTransaction extends MyTransaction {
 
 	/** Called when the user queries status of live orders */
 	public synchronized JsonObject getWorkingOrder() {
-		String description = S.format("%s %s %s for $%s",
-				isBuy() ? "Buy" : "Sell",
-				m_desiredQuantity, 
-				m_stock.getSymbol(), 
-				m_stablecoinAmt); 
-		
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
-		order.put( "action", isBuy() ? "Buy" : "Sell");
-		order.put( "description", description);
+		order.put( "action", isBuy() ? "BUY" : "Sell");     // used to set the color; maybe it should be upper case?
+		order.put( "description", getWorkingOrderText() );
 		order.put( "progress", m_progress);
 		return order;
 	}
@@ -600,12 +585,22 @@ public class OrderTransaction extends MyTransaction {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
 		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   
-		order.put( "text", m_description);
 		order.put( "status", m_status.toString() );
+		order.put( "text", m_status == LiveOrderStatus.Failed ? m_errorText : getCompletedOrderText() );
 		if (m_errorCode != null) {
 			order.put( "errorCode", m_errorCode.toString() );
 		}
 		return order;
+	}
+	
+	private String getWorkingOrderText() {
+		return S.format( "%s %s %s for %s",
+				isBuy() ? "Buy" : "Sell", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
+	}
+	
+	private String getCompletedOrderText() {
+		return S.format( "%s %s %s for %s",
+				isBuy() ? "Bought" : "Sold", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
 	}
 	
 }

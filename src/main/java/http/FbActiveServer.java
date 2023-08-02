@@ -81,14 +81,21 @@ public class FbActiveServer {
 			S.out( trans.obj() );
 			
 			try {
-				String uri = String.format( "/api/fireblocks/?id=%s&status=%s&hash=%s", 
-						trans.id(), trans.status(), S.notNull( trans.hash() ) );  
+				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", 
+						trans.id(), trans.status() );
+				
+				// append hash only if not null; RefAPI can't handle null params in URI
+				if (S.isNotNull(trans.hash() ) ) {
+					uri = String.format("%s&hash=%s", uri, trans.hash() );
+				}
 	
 				// use MyHttpClient since this is a local transaction
 				MyHttpClient client = new MyHttpClient("localhost", 8383);
 				client.get(uri);
 				
-				Util.require( client.getResponseCode() == 200, "Error: received response code " + client.getResponseCode() );
+				Util.require( 
+						client.getResponseCode() == 200, 
+						"Error: response code: %s  message: %s", client.getResponseCode(), client.getMessage() );
 			}
 			catch( Exception e) {
 				S.out( "Could not update RefAPI - " + e.getMessage() );
@@ -107,7 +114,7 @@ public class FbActiveServer {
 		JsonObject obj() { return m_obj; }
 		
 		String id() throws Exception {
-			return m_obj.getString("id");  // add the requires)
+			return m_obj.getString("id");  // fireblocks id
 		}
 		
 		String hash() throws Exception {

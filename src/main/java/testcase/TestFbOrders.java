@@ -1,5 +1,6 @@
 package testcase;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import fireblocks.Busd;
@@ -96,21 +97,25 @@ public class TestFbOrders extends MyTestCase {
 
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// mint BUSD for user Bob
-		busd.mint(
-				accounts.getId( "Admin1"),
-				accounts.getAddress("Bob"),
-				2000);
-		
-		// user to approve buying with BUSD; you must wait for this
-		busd.approve(
-				accounts.getId( "Bob"),
-				rusd.address(),
-				200).waitForHash();
+//		S.out( "minting");
+//		busd.mint(
+//				accounts.getId( "Admin1"),
+//				accounts.getAddress("Bob"),
+//				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+//		
+//		// user to approve buying with BUSD; you must wait for this
+//		S.out( "approving");
+//		busd.approve(
+//				accounts.getId( "Bob"),
+//				rusd.address(),
+//				2000).waitForHash();
 		
 		String address = accounts.getAddress("Bob");
 		String cookie = Cookie.signIn(address);
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
+
+		long now = System.currentTimeMillis() / 1000;		
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
@@ -123,12 +128,12 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 200, cli.getResponseCode() );
 		assertEquals( RefCode.OK, cli.getCode() );
 		
-		String uid = map.getString("id");
+		String uid = map.getString("id");  // 5-digit code
 		assertTrue( S.isNotNull(uid) );
 		S.out( "Submitted order with uid %s", uid);
 		
 		while(true) {
-			JsonObject liveOrders = getLiveOrders(address);
+			JsonObject liveOrders = getAllLiveOrders(address);
 			S.out( liveOrders);
 
 			JsonObject msg = liveOrders.getArray("messages").find("id", uid);
@@ -145,6 +150,16 @@ public class TestFbOrders extends MyTestCase {
 
 			S.sleep(1000);
 		}
+		
+		m_config.sqlConnection( conn -> { 
+			JsonArray ar = conn.queryToJson("select * from crypto_transactions where timestamp > %s", now);
+			assertTrue( ar.size() > 0);
+			JsonObject rec = ar.get(0);
+			S.out(rec);
+			assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED
+			assertEquals( 1.0, rec.getDouble("quantity") );
+		});
+		
 		
 	}
 

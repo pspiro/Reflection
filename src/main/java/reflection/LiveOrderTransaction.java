@@ -18,7 +18,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		super(main, exchange);
 	}
 
-	public void handleWorkingOrders() {
+	public void handleLiveOrders() {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();
 			
@@ -49,8 +49,8 @@ public class LiveOrderTransaction extends MyTransaction {
 			}
 			
 			JsonObject ret = new JsonObject();
-			ret.put( "orders", orders);
-			ret.put( "messages", messages);
+			ret.put( "orders", orders);      // rename to "working", rename message to "live"
+			ret.put( "messages", messages);  // rename to "completed"
 			respond( ret);
 		});
 	}
@@ -62,7 +62,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			
 			String id = m_map.getRequiredParam("id");
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
-			String hash = m_map.getParam("hash");
+			String hash = S.notNull( m_map.getParam("hash") );
 			
 			updateCryptoTable( id, status, hash);
 			
@@ -70,7 +70,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			
 			if (liveOrder != null) {
 				log( LogType.FB_UPDATE, "uid=%s  status=%s", liveOrder.uid(), status);
-				liveOrder.onUpdateStatus(id, status, hash);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
+				liveOrder.onUpdateStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it
@@ -85,11 +85,10 @@ public class LiveOrderTransaction extends MyTransaction {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("fireblocks_id", id);
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 			
-			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "id = %s", id) );				
+			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "fireblocks_id = '%s'", id) );				
 		}
 		catch( Exception e) {
 			e.printStackTrace();

@@ -2,8 +2,8 @@ package test;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
-import junit.framework.TestCase;
 import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
@@ -18,13 +18,40 @@ public class CreateTables  {
 	public static void main(String[] args) {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
+
+			new CreateTables().createCryptoTransactions();
 			
-			new CreateTables().createTrades();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		S.out( "done");
+	}
+	
+	void createCryptoTransactions() throws Exception {
+		con.dropTable("crypto_transactions");
+		
+		String sql = "create table crypto_transactions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
+				+ "order_id varchar(32),"
+				+ "perm_id varchar(32),"
+				+ "fireblocks_id varchar(36),"
+				+ "timestamp double precision,"  // probably not the best type. pas
+				+ "blockchain_hash varchar(100),"  // change this to correct length
+				+ "wallet_public_key varchar(42),"
+				+ "symbol varchar(32),"
+				+ "conid varchar(32),"
+				+ "action varchar(10),"
+				+ "quantity double precision,"
+				+ "price double precision,"
+				+ "commission double precision,"
+				+ "tds double precision,"				
+				+ "currency varchar(32),"
+				+ "status varchar(32),"       // value from FireblocksStatus
+				+ "ip_address varchar(32),"
+				+ "city varchar(32),"
+				+ "country varchar(32)"
+				+ ")";
+		con.execute( sql);
 	}
 	
 	void createCommissions() throws Exception {
@@ -36,22 +63,6 @@ public class CreateTables  {
 				+ "currency varchar(3)"
 				+ ")";
 		con.execute( sql);
-	}
-	
-	void createEvents() throws Exception {
-		con.dropTable("events");
-		
-		String sql = "create table events ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "block integer,"
-				+ "token varchar(42),"
-				+ "wallet varchar(42),"
-				+ "quantity double precision,"
-				+ "transhash varchar(66),"
-				+ "source varchar(1)"  // source of entry, either Q (query) or S (stream)
-				+ ")";
-		con.execute( sql);
-		
-		con.execute( "create unique index evidx on events (transhash,wallet);");
 	}
 	
 	void createConfig() throws Exception {

@@ -11,6 +11,13 @@ import tw.util.S;
 /** Get recent Fireblocks transactions. 
  *  You must call Fireblocks.setKeys() before this */
 public class Transactions {
+
+	public static void main(String[] args) throws Exception {
+		Config config = new Config();
+		config.readFromSpreadsheet("Dt-config");
+		displayLastTransactions(5);
+	}
+
 	static void displayLastTransactions(int n) throws Exception {
 		JsonArray ar = getTransactions();
 		
@@ -29,14 +36,6 @@ public class Transactions {
 
 	public static JsonObject getTransaction(String id) throws Exception {
 		return Fireblocks.fetchObject( "/v1/transactions/" + id);
-	}
-
-	public static void main(String[] args) throws Exception {
-		Config config = new Config();
-		config.readFromSpreadsheet("Dt-config");
-
-	//	getSince(S.parseDate("7/4/2023").getTime() ).displayShort();
-		S.out( new Date(1688514612987L) ) ;
 	}
 
 	public static void getTransactions(String wallet) throws Exception {
