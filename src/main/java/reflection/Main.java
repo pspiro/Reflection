@@ -434,43 +434,24 @@ public class Main implements ITradeReportHandler {
 	}
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
-		// WARNING: you cannot change the order of these
-		Object[] dbValues = {
-				exec.time(),
-				exec.orderId(),
-				exec.side(),
-				exec.shares().toDouble(),
-				contract.symbol(),
-				exec.price(),
-				exec.permId(),
-				exec.cumQty().toDouble(),
-				contract.conid(),
-				exec.exchange(),
-				exec.avgPrice(),
-				exec.orderRef(),
-				tradeKey
-			};
-
-		Object[] msgValues = {
-				exec.orderId(),
-				exec.side(),
-				exec.shares().toDouble(),
-				contract.symbol(),
-				contract.conid(),
-				exec.price(),
-				exec.exchange(),
-
-				exec.permId(),
-				exec.cumQty(),
-				exec.avgPrice(),
-				exec.orderRef(),
-				tradeKey
-			};
-
+		JsonObject obj = new JsonObject();
+		obj.put( "time", exec.time() );         
+		obj.put( "orderid", exec.orderId() );    
+		obj.put( "permid", exec.permId() );    
+		obj.put( "side", exec.side() );
+		obj.put( "quantity", exec.shares().toDouble() ); 
+		obj.put( "symbol", contract.symbol() );
+		obj.put( "price", exec.price() );
+		obj.put( "cumfill", exec.cumQty().toDouble() );
+		obj.put( "conid", contract.conid() );
+		obj.put( "exchange", exec.exchange() );
+		obj.put( "avgprice", exec.avgPrice() );
+		obj.put( "orderref", exec.orderRef() );
+		obj.put( "tradekey", tradeKey);
+		
 		try {
-			log( LogType.TRADE, "id=%s  %s %s shares of %s (%s) at %s on %s  %s %s %s %s %s", msgValues);
-
-			sqlConnection( conn -> conn.insert( "trades", dbValues) );
+			log( LogType.TRADE, obj.toString() );
+			sqlConnection( conn -> conn.insertJson( "trades", obj) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

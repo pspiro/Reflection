@@ -5,7 +5,9 @@ import org.json.simple.JsonObject;
 import fireblocks.StockToken;
 import tw.util.S;
 
-/** All values are string, including conid, except bid and ask
+/** Represents the static stock as downloaded from the google sheets
+ * 
+ *  All values are string, including conid, except bid and ask
  *  which are doubles. This object lives in the m_stockMap
  *  map and also in the m_stocks array. Each stock is itself
  *  a map (JSONObject) with keys "bid" and "ask". This is so

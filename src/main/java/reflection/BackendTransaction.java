@@ -174,7 +174,8 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** Return transactions for a specific user or for all users */
+	/** Return transactions for a specific user or for all users;
+	 *  populates the two panels on the Dashboard */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();

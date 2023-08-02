@@ -5,6 +5,8 @@ import static reflection.Main.require;
 
 import java.util.Vector;
 
+import org.json.simple.JsonObject;
+
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
@@ -15,19 +17,26 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import fireblocks.StockToken;
-import reflection.LiveOrder.FireblocksStatus;
 import tw.util.S;
 import util.LogType;
 
-public class OrderTransaction extends LiveOrderTransaction {
+public class OrderTransaction extends MyTransaction {
+	enum LiveOrderStatus { Working, Filled, Failed };
+
 	private Order m_order;
-	private double m_desiredQuantity;  // same as Order.m_totalQuantity
+	private double m_desiredQuantity;  // same as Order.m_totalQuantity. is that true? remove one. pas
 	private Stock m_stock;
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_respondedToOrder;
 	private String m_walletAddr;
-	private LiveOrder m_liveOrder;  // you could use existing Order class instead
+	
+	
+	// live order fields
+	private String m_description = "";  // either order description or error description
+	private LiveOrderStatus m_status = LiveOrderStatus.Working;
+	private int m_progress = 10;
+	private RefCode m_errorCode;
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -137,17 +146,11 @@ public class OrderTransaction extends LiveOrderTransaction {
 		// * or check that ANY price is pretty recent, to we know prices are updating
 		
 		log( LogType.REC_ORDER, m_order.getOrderLog(contract, m_walletAddr) );
-		
-		m_liveOrder = new LiveOrder( this, S.format("%s %s %s for $%s",
-				cap(side), 
-				m_desiredQuantity, 
-				m_stock.getSymbol(), 
-				m_stablecoinAmt) ); 
-		
-		respond( code, RefCode.OK, "id", m_liveOrder.uid() );
+				
+		respond( code, RefCode.OK, "id", m_uid);
 		
 		// now it is up to the live order system to report success or failure
-		walletLiveOrders().add( m_liveOrder);
+		walletLiveOrders().add( this);
 
 		shrinkWrap( () -> {
 			// *if order size < .5, we won't submit an order; better would be to compare our total share balance with the total token balance. pas
@@ -291,11 +294,11 @@ public class OrderTransaction extends LiveOrderTransaction {
 		log( logType, "orderId=%s  filledShares=%s", m_order.orderId(), filledShares);
 		
 		if (fireblocks() ) {
-			m_liveOrder.updateFrom(FireblocksStatus.STOCK_ORDER_FILLED);
+			onUpdateStatus(FireblocksStatus.STOCK_ORDER_FILLED);
 			processFireblocks(stockTokenQty, filledShares);
 		}
 		else {
-			m_liveOrder.filled();
+			onFilled();
 		}
 	}
 	
@@ -346,7 +349,12 @@ public class OrderTransaction extends LiveOrderTransaction {
 				);
 			}
 			
-			allLiveOrders.put(id, m_liveOrder);
+			// the FB transaction has been submitted; there is a little window here where an
+			// update from FB could come and we would miss it because we have not added the
+			// id to the map yet; we could fix this with synchronization
+			insertToCryptoTable(id);
+			
+			allLiveOrders.put(id, this);
 			
 			// if we don't make it to here, it means there was an exception which will be picked up
 			// by shrinkWrap() and the live order will be failed()
@@ -379,6 +387,39 @@ public class OrderTransaction extends LiveOrderTransaction {
 
 			// we don't know why it failed, so throw the Fireblocks error
 			throw e;
+		}
+	}
+
+	private void insertToCryptoTable(String id) {
+		try {
+			JsonObject obj = new JsonObject();
+			obj.put("orderid", m_order.orderId() );  // ties the order to the trades
+			obj.put("permid", m_order.permId() );    // have to make sure this is set. pas
+			obj.put("fireblocks_id", id);
+			obj.put("timestamp", System.currentTimeMillis() / 1000);
+			obj.put("wallet_public_key", m_walletAddr);
+			obj.put("symbol", m_stock.getSymbol() );
+			obj.put("conid", m_stock.getConid() );
+			obj.put("action", m_order.action().toString() );
+			obj.put("quantity", m_desiredQuantity);
+			obj.put("price", m_order.lmtPrice() );
+			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
+			obj.put("spread", 0); // really want the average filled price here
+			obj.put("tds", m_tds);  // format this? pas
+			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
+			//"status"
+			//"blockchain_hash"
+			//"status"
+			//"ip_address"
+			//"city"
+			//"country"
+			// "crypto_id"
+		
+			m_main.sqlConnection( conn -> conn.insert("crypto_transactions", obj, "fireblocks_id = '%s'", id) );
+		} 
+		catch (Exception e) {
+			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );
+			e.printStackTrace();
 		}
 	}
 
@@ -449,15 +490,10 @@ public class OrderTransaction extends LiveOrderTransaction {
 		return m_map.getRequiredParam("action"); 
 	}
 
-	private Vector<LiveOrder> walletLiveOrders() {
-		return Util.getOrCreate(liveOrders, m_walletAddr.toLowerCase(), () -> new Vector<LiveOrder>() );
+	private Vector<OrderTransaction> walletLiveOrders() {
+		return Util.getOrCreate(liveOrders, m_walletAddr.toLowerCase(), () -> new Vector<OrderTransaction>() );
 	}
 
-	/** Return Buy or Sell starting w/ upper case */
-	private static String cap(String side) {
-		return "buy".equals(side) ? "Buy" : "Sell";
-	}
-	
 	/** Like wrap, but instead of notifying the http client, we update the live order */
 	private void shrinkWrap(ExRunnable runnable) {
 		try {
@@ -466,12 +502,12 @@ public class OrderTransaction extends LiveOrderTransaction {
 		catch( RefException e) {
 			out( e);
 			log( LogType.ERROR, e.toString() );
-			m_liveOrder.fail(e); // you have to sync this. pas
+			onFail(e); // you have to sync this. pas
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
-			m_liveOrder.fail(e); // you have to sync this. pas
+			onFail(e); // you have to sync this. pas
 		}
 	}
 	
@@ -486,4 +522,90 @@ public class OrderTransaction extends LiveOrderTransaction {
 				Main.m_config.rusd().getPosition(m_walletAddr),
 				newStockToken().getPosition( m_walletAddr) );
 	}
+	
+	public LiveOrderStatus status() {
+		return m_status;
+	}
+
+	/** Called when the stock order is filled or we receive an update from the Fireblocks server.
+	 *  The status is already logged before we come here  
+	 * @param hash blockchain hash
+	 * @param id Fireblocks id */
+	synchronized void onUpdateStatus(String id, FireblocksStatus stat, String hash) {
+		
+		// needed: date/time, action, qty, symbol, price
+		
+		
+		
+		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
+			onFilled();
+		}
+		else if (stat.pct() == 100) {
+			onFail( new Exception( "The blockchain transaction failed with status " + stat) );
+			
+			// informational only; don't throw an exception
+			try {
+				onBlockchainOrderFailed();
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+			}
+		}
+		else {
+			m_progress = stat.pct();
+		}
+	}
+
+	/** Called during testing if we bypass the FB processing */
+	synchronized void onFilled() {
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Filled;
+			m_progress = 100;
+			m_description = m_description
+					.replace("Buy", "Bought")
+					.replace("Sell", "Sold");
+		}
+	}
+
+	/** Called when an error occurs after the order is submitted to IB */
+	synchronized void onFail(Exception e) {
+		if (m_status == LiveOrderStatus.Working) {
+			m_status = LiveOrderStatus.Failed;
+	
+			m_description = e.getMessage();
+			if (e instanceof RefException) {
+				m_errorCode = ((RefException)e).code();
+			}
+		}
+	}
+
+	/** Called when the user queries status of live orders */
+	public synchronized JsonObject getWorkingOrder() {
+		String description = S.format("%s %s %s for $%s",
+				isBuy() ? "Buy" : "Sell",
+				m_desiredQuantity, 
+				m_stock.getSymbol(), 
+				m_stablecoinAmt); 
+		
+		JsonObject order = new JsonObject();
+		order.put( "id", uid() );
+		order.put( "action", isBuy() ? "Buy" : "Sell");
+		order.put( "description", description);
+		order.put( "progress", m_progress);
+		return order;
+	}
+
+	/** Called when the user queries status of live orders */
+	public synchronized JsonObject getCompletedOrder() {
+		JsonObject order = new JsonObject();
+		order.put( "id", uid() );
+		order.put( "type", m_status == LiveOrderStatus.Failed ? "error" : "message");   
+		order.put( "text", m_description);
+		order.put( "status", m_status.toString() );
+		if (m_errorCode != null) {
+			order.put( "errorCode", m_errorCode.toString() );
+		}
+		return order;
+	}
+	
 }

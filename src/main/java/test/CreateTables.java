@@ -9,7 +9,7 @@ import reflection.MySqlConnection;
 import tw.util.S;
 
 /** Create trades and commissions tables */
-public class CreateTables extends TestCase {
+public class CreateTables  {
 	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
 	static String dbUser = "postgres";
 	static String dbPassword = "1359";
@@ -19,7 +19,7 @@ public class CreateTables extends TestCase {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 			
-			new CreateTables().createCommissions();
+			new CreateTables().createTrades();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -89,16 +89,16 @@ public class CreateTables extends TestCase {
 	}
 	
 	void createTrades() throws Exception {
-		//con.execute( "drop table trades");
+		con.execute( "drop table trades");
 		
 		String sql = "create table trades ("
+				+ "order_id varchar(32),"
+				+ "perm_id varchar(32),"
 				+ "time varchar(32),"
-				+ "orderid varchar(32),"
 				+ "side varchar(4),"
 				+ "quantity double precision,"
 				+ "symbol varchar(32),"
 				+ "price double precision,"
-				+ "permid varchar(32),"
 				+ "cumfill double precision,"
 				+ "conid int,"
 				+ "exchange varchar(32),"
@@ -109,6 +109,7 @@ public class CreateTables extends TestCase {
 		con.execute( sql);
 	}
 	
+	// not used
 	void createOrders() throws Exception {
 		String sql = "create table orders ("
 				+ "time timestamptz,"

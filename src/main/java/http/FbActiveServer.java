@@ -81,7 +81,8 @@ public class FbActiveServer {
 			S.out( trans.obj() );
 			
 			try {
-				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", trans.id(), trans.status() );  
+				String uri = String.format( "/api/fireblocks/?id=%s&status=%s&hash=%s", 
+						trans.id(), trans.status(), S.notNull( trans.hash() ) );  
 	
 				// use MyHttpClient since this is a local transaction
 				MyHttpClient client = new MyHttpClient("localhost", 8383);

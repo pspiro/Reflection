@@ -1,23 +1,18 @@
 package reflection;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import reflection.LiveOrder.FireblocksStatus;
-import reflection.LiveOrder.LiveOrderStatus;
+import reflection.OrderTransaction.LiveOrderStatus;
 import tw.util.S;
 import util.LogType;
 
 public class LiveOrderTransaction extends MyTransaction {
-	static HashMap<String,Vector<LiveOrder>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
-	static HashMap<String,LiveOrder> allLiveOrders = new HashMap<>();  // key is fireblocks id 
 
 	LiveOrderTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
@@ -30,11 +25,11 @@ public class LiveOrderTransaction extends MyTransaction {
 			JsonArray orders = new JsonArray();
 			JsonArray messages = new JsonArray();
 
-			List<LiveOrder> walletOrders = liveOrders.get(walletAddr.toLowerCase());
+			List<OrderTransaction> walletOrders = liveOrders.get(walletAddr.toLowerCase());
 			if (walletOrders != null) {
-				Iterator<LiveOrder> iter = walletOrders.iterator();
+				Iterator<OrderTransaction> iter = walletOrders.iterator();
 				while (iter.hasNext() ) {
-					LiveOrder liveOrder = iter.next();
+					OrderTransaction liveOrder = iter.next();
 					
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
@@ -60,18 +55,22 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 
+	/** This handles a message from the FbActiveServer which is monitoring for blockchain transactions */
 	public void handleFireblocks() {
 		wrap( () -> {
 			parseMsg();
 			
 			String id = m_map.getRequiredParam("id");
-			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() ); 
+			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
+			String hash = m_map.getParam("hash");
 			
-			LiveOrder liveOrder = allLiveOrders.get(id);
+			updateCryptoTable( id, status, hash);
+			
+			OrderTransaction liveOrder = allLiveOrders.get(id);
 			
 			if (liveOrder != null) {
 				log( LogType.FB_UPDATE, "uid=%s  status=%s", liveOrder.uid(), status);
-				liveOrder.updateFrom(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
+				liveOrder.onUpdateStatus(id, status, hash);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it
@@ -80,6 +79,21 @@ public class LiveOrderTransaction extends MyTransaction {
 			
 			respondOk();
 		});
+	}
+
+	private void updateCryptoTable(String id, FireblocksStatus status, String hash) {
+		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
+		try {
+			JsonObject obj = new JsonObject();
+			obj.put("fireblocks_id", id);
+			obj.put("status", status.toString() );
+			obj.put("blockchain_hash", hash);
+			
+			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "id = %s", id) );				
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

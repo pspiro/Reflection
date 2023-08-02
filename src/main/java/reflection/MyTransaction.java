@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Vector;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonObject;
@@ -30,6 +31,9 @@ public abstract class MyTransaction {
 		RUSD, USDC
 	}
 	
+	static HashMap<String,Vector<OrderTransaction>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
+	static HashMap<String,OrderTransaction> allLiveOrders = new HashMap<>();  // key is fireblocks id 
+
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
 	static final String message = "message";
