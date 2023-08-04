@@ -186,7 +186,7 @@ public class BackendTransaction extends MyTransaction {
 				String where = S.isNotNull(wallet) 
 						? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
 						: "";
-				respond(trim(conn.queryToJson("select * from crypto_transactions %s order by timestamp desc limit 20", where) ) );
+				respond(conn.queryToJson("select * from crypto_transactions %s order by timestamp desc limit 20", where) );
 			});
 		});
 	}
