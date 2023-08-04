@@ -46,15 +46,6 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 		return m_prices; 
 	}
 
-	public String getString(String key) {
-		return (String)super.get(key);
-	}
-
-	public boolean getBool(String key) {
-		Boolean val = (Boolean)super.get(key);
-		return val != null ? val : false;
-	}
-	
 	public String getSmartContractId() {
 		return getString("smartcontractid");
 	}
@@ -63,12 +54,9 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 		return getString("symbol");
 	}
 
-	public String getConid() {
-		return getString("conid");
-	}
-	
-	public int getConidInt() {
-		return Integer.valueOf( getConid() );
+	/** Returns zero if not found */
+	public int getConid() {
+		return getInt("conid");
 	}
 	
 	public boolean is24Hour() {

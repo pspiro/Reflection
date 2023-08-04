@@ -39,7 +39,7 @@ public class CreateTables  {
 				+ "blockchain_hash varchar(100),"  // change this to correct length
 				+ "wallet_public_key varchar(42),"
 				+ "symbol varchar(32),"
-				+ "conid varchar(32),"
+				+ "conid integer,"
 				+ "action varchar(10),"
 				+ "quantity double precision,"
 				+ "price double precision,"

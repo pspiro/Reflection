@@ -263,7 +263,7 @@ public class Monitor {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), m_config);
 		
 		stocks.stockSet().forEach( stock -> {
-			Record record = getOrCreate( stock.getConidInt() );
+			Record record = getOrCreate( stock.getConid() );
 			record.m_symbol = stock.getSymbol();
 			record.m_address = stock.getSmartContractId();  
 			record.m_active = "Y";

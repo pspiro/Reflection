@@ -154,7 +154,7 @@ public class MktDataServer {
 
 		for (Stock stock : m_stocks) {
 			final Contract contract = new Contract();
-			contract.conid( Integer.valueOf( stock.getConid() ) );
+			contract.conid( stock.getConid() );
 			
 			DualPrices dual = new DualPrices( stock);
 			m_list.add( dual);

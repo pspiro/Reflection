@@ -67,7 +67,7 @@ class DualPrices {
 		private boolean m_changed;
 		private String m_conid;
 		
-		Prices(String conid) {
+		Prices(int conid) {
 			m_conid = String.valueOf( conid);
 		}
 
