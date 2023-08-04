@@ -186,17 +186,9 @@ public class BackendTransaction extends MyTransaction {
 				String where = S.isNotNull(wallet) 
 						? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
 						: "";
-				respond(trim(conn.queryToJson("select * from crypto_transactions %s order by created_at desc limit 20", where) ) );
+				respond(conn.queryToJson("select * from crypto_transactions %s order by timestamp desc limit 20", where) );
 			});
 		});
-	}
-
-	private JsonArray trim(JsonArray json) {
-		json.forEach( obj -> {
-			((HashMap)obj).remove("created_at");
-			((HashMap)obj).remove("updated_at");
-		});
-		return json;
 	}
 
 	public void handleGetUserByWallet() {
@@ -317,7 +309,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			m_main.sqlConnection( conn -> {
 				JsonArray ar = conn.queryToJson(
-						"select name, address, email, phone, pan_number from users where wallet_public_key = '%s'", 
+						"select name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
 						walletAddr.toLowerCase() );
 				
 				JsonObject obj = ar.size() == 0 
