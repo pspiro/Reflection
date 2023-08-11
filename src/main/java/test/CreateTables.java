@@ -14,6 +14,7 @@ public class CreateTables  {
 	static String dbUser = "postgres";
 	static String dbPassword = "1359";
 	static MySqlConnection con = new MySqlConnection();
+	static final int tradeKeyLen = 64; 
 
 	public static void main(String[] args) {
 		try {
@@ -35,11 +36,11 @@ public class CreateTables  {
 				+ "order_id varchar(32),"
 				+ "perm_id varchar(32),"
 				+ "fireblocks_id varchar(36),"
-				+ "timestamp double precision,"  // probably not the best type. pas
-				+ "blockchain_hash varchar(100),"  // change this to correct length
+				+ "timestamp bigint,"   // eight bytes, signed
+				+ "blockchain_hash varchar(66),"
 				+ "wallet_public_key varchar(42),"
 				+ "symbol varchar(32),"
-				+ "conid integer,"
+				+ "conid int,"
 				+ "action varchar(10),"
 				+ "quantity double precision,"
 				+ "price double precision,"
@@ -47,7 +48,7 @@ public class CreateTables  {
 				+ "tds double precision,"				
 				+ "currency varchar(32),"
 				+ "status varchar(32),"       // value from FireblocksStatus
-				+ "ip_address varchar(32),"
+				+ "ip_address varchar(32),"   // big enough to store v6 IP format
 				+ "city varchar(32),"
 				+ "country varchar(32)"
 				+ ")";
@@ -58,45 +59,11 @@ public class CreateTables  {
 		con.dropTable("commissions");
 		
 		String sql = "create table commissions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "tradekey varchar(42),"
+				+ "tradekey varchar(32),"
 				+ "commission double precision,"
 				+ "currency varchar(3)"
 				+ ")";
 		con.execute( sql);
-	}
-	
-	void createConfig() throws Exception {
-		//con.execute( "drop table config");
-		
-		String sql = "create table config ("
-				+ "id integer,"
-				+ "min_order_size double precision,"
-				+ "max_order_size double precision,"
-				+ "non_kyc_max_order_size double precision,"
-				+ "price_refresh_interval integer,"
-				+ "commission double precision,"
-				+ "buy_spread double precision,"
-				+ "sell_spread double precision,"
-				+ "created_at timestamp,"
-				+ "updated_at timestamp"
-				+ ")";
-		con.execute( sql);
-		
-		
-
-		// insert empty row
-		con.execute( "insert into config default values");
-		
-		// update the values
-		String sql2 = "update config set "
-				+ "min_order_size = 1,"
-				+ "max_order_size = 2000,"
-				+ "non_kyc_max_order_size = 1000,"
-				+ "price_refresh_interval = 20,"
-				+ "commission = 1,"
-				+ "buy_spread = .005,"
-				+ "sell_spread = .005";
-		con.execute(sql2);
 	}
 	
 	void createTrades() throws Exception {
@@ -115,76 +82,8 @@ public class CreateTables  {
 				+ "exchange varchar(32),"
 				+ "avgprice double precision,"
 				+ "orderref varchar(256),"
-				+ "tradekey varchar(256)"
+				+ "tradekey varchar(32)"
 				+ ")";
 		con.execute( sql);
-	}
-	
-	// not used
-	void createOrders() throws Exception {
-		String sql = "create table orders ("
-				+ "time timestamptz,"
-				+ "wallet varchar(32),"
-				+ "cryptoid varchar(32),"
-				+ "orderid varchar(32),"
-				+ "side varchar(4),"
-				+ "quantity double precision,"
-				+ "symbol varchar(32),"
-				+ "conid int,"
-				+ "price double precision,"
-				+ "filled int"
-				+ ")";
-		con.execute( sql);
-	}
-	
-	void insert() throws Exception {
-		con.insert( "people", "peter", 53, "pinecliff");
-		S.out( "inserted one");
-		
-		ResultSet rs = con.query( "SELECT * from people");
-		while(rs.next()) {
-			S.out( "name=%s  age=%s  address=%s",
-					rs.getString(1), rs.getInt(2), rs.getString(3) );
-		}		
-	}
-	
-	/** Hitting the remote RefAPI server takes .31 seconds.
-	 *  Hitting RefAPI on localhost is .001 seconds. */
-	public void testQueryConfigHttp() throws Exception {
-		S.out( "Query config from RefAPI server");
-		S.out( System.currentTimeMillis() );
-		for (int i = 0; i < 100; i++) {
-			String data = "{ 'msg': 'getconfig' }";
-			//HashMap<String, Object> res = TestErrors.sendData(data);
-			//S.out( res);
-		}
-		S.out( System.currentTimeMillis() );
-	}
-
-	public void testReadconfigSpreadsheet() {
-		try {
-			Config config = new Config();
-			config.readFromSpreadsheet("Config");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/** On my PC it is taking .16 seconds to hit the config table. */
-	public void testQueryConfigDb() throws Exception {
-		try {
-			con.connect(dbUrl, dbUser, dbPassword);
-		} 
-		catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		S.out( "Query database");
-		S.out( System.currentTimeMillis() );
-		for (int i = 0; i < 1; i++) {
-			ResultSet rs = con.query( "SELECT * from config");
-			
-		}
-		S.out( System.currentTimeMillis() );
 	}
 }

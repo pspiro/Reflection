@@ -60,6 +60,7 @@ public class Main implements ITradeReportHandler {
 	private JsonObject m_type2Config;
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
+	private GTable m_blacklist;  // wallet is key, case insensitive
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
 
@@ -197,6 +198,8 @@ public class Main implements ITradeReportHandler {
 		m_failCodes = S.isNotNull( m_config.errorCodesTab() )
 			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
+		
+		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		
 		m_stocks.readFromSheet(book, m_config);
 	}
@@ -580,6 +583,12 @@ public class Main implements ITradeReportHandler {
 
 	public JsonArray hotStocks() {
 		return m_stocks.hotStocks();
+	}
+
+	/** @param side is buy or sell (lower case) */
+	boolean validWallet(String walletAddr, String side) {
+		String allow = m_blacklist.getNN( walletAddr).toLowerCase();
+		return S.isNull(allow) || allow.equals("all") || allow.equals(side); 
 	}
 	
 }

@@ -83,6 +83,9 @@ public class OrderTransaction extends MyTransaction {
 		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		
+		// make sure wallet is not blacklisted
+		require( m_main.validWallet( m_walletAddr, side), RefCode.INVALID_REQUEST, "Your order cannot be processed at this time. Please try again later (L9)");
+		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
 		validateCookie(m_walletAddr);
@@ -511,7 +514,7 @@ public class OrderTransaction extends MyTransaction {
 	}
 	
 	boolean isBuy() {
-		return m_order.isBuy();
+		return m_order.isBuy();  // null exception here? don't call isBuy() until m_order is set in order() method, or change isBuy() to call action()
 	}
 
 	public void onBlockchainOrderFailed() throws Exception {

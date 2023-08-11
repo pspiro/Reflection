@@ -49,6 +49,10 @@ public class GTable extends HashMap<String,String> {
 		return super.get( m_caseSensitive ? key : ((String)key).toLowerCase() );
 	}
 
+	public String getNN(Object key) {
+		return S.notNull(get(key));  
+	}
+
 	/** true for true or yes, everything else false */
 	public boolean getBoolean(String key) {
 		String val = S.notNull( get(key) ).toLowerCase();
