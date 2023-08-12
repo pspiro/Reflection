@@ -23,7 +23,6 @@ public class JtsCalendar extends GregorianCalendar {
     // For Serialization (serialized by ChartSettings)
     private static final String SINGLE_SPACE_PAD = " ";
     private static final String DOUBLE_SPACE_PAD = "  ";
-    private static final SimpleDateFormat SHORT_HUMAN_FORMAT = new SimpleDateFormat("MMM d HH:mm:ss");
 
     // constants
     public static final long MILLIS_IN_DAY = 24 * 60 * 60 * 1000L;

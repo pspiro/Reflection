@@ -228,6 +228,7 @@ public class TestOrder extends MyTestCase {
 		obj.put("currency", "USDC");
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("noFireblocks", true);
+		obj.put("testcase", true);
 		
 		double price = obj.getDouble("tokenPrice");
 		double qty = obj.getDouble("quantity");

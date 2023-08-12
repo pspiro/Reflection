@@ -12,6 +12,8 @@ import reflection.OrderTransaction.LiveOrderStatus;
 import tw.util.S;
 import util.LogType;
 
+/** The client will query the live order status every couple of seconds. This should be changed
+ *  to use WebSockets and push the change to the client w/ no query */
 public class LiveOrderTransaction extends MyTransaction {
 
 	LiveOrderTransaction(Main main, HttpExchange exchange) {
