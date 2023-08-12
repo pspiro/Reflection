@@ -84,7 +84,7 @@ public class OrderTransaction extends MyTransaction {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		
 		// make sure wallet is not blacklisted
-		require( m_main.validWallet( m_walletAddr, side), RefCode.INVALID_REQUEST, "Your order cannot be processed at this time. Please try again later (L9)");
+		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this

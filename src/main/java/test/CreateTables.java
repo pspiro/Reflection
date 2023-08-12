@@ -1,10 +1,5 @@
 package test;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-
-import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 

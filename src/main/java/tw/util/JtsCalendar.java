@@ -209,11 +209,6 @@ public class JtsCalendar extends GregorianCalendar {
                pad( get(Calendar.DAY_OF_MONTH) );
     }
 
-    /** @return data like JAN 23 13:44:18 */
-    public String getShortHumanDateTime() {
-        return SHORT_HUMAN_FORMAT.format(new Long(getTimeInMillis())).toUpperCase();
-    }
-
     /** Should be used for all API String date/time reports,
      *  except for historical data format types >= 3 that are date strings.
      *  @return YYYYMMDD  HH:MM:SS local time. */
@@ -494,10 +489,6 @@ public class JtsCalendar extends GregorianCalendar {
 		return getYYYY().equals( calendar.getYYYY() );
 	}
 	
-    public String show(SimpleDateFormat formatter) {
-        return formatter.format(new Long(getTimeInMillis()));
-    }
-
     public boolean isBetween(JtsCalendar from, JtsCalendar to){
         return (getTimeInMillis() >= from.getTimeInMillis() && getTimeInMillis() <= to.getTimeInMillis());
     }

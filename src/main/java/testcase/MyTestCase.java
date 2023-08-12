@@ -76,5 +76,11 @@ public class MyTestCase extends TestCase {
 	JsonArray getCompletedLiveOrders() throws Exception {
 		return getAllLiveOrders(Cookie.wallet).getArray("messages");
 	}
+
+	protected void assertNotEquals(String notExpected, String actual) {
+		assertTrue( 
+				String.format( "Got %s which was not expected", notExpected),
+				!notExpected.equals(actual) );
+	}
 	
 }
