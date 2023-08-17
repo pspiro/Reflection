@@ -26,7 +26,7 @@ public class TestProfile extends MyTestCase {
 		cli.assertResponseCode(200);
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
-		JsonObject obj = cli.readMyJsonObject();
+		JsonObject obj = cli.readJsonObject();
 		assertEquals( "john glick", obj.getString("name") );
 		assertEquals( "addresss", obj.getString("address") );
 		assertEquals( "emaill", obj.getString("email") );
@@ -48,7 +48,7 @@ public class TestProfile extends MyTestCase {
 		cli.assertResponseCode(200);
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
-		obj = cli.readMyJsonObject();
+		obj = cli.readJsonObject();
 		assertEquals( "timmy", obj.getString("name") );
 		assertEquals( "hot", obj.getString("address") );
 		assertEquals( "cold", obj.getString("email") );

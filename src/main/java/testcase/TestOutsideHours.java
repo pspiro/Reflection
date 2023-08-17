@@ -171,7 +171,7 @@ public class TestOutsideHours extends MyTestCase {
 	}
 	
 	public void testShowHours() throws Exception {
-		cli().get( "/?msg=getTradingHours").readMyJsonObject().display();
+		cli().get( "/?msg=getTradingHours").readJsonObject().display();
 	}
 
 }

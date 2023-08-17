@@ -29,7 +29,7 @@ public class TestPrices extends MyTestCase{
 	}
 
 	public void testShowPrices() throws Exception {
-		cli().get( "/?msg=getallprices").readMyJsonObject().display();
+		cli().get( "/?msg=getallprices").readJsonObject().display();
 	}
 	
 }

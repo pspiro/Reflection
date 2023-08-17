@@ -66,7 +66,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/init
 		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 
 		// the server uses the time on the message itself, not the actual elapsed time
@@ -79,7 +79,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "past " + cli.readMyJsonObject() );
+		S.out( "past " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.TOO_SLOW, cli.getCode() );
 	}
@@ -89,7 +89,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
@@ -103,7 +103,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "fut " + cli.readMyJsonObject() );
+		S.out( "fut " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.TOO_FAST, cli.getCode() );
 	}
@@ -112,7 +112,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/init
 		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
@@ -125,7 +125,7 @@ public class TestSiwe extends MyTestCase {
 
 		// test siwe/signin
 		cli().post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "failSig " + cli.readMyJsonObject() );
+		S.out( "failSig " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.UNKNOWN, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
 	}
@@ -134,7 +134,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/init
 		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
@@ -148,13 +148,13 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "failDup " + cli.readMyJsonObject() );
+		S.out( "failDup " + cli.readJsonObject() );
 		assertEquals( 200, cli.getResponseCode() );
 
 		// test siwe/signin again
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		S.out( "failDup " + cli.readMyJsonObject() );
+		S.out( "failDup " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 	}
 	
@@ -162,7 +162,7 @@ public class TestSiwe extends MyTestCase {
 		// send siwe/init
 		cli().get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );
 
 		// create siwe message
@@ -187,14 +187,14 @@ public class TestSiwe extends MyTestCase {
 		// fail siwe/me
 		cli = cli();
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		S.out( cli.readMyJsonObject() );
+		S.out( cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( false, cli.readMyJsonObject().getBool("loggedIn") ); 
+		assertEquals( false, cli.readJsonObject().getBool("loggedIn") ); 
 	}
 	
 	public void testSiweSignout() throws Exception {
 		// siwe/init, get nonce
-		String nonce = cli().get("/siwe/init").readMyJsonObject().getString("nonce");
+		String nonce = cli().get("/siwe/init").readJsonObject().getString("nonce");
 		
 		SiweMessage siweMsg = TestSiwe.createSiweMsg(nonce, Instant.now() );
 		
@@ -220,7 +220,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 		
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
@@ -249,7 +249,7 @@ public class TestSiwe extends MyTestCase {
 			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
-		JsonObject meResponseMsg = cli.readMyJsonObject();
+		JsonObject meResponseMsg = cli.readJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
 		JsonObject meSiweMsg = meResponseMsg.getObject("message");
 		assertEquals( myWalletAddress, meSiweMsg.getString("address") );
@@ -263,7 +263,7 @@ public class TestSiwe extends MyTestCase {
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assertEquals( 200, cli.getResponseCode() );
-		meResponseMsg = cli.readMyJsonObject();
+		meResponseMsg = cli.readJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
 		meSiweMsg = meResponseMsg.getObject("message");
 		assertEquals( TestSiwe.myWalletAddress, meSiweMsg.getString("address") );
@@ -273,7 +273,7 @@ public class TestSiwe extends MyTestCase {
 	public void testFailCookie() throws Exception {
 		// test siwe/init
 		cli().get("/siwe/init");
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		String nonce = cli.readJsonObject().getString("nonce");
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 
 		JsonObject signedMsgSent = new JsonObject();

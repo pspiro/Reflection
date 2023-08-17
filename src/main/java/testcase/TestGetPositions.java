@@ -37,7 +37,7 @@ public class TestGetPositions extends MyTestCase {
 		cli.get("?msg=getpositions");
 		assertEquals(200, cli.getResponseCode());
 
-		JsonArray ar = cli.readMyJsonArray();
+		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
 
 		JsonObject item = ar.getJsonObj(0);
@@ -50,7 +50,7 @@ public class TestGetPositions extends MyTestCase {
 		MyHttpClient cli = cli();
 		cli.get("/api/positions/" + wallet);
 		assertEquals(200, cli.getResponseCode());
-		JsonArray ar = cli.readMyJsonArray();
+		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
 		
 		JsonObject item = ar.getJsonObj(0);

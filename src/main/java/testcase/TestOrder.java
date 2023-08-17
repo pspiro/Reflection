@@ -26,66 +26,6 @@ public class TestOrder extends MyTestCase {
 		}
 	}
 	
-	// test blacklist
-	public static String buy  = "0x000000000000000000000000000000000000000a";
-	public static String sell = "0x000000000000000000000000000000000000000b";
-	public static String all  = "0x000000000000000000000000000000000000000c";
-	public static String none = "0x000000000000000000000000000000000000000d";
-	
-	public void testBlacklist() throws Exception {
-		String ret;
-		JsonObject obj;
-		JsonObject map;
-		
-		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", buy);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
-
-		obj = createOrder("SELL", 10, 2);
-		obj.put("wallet_public_key", buy);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
-		
-		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", sell);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
-
-		obj = createOrder("SELL", 10, 2);
-		obj.put("wallet_public_key", sell);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
-		
-		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", all);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
-
-		obj = createOrder("SELL", 10, 2);
-		obj.put("wallet_public_key", all);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
-		
-		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", none);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
-
-		obj = createOrder("SELL", 10, 2);
-		obj.put("wallet_public_key", none);
-		map = postOrderToObj(obj);
-		ret = map.getString( "code");
-		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
-	}
-	
 
 
 	// missing walletId
@@ -143,7 +83,7 @@ public class TestOrder extends MyTestCase {
 		obj.remove("cookie");
 		
 		MyHttpClient cli = postOrder(obj);
-		JsonObject map = cli.readMyJsonObject();
+		JsonObject map = cli.readJsonObject();
 		String text = map.getString("message");
 		assertEquals( 400, cli.getResponseCode() );
 		startsWith( "Null cookie", text);

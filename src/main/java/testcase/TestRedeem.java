@@ -13,7 +13,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void testMyAfter() throws Exception {
 		MyHttpClient cli = cli();
-		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
@@ -34,7 +34,7 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testMyBefore() throws Exception {
-		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);

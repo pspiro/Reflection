@@ -34,7 +34,7 @@ public class TestConfig extends TestCase {
 
 	public void testBackendConfigs() throws Exception {
 		MyHttpClient cli = new MyHttpClient(host, 8383);
-		JsonArray ar = cli.get("/api/faqs").readMyJsonArray();
+		JsonArray ar = cli.get("/api/faqs").readJsonArray();
 		S.out( ar.getJsonObj(0) );
 		assertTrue( ar.size() > 3);
 

@@ -36,7 +36,7 @@ public class TestUnwindOrder extends MyTestCase {
 	private double getPos(int conid) throws Exception {
 		JsonArray ar = cli()
 				.get("?msg=getpositions")
-				.readMyJsonArray();
+				.readJsonArray();
 		JsonObject obj = find(ar, 265598);
 		return obj != null ? obj.getDouble("conid") : 0;
 	}

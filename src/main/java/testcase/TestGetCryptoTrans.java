@@ -7,13 +7,13 @@ import tw.util.S;
 public class TestGetCryptoTrans extends MyTestCase {
 	public void testGetAll() throws Exception {
 		JsonArray ar = cli().get( "/api/crypto-transactions")
-			.readMyJsonArray();
+			.readJsonArray();
 		assertTrue( ar.size() > 0);
 	}
 
 	public void testGetSome() throws Exception {
 		JsonArray ar = cli().get( "/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet)
-				.readMyJsonArray();
+				.readJsonArray();
 		ar.display();
 		assertTrue( ar.size() > 0);
 	}

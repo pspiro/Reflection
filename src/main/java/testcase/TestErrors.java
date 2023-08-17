@@ -19,7 +19,7 @@ public class TestErrors extends TestCase {
 	public static JsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = new MyHttpClient( host, 8383);
 		cli.post( Util.toJson( data) );
-		return cli.readMyJsonObject();
+		return cli.readJsonObject();
 	}
 	
 	public void testMalformedJson() throws Exception {

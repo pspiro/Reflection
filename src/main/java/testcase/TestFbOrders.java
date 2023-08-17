@@ -36,7 +36,7 @@ public class TestFbOrders extends MyTestCase {
 	 *  insufficient crypto or insufficient approved amount */
 	public void testInsufficientFundsBuy() throws Exception {
 		cli().get("/api/mywallet/" + Cookie.wallet);
-		double bal = cli.readMyJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
+		double bal = cli.readJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);

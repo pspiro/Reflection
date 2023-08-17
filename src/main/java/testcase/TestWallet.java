@@ -30,7 +30,7 @@ public class TestWallet extends MyTestCase {
 
 	public void testMyWallet() throws Exception {
 		MyHttpClient cli = cli();
-		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readMyJsonObject();
+		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
