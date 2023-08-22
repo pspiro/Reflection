@@ -499,7 +499,8 @@ int getPosition(){
    * @return      the next token
    * @exception   java.io.IOException  if any I/O-Error occurs
    */
-  public Yytoken yylex() throws java.io.IOException, ParseException {
+  @SuppressWarnings("removal")
+public Yytoken yylex() throws java.io.IOException, ParseException {
     int zzInput;
     int zzAction;
 

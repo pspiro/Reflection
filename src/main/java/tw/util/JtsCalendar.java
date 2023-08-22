@@ -23,7 +23,6 @@ public class JtsCalendar extends GregorianCalendar {
     // For Serialization (serialized by ChartSettings)
     private static final String SINGLE_SPACE_PAD = " ";
     private static final String DOUBLE_SPACE_PAD = "  ";
-    private static final SimpleDateFormat SHORT_HUMAN_FORMAT = new SimpleDateFormat("MMM d HH:mm:ss");
 
     // constants
     public static final long MILLIS_IN_DAY = 24 * 60 * 60 * 1000L;
@@ -207,11 +206,6 @@ public class JtsCalendar extends GregorianCalendar {
     public String getMMDD() {
         return pad( get(Calendar.MONTH)+1) +
                pad( get(Calendar.DAY_OF_MONTH) );
-    }
-
-    /** @return data like JAN 23 13:44:18 */
-    public String getShortHumanDateTime() {
-        return SHORT_HUMAN_FORMAT.format(new Long(getTimeInMillis())).toUpperCase();
     }
 
     /** Should be used for all API String date/time reports,
@@ -494,10 +488,6 @@ public class JtsCalendar extends GregorianCalendar {
 		return getYYYY().equals( calendar.getYYYY() );
 	}
 	
-    public String show(SimpleDateFormat formatter) {
-        return formatter.format(new Long(getTimeInMillis()));
-    }
-
     public boolean isBetween(JtsCalendar from, JtsCalendar to){
         return (getTimeInMillis() >= from.getTimeInMillis() && getTimeInMillis() <= to.getTimeInMillis());
     }

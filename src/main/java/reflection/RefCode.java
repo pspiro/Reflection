@@ -24,5 +24,6 @@ public enum RefCode {
 	TOO_SLOW,
 	UPDATE_PROFILE, 
 	POST_SPLIT, 
-	PRE_SPLIT
+	PRE_SPLIT, 
+	ACCESS_DENIED,		// means the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
 }

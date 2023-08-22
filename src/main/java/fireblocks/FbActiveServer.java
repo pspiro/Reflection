@@ -1,4 +1,4 @@
-package http;
+package fireblocks;
 
 import java.net.BindException;
 import java.util.HashMap;
@@ -7,8 +7,8 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Accounts;
-import fireblocks.Transactions;
+import http.MyHttpClient;
+import http.SimpleTransaction;
 import reflection.Config;
 import tw.util.S;
 
@@ -23,6 +23,7 @@ import tw.util.S;
 public class FbActiveServer {
 	static Accounts accounts = Accounts.instance;
 	static HashMap<String,Trans> m_map = new HashMap<>();
+	private static boolean m_dots = true;
 	
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
@@ -30,7 +31,10 @@ public class FbActiveServer {
 	
 	public static void main(String[] args) {
 		try {
-			Util.require( args.length == 1, "You must specify a config tab name");
+			Util.require( args.length >= 1, "You must specify a config tab name");
+			if (args.length == 2) {
+				m_dots = false;
+			}
 			run( args[0] );
 		}
 		catch( BindException e) {
@@ -60,7 +64,7 @@ public class FbActiveServer {
 			// this creates like ten threads for every request which doesn't seem very efficient. pas
 			// we're querying only for transactions in the last five minutes
 			try {
-				System.out.print('.');
+				if (m_dots) System.out.print('.');
 				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 5);
 				
 				for (JsonObject obj : ar) {

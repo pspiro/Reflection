@@ -24,7 +24,7 @@ public class OrderTransaction extends MyTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
 
 	private Order m_order;
-	private double m_desiredQuantity;  // same as Order.m_totalQuantity. is that true? remove one. pas
+	private double m_desiredQuantity;  // same as Order.m_totalQuantity, but this one is set first
 	private Stock m_stock;
 	private double m_stablecoinAmt;
 	private double m_tds;
@@ -35,8 +35,8 @@ public class OrderTransaction extends MyTransaction {
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
 	private LiveOrderStatus m_status = LiveOrderStatus.Working;
-	private int m_progress = 10;
-	private RefCode m_errorCode;
+	private int m_progress = 5;
+	private RefCode m_errorCode; // set if live order fails
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -84,7 +84,7 @@ public class OrderTransaction extends MyTransaction {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		
 		// make sure wallet is not blacklisted
-		require( m_main.validWallet( m_walletAddr, side), RefCode.INVALID_REQUEST, "Your order cannot be processed at this time. Please try again later (L9)");
+		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
@@ -297,7 +297,7 @@ public class OrderTransaction extends MyTransaction {
 		log( logType, "orderId=%s  filledShares=%s", m_order.orderId(), filledShares);
 		
 		if (fireblocks() ) {
-			onUpdateStatus(FireblocksStatus.STOCK_ORDER_FILLED);
+			onUpdateStatus(FireblocksStatus.STOCK_ORDER_FILLED); // set m_progress to 15%
 			processFireblocks(stockTokenQty, filledShares);
 		}
 		else {
@@ -517,8 +517,10 @@ public class OrderTransaction extends MyTransaction {
 		return m_order.isBuy();  // null exception here? don't call isBuy() until m_order is set in order() method, or change isBuy() to call action()
 	}
 
+	// check the log, compare these amounts to the order size to see why the order failed
 	public void onBlockchainOrderFailed() throws Exception {
-		log( LogType.BLOCKCHAIN_FAILED, "The blockchain order failed.  Approved=%s  BUSD=%s  RUSD=%S  StockToken=%s",
+		log( LogType.BLOCKCHAIN_FAILED, "The blockchain order failed  desired=%s  approved=%s  USDC=%s  RUSD=%s  StockToken=%s",
+				m_desiredQuantity,
 				Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
 				Main.m_config.busd().getPosition(m_walletAddr),
 				Main.m_config.rusd().getPosition(m_walletAddr),
@@ -553,7 +555,9 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 
-	/** Called during testing if we bypass the FB processing */
+	/** Called when blockchain goes to CONFIRMING or COMPLETED;
+	 *  also called during testing if we bypass the FB processing;
+	 *  set up the order so that user will received Filled msg on next update */
 	synchronized void onFilled() {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
@@ -561,7 +565,8 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 
-	/** Called when an error occurs after the order is submitted to IB */
+	/** Called when an error occurs after the order is submitted to IB 
+	 * @throws  */
 	synchronized void onFail(Exception e) {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Failed;
@@ -570,6 +575,15 @@ public class OrderTransaction extends MyTransaction {
 			if (e instanceof RefException) {
 				m_errorCode = ((RefException)e).code();
 			}
+
+			// send alert, but not when testing, and don't throw an exception, it's just reporting
+			try {
+				if (!m_map.getBool("testcase")) {
+					alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s", m_uid, m_errorText, m_errorCode) );
+				}
+			} catch (RefException e1) {
+				e1.printStackTrace();
+			}
 		}
 	}
 
@@ -577,7 +591,7 @@ public class OrderTransaction extends MyTransaction {
 	public synchronized JsonObject getWorkingOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
-		order.put( "action", isBuy() ? "BUY" : "Sell");     // used to set the color; maybe it should be upper case?
+		order.put( "action", isBuy() ? "Buy" : "Sell");     // used to set the color; maybe it should be upper case?
 		order.put( "description", getWorkingOrderText() );
 		order.put( "progress", m_progress);
 		return order;

@@ -164,6 +164,7 @@ public class MoralisServer {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	void handleBlockchainEvent( SimpleTransaction trans) {
 		try {
 			JsonObject msg = trans.getJson();

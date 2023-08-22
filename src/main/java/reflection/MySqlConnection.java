@@ -50,8 +50,6 @@ public class MySqlConnection implements AutoCloseable {
 	public JsonArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
 		ResultSet res = query(sql, params);
 		
-		ResultSetMetaData meta = res.getMetaData();
-
 		JsonArray ar = new JsonArray();
 		while (res.next() ) {
 			JsonObject obj = new JsonObject();

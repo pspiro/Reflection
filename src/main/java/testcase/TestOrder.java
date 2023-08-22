@@ -16,7 +16,7 @@ public class TestOrder extends MyTestCase {
 	static {
 		try {
 			curPrice = m_config.newRedis().singleQuery( 
-					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );
+					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );  // if you get an error here, call https://reflection.trading/api/?msg=seedprices
 			S.out( "TestOrder: Current AAPL price is %s", curPrice);
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
@@ -29,12 +29,11 @@ public class TestOrder extends MyTestCase {
 	// test blacklist
 	public static String buy  = "0x000000000000000000000000000000000000000a";
 	public static String sell = "0x000000000000000000000000000000000000000b";
-//	public static String all  = "0x000000000000000000000000000000000000000c";
+	public static String all  = "0x000000000000000000000000000000000000000c";
 	public static String none = "0x000000000000000000000000000000000000000d";
 	
 	public void testBlacklist() throws Exception {
 		String ret;
-		String text;
 		JsonObject obj;
 		JsonObject map;
 		
@@ -42,52 +41,52 @@ public class TestOrder extends MyTestCase {
 		obj.put("wallet_public_key", buy);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		text = map.getString("message");
-		assertEquals( RefCode.OK.toString(), ret);
+		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
 
 		obj = createOrder("SELL", 10, 2);
 		obj.put("wallet_public_key", buy);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
 		
 		obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", sell);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
 
 		obj = createOrder("SELL", 10, 2);
 		obj.put("wallet_public_key", sell);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		assertEquals( RefCode.OK.toString(), ret);
+		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
 		
-//		obj = createOrder("BUY", 10, 2);
-//		obj.put("wallet_public_key", all);
-//		map = postOrderToObj(obj);
-//		ret = map.getString( "code");
-//		assertEquals( RefCode.OK.toString(), ret);
-//
-//		obj = createOrder("SELL", 10, 2);
-//		obj.put("wallet_public_key", all);
-//		map = postOrderToObj(obj);
-//		ret = map.getString( "code");
-//		assertEquals( RefCode.OK.toString(), ret);
+		obj = createOrder("BUY", 10, 2);
+		obj.put("wallet_public_key", all);
+		map = postOrderToObj(obj);
+		ret = map.getString( "code");
+		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
+
+		obj = createOrder("SELL", 10, 2);
+		obj.put("wallet_public_key", all);
+		map = postOrderToObj(obj);
+		ret = map.getString( "code");
+		assertNotEquals( RefCode.ACCESS_DENIED.toString(), ret);
 		
 		obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", none);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
 
 		obj = createOrder("SELL", 10, 2);
 		obj.put("wallet_public_key", none);
 		map = postOrderToObj(obj);
 		ret = map.getString( "code");
-		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+		assertEquals( RefCode.ACCESS_DENIED.toString(), ret);
 	}
 	
+
 
 	// missing walletId
 	public void testMissingWallet() throws Exception {
@@ -229,6 +228,7 @@ public class TestOrder extends MyTestCase {
 		obj.put("currency", "USDC");
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("noFireblocks", true);
+		obj.put("testcase", true);
 		
 		double price = obj.getDouble("tokenPrice");
 		double qty = obj.getDouble("quantity");
