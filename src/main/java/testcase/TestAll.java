@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 	   TestErrors.class,
 	   TestFaqs.class,
 	   TestFireblocks.class,
+	   TestFbOrders.class,
 	   TestGetPositions.class,
 	   TestGtable.class,
 	   TestOrder.class,

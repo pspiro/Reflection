@@ -404,7 +404,7 @@ public class OrderTransaction extends MyTransaction {
 			obj.put("symbol", m_stock.getSymbol() );
 			obj.put("conid", m_stock.getConid() );
 			obj.put("action", m_order.action().toString() );
-			obj.put("quantity", m_order.totalQuantity());
+			obj.put("quantity", m_order.totalQty());
 			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
