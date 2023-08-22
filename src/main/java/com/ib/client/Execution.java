@@ -45,7 +45,7 @@ public class Execution {
     private String 	m_acctNumber;
     private String 	m_exchange;
     private String 	m_side;
-    private Decimal m_shares;
+    private Decimal m_shares; // rounded to three decimals
     private double 	m_price;
     private int		m_permId;
     private int     m_liquidation;
@@ -113,10 +113,8 @@ public class Execution {
 
     /** never called */
     public Execution( int p_orderId, int p_clientId, String p_execId, String p_time,
-                      String p_acctNumber, String p_exchange, String p_side, Decimal p_shares,
-                      double p_price, int p_permId, int p_liquidation, Decimal p_cumQty,
-                      double p_avgPrice, String p_orderRef, String p_evRule, double p_evMultiplier,
-                      String p_modelCode) {
+                      String p_acctNumber, String p_exchange, String p_side, double p_shares,
+                      double p_price, int p_permId) {
         m_orderId = p_orderId;
         m_clientId = p_clientId;
         m_execId = p_execId;
@@ -124,16 +122,17 @@ public class Execution {
       	m_acctNumber = p_acctNumber;
       	m_exchange = p_exchange;
       	m_side = p_side;
-      	m_shares = p_shares;
+      	m_shares = Decimal.get(p_shares);
+      	m_cumQty = m_shares;
       	m_price = p_price;
         m_permId = p_permId;
-        m_liquidation = p_liquidation;
-        m_cumQty = p_cumQty;
-        m_avgPrice = p_avgPrice;
-        m_orderRef = p_orderRef;
-        m_evRule = p_evRule;
-        m_evMultiplier = p_evMultiplier;
-        m_modelCode = p_modelCode;
+//        m_liquidation = p_liquidation;
+//        m_cumQty = p_cumQty;
+//        m_avgPrice = p_avgPrice;
+//        m_orderRef = p_orderRef;
+//        m_evRule = p_evRule;
+//        m_evMultiplier = p_evMultiplier;
+//        m_modelCode = p_modelCode;
     }
 
     @Override

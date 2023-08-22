@@ -177,6 +177,27 @@ public abstract class MyTransaction {
 		return true;
 	}
 	
+	synchronized boolean respondWithPlainText( String data) {
+		if (m_responded) {
+			return false;
+		}
+		
+		// need this? pas
+		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
+			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
+			m_exchange.sendResponseHeaders( 200, data.length() );
+			outputStream.write(data.getBytes());
+			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 200) );
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			log( LogType.ERROR, "Exception while responding with plain text");
+		}
+		m_responded = true;
+		return true;
+	}
+	
+	
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
 	final void wrap( ExRunnable runnable) {
@@ -243,12 +264,20 @@ public abstract class MyTransaction {
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
-	void returnPrice(int conid) throws RefException {
+	void returnPrice(int conid, boolean csv) throws RefException {
 		Prices prices = m_main.getStock(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
-		out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
-		respond( prices.toJson(conid) );
+		// this is used by the google sheet to display prices
+		if (csv) {
+			String data = S.format( "%s,%s", prices.bid(), prices.ask() );
+			respondWithPlainText(data);
+		}
+		// no sure what this is used for
+		else {
+			out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
+			respond( prices.toJson(conid) );
+		}
 	}
 
 	/** Top-level method. */

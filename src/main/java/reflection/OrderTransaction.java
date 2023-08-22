@@ -3,12 +3,14 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.util.Random;
 import java.util.Vector;
 
 import org.json.simple.JsonObject;
 
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
+import com.ib.client.Execution;
 import com.ib.client.Order;
 import com.ib.client.OrderStatus;
 import com.ib.client.OrderType;
@@ -178,11 +180,8 @@ public class OrderTransaction extends MyTransaction {
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
-				require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
 				S.out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
-				m_order.status(OrderStatus.Filled);
-				m_filledShares = m_order.roundedQty();
-				onIBOrderCompleted(false);
+				simulateFill(contract);
 			}
 			// submit order to IB
 			else {
@@ -190,6 +189,38 @@ public class OrderTransaction extends MyTransaction {
 				submitOrder( contract);
 			}
 		});
+	}
+
+	private void simulateFill(Contract contract) throws Exception {		
+		require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
+		
+		Random rnd = new Random(System.currentTimeMillis());
+
+		m_order.orderId( rnd.nextInt(Integer.MAX_VALUE) );
+		m_order.permId( rnd.nextInt(Integer.MAX_VALUE) );
+		m_order.status(OrderStatus.Filled);
+		m_filledShares = m_order.roundedQty();
+
+		// simulate the trade
+		Execution exec = new Execution(
+				m_order.orderId(),
+				0,  // client id
+				"" + rnd.nextInt(),
+				"time",
+				"acct",
+				"exch",
+				isBuy() ? "buy" : "sell",
+				m_order.roundedQty(),
+				m_order.lmtPrice(),
+				m_order.permId()
+				);
+		m_main.tradeReport( "TK" + rnd.nextInt(), contract, exec);  // you could simulate commission report as well 	
+
+		log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
+				m_order.orderId(), m_order.action(), m_order.totalQty(), m_order.totalQty(), m_order.lmtPrice(),
+				m_config.commission(), 0, "");
+
+		onIBOrderCompleted( false ); // you might want to sometimes pass false here when testing
 	}
 
 	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require() and no wrap(),
@@ -365,15 +396,16 @@ public class OrderTransaction extends MyTransaction {
 	private void insertToCryptoTable(String id) {
 		try {
 			JsonObject obj = new JsonObject();
+			obj.put("fireblocks_id", id);  // primary key
 			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
 			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
-			obj.put("fireblocks_id", id);
 			obj.put("timestamp", System.currentTimeMillis() / 1000);
 			obj.put("wallet_public_key", m_walletAddr);
 			obj.put("symbol", m_stock.getSymbol() );
 			obj.put("conid", m_stock.getConid() );
 			obj.put("action", m_order.action().toString() );
-			obj.put("quantity", m_desiredQuantity);
+			obj.put("quantity", m_order.totalQuantity());
+			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);  // format this? pas

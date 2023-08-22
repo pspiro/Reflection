@@ -82,13 +82,10 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			String conidStr = Util.getLastToken(m_uri, "/");
 			require( !conidStr.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
-			int conid = Integer.valueOf(conidStr);
+			require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "%s is not a valid conid", conidStr);
+			int conid = Integer.parseInt(conidStr);
 			
 			Stock stock = m_main.getStock(conid);
-			
-			Contract contract = new Contract();
-			contract.conid(conid);
-			contract.exchange( m_main.getExchange( conid) );
 			
 			boolean inside = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null, null);
 			stock.put( "exchangeStatus", inside ? "open" : "closed");  // this updates the global object and better be re-entrant
@@ -100,8 +97,10 @@ public class BackendTransaction extends MyTransaction {
 	/** Backend-style msg; conid is last parameter */  // when is this used? pas
 	public void handleGetPrice() {
 		wrap( () -> {
-			int conid = Integer.valueOf( Util.getLastToken(m_uri, "/") );
-			returnPrice(conid);
+			String conidStr = Util.getLastToken(m_uri, "/");
+			require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "%s is not a valid conid", conidStr);
+			int conid = Integer.parseInt(conidStr);
+			returnPrice(conid, false);
 		});
 	}
 	
@@ -264,7 +263,7 @@ public class BackendTransaction extends MyTransaction {
 
 		try {
 			String addr = Util.getLastToken( m_uri, "/");
-			require( Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Correct usage is: .../mint/<wallet_address>");
+			require( Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Correct usage is: .../mint/wallet_address");
 			mint( addr);
 			response = m_config.mintHtml();
 		}
@@ -272,17 +271,8 @@ public class BackendTransaction extends MyTransaction {
 			e.printStackTrace();
 			response = "An error occurred - " + e.getMessage();
 		}
-
-		// we can't use respond here because we want to send html, not json
-		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
-			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
-			m_exchange.sendResponseHeaders( 200, response.length() );
-			outputStream.write( response.getBytes() );
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			log( LogType.ERROR, "Exception while responding with html");
-		}
+		
+		respondWithPlainText(response);
 	}
 	
 	/** Transfer some BUSD and ETH to the user's wallet */

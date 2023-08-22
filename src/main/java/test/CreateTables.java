@@ -1,5 +1,7 @@
 package test;
 
+import org.json.simple.JsonArray;
+
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -15,7 +17,9 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			new CreateTables().createCryptoTransactions();
+//			new CreateTables().createCryptoTransactions();
+//			new CreateTables().createTrades();
+			new CreateTables().query();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -24,21 +28,32 @@ public class CreateTables  {
 		S.out( "done");
 	}
 	
+	void query() throws Exception {
+		String sql = "select * "
+				+ "from crypto_transactions ct "   // in Java 13 you have text blocks, you wouldn't need all the + "
+				//+ "left join trades tr on ct.order_id = tr.order_id "
+				//+ "join commissions co on tr.tradekey = co.tradekey"
+				;
+		JsonArray json = con.queryToJson(sql);
+		json.display();
+	}
+	
 	void createCryptoTransactions() throws Exception {
 		con.dropTable("crypto_transactions");
 		
 		String sql = "create table crypto_transactions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "order_id varchar(32),"
-				+ "perm_id varchar(32),"
-				+ "fireblocks_id varchar(36),"
+				+ "fireblocks_id varchar(36) check (fireblocks_id <> ''),"
+				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
+				+ "symbol varchar(32),"
+				+ "conid int check (conid > 0),"
+				+ "action varchar(10) check (action = 'buy' or action = 'sell'),"
+				+ "quantity double precision check (quantity > 0),"
+				+ "rounded_quantity int," // could be zero
+				+ "price double precision check (price > 0),"
+				+ "order_id int,"  // could be zero
+				+ "perm_id int,"  // could be zero
 				+ "timestamp bigint,"   // eight bytes, signed
 				+ "blockchain_hash varchar(66),"
-				+ "wallet_public_key varchar(42),"
-				+ "symbol varchar(32),"
-				+ "conid int,"
-				+ "action varchar(10),"
-				+ "quantity double precision,"
-				+ "price double precision,"
 				+ "commission double precision,"
 				+ "tds double precision,"				
 				+ "currency varchar(32),"
@@ -53,8 +68,8 @@ public class CreateTables  {
 	void createCommissions() throws Exception {
 		con.dropTable("commissions");
 		
-		String sql = "create table commissions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "tradekey varchar(32),"
+		String sql = "create table commissions ("
+				+ "tradekey varchar(32),"			// tie commission report to trade
 				+ "commission double precision,"
 				+ "currency varchar(3)"
 				+ ")";
@@ -62,11 +77,12 @@ public class CreateTables  {
 	}
 	
 	void createTrades() throws Exception {
-		con.execute( "drop table trades");
+		con.dropTable( "trades");
 		
 		String sql = "create table trades ("
-				+ "order_id varchar(32),"
-				+ "perm_id varchar(32),"
+				+ "tradekey varchar(32),"  // tie the trade to the commission report
+				+ "order_id int,"
+				+ "perm_id int check (perm_id <> 0),"  // can't be zero because then we can't tie it to the crypto_transaction
 				+ "time varchar(32),"
 				+ "side varchar(4),"
 				+ "quantity double precision,"
@@ -76,8 +92,38 @@ public class CreateTables  {
 				+ "conid int,"
 				+ "exchange varchar(32),"
 				+ "avgprice double precision,"
-				+ "orderref varchar(256),"
-				+ "tradekey varchar(32)"
+				+ "orderref varchar(256)"
+				+ ")";
+		con.execute( sql);
+	}
+	
+	void createUsers() throws Exception {
+		con.dropTable( "trades");
+
+		// to add unique to an existing table:
+		// ALTER TABLE users ADD UNIQUE (wallet_public_key);
+		
+		// fields:
+//		id
+//		name
+//		email
+//		phone
+//		wallet_public_key  // must be UNIQUE and lower case, e.g.:
+//		wallet_public_key varchar(42) unique CHECK (lowercase_column = LOWER(lowercase_column))
+//		kyc_status  // should remove this and check 
+//		address
+//		active
+//		is_black_listed
+//		created_at
+//		updated_at
+//		city
+//		country
+//		persona_response
+//		pan_number
+//		aadhaar
+		
+		String sql = "create table users ("
+				// write this
 				+ ")";
 		con.execute( sql);
 	}

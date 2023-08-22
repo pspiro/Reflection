@@ -53,7 +53,7 @@ public class Main implements ITradeReportHandler {
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
-	private       ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
+	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private       String m_faqs;
 	private String m_type1Config; 
@@ -440,8 +440,8 @@ public class Main implements ITradeReportHandler {
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
 		obj.put( "time", exec.time() );         
-		obj.put( "orderid", exec.orderId() );    
-		obj.put( "permid", exec.permId() );    
+		obj.put( "order_id", exec.orderId() );    
+		obj.put( "perm_id", exec.permId() );    
 		obj.put( "side", exec.side() );
 		obj.put( "quantity", exec.shares().toDouble() ); 
 		obj.put( "symbol", contract.symbol() );
