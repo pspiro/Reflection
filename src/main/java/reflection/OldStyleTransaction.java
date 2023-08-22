@@ -280,6 +280,7 @@ public class OldStyleTransaction extends MyTransaction {
 		setTimer( Main.m_config.timeout(), () -> timedOut( "getDescription timed out") );
 	}
 
+	/** Not being used because the google sheet IMPORTDATA doesn't work */
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
 		boolean csv = m_map.getBool("csv");

@@ -440,8 +440,8 @@ public class Main implements ITradeReportHandler {
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
 		obj.put( "time", exec.time() );         
-		obj.put( "orderid", exec.orderId() );    
-		obj.put( "permid", exec.permId() );    
+		obj.put( "order_id", exec.orderId() );    
+		obj.put( "perm_id", exec.permId() );    
 		obj.put( "side", exec.side() );
 		obj.put( "quantity", exec.shares().toDouble() ); 
 		obj.put( "symbol", contract.symbol() );
