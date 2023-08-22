@@ -282,7 +282,8 @@ public class OldStyleTransaction extends MyTransaction {
 
 	private void getPrice() throws RefException {
 		int conid = m_map.getRequiredInt( "conid");
-		returnPrice(conid);
+		boolean csv = m_map.getBool("csv");
+		returnPrice(conid, csv);
 	}	
 
 	/** Top-level method; set some prices for use in test systems 

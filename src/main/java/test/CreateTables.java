@@ -38,7 +38,7 @@ public class CreateTables  {
 				+ "fireblocks_id varchar(36),"
 				+ "timestamp bigint,"   // eight bytes, signed
 				+ "blockchain_hash varchar(66),"
-				+ "wallet_public_key varchar(42),"
+				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "symbol varchar(32),"
 				+ "conid int,"
 				+ "action varchar(10),"
@@ -67,7 +67,7 @@ public class CreateTables  {
 	}
 	
 	void createTrades() throws Exception {
-		con.execute( "drop table trades");
+		con.dropTable( "trades");
 		
 		String sql = "create table trades ("
 				+ "order_id varchar(32),"
@@ -83,6 +83,37 @@ public class CreateTables  {
 				+ "avgprice double precision,"
 				+ "orderref varchar(256),"
 				+ "tradekey varchar(32)"
+				+ ")";
+		con.execute( sql);
+	}
+	
+	void createUsers() throws Exception {
+		con.dropTable( "trades");
+
+		// to add unique to an existing table:
+		// ALTER TABLE users ADD UNIQUE (wallet_public_key);
+		
+		// fields:
+//		id
+//		name
+//		email
+//		phone
+//		wallet_public_key  // must be UNIQUE and lower case, e.g.:
+//		wallet_public_key varchar(42) unique CHECK (lowercase_column = LOWER(lowercase_column))
+//		kyc_status  // should remove this and check 
+//		address
+//		active
+//		is_black_listed
+//		created_at
+//		updated_at
+//		city
+//		country
+//		persona_response
+//		pan_number
+//		aadhaar
+		
+		String sql = "create table users ("
+				// write this
 				+ ")";
 		con.execute( sql);
 	}

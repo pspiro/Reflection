@@ -388,4 +388,14 @@ public class Util {
 			return val;
 		}
 	}
+
+	public static boolean isInteger(String conidStr) {
+		try {
+			Integer.valueOf(conidStr);
+			return true;
+		}
+		catch( Exception e) {
+			return false;
+		}
+	}
 }
