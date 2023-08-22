@@ -37,11 +37,11 @@ public class MyTestCase extends TestCase {
 	}
 
 	JsonObject postOrderToObj( JsonObject obj) throws Exception {
-		return postOrder(obj).readMyJsonObject();
+		return postOrder(obj).readJsonObject();
 	}
 
 	String postOrderToId( JsonObject obj) throws Exception {
-		return postOrder(obj).readMyJsonObject().getString("id");
+		return postOrder(obj).readJsonObject().getString("id");
 	}
 
 	JsonObject getWorkingLiveOrder(String id) throws Exception {
@@ -51,7 +51,7 @@ public class MyTestCase extends TestCase {
 
 	public JsonObject getAllLiveOrders(String address) throws Exception {
 		return cli().get("/api/working-orders/" + address)
-				.readMyJsonObject();
+				.readJsonObject();
 	}
 	
 	JsonObject getLiveMessage2(String id) throws Exception {
@@ -77,6 +77,10 @@ public class MyTestCase extends TestCase {
 		return getAllLiveOrders(Cookie.wallet).getArray("messages");
 	}
 
+	protected void assert200() throws Exception {
+		assertEquals( 200, cli.getResponseCode() );
+	}
+	
 	protected void assertNotEquals(String notExpected, String actual) {
 		assertTrue( 
 				String.format( "Got %s which was not expected", notExpected),

@@ -6,7 +6,6 @@ import com.moonstoneid.siwe.SiweMessage;
 
 import common.Util;
 import http.MyHttpClient;
-import junit.framework.Assert;
 import reflection.SiweUtil;
 import tw.util.S;
 
@@ -37,8 +36,8 @@ public class Cookie extends MyTestCase {
 		
 		// send siwe/init
 		cli.get("/siwe/init");
-		Assert.assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readMyJsonObject().getString("nonce");
+		assertEquals( 200, cli.getResponseCode() );
+		String nonce = cli.readJsonObject().getString("nonce");
 
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 

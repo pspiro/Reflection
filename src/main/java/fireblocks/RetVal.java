@@ -17,6 +17,11 @@ public class RetVal {
 	}
 	
 	/** This blocks for up to 63 seconds */
+	public void waitForCompleted() throws Exception {
+		waitForStatus("COMPLETED");
+	}
+	
+	/** This blocks for up to 63 seconds */
 	public void waitForStatus(String status) throws Exception {
 		Fireblocks.waitForStatus(m_id, status);
 	}

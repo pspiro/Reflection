@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 	   TestOrderNoAutoFill.class,
 	   TestOutsideHours.class,
 	   TestPanic.class,
+	   TestPositionTracker.class,
 	   TestPrices.class,
 	   TestProfile.class,
 	   TestRedeem.class,

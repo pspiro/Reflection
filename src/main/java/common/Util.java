@@ -351,6 +351,11 @@ public class Util {
 				Math.min(end, str.length() ) );
 	}
 	
+	/** Default value is used for null input only */ 
+	public static <T extends Enum<T>> T getEnum(String text, T[] values, T defVal) throws IllegalArgumentException {
+		return S.isNull(text) ? defVal : getEnum(text, values);
+	}
+
 	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */
 	public static <T extends Enum<T>> T getEnum(String text, T[] values) throws IllegalArgumentException {
 		for (T val : values) {
@@ -361,7 +366,7 @@ public class Util {
 		String str = String.format( "'%s' is not a valid value for enum %s", text, values[0].getClass().getName() );
 		throw new IllegalArgumentException( str);
 	}
-	
+		
 	public static String allEnumValues(Object[] values) {
 		return Arrays.asList(values).toString();
 	}

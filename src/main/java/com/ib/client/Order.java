@@ -17,8 +17,6 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.client.Types.TriggerMethod;
 import com.ib.client.Types.VolatilityType;
 
-import tw.util.S;
-
 public class Order {
     final public static int 	CUSTOMER = 0;
     final public static int 	FIRM = 1;
@@ -43,7 +41,8 @@ public class Order {
 
     // primary attributes
     private String      m_action = "BUY";
-    private double      m_totalQuantity;  // total decimal desired quantity
+    private double      m_totalQty;  // total decimal desired quantity
+    private int         m_roundedQty;  // quantity submitted to exchange
     private int         m_displaySize;
     private String      m_orderType = "LMT";
     private double      m_lmtPrice = Double.MAX_VALUE;
@@ -461,7 +460,7 @@ public class Order {
     public void sweepToFill(boolean v)                                  { m_sweepToFill = v; }
     public void tif(TimeInForce v)                                      { m_tif = ( v == null ) ? null : v.getApiString(); }
     public void tif(String v)                                           { m_tif = v; }
-    public void totalQuantity(double v)                                 { m_totalQuantity = v; }
+    public void totalQty(double v)                                      { m_totalQty = v; }
     public void trailingPercent(double v)                               { m_trailingPercent = v; }
     public void trailStopPrice(double v)                                { m_trailStopPrice = v; }
     public void transmit(boolean v)                                     { m_transmit = v; }
@@ -609,7 +608,7 @@ public class Order {
 
         if (m_orderId != l_theOther.m_orderId
             || m_clientId != l_theOther.m_clientId
-            || m_totalQuantity != l_theOther.m_totalQuantity
+            || m_totalQty != l_theOther.m_totalQty
         	|| m_lmtPrice != l_theOther.m_lmtPrice
         	|| m_auxPrice != l_theOther.m_auxPrice
         	|| m_ocaType != l_theOther.m_ocaType
@@ -768,26 +767,40 @@ public class Order {
         return (int) (m_permId ^ (m_permId >>> 32));
     }
 
-	/** Log entry for order */ 
+	/** Log entry for order when order is submitted */ 
 	public String getOrderLog(Contract contract, String walletAddr) {
-		return String.format( "wallet=%s  conid=%s  orderId=%s | %s %.3f on %s at %.2f",
-				walletAddr, contract.conid(), m_orderId,
-				m_action, m_totalQuantity, contract.exchange(), m_lmtPrice);
+		return String.format( ""
+				+ "wallet=%s  "
+				+ "conid=%s  "
+				+ "orderId=%s  "
+				+ "action=%s  "
+				+ "totalQty=%s  "
+				+ "roundedQty=%s  "
+				+ "lmtPrice=%.2f  "
+				+ "exchange=%s",
+				walletAddr, 
+				contract.conid(), 
+				m_orderId,
+				m_action, 
+				m_totalQty, 
+				m_roundedQty, 
+				m_lmtPrice,
+				contract.exchange() 
+				);
 	}
 
-	/** Return totalQuantity rounded to three decimal places. */
-    public String totalQty() { 
-    	return S.fmt3(m_totalQuantity); 
-    }
-    
     /** total decimal desired quantity */
-    public double totalQuantity() { 
-    	return m_totalQuantity; 
+    public double totalQty() { 
+    	return m_totalQty; 
     }
 	
     public int roundedQty() {
-		return (int)Math.round(m_totalQuantity);
+		return m_roundedQty;
 	}
+    
+    public void roundedQty( int v) {
+    	m_roundedQty = v;
+    }
 
     public void flipSide() {
     	action( action() == Action.BUY ? Action.SELL : Action.BUY); 

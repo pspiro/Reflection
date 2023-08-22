@@ -81,7 +81,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "past " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TOO_SLOW, cli.getCode() );
+		assertEquals( RefCode.TOO_SLOW, cli.getRefCode() );
 	}
 	
 	public void testSiweFailFut() throws Exception {
@@ -105,7 +105,7 @@ public class TestSiwe extends MyTestCase {
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "fut " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.TOO_FAST, cli.getCode() );
+		assertEquals( RefCode.TOO_FAST, cli.getRefCode() );
 	}
 	
 	public void testFailSig() throws Exception {
@@ -127,7 +127,7 @@ public class TestSiwe extends MyTestCase {
 		cli().post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failSig " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.UNKNOWN, cli.getCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
+		assertEquals( RefCode.UNKNOWN, cli.getRefCode() );  // gives unknown because it is a Siwe exception; better would be to catch it and throw RefException
 	}
 	
 	public void testFailDup() throws Exception {
@@ -291,7 +291,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		startsWith( "Null cookie", cli.getMessage() );
 		
 		// test mismatched cookie header and body address
@@ -303,7 +303,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "Cookie header wallet address", cli.getMessage() );
 
 		// test cookie not found
@@ -311,7 +311,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "No session object found", cli.getMessage() );
 		
 		// test siwe/me wrong nonce
@@ -322,7 +322,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getCode() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "Cookie nonce", cli.getMessage() );
 
 		// test a successful me

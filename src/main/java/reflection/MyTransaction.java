@@ -44,7 +44,7 @@ public abstract class MyTransaction {
 	protected Main m_main;
 	protected HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();
+	protected ParamMap m_map = new ParamMap();  // change this to a JsonObject
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_uid;
@@ -57,7 +57,7 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uid = header == null ? Util.id(5) : Util.id(5) + " " + header;		
+		m_uid = header == null ? Util.id(6) : Util.id(6) + " " + header;		
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	
@@ -179,23 +179,19 @@ public abstract class MyTransaction {
 	
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	void wrap( ExRunnable runnable) {
+	final void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
 		catch( RefException e) {
 			synchronized(this) {      // must synchronize access to m_responded
+				// if we haven't responded yet, log the error and respond
 				if (!m_responded) {
 					log( LogType.ERROR, e.toString() );
+					respondFull(e.toJson(), 400, null);
 				}
-
-				boolean responded = respondFull( 
-						e.toJson(), 
-						400, 
-						null);
-				
 				// display errors that occurred after the response except for timeouts since that is normal
-				if (!responded && e.code() != RefCode.TIMED_OUT) {
+				else if (e.code() != RefCode.TIMED_OUT) {
 					log( LogType.ERROR, e.toString() + " (ERROR IGNORED)" );
 				}
 			}
@@ -203,10 +199,7 @@ public abstract class MyTransaction {
 		catch( Exception e) {
 			e.printStackTrace();
 			log( LogType.ERROR, S.notNull( e.getMessage() ) );
-			respondFull( 
-					RefException.eToJson(e, RefCode.UNKNOWN),
-					400,
-					null);
+			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
 		}
 	}
 	

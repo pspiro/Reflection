@@ -22,7 +22,7 @@ public class ParamMap extends HashMap<String, String> {
 		return val;
 	}
 
-	boolean getBool(String tag) throws RefException {
+	boolean getBool(String tag) {
 		return Boolean.valueOf( getParam( tag) );
 	}
 	

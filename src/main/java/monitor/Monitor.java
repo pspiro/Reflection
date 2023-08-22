@@ -137,7 +137,7 @@ public class Monitor {
 		S.out( "Querying stock positions");
 		JsonArray ar = new MyHttpClient("localhost", 8383)
 			.get("?msg=getpositions")
-			.readMyJsonArray();
+			.readJsonArray();
 		
 		for (JsonObject obj : ar) {
 			Record rec = getOrCreate( obj.getInt("conid") );
@@ -174,7 +174,7 @@ public class Monitor {
 		
 		double val = new MyHttpClient("localhost", 8383)
 				.get( "/?msg=getCashBal")
-				.readMyJsonObject()
+				.readJsonObject()
 				.getDouble("TotalCashValue");
 		SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
 	}

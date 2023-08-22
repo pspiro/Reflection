@@ -587,8 +587,8 @@ public class Main implements ITradeReportHandler {
 
 	/** @param side is buy or sell (lower case) */
 	boolean validWallet(String walletAddr, String side) {
-		String allow = m_blacklist.getNN( walletAddr).toLowerCase();
-		return S.isNull(allow) || allow.equals("all") || allow.equals(side); 
+		String str = m_blacklist.get(walletAddr);
+		return Util.getEnum(str, Allow.values(), Allow.All).allow(side);
 	}
 	
 }

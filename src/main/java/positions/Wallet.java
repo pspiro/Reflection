@@ -12,14 +12,14 @@ public class Wallet {
 	static String test = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";  // for testing only
 	
 	private String m_address;
-	private HashMap<String, Double> m_map;
+	private HashMap<String, Double> m_map; // map token (lower case) to balance
 	
 	public Wallet(String address) {
 		m_address = address;
 	}
 
-	/** Only send the request the first time 
-	 * @throws Exception */
+	/** Only send the request the first time
+	 *  @param token must be lower case */ 
 	public double getBalance(String token) throws Exception {
 		if (m_map == null) {
 			m_map = reqPositionsMap(m_address);
@@ -46,6 +46,5 @@ public class Wallet {
 	public double getNativeTokenBalance() throws Exception {
 		return MoralisServer.getNativeBalance(m_address);
 	}
-
 	
 }

@@ -15,7 +15,6 @@ public enum LogType {
 	ORDER_CONNECTION,
 	ORDER_ERR,		// we received an error msg from TWS for this order
 	ORDER_TIMEOUT,
-	PARTIAL_FILL,	// order was partially filled
 	REDEEM, 
 	FAILED,		// order was rejected
 	RESTART,		// application was restarted

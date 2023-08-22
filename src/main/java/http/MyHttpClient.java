@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
-import org.json.simple.parser.JSONParser;
 
 import common.Util;
 import junit.framework.TestCase;
@@ -49,16 +48,12 @@ public class MyHttpClient {
 		m_socket.getOutputStream().write( bytes);
 	}
 
-	public JsonObject readMyJsonObject() throws Exception {
+	public JsonObject readJsonObject() throws Exception {
 		return JsonObject.parse( readString() );
 	}
 	
-	public JsonArray readMyJsonArray() throws Exception {
+	public JsonArray readJsonArray() throws Exception {
 		return JsonArray.parse( readString() );
-	}
-	
-	public JsonObject readJsonObject() throws Exception {
-		return (JsonObject)new JSONParser().parse( readString() );
 	}
 	
 	public String readString() throws Exception {
@@ -198,12 +193,12 @@ public class MyHttpClient {
 
 	/** The messages can change; it's better to create a custom code and use getCode() */
 	public String getMessage() throws Exception {
-		return readMyJsonObject().getString("message");
+		return readJsonObject().getString("message");
 	}
 	
 	// let this return the enum
-	public RefCode getCode() throws Exception {
-		String code = readMyJsonObject().getString("code");
+	public RefCode getRefCode() throws Exception {
+		String code = readJsonObject().getString("code");
 		return S.isNull( code) ? null : Util.getEnum( code, RefCode.values() );
 	}
 

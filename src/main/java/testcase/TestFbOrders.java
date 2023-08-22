@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import fireblocks.Busd;
+import fireblocks.Erc20;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 import reflection.RefCode;
@@ -14,14 +15,19 @@ import tw.util.S;
 public class TestFbOrders extends MyTestCase {
 	// test all possible orders and a success of buy w/ BUSD, buy w/ RUSD, and sell
 	
-	static String userAddr = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	static String bobAddr = "0xAB015EB8298E5364CEA5C8F8e084E2fc3E3b4BAF";
+	static String bobAddr;
 	static StockToken stock;
 	static Busd busd;
 	static Rusd rusd;
 
 	static {		
 		try {
+			bobAddr = accounts.getAddress("Bob");
+			S.out( "bobAddr = %s", bobAddr);
+			
+			// create Wallet instead and use that
+			showAmounts("pre-run");
+			
 			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenName", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
 			busd = m_config.busd();
@@ -29,13 +35,22 @@ public class TestFbOrders extends MyTestCase {
 		}
 		catch( Exception e) {
 			e.printStackTrace();
+			System.exit(0);
 		}
+	}
+
+	public void testInsufficientFundsSell() throws Exception {
+		// write this
 	}
 
 	/** This test will fail. To get it to pass, update LiveOrder.updateFrom() to check for 
 	 *  insufficient crypto or insufficient approved amount */
 	public void testInsufficientFundsBuy() throws Exception {
-		cli().get("/api/mywallet/" + Cookie.wallet);
+		S.out( "-----testInsufficientFundsBuy");
+		Cookie.setNewWallet(bobAddr);
+		showAmounts("starting insuf. funds");
+		
+		cli().get("/api/mywallet/" + bobAddr);
 		double bal = cli.readJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
@@ -44,7 +59,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		while(true) {
 			JsonObject ret = getLiveMessage2(map.getString("id"));
@@ -62,26 +77,33 @@ public class TestFbOrders extends MyTestCase {
 	 *  insufficient crypto or insufficient approved amount. It's only worthwhile
 	 *  if we see this happening in real life  */
 	public void testNonApproval() throws Exception {
+		S.out( "-----testNonApproval");
 		Cookie.setNewWallet(bobAddr);
+		showAmounts("starting non-approval");
 
 		// mint BUSD for user Bob
-//		busd.mint(
-//				accounts.getId( "Admin1"),
-//				accounts.getAddress("Bob"),
-//				200);
+		// mint BUSD for user Bob
+		S.out( "**minting 2000");
+		busd.mint(
+				accounts.getId( "Admin1"),
+				bobAddr,
+				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
 		
 		// approve too little
+		S.out( "**approving .49");
 		busd.approve(
 				accounts.getId( "Bob"),
 				rusd.address(),
-				.99).waitForHash();
+				.49).waitForCompleted();
+		
+		showAmounts("updated amounts");
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
 		
 		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		while(true) {
 			JsonObject ret = getLiveMessage2(map.getString("id"));
@@ -96,22 +118,26 @@ public class TestFbOrders extends MyTestCase {
 	}
 
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
-		// mint BUSD for user Bob
-//		S.out( "minting");
-//		busd.mint(
-//				accounts.getId( "Admin1"),
-//				accounts.getAddress("Bob"),
-//				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
-//		
-//		// user to approve buying with BUSD; you must wait for this
-//		S.out( "approving");
-//		busd.approve(
-//				accounts.getId( "Bob"),
-//				rusd.address(),
-//				2000).waitForHash();
+		S.out( "-----testFillWithFb");
+		Cookie.setNewWallet(bobAddr);
+		showAmounts("starting amounts");
 		
-		String address = accounts.getAddress("Bob");
-		String cookie = Cookie.signIn(address);
+		// mint BUSD for user Bob
+		S.out( "**minting 2000");
+		busd.mint(
+				accounts.getId( "Admin1"),
+				bobAddr,
+				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+		
+		// user to approve buying with BUSD; you must wait for this
+		S.out( "**approving 2000");
+		busd.approve(
+				accounts.getId( "Bob"),
+				rusd.address(),
+				2000).waitForCompleted();
+
+		showAmounts("updated amounts");
+
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
@@ -119,28 +145,26 @@ public class TestFbOrders extends MyTestCase {
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
-		obj.put("wallet_public_key", address);
-		obj.put("cookie", cookie);
 		
-		S.out( "Sending: " + obj);
+		S.out( "**Submitting: " + obj);
 
 		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		String uid = map.getString("id");  // 5-digit code
 		assertTrue( S.isNotNull(uid) );
 		S.out( "Submitted order with uid %s", uid);
 		
 		while(true) {
-			JsonObject liveOrders = getAllLiveOrders(address);
+			JsonObject liveOrders = getAllLiveOrders(bobAddr);
 			S.out( liveOrders);
 
 			JsonObject msg = liveOrders.getArray("messages").find("id", uid);
 			JsonObject order = liveOrders.getArray("orders").find("id", uid);
 			
 			if (msg != null) {
-				S.out("filled: " + msg);
+				S.out("Completed: " + msg);
 				assertEquals( "message", msg.getString("type"));
 				startsWith( "Bought", msg.getString("text") );
 				break;
@@ -162,5 +186,13 @@ public class TestFbOrders extends MyTestCase {
 		
 		
 	}
-
+	
+	static void showAmounts(String str) throws Exception {
+		S.out( "%s  approved=%s  USDC=%s  RUSD=%s  StockToken=%s",
+				str,
+				m_config.busd().getAllowance(bobAddr, m_config.rusdAddr() ),
+				m_config.busd().getPosition(bobAddr),
+				m_config.rusd().getPosition(bobAddr),
+				new StockToken("0x5195729466e481de3c63860034fc89efa5fbbb8f").getPosition(bobAddr) );
+	}
 }

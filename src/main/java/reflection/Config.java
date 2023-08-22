@@ -76,6 +76,7 @@ public class Config extends ConfigBase {
 	private String errorCodesTab;  // valid values are yes, no, random
 	private TimeInForce tif;
 	private String fbAdmins;
+	private Allow allowTrading = Allow.All;  // won't be returned in getConfig message
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -89,6 +90,8 @@ public class Config extends ConfigBase {
 	private int busdDecimals;
 	private int fbServerPort;
 	private int fbPollIingInterval;
+	
+	public Allow allowTrading() { return allowTrading; }
 	
 	public int fbPollIingInterval() { return fbPollIingInterval; }
 	public int rusdDecimals() { return rusdDecimals; }
@@ -187,6 +190,8 @@ public class Config extends ConfigBase {
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
+		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
+		S.out( "allowTrading=%s", allowTrading);
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");

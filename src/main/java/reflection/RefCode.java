@@ -12,7 +12,7 @@ public enum RefCode {
 	TIMED_OUT,			// order timed out before being filled or canceled, or SIWE auth was too slow
 	REJECTED,			// order was rejected, reason unknown
 	ORDER_TOO_LARGE,	// dollar amt is too high as per config settings
-	PARTIAL_FILL,		// order was partially filled
+	PARTIAL_FILL,		// order was partially filled; should never happen, we use AON
 	MISSING_ENV_VAR,
 	BLOCKCHAIN_FAILED,
 	INSUFFICIENT_FUNDS,
@@ -25,5 +25,6 @@ public enum RefCode {
 	UPDATE_PROFILE, 
 	POST_SPLIT, 
 	PRE_SPLIT, 
-	ACCESS_DENIED,		// means the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
+	ACCESS_DENIED, 		// the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
+	TRADING_HALTED,		// trading is halted as per the allowTrading config setting
 }

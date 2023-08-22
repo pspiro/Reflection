@@ -10,8 +10,6 @@ import java.util.List;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.WhatToShow;
 
-import tw.util.S;
-
 public abstract class EClient {
 
     // Client version history
@@ -1386,10 +1384,6 @@ public abstract class EClient {
             return;
         }
         
-        S.out( "Submitting %s  id=%s  side=%s  qty=%s  conid=%s  price=%s",
-        		order.whatIf() ? "what-if" : "order",
-        		id, order.action(), order.totalQty(), contract.conid(), order.lmtPrice() );
-
         if (m_serverVersion < MIN_SERVER_VER_SCALE_ORDERS) {
         	if (order.scaleInitLevelSize() != Integer.MAX_VALUE ||
         		order.scalePriceIncrement() != Double.MAX_VALUE) {
@@ -1756,7 +1750,7 @@ public abstract class EClient {
 //			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
 //				b.send( order.totalQty() );
 //			else
-				b.send( order.roundedQty() );  // rounded to nearest int
+				b.send( order.roundedQty() );
             
 			b.send( order.getOrderType());
             if (m_serverVersion < MIN_SERVER_VER_ORDER_COMBO_LEGS_PRICE) {

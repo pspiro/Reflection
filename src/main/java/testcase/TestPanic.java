@@ -17,40 +17,40 @@ public class TestPanic extends MyTestCase {
 		
 		tab.put( "allowTrading", Allow.Sell.toString() );
 		cli().get("/?msg=refreshconfig");
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
 		postOrderToObj(obj);
-		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
 		obj = TestOrder.createOrder( "SELL", 10, 3);
 		postOrderToObj(obj);
-		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 		
 		tab.put( "allowTrading", Allow.None.toString() );
 		cli().get("/?msg=refreshconfig");
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		obj = TestOrder.createOrder( "BUY", 10, 3);
 		postOrderToObj(obj);
-		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
 		obj = TestOrder.createOrder( "SELL", 10, 3);
 		postOrderToObj(obj);
-		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
 		// put it back to all
 		tab.put( "allowTrading", Allow.All.toString() );
 		cli().get("/?msg=refreshconfig");
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		obj = TestOrder.createOrder( "BUY", 10, 3);
 		postOrderToObj(obj);
-		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
 		obj = TestOrder.createOrder( "SELL", 10, 3);
 		postOrderToObj(obj);
-		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getCode().toString() );
+		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 		
 	}
 	

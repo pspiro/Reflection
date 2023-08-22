@@ -71,7 +71,7 @@ public class TestOrder extends MyTestCase {
 		
 		JsonObject map = postOrderToObj(obj);
 		assertEquals( 200, cli.getResponseCode() );
-		assertEquals( RefCode.OK, cli.getCode() );
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		JsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
@@ -97,7 +97,7 @@ public class TestOrder extends MyTestCase {
 		String text = map.getString("message");
 		S.out( "fillSell %s %s", code, text);
 		assertEquals(200, cli.getResponseCode() );
-		assertEquals(RefCode.OK, cli.getCode() );
+		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
@@ -123,7 +123,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject map = postOrderToObj(obj);
 		S.out( "testFracShares " + map);
 		assertEquals(200, cli.getResponseCode() );
-		assertEquals(RefCode.OK, cli.getCode() );
+		assertEquals(RefCode.OK, cli.getRefCode() );
 		
 		JsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
@@ -135,7 +135,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject map = postOrderToObj(obj);
 
 		assertEquals(200, cli.getResponseCode() );
-		assertEquals(RefCode.OK, cli.getCode() );
+		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );

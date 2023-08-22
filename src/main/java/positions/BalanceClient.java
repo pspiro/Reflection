@@ -49,7 +49,7 @@ public class BalanceClient {
 	    // query my position server
 		MyHttpClient cli = new MyHttpClient("localhost", 9393);
 		cli.get( "wallet?wallet=" + wallet);
-		JsonObject myWallet = cli.readMyJsonObject();
+		JsonObject myWallet = cli.readJsonObject();
 
 		for (JsonObject item : morPositions) {
 			String token = item.getString("token_address").toLowerCase();
