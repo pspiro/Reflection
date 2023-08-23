@@ -19,7 +19,7 @@ public class CreateTables  {
 
 //			new CreateTables().createCryptoTransactions();
 //			//new CreateTables().createTrades();
-			new CreateTables().query();
+			new CreateTables().createCommTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -28,13 +28,15 @@ public class CreateTables  {
 		S.out( "done");
 	}
 	
-	void query() throws Exception {
-		String sql = "select * "
-				+ "from crypto_transactions ct "   // in Java 13 you have text blocks, you wouldn't need all the + "
-				+ "left join trades tr on ct.order_id = tr.order_id "
-				//+ "join commissions co on tr.tradekey = co.tradekey"
-				;
-		con.queryToJson(sql).display();
+	void createCommTable() throws Exception {
+		con.dropTable("commissions");
+		
+		String sql = "create table commissions ("
+				+ "tradekey varchar(32),"
+				+ "comm_paid double precision"
+				+ "currency varchar(3)"
+				+ ")";
+		con.execute(sql);
 	}
 	
 	void createCryptoTransactions() throws Exception {
@@ -53,7 +55,7 @@ public class CreateTables  {
 				+ "perm_id int,"  // could be zero
 				+ "timestamp bigint,"   // eight bytes, signed
 				+ "blockchain_hash varchar(66),"
-				+ "commission double precision,"
+				+ "commission double precision,"  // change this to comm_charged
 				+ "tds double precision,"				
 				+ "currency varchar(32),"
 				+ "status varchar(32),"       // value from FireblocksStatus

@@ -32,7 +32,7 @@ import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
 import redis.clients.jedis.exceptions.JedisException;
 import reflection.Config.RefApiConfig;
-import reflection.MySqlConnection.SqlRunnable;
+import reflection.MySqlConnection.SqlCommand;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -483,8 +483,8 @@ public class Main implements ITradeReportHandler {
 	}
 	
 	/** This creates a new connection every time. You could take approach like Redis where you keep it open */
-	void sqlConnection(SqlRunnable runnable) throws Exception {
-		m_config.sqlConnection(runnable);
+	void sqlConnection(SqlCommand runnable) throws Exception {
+		m_config.sqlCommand(runnable);
 	}
 
 	public ApiController orderController() {

@@ -26,7 +26,8 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
-/** This does not get added to a panel like JTabbedPane; it is the panel. */
+/** This does not get added to a panel like JTabbedPane; it is the panel.
+ *  Let the panels implement NewTabPanel for more functionality */
 public class NewTabbedPanel extends JPanel {
 	private static final Color COLOR = new Color( 184, 207, 229);
 	private static final int V1 = 1; 		// bottom line is raised this amount
@@ -44,6 +45,9 @@ public class NewTabbedPanel extends JPanel {
 	private final HashMap<String,Tab> m_map = new HashMap<String,Tab>();
 	private final boolean m_underline;  // if true, draws a horizontal line all the way across
 	private int m_count = 2;
+	private JComponent m_current;
+	
+	public JComponent current() { return m_current; }
 	
 	public NewTabbedPanel() {
 		this( false);
@@ -74,6 +78,7 @@ public class NewTabbedPanel extends JPanel {
 		HtmlButton button = new But( title, canClose, new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
 				select( title);
+				m_current = comp;
 			}
 		});
 		

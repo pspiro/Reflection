@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
@@ -16,7 +17,8 @@ import fireblocks.Rusd;
 import junit.framework.TestCase;
 import redis.ConfigBase;
 import redis.MyRedis;
-import reflection.MySqlConnection.SqlRunnable;
+import reflection.MySqlConnection.SqlCommand;
+import reflection.MySqlConnection.SqlQuery;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
@@ -501,10 +503,17 @@ public class Config extends ConfigBase {
 		return new MyRedis(redisHost, redisPort);
 	}
 	
-	public void sqlConnection(SqlRunnable runnable) throws Exception {
+	public void sqlCommand(SqlCommand command) throws Exception {
 		try ( MySqlConnection conn = new MySqlConnection() ) {
 			conn.connect( postgresUrl, postgresUser, postgresPassword);
-			runnable.run(conn);
+			command.run(conn);
+		}
+	}
+	
+	public JsonArray sqlQuery(SqlQuery query) throws Exception {
+		try ( MySqlConnection conn = new MySqlConnection() ) {
+			conn.connect( postgresUrl, postgresUser, postgresPassword);
+			return query.run(conn);
 		}
 	}
 	

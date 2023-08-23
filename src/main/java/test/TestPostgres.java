@@ -15,7 +15,7 @@ public class TestPostgres {
 		obj.put("name", "peter");
 		obj.put("active", true);
 		
-		config.sqlConnection( conn -> {
+		config.sqlCommand( conn -> {
 			conn.execute( "delete from users where name = 'peter'");
 			conn.insertOrUpdate("users", obj, "name = '%s'", "peter");
 			S.out(conn.queryToJson("select * from users where name = 'peter'"));

@@ -207,8 +207,12 @@ public class MySqlConnection implements AutoCloseable {
 		}
 	}
 	
-	public interface SqlRunnable {
+	public interface SqlCommand { // rename to command
 		public void run(MySqlConnection conn) throws Exception;
+	}
+
+	public interface SqlQuery {
+		public JsonArray run(MySqlConnection conn) throws Exception;
 	}
 
 	@Override public void close() throws Exception {

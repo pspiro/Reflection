@@ -18,7 +18,7 @@ public class TestProfile extends MyTestCase {
 		""";
 		
 		Config c = Config.readFrom("Dt-config");
-		c.sqlConnection( conn -> { 
+		c.sqlCommand( conn -> { 
 			conn.execute("delete from users where name = 'john glick'");
 		});
 		

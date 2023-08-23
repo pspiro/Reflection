@@ -19,7 +19,7 @@ public class TestGetCryptoTrans extends MyTestCase {
 	}
 	
 	public void testOpenTrans() throws Exception {
-		m_config.sqlConnection( conn -> {
+		m_config.sqlCommand( conn -> {
 			S.out( "open connection");
 			S.sleep(5000);
 		});
