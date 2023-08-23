@@ -64,7 +64,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			
 			String id = m_map.getRequiredParam("id");
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
-			String hash = S.notNull( m_map.getParam("hash") );
+			String hash = S.notNull( m_map.getParam("txHash") );
 			
 			updateCryptoTable( id, status, hash);
 			

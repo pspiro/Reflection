@@ -18,7 +18,7 @@ public class CreateTables  {
 			con.connect(dbUrl, dbUser, dbPassword);
 
 //			new CreateTables().createCryptoTransactions();
-//			new CreateTables().createTrades();
+//			//new CreateTables().createTrades();
 			new CreateTables().query();
 			
 		} catch (Exception e) {
@@ -31,11 +31,10 @@ public class CreateTables  {
 	void query() throws Exception {
 		String sql = "select * "
 				+ "from crypto_transactions ct "   // in Java 13 you have text blocks, you wouldn't need all the + "
-				//+ "left join trades tr on ct.order_id = tr.order_id "
+				+ "left join trades tr on ct.order_id = tr.order_id "
 				//+ "join commissions co on tr.tradekey = co.tradekey"
 				;
-		JsonArray json = con.queryToJson(sql);
-		json.display();
+		con.queryToJson(sql).display();
 	}
 	
 	void createCryptoTransactions() throws Exception {
@@ -46,7 +45,7 @@ public class CreateTables  {
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "symbol varchar(32),"
 				+ "conid int check (conid > 0),"
-				+ "action varchar(10) check (action = 'buy' or action = 'sell'),"
+				+ "action varchar(10),"
 				+ "quantity double precision check (quantity > 0),"
 				+ "rounded_quantity int," // could be zero
 				+ "price double precision check (price > 0),"
