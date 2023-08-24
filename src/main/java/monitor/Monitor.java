@@ -24,11 +24,9 @@ public class Monitor {
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
-	
-
+	static final Config m_config = new Config();
 	JFrame m_frame = new JFrame();
-	
-	final static Config m_config = new Config();
+	NewTabbedPanel m_tabs = new NewTabbedPanel(true);
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
@@ -38,8 +36,6 @@ public class Monitor {
 		NewLookAndFeel.register();
 		new Monitor( args[0] );
 	}
-
-	NewTabbedPanel tabs = new NewTabbedPanel(true);
 	
 	Monitor(String tabName) throws Exception {
 		// read config
@@ -66,15 +62,15 @@ public class Monitor {
 		JPanel butPanel = new JPanel();
 		butPanel.add(but);
 		
-		tabs.addTab( "Misc", m_miscPanel);
-		tabs.addTab( "Wallet", m_wallet);
-		tabs.addTab( "Transactions", m_transPanel);
-		tabs.addTab( "Users", m_usersPanel);
-		tabs.addTab( "Tokens", m_tokensPanel);
-		tabs.addTab( "Prices", m_pricesPanel);
+		m_tabs.addTab( "Misc", m_miscPanel);
+		m_tabs.addTab( "Wallet", m_wallet);
+		m_tabs.addTab( "Transactions", m_transPanel);
+		m_tabs.addTab( "Users", m_usersPanel);
+		m_tabs.addTab( "Tokens", m_tokensPanel);
+		m_tabs.addTab( "Prices", m_pricesPanel);
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
-		m_frame.add( tabs);
+		m_frame.add( m_tabs);
 		m_frame.setTitle( "Reflection Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 1000, 600);
@@ -87,7 +83,7 @@ public class Monitor {
 	/** called when Refresh button is clicked */
 	private void refresh() {
 		try {
-			((RefPanel)tabs.current()).refresh();
+			((RefPanel)m_tabs.current()).refresh();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

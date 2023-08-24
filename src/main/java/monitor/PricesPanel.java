@@ -19,7 +19,7 @@ public class PricesPanel extends JPanel implements RefPanel {
 	PricesPanel() {
 		super( new BorderLayout() );
 
-		add( new JScrollPane( new MyTable( m_mod) ) );
+		add( new MyTable( m_mod).scroll() );
 	}
 
 	void initialize() {

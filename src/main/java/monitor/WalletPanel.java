@@ -1,37 +1,35 @@
 package monitor;
 
-import javax.swing.JFrame;
+import java.awt.BorderLayout;
+
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
+import common.Util;
+import http.MyHttpClient;
 import monitor.Monitor.RefPanel;
 import positions.Wallet;
-import reflection.Config;
 import reflection.Stock;
-import reflection.Stocks;
-import tw.util.S;
+import tw.util.MyTable;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.S;
+import tw.util.VerticalPanel;
 
 public class WalletPanel extends JPanel implements RefPanel, INewTab {
 	private static final double minBalance = .0001;
 	private final JTextField m_wallet = new JTextField(32); 
-	private final Stocks stocks = new Stocks();
-	private final Config m_config;
-	
-	public static void main(String[] args) throws Exception {
-		JFrame m_frame = new JFrame();
-		
-		m_frame.add( new WalletPanel() );
-		m_frame.setTitle( "WalletPanel");
-		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		m_frame.setSize( 800, 1000);
-		m_frame.setVisible(true);
-		
-	}
+	private final JLabel m_rusd = new JLabel(); 
+	private final JLabel m_usdc = new JLabel(); 
+	private final JLabel m_approved = new JLabel(); 
+	private final JLabel m_matic = new JLabel(); 
+	private final Model m_model = new Model();
 	
 	WalletPanel() throws Exception {
-		m_config = Config.readFrom("Dt-config");
-		stocks.readFromSheet(m_config);
+
 		m_wallet.addActionListener( e -> { 
 			try {
 				refresh();
@@ -39,30 +37,59 @@ public class WalletPanel extends JPanel implements RefPanel, INewTab {
 				e1.printStackTrace();
 			} 
 		});
-		add( m_wallet);
-	}
 
+		VerticalPanel v = new VerticalPanel();
+		v.add( "Wallet", m_wallet);
+		v.add( "RUSD", m_rusd);
+		v.add( "USDC", m_usdc);
+		v.add( "Approved", m_approved);
+		v.add( "MATIC", m_matic);
+		
+		setLayout( new BorderLayout() );
+		add( v, BorderLayout.NORTH);
+		add( new MyTable(m_model).scroll() );
+	}
+	
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
-		Wallet wallet = new Wallet( m_wallet.getText() );
 
-		for (Stock stock : stocks) {
-			double bal = wallet.getBalance( stock.getSmartContractId() );
-			if (bal > minBalance) {
-				S.out( "%s = %s", stock.getSymbol(), bal);
+		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		JsonArray ar = cli.get( "/api/mywallet/" + m_wallet.getText() ).readJsonObject().getArray("tokens");
+		Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
+
+		m_rusd.setText("" + ar.get(0).getDouble("balance"));
+		m_usdc.setText("" + ar.get(1).getDouble("balance"));
+		m_approved.setText("" + ar.get(1).getDouble("approvedBalance"));
+		m_matic.setText("" + ar.get(2).getDouble("balance"));
+		
+		m_model.refresh();
+	}
+	
+	class Model extends JsonModel {
+		Model() {
+			super("Symbol,Balance");
+		}
+	
+		void refresh() throws Exception {
+			m_ar.clear();
+
+			Wallet wallet = new Wallet( m_wallet.getText() );
+			for (Stock stock : Monitor.stocks) {
+				JsonObject obj = new JsonObject();
+				double bal = wallet.getBalance( stock.getSmartContractId() );
+				if (bal > minBalance) {
+					obj.put( "Symbol", stock.getSymbol() );
+					obj.put( "Balance", bal);
+					m_ar.add(obj);
+				}
 			}
+			fireTableDataChanged();
 		}
 	}
 
-	@Override
-	public void activated() {
-		// TODO Auto-generated method stub
-		
+	@Override public void activated() {
 	}
 
-	@Override
-	public void closed() {
-		// TODO Auto-generated method stub
-		
+	@Override public void closed() {
 	}
 }

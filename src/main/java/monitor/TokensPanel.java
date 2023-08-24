@@ -30,10 +30,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 
 	TokensPanel() {
 		super( new BorderLayout() );
-		JTable tab = new MyTable( m_mod);
-		
-		add( new JScrollPane(tab) );
-		
+		add( new MyTable( m_mod).scroll() );
 	}
 	
 	public void refresh() throws Exception {

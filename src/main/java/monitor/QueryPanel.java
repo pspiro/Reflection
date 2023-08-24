@@ -16,7 +16,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 		super( new BorderLayout() );
 		m_mod = new QueryModel(allNames, sql);
 		
-		add( new JScrollPane( new MyTable(m_mod) ) );
+		add( new MyTable(m_mod).scroll() );
 	}
 	
 	public void refresh() throws Exception {

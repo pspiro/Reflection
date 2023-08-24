@@ -5,6 +5,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -119,6 +120,10 @@ public class MyTable extends JTable { // nicole
 		}
 		revalidate();
 		repaint();
+	}
+	
+	public JScrollPane scroll() {
+		return new JScrollPane(this);
 	}
 	
 //	@Override public boolean editCellAt(int row, int column, EventObject e) {
