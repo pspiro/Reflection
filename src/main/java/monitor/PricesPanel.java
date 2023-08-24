@@ -49,8 +49,9 @@ public class PricesPanel extends JPanel implements RefPanel {
 		void refresh() {
 			try {
 				MyHttpClient cli = new MyHttpClient("localhost", 8383);
-				JsonArray ar = cli.get( "/api/?msg=getallprices").readJsonArray();
-				ar.forEach( refPrices -> update(refPrices) ); 
+				JsonObject map = cli.get( "/api/?msg=getallprices").readJsonObject();
+				//JsonArray ar = cli.get( "/api/?msg=get-stocks-with-prices").readJsonArray();
+				map.forEach( (conid,prices) -> update(Integer.parseInt(conid), (JsonObject)prices) ); 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -58,21 +59,20 @@ public class PricesPanel extends JPanel implements RefPanel {
 			fireTableDataChanged();
 		}
 
-		private void update(JsonObject refPrices) {
-			JsonObject stock = findStock(refPrices);
+		private void update(int conid, JsonObject refPrices) {
+			JsonObject stock = findStock(conid);
 			if (stock != null) {
 				stock.put( "bid", refPrices.getDouble("bid") );
 				stock.put( "ask", refPrices.getDouble("ask") );
 				stock.put( "last", refPrices.getDouble("last") );
-				stock.put( "time", refPrices.getDouble("time") );
+				stock.put( "time", refPrices.getString("time") );
 			}
 			else {
-				S.out( "Error: received refPrices " + refPrices);
+				S.out( "Error: received prices for unknown conid " + conid);
 			}
 		}
 
-		JsonObject findStock(JsonObject refPrices) {
-			int conid = refPrices.getInt("conid");
+		JsonObject findStock(int conid) {
 			for (JsonObject stock : m_ar) {
 				if (stock.getInt("conid") == conid) {
 					return stock;
