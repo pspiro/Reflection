@@ -32,7 +32,7 @@ public class PricesPanel extends JPanel implements RefPanel {
 
 	class Model extends JsonModel {
 		Model() {
-			super( "symbol,conid,Our Bid,Our Ask,Real Bid,Real Ask");
+			super( "symbol,conid,bid,ask,last,time,Real Bid,Real Ask");
 		}
 		
 		void initialize() {
@@ -49,7 +49,7 @@ public class PricesPanel extends JPanel implements RefPanel {
 		void refresh() {
 			try {
 				MyHttpClient cli = new MyHttpClient("localhost", 8383);
-				JsonArray ar = cli.get( "/api/get-stocks-with-prices").readJsonArray();
+				JsonArray ar = cli.get( "/api/?msg=getallprices").readJsonArray();
 				ar.forEach( refPrices -> update(refPrices) ); 
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -61,8 +61,10 @@ public class PricesPanel extends JPanel implements RefPanel {
 		private void update(JsonObject refPrices) {
 			JsonObject stock = findStock(refPrices);
 			if (stock != null) {
-				stock.put( "Our Bid", refPrices.getDouble("bid") );
-				stock.put( "Our Ask", refPrices.getDouble("ask") );
+				stock.put( "bid", refPrices.getDouble("bid") );
+				stock.put( "ask", refPrices.getDouble("ask") );
+				stock.put( "last", refPrices.getDouble("last") );
+				stock.put( "time", refPrices.getDouble("time") );
 			}
 			else {
 				S.out( "Error: received refPrices " + refPrices);
