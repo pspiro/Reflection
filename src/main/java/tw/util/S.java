@@ -633,7 +633,11 @@ public class S {
 	public static void inform(Component parent, String message, Object... params) {
 		JOptionPane.showMessageDialog( parent, String.format( notNull( message), params) );
 	}
-
+	
+	public static boolean confirm(Component parent, String message) {
+		return JOptionPane.showConfirmDialog(parent, message) == 0;
+	}
+	
 	public static List<String> list(String... strings) {
 		ArrayList<String> list = new ArrayList<String>();
 		for (String string : strings) {

@@ -3,7 +3,6 @@ package monitor;
 import java.awt.BorderLayout;
 
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -12,8 +11,8 @@ import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.S;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.S;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -43,7 +42,7 @@ public class Monitor {
 		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
 		m_config.readFromSpreadsheet(tabName);
 		S.out( "  done");
-		
+
 		// read stocks
 		S.out( "Reading stock list from google sheet");
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
@@ -69,7 +68,7 @@ public class Monitor {
 		m_tabs.addTab( "Users", m_usersPanel);
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
-		m_tabs.addTab( "Redemptions", createRedemptionsPanel() );
+		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -94,12 +93,6 @@ public class Monitor {
 	
 	interface RefPanel extends INewTab {
 		void refresh() throws Exception; // called when Refresh button is clicked
-	}
-
-	static JComponent createRedemptionsPanel() {
-		return new QueryPanel(
-				"id,wallet_public_key,stable_coin,amount,fulfilled,created_at,timestamp",
-				"select * from redemptions");
 	}
 
 	static QueryPanel createUsersPanel() {

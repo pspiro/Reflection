@@ -5,7 +5,6 @@ import static reflection.Main.require;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.util.HashMap;
 
@@ -13,7 +12,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 
-import com.ib.client.Contract;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
@@ -120,26 +118,50 @@ public class BackendTransaction extends MyTransaction {
 			//setTimer( m_config.timeout(), () -> timedOut( "redemption request timed out") );
 
 			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
-			require( rusdPos > 0, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
-			
-			log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
-
+			require( rusdPos > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
+	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
-			if (busdPos >= rusdPos) {
-				rusd.sellRusd(walletAddr, m_config.busd(), rusdPos)
+			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
+				log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
+
+				rusd.sellRusd(walletAddr, busd, rusdPos)
 					.waitForHash();
 				
-				// QUESTION: can we send back a partial response before the hash is ready using chunks or WebSockets?
-				
-				respondOk();  // wait for completion. pas 
+				respondOk();  // wait for completion. pas
+
+				report( walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
 			}
 			else {  // we don't use require here because we want to call alert()
+				
+				// check for previous unfilled request 
+				require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and fulfilled = false", walletAddr.toLowerCase()) ).isEmpty(), 
+						RefCode.REDEMPTION_PENDING, 
+						"There is already an outstanding redemption request for this wallet; we appreciate your patience.");
+
+				// write unfilled report to DB
+				report( walletAddr, busd, rusdPos, false);
+				
+				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
 						walletAddr, rusdPos, busdPos, (rusdPos - busdPos) );
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
+				
+				// report error back to user
 				throw new RefException( RefCode.INSUFFICIENT_FUNDS, str);
 			}
+		});
+	}
+	
+	private static void report(String walletAddr, Busd busd, double rusdPos, boolean fulfilled) {
+		Util.wrap( () -> {
+			JsonObject obj = new JsonObject();
+			obj.put( "wallet_public_key", walletAddr.toLowerCase() );
+			obj.put( "stablecoin", busd.getName() );
+			obj.put( "amount", rusdPos);
+			obj.put( "fulfilled", fulfilled);
+	
+			Main.m_config.sqlCommand( conn -> conn.insertJson("redemptions", obj) );
 		});
 	}
 

@@ -21,6 +21,7 @@ import com.ib.client.Decimal;
 
 import reflection.RefCode;
 import reflection.RefException;
+import reflection.MyTransaction.ExRunnable;
 import tw.util.S;
 
 public class Util {
@@ -401,6 +402,16 @@ public class Util {
 		}
 		catch( Exception e) {
 			return false;
+		}
+	}
+
+	/** Simple wrapper to print stack trace */
+	public static void wrap( ExRunnable ex) {
+		try {
+			ex.run();
+		}
+		catch( Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

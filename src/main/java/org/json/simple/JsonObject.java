@@ -266,7 +266,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		else {
 			out( objIn);
 		}
-		
 	}
 	
 	static void out( String format, Object... params) {
@@ -290,6 +289,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		Util.require(obj != null, "The required key is missing from the json object: " + key);
 		return obj;
 	}
+
+	public interface Updtr {
+		public Object update(Object obj);
+	}
 	
+	public void update(String key, Updtr updtr) {
+		Object obj = get(key);
+		if (obj != null ) {
+			put( key, updtr.update(obj) );
+		}
+	}
 	
 }

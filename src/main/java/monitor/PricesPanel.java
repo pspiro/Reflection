@@ -3,9 +3,7 @@ package monitor;
 import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import http.MyHttpClient;
