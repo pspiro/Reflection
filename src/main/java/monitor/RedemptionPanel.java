@@ -15,7 +15,7 @@ public class RedemptionPanel extends QueryPanel {
 
 	RedemptionPanel() {
 		super( "id,wallet_public_key,stablecoin,amount,fulfilled,created_at,REDEEM NOW",
-			   "select * from redemptions");
+			   "select * from redemptions order by updated_at desc");
 	}
 	
 	@Override protected JsonModel createModel(String allNames, String sql) {
@@ -35,22 +35,25 @@ public class RedemptionPanel extends QueryPanel {
 			}
 		}
 		
-		private void redeem(JsonObject obj) throws Exception {
-			if (obj.getBool("fulfilled") ) {
-				S.inform(RedemptionPanel.this, "Already filled");
-				return;
-			}
-				
-			String walletAddr = obj.getString( "wallet_public_key");
+		private void redeem(JsonObject redemption) throws Exception {
+			String walletAddr = redemption.getString( "wallet_public_key");
 			Rusd rusd = Monitor.m_config.rusd();
 			Busd busd = Monitor.m_config.busd();
 
+			// already fulfilled?
+			if (redemption.getBool("fulfilled") ) {
+				S.inform(RedemptionPanel.this, "Already filled");
+				return;
+			}
+		
+			// nothing to redeem?
 			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
 			if (rusdPos < .005) {
 				S.inform(RedemptionPanel.this, "User has no RUSD to redeem");
 				return;
 			}
 			
+			// insufficient stablecoin in RefWallet?
 			double ourStablePos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (ourStablePos < rusdPos) {
 				String str = String.format( 
@@ -60,13 +63,18 @@ public class RedemptionPanel extends QueryPanel {
 				return;
 			}
 			
-			if (!S.confirm(RedemptionPanel.this, "Are you sure?") ) {
-				return;
+			if (S.confirm(RedemptionPanel.this, "Are you sure?") ) {
+				rusd.sellRusd(walletAddr, busd, rusdPos)
+					.waitForHash();
+				
+				// update redemptions table in DB and screen
+				String sql = String.format( "update redemptions set fulfilled=true where id = %s", redemption.getInt("id") );
+				Monitor.m_config.sqlCommand( conn -> conn.execute(sql) );
+				
+				refresh();
+				
+				S.inform( RedemptionPanel.this, "Completed");
 			}
-			
-			rusd.sellRusd(walletAddr, busd, rusdPos)
-				.waitForHash();
-			S.inform( RedemptionPanel.this, "Completed");
 		}
 
 		@Override public void adjust(JsonObject obj) {

@@ -635,7 +635,8 @@ public class S {
 	}
 	
 	public static boolean confirm(Component parent, String message) {
-		return JOptionPane.showConfirmDialog(parent, message) == 0;
+		return JOptionPane.showConfirmDialog( 
+				parent, message, "Confirm", JOptionPane.YES_NO_OPTION) == 0;
 	}
 	
 	public static List<String> list(String... strings) {
