@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Alerts;
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Erc20;
 import test.MyTimer;
 import tw.util.S;
@@ -49,7 +50,6 @@ public abstract class MyTransaction {
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_uid;
 	
-
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, null);
 	}
@@ -224,11 +224,6 @@ public abstract class MyTransaction {
 		}
 	}
 	
-	/** Runnable, returns void, throws Exception */
-	public interface ExRunnable {
-		void run() throws Exception;
-	}
-
 	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas

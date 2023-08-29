@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.json.simple.parser.JSONParser;
 
@@ -266,6 +267,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		else {
 			out( objIn);
 		}
+		
 	}
 	
 	static void out( String format, Object... params) {
@@ -290,14 +292,21 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return obj;
 	}
 
-	public interface Updtr {
-		public Object update(Object obj);
+	public Comparable getComparable(String key) {
+		return (Comparable)get(key);
 	}
-	
-	public void update(String key, Updtr updtr) {
+
+	/** Add the pair if val is not null */
+	public void putIf(String key, String val) {
+		if (val != null) {
+			put(key, val);
+		}
+	}
+
+	public void update(String key, Function<Object,Object> updater) {
 		Object obj = get(key);
 		if (obj != null ) {
-			put( key, updtr.update(obj) );
+			put( key, updater.apply(obj) );
 		}
 	}
 	

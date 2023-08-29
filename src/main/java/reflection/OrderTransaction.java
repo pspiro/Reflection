@@ -18,6 +18,7 @@ import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.StockToken;
 import tw.util.S;
 import util.LogType;
@@ -90,6 +91,9 @@ public class OrderTransaction extends MyTransaction {
 		
 		// make sure wallet is not blacklisted
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");
+		
+		// make sure trading is not restricted for this stock
+		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this

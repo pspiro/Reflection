@@ -13,10 +13,10 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 
 import common.Util;
+import common.Util.ExRunnable;
 import http.SimpleTransaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
-import reflection.MyTransaction.ExRunnable;
 import reflection.Stock;
 import reflection.Stocks;
 import reflection.TradingHours;

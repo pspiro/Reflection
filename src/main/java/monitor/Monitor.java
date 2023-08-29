@@ -17,8 +17,8 @@ import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
+import tw.util.NewTabbedPanel.INewTab;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -49,7 +49,7 @@ public class Monitor {
 		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
 		m_config.readFromSpreadsheet(tabName);
 		S.out( "  done");
-
+		
 		// read stocks
 		S.out( "Reading stock list from google sheet");
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
@@ -85,7 +85,6 @@ public class Monitor {
 		m_pricesPanel.initialize();
 	}
 	
-
 	/** called when Refresh button is clicked */
 	private void refresh() {
 		try {
@@ -100,13 +99,13 @@ public class Monitor {
 	}
 
 	static QueryPanel createUsersPanel() {
-		String names = "aadhaar,active,address,city,country,created_at,email,id,is_black_listed,kyc_status,name,pan_number,persona_response,phone,updated_at,wallet_public_key";
+		String names = "wallet_public_key,name,email,phone,aadhaar,active,address,city,country,created_at,id,is_black_listed,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
 		return new QueryPanel( names, sql);
 	}
 
-	static QueryPanel createTransPanel() {
-		String names = "tds,rounded_quantity,perm_id,fireblocks_id,price,action,commission,currency,timestamp,cumfill,side,quantity,avgprice,wallet_public_key,conid,exchange,time,order_id,tradekey,status,";
+	public static QueryPanel createTransPanel() {
+		String names = "wallet_public_key,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,timestamp,cumfill,side,avgprice,exchange,time,order_id,tradekey";
 		String sql = """
 				select *
 				from crypto_transactions ct

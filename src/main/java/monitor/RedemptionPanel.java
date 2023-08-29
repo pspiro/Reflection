@@ -28,7 +28,7 @@ public class RedemptionPanel extends QueryPanel {
 		}
 	
 		public void onLeftClick(MouseEvent e, int row, int col) {
-			if (col == getIndex("REDEEM NOW") ) {
+			if (col == getColumnIndex("REDEEM NOW") ) {
 				Util.wrap( () -> {
 					redeem(m_ar.get(row));
 				});

@@ -21,7 +21,6 @@ import com.ib.client.Decimal;
 
 import reflection.RefCode;
 import reflection.RefException;
-import reflection.MyTransaction.ExRunnable;
 import tw.util.S;
 
 public class Util {
@@ -29,6 +28,11 @@ public class Util {
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
+	/** Runnable, returns void, throws Exception */
+	public interface ExRunnable {
+		void run() throws Exception;
+	}
+
 	/** Do a decimal compare down to six digits */
 	public static boolean isGtEq(double larger, double smaller) {
 		return larger - smaller >= -.000001;
@@ -405,12 +409,11 @@ public class Util {
 		}
 	}
 
-	/** Simple wrapper to print stack trace */
-	public static void wrap( ExRunnable ex) {
+	/** Simple wrapper which prints stack trace */
+	public static void wrap(ExRunnable runner) {
 		try {
-			ex.run();
-		}
-		catch( Exception e) {
+			runner.run();
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

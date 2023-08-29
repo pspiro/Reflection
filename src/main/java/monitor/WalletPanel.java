@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.TitledBorder;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -14,7 +15,6 @@ import http.MyHttpClient;
 import monitor.Monitor.RefPanel;
 import positions.Wallet;
 import reflection.Stock;
-import tw.util.MyTable;
 import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
 import tw.util.VerticalPanel;
@@ -39,15 +39,18 @@ public class WalletPanel extends JPanel implements RefPanel, INewTab {
 		});
 
 		VerticalPanel v = new VerticalPanel();
+		v.setBorder( new TitledBorder( "Balances") );
 		v.add( "Wallet", m_wallet);
 		v.add( "RUSD", m_rusd);
 		v.add( "USDC", m_usdc);
 		v.add( "Approved", m_approved);
 		v.add( "MATIC", m_matic);
 		
+//		QPanel v2 = new QPanel( "select * from users where wallet_public_key = " +
+		
 		setLayout( new BorderLayout() );
 		add( v, BorderLayout.NORTH);
-		add( new MyTable(m_model).scroll() );
+		add( m_model.createTable() );
 	}
 	
 	public void refresh() throws Exception {

@@ -46,6 +46,8 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "endDate", row.getString("End Date") );
 				stock.put( "convertsToAmt", row.getDouble("Converts To Amt") );
 				stock.put( "convertsToAddress", row.getString( "Converts To Address") );
+				stock.put( "allow", row.getString("Allow") );
+				
 				
 				ListEntry masterRow = map.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);

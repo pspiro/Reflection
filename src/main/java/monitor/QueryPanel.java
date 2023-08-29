@@ -11,14 +11,14 @@ import tw.util.MyTable;
 import tw.util.S;
 
 public class QueryPanel extends JPanel implements RefPanel {
-	final JsonModel m_mod;
+	final JsonModel m_model;
 	
 	QueryPanel(String allNames, String sql) {
 		super( new BorderLayout() );
 		
-		m_mod = createModel(allNames, sql);
+		m_model = createModel(allNames, sql);
 		
-		add( new MyTable(m_mod).scroll() );
+		add( m_model.createTable() );
 	}
 	
 	protected JsonModel createModel(String allNames, String sql) {
@@ -27,7 +27,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 
 	public void refresh() throws Exception {
 		S.out( "Refreshing Trans panel");
-		m_mod.refresh();
+		m_model.refresh();
 	}
 	
 	static class QueryModel extends JsonModel {
