@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
 
@@ -17,8 +15,6 @@ import common.Util;
 import fireblocks.StockToken;
 import http.MyHttpClient;
 import monitor.Monitor.RefPanel;
-import reflection.Stocks;
-import tw.google.NewSheet;
 import tw.util.MyTable;
 import tw.util.MyTableModel;
 import tw.util.S;

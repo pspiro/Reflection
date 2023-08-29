@@ -7,6 +7,7 @@ import java.util.Iterator;
 import org.json.simple.JsonArray;
 
 import common.Util;
+import fireblocks.StockToken;
 import redis.ConfigBase;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
@@ -98,5 +99,10 @@ public class Stocks implements Iterable<Stock> {
 
 	@Override public Iterator<Stock> iterator() {
 		return stockSet().iterator();
+	}
+
+	/** Return smart contract address of any stock */
+	public StockToken getAnyStockToken() {
+		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
 	}
 }

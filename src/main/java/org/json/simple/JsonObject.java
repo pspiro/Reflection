@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.json.simple.parser.JSONParser;
 
@@ -301,6 +302,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			put(key, val);
 		}
 	}
-	
+
+	public void update(String key, Function<Object,Object> updater) {
+		Object obj = get(key);
+		if (obj != null ) {
+			put( key, updater.apply(obj) );
+		}
+	}
 	
 }

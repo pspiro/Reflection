@@ -19,6 +19,15 @@ class JsonModel extends MyTableModel {
 		}
 	}
 	
+	int getIndex(String name) {
+		for (int i = 0; i < names.length; i++) {
+			if (names[i].equals(name) ) {
+				return i;
+			}
+		}
+		return -1;
+	}
+	
 	void refresh( ) throws Exception { // needed?
 	}
 	

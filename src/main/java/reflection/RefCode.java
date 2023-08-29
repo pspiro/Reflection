@@ -26,5 +26,6 @@ public enum RefCode {
 	POST_SPLIT, 
 	PRE_SPLIT, 
 	ACCESS_DENIED, 		// the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
-	TRADING_HALTED,		// trading is halted as per the allowTrading config setting
+	TRADING_HALTED, // trading is halted as per the allowTrading config setting
+	REDEMPTION_PENDING,		// user has twice submitted redemption and there is insufficient USDC in RefWallet
 }
