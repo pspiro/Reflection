@@ -32,18 +32,15 @@ public class TokensPanel extends JPanel implements RefPanel {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Tokens panel");
 		
-		// or this whole thing can run in a browser and be fed only html?
-		S.out( "Querying stock positions");
-		JsonArray ar = new MyHttpClient("localhost", 8383)
-			.get("?msg=getpositions")
-			.readJsonArray();
-		
-		for (JsonObject obj : ar) {
-			Record rec = getOrCreate( obj.getInt("conid") );
-			rec.m_position = obj.getDouble("position");
-			Util.require( rec.m_conid != 0 && rec.m_position != 0.0, "Invalid json for position query");
-		}
-		SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
+		S.out( "Querying IB stock positions");
+		Monitor.queryArray("/api/?msg=getpositions", ar -> {
+			for (JsonObject obj : ar) {
+				Record rec = getOrCreate( obj.getInt("conid") );
+				rec.m_position = obj.getDouble("position");
+				Util.require( rec.m_conid != 0 && rec.m_position != 0.0, "Invalid json for position query");
+			}
+			SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
+		});
 		
 		for (Record rec : m_records) {
 			if (S.isNotNull(rec.m_address) ) {
@@ -52,7 +49,6 @@ public class TokensPanel extends JPanel implements RefPanel {
 			}
 		}
 		SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
-		
 	}
 	
 	class Mod extends MyTableModel {

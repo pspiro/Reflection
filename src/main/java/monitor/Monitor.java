@@ -6,6 +6,12 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
+import common.Util;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -19,6 +25,7 @@ import tw.util.S;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
+	static final String base = "https://reflection.trading";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -48,10 +55,6 @@ public class Monitor {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
 		S.out( "  done");
 
-		MiscPanel m_miscPanel = new MiscPanel();
-		WalletPanel m_wallet = new WalletPanel();
-		QueryPanel m_transPanel = createTransPanel();
-		QueryPanel m_usersPanel = createUsersPanel();
 		TokensPanel m_tokensPanel = new TokensPanel();
 		PricesPanel m_pricesPanel = new PricesPanel();
 
@@ -62,13 +65,14 @@ public class Monitor {
 		JPanel butPanel = new JPanel();
 		butPanel.add(but);
 		
-		m_tabs.addTab( "Misc", m_miscPanel);
-		m_tabs.addTab( "Wallet", m_wallet);
-		m_tabs.addTab( "Transactions", m_transPanel);
-		m_tabs.addTab( "Users", m_usersPanel);
+		m_tabs.addTab( "Misc", new MiscPanel() );
+		m_tabs.addTab( "Wallet", new WalletPanel() );
+		m_tabs.addTab( "Transactions", createTransPanel() );
+		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
+		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -110,5 +114,37 @@ public class Monitor {
 				;""";
 //				join commissions co on tr.tradekey = co.tradekey
 		return new QueryPanel( names, sql);
+	}
+
+	// move to Util?
+	
+	interface MyConsumer<T> {
+		void accept(T param) throws Exception;
+	}
+	
+	static void queryObj(String endpoint, MyConsumer<JsonObject> cli) {
+		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
+		client.prepare("GET", Monitor.base + endpoint)
+			.execute()
+			.toCompletableFuture()
+			.thenAccept( resp -> {
+				Util.wrap( () -> {
+					client.close();
+					cli.accept( JsonObject.parse( resp.getResponseBody() ) );
+				});
+			});
+	}
+	
+	static void queryArray(String endpoint, MyConsumer<JsonArray> cli) {
+		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
+		client.prepare("GET", Monitor.base + endpoint)
+			.execute()
+			.toCompletableFuture()
+			.thenAccept( resp -> {
+				Util.wrap( () -> {
+					client.close();
+					cli.accept( JsonArray.parse( resp.getResponseBody() ) );
+				});
+			});
 	}
 }

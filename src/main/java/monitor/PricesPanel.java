@@ -45,16 +45,10 @@ public class PricesPanel extends JPanel implements RefPanel {
 		}
 
 		void refresh() {
-			try {
-				MyHttpClient cli = new MyHttpClient("localhost", 8383);
-				JsonObject map = cli.get( "/api/?msg=getallprices").readJsonObject();
-				//JsonArray ar = cli.get( "/api/?msg=get-stocks-with-prices").readJsonArray();
+			Monitor.queryObj("/api/?msg=getallprices", map -> {
 				map.forEach( (conid,prices) -> update(Integer.parseInt(conid), (JsonObject)prices) ); 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			fireTableDataChanged();
+				fireTableDataChanged();
+			});
 		}
 
 		private void update(int conid, JsonObject refPrices) {

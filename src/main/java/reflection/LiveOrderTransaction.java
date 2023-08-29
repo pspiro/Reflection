@@ -20,6 +20,29 @@ public class LiveOrderTransaction extends MyTransaction {
 		super(main, exchange);
 	}
 
+	/** Called by the Monitor program */
+	public void handleAllLiveOrders() {
+		wrap( () -> {
+			JsonArray orders = new JsonArray();
+			JsonArray messages = new JsonArray();
+
+			allLiveOrders.forEach( (fbId, liveOrder) -> {
+				if (liveOrder.status() == LiveOrderStatus.Working) {
+					orders.add( liveOrder.getWorkingOrder() );
+				}
+				else {
+					messages.add( liveOrder.getCompletedOrder() );
+					// we don't remove it from the list
+				}
+			});
+			
+			JsonObject ret = new JsonObject();
+			ret.put( "orders", orders);      // rename to "working", rename message to "live"
+			ret.put( "messages", messages);  // rename to "completed"
+			respond( ret);
+		});
+	}
+	
 	public void handleLiveOrders() {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();

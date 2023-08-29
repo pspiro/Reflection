@@ -53,16 +53,17 @@ public class WalletPanel extends JPanel implements RefPanel, INewTab {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		JsonArray ar = cli.get( "/api/mywallet/" + m_wallet.getText() ).readJsonObject().getArray("tokens");
-		Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
+		Monitor.queryObj("/api/mywallet/" + m_wallet.getText(), obj -> {
+			JsonArray ar = obj.getArray("tokens");
+			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
 
-		m_rusd.setText("" + ar.get(0).getDouble("balance"));
-		m_usdc.setText("" + ar.get(1).getDouble("balance"));
-		m_approved.setText("" + ar.get(1).getDouble("approvedBalance"));
-		m_matic.setText("" + ar.get(2).getDouble("balance"));
+			m_rusd.setText("" + ar.get(0).getDouble("balance"));
+			m_usdc.setText("" + ar.get(1).getDouble("balance"));
+			m_approved.setText("" + ar.get(1).getDouble("approvedBalance"));
+			m_matic.setText("" + ar.get(2).getDouble("balance"));			
+		});
 		
-		m_model.refresh();
+		m_model.refresh();		
 	}
 	
 	class Model extends JsonModel {

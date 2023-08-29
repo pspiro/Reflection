@@ -59,11 +59,10 @@ public class MiscPanel extends JPanel implements RefPanel, INewTab {
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
 		
-		double val = new MyHttpClient("localhost", 8383)
-				.get( "/?msg=getCashBal")
-				.readJsonObject()
-				.getDouble("TotalCashValue");
-		SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
+		Monitor.queryObj( "/api/?msg=getCashBal", obj -> {
+			double val = obj.getDouble("TotalCashValue");
+			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
+		});
 	}
 
 	@Override public void activated() {
