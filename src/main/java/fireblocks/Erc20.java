@@ -58,7 +58,9 @@ public class Erc20 {
 				.toBigInteger();
 	}
 
-	/** Returns hex string */
+	/** Returns hex string
+	 *  @param amt is rounded to four decimals; this is fine as long as the frontend is 
+	 *  rounding to <= 4 decimals */
 	public BigInteger toBlockchain(double amt) throws RefException {
 		return timesPower( amt, m_decimals); 
 	}

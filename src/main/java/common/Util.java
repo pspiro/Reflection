@@ -28,6 +28,11 @@ public class Util {
 	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	
+	/** Runnable, returns void, throws Exception */
+	public interface ExRunnable {
+		void run() throws Exception;
+	}
+
 	/** Do a decimal compare down to six digits */
 	public static boolean isGtEq(double larger, double smaller) {
 		return larger - smaller >= -.000001;
@@ -401,6 +406,15 @@ public class Util {
 		}
 		catch( Exception e) {
 			return false;
+		}
+	}
+
+	/** Simple wrapper which prints stack trace */
+	public static void wrap(ExRunnable runner) {
+		try {
+			runner.run();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

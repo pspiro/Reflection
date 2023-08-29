@@ -14,20 +14,20 @@ import tw.util.MyTable;
 import tw.util.S;
 
 public class PricesPanel extends JPanel implements RefPanel {
-	final Model m_mod = new Model();
+	final Model m_model = new Model();
 
 	PricesPanel() {
 		super( new BorderLayout() );
 
-		add( new MyTable( m_mod).scroll() );
+		add( m_model.createTable() );
 	}
 
 	void initialize() {
-		m_mod.initialize();
+		m_model.initialize();
 	}
 
 	@Override public void refresh() throws Exception {
-		m_mod.refresh();
+		m_model.refresh();
 	}
 
 	class Model extends JsonModel {
@@ -43,7 +43,7 @@ public class PricesPanel extends JPanel implements RefPanel {
 				m_ar.add( stock);
 			});
 			
-			m_mod.fireTableDataChanged();
+			m_model.fireTableDataChanged();
 		}
 
 		void refresh() {
@@ -84,7 +84,7 @@ public class PricesPanel extends JPanel implements RefPanel {
 	
 	
 	@Override public void activated() {
-		m_mod.refresh();
+		m_model.refresh();
 	}
 
 	@Override public void closed() {

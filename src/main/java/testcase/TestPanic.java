@@ -60,6 +60,12 @@ public class TestPanic extends MyTestCase {
 	public static String all  = "0x000000000000000000000000000000000000000c";
 	public static String none = "0x000000000000000000000000000000000000000d";
 	
+	/** Test pausing a stock */
+	public void testPauseStock() {
+		//write this
+	}
+	
+	/** Test blacklisting a wallet */
 	public void testBlacklist() throws Exception {
 		JsonObject obj;
 		JsonObject map;

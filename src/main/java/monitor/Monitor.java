@@ -94,13 +94,13 @@ public class Monitor {
 	}
 
 	static QueryPanel createUsersPanel() {
-		String names = "aadhaar,active,address,city,country,created_at,email,id,is_black_listed,kyc_status,name,pan_number,persona_response,phone,updated_at,wallet_public_key";
+		String names = "wallet_public_key,name,email,phone,aadhaar,active,address,city,country,created_at,id,is_black_listed,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
 		return new QueryPanel( names, sql);
 	}
 
 	public static QueryPanel createTransPanel() {
-		String names = "tds,rounded_quantity,perm_id,fireblocks_id,price,action,commission,currency,timestamp,cumfill,side,quantity,avgprice,wallet_public_key,conid,exchange,time,order_id,tradekey,status,";
+		String names = "wallet_public_key,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,timestamp,cumfill,side,avgprice,exchange,time,order_id,tradekey";
 		String sql = """
 				select *
 				from crypto_transactions ct

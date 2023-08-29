@@ -24,13 +24,13 @@ import tw.util.MyTableModel;
 import tw.util.S;
 
 public class TokensPanel extends JPanel implements RefPanel {
-	Mod m_mod = new Mod();
+	Mod m_model = new Mod();
 	Records m_records = new Records();
 	RecMap m_recMap = new RecMap();
 
 	TokensPanel() {
 		super( new BorderLayout() );
-		add( new MyTable( m_mod).scroll() );
+		add( m_model.createTable() );
 	}
 	
 	public void refresh() throws Exception {
@@ -47,7 +47,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 			rec.m_position = obj.getDouble("position");
 			Util.require( rec.m_conid != 0 && rec.m_position != 0.0, "Invalid json for position query");
 		}
-		SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
+		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 		
 		for (Record rec : m_records) {
 			if (S.isNotNull(rec.m_address) ) {
@@ -55,7 +55,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 				rec.m_tokens = new StockToken( rec.m_address).queryTotalSupply();
 			}
 		}
-		SwingUtilities.invokeLater( () -> m_mod.fireTableDataChanged() );
+		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 		
 	}
 	
@@ -137,7 +137,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 			record.m_position = -1;
 		});
 		
-		m_mod.fireTableDataChanged();
+		m_model.fireTableDataChanged();
 	}
 
 	private Record getOrCreate(int conid) {

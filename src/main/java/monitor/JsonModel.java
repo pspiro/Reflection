@@ -37,4 +37,9 @@ class JsonModel extends MyTableModel {
 	@Override public Object getValueAt(int row, int col) {
 		return m_ar.get(row).get( m.get(col) );
 	}
+	
+	public void onHeaderClicked(int col) {
+		m_ar.sortJson( names[col] );
+	}
+	
 }

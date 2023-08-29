@@ -290,6 +290,17 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		Util.require(obj != null, "The required key is missing from the json object: " + key);
 		return obj;
 	}
+
+	public Comparable getComparable(String key) {
+		return (Comparable)get(key);
+	}
+
+	/** Add the pair if val is not null */
+	public void putIf(String key, String val) {
+		if (val != null) {
+			put(key, val);
+		}
+	}
 	
 	
 }

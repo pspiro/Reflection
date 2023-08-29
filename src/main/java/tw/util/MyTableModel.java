@@ -3,6 +3,7 @@ package tw.util;
 import java.awt.event.MouseEvent;
 
 import javax.swing.JLabel;
+import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -39,5 +40,9 @@ public abstract class MyTableModel extends AbstractTableModel {
 	}
 
 	public void selectionChanged(ListSelectionEvent e) {
-	}	
+	}
+	
+	public JScrollPane createTable() {
+		return new JScrollPane( new MyTable( this) );
+	}
 }

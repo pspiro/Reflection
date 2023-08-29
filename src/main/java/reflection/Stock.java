@@ -2,6 +2,7 @@ package reflection;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import fireblocks.StockToken;
 import tw.util.S;
 
@@ -89,5 +90,9 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 
 	public String getConvertsToAddress() { 
 		return getString("convertsToAddress");
+	}
+
+	public Allow getAllow() {
+		return Util.getEnum( getString("allow"), Allow.values(), Allow.All);
 	}
 }
