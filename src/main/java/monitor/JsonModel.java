@@ -3,6 +3,7 @@ package monitor;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import tw.util.MyTableModel;
 
@@ -19,7 +20,7 @@ class JsonModel extends MyTableModel {
 		}
 	}
 	
-	int getIndex(String name) {
+	int getColumnIndex(String name) {
 		for (int i = 0; i < names.length; i++) {
 			if (names[i].equals(name) ) {
 				return i;
@@ -49,6 +50,10 @@ class JsonModel extends MyTableModel {
 	
 	public void onHeaderClicked(int col) {
 		m_ar.sortJson( names[col] );
+	}
+	
+	JsonObject getRow(int i) {
+		return m_ar.get(i);
 	}
 	
 }
