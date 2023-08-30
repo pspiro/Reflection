@@ -17,8 +17,8 @@ import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.S;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.S;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -65,6 +65,7 @@ public class Monitor {
 		JPanel butPanel = new JPanel();
 		butPanel.add(but);
 		
+		m_tabs.addTab( "Home", new HomePanel() );
 		m_tabs.addTab( "Misc", new MiscPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
 		m_tabs.addTab( "Transactions", createTransPanel() );
@@ -122,7 +123,7 @@ public class Monitor {
 	}
 	
 	static void queryObj(String endpoint, MyConsumer<JsonObject> cli) {
-		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
+		AsyncHttpClient client = new DefaultAsyncHttpClient();
 		client.prepare("GET", Monitor.base + endpoint)
 			.execute()
 			.toCompletableFuture()
@@ -145,5 +146,14 @@ public class Monitor {
 					cli.accept( JsonArray.parse( resp.getResponseBody() ) );
 				});
 			});
+	}
+	
+	static class HomePanel extends JPanel implements RefPanel {
+		@Override public void activated() {
+		}
+		@Override public void closed() {
+		}
+		@Override public void refresh() throws Exception {
+		}
 	}
 }

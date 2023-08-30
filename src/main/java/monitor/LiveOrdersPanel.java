@@ -17,14 +17,14 @@ import tw.util.S;
 public class LiveOrdersPanel extends JPanel implements RefPanel {
 	String endpoint = "/api/all-live-orders";
 
-	final JsonModel m_mod;
+	final JsonModel m_model;
 	
 	LiveOrdersPanel() {
 		super( new BorderLayout() );
 		
-		m_mod = new Model();
+		m_model = new Model();
 		
-		add( new MyTable(m_mod).scroll() );
+		add( new MyTable(m_model).scroll() );
 	}
 	
 	protected JsonModel createModel(String allNames, String sql) {
@@ -33,18 +33,17 @@ public class LiveOrdersPanel extends JPanel implements RefPanel {
 
 	public void refresh() throws Exception {
 		S.out( "Refreshing Live Orders panel");
-		m_mod.refresh();
+		m_model.refresh();
 	}
 	
 	class Model extends JsonModel {
 		Model() {
-			super( "id,action,description,progress");
+			super( "id,wallet,description,progress,status,errorCode,errorText");
 		}
 		
 		void refresh( ) throws Exception {
-			Monitor.queryObj(endpoint, obj -> {
-				obj.getArray("messages").display();
-				m_ar = obj.getArray("orders");
+			Monitor.queryArray(endpoint, ar -> {
+				m_ar = ar;
 				fireTableDataChanged();
 			});
 		}
