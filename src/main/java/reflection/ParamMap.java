@@ -44,7 +44,7 @@ public class ParamMap extends HashMap<String, String> {
 		}
 	}		
 
-	double getDouble(String tag) throws RefException {
+	double getDoubleParam(String tag) throws RefException {
 		try {
 			String val = getParam(tag);
 			return S.isNull(val) ? 0 : Double.valueOf(val);

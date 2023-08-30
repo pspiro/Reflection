@@ -123,13 +123,13 @@ public class OrderTransaction extends MyTransaction {
 		// subtracted from the position tracker
 
 		// check TDS calculation
-		m_tds = m_map.getDouble("tds");
+		m_tds = m_map.getDoubleParam("tds");
 		double myTds = m_order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
 		// fix this -> require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
-		m_stablecoinAmt = m_map.getDouble("amount");
+		m_stablecoinAmt = m_map.getDoubleParam("amount");
 		if (m_stablecoinAmt == 0) {
-			m_stablecoinAmt = m_map.getDouble("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
+			m_stablecoinAmt = m_map.getDoubleParam("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
 		
 		double myStablecoinAmt = m_order.isBuy()
