@@ -11,7 +11,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.MyHttpClient;
 import monitor.Monitor.RefPanel;
 import positions.Wallet;
 import reflection.Stock;
