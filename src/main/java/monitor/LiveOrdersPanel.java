@@ -42,9 +42,8 @@ public class LiveOrdersPanel extends JPanel implements RefPanel {
 		}
 		
 		void refresh( ) throws Exception {
-			Monitor.queryObj(endpoint, obj -> {
-				obj.getArray("messages").display();
-				m_ar = obj.getArray("orders");
+			Monitor.queryArray(endpoint, ar -> {
+				m_ar = ar;
 				fireTableDataChanged();
 			});
 		}

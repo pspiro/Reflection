@@ -8,14 +8,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import fireblocks.Fireblocks;
-import http.MyHttpClient;
 import monitor.Monitor.RefPanel;
 import positions.Wallet;
-import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
-public class MiscPanel extends JPanel implements RefPanel, INewTab {
+public class MiscPanel extends JPanel implements RefPanel {
 	private JTextField m_usdc = new JTextField(10);
 	private JTextField m_rusd = new JTextField(10);
 	private JTextField m_usdc2 = new JTextField(10);
