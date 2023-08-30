@@ -51,7 +51,7 @@ public class TestProfile extends MyTestCase {
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
 		obj = cli.readJsonObject();
-		assertEquals( "timmy", obj.getString("first_name") );
+		assertEquals( "timmy", obj.getString("first)name") );
 		assertEquals( "jones", obj.getString("last_name") );
 		assertEquals( "hot", obj.getString("address") );
 		assertEquals( "cold", obj.getString("email") );
