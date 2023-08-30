@@ -329,7 +329,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			m_main.sqlConnection( conn -> {
 				JsonArray ar = conn.queryToJson(
-						"select name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
+						"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
 						walletAddr.toLowerCase() );
 				
 				JsonObject obj = ar.size() == 0 
