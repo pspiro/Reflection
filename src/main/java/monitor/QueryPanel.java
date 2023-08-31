@@ -7,7 +7,6 @@ import javax.swing.JPanel;
 import org.json.simple.JsonObject;
 
 import monitor.Monitor.RefPanel;
-import tw.util.MyTable;
 import tw.util.S;
 
 public class QueryPanel extends JPanel implements RefPanel {

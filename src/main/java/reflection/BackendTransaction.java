@@ -186,7 +186,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			String key = m_map.get("key");
-			if (key != null) {
+			if (S.isNotNull(key) ) {
 				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {

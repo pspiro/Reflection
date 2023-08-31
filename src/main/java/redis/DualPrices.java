@@ -1,7 +1,5 @@
 package redis;
 
-import java.text.SimpleDateFormat;
-
 import redis.MktDataServer.MyTickType;
 import redis.clients.jedis.Pipeline;
 import reflection.Stock;
@@ -58,7 +56,7 @@ class DualPrices {
 	
 	
 	static public class Prices {
-		private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
+//		private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
 		
 		private double m_bid;
 		private double m_ask;

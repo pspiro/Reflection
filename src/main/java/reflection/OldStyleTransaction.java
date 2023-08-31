@@ -15,10 +15,6 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import common.Util;
-import fireblocks.Busd;
-import fireblocks.Rusd;
-import positions.MoralisServer;
 import redis.clients.jedis.Jedis;
 import tw.util.S;
 import util.LogType;
@@ -44,7 +40,7 @@ public class OldStyleTransaction extends MyTransaction {
 		seedPrices,
 		terminate,
 		testAlert,
-		wallet,
+		//wallet,
 		;
 	}
 
@@ -107,9 +103,6 @@ public class OldStyleTransaction extends MyTransaction {
 			case seedPrices:
 				onSeedPrices();
 				break;
-			case wallet:
-				onShowWallet();
-				break;
 			case getCashBal:
 				onCashBal();
 				break;
@@ -135,40 +128,6 @@ public class OldStyleTransaction extends MyTransaction {
 		});
 		
 		setTimer( Main.m_config.timeout(), () -> timedOut( "onCashBal() timed out") ); 
-	}
-
-	/** Return json showing balance, allowance, and stock token positions */
-	private void onShowWallet() throws Exception {
-		String wallet = m_map.getRequiredParam("address");
-		Main.require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "Invalid wallet address: %s", wallet);
-
-		JsonObject obj = new JsonObject();
-		obj.put( "Native token balance", MoralisServer.getNativeBalance(wallet) );
-		obj.put( "Allowance", Main.m_config.busd().getAllowance(wallet, Main.m_config.rusdAddr() ) );
-		
-		Rusd rusd = Main.m_config.rusd();
-		Busd busd = Main.m_config.busd();
-		
-		// should group these differently
-//		for (MyJsonObject item : MoralisServer.reqPositions(wallet) ) {
-//			String addr = item.getString("token_address");
-//			if (addr.equals( rusd.address() ) ) {
-//				obj.put( "RUSD", rusd.fromBlockchain( item.getString("balance") ) );
-//			}
-//			else if (addr.equals( busd.address() ) ) {
-//				obj.put( "BUSD", busd.fromBlockchain( item.getString("balance") ) );
-//			}
-//			else {
-//				HashMap stock = m_main.getStockByTokAddr(addr);
-//				if (stock != null) {
-//					obj.put( stock.get("symbol"), Erc20.fromBlockchain( 
-//							item.getString("balance"), 
-//							StockToken.stockTokenDecimals)); 
-//				}
-//			}
-//		}
-		
-		respond(obj);
 	}
 
 	private void onTestAlert() {

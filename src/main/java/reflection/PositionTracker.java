@@ -92,21 +92,4 @@ public class PositionTracker {
 		return (int)Math.floor(qty + Small);
 	}
 
-	public static void main(String[] args) {
-		PositionTracker t = new PositionTracker();
-//		S.out( t.buy( 8314, .5) );
-//		S.out( t.sell( 8314, .5) );
-//		S.out( t.sell( 8314, .5) );
-//		S.out( t.sell( 8314, .001) );
-//		S.out( t.buy( 8314, 2.25) );
-//		S.out( t.buy( 8314, 2.25) );
-//		S.out( t.buy( 8314, 2.25) );
-//		S.out( t.buy( 8314, 3.1) );
-//		S.out( t.buy( 8314, 3.1) );
-//		S.out( t.buy( 8314, 3.1) );
-//		S.out( t.buy( 8314, 3.1) );
-//		S.out( t.buy( 8314, 3.1) );
-	}
-	
-	
 }

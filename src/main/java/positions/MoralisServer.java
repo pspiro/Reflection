@@ -238,7 +238,7 @@ public class MoralisServer {
 			Main.require( m_status == Status.ready || m_status == Status.waiting, RefCode.UNKNOWN, m_status.toString() );
 
 			ParamMap map = trans.getMap();
-			String wallet = map.getLowerCase("wallet");
+			String wallet = map.getString("wallet").toLowerCase();
 
 			// request for a single wallet?
 			if (S.isNotNull( wallet) ) {
