@@ -106,25 +106,25 @@ public class BackendTransaction extends MyTransaction {
 	public void handleRedeem() {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();
-			
+						
+			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
+			require( m_main.validWallet( walletAddr, "Sell"), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
+
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
 			validateCookie(walletAddr);
-
+			
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();
 
-			// not needed, waitForHash() will itself eventually timeout
-			//setTimer( m_config.timeout(), () -> timedOut( "redemption request timed out") );
-
-			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
+			double rusdPos = Util.truncate( rusd.getPosition(walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
 			require( rusdPos > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
 				log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
 
-				rusd.sellRusd(walletAddr, busd, rusdPos)
+				rusd.sellRusd(walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
 					.waitForHash();
 				
 				respondOk();  // wait for completion. pas

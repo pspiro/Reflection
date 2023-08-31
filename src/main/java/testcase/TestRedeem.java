@@ -23,12 +23,13 @@ public class TestRedeem extends MyTestCase {
 		assertTrue( tok.getDouble("balance") > 0 );
 	}
 	
+	// should fail
 	public void testRedeem() throws Exception {
+		Cookie.setNewWallet("0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce");
 		JsonObject payload = new JsonObject();
 		payload.put("cookie", Cookie.cookie);
 
-		MyHttpClient cli = cli();
-		cli.post("/api/redemptions/redeem/" + Cookie.wallet, payload.toString() );
+		cli().post("/api/redemptions/redeem/" + Cookie.wallet, payload.toString() );
 		S.out( "redeem: " + cli.readString() );
 		assertEquals(200, cli.getResponseCode() );  // confirm that Cookie wallet has some RUSD in it
 	}

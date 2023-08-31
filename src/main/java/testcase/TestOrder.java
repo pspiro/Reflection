@@ -175,10 +175,10 @@ public class TestOrder extends MyTestCase {
 		double amt = price * qty;
 		boolean buy = obj.getString("action").equalsIgnoreCase("BUY");
 		
-		double tds = (amt - m_config.commission() ) * .01;
-		if (!buy) {
-			obj.put("tds", tds);
-		}
+		double tds = buy
+				? amt * .01
+				: (amt - m_config.commission() ) * .01;
+		obj.put("tds", tds);
 		
 		double total = buy ? amt + m_config.commission() : amt - m_config.commission() - tds;
 		obj.put("amount", total);
