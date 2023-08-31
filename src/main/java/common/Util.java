@@ -101,12 +101,8 @@ public class Util {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		boolean a = inside( 
-				new Date(), 
-				8314, 
-				";20230604:2000-20230605:0330;;20230615:0800-20230615:1000; ;20230606:2000-20230607:0330;20230607:2000-20230608:0330;20230608:2000-20230609:0330",
-				null);
-		S.out(a);
+		S.out( truncate( 1.00019, 4) );
+		S.out( 1.00019);
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -416,5 +412,12 @@ public class Util {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/** Truncate n to a number of decimal digits */
+	public static double truncate(double n, int digits) throws Exception {
+		require( n >= 0, "Cannot truncate negative numbers"); // you could fix this if needed
+		double mult = Math.pow(10, digits);
+		return Math.floor( n * mult) / mult;
 	}
 }

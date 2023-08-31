@@ -88,9 +88,7 @@ public class OrderTransaction extends MyTransaction {
 		
 		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-		
-		// make sure wallet is not blacklisted
-		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");
+		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 		
 		// make sure trading is not restricted for this stock
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
@@ -124,18 +122,22 @@ public class OrderTransaction extends MyTransaction {
 
 		// check TDS calculation
 		m_tds = m_map.getDouble("tds");
-		double myTds = m_order.isBuy() ? 0 : (preCommAmt - m_config.commission() ) * .01;
-		// fix this -> require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
+		
+		double myTds = m_order.isBuy() 
+				? preCommAmt * .01
+				: (preCommAmt - m_config.commission() ) * .01;
+		require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
 		m_stablecoinAmt = m_map.getDouble("amount");
 		if (m_stablecoinAmt == 0) {
 			m_stablecoinAmt = m_map.getDouble("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
 		
+		// add this after the tds is fixed for buy order
 		double myStablecoinAmt = m_order.isBuy()
-			? preCommAmt + m_config.commission()
+			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
-		// fix this-> require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calulated amount of %s", m_stablecoinAmt, myStablecoinAmt);
+		// fix this-> require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
 		// confirm that the user has enough stablecoin or stock token in their wallet
 		// fix this-> requireSufficientStablecoin(order);		

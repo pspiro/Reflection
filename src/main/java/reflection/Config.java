@@ -79,6 +79,7 @@ public class Config extends ConfigBase {
 	private TimeInForce tif;
 	private String fbAdmins;
 	private Allow allowTrading = Allow.All;  // won't be returned in getConfig message
+	private boolean allowRedemptions;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -193,7 +194,7 @@ public class Config extends ConfigBase {
 		this.errorCodesTab = m_tab.get("errorCodesTab");
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
-		S.out( "allowTrading=%s", allowTrading);
+		this.allowRedemptions = m_tab.getBoolean("allowRedemptions");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -547,6 +548,10 @@ public class Config extends ConfigBase {
 
 	public int fbServerPort() {
 		return fbServerPort;
+	}
+	
+	public boolean allowRedemptions() {
+		return allowRedemptions;		
 	}
 	
 }

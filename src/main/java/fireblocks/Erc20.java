@@ -14,6 +14,8 @@ import tw.util.IStream;
 import tw.util.S;
 
 public class Erc20 {
+	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;
+										  // for stock tokens, this might not be enough
 	static final String approveKeccak = "095ea7b3";
 	static final String totalSupplyAbi = Util.toJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
