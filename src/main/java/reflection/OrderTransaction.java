@@ -94,7 +94,7 @@ public class OrderTransaction extends MyTransaction {
 		// make sure trading is not restricted for this stock
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
-		// if order is above max non-KYC size, verify they have passed KYC 
+		// if order is above max non-KYC size, verify they have passed KYC (must come after m_wallet is set)
 		if (!Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ) {
 			verifyKyc();
 		}
@@ -204,7 +204,7 @@ public class OrderTransaction extends MyTransaction {
 
 	private void verifyKyc() throws Exception {
 		// get user entry from DB
-		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = %s", m_walletAddr.toLowerCase() ) );
+		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 		require( ar.size() == 1, RefCode.NEED_KYC, "No KYC info for user");
 		
 		// check kyc_status

@@ -46,6 +46,7 @@ public class MySqlConnection implements AutoCloseable {
 		return set;
 	}
 	
+	/** Don't forget single-quotes around string search params */
 	public JsonArray queryToJson( String sql, Object... params) throws Exception {  // you could pass in the json labels, if you like
 		ResultSet res = query(sql, params);
 		
