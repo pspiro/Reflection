@@ -22,7 +22,7 @@ public class TestPrices extends MyTestCase{
 		double ask = map.getDouble( "ask");
 		assertTrue( ask >= curPrice - offset && ask <= curPrice + offset);
 		
-		//assertTrue (bid < ask);
+		assertTrue (bid < ask);
 
 //		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 //		assertEquals( text, "Param 'cryptoid' is missing");

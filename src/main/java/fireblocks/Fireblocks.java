@@ -354,8 +354,8 @@ public class Fireblocks {
 	
 	public static void waitForStatus(String fireblocksId, String statusIn) throws Exception {
 		// it always takes at least a few seconds, I think
-		
-		while( true) {
+
+		for (int i = 0; i < 90; i++) {
 			S.sleep(1000);
 			JsonObject trans = Transactions.getTransaction( fireblocksId);
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
@@ -375,6 +375,7 @@ public class Fireblocks {
 				throw new RefException( RefCode.BLOCKCHAIN_FAILED, "Transaction failed - %s", trans.getString("subStatus") );
 			}
 		}
+		throw new RefException( RefCode.TIMED_OUT, "Timed out waiting for Fireblocks transaction"); // should never happen
 	}
 	
 	static void initMap() {

@@ -50,6 +50,7 @@ class JsonModel extends MyTableModel {
 	
 	public void onHeaderClicked(int col) {
 		m_ar.sortJson( names[col] );
+		fireTableDataChanged();
 	}
 	
 	JsonObject getRow(int i) {

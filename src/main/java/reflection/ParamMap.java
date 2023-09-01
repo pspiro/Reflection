@@ -92,13 +92,7 @@ public class ParamMap {
 		return (String)m_obj.get(tag);
 	}
 
-//	public String getLowerCase(String tag) {
-//		String str = get(tag);
-//		return str == null ? null : str.toLowerCase();
-//	}
-//	
-//	public JsonObject getJsonObject(String tag) throws Exception {
-//		String str = get(tag);
-//		return str != null ? JsonObject.parse(str) : null;
-//	}
+	@Override public String toString() {
+		return m_obj.toString();
+	}
 }

@@ -23,7 +23,7 @@ public class TestProfile extends MyTestCase {
 		});
 		
 		cli().post("/api/update-profile", json);
-		cli.assertResponseCode(200);
+		assert200();
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
 		JsonObject obj = cli.readJsonObject();
@@ -47,7 +47,7 @@ public class TestProfile extends MyTestCase {
 		""";
 		
 		cli().post("/api/update-profile", json2);
-		cli.assertResponseCode(200);
+		assert200();
 		
 		cli().get("/api/get-profile/0xb016711702D3302ceF6cEb62419abBeF5c44450g");
 		obj = cli.readJsonObject();

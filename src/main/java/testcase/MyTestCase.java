@@ -78,6 +78,9 @@ public class MyTestCase extends TestCase {
 	}
 
 	protected void assert200() throws Exception {
+		if (cli.getResponseCode() != 200) {
+			S.out( "%s - %s", cli.getRefCode(), cli.getMessage() );
+		}
 		assertEquals( 200, cli.getResponseCode() );
 	}
 	

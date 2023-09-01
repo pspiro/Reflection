@@ -21,6 +21,8 @@ public class MyTable extends JTable { // nicole
 	public MyTable(MyTableModel m) { // inbox
 		super( m);
 		
+		getTableHeader().setReorderingAllowed(false);		
+		
 		// list for events on the column headers
 		getTableHeader().addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {

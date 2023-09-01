@@ -125,7 +125,8 @@ public class BackendTransaction extends MyTransaction {
 				log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
 
 				rusd.sellRusd(walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
-					.waitForHash();
+					//.waitForHash();
+					.waitForStatus("COMPLETED");
 				
 				respondOk();  // wait for completion. pas
 

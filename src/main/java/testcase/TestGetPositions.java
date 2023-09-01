@@ -35,7 +35,7 @@ public class TestGetPositions extends MyTestCase {
 	public void testStockPos() throws Exception {
 		MyHttpClient cli = cli();
 		cli.get("?msg=getpositions");
-		assertEquals(200, cli.getResponseCode());
+		assert200();
 
 		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
@@ -49,7 +49,7 @@ public class TestGetPositions extends MyTestCase {
 	public void testTokenPos() throws Exception {
 		MyHttpClient cli = cli();
 		cli.get("/api/positions/" + wallet);
-		assertEquals(200, cli.getResponseCode());
+		assert200();
 		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
 		

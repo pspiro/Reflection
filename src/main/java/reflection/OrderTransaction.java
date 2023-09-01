@@ -179,18 +179,18 @@ public class OrderTransaction extends MyTransaction {
 		shrinkWrap( () -> {
 			// nothing to submit to IB; go straight to blockchain
 			if (m_order.roundedQty() == 0) {
-				S.out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
-				S.out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				simulateFill(contract);
 			}
 			// submit order to IB
 			else {
-				S.out( "Submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				submitOrder( contract);
 			}
 		});
@@ -474,7 +474,7 @@ public class OrderTransaction extends MyTransaction {
 
 			// if no shares were filled, just remove the balances from the position tracker
 			if (m_filledShares == 0) {
-				S.out( "Undoing order from PositionTracker"); 
+				out( "Undoing order from PositionTracker"); 
 				positionTracker.undo( conid, isBuy(), m_order.totalQty(), m_order.roundedQty() );
 
 				String body = String.format( "The blockchain transaction; no shares were filledd  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 

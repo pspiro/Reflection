@@ -88,6 +88,7 @@ public class TestOutsideHours extends MyTestCase {
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
+	// need to change this to the 30 min time that IBEOS is closed
 	public void testPostClose() throws Exception {
 		JsonObject map = testHours( IBM, "20:00");
 
