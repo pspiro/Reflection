@@ -76,6 +76,11 @@ public class GTable extends HashMap<String,String> {
 		}
 	}
 	
+	public double getRequiredDouble(String tag) throws Exception {
+		getRequiredString(tag);
+		return getDouble(tag);
+	}
+
 	public int getRequiredInt(String tag) throws Exception {
 		// keep this outside the try block so it throws a better exception
 		String str = getRequiredString(tag);

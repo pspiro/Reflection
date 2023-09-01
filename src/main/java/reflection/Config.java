@@ -52,6 +52,7 @@ public class Config extends ConfigBase {
 	
 
 	// program parameters
+	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
 	private String refApiHost = "0.0.0.0"; // host for RefAPI to listen on
@@ -195,6 +196,7 @@ public class Config extends ConfigBase {
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
 		this.allowRedemptions = m_tab.getBoolean("allowRedemptions");
+		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("nonKycMaxOrderSize");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -552,6 +554,10 @@ public class Config extends ConfigBase {
 	
 	public boolean allowRedemptions() {
 		return allowRedemptions;		
+	}
+	
+	public double nonKycMaxOrderSize() {
+		return nonKycMaxOrderSize;
 	}
 	
 }

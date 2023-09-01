@@ -303,11 +303,17 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		}
 	}
 
+	/** Update the value for one specific key */
 	public void update(String key, Function<Object,Object> updater) {
 		Object obj = get(key);
 		if (obj != null ) {
 			put( key, updater.apply(obj) );
 		}
+	}
+
+	/** Return true if val is not null */
+	public boolean has(String key) {
+		return S.isNotNull( getString(key) );
 	}
 	
 }

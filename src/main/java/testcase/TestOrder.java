@@ -111,6 +111,16 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
+	public void testKyc()  throws Exception {
+		double qty = m_config.nonKycMaxOrderSize() / 138 + 1;
+		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
+		obj.put("quantity", qty);
+		
+		JsonObject map = postOrderToObj(obj);
+		String ret = map.getString( "code");
+		assertEquals( RefCode.NEED_KYC.toString(), ret);
+	}
+
 	public void testMaxAmtSell()  throws Exception {
 		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'sell', 'quantity': '1000', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
 		JsonObject map = postOrderToObj(obj);
