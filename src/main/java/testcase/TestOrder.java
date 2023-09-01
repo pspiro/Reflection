@@ -163,6 +163,16 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 	}
 	
+	/** This only works after hours and with a contract that hasn't traded for five minutes */
+	public void testNotRecent() throws Exception {
+		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }"); 
+		JsonObject map = postOrderToObj(obj);
+		assertEquals( 200, cli.getResponseCode() );
+		S.sleep(100); 
+		JsonObject resp = getLiveMessage2(map.getString("id"));
+		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
+	}
+	
 	static JsonObject createOrder(String side, double qty, double offset) throws Exception {
 		return createOrder2( side, qty, curPrice + offset);
 	}

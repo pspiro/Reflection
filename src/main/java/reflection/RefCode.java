@@ -29,5 +29,6 @@ public enum RefCode {
 	ACCESS_DENIED, 		// the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
 	TRADING_HALTED, // trading is halted as per the allowTrading config setting
 	REDEMPTIONS_HALTED, // redemptions are halted as per the allowRedemptions setting in config
-	REDEMPTION_PENDING,		// user has twice submitted redemption and there is insufficient USDC in RefWallet
+	REDEMPTION_PENDING, // user has twice submitted redemption and there is insufficient USDC in RefWallet
+	STALE_DATA, // no recent market data for order rounded to zero	
 }

@@ -185,6 +185,10 @@ public class OrderTransaction extends MyTransaction {
 		shrinkWrap( () -> {
 			// nothing to submit to IB; go straight to blockchain
 			if (m_order.roundedQty() == 0) {
+				// when placing an order that rounds to zero shares, we must check that the prices 
+				// are pretty recent; if they are stale, we will fill the order with a bad price
+				require( m_stock.hasRecentPrices(isBuy()), RefCode.STALE_DATA, "There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
+				
 				out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
