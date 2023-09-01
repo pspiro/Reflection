@@ -125,7 +125,8 @@ public class BackendTransaction extends MyTransaction {
 				log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
 
 				rusd.sellRusd(walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
-					.waitForHash();
+					//.waitForHash();
+					.waitForStatus("COMPLETED");
 				
 				respondOk();  // wait for completion. pas
 
@@ -186,7 +187,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			String key = m_map.get("key");
-			if (key != null) {
+			if (S.isNotNull(key) ) {
 				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {
@@ -329,7 +330,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			m_main.sqlConnection( conn -> {
 				JsonArray ar = conn.queryToJson(
-						"select name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
+						"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
 						walletAddr.toLowerCase() );
 				
 				JsonObject obj = ar.size() == 0 

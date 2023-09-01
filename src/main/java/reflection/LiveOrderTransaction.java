@@ -91,7 +91,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			}
 			else {
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it
-				S.out( "Error: no live order with id %s; could not update status to %s", id, status);
+				out( "Error: no live order with id %s; could not update status to %s", id, status);
 			}
 			
 			respondOk();

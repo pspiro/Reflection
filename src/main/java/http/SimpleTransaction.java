@@ -115,20 +115,9 @@ public class SimpleTransaction {
 		else {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-	            
 				JSONParser parser = new JSONParser();
 	            JsonObject jsonObject = (JsonObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
-	            
-	            for (Object key : jsonObject.keySet() ) {
-	            	Object value = jsonObject.get(key);
-	            	require( key instanceof String, RefCode.INVALID_REQUEST, "Invalid JSON, key is not a string");
-	            	
-	            	if (value != null) {
-	            		map.put( (String)key, value.toString() );
-	            	}
-	            }
-
-	            S.out( "Received POST request " + map.toString() );
+	            map = new ParamMap(jsonObject);
 			}
 			catch( Exception e) {
 				e.printStackTrace(); // should never happen

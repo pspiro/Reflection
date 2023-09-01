@@ -57,7 +57,7 @@ public class TestFbOrders extends MyTestCase {
 		obj.remove("noFireblocks");
 		
 		JsonObject map = postOrderToObj(obj);
-		assertEquals( 200, cli.getResponseCode() );
+		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		while(true) {
@@ -101,7 +101,7 @@ public class TestFbOrders extends MyTestCase {
 		obj.remove("noFireblocks");
 		
 		JsonObject map = postOrderToObj(obj);
-		assertEquals( 200, cli.getResponseCode() );
+		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		while(true) {
@@ -148,7 +148,7 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "**Submitting: " + obj);
 
 		JsonObject map = postOrderToObj(obj);
-		assertEquals( 200, cli.getResponseCode() );
+		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		String uid = map.getString("id");  // 5-digit code

@@ -147,7 +147,12 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		sort( (a, b) -> {
 			Comparable v1 = a.getComparable(colname);
 			Comparable v2 = b.getComparable(colname);
-			return v1 != null ? v1.compareTo( v2) : v2 != null ? -1 : 0;
+			return v1 != null && v2 != null
+					? v1.compareTo(v2)
+					: v1 == null && v2 == null
+						? 0
+						: v1 == null
+							? -1 : 1;
 		});
 	}
 

@@ -96,22 +96,8 @@ public abstract class MyTransaction {
 		else {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-
-	            JsonObject jsonObject = (JsonObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
-
-	            for (Object key : jsonObject.keySet() ) {  // this is stupid to build a new map; you should just save the json object
-	            	Object value = jsonObject.get(key);
-	            	require( key instanceof String, RefCode.INVALID_REQUEST, "Invalid JSON, key is not a string");
-
-	            	if (value != null) {
-	            		m_map.put( (String)key, value.toString() );  // tags are mixed case
-	            	}
-	            }
-
-	            out( "  parsed POST request " + jsonObject);
-			}
-			catch( RefException e) {  // catch the above require() call
-				throw e;
+	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)	            		
+	            out( "  parsed POST request " + m_map);
 			}
 			catch( ParseException e) {   // this exception does not set the exception message text
 				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.toString() );

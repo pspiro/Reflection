@@ -13,8 +13,7 @@ public class TestBackendMsgs extends MyTestCase {
 	String host = "localhost";
 	
 	public void testGetAllStocks() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/get-all-stocks");
+		cli().get("/api/get-all-stocks");
 		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
 		JsonObject item = ar.getJsonObj(0);
@@ -24,8 +23,7 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 	
 	public void testGetStocksWithPrices() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/get-stocks-with-prices");
+		cli().get("/api/get-stocks-with-prices");
 		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);
 		JsonObject item = ar.getJsonObj(0);
@@ -35,8 +33,7 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 	
 	public void testGetStockWithPrice() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/get-stock-with-price/265598");
+		cli().get("/api/get-stock-with-price/265598");
 		JsonObject obj = cli.readJsonObject();
 		assert200();
 		
@@ -53,8 +50,7 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 	
 	public void testGetPrice() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/get-price/265598");
+		cli().get("/api/get-price/265598");
 		JsonObject obj = cli.readJsonObject();
 		assert200();
 		
@@ -65,8 +61,7 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 	
 	public void testGetCryptos() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/crypto-transactions");
+		cli().get("/api/crypto-transactions");
 		JsonArray ar = cli.readJsonArray();
 		S.out( "all crypto");
 		S.out( ar.getJsonObj(0) );
@@ -75,8 +70,7 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 	
 	public void testGetCryptosByAddr() throws Exception {
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
-		cli.get("/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet);
+		cli().get("/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet);
 		JsonArray ar = cli.readJsonArray();
 		S.out( "crypto by addr");
 		S.out( ar.getJsonObj(0));

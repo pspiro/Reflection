@@ -127,16 +127,16 @@ public class OrderTransaction extends MyTransaction {
 		// subtracted from the position tracker
 
 		// check TDS calculation
-		m_tds = m_map.getDouble("tds");
+		m_tds = m_map.getDoubleParam("tds");
 		
 		double myTds = m_order.isBuy() 
 				? preCommAmt * .01
 				: (preCommAmt - m_config.commission() ) * .01;
 		require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
-		m_stablecoinAmt = m_map.getDouble("amount");
+		m_stablecoinAmt = m_map.getDoubleParam("amount");
 		if (m_stablecoinAmt == 0) {
-			m_stablecoinAmt = m_map.getDouble("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
+			m_stablecoinAmt = m_map.getDoubleParam("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
 		
 		// add this after the tds is fixed for buy order
@@ -185,18 +185,18 @@ public class OrderTransaction extends MyTransaction {
 		shrinkWrap( () -> {
 			// nothing to submit to IB; go straight to blockchain
 			if (m_order.roundedQty() == 0) {
-				S.out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
-				S.out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				simulateFill(contract);
 			}
 			// submit order to IB
 			else {
-				S.out( "Submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				out( "Submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				submitOrder( contract);
 			}
 		});
@@ -495,7 +495,7 @@ public class OrderTransaction extends MyTransaction {
 
 			// if no shares were filled, just remove the balances from the position tracker
 			if (m_filledShares == 0) {
-				S.out( "Undoing order from PositionTracker"); 
+				out( "Undoing order from PositionTracker"); 
 				positionTracker.undo( conid, isBuy(), m_order.totalQty(), m_order.roundedQty() );
 
 				String body = String.format( "The blockchain transaction; no shares were filledd  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 

@@ -104,7 +104,9 @@ public class CreateTables  {
 		
 		// fields:
 //		id
-//		name
+//		first_name varchar(50)
+//		last_name varchar(50)
+//		name   << obsolete
 //		email
 //		phone
 //		wallet_public_key  // must be UNIQUE and lower case, e.g.:

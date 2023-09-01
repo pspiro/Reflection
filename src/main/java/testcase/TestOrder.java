@@ -70,7 +70,7 @@ public class TestOrder extends MyTestCase {
 		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
 		
 		JsonObject map = postOrderToObj(obj);
-		assertEquals( 200, cli.getResponseCode() );
+		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		JsonObject ret = getLiveMessage(map.getString("id"));
@@ -96,7 +96,7 @@ public class TestOrder extends MyTestCase {
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "fillSell %s %s", code, text);
-		assertEquals(200, cli.getResponseCode() );
+		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));
@@ -133,7 +133,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject obj = createOrder("BUY", 1.5, 2); 
 		JsonObject map = postOrderToObj(obj);
 		S.out( "testFracShares " + map);
-		assertEquals(200, cli.getResponseCode() );
+		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
 		
 		JsonObject ret = getLiveMessage(map.getString("id"));
@@ -145,7 +145,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject obj = createOrder("BUY", .4, 2); 
 		JsonObject map = postOrderToObj(obj);
 
-		assertEquals(200, cli.getResponseCode() );
+		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));

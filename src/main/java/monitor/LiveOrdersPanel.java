@@ -4,11 +4,6 @@ import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.json.simple.JsonObject;
-
-import common.Util;
 import monitor.Monitor.RefPanel;
 import tw.util.MyTable;
 import tw.util.S;

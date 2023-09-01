@@ -1,34 +1,52 @@
 package reflection;
 
-import java.util.HashMap;
-
 import org.json.simple.JsonObject;
 
 import common.Util;
 import tw.util.S;
 
 /** Values are returned lower case, interned, although the intern() didn't seem to work. */
-public class ParamMap extends HashMap<String, String> {
+public class ParamMap {
+	private JsonObject m_obj;
+
+	public ParamMap(JsonObject obj) {
+		m_obj = obj;
+	}
+	
+	public ParamMap() {
+		m_obj = new JsonObject();
+	}
 	
 	/** Returns lower case, interned string. */
 	String getParam(String tag) {
-		String value = super.get( tag);
-		return value != null ? value.toLowerCase().intern() : null;
+		return m_obj.getString(tag).toLowerCase().intern();  // check all uses and get rid of intern(), it's not efficient
 	}
 	
-	public String getRequiredParam(String tag) throws RefException {
+	/** Returns lower case, interned string. */
+	String getRequiredParam(String tag) throws RefException {
 		String val = getParam( tag);
 		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
 		return val;
 	}
 
+	String getRequiredString(String tag) throws RefException {
+		String val = m_obj.getString( tag);
+		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
+		return val;
+	}
+
+	/** Never null */
+	public String getString(String tag) {
+		return m_obj.getString(tag);
+	}
+
 	boolean getBool(String tag) {
-		return Boolean.valueOf( getParam( tag) );
+		return m_obj.getBool(tag);
 	}
 	
-	public int getRequiredInt(String tag) throws RefException {
+	int getRequiredInt(String tag) throws RefException {
 		try {
-			return Integer.valueOf( getRequiredParam( tag) );
+			return Integer.valueOf( getRequiredString( tag) );
 		}
 		catch( NumberFormatException e) {
 			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' must be an integer", tag);
@@ -37,16 +55,16 @@ public class ParamMap extends HashMap<String, String> {
 
 	double getRequiredDouble(String tag) throws RefException {
 		try {
-			return Double.valueOf( getRequiredParam( tag) );
+			return Double.valueOf( getRequiredString( tag) );
 		}
 		catch( NumberFormatException e) {
 			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' must be a number", tag);
 		}
 	}		
 
-	double getDouble(String tag) throws RefException {
+	double getDoubleParam(String tag) throws RefException {
 		try {
-			String val = getParam(tag);
+			String val = m_obj.getString(tag);
 			return S.isNull(val) ? 0 : Double.valueOf(val);
 		}
 		catch( NumberFormatException e) {
@@ -54,9 +72,10 @@ public class ParamMap extends HashMap<String, String> {
 		}
 	}		
 
+	/** Case-insensitive */
 	<T extends Enum<T>> T getEnumParam(String tag, T[] values) throws RefException {
 		try {
-			return Util.getEnum(getRequiredParam(tag), values);
+			return Util.getEnum(getRequiredString(tag), values);
 		}
 		catch( IllegalArgumentException e) {			
 			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' has invalid value of %s; valid values are %s", 
@@ -64,13 +83,16 @@ public class ParamMap extends HashMap<String, String> {
 		}
 	}
 
-	public String getLowerCase(String tag) {
-		String str = get(tag);
-		return str == null ? null : str.toLowerCase();
+	public void put(String tag, String val) {
+		m_obj.put(tag, val);
 	}
-	
-	public JsonObject getJsonObject(String tag) throws Exception {
-		String str = get(tag);
-		return str != null ? JsonObject.parse(str) : null;
+
+	/** For backwards compatibility */
+	public String get(String tag) {
+		return (String)m_obj.get(tag);
+	}
+
+	@Override public String toString() {
+		return m_obj.toString();
 	}
 }
