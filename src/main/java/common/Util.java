@@ -38,6 +38,11 @@ public class Util {
 		return larger - smaller >= -.000001;
 	}
 
+	/** Do a decimal compare down to six digits */
+	public static boolean isLtEq(double smaller, double larger) {
+		return isGtEq(larger, smaller);
+	}
+
 	/** Do a decimal compare down to four digits */
 	public static boolean isEq(double d1, double d2, double tolerance) {
 		return Math.abs(d1 - d2) < tolerance;

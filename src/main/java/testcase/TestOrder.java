@@ -105,17 +105,28 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '1000', 'tokenPrice': '138', 'cryptoid': 'testmaxamtbuy' }");
+		double qty = m_config.maxBuyAmt() / 138 + 1;
+		JsonObject obj = createOrder2("buy", qty, 138);
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
 	public void testMaxAmtSell()  throws Exception {
-		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'sell', 'quantity': '1000', 'tokenPrice': '138', 'cryptoid': 'testmaxamtsell' }"); 
+		double qty = m_config.maxSellAmt() / 138 + 1;
+		JsonObject obj = createOrder2("buy", qty, 138);
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
+	}
+
+	public void testKyc()  throws Exception {
+		double qty = m_config.nonKycMaxOrderSize() / 138 + 1;
+		JsonObject obj = createOrder2("buy", qty, 138);
+		
+		JsonObject map = postOrderToObj(obj);
+		String ret = map.getString( "code");
+		assertEquals( RefCode.NEED_KYC.toString(), ret);
 	}
 
 	public void testFracShares()  throws Exception {
@@ -150,6 +161,16 @@ public class TestOrder extends MyTestCase {
 		S.out( "zero shares: " + text);
 		assertEquals( "Quantity must be positive", text);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+	}
+	
+	/** This only works after hours and with a contract that hasn't traded for five minutes */
+	public void testNotRecent() throws Exception {
+		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }"); 
+		JsonObject map = postOrderToObj(obj);
+		assertEquals( 200, cli.getResponseCode() );
+		S.sleep(100); 
+		JsonObject resp = getLiveMessage2(map.getString("id"));
+		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
 	}
 	
 	static JsonObject createOrder(String side, double qty, double offset) throws Exception {

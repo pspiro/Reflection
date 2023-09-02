@@ -95,4 +95,10 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 	public Allow getAllow() {
 		return Util.getEnum( getString("allow"), Allow.values(), Allow.All);
 	}
+
+	/** We check this when order size is rounded to zero
+	 *  Make sure bid or ask is near a recent last when order size is rounded to zero */
+	public boolean hasRecentPrices(boolean buy) {
+		return m_prices.hasNear(buy);
+	}
 }

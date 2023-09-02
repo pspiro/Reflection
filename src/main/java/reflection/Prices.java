@@ -1,5 +1,7 @@
 package reflection;
 
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -25,24 +27,29 @@ public class Prices {
 	private double m_ask;
 	private double m_last;
 	private double m_close;
-	private String m_time;
+	private long m_time;  // ms since epoch
 
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
 	public double last() { return m_last; }
 	public double close() { return m_close; }
+	public long time() { return m_time; }
 
 	public Prices(Map<String, String> map) {
 		m_bid = getDouble(map, "bid");
 		m_ask = getDouble(map, "ask");
 		m_last = getDouble(map, "last");
 		m_close = getDouble(map, "close");
-		m_time = map.get("time");
+		m_time = getLong(map, "time");
 	}
 	
 	/** Used only by NULL prices. */
 	public Prices() {
-		m_time = "";
+	}
+
+	private long getLong(Map<String, String> map, String key) {
+		String val = map.get(key);
+		return val != null ? Long.valueOf( val) : 0;
 	}
 
 	double getDouble( Map<String, String> map, String key) {
@@ -130,4 +137,24 @@ public class Prices {
 		S.out( "conid=%s  bid=%s  ask=%s  last=%s  close=%s",
 				conid, m_bid, m_ask, m_last, m_close);	
 	}
+
+	private final static double NEAR = .005; // one half percent
+	private final static long MIN = 60000; // one minute
+	private final static long RECENT = MIN * 5; // five minutes
+	
+	/** Make sure bid or ask is near a recent last when order size is rounded to zero */
+	public boolean hasNear(boolean buy) {
+		return System.currentTimeMillis() - m_time <= RECENT && 
+			(buy 
+				? (m_last - m_ask) / m_last <= NEAR
+				: (m_bid - m_last) / m_last <= NEAR);
+	}
+
+//	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");
+//	public static void main(String[] args) throws ParseException {
+//		String str = "09/01 14:57:23";
+//		Date t = fmt.parse(str);
+//		S.out(t);
+//		1693595099113
+//	}
 }

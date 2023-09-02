@@ -6,6 +6,7 @@ import static reflection.Main.require;
 import java.util.Random;
 import java.util.Vector;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Contract;
@@ -33,7 +34,7 @@ public class OrderTransaction extends MyTransaction {
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_respondedToOrder;
-	private String m_walletAddr;
+	private String m_walletAddr;  // mixed case, I think
 	
 	private static PositionTracker positionTracker = new PositionTracker(); 
 	
@@ -84,14 +85,19 @@ public class OrderTransaction extends MyTransaction {
 
 		double preCommAmt = price * m_desiredQuantity;
 		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
-		require( preCommAmt <= maxAmt, RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
-		
+		require( Util.isLtEq(preCommAmt, maxAmt), RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
+
 		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 		
 		// make sure trading is not restricted for this stock
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
+
+		// if order is above max non-KYC size, verify they have passed KYC (must come after m_wallet is set)
+		if (!Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ) {
+			verifyKyc();
+		}
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
@@ -179,6 +185,10 @@ public class OrderTransaction extends MyTransaction {
 		shrinkWrap( () -> {
 			// nothing to submit to IB; go straight to blockchain
 			if (m_order.roundedQty() == 0) {
+				// when placing an order that rounds to zero shares, we must check that the prices 
+				// are pretty recent; if they are stale, we will fill the order with a bad price
+				require( m_stock.hasRecentPrices(isBuy()), RefCode.STALE_DATA, "There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
+				
 				out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
@@ -194,6 +204,21 @@ public class OrderTransaction extends MyTransaction {
 				submitOrder( contract);
 			}
 		});
+	}
+
+	private void verifyKyc() throws Exception {
+		// get user entry from DB
+		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+		require( ar.size() == 1, RefCode.NEED_KYC, "No KYC info for user");
+		
+		// check kyc_status
+		JsonObject obj = ar.get(0);
+		require(obj.getBool("kyc_status"), RefCode.NEED_KYC, "KYC was not completed");
+
+		// check that we at least have values for other fields
+		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number,persona_response".split(",") ) {
+			require (obj.has( tag), RefCode.NEED_KYC, "Missing user attribute: %s", tag);
+		}
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
