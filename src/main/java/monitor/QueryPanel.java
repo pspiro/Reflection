@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import monitor.Monitor.RefPanel;
 import tw.util.S;
 
@@ -48,11 +49,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 	}
 
 	@Override public void activated() {
-		try {
-			refresh();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		Util.wrap( () -> refresh() );
 	}
 
 	@Override public void closed() {

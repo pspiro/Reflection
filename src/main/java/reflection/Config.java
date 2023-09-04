@@ -402,27 +402,6 @@ public class Config extends ConfigBase {
 		}
 	}
 	
-	public void pushFaq(MySqlConnection db) throws Exception {
-		db.startTransaction();
-		
-		db.delete("delete from frequently_asked_questions");
-		
-		int id = 1;
-		
-		Tab tab = NewSheet.getTab( NewSheet.Reflection, "FAQ");
-		for (ListEntry row : tab.fetchRows() ) {
-			String q = row.getString("Question");
-			String a = row.getString("Answer");
-			
-			if (S.isNotNull(q) && S.isNotNull(a) ) {
-				db.insert("frequently_asked_questions", id++, q, a, true);
-			}
-		}
-		
-		db.commit();
-		
-	}
-
 	public String symbolsTab() {
 		return symbolsTab;
 	}

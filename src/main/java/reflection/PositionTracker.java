@@ -19,16 +19,16 @@ public class PositionTracker {
 
 	// ideally we would initialize this from the real positions at startup
 	
-	static class Pos { 
+	private static class Pos { 
 		
 		double m_desired; 	// total desired fractional shares only
 		int m_actual; 		// total number of real shares derived from fractional shares 
 		
-		public int buyOrSell(boolean buy, double qty) {
+		synchronized int buyOrSell(boolean buy, double qty) {
 			return buy ? buy(qty) : sell(qty);
 		}
 		
-		public void undo(boolean buy, double qty, int rounded) {
+		synchronized void undo(boolean buy, double qty, int rounded) {
 			if (buy) {
 				undoBuy(qty, rounded);
 			}
@@ -37,7 +37,7 @@ public class PositionTracker {
 			}
 		}
 
-		int buy( double qty) {
+		private int buy( double qty) {
 			double dec = dec(qty);
 			m_desired += dec;
 			
@@ -48,7 +48,7 @@ public class PositionTracker {
 			return roundDown(qty);
 		}
 
-		int sell(double qty) {
+		private int sell(double qty) {
 			double dec = dec(qty);
 			m_desired -= dec;
 			
@@ -61,7 +61,7 @@ public class PositionTracker {
 		}
 		
 		/** This is used to undo a transaction that was never filled */
-		void undoBuy(double qty, int rounded) {			
+		private void undoBuy(double qty, int rounded) {			
 			m_desired -= qty;
 			if (rounded > roundDown(qty) ) {
 				m_actual --;
@@ -69,7 +69,7 @@ public class PositionTracker {
 		}
 
 		/** This is used to undo a transaction that was never filled */
-		void undoSell(double qty, int rounded) {
+		private void undoSell(double qty, int rounded) {
 			m_desired += qty;
 			if (rounded > roundDown(qty) ) {
 				m_actual++;
