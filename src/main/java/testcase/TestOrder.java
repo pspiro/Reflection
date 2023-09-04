@@ -11,6 +11,8 @@ import tw.util.S;
 public class TestOrder extends MyTestCase {
 	static double curPrice;
 	static boolean m_noFireblocks = true;
+	static String noUserRec = "0x000000000000000000000000000000000000dead";
+	
 //	static double approved;
 	
 	static {
@@ -28,6 +30,35 @@ public class TestOrder extends MyTestCase {
 	
 
 
+	// missing user record
+	public void testMissingUserRec() throws Exception {
+		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", noUserRec) );
+		
+		JsonObject obj = createOrder("BUY", 10, 2);
+		obj.put("wallet_public_key", noUserRec);
+		postOrderToObj(obj);
+		assertEquals( RefCode.MISSING_USER_RECORD, cli.getRefCode() );
+		
+		String[] fields = { "wallet_public_key", "active"};		
+		m_config.sqlCommand( conn -> conn.insert("users", fields, noUserRec, true) );
+		
+		obj = createOrder("BUY", 10, 2);
+		obj.put("wallet_public_key", noUserRec);
+		postOrderToObj(obj);
+		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );
+	}
+	
+	// missing walletId
+//	public void testMissingUserAttrib() throws Exception {
+//		JsonObject obj = createOrder("BUY", 10, 2);
+//		obj.remove("wallet_public_key");
+//		JsonObject map = postOrderToObj(obj);
+//		String ret = map.getString( "code");
+//		String text = map.getString("message");
+//		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
+//		assertEquals( text, "Param 'wallet_public_key' is missing");
+//	}
+	
 	// missing walletId
 	public void testMissingWallet() throws Exception {
 		JsonObject obj = createOrder("BUY", 10, 2);
@@ -149,7 +180,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));
-		assertEquals( "message", ret.getString("type") );
+		assertEquals( "message", ret.getString("type") ); // this sometimes failes because of stale data
 		startsWith( "Bought 0.4", ret.getString("text") );
 	}
 

@@ -116,14 +116,9 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFbActiveServer();
+		////////////////////checkFbActiveServer();
 		
 		
-		
-		// /api/crypto-transactions  all trades, I think not used
-		// /api/crypto-transactions?wallet_public_key=${address}&sortBy=id:desc  all trades for one user
-
-
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
 		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);

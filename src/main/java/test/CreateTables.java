@@ -13,11 +13,16 @@ public class CreateTables  {
 
 	public static void main(String[] args) {
 		try {
-			con.connect(dbUrl, dbUser, dbPassword);
+//			con.connect(dbUrl, dbUser, dbPassword);
+//			con.execute("alter table users add column first_name varchar(50)");
+//			con.execute("alter table users add column last_name varchar(50)");
+//			con.execute("update users set first_name = 'peter', last_name='spiro'");
+//			con.execute("alter table users add column aadhaar varchar(12)");
+//			con.execute("update users set aadhaar = '939393939393'");
 
 //			new CreateTables().createCryptoTransactions();
 //			//new CreateTables().createTrades();
-			new CreateTables().createCommTable();
+			//new CreateTables().createCommTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -97,7 +102,7 @@ public class CreateTables  {
 	}
 	
 	void createUsers() throws Exception {
-		con.dropTable( "trades");
+		con.dropTable( "users");
 
 		// to add unique to an existing table:
 		// ALTER TABLE users ADD UNIQUE (wallet_public_key);
@@ -121,7 +126,7 @@ public class CreateTables  {
 //		country
 //		persona_response
 //		pan_number
-//		aadhaar
+//		aadhaar varchar(12)
 		
 		String sql = "create table users ("
 				// write this

@@ -95,9 +95,7 @@ public class OrderTransaction extends MyTransaction {
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
 		// if order is above max non-KYC size, verify they have passed KYC (must come after m_wallet is set)
-		if (!Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ) {
-			verifyKyc();
-		}
+		verifyPersonalInfo( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
@@ -206,19 +204,21 @@ public class OrderTransaction extends MyTransaction {
 		});
 	}
 
-	private void verifyKyc() throws Exception {
+	private void verifyPersonalInfo(boolean smallOrder) throws Exception {
 		// get user entry from DB
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
-		require( ar.size() == 1, RefCode.NEED_KYC, "No KYC info for user");
+		require( ar.size() == 1, RefCode.MISSING_USER_RECORD, "No user record found for wallet %s", m_walletAddr);
 		
-		// check kyc_status
+		// check that we have values required fields
 		JsonObject obj = ar.get(0);
-		require(obj.getBool("kyc_status"), RefCode.NEED_KYC, "KYC was not completed");
-
-		// check that we at least have values for other fields
-		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number,persona_response".split(",") ) {
-			require (obj.has( tag), RefCode.NEED_KYC, "Missing user attribute: %s", tag);
+		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number".split(",") ) {
+			require (obj.has( tag), RefCode.MISSING_USER_ATTRIB, "Missing user attribute %s for wallet %s; please update your profile", tag, m_walletAddr);
 		}
+
+		// check kyc_status
+		require(smallOrder || obj.has("persona_response") && obj.getBool("kyc_status"), 
+				RefCode.NEED_KYC, 
+				"KYC must be completed for this order");
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
@@ -502,9 +502,9 @@ public class OrderTransaction extends MyTransaction {
 				out( "Undoing order from PositionTracker"); 
 				positionTracker.undo( conid, isBuy(), m_order.totalQty(), m_order.roundedQty() );
 
-				String body = String.format( "The blockchain transaction; no shares were filledd  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 
+				String body = String.format( "The blockchain transaction failed; no shares were filledd  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 
 						m_walletAddr, conid, m_order.totalQty(), m_order.roundedQty() ); 
-				alert( "BC FAILED - UNDOING ORDER", body);
+				alert( "FAILED - UNDOING ORDER", body);
 			}
 			
 			// if shares were filled, have to execute an opposing trade
