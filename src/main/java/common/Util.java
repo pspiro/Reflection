@@ -378,7 +378,7 @@ public class Util {
 	}
 
 	/** Return an id of n chars where each char is between a and z */
-	public static String id(int n) {
+	public static String uid(int n) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < n; i++) 
 			b.append( (char)('a' + rnd.nextInt(26) ) );
