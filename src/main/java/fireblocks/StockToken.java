@@ -23,9 +23,6 @@ public class StockToken extends Erc20 {
 	
 	static int decimals = 5;
 	static BigDecimal mult = new BigDecimal( 10).pow(decimals);
-	static String buyKeccak = "3f60b633";
-	static String getcallerKk = "a5905412";
-	static String iscallerKk = "ac55c8b0";
 	
 	// String m_rusdAddress; // this could/should be a member var
 	
@@ -54,7 +51,7 @@ public class StockToken extends Erc20 {
 	// 3: refwallet
 	// i passed refWallet but it acted like i used Test1 account; that was the sending address
 
-	static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
+	public static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		Util.require( S.isNotNull( name), "Null name" );
 		Util.require( S.isNotNull( symbol), "Null symbol" );
 		Util.require( S.isNotNull( rusdAddr), "Null rusdAddr" );

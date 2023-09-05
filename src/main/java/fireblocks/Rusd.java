@@ -1,6 +1,7 @@
 package fireblocks;
 
 import common.Util;
+import reflection.RefException;
 import tw.util.S;
 
 public class Rusd extends Erc20 {
@@ -19,6 +20,7 @@ public class Rusd extends Erc20 {
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
 	static final String addOrRemoveKeccak = "89fa2c03";
+	static final String swapKeccak = "62835413";
 
 	// deploy RUSD from owner wallet
 	// deploy QQQ from owner wallet
@@ -40,7 +42,7 @@ public class Rusd extends Erc20 {
 	
 	/** Deploy RUSD
 	 *  @return deployed address */
-	void deploy(String filename, String refWallet, String adminAddr) throws Exception {
+	public void deploy(String filename, String refWallet, String adminAddr) throws Exception {
 		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
 		String[] paramTypes = { "address", "address" };
 		Object[] params = { refWallet, adminAddr };
@@ -185,6 +187,8 @@ public class Rusd extends Erc20 {
 
 
 	public void addOrRemoveAdmin(String adminAddr, boolean add) throws Exception {
+		Util.require( add, "remove not supported yet for safety");
+		
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
@@ -201,6 +205,30 @@ public class Rusd extends Erc20 {
 				paramTypes, 
 				params, 
 				"RUSD add admin");
+	}
+	
+	public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
+		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
+		Object[] params = { 
+				userAddr, 
+				stockToBurn.address(),
+				stockToMint.address(),
+				toBlockchain(burnAmt),
+				toBlockchain(mintAmt)
+		};
+		
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);
+		S.out( "Account %s is swapping %s of %s for %s of %s for wallet %s",
+				adminAcctId, burnAmt, stockToBurn.address(), mintAmt, stockToMint.address(), userAddr);
+		
+		return Fireblocks.call2(
+				adminAcctId,
+				m_address,
+				swapKeccak, // <<<<<<<<<<<<<<<<<<
+				paramTypes,
+				params,
+				"RUSD swap");
+				
 	}
 
 }

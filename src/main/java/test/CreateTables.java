@@ -17,7 +17,7 @@ public class CreateTables  {
 //			con.execute("alter table users add column first_name varchar(50)");
 //			con.execute("alter table users add column last_name varchar(50)");
 //			con.execute("update users set first_name = 'peter', last_name='spiro'");
-//			con.execute("alter table users add column aadhaar varchar(12)");
+			//con.execute("alter table users add column aadhaar varchar(12)");
 //			con.execute("update users set aadhaar = '939393939393'");
 
 //			new CreateTables().createCryptoTransactions();
@@ -126,7 +126,7 @@ public class CreateTables  {
 //		country
 //		persona_response
 //		pan_number
-//		aadhaar varchar(12)
+//		aadhaar
 		
 		String sql = "create table users ("
 				// write this
