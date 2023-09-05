@@ -57,7 +57,7 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uid = header == null ? Util.id(6) : Util.id(6) + " " + header;		
+		m_uid = header == null ? Util.uid(6) : Util.uid(6) + " " + header;		
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	

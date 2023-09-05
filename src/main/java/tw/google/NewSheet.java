@@ -1,9 +1,13 @@
 package tw.google;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.google.api.services.sheets.v4.Sheets.Spreadsheets;
 import com.google.api.services.sheets.v4.model.AddSheetRequest;
@@ -15,8 +19,10 @@ import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
+import common.Util;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;
+import tw.util.OStream;
 import tw.util.S;
 
 /** Note: you cannot have null values in the list for insert or update operations.
@@ -85,6 +91,13 @@ public class NewSheet {
 			
 			BatchUpdateSpreadsheetRequest body = new BatchUpdateSpreadsheetRequest().setRequests(requests);
 			sheets().batchUpdate(id(), body).execute();
+		}
+
+		public void save(String folder) throws Exception {
+			new File(folder).mkdir();
+			for (Sheet sheet : m_spreadsheet.getSheets() ) {
+				new Tab(sheet).save(folder);
+			}
 		}
 
 		public Tab getTab( String name) throws Exception {
@@ -172,7 +185,7 @@ public class NewSheet {
 		public class Tab {
 			private Sheet m_sheet;
 			private String m_name;
-			private String[] m_headerRow;
+			private String[] m_headerRow; // could be shorter than the longest row
 			private HashMap<String,Integer> m_map = new HashMap<String,Integer>(); // map column header to zero-based index
 			private Rows m_insEntries; // for bulk inserts
 			private Rows m_updEntries; // for bulk inserts
@@ -188,6 +201,31 @@ public class NewSheet {
 				int cc = 0;
 				for (String title : getHeaderRow() ) {
 					m_map.put( title.replaceAll( " ", ""), Integer.valueOf( cc++) ); 
+				}
+			}
+			
+			public void save(String folder) throws IOException, Exception {
+				List<List<Object>> rows = getRows(false);
+				if (rows == null) return;  // some sheets may have no rows
+				
+				JsonArray ar = new JsonArray();
+				
+				for (int i = 1; i < rows.size(); i++) {  // skip header row
+					List<Object> row = rows.get(i);
+					JsonObject obj = new JsonObject();
+					for (int c = 0; c < row.size() && c < m_headerRow.length; c++) {
+						String name = m_headerRow[c];
+						if (S.isNotNull(name) ) {
+							obj.put(name, row.get(c) );
+						}
+					}
+					ar.add(obj);
+				}
+				if (ar.size() > 0) {
+					String filename = String.format("%s/%s.json", folder, m_name);
+					try (OStream os = new OStream(filename) ) {
+						os.write( ar.toString() );
+					}
 				}
 			}
 			
@@ -506,6 +544,7 @@ public class NewSheet {
 			}
 
 		}
+
 
 	}
 	
