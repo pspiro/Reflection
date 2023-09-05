@@ -422,7 +422,7 @@ public class Config extends ConfigBase {
 		return new Rusd( rusdAddr, rusdDecimals);
 	}
 
-	public Busd busd() {
+	public Busd busd() throws Exception {
 		return new Busd( busdAddr, busdDecimals);
 	}
 

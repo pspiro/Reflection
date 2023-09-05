@@ -21,7 +21,7 @@ public class Busd extends Erc20 {
 		
 	}
 
-	public Busd( String address, int decimals) {
+	public Busd( String address, int decimals) throws Exception {
 		super( address, decimals);
 	}
 	

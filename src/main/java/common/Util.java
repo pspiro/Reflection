@@ -320,6 +320,10 @@ public class Util {
 		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
+	public static void reqValidAddress(String str) throws Exception {
+		require( isValidAddress(str), "Invalid address: %s", str);
+	}
+	
 	public static String getLastToken(String str, String sep) {
 		String[] ar = str.split(sep);
 		return ar[ar.length-1];

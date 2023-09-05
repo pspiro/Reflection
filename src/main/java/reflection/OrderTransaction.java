@@ -487,7 +487,7 @@ public class OrderTransaction extends MyTransaction {
 		
 	}
 
-	private StockToken newStockToken() {
+	private StockToken newStockToken() throws Exception {
 		return new StockToken( m_stock.getSmartContractId() );
 	}
 

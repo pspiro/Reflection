@@ -16,7 +16,7 @@ public class Wallet {
 	private HashMap<String, Double> m_map; // map token (lower case) to balance
 	
 	public Wallet(String address) throws Exception {
-		Util.require( Util.isValidAddress(address), "Invalid wallet address");
+		Util.reqValidAddress(address);
 		m_address = address;
 	}
 
@@ -32,7 +32,7 @@ public class Wallet {
 
 	/** Returns a map of contract address (lower case) -> position (Double) */ 
 	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
-		Util.require( Util.isValidAddress(wallet), "Invalid wallet address");
+		Util.reqValidAddress(wallet);
 		HashMap<String,Double> map = new HashMap<>();
 		
 		for (JsonObject token : MoralisServer.reqPositionsList(wallet) ) {

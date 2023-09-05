@@ -101,8 +101,9 @@ public class Stocks implements Iterable<Stock> {
 		return stockSet().iterator();
 	}
 
-	/** Return smart contract address of any stock */
-	public StockToken getAnyStockToken() {
+	/** Return smart contract address of any stock 
+	 * @throws Exception */
+	public StockToken getAnyStockToken() throws Exception {
 		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
 	}
 }

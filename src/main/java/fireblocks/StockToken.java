@@ -26,7 +26,7 @@ public class StockToken extends Erc20 {
 	
 	// String m_rusdAddress; // this could/should be a member var
 	
-	public StockToken( String address) {    // you might want to add the name here
+	public StockToken( String address) throws Exception {    // you might want to add the name here
 		super( address, stockTokenDecimals);
 	}
 	
