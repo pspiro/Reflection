@@ -213,8 +213,8 @@ public class Rusd extends Erc20 {
 				userAddr, 
 				stockToBurn.address(),
 				stockToMint.address(),
-				toBlockchain(burnAmt),
-				toBlockchain(mintAmt)
+				stockToBurn.toBlockchain(burnAmt),
+				stockToMint.toBlockchain(mintAmt)
 		};
 		
 		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);

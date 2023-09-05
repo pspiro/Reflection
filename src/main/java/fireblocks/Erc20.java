@@ -136,7 +136,7 @@ public class Erc20 {
 	/** Query the blockchain transaction through Moralis until the transaction
 	 *  is there AND it contains the receipt_contract_address field;
 	 *  takes about 17 seconds. */
-	static String getDeployedAddress(String txHash) throws Exception {
+	public static String getDeployedAddress(String txHash) throws Exception {
 		for (int i = 0; i < 3*60; i++) {
 			if (i > 0) S.sleep(1000);
 			
