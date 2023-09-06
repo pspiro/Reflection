@@ -211,7 +211,8 @@ public class OrderTransaction extends MyTransaction {
 		
 		// check that we have values required fields
 		JsonObject obj = ar.get(0);
-		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number".split(",") ) {
+		for (String tag : "email,phone,pan_number".split(",") ) {
+		//for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number".split(",") ) {
 			require (obj.has( tag), RefCode.MISSING_USER_ATTRIB, "Missing user attribute '%s' for wallet %s; please update your profile", tag, m_walletAddr);
 		}
 
