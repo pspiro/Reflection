@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import http.MyHttpClient;
 import tw.util.S;
 
 public class TestBackendMsgs extends MyTestCase {

@@ -30,7 +30,7 @@ public class TestOrder extends MyTestCase {
 	
 
 
-	// missing user record
+	// verify user record
 	public void testMissingUserRec() throws Exception {
 		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", noUserRec) );
 		
@@ -39,13 +39,25 @@ public class TestOrder extends MyTestCase {
 		postOrderToObj(obj);
 		assertEquals( RefCode.MISSING_USER_RECORD, cli.getRefCode() );
 		
-		String[] fields = { "wallet_public_key", "active"};		
-		m_config.sqlCommand( conn -> conn.insert("users", fields, noUserRec, true) );
+		String[] fields = {
+				"wallet_public_key", "active", "first_name", "last_name", "email", "phone", "aadhaar", 
+		};
+		Object[] vals = {
+				noUserRec, true, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
+		};
+		m_config.sqlCommand( conn -> conn.insert("users", fields, vals) );
 		
 		obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", noUserRec);
 		postOrderToObj(obj);
-		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );
+		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );  // missing pan
+		
+		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'abc' where wallet_public_key = '%s'", noUserRec) ) );
+		
+		obj = createOrder("BUY", 10, 2);
+		obj.put("wallet_public_key", noUserRec);
+		postOrderToObj(obj);
+		assertEquals( RefCode.INVALID_USER_ATTRIB, cli.getRefCode() );  // invalid pan, aadhaar
 	}
 	
 	// missing walletId

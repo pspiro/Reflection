@@ -212,9 +212,13 @@ public class OrderTransaction extends MyTransaction {
 		// check that we have values required fields
 		JsonObject obj = ar.get(0);
 		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number".split(",") ) {
-			require (obj.has( tag), RefCode.MISSING_USER_ATTRIB, "Missing user attribute %s for wallet %s; please update your profile", tag, m_walletAddr);
+			require (obj.has( tag), RefCode.MISSING_USER_ATTRIB, "Missing user attribute '%s' for wallet %s; please update your profile", tag, m_walletAddr);
 		}
 
+		// check pan and aadhaar
+		require( obj.getString("aadhaar").length() == 12, RefCode.INVALID_USER_ATTRIB, "Aadhaar '%s' is invalid", obj.getString("aadhaar") ); 
+		require( obj.getString("pan_number").length() == 10, RefCode.INVALID_USER_ATTRIB, "PAN '%s' is invalid", obj.getString("pan_number") );
+		
 		// check kyc_status
 		require(smallOrder || obj.has("persona_response") && obj.getBool("kyc_status"), 
 				RefCode.NEED_KYC, 

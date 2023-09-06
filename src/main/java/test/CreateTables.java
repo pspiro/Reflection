@@ -125,7 +125,7 @@ public class CreateTables  {
 //		city
 //		country
 //		persona_response
-//		pan_number
+//		pan_number varchar(10)
 //		aadhaar
 		
 		String sql = "create table users ("

@@ -3,7 +3,6 @@ package testcase;
 import static fireblocks.Accounts.instance;
 
 import fireblocks.Busd;
-import fireblocks.Erc20;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 import tw.util.S;
