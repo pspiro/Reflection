@@ -341,7 +341,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	HashMap<String,String> mapWalletToCode = new HashMap<>();
+	static HashMap<String,String> mapWalletToCode = new HashMap<>();
 	
 	public void validateEmail() {
 		wrap( () -> {
@@ -383,14 +383,16 @@ public class BackendTransaction extends MyTransaction {
 			
 			// if email has changed and is not null, they must submit a valid verification code from the validateEmail() message
 			if (S.isNotNull(email) && !email.equalsIgnoreCase( getExistingEmail(wallet) ) ) {
-//				require( profile.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(wallet) ),
-//						RefCode.INVALID_REQUEST,
-//						"The email verification code is incorrect");
+				require( profile.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(wallet) ),
+						RefCode.INVALID_REQUEST,
+						"The email verification code is incorrect");
+				mapWalletToCode.remove(wallet); // remove only if there is a match so they can try again
 			}
 
-			// add fields to profile
+			// add/remove fields to profile
 			profile.put( "wallet_public_key", wallet);
 			profile.put( "active", true);
+			profile.remove("email_confirmation"); // don't want to store this in db
 			
 			// insert or update record in users table
 			m_main.sqlConnection( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", wallet) );
@@ -406,23 +408,3 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 }
-
-				
-//				
-//				JSONArray ar = conn.queryToJson("select * name, address, email, phone, pan_number from users where wallet = '%s'", address.toLowerCase() );
-//				
-//				if (ar.size() == )
-//				//require( ar.size() == 1, RefCode.UPDATE_PROFILE, "Please update your profile before submitting an order");
-//				
-//				MyJsonObject obj = 
-//				Profile profile = new Profile(ar.getJsonObj(0) );
-//			});
-//		});
-//	}
-//
-//	public void handleUpdateProfile() {
-//	}
-//	
-//}
-// YOU MAY NEED TO REQUIRE SIGN-IN BEFORE ACCEPTING UPDATE-PROFILE
-	
