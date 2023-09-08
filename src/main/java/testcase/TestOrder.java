@@ -37,7 +37,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", noUserRec);
 		postOrderToObj(obj);
-		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
 		String[] fields = {
 				"wallet_public_key", "active", "first_name", "last_name", "email", "phone", "aadhaar", 
@@ -50,14 +50,14 @@ public class TestOrder extends MyTestCase {
 		obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", noUserRec);
 		postOrderToObj(obj);
-		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );  // missing pan
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // missing pan
 		
 		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'abc' where wallet_public_key = '%s'", noUserRec) ) );
 		
 		obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", noUserRec);
 		postOrderToObj(obj);
-		assertEquals( RefCode.INVALID_USER_ATTRIB, cli.getRefCode() );  // invalid pan, aadhaar
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // invalid pan, aadhaar
 	}
 	
 	// missing walletId

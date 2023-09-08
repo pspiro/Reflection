@@ -1,5 +1,7 @@
 package common;
 
+import static reflection.Main.require;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -385,7 +387,7 @@ public class Util {
 	public static String uid(int n) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < n; i++) 
-			b.append( (char)('a' + rnd.nextInt(26) ) );
+			b.append( (char)('A' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
 
@@ -433,5 +435,11 @@ public class Util {
 	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");
 	public static String fmtTime(long t) {
 		return fmt.format( new Date(t) );
+	}
+
+	/** Must be in format of a@b.c */
+	public static boolean isValidEmail(String email) {
+		int i = email.indexOf("@");
+		return i >= 1 && email.indexOf(".") > i + 1 && email.length() >= 5;
 	}
 }

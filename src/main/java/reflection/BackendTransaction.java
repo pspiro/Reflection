@@ -4,13 +4,10 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
-import org.json.simple.parser.JSONParser;
 
 import com.sun.net.httpserver.HttpExchange;
 
@@ -23,6 +20,8 @@ import fireblocks.Transfer;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
+import tw.google.Auth;
+import tw.google.TwMail;
 import tw.util.S;
 import util.LogType;
 
@@ -341,22 +340,69 @@ public class BackendTransaction extends MyTransaction {
 			});
 		});
 	}
+
+	HashMap<String,String> mapWalletToCode = new HashMap<>();
 	
-	public void handleUpdateProfile() {
+	public void validateEmail() {
 		wrap( () -> {
-            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-            JsonObject profile = (JsonObject)new JSONParser().parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+            JsonObject data = parseToObject();
 			
-			String walletAddr = profile.getLowerString("wallet_public_key");
-			require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+            String wallet = data.getLowerString( "wallet_public_key");
+			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet '%s' is invalid", wallet);
+
+			String email = data.getString( "email");
+			require( Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email '%s' is invalid for wallet '%s'", email, wallet);
 			
-			// set wallet to lower case for insert
-			profile.put( "wallet_public_key", walletAddr);
-			profile.put( "active", true);
+			String code = Util.uid(5);
+			S.out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);
 			
-			m_main.sqlConnection( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletAddr) );
+			mapWalletToCode.put( wallet, code); // save code 
+			
+			TwMail mail = Auth.auth().getMail();
+			mail.send(
+					"Reflection", 
+					"peteraspiro@gmail.com", 
+					email,
+					"Reflection Verification Code",
+					"Your Reflection Verification code is: " + code,
+					"plain");
+			
 			respondOk();
 		});
+	}
+
+	public void handleUpdateProfile() {
+		wrap( () -> {
+            JsonObject profile = parseToObject();
+			
+			String wallet = profile.getLowerString("wallet_public_key");
+			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet '%s' is invalid", wallet);
+			
+			String email = profile.getString("email");
+			require( S.isNull(email) || Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email address '%s' is invalid", email);
+			
+			// if email has changed and is not null, they must submit a valid verification code from the validateEmail() message
+			if (S.isNotNull(email) && !email.equalsIgnoreCase( getExistingEmail(wallet) ) ) {
+//				require( profile.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(wallet) ),
+//						RefCode.INVALID_REQUEST,
+//						"The email verification code is incorrect");
+			}
+
+			// add fields to profile
+			profile.put( "wallet_public_key", wallet);
+			profile.put( "active", true);
+			
+			// insert or update record in users table
+			m_main.sqlConnection( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", wallet) );
+			respondOk();
+		});
+	}
+
+	private String getExistingEmail(String walletAddr) throws Exception {
+		JsonArray res = Main.m_config.sqlQuery( conn -> conn.queryToJson("select email from users where wallet_public_key = '%s'", walletAddr) );
+		return res.size() > 0
+				? res.get(0).getString("email")
+				: "";
 	}
 
 }
