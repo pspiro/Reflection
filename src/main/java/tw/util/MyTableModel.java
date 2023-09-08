@@ -11,7 +11,7 @@ import javax.swing.table.TableCellRenderer;
 
 public abstract class MyTableModel extends AbstractTableModel {
 	public static DefaultTableCellRenderer DEFAULT = new DefaultTableCellRenderer();
-	public static RightRenderer RIGHT_RENDERER = new RightRenderer();
+	public static RightRenderer RIGHT_RENDERER = new RightRenderer(); // right-justify
 	
 	public static class RightRenderer extends DefaultTableCellRenderer {
 		public RightRenderer() {

@@ -10,6 +10,7 @@ import common.Util;
 import monitor.Monitor.RefPanel;
 import tw.util.S;
 
+/** Querys data from the database */
 public class QueryPanel extends JPanel implements RefPanel {
 	final JsonModel m_model;
 	

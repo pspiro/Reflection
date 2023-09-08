@@ -429,4 +429,9 @@ public class Util {
 		double mult = Math.pow(10, digits);
 		return Math.floor( n * mult) / mult;
 	}
+
+	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");
+	public static String fmtTime(long t) {
+		return fmt.format( new Date(t) );
+	}
 }

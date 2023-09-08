@@ -2,15 +2,19 @@ package monitor;
 
 import java.util.HashMap;
 
+import javax.swing.table.TableCellRenderer;
+
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import tw.util.MyTableModel;
 
 class JsonModel extends MyTableModel {
 	final String[] names;
 	final HashMap<Integer,String> m = new HashMap<>(); // map index to name
 	JsonArray m_ar = new JsonArray();
+	private String m_justify = "";
 	
 	JsonModel(String allNames) {
 		names = allNames.split(",");
@@ -18,6 +22,15 @@ class JsonModel extends MyTableModel {
 		for (int i = 0; i < names.length; i++) {
 			m.put( i, names[i]);
 		}
+	}
+	
+	/** Pass a string with one char for each column, either l or r */
+	void justify(String str) {
+		m_justify = str;
+	}
+	
+	@Override public TableCellRenderer getRenderer(int row, int col) {
+		return col < m_justify.length() && m_justify.charAt(col) == 'r' ? RIGHT_RENDERER : DEFAULT;
 	}
 	
 	int getColumnIndex(String name) {

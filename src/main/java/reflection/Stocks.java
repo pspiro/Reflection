@@ -14,6 +14,7 @@ import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 
 public class Stocks implements Iterable<Stock> {
+	private static Stock NULL = new Stock();
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	private final JsonArray m_hotStocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
@@ -105,5 +106,10 @@ public class Stocks implements Iterable<Stock> {
 	 * @throws Exception */
 	public StockToken getAnyStockToken() throws Exception {
 		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
+	}
+
+	public Stock getStock(int conid) {
+		Stock stock = m_stockMap.get(conid);
+		return stock != null ? stock : NULL;
 	}
 }

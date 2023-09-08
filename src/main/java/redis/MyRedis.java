@@ -78,7 +78,8 @@ public class MyRedis {
 	}
 
 
-	/** Use this version when all the queries are done at once. */
+	/** Use this version when all the queries are done at once. It sends the real query
+	 *  after all the little queries have been added to the pipeline */
 	public void pipeline( PRun runnable) {
 		wrap( () -> {
 			checkConnection();
@@ -89,7 +90,6 @@ public class MyRedis {
 	}
 
 	/** Currently not used.
-	 * 
 	 *  This has severe limitation of only one pipeline at a time.
 	 *  Use this version when all the queries are spread out over time
 	 *  @param batchTimeMs is time until we call sync
