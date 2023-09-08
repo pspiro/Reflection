@@ -207,7 +207,7 @@ public class OrderTransaction extends MyTransaction {
 	private void verifyPersonalInfo(boolean smallOrder) throws Exception {
 		// get user entry from DB
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
-		require( ar.size() == 1, RefCode.MISSING_USER_RECORD, "No user record found for wallet %s", m_walletAddr);
+		require( ar.size() == 1, RefCode.MISSING_USER_ATTRIB, "No user record found for wallet %s", m_walletAddr);
 		
 		// check that we have values required fields
 		JsonObject obj = ar.get(0);

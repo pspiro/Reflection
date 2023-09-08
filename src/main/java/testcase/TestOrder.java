@@ -37,7 +37,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject obj = createOrder("BUY", 10, 2);
 		obj.put("wallet_public_key", noUserRec);
 		postOrderToObj(obj);
-		assertEquals( RefCode.MISSING_USER_RECORD, cli.getRefCode() );
+		assertEquals( RefCode.MISSING_USER_ATTRIB, cli.getRefCode() );
 		
 		String[] fields = {
 				"wallet_public_key", "active", "first_name", "last_name", "email", "phone", "aadhaar", 
