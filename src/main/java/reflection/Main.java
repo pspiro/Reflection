@@ -116,7 +116,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		////////////////////checkFbActiveServer();
+		checkFbActiveServer();
 		
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
@@ -187,7 +187,7 @@ public class Main implements ITradeReportHandler {
 
 		// read Backend config (used by Frontend)
 		readFaqsFromSheet(book);
-		m_type1Config = readConfig(book, 1).toString();
+		m_type1Config = readType1Config(book).toString();
 		m_type2Config = readConfig(book, 2);
 
 		// read list of RefCodes where we want to simulate failure
@@ -198,6 +198,14 @@ public class Main implements ITradeReportHandler {
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		
 		m_stocks.readFromSheet(book, m_config);
+	}
+
+	private String readType1Config(Book book) throws Exception {
+		JsonObject obj = new JsonObject();
+		for (String key : "min_order_size,max_order_size,non_kyc_max_order_size,price_refresh_interval,commission,buy_spread,sell_spread".split(",") ) {
+			obj.put( key, m_config.getRequiredDouble(key) );
+		}
+		return obj.toString();
 	}
 
 	/** You could shave 300 ms by sharing the same Book as Config 
@@ -230,8 +238,6 @@ public class Main implements ITradeReportHandler {
 		require( obj.size() > 0, RefCode.CONFIG_ERROR, "Type-%s config settings are missing", type);
 		return obj;
 	}
-	
-	
 	
 	// let it fall back to read from a flatfile if this fails. pas
 

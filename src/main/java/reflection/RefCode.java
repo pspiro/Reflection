@@ -31,5 +31,5 @@ public enum RefCode {
 	REDEMPTIONS_HALTED, // redemptions are halted as per the allowRedemptions setting in config
 	REDEMPTION_PENDING, // user has twice submitted redemption and there is insufficient USDC in RefWallet
 	STALE_DATA,   // no recent market data for order rounded to zero
-	MISSING_USER_ATTRIB, MISSING_USER_RECORD,  // missing user record or some required field from user table
+	INVALID_USER_PROFILE,  // missing user record or some required field from user table
 }

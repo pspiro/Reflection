@@ -179,8 +179,8 @@ public class Fireblocks {
 	}
 	
 	/** Assume address starts with 0x */
-	public static String padAddr(String addr) throws RefException {
-		Main.require( addr != null && addr.length() == 42, RefCode.INVALID_REQUEST, "Invalid address %s", addr);
+	public static String padAddr(String addr) throws Exception {
+		Util.reqValidAddress(addr);
 		return padLeft( addr.substring(2) );
 	}
 
@@ -272,7 +272,7 @@ public class Fireblocks {
 		return call2(fromAcct, addr, callData, paramTypes, params, note).id();
 	}
 	
-	/** @param addr is the address of the contract for which you are calling a method
+	/** @param addr is the address of the contract for which you are calling a method OR 0x0 when deploying a contract 
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data
 	 *  @return RetVal so caller can either get ID or wait for blockchain hash */

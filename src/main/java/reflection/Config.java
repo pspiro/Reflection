@@ -151,12 +151,12 @@ public class Config extends ConfigBase {
 		m_tab = new GTable( tab, "Tag", "Value", true);
 		
 		// user experience parameters
-		this.buySpread = m_tab.getDouble( "buySpread");
-		this.sellSpread = m_tab.getDouble( "sellSpread");
+		this.buySpread = m_tab.getDouble( "buy_spread");
+		this.sellSpread = m_tab.getDouble( "sell_spread");
 		this.minBuySpread = m_tab.getDouble( "minBuySpread");   // should be changed to read table without formatting. pas
 		this.minSellSpread = m_tab.getDouble( "minSellSpread");
-		this.maxBuyAmt = m_tab.getDouble( "maxBuyAmt");
-		this.maxSellAmt = m_tab.getDouble( "maxSellAmt");
+		this.maxBuyAmt = m_tab.getDouble( "max_order_size");
+		this.maxSellAmt = m_tab.getDouble( "max_order_size");
 		this.minTokenPosition = m_tab.getDouble("minTokenPosition");
 		this.commission = m_tab.getDouble( "commission");
 
@@ -196,7 +196,7 @@ public class Config extends ConfigBase {
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
 		this.allowRedemptions = m_tab.getBoolean("allowRedemptions");
-		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("nonKycMaxOrderSize");
+		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("non_kyc_max_order_size");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -422,7 +422,7 @@ public class Config extends ConfigBase {
 		return new Rusd( rusdAddr, rusdDecimals);
 	}
 
-	public Busd busd() {
+	public Busd busd() throws Exception {
 		return new Busd( busdAddr, busdDecimals);
 	}
 
@@ -539,4 +539,7 @@ public class Config extends ConfigBase {
 		return nonKycMaxOrderSize;
 	}
 	
+	double getRequiredDouble(String key) throws Exception {
+		return m_tab.getRequiredDouble(key);
+	}
 }

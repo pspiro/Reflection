@@ -1,5 +1,7 @@
 package common;
 
+import static reflection.Main.require;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -320,6 +322,10 @@ public class Util {
 		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
+	public static void reqValidAddress(String str) throws Exception {
+		require( isValidAddress(str), "Invalid address: %s", str);
+	}
+	
 	public static String getLastToken(String str, String sep) {
 		String[] ar = str.split(sep);
 		return ar[ar.length-1];
@@ -381,7 +387,7 @@ public class Util {
 	public static String uid(int n) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < n; i++) 
-			b.append( (char)('a' + rnd.nextInt(26) ) );
+			b.append( (char)('A' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
 
@@ -424,5 +430,16 @@ public class Util {
 		require( n >= 0, "Cannot truncate negative numbers"); // you could fix this if needed
 		double mult = Math.pow(10, digits);
 		return Math.floor( n * mult) / mult;
+	}
+
+	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");
+	public static String fmtTime(long t) {
+		return fmt.format( new Date(t) );
+	}
+
+	/** Must be in format of a@b.c */
+	public static boolean isValidEmail(String email) {
+		int i = email.indexOf("@");
+		return i >= 1 && email.indexOf(".") > i + 1 && email.length() >= 5;
 	}
 }

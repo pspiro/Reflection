@@ -1,0 +1,88 @@
+package monitor;
+
+import java.awt.BorderLayout;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.JPanel;
+
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
+import common.Util;
+import monitor.Monitor.RefPanel;
+import redis.clients.jedis.Response;
+import tw.util.S;
+
+public class RedisPanel extends JPanel implements RefPanel {
+	final JsonModel m_model = new RedisModel();
+	
+	RedisPanel() {
+		super( new BorderLayout() );
+		
+		add( m_model.createTable() );
+	}
+	
+	@Override public void refresh() throws Exception {
+		S.out( "Refreshing Redis panel");
+		m_model.refresh();
+		S.out( "  done");
+	}
+	
+	static class RedisQuery {
+		String key;
+		Response<Map<String, String>> resp;  // this is specifically an "hgetall" query
+
+		RedisQuery(String v1, Response<Map<String, String>> v2) {
+			key = v1;
+			resp = v2;
+		}
+	}
+	
+	static class RedisModel extends JsonModel {
+		RedisModel() {
+			super("symbol,conid,bid,ask,last,time,close");
+			justify("llrrrlr");
+		}
+	
+		void refresh() throws Exception {
+			Set<String> keys = Monitor.m_config.newRedis().query( jedis -> jedis.keys("*") );
+
+			ArrayList<RedisQuery> list = new ArrayList<>();
+			
+			Monitor.m_config.newRedis().pipeline( pipe -> {
+				for (String key : keys) {
+					list.add( new RedisQuery( key, pipe.hgetAll(key) ) );  // we have to remember the key or we can't get it
+				}
+			});
+			
+			JsonArray ar = new JsonArray();
+			
+			list.forEach( query -> {
+				JsonObject obj = new JsonObject();
+				obj.put("conid", query.key); 
+				query.resp.get().forEach( (key,val) -> obj.put( key, val) );
+				ar.add( obj);
+				
+				obj.put("symbol", Monitor.stocks.getStock(Integer.parseInt(query.key)).getSymbol() ); // lookup symbol
+				obj.update("time", val -> Util.fmtTime(Long.parseLong((String)val) ) );  // format date 
+			});
+			
+			m_ar = ar;
+			fireTableDataChanged();
+		}
+	}
+	
+	@Override public void activated() {
+		try {
+			refresh();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override public void closed() {
+	}
+}

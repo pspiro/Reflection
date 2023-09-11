@@ -94,6 +94,7 @@ public abstract class MyTransaction {
 		}
 
 		else {
+			/** This code is obsolete; use parseToObject() instead */
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)	            		
@@ -286,6 +287,11 @@ public abstract class MyTransaction {
 		String address = Util.getLastToken(m_uri, "/");
 		require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		return address;
+	}
+	
+	/** Parse a POST message and return JsonObject */
+	JsonObject parseToObject() throws Exception {
+        return (JsonObject)new JSONParser().parse(new InputStreamReader( m_exchange.getRequestBody() ));  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	}
 	
 	

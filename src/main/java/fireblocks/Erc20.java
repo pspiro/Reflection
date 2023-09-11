@@ -22,7 +22,8 @@ public class Erc20 {
 	protected String m_address;
 	protected int m_decimals;
 	
-	Erc20( String address, int decimals) {
+	Erc20( String address, int decimals) throws Exception {
+		Util.reqValidAddress(address);
 		this.m_address = address;
 		this.m_decimals = decimals;
 	}
@@ -86,12 +87,14 @@ public class Erc20 {
 	
 	/** Sends a query to Moralis */
 	public double getAllowance(String wallet, String spender) throws Exception {
+		Util.reqValidAddress(wallet);
 		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
 	}
 
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
+		Util.reqValidAddress(walletAddr);
 		return new Wallet(walletAddr).getBalance(m_address); 
 	}
 	

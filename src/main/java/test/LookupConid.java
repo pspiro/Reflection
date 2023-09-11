@@ -54,22 +54,21 @@ public class LookupConid extends ConnectionAdapter {
 			Tab tab = NewSheet.getTab( NewSheet.Reflection, "Master-symbols");
 			ListEntry[] rows = tab.fetchRows();
 			for (ListEntry row : rows) {
-				S.sleep(40);
+				S.sleep(100);
 				
 				String symbol = row.getString("Token Symbol");
-				boolean tfh = row.getBool("24-Hour");
+				String tfh = row.getString("24-Hour");
 				int conid = row.getInt("Conid");
 				String primary = row.getString("Primary Exchange");
+				String description = row.getString("Description");
 				
 				Contract c = new Contract();
-				c.symbol(symbol);
+				c.symbol(symbol.replace("-", " "));  // handle BRK-B
 				c.currency("USD");
 				c.exchange("SMART");
 				c.secType("STK");
 				
-				S.out( "Send " + symbol);
 				m_controller.reqContractDetails(c, list -> {
-					S.out( "Rec " + symbol);
 					try {
 						Util.require(list.size() == 1, symbol + " returned " + list.size() );
 						ContractDetails item = list.get(0);
@@ -81,7 +80,7 @@ public class LookupConid extends ConnectionAdapter {
 							set = true;
 						}
 						else if (conid != item.conid() ) {
-							S.out( "Conid doesn't match for " + symbol);
+							S.out( "Conid doesn't match for %s (%s vs %s)", symbol, conid, item.conid() );
 						}
 						
 						// check and set primary exchange
@@ -90,7 +89,23 @@ public class LookupConid extends ConnectionAdapter {
 							set = true;
 						}
 						else if (!primary.equals( item.contract().primaryExch() ) ) {
-							S.out( "Primary exchange doesn't match for " + symbol);
+							S.out( "Primary exchange doesn't match for %s (%s vs %s)", symbol, primary, item.contract().primaryExch() );
+						}
+						
+						// check and set 24H
+						boolean isOvernight = item.validExchanges().indexOf("OVERNIGHT") != -1;						
+						if (S.isNull(tfh) ) {
+							row.setValue( "24-Hour", isOvernight ? "TRUE" : "FALSE");
+							set = true;
+						}
+						else if ( tfh.equals("TRUE") != isOvernight) {
+							S.out( "Overnight hours does not match for %s (%s vs %s)", symbol, tfh, isOvernight);
+						}
+						
+						// update description if blank
+						if (S.isNull(description) ) {
+							row.setValue("Description", item.longName() );
+							set = true;
 						}
 
 						// update row
@@ -104,24 +119,6 @@ public class LookupConid extends ConnectionAdapter {
 					dec();
 				});
 				m_sent++;
-				
-				if (tfh) {
-					c.exchange("IBEOS");
-
-					S.out( "Send " + symbol + " IBEOS");
-					m_controller.reqContractDetails(c, list -> {
-						S.out( "Rec " + symbol + " IBEOS");
-						try {
-							Util.require(list.size() > 0, "No IBEOS listing found for " + symbol);
-						}
-						catch( Exception e) {
-							S.out( e.getMessage() );
-						}
-						dec();
-					});
-					m_sent++;
-				}
-				
 			}
 			m_allSent = true;
 			check();
