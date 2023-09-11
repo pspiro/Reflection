@@ -72,7 +72,7 @@ public class Monitor {
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
-		m_tabs.addTab( "Redis", new RedisPanel() );
+		//m_tabs.addTab( "Redis", new RedisPanel() );
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		
