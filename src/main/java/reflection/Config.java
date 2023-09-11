@@ -363,20 +363,6 @@ public class Config extends ConfigBase {
 		}
 	}
 	
-
-	private void validateBackendConfig(GTable t) throws Exception {
-		require( t, "min_order_size", 1, 100); 
-		require( t, "max_order_size", 0, 20000);
-		require( t, "non_kyc_max_order_size", 0, 20000);
-		require( t, "price_refresh_interval", 5, 60);
-		require( t, "commission", 0, 5);
-		require( t, "buy_spread", .001, .05 );
-		require( t, "sell_spread", .001, .05 );
-		
-		require( t.getDouble( "buy_spread") > minBuySpread, "buy_spread");
-		require( t.getDouble( "sell_spread") > minSellSpread, "sell_spread");
-	}
-
 	private void require(GTable t, String param, double lower, double upper) throws Exception {
 		double value = t.getDouble( param);
 		require( value >= lower && value <= upper, param);

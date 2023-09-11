@@ -149,7 +149,21 @@
 			<scope>test</scope>
 		</dependency-->
 				
-	</dependencies>
+    <!-- Selenium WebDriver -->
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>3.141.59</version> <!-- Replace with the latest version available -->
+		</dependency>
+	
+		<!-- Chrome WebDriver -->
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-chrome-driver</artifactId>
+			<version>3.141.59</version> <!-- Replace with the same version as selenium-java -->
+		</dependency>
+  
+  	</dependencies>
 	
 	<!-- you can use this for dependency management, they you don't need to add the version
 	     of any of the google cloud libraries; in particular this will add the correct
