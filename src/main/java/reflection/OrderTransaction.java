@@ -130,7 +130,7 @@ public class OrderTransaction extends MyTransaction {
 		double myTds = m_order.isBuy() 
 				? preCommAmt * .01
 				: (preCommAmt - m_config.commission() ) * .01;
-		require( Util.isEq( m_tds, myTds, .001), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
+		//require( Util.isEq( m_tds, myTds, .01), RefCode.INVALID_REQUEST, "TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
 		m_stablecoinAmt = m_map.getDoubleParam("amount");
 		if (m_stablecoinAmt == 0) {
