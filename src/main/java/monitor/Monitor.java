@@ -77,6 +77,8 @@ public class Monitor {
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
+		m_frame.add( new SouthPanel(), BorderLayout.SOUTH);
+		
 		m_frame.setTitle( "Reflection Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 1000, 600);

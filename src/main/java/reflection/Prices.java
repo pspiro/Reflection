@@ -144,10 +144,12 @@ public class Prices {
 	
 	/** Make sure bid or ask is near a recent last when order size is rounded to zero */
 	public boolean hasNear(boolean buy) {
-		return System.currentTimeMillis() - m_time <= RECENT && 
-			(buy 
-				? (m_last - m_ask) / m_last <= NEAR
-				: (m_bid - m_last) / m_last <= NEAR);
+		return 
+				m_bid <= m_ask &&  // bid/ask should not be crossed 
+				System.currentTimeMillis() - m_time <= RECENT &&  // last price is recent 
+				(buy 
+						? (m_last - m_ask) / m_last <= NEAR   // for a buy order, make sure the ask is not very low
+						: (m_bid - m_last) / m_last <= NEAR); // for a sell order, make sure the bid is not very high 
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");
