@@ -153,6 +153,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
+		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
@@ -226,7 +227,7 @@ public class Main implements ITradeReportHandler {
 
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
-	JsonObject readConfig(Book book, int type) throws Exception {
+	JsonObject readConfig(Book book, int type) throws Exception {   // remove the type parameter after 9/9/23 and read all entries and delete type-1 entries from Jitin-config
 		JsonObject obj = new JsonObject();
 		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {
 			if (row.getInt("Type") == type) {
