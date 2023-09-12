@@ -40,7 +40,8 @@ public class NewSheet {
 	public static final String Tw = "1NIK0RFtpsquqTqw3CPDuKne7icyl0ny1O9J3u6bfpMU";
 	public static final String Rjjw = "15GeuF0_20-2v-vg8po6RuOB4HbztaaxKVEuvPfsCD5M";
 	public static final String Reflection = "1yxE8i8Qfm0ppLXI_GF0AB4n-p3yL_jqNF8ESIz-OZCA";
-	public static String Remittance = "16jO882MA5_Lvehh1sEbgjkfVjjtcb7tH4h-GmnRSuYM";
+	public static final String Remittance = "16jO882MA5_Lvehh1sEbgjkfVjjtcb7tH4h-GmnRSuYM";
+	public static final String LinkedIn = "1Q_kM-6j_xbhebiJJP_sxWRP6q4gObr-KTGxCB1cgt-k";
 	//public static String Remittance = "1Rc4hUFlqjaHE-4DSZs9Q1KLQSa9zWre5P-Dj5x06ZyE"; // test
 	
 	public static void main(String[] args) throws Exception {
