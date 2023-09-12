@@ -1,5 +1,8 @@
 package test;
 
+import java.io.IOException;
+import java.util.Scanner;
+
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
@@ -12,16 +15,26 @@ import tw.util.S;
 public class UpdateEmails {
 	static ChromeDriver driver;
 	
-	public static void main(String[] args) {
-		try {
-			login();
-			S.sleep(1000);
+	public static void main(String[] args) throws Exception {
+
+		login("heather@briscoinvestments.com", "16Sixteen!");
+		S.sleep(1000);
+		process("Heather");
+		driver.close();
 			
-			GTable tab = new GTable( NewSheet.Reflection, "LI", "URL", "Email Address");
+		login("peteraspiro@gmail.com", "1359ab");
+		S.sleep(1000);
+		process("Pete");
+		driver.close();
+	}
+	
+	static void process(String tabName) {
+		try {
+			GTable tab = new GTable( NewSheet.LinkedIn, tabName, "URL", "Email Address");
 			
 			tab.keySet().forEach( url -> {
 				String email = tab.get(url);
-				if (S.isNull(email) ) {
+				if (S.isNotNull(url) && S.isNull(email) ) {
 					try {
 						email = getEmail(url);
 						if (S.isNotNull(email) ) {
@@ -29,6 +42,7 @@ public class UpdateEmails {
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
+						pause();
 					}
 				}
 			});
@@ -44,15 +58,20 @@ public class UpdateEmails {
 
 		// go to one person
 		driver.get(url); 
-		S.sleep(1000);
+		S.sleep(3000);
 		
 		String email = driver
-				.findElementByXPath("//*[@class=\"artdeco-modal__content ember-view\"]/section/div/section[2]/div/a")
+				.findElementByXPath("/html/body/div[3]/div/div/div[2]/section/div/section[3]/div/a")
 				.getAttribute("href")
 				.substring(7);
 		
 		S.out("  found " + email);
 		return email;
+	}
+
+	private static void pause() {
+		new Scanner(System.in).nextLine();
+		S.out("read");
 	}
 
 	public static ChromeDriver createDriver(String version) throws Exception {
@@ -62,17 +81,18 @@ public class UpdateEmails {
 		return new ChromeDriver();
 	}
 	
-	static void login() throws Exception {
+	static void login(String username, String pword) throws Exception {
 		driver = createDriver("116");
 		driver.get("https://www.linkedin.com/");
-		S.sleep(2000);
+		//S.sleep(1000);
+		pause();
 
 		WebElement ele;
 		ele = driver.findElementById("session_key");
-		ele.sendKeys("peteraspiro@gmail.com");
+		ele.sendKeys(username);
 
 		ele = driver.findElementById("session_password");
-		ele.sendKeys("1359ab");
+		ele.sendKeys(pword);
 
 		// click Login
 		ele = driver.findElementByCssSelector("#main-content > section.section.min-h-\\[560px\\].flex-nowrap.pt-\\[40px\\].babybear\\:flex-col.babybear\\:min-h-\\[0\\].babybear\\:px-mobile-container-padding.babybear\\:pt-\\[24px\\] > div > div > form > div.flex.justify-between.sign-in-form__footer--full-width > button");

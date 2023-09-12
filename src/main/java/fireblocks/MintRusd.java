@@ -6,7 +6,7 @@ import tw.google.NewSheet;
 
 public class MintRusd {
 	public static void main(String[] args) throws Exception {
-		mint("0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce", 100000);
+		mint("0xb781012C022FcD149645e2b16Dfd2E920754514f", 100000);
 	}
 	
 	static void mint(String wallet, double amt) throws Exception {
@@ -18,7 +18,7 @@ public class MintRusd {
 		String id = config
 				.rusd()
 				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0);
-		Fireblocks.waitForStatus(id, "CONFIRMED");
+		Fireblocks.waitForStatus(id, "COMPLETED");
 		
 		
 	}
