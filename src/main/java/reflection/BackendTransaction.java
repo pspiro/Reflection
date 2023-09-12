@@ -353,7 +353,7 @@ public class BackendTransaction extends MyTransaction {
 			String email = data.getString( "email");
 			require( Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email '%s' is invalid for wallet '%s'", email, wallet);
 			
-			String code = Util.uid(5);
+			String code = Util.uin(5);
 			S.out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);
 			
 			mapWalletToCode.put( wallet, code); // save code 

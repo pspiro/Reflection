@@ -391,6 +391,14 @@ public class Util {
 		return b.toString();
 	}
 
+	/** Return an id of n chars where each char is between 0 and 9 */
+	public static String uin(int n) {  //note that it could begin with a zero
+		StringBuilder b = new StringBuilder();
+		for (int i = 0; i < n; i++) 
+			b.append( (char)('0' + rnd.nextInt(10) ) );
+		return b.toString();
+	}
+
 	public interface Creator<T> {
 		T instance();
 	}
