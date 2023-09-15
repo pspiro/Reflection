@@ -1,5 +1,9 @@
 package monitor;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
 import javax.swing.table.TableCellRenderer;
@@ -7,10 +11,10 @@ import javax.swing.table.TableCellRenderer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import common.Util;
 import tw.util.MyTableModel;
+import tw.util.S;
 
-class JsonModel extends MyTableModel {
+abstract class JsonModel extends MyTableModel {
 	final String[] names;
 	final HashMap<Integer,String> m = new HashMap<>(); // map index to name
 	JsonArray m_ar = new JsonArray();
@@ -42,8 +46,7 @@ class JsonModel extends MyTableModel {
 		return -1;
 	}
 	
-	void refresh( ) throws Exception { // needed?
-	}
+	abstract void refresh() throws Exception;
 	
 	@Override public int getRowCount() {
 		return m_ar.size();
@@ -68,6 +71,19 @@ class JsonModel extends MyTableModel {
 	
 	JsonObject getRow(int i) {
 		return m_ar.get(i);
+	}
+	
+	@Override public void onRightClick(MouseEvent e, int row, int col) {
+		String str = (String)getValueAt(row, col);
+		
+//		JMenuItem it = new JMenuItem("Copy");
+//		it.addActionListener( ev - > copy() );
+//		JPopupMenu menu = new JPopupMenu(it);
+//		menu.add(it);
+        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+        StringSelection strse1 = new StringSelection(str);
+        clip.setContents(strse1, strse1);
+        S.out( "Copyied %s to cliboard", str);
 	}
 	
 }

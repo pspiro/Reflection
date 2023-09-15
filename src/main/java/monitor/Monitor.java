@@ -41,7 +41,7 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		new Monitor( args[0] );
+		new Monitor( "Dt-config");
 	}
 	
 	Monitor(String tabName) throws Exception {
@@ -68,7 +68,7 @@ public class Monitor {
 		m_tabs.addTab( "Home", new HomePanel() );
 		m_tabs.addTab( "Misc", new MiscPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
-		m_tabs.addTab( "Transactions", createTransPanel() );
+		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
@@ -105,17 +105,6 @@ public class Monitor {
 	static QueryPanel createUsersPanel() {
 		String names = "wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
-		return new QueryPanel( names, sql);
-	}
-
-	public static QueryPanel createTransPanel() {
-		String names = "wallet_public_key,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,timestamp,cumfill,side,avgprice,exchange,time,order_id,tradekey";
-		String sql = """
-				select *
-				from crypto_transactions ct
-				left join trades tr on ct.order_id = tr.order_id
-				;""";
-//				join commissions co on tr.tradekey = co.tradekey
 		return new QueryPanel( names, sql);
 	}
 

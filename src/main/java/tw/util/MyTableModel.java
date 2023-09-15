@@ -26,7 +26,7 @@ public abstract class MyTableModel extends AbstractTableModel {
 	public void onLeftClick(MouseEvent e, int row, int col) {
 	}
 
-	public void onRightClick(MouseEvent e) {
+	public void onRightClick(MouseEvent e, int row, int col) {
 	}
 
 	public void onDoubleClick(int row, int col) {
@@ -41,6 +41,7 @@ public abstract class MyTableModel extends AbstractTableModel {
 
 	public void selectionChanged(ListSelectionEvent e) {
 	}
+	
 	
 	public JScrollPane createTable() {
 		return new JScrollPane( new MyTable( this) );

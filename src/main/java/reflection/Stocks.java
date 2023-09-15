@@ -17,7 +17,7 @@ public class Stocks implements Iterable<Stock> {
 	private static Stock NULL = new Stock();
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final JsonArray m_hotStocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	
 	public void readFromSheet(ConfigBase config) throws Exception {
 		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);

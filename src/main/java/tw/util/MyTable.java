@@ -35,7 +35,7 @@ public class MyTable extends JTable { // nicole
 		addMouseListener( new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				if (SwingUtilities.isRightMouseButton(e) ) {
-					getModel().onRightClick(e);
+					getModel().onRightClick(e, rowAtPoint(e.getPoint()), columnAtPoint(e.getPoint()) );
 				}
 				else if (e.getClickCount() == 2) {
 					int row = rowAtPoint( e.getPoint() );

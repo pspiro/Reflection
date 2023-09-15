@@ -91,6 +91,8 @@ public class OrderTransaction extends MyTransaction {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 		
+		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
+		
 		// make sure trading is not restricted for this stock
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 

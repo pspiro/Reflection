@@ -1,6 +1,7 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JPanel;
 
@@ -31,7 +32,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 		m_model.refresh();
 	}
 	
-	static class QueryModel extends JsonModel {
+	class QueryModel extends JsonModel {
 		final String m_sql;
 
 		QueryModel( String allNames, String sql) {
@@ -39,7 +40,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 			m_sql = sql;
 		}
 		
-		void refresh( ) throws Exception {
+		@Override void refresh( ) throws Exception {
 			m_ar = Monitor.m_config.sqlQuery( conn -> conn.queryToJson(m_sql) );
 			m_ar.forEach( obj -> adjust(obj) );
 			fireTableDataChanged();
@@ -51,6 +52,10 @@ public class QueryPanel extends JPanel implements RefPanel {
 
 	@Override public void activated() {
 		Util.wrap( () -> refresh() );
+	}
+
+	/** Override me */
+	public void onRightClick(MouseEvent e, int row, int col) {
 	}
 
 	@Override public void closed() {

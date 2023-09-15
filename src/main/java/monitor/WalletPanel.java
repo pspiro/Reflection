@@ -53,7 +53,7 @@ public class WalletPanel extends JPanel implements RefPanel {
 	
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
-
+		
 		Monitor.queryObj("/api/mywallet/" + m_wallet.getText(), obj -> {
 			JsonArray ar = obj.getArray("tokens");
 			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 

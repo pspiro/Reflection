@@ -38,4 +38,25 @@ public class HttpClient {
 		
 		Util.require( getStatusCode() == 200, "Error status code %s - %s", getStatusCode(), getBody() );
 	}
+
+	public void get(String url) throws Exception {
+	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
+		client
+			.prepare("GET", url)
+			.setHeader("accept", "application/json")
+			.setHeader("content-type", "application/json")
+		  	.execute()
+		  	.toCompletableFuture()
+		  	.thenAccept( obj -> {
+		  		try {
+		  			client.close();
+		  			m_obj = obj;
+		  		}
+		  		catch (Exception e) {
+		  			e.printStackTrace();
+		  		}
+		  	}).join();  // the .join() makes it synchronous
+		
+		Util.require( getStatusCode() == 200, "Error status code %s - %s", getStatusCode(), getBody() );
+	}
 }

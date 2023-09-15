@@ -1,7 +1,5 @@
 package common;
 
-import static reflection.Main.require;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;

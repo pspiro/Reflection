@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.MyAsyncClient;
 
 public class SouthPanel extends JPanel {
 	static SimpleDateFormat fmt = new SimpleDateFormat("HH:mm:ss");
