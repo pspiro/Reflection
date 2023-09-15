@@ -35,6 +35,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		super();
 	}
 
+	public JsonObject(HashMap<String,Object> base) {
+		super(base);
+	}
+
 	/**
 	 * Allows creation of a JSONObject from a Map. After that, both the
 	 * generated JSONObject and the Map can be modified independently.

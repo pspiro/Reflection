@@ -373,24 +373,21 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleUpdateProfile() {
 		wrap( () -> {
-            JsonObject profile = parseToObject();
+            Profile profile = new Profile( parseToObject() );
 			
-			String wallet = profile.getLowerString("wallet_public_key");
-			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet '%s' is invalid", wallet);
+			profile.validate();
 			
-			String email = profile.getString("email");
-			require( S.isNull(email) || Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email address '%s' is invalid", email);
+			String wallet = profile.wallet();
 			
-			// if email has changed and is not null, they must submit a valid verification code from the validateEmail() message
-			if (S.isNotNull(email) && !email.equalsIgnoreCase( getExistingEmail(wallet) ) ) {
+			// if email has changed, they must submit a valid verification code from the validateEmail() message
+			if (!profile.email().equalsIgnoreCase( getExistingEmail(wallet) ) ) {
 				require( profile.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(wallet) ),
 						RefCode.INVALID_REQUEST,
 						"The email verification code is incorrect");
 				mapWalletToCode.remove(wallet); // remove only if there is a match so they can try again
 			}
 
-			// add/remove fields to profile
-			profile.put( "wallet_public_key", wallet);
+			// add/remove fields to prepare for database insertion
 			profile.put( "active", true);
 			profile.remove("email_confirmation"); // don't want to store this in db
 			

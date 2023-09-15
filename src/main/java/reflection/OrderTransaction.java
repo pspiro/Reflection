@@ -94,8 +94,10 @@ public class OrderTransaction extends MyTransaction {
 		// make sure trading is not restricted for this stock
 		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
-		// if order is above max non-KYC size, verify they have passed KYC (must come after m_wallet is set)
-		verifyPersonalInfo( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );
+		// get user profile from DB and validate it
+		Profile profile = getProfile(); 
+		profile.validate();
+		profile.checkKyc( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );  // if order is above max non-KYC size, verify they have passed KYC
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// only trade and redeem messages need this
@@ -204,25 +206,10 @@ public class OrderTransaction extends MyTransaction {
 		});
 	}
 
-	private void verifyPersonalInfo(boolean smallOrder) throws Exception {
-		// get user entry from DB
+	private Profile getProfile() throws Exception {
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 		require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "No user record found for wallet %s", m_walletAddr);
-		
-		// check that we have values required fields
-		JsonObject obj = ar.get(0);
-		for (String tag : "first_name,last_name,email,phone,aadhaar,pan_number".split(",") ) {
-			require (obj.has( tag), RefCode.INVALID_USER_PROFILE, "Missing user attribute '%s' for wallet %s; please update your profile", tag, m_walletAddr);
-		}
-
-		// check pan and aadhaar
-		require( obj.getString("aadhaar").length() == 12, RefCode.INVALID_USER_PROFILE, "Aadhaar '%s' is invalid", obj.getString("aadhaar") ); 
-		require( obj.getString("pan_number").length() == 10, RefCode.INVALID_USER_PROFILE, "PAN '%s' is invalid", obj.getString("pan_number") );
-		
-		// check kyc_status
-		require(smallOrder || obj.has("persona_response") && obj.getBool("kyc_status"), 
-				RefCode.NEED_KYC, 
-				"KYC must be completed for this order");
+		return new Profile(ar.get(0));
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
