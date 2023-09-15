@@ -388,7 +388,6 @@ public class BackendTransaction extends MyTransaction {
 			}
 
 			// add/remove fields to prepare for database insertion
-			profile.put( "active", true);
 			profile.remove("email_confirmation"); // don't want to store this in db
 			
 			// insert or update record in users table

@@ -1,6 +1,6 @@
 package test;
 
-import java.io.IOException;
+import java.util.Random;
 import java.util.Scanner;
 
 import org.openqa.selenium.WebElement;
@@ -42,7 +42,7 @@ public class UpdateEmails {
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
-						pause();
+						//pause();
 					}
 				}
 			});
@@ -52,16 +52,37 @@ public class UpdateEmails {
 		}
 	}
 	
+	static Random rnd = new Random();
+	
 	static String getEmail(String urlIn) throws Exception {
 		String url = urlIn + "/overlay/contact-info/"; 
 		S.out( "Checking " + url);
 
 		// go to one person
-		driver.get(url); 
-		S.sleep(3000);
-		
+		driver.get(url);
+		S.sleep(20000 + rnd.nextInt(20000) );  // sleep 20-40 seconds
+
+		// //*[@id="ember52"]/section/div/section[2]/div/a
+		String str1 = "/html/body/div[3]/div/div/div[2]/section/div/section[2]/div/a";
+		String str2 = "/html/body/div[3]/div/div/div[2]/section/div/section[3]/div/a";
+		String str3 = "/html/body/div[3]/div/div/div[2]/section/div/section[4]/div/a";
+
+		try {
+			return get(str1);
+		}
+		catch(Exception e) {
+			try {
+				return get(str2);
+			}
+			catch(Exception e2) {
+				return get(str3);
+			}
+		}
+	}
+	
+	static String get(String xpath) {
 		String email = driver
-				.findElementByXPath("/html/body/div[3]/div/div/div[2]/section/div/section[3]/div/a")
+				.findElementByXPath(xpath)
 				.getAttribute("href")
 				.substring(7);
 		

@@ -13,7 +13,6 @@ public class TestPostgres {
 		
 		JsonObject obj = new JsonObject();
 		obj.put("name", "peter");
-		obj.put("active", true);
 		
 		config.sqlCommand( conn -> {
 			conn.execute( "delete from users where name = 'peter'");

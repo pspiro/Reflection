@@ -103,7 +103,7 @@ public class Monitor {
 	}
 
 	static QueryPanel createUsersPanel() {
-		String names = "wallet_public_key,first_name,last_name,email,phone,aadhaar,active,address,city,country,created_at,id,is_black_listed,kyc_status,pan_number,persona_response,updated_at";
+		String names = "wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
 		return new QueryPanel( names, sql);
 	}

@@ -118,8 +118,6 @@ public class CreateTables  {
 //		wallet_public_key varchar(42) unique CHECK (lowercase_column = LOWER(lowercase_column))
 //		kyc_status  // should remove this and check 
 //		address
-//		active
-//		is_black_listed
 //		created_at
 //		updated_at
 //		city
