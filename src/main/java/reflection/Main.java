@@ -457,7 +457,7 @@ public class Main implements ITradeReportHandler {
 		obj.put( "tradekey", tradeKey);
 		
 		try {
-			log( LogType.TRADE, obj.toString() );
+			log( LogType.TRADE, obj.toString() );  // we don't really need both of these, but it might be convenient for trouble-shooting
 			sqlConnection( conn -> conn.insertJson( "trades", obj) );
 		} catch (Exception e) {
 			e.printStackTrace();

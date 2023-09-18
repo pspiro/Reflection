@@ -35,6 +35,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 	
+	/** Return live orders to Frontend for a single wallet */
 	public void handleLiveOrders() {
 		wrap( () -> {
 			String walletAddr = getWalletFromUri();
@@ -44,7 +45,7 @@ public class LiveOrderTransaction extends MyTransaction {
 
 			List<OrderTransaction> walletOrders = liveOrders.get(walletAddr.toLowerCase());
 			if (walletOrders != null) {
-				Iterator<OrderTransaction> iter = walletOrders.iterator();
+				Iterator<OrderTransaction> iter = walletOrders.iterator();  // get list for this wallet
 				while (iter.hasNext() ) {
 					OrderTransaction liveOrder = iter.next();
 					
@@ -75,18 +76,17 @@ public class LiveOrderTransaction extends MyTransaction {
 	/** This handles a message from the FbActiveServer which is monitoring for blockchain transactions */
 	public void handleFireblocks() {
 		wrap( () -> {
-			parseMsg();
+			parseMsg();  // (all keys -> lower case)
 			
 			String id = m_map.getRequiredParam("id");
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
-			String hash = S.notNull( m_map.getParam("txHash") );
+			String hash = S.notNull( m_map.getParam("txhash") );
 			
 			updateCryptoTable( id, status, hash);
 			
 			OrderTransaction liveOrder = allLiveOrders.get(id);
 			
 			if (liveOrder != null) {
-				log( LogType.FB_UPDATE, "uid=%s  status=%s", liveOrder.uid(), status);
 				liveOrder.onUpdateStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
@@ -98,14 +98,16 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 
-	private void updateCryptoTable(String id, FireblocksStatus status, String hash) {
+	private void updateCryptoTable(String uid, FireblocksStatus status, String hash) {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 		try {
+			log( LogType.FB_UPDATE, "uid=%s  status=%s  hash=%s", uid, status, hash); // this give us the history of the timing
+
 			JsonObject obj = new JsonObject();
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 			
-			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "fireblocks_id = '%s'", id) );				
+			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "fireblocks_id = '%s'", uid) );				
 		}
 		catch( Exception e) {
 			e.printStackTrace();

@@ -65,7 +65,7 @@ public class FbActiveServer {
 			// we're querying only for transactions in the last five minutes
 			try {
 				if (m_dots) System.out.print('.');
-				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 5);
+				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 3);
 				
 				for (JsonObject obj : ar) {
 					process( new Trans(obj) );
@@ -90,7 +90,7 @@ public class FbActiveServer {
 				
 				// append hash only if not null; RefAPI can't handle null params in URI
 				if (S.isNotNull(trans.hash() ) ) {
-					uri = String.format("%s&hash=%s", uri, trans.hash() );
+					uri = String.format("%s&txHash=%s", uri, trans.hash() );
 				}
 	
 				// use MyHttpClient since this is a local transaction
