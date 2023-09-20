@@ -405,7 +405,9 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleSignup() {
 		wrap( () -> {
-			parseToObject().display();
+			JsonObject obj = parseToObject();
+			S.out( "Received " + obj); 
+			Main.m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
 			respondOk();
 		});
 	}
