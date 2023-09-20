@@ -405,6 +405,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleSignup() {
 		wrap( () -> {
+			parseToObject().display();
 			respondOk();
 		});
 	}
