@@ -227,7 +227,7 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	static JsonObject createOrder3(String json) throws Exception {
-		JsonObject obj = JsonObject.parse( Util.toJson(json) );
+		JsonObject obj = JsonObject.parse( Util.fmtJson(json) );
 		obj.put("cookie", Cookie.cookie);
 		obj.put("currency", "USDC");
 		obj.put("wallet_public_key", Cookie.wallet);

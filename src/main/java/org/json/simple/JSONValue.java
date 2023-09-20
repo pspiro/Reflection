@@ -172,8 +172,8 @@ public class JSONValue {
 		if(value == null)
 			return "null";
 		
-		if(value instanceof String)
-			return "\""+escape((String)value)+"\"";
+		if(value instanceof String || value instanceof Enum)  // treat enums like strings
+			return "\""+escape(value.toString())+"\"";
 		
 		if(value instanceof Double){
 			if(((Double)value).isInfinite() || ((Double)value).isNaN())

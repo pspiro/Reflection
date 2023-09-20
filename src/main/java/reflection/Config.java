@@ -249,13 +249,13 @@ public class Config extends ConfigBase {
 		
 		for (Field field : Config.class.getDeclaredFields() ) {
 			Object obj = field.get(this);
-			if (obj != null && Util.isPrimitive(obj.getClass()) ) {
+			if (obj != null && Util.isPrimitive(obj.getClass()) ) { // add || obj instanceof Enum if you want to support enum member vars
 				list.add( field.getName() );
 				list.add(obj);
 			}
 		}
 		
-		return Util.toJsonMsg( list.toArray() );
+		return Util.toJson( list.toArray() );
 	}
 
 	/** Populate google sheet from database. */
@@ -298,54 +298,6 @@ public class Config extends ConfigBase {
 			row.setValue( "Type", type);
 			row.update();
 		}
-	}
-
-	void pushBackendConfig(MySqlConnection database) throws Exception {
-		// read from google sheet
-		Tab tab = NewSheet.getTab( NewSheet.Reflection, backendConfigTab);
-
-		//validateBackendConfig( table);
-
-		// build the sql string for type 1 config
-		StringBuilder sql = new StringBuilder( "update system_configurations set ");
-		boolean first = true;
-
-		for (ListEntry row : tab.fetchRows() ) {
-			String tag = row.getString( "Tag");
-			String value = row.getString( "Value");
-			String type = row.getString("Type");
-			
-			// don't update database with null values; do that manually if needed
-			// this is to protect against wiping out config values by mistake
-			if (S.isNull( tag) || S.isNull( value) ) {
-				continue;
-			}
-			
-			if ("1".equals( type) ) {
-				if (S.isNotNull( tag) && S.isNotNull( value) ) {
-					if (!first) {
-						sql.append( ",");
-					}
-
-					String formatStr = Util.isNumeric( value) ? "%s=%s" : "%s='%s'";
-					sql.append( String.format( formatStr, tag, value) );
-					first = false;
-				}
-				
-			}
-			else if ("2".equals( type) ) {
-				String description = row.getString( "Description");
-				insertOrUpdate( database, tag, value, description);
-				
-			}
-			else if (S.isNotNull( tag) ) {
-				Main.require( false, RefCode.UNKNOWN, "Invalid value in Type column (missing entry?) on backend config tab");
-			}
-		}		
-
-		// update the system_configurations table (type 1)
-		S.out( sql);
-		database.execute( sql.toString() );
 	}
 
 	static String[] configColumnNames = { "key", "value", "description" };

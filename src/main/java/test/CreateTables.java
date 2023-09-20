@@ -13,7 +13,7 @@ public class CreateTables  {
 
 	public static void main(String[] args) {
 		try {
-//			con.connect(dbUrl, dbUser, dbPassword);
+			con.connect(dbUrl, dbUser, dbPassword);
 //			con.execute("alter table users add column first_name varchar(50)");
 //			con.execute("alter table users add column last_name varchar(50)");
 //			con.execute("update users set first_name = 'peter', last_name='spiro'");
@@ -23,6 +23,7 @@ public class CreateTables  {
 //			new CreateTables().createCryptoTransactions();
 //			//new CreateTables().createTrades();
 			//new CreateTables().createCommTable();
+			new CreateTables().createLogTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -42,6 +43,19 @@ public class CreateTables  {
 		con.execute(sql);
 	}
 	
+	void createLogTable() throws Exception {
+		con.dropTable("commissions");
+		
+		String sql = "create table log ("
+			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+				+ "type varchar(32),"
+			    + "uid varchar(8),"
+				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
+			    + "data jsonb"  // see TestLog for how to read this back into a JsonObject
+				+ ")";
+		con.execute(sql);
+	}
+	
 	void createCryptoTransactions() throws Exception {
 		con.dropTable("crypto_transactions");
 		
@@ -56,7 +70,7 @@ public class CreateTables  {
 				+ "price double precision check (price > 0),"
 				+ "order_id int,"  // could be zero
 				+ "perm_id int,"  // could be zero
-				+ "timestamp bigint,"   // eight bytes, signed
+				+ "timestamp bigint,"   // eight bytes, signed, seconds, change to ms
 				+ "blockchain_hash varchar(66),"
 				+ "commission double precision,"  // change this to comm_charged
 				+ "tds double precision,"				
