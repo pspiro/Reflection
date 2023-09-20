@@ -116,7 +116,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFbActiveServer();
+		////////checkFbActiveServer();
 		
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
@@ -147,6 +147,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/get-profile", exch -> new BackendTransaction(this, exch).handleGetProfile() );
 		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
+		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch).handleFireblocks() ); // report build date/time
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
