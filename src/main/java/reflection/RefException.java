@@ -25,7 +25,7 @@ public class RefException extends Exception {
 	
 	public static JsonObject eToJson(Exception e, RefCode refCode) {
 		return Util.toJson(
-				"code", refCode.toString(), 
+				"code", refCode, 
 				"message", e.getMessage(),
 				"statusCode", 400
 			);

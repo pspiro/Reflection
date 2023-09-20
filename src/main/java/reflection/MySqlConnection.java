@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.postgresql.util.PSQLException;
@@ -114,6 +115,17 @@ public class MySqlConnection implements AutoCloseable {
 		return execute( String.format("update %s set %s where %s", table, values, String.format(where, params) ) );
 	}
 	
+	/** These types are supported and get quoted */
+	private static boolean getsQuoted(Object val) {
+		return val instanceof String || val instanceof JSONAware || val instanceof Enum;
+	}
+	
+	/** Return true for all supported types;
+	 *  note that String is both primitive and gets quoted */
+	private static boolean isSupportedType(Object val) {
+		return Util.isPrimitive(val.getClass()) || getsQuoted(val);
+	}
+	
 	/** If column names are not given, you can (must) give any number of columns starting with the first.
 	 *  Single-quotes in the values are supported */  
 	public void insert( String table, String[] columnNames, Object... values) throws Exception {
@@ -126,7 +138,7 @@ public class MySqlConnection implements AutoCloseable {
 				valStr.append(',');
 			}
 			if (val != null) {
-				Util.require( Util.isPrimitive(val.getClass()), "Cannot insert non-primitive type " + val.getClass() );
+				Util.require( isSupportedType(val) , "Cannot insert non-primitive type " + val.getClass() );
 				valStr.append( toSqlValue(val) );
 			}
 			else {
@@ -155,8 +167,8 @@ public class MySqlConnection implements AutoCloseable {
 
 	/** Put strings in single quotes */
 	private String toSqlValue(Object val) {
-		return val instanceof String 
-				? String.format( "'%s'", Util.dblQ((String)val))  // double-up the single-quotes 
+		return getsQuoted(val)
+				? String.format( "'%s'", Util.dblQ(val.toString()))  // double-up the single-quotes 
 				: val.toString(); 
 	}
 

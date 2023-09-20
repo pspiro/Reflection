@@ -107,7 +107,7 @@ public class Monitor {
 
 	// add the commission here as well
 	private JComponent createTradesPanel() {
-		String names = "uid,action,quantity,conid,price,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
+		String names = "uid,action,quantity,conid,pricewallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users limit 100";
 		return new QueryPanel( names, sql);
 	}

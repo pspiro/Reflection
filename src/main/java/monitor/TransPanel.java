@@ -1,6 +1,7 @@
 package monitor;
 
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
 
 import org.json.simple.JsonObject;
 
@@ -30,6 +31,8 @@ public class TransPanel extends QueryPanel implements RefPanel {
 	@Override public void closed() {
 	}
 	
+	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
+
 	class TransModel extends QueryModel {
 		public TransModel(String allNames, String sql) {
 			super(allNames, sql);

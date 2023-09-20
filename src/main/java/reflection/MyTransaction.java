@@ -286,11 +286,11 @@ public abstract class MyTransaction {
 	/** Writes entry to log table in database; must not throw exception */
 	void log( LogType type, String wallet, JsonObject json) {
 		try {
-			JsonObject log = new JsonObject();
-			log.put( "uid", m_uid);
-			log.put( "type", type);
-			log.put( "wallet_public_key", wallet);
-			log.put( "data", json);
+			JsonObject log = Util.toJson(
+					"uid", m_uid,
+					"type", type,
+					"wallet_public_key", wallet,
+					"data", json);
 			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
 		}
 		catch( Exception e) {

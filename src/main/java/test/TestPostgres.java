@@ -1,9 +1,11 @@
 package test;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import reflection.Config;
 import tw.util.S;
+import util.LogType;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -11,21 +13,29 @@ public class TestPostgres {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
-		JsonObject obj = new JsonObject();
-		obj.put("name", "peter");
+		JsonObject data = new JsonObject();
+		data.put("name", "peter");
+		//data.put("type", LogType.REC_ORDER);
+		
+//		config.sqlCommand( conn -> {
+//			String[] cols = { "wallet_public_key", "uid", "type", "data" };
+//			Object[] vals = { "my wallet", "my uid", "my type", data };
+//			conn.insert( "log", cols, vals);
+//		});
+		
+		JsonObject json = new JsonObject();
+		json.put("type", LogType.REC_ORDER);
+		json.put("type", LogType.REC_ORDER);
+		S.out( json);
 		
 		config.sqlCommand( conn -> {
-			conn.execute( "delete from users where name = 'peter'");
-			conn.insertOrUpdate("users", obj, "name = '%s'", "peter");
-			S.out(conn.queryToJson("select * from users where name = 'peter'"));
-
-			obj.put("address", "smallville");
-			conn.insertOrUpdate("users", obj, "name = '%s'", "peter");
-			
-			S.out(conn.queryToJson("select * from users where name = 'peter'"));
+			conn.insertJson("log", json);
 		});
 		
+		JsonArray ar = config.sqlQuery( conn -> conn.queryToJson("select * from log") );
+		ar.display();
 		
 		
 	}
 }
+// create a separate log table for exceptions? what is best way to insert call stack?
