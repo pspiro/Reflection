@@ -21,6 +21,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.StockToken;
+import redis.MktDataServer;
 import tw.util.S;
 import util.LogType;
 
@@ -155,7 +156,7 @@ public class OrderTransaction extends MyTransaction {
 				m_main.m_tradingHours.insideAnyHours( 
 						m_stock.getBool("is24hour"), 
 						m_map.get("simtime"), 
-						() -> contract.exchange("IBEOS") ),  // this executes only if SMART is closed but IBEOS is open 
+						() -> contract.exchange(MktDataServer.Ibeos) ),  // this executes only if SMART is closed but IBEOS is open 
 				RefCode.EXCHANGE_CLOSED, 
 				exchangeIsClosed);
 		

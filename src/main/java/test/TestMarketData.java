@@ -8,6 +8,9 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
+
+import redis.MktDataServer;
+
 import com.ib.controller.ConnectionAdapter;
 
 import reflection.Config;
@@ -29,7 +32,7 @@ public class TestMarketData extends ConnectionAdapter {
 		Contract c = new Contract();
 		c.symbol("AAPL");
 		c.currency("USD");
-		c.exchange("IBEOS");
+		c.exchange(MktDataServer.Ibeos);
 		c.secType("STK");
 		c.conid(265598);
 

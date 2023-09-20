@@ -33,6 +33,7 @@ public class MktDataServer {
 	//enum Status { Connected, Disconnected };
 	enum MyTickType { Bid, Ask, Last };
 
+	public static final String Ibeos = "OVERNIGHT"; 
 	private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");
 	private static final MktDataConfig m_config = new MktDataConfig();
 	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
@@ -175,7 +176,7 @@ public class MktDataServer {
 			// request price on IBEOS
 			if (stock.is24Hour() ) {
 				if (m_debug) S.out( "  requesting stock prices for %s on IBESO", stock.getConid() );
-				contract.exchange( "IBEOS");
+				contract.exchange( Ibeos);
 				mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 						MyTickType myTickType = getTickType(tickType);

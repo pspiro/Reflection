@@ -14,6 +14,7 @@ import com.ib.client.ContractDetails;
 import com.ib.controller.ApiController;
 
 import common.Util;
+import redis.MktDataServer;
 import tw.util.S;
 import util.LogType;
 
@@ -43,7 +44,7 @@ public class TradingHours {
 			Util.executeEvery( 0, interval, () -> {
 				S.out( "Querying for trading hours now");
 				query( stockConid, "SMART");
-				query( etf24Conid, "IBEOS");
+				query( etf24Conid, MktDataServer.Ibeos);
 			});
 		}
 	}
@@ -116,7 +117,7 @@ public class TradingHours {
 		boolean inside = insideHours( "SMART", now);
 			
 		if (!inside && is24Hour) {
-			inside = insideHours( "IBEOS", now);
+			inside = insideHours( MktDataServer.Ibeos, now);
 			if (inside) {
 				run.run();  // let the caller switch the exchange to IBEOS
 			}
@@ -144,7 +145,7 @@ public class TradingHours {
 		
 		return insideHours( "SMART", now)
 				? Session.Smart
-				: stock.is24Hour() && insideHours( "IBEOS", now) 
+				: stock.is24Hour() && insideHours( MktDataServer.Ibeos, now) 
 					? Session.Ibeos 
 					: Session.None;
 	}
