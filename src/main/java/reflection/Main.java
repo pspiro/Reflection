@@ -4,7 +4,6 @@ import java.io.OutputStream;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -116,7 +115,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFbActiveServer();
+		//checkFbActiveServer();
 		
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
@@ -166,7 +165,7 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
 		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> log(LogType.TERMINATE, "Received shutdown msg from linux kill command")));
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> S.out("Received shutdown msg from linux kill command")));
 	}
 
 	private void checkFbActiveServer() throws Exception {
@@ -253,11 +252,10 @@ public class Main implements ITradeReportHandler {
 	}
 
 	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
-	public HashMap getStockByTokAddr(String addr) throws RefException {
+	public JsonObject getStockByTokAddr(String addr) throws RefException {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
 		
-		for (Object obj : m_stocks.stocks() ) {
-			HashMap stock = (HashMap)obj;
+		for (JsonObject stock : m_stocks.stocks() ) {
 			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
 				return stock;
 			}
@@ -310,16 +308,16 @@ public class Main implements ITradeReportHandler {
 		void onTimer() {
 			try {
 				connectNow();
-				log( LogType.INFO, "connect() success");
+				S.out( "  connect() success");
 			}
 			catch( Exception e) {
-				log( LogType.ERROR, "connect() failure");
-				m_log.log(e);
+				S.out( "connect() failure");
+				e.printStackTrace();
 			}
 		}
 		
 		synchronized void connectNow() throws Exception {
-			log( LogType.INFO, "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
+			S.out( "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
 			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
 				throw new Exception("Could not connect to TWS");
 			}
@@ -332,7 +330,7 @@ public class Main implements ITradeReportHandler {
 
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
-			log( LogType.INFO, "Connected to TWS");
+			S.out( "Connected to TWS");
 			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
 
 			stopTimer();
@@ -346,7 +344,7 @@ public class Main implements ITradeReportHandler {
 			// order id's; it's because sometimes, after a reconnect or if TWS
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
-			log( LogType.INFO, "Received next valid id %s ***", id);  // why don't we receive this after disconnect/reconnect? pas
+			S.out( "***Received next valid id %s, completes login***", id);  // why don't we receive this after disconnect/reconnect? pas
 		}
 
 		@Override public synchronized void onDisconnected() {

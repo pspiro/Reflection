@@ -81,7 +81,7 @@ public class MoralisListener {
 			}
 
 			S.out( "-----ERC20 transfers");
-			for (JsonObject transfer : msg.getArray( "erc20Transfers") ) {
+			for (JsonObject transfer : msg.getArray( "erc20Transfers")) {
 	        	String token = transfer.getString( "contract").toLowerCase();
 	        	String from = transfer.getString( "from").toLowerCase();
 	        	String to = transfer.getString( "to").toLowerCase();

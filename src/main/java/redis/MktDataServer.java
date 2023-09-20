@@ -230,7 +230,7 @@ public class MktDataServer {
 	}
 
 	static void log( String text, Object... params) {
-		m_log.log( LogType.INFO, text, params);
+		m_log.log( LogType.MDS, text, params);
 	}
 
 	static void log( Exception e) {

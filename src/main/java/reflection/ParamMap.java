@@ -16,6 +16,11 @@ public class ParamMap {
 	public ParamMap() {
 		m_obj = new JsonObject();
 	}
+
+	/** Used for logging */
+	JsonObject obj() {
+		return m_obj;
+	}
 	
 	/** Returns lower case, interned string. */
 	String getParam(String tag) {

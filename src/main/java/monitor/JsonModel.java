@@ -61,9 +61,13 @@ abstract class JsonModel extends MyTableModel {
 	}
 
 	@Override public Object getValueAt(int row, int col) {
-		return m_ar.get(row).get( m.get(col) );
+		return format( m_ar.get(row).get( m.get(col) ) );
 	}
 	
+	protected Object format(Object value) {
+		return value;
+	}
+
 	public void onHeaderClicked(int col) {
 		m_ar.sortJson( names[col] );
 		fireTableDataChanged();
@@ -74,16 +78,14 @@ abstract class JsonModel extends MyTableModel {
 	}
 	
 	@Override public void onRightClick(MouseEvent e, int row, int col) {
-		String str = (String)getValueAt(row, col);
+		Object obj = (String)getValueAt(row, col);
 		
-//		JMenuItem it = new JMenuItem("Copy");
-//		it.addActionListener( ev - > copy() );
-//		JPopupMenu menu = new JPopupMenu(it);
-//		menu.add(it);
-        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
-        StringSelection strse1 = new StringSelection(str);
-        clip.setContents(strse1, strse1);
-        S.out( "Copyied %s to cliboard", str);
+		if (obj != null) {
+	        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+	        StringSelection strse1 = new StringSelection(obj.toString());
+	        clip.setContents(strse1, strse1);
+	        S.out( "Copyied %s to cliboard", obj);
+		}
 	}
 	
 }

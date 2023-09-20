@@ -5,7 +5,6 @@ import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
-import com.moonstoneid.siwe.error.SiweException;
 
 import common.Util;
 import http.MyAsyncClient;

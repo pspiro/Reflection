@@ -7,7 +7,7 @@ import tw.util.S;
 
 public class TestJson {
 	public static void main(String[] args) throws Exception {
-		String json = Util.toJson( "{'a': 3, 'b': 'bob' }");
+		String json = Util.fmtJson( "{'a': 3, 'b': 'bob' }");
 		
 		JsonObject obj = JsonObject.parse(json);
 		

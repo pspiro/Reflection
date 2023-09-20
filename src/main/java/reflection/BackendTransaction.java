@@ -44,8 +44,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonArray retVal = new JsonArray();
 			
-			for (HashMap.Entry<String,Double> entry : Wallet.reqPositionsMap(walletAddr).entrySet() ) {
-				HashMap stock = m_main.getStockByTokAddr( entry.getKey() );
+			Util.forEach( Wallet.reqPositionsMap(walletAddr).entrySet(), entry -> {
+				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
 					JsonObject resp = new JsonObject();
@@ -53,9 +53,9 @@ public class BackendTransaction extends MyTransaction {
 					resp.put("symbol", stock.get("symbol") );
 					resp.put("price", getPrice(stock) );
 					resp.put("quantity", entry.getValue() ); 
-					retVal.add(resp);
+					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
 				}
-			}
+			});
 			
 			respond(retVal);
 		});
@@ -309,7 +309,7 @@ public class BackendTransaction extends MyTransaction {
 		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
 		out( "FB id is %s", id2);
 
-		log( LogType.MINT, "Minted to %s", dest);
+		out( "Minted to %s", dest);
 	}
 
 	/** Respond with build date/time */

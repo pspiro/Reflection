@@ -190,7 +190,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	/** If the key does not exist, it returns an empty array */
 	public JsonArray getArray(String key) {
-		JsonArray array = (JsonArray)get(key);
+		JsonArray array = (JsonArray)get(key); // it's breakig here due to JsonArray changes; roll those back, we don't need array of non-json objs anymore
 		return array != null ? array : new JsonArray(); 
 	}
 

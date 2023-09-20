@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 	   TestFbOrders.class,
 	   TestGetPositions.class,
 	   TestGtable.class,
+	   TestLog.class,
 	   TestOrder.class,
 	   TestOrderNoAutoFill.class,
 	   TestOutsideHours.class,

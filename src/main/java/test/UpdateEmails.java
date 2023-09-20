@@ -91,7 +91,9 @@ public class UpdateEmails {
 	}
 
 	private static void pause() {
-		new Scanner(System.in).nextLine();
+		try(Scanner s = new Scanner(System.in)) {
+			s.nextLine();
+		}
 		S.out("read");
 	}
 

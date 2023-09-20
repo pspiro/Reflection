@@ -66,6 +66,10 @@ public class OrderTransaction extends MyTransaction {
 	// for the 
 
 	private void order() throws Exception {
+		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		jlog( LogType.REC_ORDER, m_map.obj() );
+		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
@@ -76,6 +80,7 @@ public class OrderTransaction extends MyTransaction {
 		String side = m_map.getRequiredParam("action");
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 		require( m_config.allowTrading().allow(side), RefCode.TRADING_HALTED, "Trading is temporarily halted. Please try your order again later.");
+		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 
 		m_desiredQuantity = m_map.getRequiredDouble( "quantity");
 		require( m_desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
@@ -86,10 +91,6 @@ public class OrderTransaction extends MyTransaction {
 		double preCommAmt = price * m_desiredQuantity;
 		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
 		require( Util.isLtEq(preCommAmt, maxAmt), RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
-
-		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 		
 		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
 		
@@ -171,8 +172,6 @@ public class OrderTransaction extends MyTransaction {
 		// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
 		// * or check that ANY price is pretty recent, to we know prices are updating
 		
-		log( LogType.REC_ORDER, m_order.getOrderLog(contract, m_walletAddr) );
-				
 		respond( code, RefCode.OK, "id", m_uid);
 		
 		// now it is up to the live order system to report success or failure
@@ -191,18 +190,16 @@ public class OrderTransaction extends MyTransaction {
 				// are pretty recent; if they are stale, we will fill the order with a bad price
 				require( m_stock.hasRecentPrices(isBuy()), RefCode.STALE_DATA, "There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
 				
-				out( "Not submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
+				jlog( LogType.NO_SUBMIT, m_order.getJsonLog(contract) );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
-				out( "Auto-filling order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				simulateFill(contract);
 			}
 			// submit order to IB
 			else {
-				out( "Submitting order  totalQty=%s  roundedQty=%s", m_order.totalQty(), m_order.roundedQty() );
 				submitOrder( contract);
 			}
 		});
@@ -239,10 +236,7 @@ public class OrderTransaction extends MyTransaction {
 				);
 		m_main.tradeReport( "TK" + rnd.nextInt(), contract, exec);  // you could simulate commission report as well 	
 
-		log( LogType.AUTO_FILL, "id=%s  action=%s  orderQty=%s  filled=%s  orderPrc=%s  commission=%s  tds=%s  hash=%s",
-				m_order.orderId(), m_order.action(), m_order.totalQty(), m_order.totalQty(), m_order.lmtPrice(),
-				m_config.commission(), 0, "");
-
+		jlog( LogType.AUTO_FILL, null);  // test system only 
 		onIBOrderCompleted( false ); // you might want to sometimes pass false here when testing
 	}
 
@@ -256,7 +250,7 @@ public class OrderTransaction extends MyTransaction {
 
 				shrinkWrap( () -> {
 					m_order.status(status);
-					out( "  order status  id=%s  status=%s", m_order.orderId(), status);
+					olog( LogType.ORDER_STATUS, "status", status);
 
 					// save the number of shares filled
 					m_filledShares = filled.toDouble();
@@ -273,7 +267,10 @@ public class OrderTransaction extends MyTransaction {
 
 			@Override public void handle(int errorCode, String errorMsg) {
 				shrinkWrap( () -> {
-					log( LogType.ORDER_ERR, "id=%s  errorCode=%s  errorMsg=%s", m_order.orderId(), errorCode, errorMsg);
+					olog( LogType.ORDER_ERR, 
+							"errorCode", errorCode,
+							"errorMsg", errorMsg,
+							"filled", m_filledShares);
 
 					// if some shares were filled, let orderStatus or timeout handle it
 					if (m_filledShares > 0) {
@@ -295,7 +292,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 		});
 
-		log( LogType.SUBMITTED, m_order.getOrderLog(contract, m_walletAddr) );
+		jlog( LogType.SUBMITTED, m_order.getJsonLog(contract) );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
@@ -308,13 +305,14 @@ public class OrderTransaction extends MyTransaction {
 		shrinkWrap( () -> {
 			if (!m_respondedToOrder) {
 				// this will happen if our timeout is lower than the timeout of the IOC order
-				log( LogType.ORDER_TIMEOUT, "id=%s   order timed out with %s shares filled and status %s", 
-						m_order.orderId(), m_filledShares, m_order.status() );
+				olog( LogType.ORDER_TIMEOUT, 
+						"sharesFilled", m_filledShares,
+						"orderStatus", m_order.status() );
 
 				// if order is still live, cancel the order; don't let an error here disrupt processing
 				if (!m_order.status().isComplete() && !m_order.status().isCanceled() ) {
 					try {
-						out( "Canceling order %s on timeout", m_order.orderId() );
+						jlog( LogType.CANCEL_ORDER, null);
 						m_main.orderController().cancelOrder( m_order.orderId(), "", null);
 					}
 					catch( Exception e) {
@@ -344,7 +342,7 @@ public class OrderTransaction extends MyTransaction {
 				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");
 		
 		// the order has been filled or partially filled; note that filledShares can be zero if the size was rounded down
-		log( LogType.FILLED, "orderId=%s  filledShares=%s", m_order.orderId(), m_filledShares);
+		olog( LogType.ORDER_FILLED, "filledShares", m_filledShares);
 		
 		if (fireblocks() ) {
 			onUpdateStatus(FireblocksStatus.STOCK_ORDER_FILLED); // set m_progress to 15%
@@ -383,7 +381,7 @@ public class OrderTransaction extends MyTransaction {
 				);
 			}
 			
-			// buy with BUSD
+			// buy with XUSD
 			else {
 				id = m_config.rusd().buyStock(
 						m_walletAddr,
@@ -404,6 +402,8 @@ public class OrderTransaction extends MyTransaction {
 					m_order.totalQty()
 			);
 		}
+		
+		olog( LogType.SUBMITTED_TO_FIREBLOCKS, "currency", m_map.getParam("currency") );
 		
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
@@ -444,7 +444,6 @@ public class OrderTransaction extends MyTransaction {
 			m_main.sqlConnection( conn -> conn.insertJson("crypto_transactions", obj) );
 		} 
 		catch (Exception e) {
-			log( LogType.ERROR, "Error inserting record into crypto_transactions table: " + e.getMessage() );
 			e.printStackTrace();
 		}
 	}
@@ -548,12 +547,12 @@ public class OrderTransaction extends MyTransaction {
 		}
 		catch( RefException e) {
 			out( e);
-			log( LogType.ERROR, e.toString() );
+			olog( LogType.EXCEPTION, "code", e.code(), "message", e.getMessage() );
 			onFail(e.getMessage(), e.code() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, S.notNull( e.getMessage() ) );
+			olog( LogType.EXCEPTION, "message", e.getMessage() );
 			onFail(e.getMessage(), null);
 		}
 	}
@@ -601,12 +600,12 @@ public class OrderTransaction extends MyTransaction {
 				
 				// this is not ideal because it will query the balances again which we just queried
 				// above when trying to determine why the order failed; should be rare, though
-				log( LogType.BLOCKCHAIN_FAILED, "The blockchain order failed  desired=%s  approved=%s  USDC=%s  RUSD=%s  StockToken=%s",
-						m_desiredQuantity,
-						Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
-						Main.m_config.busd().getPosition(m_walletAddr),
-						Main.m_config.rusd().getPosition(m_walletAddr),
-						newStockToken().getPosition( m_walletAddr) );
+				olog( LogType.BLOCKCHAIN_FAILED, 
+						"desired", m_desiredQuantity,
+						"approved", Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
+						"USDC", Main.m_config.busd().getPosition(m_walletAddr),
+						"RUSD", Main.m_config.rusd().getPosition(m_walletAddr),
+						"stockToken", newStockToken().getPosition( m_walletAddr) );
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -693,4 +692,14 @@ public class OrderTransaction extends MyTransaction {
 				isBuy() ? "Bought" : "Sold", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
 	}
 	
+	void olog(LogType type, Object... ar) {
+		jlog( type, Util.toJson(ar) );
+	}
+	
+	void jlog(LogType type, JsonObject json) {
+		super.log(type, m_walletAddr, json);
+	}
+	
 }
+// look at all the catch blocks, save message or stack trace
+// you have to not log the cookie

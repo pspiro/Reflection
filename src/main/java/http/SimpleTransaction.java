@@ -17,9 +17,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import json.StringJson;
 import reflection.Main;
-import reflection.ParamMap;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -88,11 +86,11 @@ public class SimpleTransaction {
 		return "";
 	}
 	
-	public ParamMap getMap() throws Exception {
+	public JsonObject receiveJson() throws Exception {
 		String uri = m_exchange.getRequestURI().toString().toLowerCase();
 		require( uri.length() < 4000, RefCode.UNKNOWN, "URI is too long");
 
-		ParamMap map = new ParamMap();
+		JsonObject map = new JsonObject();
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
 			S.out( "Received GET request %s %s", uri, m_exchange.getHttpContext().getPath() ); 
@@ -117,7 +115,7 @@ public class SimpleTransaction {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 				JSONParser parser = new JSONParser();
 	            JsonObject jsonObject = (JsonObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
-	            map = new ParamMap(jsonObject);
+	            map = jsonObject;
 			}
 			catch( Exception e) {
 				e.printStackTrace(); // should never happen
@@ -150,8 +148,8 @@ public class SimpleTransaction {
 		}
 	}
 
-	public void respondJson(String tag, String val) {
-		StringJson obj = new StringJson();
+	public void respondJson(String tag, Object val) {
+		JsonObject obj = new JsonObject();
 		obj.put( tag, val);
 		respond( obj.toString() );
 	}
@@ -181,5 +179,9 @@ public class SimpleTransaction {
 			}
 		}
 		S.out( "-----");
+	}
+
+	public void respond(JsonObject obj) {
+		respond(obj.toString());
 	}
 }

@@ -45,10 +45,11 @@ public abstract class MyTransaction {
 	protected Main m_main;
 	protected HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();  // change this to a JsonObject
+	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_uid;
+	private String m_header;  // SIN for all sign-in functions
 	
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, null);
@@ -57,7 +58,8 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uid = header == null ? Util.uid(6) : Util.uid(6) + " " + header;		
+		m_uid = Util.uid(8);
+		m_header = header;
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	
@@ -117,7 +119,7 @@ public abstract class MyTransaction {
 	/** @param data is an array of key/value pairs, does not work with objects */
 	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
 		if (data.length > 1 && data.length % 2 == 0) {
-			return respondFull( Util.toJsonMsg( data), 200, null);
+			return respondFull( Util.toJson( data), 200, null);
 		}
 		
 		// can't throw an exeption here
@@ -280,6 +282,21 @@ public abstract class MyTransaction {
 	/** Format to log is ID LOG_TYPE FORMATTED_MSG where id is 3-digit code plus prefix */
 	void log( LogType type, String format, Object... params) {
 		Main.log( S.format( "%s %s %s", m_uid, type, S.format(format, params) ) );  
+	}
+
+	/** Writes entry to log table in database; must not throw exception */
+	void log( LogType type, String wallet, JsonObject json) {
+		try {
+			JsonObject log = new JsonObject();
+			log.put( "uid", m_uid);
+			log.put( "type", type);
+			log.put( "wallet_public_key", wallet);
+			log.put( "data", json);
+			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/** Assumes the wallet address is the last token in the URI */

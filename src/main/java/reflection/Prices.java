@@ -84,7 +84,7 @@ public class Prices {
 
 	/** Returns bid/ask only */
 	public JsonObject toJson(int conid) throws RefException {
-		return Util.toJsonMsg( "bid", anyBid(), "ask", anyAsk() );
+		return Util.toJson( "bid", anyBid(), "ask", anyAsk() );
 	}
 	
 	/** Used for display on the Watch List */

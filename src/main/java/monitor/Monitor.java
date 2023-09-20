@@ -3,6 +3,7 @@ package monitor;
 import java.awt.BorderLayout;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -70,11 +71,13 @@ public class Monitor {
 		m_tabs.addTab( "Wallet", new WalletPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
+		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
+		m_tabs.addTab( "Log", new LogPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -100,6 +103,13 @@ public class Monitor {
 	
 	interface RefPanel extends INewTab {
 		void refresh() throws Exception; // called when Refresh button is clicked
+	}
+
+	// add the commission here as well
+	private JComponent createTradesPanel() {
+		String names = "uid,action,quantity,conid,pricewallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
+		String sql = "select * from users limit 100";
+		return new QueryPanel( names, sql);
 	}
 
 	static QueryPanel createUsersPanel() {

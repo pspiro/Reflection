@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
+import java.text.SimpleDateFormat;
 
 import javax.swing.JPanel;
 
@@ -49,6 +50,8 @@ public class QueryPanel extends JPanel implements RefPanel {
 		public void adjust(JsonObject obj) {
 		}
 	}
+
+	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");
 
 	@Override public void activated() {
 		Util.wrap( () -> refresh() );

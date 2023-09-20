@@ -6,6 +6,8 @@ package com.ib.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.simple.JsonObject;
+
 import com.ib.client.Types.Action;
 import com.ib.client.Types.AlgoStrategy;
 import com.ib.client.Types.HedgeType;
@@ -786,6 +788,19 @@ public class Order {
 				m_roundedQty, 
 				m_lmtPrice,
 				contract.exchange() 
+				);
+	}
+	
+	public JsonObject getJsonLog(Contract contract) {
+		return common.Util.toJson(
+				"id", m_orderId,
+				"permId", m_permId,
+				"action", m_action, 
+				"totalQty", m_totalQty, 
+				"roundedQty", m_roundedQty, 
+				"conid", contract.conid(), 
+				"lmtPrice=", m_lmtPrice,
+				"exchange", contract.exchange()
 				);
 	}
 

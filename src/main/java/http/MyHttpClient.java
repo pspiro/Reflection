@@ -205,4 +205,9 @@ public class MyHttpClient {
 	public void assertResponseCode(int code) throws Exception {
 		TestCase.assertEquals(code, getResponseCode() );
 	}
+
+	public JsonObject postToJson(String string, String data) throws Exception {
+		post(string, data);
+		return readJsonObject();
+	}
 }
