@@ -27,7 +27,7 @@ public class TestFbOrders extends MyTestCase {
 			// create Wallet instead and use that
 			showAmounts("pre-run");
 			
-			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenName", "TokenAddress");
+			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
 			busd = m_config.busd();
 			rusd = m_config.rusd();
