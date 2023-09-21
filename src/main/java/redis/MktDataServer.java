@@ -1,9 +1,7 @@
 package redis;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.TimeZone;
 
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;
@@ -34,7 +32,6 @@ public class MktDataServer {
 	enum MyTickType { Bid, Ask, Last };
 
 	public static final String Ibeos = "OVERNIGHT"; 
-	private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");
 	private static final MktDataConfig m_config = new MktDataConfig();
 	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	static boolean m_debug = false;
@@ -46,11 +43,6 @@ public class MktDataServer {
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();
 	private final boolean m_testing = false;  // must be false for production; this is used to put lots of fake prices out
 	
-	static {
-		TimeZone zone = TimeZone.getTimeZone("America/New_York");
-		hhmmEST.setTimeZone( zone);			
-	}
-
 	public static void main(String[] args) {
 		try {
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");

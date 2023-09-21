@@ -97,7 +97,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		showAmounts("updated amounts");
 		
-		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
+		JsonObject obj = TestOrder.createOrder( "BUY", .1, 3);
 		obj.remove("noFireblocks");
 		
 		JsonObject map = postOrderToObj(obj);
@@ -122,20 +122,20 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("starting amounts");
 		
 		// mint BUSD for user Bob
-		S.out( "**minting 2000");
-		busd.mint(
-				accounts.getId( "Admin1"),
-				bobAddr,
-				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
-		
-		// user to approve buying with BUSD; you must wait for this
-		S.out( "**approving 2000");
-		busd.approve(
-				accounts.getId( "Bob"),
-				rusd.address(),
-				2000).waitForCompleted();
-
-		showAmounts("updated amounts");
+//		S.out( "**minting 2000");
+//		busd.mint(
+//				accounts.getId( "Admin1"),
+//				bobAddr,
+//				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+//		
+//		// user to approve buying with BUSD; you must wait for this
+//		S.out( "**approving 20000");
+//		busd.approve(
+//				accounts.getId( "Bob"),
+//				rusd.address(),
+//				2000).waitForCompleted();
+//
+//		showAmounts("updated amounts");
 
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
@@ -179,7 +179,7 @@ public class TestFbOrders extends MyTestCase {
 			assertTrue( ar.size() > 0);
 			JsonObject rec = ar.get(0);
 			S.out(rec);
-			assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED
+			assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
 			assertEquals( 1.0, rec.getDouble("quantity") );
 		});
 		

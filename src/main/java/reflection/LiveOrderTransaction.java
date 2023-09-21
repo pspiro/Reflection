@@ -38,12 +38,13 @@ public class LiveOrderTransaction extends MyTransaction {
 	/** Return live orders to Frontend for a single wallet */
 	public void handleLiveOrders() {
 		wrap( () -> {
-			String walletAddr = getWalletFromUri();
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
 			
 			JsonArray orders = new JsonArray();
 			JsonArray messages = new JsonArray();
 
-			List<OrderTransaction> walletOrders = liveOrders.get(walletAddr.toLowerCase());
+			List<OrderTransaction> walletOrders = liveOrders.get(m_walletAddr.toLowerCase());
 			if (walletOrders != null) {
 				Iterator<OrderTransaction> iter = walletOrders.iterator();  // get list for this wallet
 				while (iter.hasNext() ) {
@@ -82,16 +83,24 @@ public class LiveOrderTransaction extends MyTransaction {
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
 			String hash = S.notNull( m_map.getParam("txhash") );
 			
+			// fails silently if there is no transaction to update; it's possible that the database entry is not made yet
 			updateTransactionsTable( id, status, hash);
-			
+
 			OrderTransaction liveOrder = allLiveOrders.get(id);
 			
 			if (liveOrder != null) {
+				// for log entries, use the uid and wallet from the order 
+				m_uid = liveOrder.uid();
+				m_walletAddr = liveOrder.walletAddr();
+				
+				// special case: for this log entry, use the uid and wallet of the order 
+				olog( LogType.FB_UPDATE, "id", id, "status", status, "hash", hash); // this gives us the history of the timing
 				liveOrder.onUpdateStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
+				//olog( LogType.FB_UPDATE, "status", status, "hash", hash); // this gives us the history of the timing
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it
-				//out( "Error: no live order with id %s; could not update status to %s", id, status);
+				out( "  ignoring live order update for %s", id);
 			}
 			
 			respondOk();
@@ -105,8 +114,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 			
-			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "fireblocks_id = '%s'", uid) );				
-			olog( LogType.FB_UPDATE, "status", status, "hash", hash); // this give us the history of the timing
+			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", uid) );				
 		}
 		catch( Exception e) {
 			elog( LogType.DATABASE_ERR, e);

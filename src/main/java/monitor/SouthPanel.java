@@ -1,19 +1,16 @@
 package monitor;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.json.simple.JsonObject;
-
 import common.Util;
 import http.MyAsyncClient;
 
 public class SouthPanel extends JPanel {
-	static SimpleDateFormat fmt = new SimpleDateFormat("HH:mm:ss");
+	static SimpleDateFormat fmt = Util.hhmmss;
 
 	JLabel m_refApi = new JLabel();
 
@@ -31,13 +28,13 @@ public class SouthPanel extends JPanel {
 		try {
 			MyAsyncClient.get( "https://reflection.trading/api/ok", data -> {
 				long elap = System.currentTimeMillis() - now;
-				if (JsonObject.parse( data).getString("code").equals("OK") ) {
-					String str = String.format( "%s in %s ms", fmt.format( new Date() ), elap); 
-					m_refApi.setText( str);
-				}
-				else {
-					m_refApi.setText( "Error");
-				}
+//				if (JsonObject.parse( data).getString("code").equals("OK") ) {
+//					String str = String.format( "%s in %s ms", fmt.format( new Date() ), elap); 
+//					m_refApi.setText( str);
+//				}
+//				else {
+//					m_refApi.setText( "Error");
+//				}
 			});
 		}
 		catch( Exception e) {

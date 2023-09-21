@@ -296,11 +296,11 @@ public abstract class MyTransaction {
 		Main.jlog(type, m_uid, m_walletAddr, json);
 	}
 
-	/** Assumes the wallet address is the last token in the URI */
-	public String getWalletFromUri() throws RefException {
-		String address = Util.getLastToken(m_uri, "/");
-		require( Util.isValidAddress(address), RefCode.INVALID_REQUEST, "Wallet address is invalid");
-		return address;
+	/** Assumes the wallet address is the last token in the URI
+	 *  Read it into the member variable so it is available for log entries */
+	public void getWalletFromUri() throws RefException {
+		m_walletAddr = Util.getLastToken(m_uri, "/");
+		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 	}
 	
 	/** Parse a POST message and return JsonObject */

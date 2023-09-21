@@ -403,14 +403,14 @@ public class OrderTransaction extends MyTransaction {
 			);
 		}
 		
-		olog( LogType.SUBMITTED_TO_FIREBLOCKS, "currency", m_map.getParam("currency") );
-		
+		allLiveOrders.put(id, this);
+
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
 		insertToCryptoTable(id);
 		
-		allLiveOrders.put(id, this);
+		olog( LogType.SUBMITTED_TO_FIREBLOCKS, "id", id, "currency", m_map.getParam("currency") );
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()

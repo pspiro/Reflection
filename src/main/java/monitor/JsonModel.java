@@ -5,6 +5,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import javax.swing.table.TableCellRenderer;
 
@@ -15,16 +16,16 @@ import tw.util.MyTableModel;
 import tw.util.S;
 
 abstract class JsonModel extends MyTableModel {
-	final String[] names;
-	final HashMap<Integer,String> m = new HashMap<>(); // map index to name
+	final String[] m_colNames;
+	final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
 	JsonArray m_ar = new JsonArray();
 	private String m_justify = "";
 	
 	JsonModel(String allNames) {
-		names = allNames.split(",");
+		m_colNames = allNames.split(",");
 		
-		for (int i = 0; i < names.length; i++) {
-			m.put( i, names[i]);
+		for (int i = 0; i < m_colNames.length; i++) {
+			m_namesMap.put( i, m_colNames[i]);
 		}
 	}
 	
@@ -38,8 +39,8 @@ abstract class JsonModel extends MyTableModel {
 	}
 	
 	int getColumnIndex(String name) {
-		for (int i = 0; i < names.length; i++) {
-			if (names[i].equals(name) ) {
+		for (int i = 0; i < m_colNames.length; i++) {
+			if (m_colNames[i].equals(name) ) {
 				return i;
 			}
 		}
@@ -53,23 +54,37 @@ abstract class JsonModel extends MyTableModel {
 	}
 
 	@Override public int getColumnCount() {
-		return m.size();
+		return m_namesMap.size();
 	}
 	
 	@Override public String getColumnName(int col) {
-		return names[col];
+		return m_colNames[col];
 	}
 
 	@Override public Object getValueAt(int row, int col) {
-		return format( m_ar.get(row).get( m.get(col) ) );
+		return format( m_ar.get(row).get( m_namesMap.get(col) ) );
 	}
 	
-	protected Object format(Object value) {
+	protected Object format(Object value) { // you would have to add tag or col to be useful
 		return value;
 	}
 
 	public void onHeaderClicked(int col) {
-		m_ar.sortJson( names[col] );
+		m_ar.sortJson( m_colNames[col] );
+		fireTableDataChanged();
+	}
+	
+	@Override public void onDoubleClick(int row, int col) {
+		String tag = m_namesMap.get(col);
+		Object allowed = getValueAt(row, col);
+		
+		for (Iterator<JsonObject> iter = m_ar.iterator(); iter.hasNext(); ) {
+			Object val = iter.next().get(tag);
+			if (val == null || !val.equals(allowed) ) {
+				iter.remove();
+			}
+		}
+		
 		fireTableDataChanged();
 	}
 	
@@ -78,7 +93,7 @@ abstract class JsonModel extends MyTableModel {
 	}
 	
 	@Override public void onRightClick(MouseEvent e, int row, int col) {
-		Object obj = (String)getValueAt(row, col);
+		Object obj = getValueAt(row, col);
 		
 		if (obj != null) {
 	        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();

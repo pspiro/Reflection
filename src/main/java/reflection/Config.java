@@ -300,26 +300,6 @@ public class Config extends ConfigBase {
 		}
 	}
 
-	static String[] configColumnNames = { "key", "value", "description" };
-
-	/** Update configurations table. 
-	 * @throws Exception */
-	private void insertOrUpdate(MySqlConnection db, String tag, String value, String description) throws Exception {
-		ResultSet res = db.query( "select * from configurations where key='%s'", tag);
-		if (res.next() ) {
-			db.execute( String.format( "update configurations set value='%s', description='%s' where key='%s'",
-					Util.dblQ(value), Util.dblQ(description), tag) );
-		}
-		else {
-			db.insert("configurations", configColumnNames, tag, value, description);
-		}
-	}
-	
-	private void require(GTable t, String param, double lower, double upper) throws Exception {
-		double value = t.getDouble( param);
-		require( value >= lower && value <= upper, param);
-	}
-
 	public int threads() {
 		return 10;
 	}

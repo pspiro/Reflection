@@ -36,15 +36,15 @@ public class BackendTransaction extends MyTransaction {
 	 *  We're returning the token positions from the blockchain, not IB positions */
 	public void handleReqPositions() {
 		wrap( () -> {
-			// get wallet address (last token in URI)
-			String walletAddr = getWalletFromUri();
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
 			
 			// query positions from Moralis
 			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
 			
 			JsonArray retVal = new JsonArray();
 			
-			Util.forEach( Wallet.reqPositionsMap(walletAddr).entrySet(), entry -> {
+			Util.forEach( Wallet.reqPositionsMap(m_walletAddr).entrySet(), entry -> {
 				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
@@ -104,47 +104,48 @@ public class BackendTransaction extends MyTransaction {
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			String walletAddr = getWalletFromUri();
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
-			require( m_main.validWallet( walletAddr, "Sell"), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
+			require( m_main.validWallet( m_walletAddr, "Sell"), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
 
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
-			validateCookie(walletAddr);
+			validateCookie(m_walletAddr);
 			
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();
 
-			double rusdPos = Util.truncate( rusd.getPosition(walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
+			double rusdPos = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
 			require( rusdPos > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
 				olog( LogType.REDEEM, "amt", rusdPos);
 
-				rusd.sellRusd(walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
+				rusd.sellRusd(m_walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
 					//.waitForHash();
 					.waitForStatus("COMPLETED");
 				
 				respondOk();  // wait for completion. pas
 
-				report( walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
+				report( m_walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
 			}
 			else {  // we don't use require here because we want to call alert()
 				
 				// check for previous unfilled request 
-				require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and fulfilled = false", walletAddr.toLowerCase()) ).isEmpty(), 
+				require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and fulfilled = false", m_walletAddr.toLowerCase()) ).isEmpty(), 
 						RefCode.REDEMPTION_PENDING, 
 						"There is already an outstanding redemption request for this wallet; we appreciate your patience.");
 
 				// write unfilled report to DB
-				report( walletAddr, busd, rusdPos, false);
+				report( m_walletAddr, busd, rusdPos, false);
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
-						walletAddr, rusdPos, busdPos, (rusdPos - busdPos) );
+						m_walletAddr, rusdPos, busdPos, (rusdPos - busdPos) );
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
 				
 				// report error back to user
@@ -222,13 +223,14 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleGetUserByWallet() {
 		wrap( () -> {
-			String walletAddr = getWalletFromUri();
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
 			
 			m_main.sqlConnection( conn -> {
 				JsonArray ar = conn.queryToJson(
 						"select * from users where lower(wallet_public_key) = '%s'", 
-						walletAddr.toLowerCase() );
-				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", walletAddr);
+						m_walletAddr.toLowerCase() );
+				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", m_walletAddr);
 				
 				respond( (JsonObject)trim( ar).get(0) );
 			});
@@ -244,9 +246,10 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleMyWallet() {
 		wrap( () -> {
-			String walletAddr = getWalletFromUri();
-			
-			Wallet wallet = new Wallet(walletAddr);
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
+
+			Wallet wallet = new Wallet(m_walletAddr);
 			
 			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
@@ -259,12 +262,12 @@ public class BackendTransaction extends MyTransaction {
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
-			busd.put( "approvedBalance", m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ) );
+			busd.put( "approvedBalance", m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ) );
 			busd.put( "stablecoin", true);
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", MoralisServer.getNativeBalance(walletAddr) );
+			base.put( "balance", MoralisServer.getNativeBalance(m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();
@@ -325,12 +328,13 @@ public class BackendTransaction extends MyTransaction {
 	
 	public void handleGetProfile() {
 		wrap( () -> {
-			String walletAddr = getWalletFromUri();
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
 			
 			m_main.sqlConnection( conn -> {
 				JsonArray ar = conn.queryToJson(
 						"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
-						walletAddr.toLowerCase() );
+						m_walletAddr.toLowerCase() );
 				
 				JsonObject obj = ar.size() == 0 
 						? new JsonObject() 

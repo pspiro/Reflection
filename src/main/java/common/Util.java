@@ -26,9 +26,18 @@ import reflection.RefException;
 import tw.util.S;
 
 public class Util {
+	// hh  // 12 hr, useless, use w/ am/pm
+	// HH  // 24 hr, midnight is 00
+	// kk  // 24 hr, midnight is 24
 	static Random rnd = new Random();
-	static SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
+	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 h clock, useless 
+	static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 h clock
+	//private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");  // what is this?
+    //static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
+	//SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");
+
 	
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {

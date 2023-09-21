@@ -84,10 +84,6 @@ public class Main implements ITradeReportHandler {
 
 	public Main(String tabName) throws Exception {
 		m_tabName = tabName;
-
-		// create log file folder and open log file
-		jlog( LogType.RESTART, null, null, Util.toJson( 
-				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
 		
 		MyTimer timer = new MyTimer();
 
@@ -96,6 +92,10 @@ public class Main implements ITradeReportHandler {
 		readSpreadsheet();
 		timer.done();
 		
+		// create log entry
+		jlog( LogType.RESTART, null, null, Util.toJson( 
+				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
+
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
 		// make user approve it during startup
 		if (m_config.autoFill() ) {
@@ -116,7 +116,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFbActiveServer();
+		//checkFbActiveServer();
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
