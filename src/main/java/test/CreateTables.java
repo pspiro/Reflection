@@ -22,12 +22,12 @@ public class CreateTables  {
 
 //			new CreateTables().createCryptoTransactions();
 //			//new CreateTables().createTrades();
-<<<<<<< HEAD
-			new CreateTables().createSignupTable();
-=======
-			//new CreateTables().createCommTable();
-			new CreateTables().createLogTable();
->>>>>>> 2a08c4a2e4f82e30bdde1b43b220e05f4accf65c
+//<<<<<<< HEAD
+//			new CreateTables().createSignupTable();
+//=======
+//			//new CreateTables().createCommTable();
+//			new CreateTables().createLogTable();
+//>>>>>>> 2a08c4a2e4f82e30bdde1b43b220e05f4accf65c
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
