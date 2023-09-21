@@ -121,7 +121,7 @@ public class BackendTransaction extends MyTransaction {
 	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
-				log( LogType.REDEEM, "%s is selling %s RUSD", walletAddr, rusdPos);
+				olog( LogType.REDEEM, "amt", rusdPos);
 
 				rusd.sellRusd(walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
 					//.waitForHash();
@@ -207,7 +207,7 @@ public class BackendTransaction extends MyTransaction {
 				String where = S.isNotNull(wallet) 
 						? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
 						: "";
-				respond(conn.queryToJson("select * from crypto_transactions %s order by timestamp desc limit 20", where) );
+				respond(conn.queryToJson("select * from crypto_transactions %s order by created_at desc limit 20", where) );
 			});
 		});
 	}
@@ -407,7 +407,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			JsonObject obj = parseToObject();
 			S.out( "Received " + obj); 
-			Main.m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
+			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
 			respondOk();
 		});
 	}

@@ -14,20 +14,8 @@ public class CreateTables  {
 	public static void main(String[] args) {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
-//			con.execute("alter table users add column first_name varchar(50)");
-//			con.execute("alter table users add column last_name varchar(50)");
-//			con.execute("update users set first_name = 'peter', last_name='spiro'");
-			//con.execute("alter table users add column aadhaar varchar(12)");
-//			con.execute("update users set aadhaar = '939393939393'");
 
-//			new CreateTables().createCryptoTransactions();
-//			//new CreateTables().createTrades();
-//<<<<<<< HEAD
-//			new CreateTables().createSignupTable();
-//=======
-//			//new CreateTables().createCommTable();
-//			new CreateTables().createLogTable();
-//>>>>>>> 2a08c4a2e4f82e30bdde1b43b220e05f4accf65c
+			new CreateTables().createCryptoTransactions();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -77,6 +65,7 @@ public class CreateTables  {
 		con.dropTable("crypto_transactions");
 		
 		String sql = "create table crypto_transactions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
+			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
 				+ "fireblocks_id varchar(36) check (fireblocks_id <> ''),"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "symbol varchar(32),"
@@ -87,7 +76,6 @@ public class CreateTables  {
 				+ "price double precision check (price > 0),"
 				+ "order_id int,"  // could be zero
 				+ "perm_id int,"  // could be zero
-				+ "timestamp bigint,"   // eight bytes, signed, seconds, change to ms
 				+ "blockchain_hash varchar(66),"
 				+ "commission double precision,"  // change this to comm_charged
 				+ "tds double precision,"				

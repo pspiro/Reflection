@@ -40,10 +40,10 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
 		String[] fields = {
-				"wallet_public_key", "active", "first_name", "last_name", "email", "phone", "aadhaar", 
+				"wallet_public_key", "first_name", "last_name", "email", "phone", "aadhaar", 
 		};
 		Object[] vals = {
-				noUserRec, true, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
+				noUserRec, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
 		};
 		m_config.sqlCommand( conn -> conn.insert("users", fields, vals) );
 		
@@ -192,7 +192,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals(RefCode.OK, cli.getRefCode() );
 
 		JsonObject ret = getLiveMessage(map.getString("id"));
-		assertEquals( "message", ret.getString("type") ); // this sometimes failes because of stale data
+		assertEquals( "message", ret.getString("type") ); // this sometimes fails because of stale data
 		startsWith( "Bought 0.4", ret.getString("text") );
 	}
 

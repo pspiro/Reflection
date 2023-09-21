@@ -61,7 +61,7 @@ public class MyTestCase extends TestCase {
 	
 	JsonObject getLiveMessage(String id) throws Exception {
 		// wait a tic for the order to fill, even autoFill orders take a few ms
-		S.sleep(300);
+		S.sleep(1000);
 		
 		JsonArray msgs = getCompletedLiveOrders();
 		msgs.display();

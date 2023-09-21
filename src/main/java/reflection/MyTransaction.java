@@ -285,7 +285,7 @@ public abstract class MyTransaction {
 	}
 	
 	void elog(LogType type, Exception e) {
-		log(type, m_walletAddr, RefException.eToJson(e) );
+		jlog(type, RefException.eToJson(e) );
 	}
 
 	void elog(LogType type, RefException e) {
@@ -293,27 +293,7 @@ public abstract class MyTransaction {
 	}
 
 	void jlog(LogType type, JsonObject json) {
-		log(type, m_walletAddr, json);
-	}
-
-	/** Format to log is ID LOG_TYPE FORMATTED_MSG where id is 3-digit code plus prefix */
-	void log( LogType type, String format, Object... params) {
-		Main.log( S.format( "%s %s %s", m_uid, type, S.format(format, params) ) );  
-	}
-
-	/** Writes entry to log table in database; must not throw exception */
-	void log( LogType type, String wallet, JsonObject json) {
-		try {
-			JsonObject log = Util.toJson(
-					"uid", m_uid,
-					"type", type,
-					"wallet_public_key", wallet,
-					"data", json);
-			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
+		Main.jlog(type, m_uid, m_walletAddr, json);
 	}
 
 	/** Assumes the wallet address is the last token in the URI */

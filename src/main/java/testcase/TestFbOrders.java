@@ -174,7 +174,7 @@ public class TestFbOrders extends MyTestCase {
 			S.sleep(1000);
 		}
 		
-		m_config.sqlCommand( conn -> { 
+		m_config.sqlCommand( conn -> {   // fix this
 			JsonArray ar = conn.queryToJson("select * from crypto_transactions where timestamp > %s", now);
 			assertTrue( ar.size() > 0);
 			JsonObject rec = ar.get(0);

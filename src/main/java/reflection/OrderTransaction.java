@@ -349,7 +349,7 @@ public class OrderTransaction extends MyTransaction {
 			processFireblocks(m_filledShares);
 		}
 		else {
-			onFilled();
+			onCompleted();
 		}
 	}
 	
@@ -422,7 +422,6 @@ public class OrderTransaction extends MyTransaction {
 			obj.put("fireblocks_id", id);  // primary key
 			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
 			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
-			obj.put("timestamp", System.currentTimeMillis() / 1000);
 			obj.put("wallet_public_key", m_walletAddr);
 			obj.put("symbol", m_stock.getSymbol() );
 			obj.put("conid", m_stock.getConid() );
@@ -535,7 +534,7 @@ public class OrderTransaction extends MyTransaction {
 	}
 
 	private boolean fireblocks() throws RefException {
-		return m_config.useFireblocks() && !m_map.getBool("noFireblocks");
+		return m_config.isProduction() || m_config.useFireblocks() && !m_map.getBool("noFireblocks");
 	}
 
 	private Vector<OrderTransaction> walletLiveOrders() {
@@ -573,7 +572,7 @@ public class OrderTransaction extends MyTransaction {
 	 * @param id Fireblocks id */
 	synchronized void onUpdateStatus(FireblocksStatus stat) {
 		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
-			onFilled();
+			onCompleted();
 		}
 		else if (stat.pct() == 100) {
 			try {
@@ -623,7 +622,7 @@ public class OrderTransaction extends MyTransaction {
 	/** Called when blockchain goes to CONFIRMING or COMPLETED;
 	 *  also called during testing if we bypass the FB processing;
 	 *  set up the order so that user will received Filled msg on next update */
-	synchronized void onFilled() {
+	synchronized void onCompleted() {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;

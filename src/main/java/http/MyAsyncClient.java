@@ -18,6 +18,7 @@ public class MyAsyncClient {
 		get( url, str -> ret.run( JsonObject.parse(str) ) );  
 	}
 	
+	/** Returns response body */
 	public static void get( String url, Ret ret) { 
 		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client

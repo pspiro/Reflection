@@ -65,7 +65,8 @@ public class TradingHours {
 				}
 			}
 			catch (Exception e) {
-				Main.log( LogType.ERROR, e.getMessage() ); 
+				e.printStackTrace();
+				Main.jlog( LogType.ERROR, null, null, RefException.eToJson(e) ); 
 			}
 		});
 	}

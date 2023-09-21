@@ -86,7 +86,8 @@ public class Main implements ITradeReportHandler {
 		m_tabName = tabName;
 
 		// create log file folder and open log file
-		log( LogType.RESTART, Util.readResource( Main.class, "version.txt") );  // print build date/time
+		jlog( LogType.RESTART, null, null, Util.toJson( 
+				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
 		
 		MyTimer timer = new MyTimer();
 
@@ -330,7 +331,7 @@ public class Main implements ITradeReportHandler {
 
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
-			S.out( "Connected to TWS");
+			log( LogType.TWS_CONNECTION, "connected");
 			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
 
 			stopTimer();
@@ -344,12 +345,12 @@ public class Main implements ITradeReportHandler {
 			// order id's; it's because sometimes, after a reconnect or if TWS
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
-			S.out( "***Received next valid id %s, completes login***", id);  // why don't we receive this after disconnect/reconnect? pas
+			jlog( LogType.TWS_CONNECTION, null, null, Util.toJson( "validId", id) );
 		}
 
 		@Override public synchronized void onDisconnected() {
 			if (m_timer == null) {
-				log( LogType.ERROR, "Disconnected from TWS");
+				log( LogType.TWS_CONNECTION, "dicconnected");
 				startTimer();
 			}
 		}
@@ -420,12 +421,24 @@ public class Main implements ITradeReportHandler {
 
 	/** Write to the log file. Don't throw any exception. */
 
-	static void log( LogType type, String text, Object... params) {
-		m_log.log( type, text, params);
+	static void log( LogType type, String text) {
+		jlog( type, null, null, Util.toJson( "text", text) );
 	}
 
-	static void log( String text) {
-		m_log.log( text);
+	/** Writes entry to log table in database; must not throw exception */
+	static void jlog( LogType type, String uid, String wallet, JsonObject json) {
+		try {
+			JsonObject log = Util.toJson(
+					"uid", uid,
+					"type", type,
+					"wallet_public_key", wallet,
+					"data", json);
+			S.out( "%s %s %s", type, wallet, log);
+			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	static class Pair {
@@ -455,7 +468,7 @@ public class Main implements ITradeReportHandler {
 		obj.put( "tradekey", tradeKey);
 		
 		try {
-			log( LogType.TRADE, obj.toString() );  // we don't really need both of these, but it might be convenient for trouble-shooting
+			jlog( LogType.TRADE, null, null, obj);  // we don't really need both of these, but it might be convenient for trouble-shooting
 			sqlConnection( conn -> conn.insertJson( "trades", obj) );
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -469,7 +482,11 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
 		try {
-			log( LogType.COMMISSION, "%s %s %s %s", rpt.execId(), rpt.commission(), rpt.currency(), tradeKey);
+			jlog( LogType.COMMISSION, null, null, Util.toJson( 
+					"execId", rpt.execId(), 
+					"commission", rpt.commission(), 
+					"currency", rpt.currency(),
+					"tradeKey", tradeKey) );
 
 			Object[] vals = {
 					tradeKey,
@@ -483,8 +500,7 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 	
-	/** This creates a new connection every time. You could take approach like Redis where you keep it open */
-	void sqlConnection(SqlCommand runnable) throws Exception {
+	void sqlConnection(SqlCommand runnable) throws Exception {  // could be status
 		m_config.sqlCommand(runnable);
 	}
 

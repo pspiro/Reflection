@@ -82,7 +82,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
 			String hash = S.notNull( m_map.getParam("txhash") );
 			
-			updateCryptoTable( id, status, hash);
+			updateTransactionsTable( id, status, hash);
 			
 			OrderTransaction liveOrder = allLiveOrders.get(id);
 			
@@ -98,16 +98,15 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 
-	private void updateCryptoTable(String uid, FireblocksStatus status, String hash) {
+	private void updateTransactionsTable(String uid, FireblocksStatus status, String hash) {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 		try {
-			log( LogType.FB_UPDATE, "uid=%s  status=%s  hash=%s", uid, status, hash); // this give us the history of the timing
-
 			JsonObject obj = new JsonObject();
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 			
 			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions",  obj, "fireblocks_id = '%s'", uid) );				
+			olog( LogType.FB_UPDATE, "status", status, "hash", hash); // this give us the history of the timing
 		}
 		catch( Exception e) {
 			elog( LogType.DATABASE_ERR, e);
