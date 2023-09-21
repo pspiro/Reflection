@@ -37,17 +37,20 @@ public abstract class MyTransaction {
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
-	static final String message = "message";
+	//static final String message = "message";
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
+	protected static final String Message = "message";
 
 	protected Main m_main;
 	protected HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();  // change this to a JsonObject
+	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality
 	protected String m_uri;
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_uid;
+	protected String m_walletAddr;  // mixed case, I think; would be null for most messages, only some use it
+	private String m_header;  // SIN for all sign-in functions
 	
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, null);
@@ -56,7 +59,8 @@ public abstract class MyTransaction {
 	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
-		m_uid = header == null ? Util.uid(6) : Util.uid(6) + " " + header;		
+		m_uid = Util.uid(8);
+		m_header = header;
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	
@@ -116,13 +120,13 @@ public abstract class MyTransaction {
 	/** @param data is an array of key/value pairs, does not work with objects */
 	synchronized boolean respond( Object...data) {     // this is dangerous and error-prone because it could conflict with the version below
 		if (data.length > 1 && data.length % 2 == 0) {
-			return respondFull( Util.toJsonMsg( data), 200, null);
+			return respondFull( Util.toJson( data), 200, null);
 		}
 		
 		// can't throw an exeption here
 		Exception e = new Exception("MyTransaction.respond(Object...) called with wrong number of parameters");
 		e.printStackTrace();
-		return respondFull( RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
+		return respondFull( RefException.eToJson(e), 400, null);
 	}
 
 	/** Only respond once for each request
@@ -157,7 +161,7 @@ public abstract class MyTransaction {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, "Exception while responding with json");
+			elog( LogType.RESPOND_ERR, e);
 		}
 		m_responded = true;
 		return true;
@@ -177,7 +181,7 @@ public abstract class MyTransaction {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, "Exception while responding with plain text");
+			elog( LogType.RESPOND_ERR, e);
 		}
 		m_responded = true;
 		return true;
@@ -194,18 +198,18 @@ public abstract class MyTransaction {
 			synchronized(this) {      // must synchronize access to m_responded
 				// if we haven't responded yet, log the error and respond
 				if (!m_responded) {
-					log( LogType.ERROR, e.toString() );
+					elog( LogType.EXCEPTION, e);
 					respondFull(e.toJson(), 400, null);
 				}
 				// display errors that occurred after the response except for timeouts since that is normal
 				else if (e.code() != RefCode.TIMED_OUT) {
-					log( LogType.ERROR, e.toString() + " (ERROR IGNORED)" );
+					elog( LogType.EXCEPTION, e);
 				}
 			}
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, S.notNull( e.getMessage() ) );
+			elog( LogType.EXCEPTION, e);
 			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
 		}
 	}
@@ -276,9 +280,40 @@ public abstract class MyTransaction {
 		S.out( m_uid + " " + format, params);
 	}
 
+	void olog(LogType type, Object... ar) {
+		jlog( type, Util.toJson(ar) );
+	}
+	
+	void elog(LogType type, Exception e) {
+		log(type, m_walletAddr, RefException.eToJson(e) );
+	}
+
+	void elog(LogType type, RefException e) {
+		jlog(type, e.toJson() );
+	}
+
+	void jlog(LogType type, JsonObject json) {
+		log(type, m_walletAddr, json);
+	}
+
 	/** Format to log is ID LOG_TYPE FORMATTED_MSG where id is 3-digit code plus prefix */
 	void log( LogType type, String format, Object... params) {
 		Main.log( S.format( "%s %s %s", m_uid, type, S.format(format, params) ) );  
+	}
+
+	/** Writes entry to log table in database; must not throw exception */
+	void log( LogType type, String wallet, JsonObject json) {
+		try {
+			JsonObject log = Util.toJson(
+					"uid", m_uid,
+					"type", type,
+					"wallet_public_key", wallet,
+					"data", json);
+			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/** Assumes the wallet address is the last token in the URI */

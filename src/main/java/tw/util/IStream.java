@@ -22,6 +22,10 @@ public class IStream {
 		return m_peek;
 	}
 	
+	public boolean hasNext() {
+		return peek() != null;
+	}
+	
 	public String readln() {
 		if (m_peek != null) {
 			try {

@@ -17,7 +17,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import redis.clients.jedis.Jedis;
 import tw.util.S;
-import util.LogType;
 
 public class OldStyleTransaction extends MyTransaction {
 	enum MsgType {
@@ -84,7 +83,7 @@ public class OldStyleTransaction extends MyTransaction {
 				getConnStatus();
 				break;
 			case terminate:
-				log( LogType.TERMINATE, "");
+				S.out( "Received terminate message");
 				System.exit( 0);
 				break;
 			case disconnect:

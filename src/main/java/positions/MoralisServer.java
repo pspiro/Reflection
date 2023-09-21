@@ -19,11 +19,7 @@ import com.sun.net.httpserver.HttpServer;
 import common.Util;
 import fireblocks.Erc20;
 import http.SimpleTransaction;
-import positions.EventFetcher.Balances;
-import reflection.Main;
 import reflection.MySqlConnection;
-import reflection.ParamMap;
-import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
 import util.DateLogFile;
@@ -234,35 +230,31 @@ public class MoralisServer {
 	// remove below code for production. pas
 	
 	void handleWalletReq( SimpleTransaction trans) {
-		try {
-			Main.require( m_status == Status.ready || m_status == Status.waiting, RefCode.UNKNOWN, m_status.toString() );
-
-			ParamMap map = trans.getMap();
-			String wallet = map.getString("wallet").toLowerCase();
-
-			// request for a single wallet?
-			if (S.isNotNull( wallet) ) {
-				Main.require( Util.validToken(wallet), RefCode.UNKNOWN, "Invalid wallet");
-				m_log.log( LogType.WALLET, "Handling request for wallet %s", wallet);
-				
-				Balances balances = m_client.getWalletBalances( wallet);
-				Main.require( balances != null, RefCode.UNKNOWN, "no balances for wallet");
-				trans.respond( balances.toString() );
-			}
-			else {
-				// request for all wallets
-				m_log.log( LogType.WALLET, "Handling request for all wallets");
-				trans.respond( m_client.getAllWalletsJson() );
-			}
-		}
-		catch( RefException e) {
-			m_log.log( LogType.ERROR, e.toString() );
-			trans.respondJson( "error", e.toString() ); // toJson().toString() );
-		}
-		catch( Exception e) {
-			m_log.log( LogType.ERROR, e.getMessage() );
-			trans.respondJson( "error", e.getMessage() );
-		}
+//		try {
+//			Main.require( m_status == Status.ready || m_status == Status.waiting, RefCode.UNKNOWN, m_status.toString() );
+//
+//			ParamMap map = trans.getMap();
+//			String wallet = map.getString("wallet").toLowerCase();
+//
+//			// request for a single wallet?
+//			if (S.isNotNull( wallet) ) {
+//				Main.require( Util.validToken(wallet), RefCode.UNKNOWN, "Invalid wallet");
+//				
+//				Balances balances = m_client.getWalletBalances( wallet);
+//				Main.require( balances != null, RefCode.UNKNOWN, "no balances for wallet");
+//				trans.respond( balances.toString() );
+//			}
+//			else {
+//				// request for all wallets
+//				trans.respond( m_client.getAllWalletsJson() );
+//			}
+//		}
+//		catch( RefException e) {
+//			trans.respondJson( "error", e.toString() ); // toJson().toString() );
+//		}
+//		catch( Exception e) {
+//			trans.respondJson( "error", e.getMessage() );
+//		}
 	}
 
 	interface MyFunction {

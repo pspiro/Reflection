@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Random;
 import java.util.TimeZone;
 import java.util.Timer;
@@ -17,6 +18,7 @@ import java.util.TimerTask;
 
 import org.json.simple.JsonObject;
 
+import com.google.iam.v1.AuditLogConfig.LogType;
 import com.ib.client.Decimal;
 
 import reflection.RefCode;
@@ -31,6 +33,11 @@ public class Util {
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {
 		void run() throws Exception;
+	}
+
+	/** Same as Consumer but allows exception */
+	public interface ExConsumer<T> {
+		void accept(T t) throws Exception;
 	}
 
 	/** Do a decimal compare down to six digits */
@@ -105,9 +112,14 @@ public class Util {
 		}
 	}
 	
+	
 	public static void main(String[] args) throws Exception {
-		S.out( truncate( 1.00019, 4) );
-		S.out( 1.00019);
+		JsonObject f1 = Util.toJson( "a", "b");
+		
+		S.out( Util.toJson(
+				"uid", 123,
+				"type", LogType.ADMIN_READ,
+				"data", f1) );
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -139,8 +151,9 @@ public class Util {
 	public static String formatStrWc = ", \"%s\": \"%s\"";
 
 	/** Create the whole Json message, including the time.
+	 * Note that enums are added as object but deserialized as strings
 	 *  @param strs tag/value pairs */
-	public static JsonObject toJsonMsg( Object... strs) { // get rid of this. pas
+	public static JsonObject toJson( Object... strs) {
 		JsonObject obj = new JsonObject();
 		
 		Object tag = null;
@@ -149,21 +162,11 @@ public class Util {
 				tag = val;
 			}
 			else {
-				if (isNumeric( val) ) {
-					obj.put( tag.toString(), val);
-				}
-				else if (val != null) {
-					obj.put( tag.toString(), val.toString() );
-				}
+				obj.put( tag.toString(), val);
 				tag = null;
 			}
 		}
 		return obj;
-	}
-
-	/** Numbers we will put without quotation marks; everything else gets quotation marks. */
-	public static boolean isNumeric(Object val) {
-		return val instanceof Integer || val instanceof Double || val instanceof Long;
 	}
 
 	/** Replace all CRLF and LF with ' ' */
@@ -179,16 +182,6 @@ public class Util {
 	/** Round to two decimals. */
 	public static double round(double price) {
 		return Math.round( price * 100) / 100.0;		
-	}
-	
-	static boolean isNumeric(String str) {
-		try {
-			Double.valueOf( str);
-			return true;
-		}
-		catch( Exception e) {
-			return false;
-		}
 	}
 
 	public static String readResource(Class cls, String filename) throws IOException {
@@ -311,8 +304,9 @@ public class Util {
 		}
 	}
 
-	/** Replace single-quotes with double-quotes */
-	public static String toJson(String str) {  // not a good name
+	/** Replace single-quotes with double-quotes
+	 *  @deprecated, use toJsonMsg() instead */
+	public static String fmtJson(String str) {  // not a good name
 		return str.replaceAll( "\\'", "\"");
 	}
 	
@@ -336,6 +330,33 @@ public class Util {
 	public static boolean isPrimitive(Class clas) {
 		return clas == String.class || clas == Integer.class || clas == Double.class || clas == Long.class || clas == Boolean.class || clas == Float.class;
 	}
+
+	/** Numbers we will put without quotation marks; everything else gets quotation marks. */
+//	public static boolean isNumeric(Object val) {
+//		return val instanceof Integer || val instanceof Double || val instanceof Long || val instanceof Float;
+//	}
+	
+	static boolean isDouble(String str) {
+		try {
+			Double.valueOf( str);
+			return true;
+		}
+		catch( Exception e) {
+			return false;
+		}
+	}
+
+	public static boolean isInteger(String conidStr) {
+		try {
+			Integer.valueOf(conidStr);
+			return true;
+		}
+		catch( Exception e) {
+			return false;
+		}
+	}
+
+	
 	
 //	public static String toLowerCase(String address) {
 //		return notNull(address).toLowerCase();
@@ -412,16 +433,6 @@ public class Util {
 		}
 	}
 
-	public static boolean isInteger(String conidStr) {
-		try {
-			Integer.valueOf(conidStr);
-			return true;
-		}
-		catch( Exception e) {
-			return false;
-		}
-	}
-
 	/** Simple wrapper which prints stack trace */
 	public static void wrap(ExRunnable runner) {
 		try {
@@ -447,5 +458,13 @@ public class Util {
 	public static boolean isValidEmail(String email) {
 		int i = email.indexOf("@");
 		return i >= 1 && email.indexOf(".") > i + 1 && email.length() >= 5;
+	}
+	
+	/** My version of forEach that propogates up an exception */ 
+	public static <T> void forEach(Iterable<T> iter, ExConsumer<? super T> action) throws Exception {
+        Objects.requireNonNull(action);
+        for (T t : iter) {
+            action.accept(t);
+        }
 	}
 }

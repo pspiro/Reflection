@@ -129,7 +129,7 @@ public class SiweTransaction extends MyTransaction {
 			HashMap<String,String> headers = new HashMap<>();
 			headers.put( "Set-Cookie", cookie);
 		
-			respondFull( Util.toJsonMsg( code, "OK"), 200, headers);
+			respondFull( Util.toJson( code, "OK"), 200, headers);
 		});
 	}
 	
