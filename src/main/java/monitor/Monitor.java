@@ -70,6 +70,7 @@ public class Monitor {
 		m_tabs.addTab( "Wallet", new WalletPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
+		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
@@ -105,6 +106,12 @@ public class Monitor {
 	static QueryPanel createUsersPanel() {
 		String names = "wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
+		return new QueryPanel( names, sql);
+	}
+
+	static QueryPanel createSignupPanel() {
+		String names = "name,email,phone,wallet_public_key";
+		String sql = "select * from signup";
 		return new QueryPanel( names, sql);
 	}
 

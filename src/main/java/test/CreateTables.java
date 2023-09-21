@@ -13,7 +13,7 @@ public class CreateTables  {
 
 	public static void main(String[] args) {
 		try {
-//			con.connect(dbUrl, dbUser, dbPassword);
+			con.connect(dbUrl, dbUser, dbPassword);
 //			con.execute("alter table users add column first_name varchar(50)");
 //			con.execute("alter table users add column last_name varchar(50)");
 //			con.execute("update users set first_name = 'peter', last_name='spiro'");
@@ -22,7 +22,7 @@ public class CreateTables  {
 
 //			new CreateTables().createCryptoTransactions();
 //			//new CreateTables().createTrades();
-			//new CreateTables().createCommTable();
+			new CreateTables().createSignupTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -38,6 +38,18 @@ public class CreateTables  {
 				+ "tradekey varchar(32),"
 				+ "comm_paid double precision"
 				+ "currency varchar(3)"
+				+ ")";
+		con.execute(sql);
+	}
+	
+	void createSignupTable() throws Exception {
+		con.dropTable("signup");
+		
+		String sql = "create table signup ("
+				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
+				+ "name varchar(60),"
+				+ "email varchar(60),"
+				+ "phone varchar(20)"
 				+ ")";
 		con.execute(sql);
 	}
