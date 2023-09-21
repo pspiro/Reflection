@@ -68,16 +68,16 @@ public class Monitor {
 		
 		m_tabs.addTab( "Home", new HomePanel() );
 		m_tabs.addTab( "Misc", new MiscPanel() );
+		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
-		m_tabs.addTab( "Users", createUsersPanel() );
+		m_tabs.addTab( "Log", new LogPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
-		m_tabs.addTab( "Log", new LogPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);

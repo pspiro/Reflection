@@ -23,10 +23,14 @@ public class RefException extends Exception {
 		return eToJson(this, m_code);
 	}
 	
+	public static JsonObject eToJson(Exception e) {
+		return eToJson(e, RefCode.UNKNOWN);
+	}
+	
 	public static JsonObject eToJson(Exception e, RefCode refCode) {
 		return Util.toJson(
 				"code", refCode, 
-				"message", e.getMessage(),
+				"message", e.getMessage() != null ? e.getMessage() : e.toString(),
 				"statusCode", 400
 			);
 	}

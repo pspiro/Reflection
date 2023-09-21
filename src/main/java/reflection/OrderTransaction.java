@@ -35,7 +35,6 @@ public class OrderTransaction extends MyTransaction {
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_respondedToOrder;
-	private String m_walletAddr;  // mixed case, I think
 	
 	private static PositionTracker positionTracker = new PositionTracker(); 
 	
@@ -445,6 +444,7 @@ public class OrderTransaction extends MyTransaction {
 			m_main.sqlConnection( conn -> conn.insertJson("crypto_transactions", obj) );
 		} 
 		catch (Exception e) {
+			elog( LogType.DATABASE_ERR, e);
 			e.printStackTrace();
 		}
 	}
@@ -528,6 +528,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 		}
 		catch( Exception e) {
+			elog( LogType.UNWIND_ERR, e);
 			e.printStackTrace();
 			alert( "Error occurred while unwinding order", e.getMessage() );
 		}
@@ -548,12 +549,12 @@ public class OrderTransaction extends MyTransaction {
 		}
 		catch( RefException e) {
 			out( e);
-			olog( LogType.EXCEPTION, "code", e.code(), "message", e.getMessage() );
+			elog( LogType.EXCEPTION, e);
 			onFail(e.getMessage(), e.code() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			olog( LogType.EXCEPTION, "message", e.getMessage() );
+			elog( LogType.EXCEPTION, e);
 			onFail(e.getMessage(), null);
 		}
 	}
@@ -596,6 +597,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 
 			// write to log file (don't throw, informational only)
+			// this is second log entry for the failed order (see onFail() )
 			try {
 				// this is not good, I think it sends the wallet query several time unnecessarily. pas
 				
@@ -614,6 +616,7 @@ public class OrderTransaction extends MyTransaction {
 		}
 		else {
 			m_progress = stat.pct();
+			olog( LogType.ORDER_STATUS_UPDATED, "status", stat, "pct", stat.pct() );
 		}
 	}
 
@@ -624,6 +627,7 @@ public class OrderTransaction extends MyTransaction {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
+			jlog( LogType.ORDER_COMPLETED, null);
 		}
 	}
 
@@ -631,6 +635,8 @@ public class OrderTransaction extends MyTransaction {
 	synchronized void onFail(String errorText, RefCode errorCode) {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Failed;
+			
+			olog( LogType.ORDER_FAILED, Message, errorText, "code", errorCode);
 		
 			// unwind the IB order first and foremost
 			unwindOrder();
@@ -693,14 +699,8 @@ public class OrderTransaction extends MyTransaction {
 				isBuy() ? "Bought" : "Sold", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
 	}
 	
-	void olog(LogType type, Object... ar) {
-		jlog( type, Util.toJson(ar) );
-	}
-	
-	void jlog(LogType type, JsonObject json) {
-		super.log(type, m_walletAddr, json);
-	}
-	
 }
 // look at all the catch blocks, save message or stack trace
 // you have to not log the cookie
+// check logs for FB updates
+// for log entry, you can trim the wallet
