@@ -15,7 +15,8 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			new CreateTables().createCryptoTransactions();
+//			new CreateTables().createCryptoTransactions();
+//			new CreateTables().createTrades();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -66,7 +67,8 @@ public class CreateTables  {
 		
 		String sql = "create table crypto_transactions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
 			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
-				+ "fireblocks_id varchar(36) check (fireblocks_id <> ''),"
+				+ "fireblocks_id varchar(36) unique check (fireblocks_id <> ''),"
+				+ "uid varchar(8) unique," 
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "symbol varchar(32),"
 				+ "conid int check (conid > 0),"
@@ -102,7 +104,7 @@ public class CreateTables  {
 	void createTrades() throws Exception {
 		con.dropTable( "trades");
 		
-		String sql = "create table trades ("
+		String sql = "create table trades ("  // you could add uid here, but you would have to create a map of orderid or permid to uid or OrderTransaction
 				+ "tradekey varchar(32),"  // tie the trade to the commission report
 				+ "order_id int,"
 				+ "perm_id int check (perm_id <> 0),"  // can't be zero because then we can't tie it to the crypto_transaction

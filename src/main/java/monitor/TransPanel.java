@@ -9,7 +9,7 @@ import monitor.Monitor.RefPanel;
 
 /** Joins the order and the trade */  // you should join the commission here as well 
 public class TransPanel extends QueryPanel implements RefPanel {
-	static String names = "created_at,wallet_public_key,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
+	static String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
 	static String sql = """
 			select *
 			from crypto_transactions ct
