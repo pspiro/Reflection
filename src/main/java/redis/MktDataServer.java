@@ -48,7 +48,7 @@ public class MktDataServer {
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
 			
 			// ensure that application is not already running
-			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
+			SimpleTransaction.listen("0.0.0.0", 6999, trans -> trans.respond("OK") );			
 			
 			new MktDataServer(args);
 		}
