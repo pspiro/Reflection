@@ -410,7 +410,8 @@ public class BackendTransaction extends MyTransaction {
 	public void handleSignup() {
 		wrap( () -> {
 			JsonObject obj = parseToObject();
-			S.out( "Received " + obj); 
+			S.out( "Received " + obj);
+			obj.update( "wallet_public_key", val -> val.toString().toLowerCase() );
 			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
 			respondOk();
 		});
