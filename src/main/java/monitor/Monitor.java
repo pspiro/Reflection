@@ -13,6 +13,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import monitor.Monitor.RefPanel;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -71,8 +72,8 @@ public class Monitor {
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
-		m_tabs.addTab( "Transactions", new TransPanel() );
-		m_tabs.addTab( "Log", new LogPanel() );
+		m_tabs.addTab( "Transactions", createTransPanel() );
+		m_tabs.addTab( "Log", createLogPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Tokens", m_tokensPanel);
 		m_tabs.addTab( "Prices", m_pricesPanel);
@@ -106,15 +107,28 @@ public class Monitor {
 		void refresh() throws Exception; // called when Refresh button is clicked
 	}
 
+	private JComponent createTransPanel() {
+		String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
+		// String sql = "select * from crypto_transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
+		String sql = "select * from crypto_transactions order by created_at desc limit 50";
+		return new QueryPanel( names, sql);
+	}
+
+	private JComponent createLogPanel() {
+		String names = "created_at,wallet_public_key,uid,type,data"; 
+		String sql = "select * from log order by created_at DESC limit 50";
+		return new QueryPanel( names, sql);
+	}
+
 	// add the commission here as well
 	private JComponent createTradesPanel() {
-		String names = "action,quantity,conid,pricewallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
-		String sql = "select * from users limit 100";
+		String names = "created_at,tradekey,order_id,perm_id,time,side,quantity,symbol,price,cumfill,conid,exchange,avgprice,orderref";
+		String sql = "select * from trades order by created_at desc limit 50";
 		return new QueryPanel( names, sql);
 	}
 
 	static QueryPanel createUsersPanel() {
-		String names = "wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,created_at,id,kyc_status,pan_number,persona_response,updated_at";
+		String names = "created_at,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users";
 		return new QueryPanel( names, sql);
 	}
