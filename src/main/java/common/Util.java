@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,7 +34,7 @@ public class Util {
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
 	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 h clock, useless 
-	static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 h clock
+	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 h clock
 	//private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");  // what is this?
     //static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
 	//SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");
@@ -475,5 +476,12 @@ public class Util {
         for (T t : iter) {
             action.accept(t);
         }
+	}
+
+	/** Wait for user to press enter */
+	public static void pause() {
+		try(Scanner s = new Scanner(System.in)) {
+			s.nextLine();
+		}
 	}
 }

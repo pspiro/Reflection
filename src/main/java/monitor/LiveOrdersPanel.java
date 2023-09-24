@@ -37,6 +37,7 @@ public class LiveOrdersPanel extends JPanel implements RefPanel {
 		}
 		
 		void refresh( ) throws Exception {
+			super.refresh();
 			Monitor.queryArray(endpoint, ar -> {
 				m_ar = ar;
 				fireTableDataChanged();

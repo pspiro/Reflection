@@ -153,7 +153,7 @@ public class MktDataServer {
 			m_list.add( dual);
 
 			// request price on SMART
-			if (m_debug) S.out( "  requesting stock prices for %s on SMART", stock.getConid() );
+			S.out( "  requesting stock prices for %s on SMART", stock.getConid() );
 			contract.exchange( "SMART");
 			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
@@ -167,7 +167,7 @@ public class MktDataServer {
 			
 			// request price on IBEOS
 			if (stock.is24Hour() ) {
-				if (m_debug) S.out( "  requesting stock prices for %s on IBESO", stock.getConid() );
+				S.out( "  requesting stock prices for %s on OVERNIGHT", stock.getConid() );
 				contract.exchange( Ibeos);
 				mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {

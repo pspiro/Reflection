@@ -15,7 +15,7 @@ import org.json.simple.JsonObject;
 import tw.util.MyTableModel;
 import tw.util.S;
 
-abstract class JsonModel extends MyTableModel {
+public class JsonModel extends MyTableModel {
 	final String[] m_colNames;
 	final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
 	JsonArray m_ar = new JsonArray();
@@ -47,7 +47,9 @@ abstract class JsonModel extends MyTableModel {
 		return -1;
 	}
 	
-	abstract void refresh() throws Exception;
+	void refresh() throws Exception {
+		m_filtered = false;
+	}
 	
 	@Override public int getRowCount() {
 		return m_ar.size();
@@ -62,10 +64,11 @@ abstract class JsonModel extends MyTableModel {
 	}
 
 	@Override public Object getValueAt(int row, int col) {
-		return format( m_ar.get(row).get( m_namesMap.get(col) ) );
+		String key = m_namesMap.get(col);
+		return format( key, m_ar.get(row).get(key) );
 	}
 	
-	protected Object format(Object value) { // you would have to add tag or col to be useful
+	protected Object format(String key, Object value) { // you would have to add tag or col to be useful
 		return value;
 	}
 
@@ -74,7 +77,17 @@ abstract class JsonModel extends MyTableModel {
 		fireTableDataChanged();
 	}
 	
+	boolean m_filtered;
+	
 	@Override public void onDoubleClick(int row, int col) {
+		if (m_filtered) {
+			try {
+				refresh();
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;  // we have no hope
+			}
+		}
 		String tag = m_namesMap.get(col);
 		Object allowed = getValueAt(row, col);
 		
@@ -84,8 +97,9 @@ abstract class JsonModel extends MyTableModel {
 				iter.remove();
 			}
 		}
-		
+	
 		fireTableDataChanged();
+		m_filtered = true;
 	}
 	
 	JsonObject getRow(int i) {

@@ -42,11 +42,12 @@ public class RedisPanel extends JPanel implements RefPanel {
 	
 	static class RedisModel extends JsonModel {
 		RedisModel() {
-			super("symbol,conid,bid,ask,last,time,close");
+			super("symbol,conid,bid,ask,last,time,close,from");
 			justify("llrrrlr");
 		}
 	
 		void refresh() throws Exception {
+			super.refresh();
 			Set<String> keys = Monitor.m_config.newRedis().query( jedis -> jedis.keys("*") );
 
 			ArrayList<RedisQuery> list = new ArrayList<>();
@@ -72,6 +73,20 @@ public class RedisPanel extends JPanel implements RefPanel {
 			m_ar = ar;
 			fireTableDataChanged();
 		}
+		
+//		@Override protected Object format(String key, Object val) {
+//			return key.equals("bid") || key.equals("ask")
+//					? fmt((String)val) : val;
+//		}
+//
+//		private String fmt(String val) {
+//			try {
+//				S.parseDouble
+//			}
+//			catch( Exception e) {
+//				return val;
+//			}
+//		}
 	}
 	
 	@Override public void activated() {

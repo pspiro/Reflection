@@ -27,15 +27,15 @@ class DualPrices {
 	}
 
 	public void tickSmart(MyTickType tickType, double price) {
-		tick( m_smart, tickType, price);
+		tick( m_smart, tickType, price, "smart");
 	}
 
 	public void tickIbeos(MyTickType tickType, double price) {
-		tick( m_ibeos, tickType, price);
+		tick( m_ibeos, tickType, price, "overnight");
 	}
 	
-	private void tick( Prices prices, MyTickType tickType, double price) {
-		prices.tick( tickType, price);
+	private void tick( Prices prices, MyTickType tickType, double price, String lastExchange) {
+		prices.tick( tickType, price, lastExchange);
 	}
 
 	public void send(Pipeline pipeline, Session inside) {
@@ -64,12 +64,13 @@ class DualPrices {
 		private long m_time;
 		private boolean m_changed;
 		private String m_conid;
+		private String m_from;
 		
 		Prices(int conid) {
 			m_conid = String.valueOf( conid);
 		}
 
-		public synchronized void tick(MyTickType tickType, double price) {
+		public synchronized void tick(MyTickType tickType, double price, String lastExchange) {
 			switch( tickType) {
 				case Bid:
 					m_bid = price;
@@ -83,6 +84,7 @@ class DualPrices {
 					break;
 			}
 			m_changed = true;
+			m_from = lastExchange;
 		}
 
 		public synchronized void send(Pipeline pipeline, boolean force) {  // better would be to store separate changed flags for each field
@@ -92,6 +94,9 @@ class DualPrices {
 				pipeline.hset( m_conid, "ask", String.valueOf( m_ask) ); 
 				pipeline.hset( m_conid, "last", String.valueOf( m_last) ); 
 				pipeline.hset( m_conid, "time", String.valueOf( m_time) );
+				if (S.isNotNull( m_from) ) {
+					pipeline.hset( m_conid, "from", m_from);
+				}
 				m_changed = false;
 			}
 		}

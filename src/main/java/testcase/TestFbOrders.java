@@ -1,8 +1,11 @@
 package testcase;
 
+import java.util.Date;
+
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import fireblocks.Busd;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
@@ -140,7 +143,7 @@ public class TestFbOrders extends MyTestCase {
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
-		long now = System.currentTimeMillis() / 1000;		
+		String now = Util.yToS.format( new Date() );		
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
@@ -175,7 +178,7 @@ public class TestFbOrders extends MyTestCase {
 		}
 		
 		m_config.sqlCommand( conn -> {   // fix this
-			JsonArray ar = conn.queryToJson("select * from crypto_transactions where timestamp > %s", now);
+			JsonArray ar = conn.queryToJson("select * from crypto_transactions where created_at > '%s'", now);
 			assertTrue( ar.size() > 0);
 			JsonObject rec = ar.get(0);
 			S.out(rec);

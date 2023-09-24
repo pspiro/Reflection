@@ -166,7 +166,12 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
 		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> S.out("Received shutdown msg from linux kill command")));
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
+	}
+	
+	void shutdown() {
+		log( LogType.SHUTDOWN, null);
+		m_redis.disconnect();  // seems like a good idea
 	}
 
 	private void checkFbActiveServer() throws Exception {

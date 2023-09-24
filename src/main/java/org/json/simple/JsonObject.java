@@ -307,7 +307,9 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		}
 	}
 
-	/** Update the value for one specific key */
+
+	/** Update the value for one specific key;
+	 *  the value passed to the callback will never be null */
 	public void update(String key, Function<Object,Object> updater) {
 		Object obj = get(key);
 		if (obj != null ) {

@@ -169,7 +169,7 @@ public class MySqlConnection implements AutoCloseable {
 	private String toSqlValue(Object val) {
 		return getsQuoted(val)
 				? String.format( "'%s'", Util.dblQ(val.toString()))  // double-up the single-quotes 
-				: val.toString(); 
+				: val != null ? val.toString() : "null"; 
 	}
 
 	public void dropTable(String table) throws Exception {

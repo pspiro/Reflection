@@ -73,6 +73,7 @@ public class WalletPanel extends JPanel implements RefPanel {
 		}
 	
 		void refresh() throws Exception {
+			super.refresh();
 			m_ar.clear();
 
 			Wallet wallet = new Wallet( m_wallet.getText() );

@@ -1,12 +1,12 @@
 package test;
 
 import java.util.Random;
-import java.util.Scanner;
 
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
 
+import common.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
@@ -90,13 +90,6 @@ public class UpdateEmails {
 		return email;
 	}
 
-	private static void pause() {
-		try(Scanner s = new Scanner(System.in)) {
-			s.nextLine();
-		}
-		S.out("read");
-	}
-
 	public static ChromeDriver createDriver(String version) throws Exception {
 		String exe = String.format( "C:\\temp\\chromedriver.exe"); //chrome-win64\\chrome.exe", version);
 		S.out( "Starting chromedriver " + exe);
@@ -108,7 +101,7 @@ public class UpdateEmails {
 		driver = createDriver("116");
 		driver.get("https://www.linkedin.com/");
 		//S.sleep(1000);
-		pause();
+		Util.pause();
 
 		WebElement ele;
 		ele = driver.findElementById("session_key");

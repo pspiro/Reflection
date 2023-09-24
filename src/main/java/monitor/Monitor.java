@@ -74,7 +74,7 @@ public class Monitor {
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", new LogPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
-		m_tabs.addTab( "Tokens", m_tokensPanel);
+		m_tabs.addTab( "Tokens", new TokensPanel() );
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
@@ -89,7 +89,6 @@ public class Monitor {
 		m_frame.setSize( 1000, 600);
 		m_frame.setVisible(true);
 		
-		m_tokensPanel.initialize();
 		m_pricesPanel.initialize();
 	}
 	

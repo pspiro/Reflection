@@ -1,46 +1,75 @@
 package monitor;
 
+import java.awt.Color;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
+
+import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyAsyncClient;
 
+/** Test the three servers */
 public class SouthPanel extends JPanel {
 	static SimpleDateFormat fmt = Util.hhmmss;
 
-	JLabel m_refApi = new JLabel();
+	JTextField m_refApi = new JTextField(10);
+	JTextField m_fbServer = new JTextField(10);
+	JTextField m_mdServer = new JTextField(10);
+	JTextField m_aapl = new JTextField(10);
 
 	SouthPanel() {
-
-		add( new JLabel("RefAPI:"));
+		add( new JLabel("Ref API:"));
 		add( m_refApi);
 		add( Box.createHorizontalStrut(10));
-		Util.executeEvery(100, 5000, () -> update() ); 
+		add( new JLabel("FB Server:"));
+		add( m_fbServer);
+		add( Box.createHorizontalStrut(10));
+		add( new JLabel("MD Server:"));
+		add( m_mdServer);
+		add( Box.createHorizontalStrut(10));
+		add( new JLabel("AAPL:"));
+		add( m_aapl);
+		add( Box.createHorizontalStrut(10));
+		//--------Util.executeEvery(100, 10000, () -> update() ); 
 	}
 
 	private void update() {
-		long now = System.currentTimeMillis();
-
 		try {
-			MyAsyncClient.get( "https://reflection.trading/api/ok", data -> {
-				long elap = System.currentTimeMillis() - now;
-//				if (JsonObject.parse( data).getString("code").equals("OK") ) {
-//					String str = String.format( "%s in %s ms", fmt.format( new Date() ), elap); 
-//					m_refApi.setText( str);
-//				}
-//				else {
-//					m_refApi.setText( "Error");
-//				}
-			});
+			test( "https://reflection.trading/api/ok", m_refApi);
+			test( "https://reflection.trading/fbserver/ok", m_fbServer);
+			test( "https://reflection.trading/mdserver/ok", m_mdServer);
+			
+			Object map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
+			
+			HashMap<String,String> m = (HashMap<String,String>)map; // this is annoying, it shouldn't be necessary
+			m_aapl.setText( String.format( "%s : %s", m.get("bid"), m.get("ask") ) ); 
+			
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			m_refApi.setText( "ERROR - NO CONNECTION");
 		}
 	}
-}
 
+	private void test(String url, JTextField field) {
+		long now = System.currentTimeMillis();
+
+		MyAsyncClient.get( url, data -> {
+			if (data.equals("OK") || JsonObject.isObject(data) && JsonObject.parse( data).getString("code").equals("OK") ) {
+				long elap = System.currentTimeMillis() - now;
+				field.setText( String.format( "%s (%s ms)", elap < 500 ? "OK" : "SLOW", elap) );
+				field.setBackground(Color.white);
+			}
+			else {
+				field.setText( "ERROR");
+				field.setBackground(Color.yellow);
+			}
+		});
+	}
+}
