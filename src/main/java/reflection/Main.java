@@ -38,7 +38,6 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
-import util.DateLogFile;
 import util.LogType;
 
 public class Main implements ITradeReportHandler {
@@ -48,7 +47,6 @@ public class Main implements ITradeReportHandler {
 	
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
-	private static final DateLogFile m_log = new DateLogFile("reflection"); // log file for requests and responses
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
 	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
@@ -566,7 +564,7 @@ public class Main implements ITradeReportHandler {
 			}
 		}
 		catch( JedisException e) {
-			m_log.log(LogType.JEDIS, e.getMessage() );
+			log(LogType.JEDIS, e.getMessage() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();

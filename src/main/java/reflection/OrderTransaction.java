@@ -421,6 +421,7 @@ public class OrderTransaction extends MyTransaction {
 		try {
 			JsonObject obj = new JsonObject();
 			obj.put("fireblocks_id", id);  // primary key
+			obj.put("uid", m_uid);
 			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
 			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
 			obj.put("wallet_public_key", m_walletAddr);
