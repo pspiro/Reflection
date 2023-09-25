@@ -653,11 +653,12 @@ public class OrderTransaction extends MyTransaction {
 		}
 	}
 
-	/** Called when the user queries status of live orders */
+	/** Called when the monitor program queries for all live orders */
 	public synchronized JsonObject getLiveOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
 		order.put( "wallet", m_walletAddr);
+		order.put( "action", isBuy() ? "Buy" : "Sell");
 		order.put( "description", getWorkingOrderText() );
 		order.put( "progress", m_progress);
 		order.put( "status", m_status.toString() );
@@ -668,6 +669,7 @@ public class OrderTransaction extends MyTransaction {
 		return order;
 	}
 
+	/** Called when Frontend queries live order for a single wallet */
 	public synchronized JsonObject getWorkingOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
@@ -677,7 +679,7 @@ public class OrderTransaction extends MyTransaction {
 		return order;
 	}
 
-	/** Called when the user queries status of live orders */
+	/** Called when Frontend queries live order for a single wallet */
 	public synchronized JsonObject getCompletedOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );

@@ -13,7 +13,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.Monitor.RefPanel;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;

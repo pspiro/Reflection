@@ -6,7 +6,6 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -22,6 +21,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 	TokensPanel() {
 		super( new BorderLayout() );
 		add( m_model.createTable() );
+		m_model.justify("lllrr");
 	}
 	
 	public void refresh() throws Exception {

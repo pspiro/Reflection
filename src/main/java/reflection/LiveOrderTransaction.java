@@ -25,7 +25,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		wrap( () -> {
 			JsonArray retLiveOrders = new JsonArray();
 			
-			liveOrders.forEach( (walletAddr, list) -> {
+			liveOrders.forEach( (walletAddr, list) -> {  // can't use allLiveOrders because it is not the complete list
 				for (OrderTransaction order : list) {
 					retLiveOrders.add( order.getLiveOrder() );
 				}

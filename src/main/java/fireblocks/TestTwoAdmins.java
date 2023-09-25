@@ -41,10 +41,7 @@ public class TestTwoAdmins {
 	static void prepare(String name) throws Exception {
 		String addr = Accounts.instance.getAddress(name);
 		
-		busd.mint(
-				Accounts.instance.getAdminAccountId(addr),
-				addr,
-				2);
+		busd.mint(addr, 2);
 
 		// user to approve buying with BUSD; you must wait for this
 		busd.approve(

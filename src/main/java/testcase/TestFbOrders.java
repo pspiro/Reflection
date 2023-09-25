@@ -86,10 +86,7 @@ public class TestFbOrders extends MyTestCase {
 		// mint BUSD for user Bob
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		busd.mint(
-				accounts.getId( "Admin1"),
-				bobAddr,
-				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+		busd.mint( bobAddr,	2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
 		
 		// approve too little
 		S.out( "**approving .49");

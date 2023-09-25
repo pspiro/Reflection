@@ -14,7 +14,6 @@ public class Busd extends Erc20 {
 
 		Busd busd = config.busd();
 		busd.mint( 
-				Accounts.instance.getId( "Owner"),
 				"0xb95bf9C71e030FA3D8c0940456972885DB60843F",
 				//"0xd953DC148f3A1019132FBD75Ee515E3F786f6634",
 				300000);
@@ -31,8 +30,8 @@ public class Busd extends Erc20 {
 	
 	/** This can be called by anybody, the BUSD does not have an owner.
 	 *  For testing only; cannot be called in production */
-	public RetVal mint(int accountId, String address, double amt) throws Exception {
-		S.out( "Account %s minting %s %s for %s", accountId, amt, getName(), address);
+	public RetVal mint(String address, double amt) throws Exception {
+		S.out( "Minting %s %s for %s", amt, getName(), address);
 		
 		String[] paramTypes = { "address", "uint256" };
 		
@@ -41,7 +40,7 @@ public class Busd extends Erc20 {
 				toBlockchain( amt) 
 		};
 		
-		return Fireblocks.call2( accountId, m_address, mintKeccak, paramTypes, params, "Stablecoin mint");
+		return Fireblocks.call2( Accounts.instance.getId( "Owner"), m_address, mintKeccak, paramTypes, params, "Stablecoin mint");
 	}
 	
 	/** For testing only, as we cannot deploy the real stablecoin */

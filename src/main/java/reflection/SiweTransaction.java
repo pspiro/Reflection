@@ -53,7 +53,7 @@ public class SiweTransaction extends MyTransaction {
 	}
 	
 	public SiweTransaction(Main main, HttpExchange exch) {
-		super(main, exch, "SIN");
+		super(main, exch);
 	}
 
 	/** Frontend requests nonce to build SIWE message.

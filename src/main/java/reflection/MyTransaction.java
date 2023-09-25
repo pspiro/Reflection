@@ -33,7 +33,7 @@ public abstract class MyTransaction {
 	}
 	
 	static HashMap<String,Vector<OrderTransaction>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
-	static HashMap<String,OrderTransaction> allLiveOrders = new HashMap<>();  // key is fireblocks id 
+	static HashMap<String,OrderTransaction> allLiveOrders = new HashMap<>();  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	static final String code = "code";
@@ -50,17 +50,11 @@ public abstract class MyTransaction {
 	protected MyTimer m_timer = new MyTimer();
 	protected String m_uid;
 	protected String m_walletAddr;  // mixed case, I think; would be null for most messages, only some use it
-	private String m_header;  // SIN for all sign-in functions
 	
 	MyTransaction( Main main, HttpExchange exchange) {
-		this( main, exchange, null);
-	}
-
-	MyTransaction( Main main, HttpExchange exchange, String header) {
 		m_main = main;
 		m_exchange = exchange;
 		m_uid = Util.uid(8);
-		m_header = header;
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	

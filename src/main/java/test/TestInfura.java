@@ -6,8 +6,8 @@ import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.json.simple.JsonObject;
 
+import common.Util.ObjectHolder;
 import tw.util.S;
-import util.StringHolder;
 
 public class TestInfura {
 	static String api = "bba0c8b8f46b4c6a8f740a74c6c4ad77";
@@ -25,7 +25,7 @@ public class TestInfura {
 	}		
 	
 	static String querySync(String url, String data) {
-		StringHolder holder = new StringHolder();
+		ObjectHolder<String> holder = new ObjectHolder<String>();
 
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare("POST", url)

@@ -39,6 +39,10 @@ public class Util {
     //static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
 	//SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");
 
+	/** Use this to return values from asynchronous methods */
+	public static class ObjectHolder<T> {
+		public T val;
+	}
 	
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {

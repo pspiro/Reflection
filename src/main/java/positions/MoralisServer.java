@@ -17,6 +17,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
+import common.Util.ObjectHolder;
 import fireblocks.Erc20;
 import http.SimpleTransaction;
 import reflection.MySqlConnection;
@@ -24,7 +25,6 @@ import reflection.RefException;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
-import util.StringHolder;
 
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick */
@@ -288,7 +288,7 @@ public class MoralisServer {
 	}
 	
 	private static String querySync_(String url) {
-		StringHolder holder = new StringHolder();
+		ObjectHolder<String> holder = new ObjectHolder<String>();
 
 	    AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare("GET", url)

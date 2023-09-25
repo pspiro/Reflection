@@ -25,6 +25,7 @@ import junit.framework.TestCase;
 	   TestPositionTracker.class,
 	   TestPrices.class,
 	   TestRedeem.class,
+	   TestSignup.class,
 	   TestSiwe.class,
 	   TestSplitDates.class,
 	   TestStrings.class,
