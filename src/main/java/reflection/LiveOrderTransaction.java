@@ -79,14 +79,14 @@ public class LiveOrderTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();  // (all keys -> lower case)
 			
-			String id = m_map.getRequiredParam("id");
+			String fbId = m_map.getRequiredParam("id");
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
 			String hash = S.notNull( m_map.getParam("txhash") );
 			
 			// fails silently if there is no transaction to update; it's possible that the database entry is not made yet
-			updateTransactionsTable( id, status, hash);
+			updateTransactionsTable( fbId, status, hash);
 
-			OrderTransaction liveOrder = allLiveOrders.get(id);
+			OrderTransaction liveOrder = allLiveOrders.get(fbId);
 			
 			if (liveOrder != null) {
 				// for log entries, use the uid and wallet from the order 
@@ -94,27 +94,27 @@ public class LiveOrderTransaction extends MyTransaction {
 				m_walletAddr = liveOrder.walletAddr();
 				
 				// special case: for this log entry, use the uid and wallet of the order 
-				olog( LogType.FB_UPDATE, "id", id, "status", status, "hash", hash); // this gives us the history of the timing
+				olog( LogType.FB_UPDATE, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
 				liveOrder.onUpdateStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
 				//olog( LogType.FB_UPDATE, "status", status, "hash", hash); // this gives us the history of the timing
 				// this will happen anytime this is a FB transactions that is not an order; we can remove it
-				out( "  ignoring live order update for %s", id);
+				out( "  ignoring live order update for %s", fbId);
 			}
 			
 			respondOk();
 		});
 	}
 
-	private void updateTransactionsTable(String uid, FireblocksStatus status, String hash) {
+	private void updateTransactionsTable(String fbId, FireblocksStatus status, String hash) {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 		try {
 			JsonObject obj = new JsonObject();
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 			
-			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", uid) );				
+			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
 		catch( Exception e) {
 			elog( LogType.DATABASE_ERR, e);

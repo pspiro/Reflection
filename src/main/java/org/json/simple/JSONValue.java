@@ -154,6 +154,12 @@ public class JSONValue {
 		out.write(value.toString());
 	}
 
+	/** These types will be quoted when json is converted to a string;
+	 *  see also MySqlConnection.getsQuoted */
+	private static boolean likeString( Object val) {
+		return val instanceof String || val instanceof Enum || val instanceof java.sql.Timestamp;
+	}
+	
 	/**
 	 * Convert an object to JSON text.
 	 * <p>
@@ -172,7 +178,7 @@ public class JSONValue {
 		if(value == null)
 			return "null";
 		
-		if(value instanceof String || value instanceof Enum)  // treat enums like strings
+		if( likeString(value) )  // treat enums like strings
 			return "\""+escape(value.toString())+"\"";
 		
 		if(value instanceof Double){
