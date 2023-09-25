@@ -411,7 +411,13 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			JsonObject obj = parseToObject();
 			S.out( "Received " + obj);
-			obj.update( "wallet_public_key", val -> val.toString().toLowerCase() );
+			obj.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
+			require( S.isNotNull( obj.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
+			require( S.isNotNull( obj.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
+			
+			String wallet = obj.getString("wallet_public_key");
+			require( S.isNull( wallet) || wallet.length() == 42, RefCode.INVALID_REQUEST, "The wallet address entered is invalid");
+			
 			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
 			respondOk();
 		});
