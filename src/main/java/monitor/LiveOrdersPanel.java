@@ -33,7 +33,7 @@ public class LiveOrdersPanel extends JPanel implements RefPanel {
 	
 	class Model extends JsonModel {
 		Model() {
-			super( "id,wallet,action,description,progress,status,errorCode,errorText");
+			super( "uid,wallet,action,description,progress,status,errorCode,errorText");
 		}
 		
 		void refresh( ) throws Exception {

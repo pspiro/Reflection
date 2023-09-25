@@ -656,7 +656,7 @@ public class OrderTransaction extends MyTransaction {
 	/** Called when the monitor program queries for all live orders */
 	public synchronized JsonObject getLiveOrder() {
 		JsonObject order = new JsonObject();
-		order.put( "id", uid() );
+		order.put( "uid", uid() );
 		order.put( "wallet", m_walletAddr);
 		order.put( "action", isBuy() ? "Buy" : "Sell");
 		order.put( "description", getWorkingOrderText() );
