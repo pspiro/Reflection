@@ -36,20 +36,11 @@ public class Config extends ConfigBase {
 	private double maxSellAmt; // max sell amt in dollars
 	private double minBuySpread;  // as pct of price
 	private double minSellSpread;  // as pct of price
+	double minOrderSize;  // in dollars
 
 	// needed by back-end server
 	private double buySpread;  // as pct of price
 	private double sellSpread;  // as pct of price
-	
-	// 
-//	private double commission;
-//	private int price_refresh_interval (integer)
-	
-//	min_order_size (float)  // get rid of these
-//	max_order_size (float)  // // get rid of these
-//	non_kyc_max_order_size (float)
-//	commission (float)
-	
 
 	// program parameters
 	private double nonKycMaxOrderSize;
@@ -151,14 +142,15 @@ public class Config extends ConfigBase {
 		m_tab = new GTable( tab, "Tag", "Value", true);
 		
 		// user experience parameters
-		this.buySpread = m_tab.getDouble( "buy_spread");
-		this.sellSpread = m_tab.getDouble( "sell_spread");
-		this.minBuySpread = m_tab.getDouble( "minBuySpread");   // should be changed to read table without formatting. pas
-		this.minSellSpread = m_tab.getDouble( "minSellSpread");
-		this.maxBuyAmt = m_tab.getDouble( "max_order_size");
-		this.maxSellAmt = m_tab.getDouble( "max_order_size");
-		this.minTokenPosition = m_tab.getDouble("minTokenPosition");
-		this.commission = m_tab.getDouble( "commission");
+		this.buySpread = m_tab.getRequiredDouble( "buy_spread");
+		this.sellSpread = m_tab.getRequiredDouble( "sell_spread");
+		this.minBuySpread = m_tab.getRequiredDouble( "minBuySpread");   // should be changed to read table without formatting. pas
+		this.minSellSpread = m_tab.getRequiredDouble( "minSellSpread");
+		this.maxBuyAmt = m_tab.getRequiredDouble( "max_order_size");
+		this.maxSellAmt = m_tab.getRequiredDouble( "max_order_size");
+		this.minOrderSize = m_tab.getRequiredDouble( "min_order_size");
+		this.minTokenPosition = m_tab.getRequiredDouble("minTokenPosition");
+		this.commission = m_tab.getRequiredDouble( "commission");
 
 		// TWS connection
 		this.twsOrderHost = m_tab.get( "twsOrderHost");
@@ -197,6 +189,7 @@ public class Config extends ConfigBase {
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
 		this.allowRedemptions = m_tab.getBoolean("allowRedemptions");
 		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("non_kyc_max_order_size");
+		
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -459,5 +452,8 @@ public class Config extends ConfigBase {
 	
 	double getRequiredDouble(String key) throws Exception {
 		return m_tab.getRequiredDouble(key);
+	}
+	public double minOrderSize() {
+		return minOrderSize;
 	}
 }

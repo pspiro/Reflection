@@ -1,12 +1,12 @@
 package test;
 
 import java.util.Random;
-import java.util.Scanner;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
 
+import common.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
@@ -17,10 +17,10 @@ public class UpdateEmails {
 	
 	public static void main(String[] args) throws Exception {
 
-		login("heather@briscoinvestments.com", "16Sixteen!");
-		S.sleep(1000);
-		process("Heather");
-		driver.close();
+//		login("heather@briscoinvestments.com", "16Sixteen!");
+//		S.sleep(1000);
+//		process("Heather");
+//		driver.close();
 			
 		login("peteraspiro@gmail.com", "1359ab");
 		S.sleep(1000);
@@ -82,7 +82,7 @@ public class UpdateEmails {
 	
 	static String get(String xpath) {
 		String email = driver
-				.findElementByXPath(xpath)
+				.findElement(By.xpath(xpath))
 				.getAttribute("href")
 				.substring(7);
 		
@@ -90,35 +90,24 @@ public class UpdateEmails {
 		return email;
 	}
 
-	private static void pause() {
-		try(Scanner s = new Scanner(System.in)) {
-			s.nextLine();
-		}
-		S.out("read");
-	}
-
-	public static ChromeDriver createDriver(String version) throws Exception {
-		String exe = String.format( "C:\\temp\\chromedriver.exe"); //chrome-win64\\chrome.exe", version);
-		S.out( "Starting chromedriver " + exe);
-		System.setProperty(ChromeDriverService.CHROME_DRIVER_EXE_PROPERTY, exe);
-		return new ChromeDriver();
-	}
-	
 	static void login(String username, String pword) throws Exception {
-		driver = createDriver("116");
+//		ChromeOptions o = new ChromeOptions();
+//		o.setBrowserVersion("116");  // if you want to use a different version
+
+		driver = new ChromeDriver(); 
 		driver.get("https://www.linkedin.com/");
 		//S.sleep(1000);
-		pause();
+		Util.pause();
 
 		WebElement ele;
-		ele = driver.findElementById("session_key");
+		ele = driver.findElement(By.id("session_key") );
 		ele.sendKeys(username);
 
-		ele = driver.findElementById("session_password");
+		ele = driver.findElement(By.id("session_password"));
 		ele.sendKeys(pword);
 
 		// click Login
-		ele = driver.findElementByCssSelector("#main-content > section.section.min-h-\\[560px\\].flex-nowrap.pt-\\[40px\\].babybear\\:flex-col.babybear\\:min-h-\\[0\\].babybear\\:px-mobile-container-padding.babybear\\:pt-\\[24px\\] > div > div > form > div.flex.justify-between.sign-in-form__footer--full-width > button");
+		ele = driver.findElement(By.cssSelector("#main-content > section.section.min-h-\\[560px\\].flex-nowrap.pt-\\[40px\\].babybear\\:flex-col.babybear\\:min-h-\\[0\\].babybear\\:px-mobile-container-padding.babybear\\:pt-\\[24px\\] > div > div > form > div.flex.justify-between.sign-in-form__footer--full-width > button"));
 		ele.click();
 		
 	}

@@ -9,7 +9,7 @@ public class MintRusd {
 		mint("0xb781012C022FcD149645e2b16Dfd2E920754514f", 100000);
 	}
 	
-	static void mint(String wallet, double amt) throws Exception {
+	public static void mint(String wallet, double amt) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
 		Stocks stocks = new Stocks();

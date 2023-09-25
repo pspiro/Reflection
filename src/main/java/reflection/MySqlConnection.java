@@ -115,7 +115,8 @@ public class MySqlConnection implements AutoCloseable {
 		return execute( String.format("update %s set %s where %s", table, values, String.format(where, params) ) );
 	}
 	
-	/** These types are supported and get quoted */
+	/** These types are supported and get quoted.
+	 *  See also JSONValue.getsQuoted */
 	private static boolean getsQuoted(Object val) {
 		return val instanceof String || val instanceof JSONAware || val instanceof Enum;
 	}
@@ -165,11 +166,11 @@ public class MySqlConnection implements AutoCloseable {
 		execute(sql);
 	}
 
-	/** Put strings in single quotes */
+	/** Put strings in single quotes when inserting or updating */
 	private String toSqlValue(Object val) {
 		return getsQuoted(val)
 				? String.format( "'%s'", Util.dblQ(val.toString()))  // double-up the single-quotes 
-				: val.toString(); 
+				: val != null ? val.toString() : "null"; 
 	}
 
 	public void dropTable(String table) throws Exception {

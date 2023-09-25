@@ -10,6 +10,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import common.Util.ObjectHolder;
 import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
@@ -106,7 +107,7 @@ public class Fireblocks {
 				Encrypt.encode( header), Encrypt.encode( payload), signed)
 				.replace( "/", "_").replace( "+", "-");
 		
-		ObjHolder holder = new ObjHolder();
+		ObjectHolder<Response> holder = new ObjectHolder<>();
 		
 		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
 		client.prepare(operation, base + endpoint)
@@ -134,10 +135,6 @@ public class Fireblocks {
 		return holder.val.getResponseBody();
 	}
 	
-	static class ObjHolder {
-		Response val;
-	}
-
 	static void process(Response resp) throws Exception {
 		String body = resp.getResponseBody();
 		S.out( body);

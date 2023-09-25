@@ -49,7 +49,8 @@ public class PricesPanel extends JPanel implements RefPanel {
 			m_model.fireTableDataChanged();
 		}
 
-		void refresh() {
+		void refresh() throws Exception {
+			super.refresh();
 			Monitor.queryObj("/api/?msg=getallprices", map -> {
 				map.forEach( (conid,prices) -> update(Integer.parseInt(conid), (JsonObject)prices) ); 
 				fireTableDataChanged();
@@ -119,7 +120,6 @@ public class PricesPanel extends JPanel implements RefPanel {
 	
 	
 	@Override public void activated() {
-		m_model.refresh();
 	}
 
 	@Override public void closed() {

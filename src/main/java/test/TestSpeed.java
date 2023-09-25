@@ -4,9 +4,9 @@ import java.sql.ResultSet;
 
 import org.asynchttpclient.DefaultAsyncHttpClient;
 
+import common.Util.ObjectHolder;
 import reflection.MySqlConnection;
 import tw.util.S;
-import util.StringHolder;
 
 /** Compare db access to RefAPI access. */
 public class TestSpeed {
@@ -37,7 +37,7 @@ public class TestSpeed {
 	}
 
 	private static String sendReq() {
-		StringHolder holder = new StringHolder();
+		ObjectHolder<String> holder = new ObjectHolder<String>();
 
 		DefaultAsyncHttpClient client = new DefaultAsyncHttpClient(); 
 		

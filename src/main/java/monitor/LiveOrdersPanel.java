@@ -10,7 +10,7 @@ import tw.util.S;
 
 
 public class LiveOrdersPanel extends JPanel implements RefPanel {
-	String endpoint = "/api/all-live-orders";
+	static final String endpoint = "/api/all-live-orders";
 
 	final JsonModel m_model;
 	
@@ -33,10 +33,11 @@ public class LiveOrdersPanel extends JPanel implements RefPanel {
 	
 	class Model extends JsonModel {
 		Model() {
-			super( "id,wallet,description,progress,status,errorCode,errorText");
+			super( "uid,wallet,action,description,progress,status,errorCode,errorText");
 		}
 		
 		void refresh( ) throws Exception {
+			super.refresh();
 			Monitor.queryArray(endpoint, ar -> {
 				m_ar = ar;
 				fireTableDataChanged();

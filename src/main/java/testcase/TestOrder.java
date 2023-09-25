@@ -17,8 +17,19 @@ public class TestOrder extends MyTestCase {
 	
 	static {
 		try {
+			String conid = "265598";
+			
 			curPrice = m_config.newRedis().singleQuery( 
-					jedis -> Double.valueOf( jedis.hget("265598", "bid") ) );  // if you get an error here, call https://reflection.trading/api/?msg=seedprices
+					jedis -> {
+						String bid = jedis.hget(conid, "bid");
+						String ask = jedis.hget(conid, "ask");
+						if (S.isNull(bid) || S.isNull(ask) ) {
+							jedis.hset( conid, "bid", "138.2");
+							jedis.hset( conid, "ask", "138.4");
+							return 138.3;
+						}
+						return Double.valueOf(bid);
+					});
 			S.out( "TestOrder: Current AAPL price is %s", curPrice);
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
@@ -146,11 +157,17 @@ public class TestOrder extends MyTestCase {
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Sold 10", ret.getString("text") );
 	}
+
+	public void testMinOrderSize() throws Exception {
+		double qty = m_config.minOrderSize() / curPrice - .01;
+		JsonObject map = postOrderToObj( createOrder2("buy", qty, 138) );
+		String ret = map.getString( "code");
+		assertEquals( RefCode.ORDER_TOO_SMALL.toString(), ret);
+	}
 	
 	public void testMaxAmtBuy()  throws Exception {
-		double qty = m_config.maxBuyAmt() / 138 + 1;
-		JsonObject obj = createOrder2("buy", qty, 138);
-		JsonObject map = postOrderToObj(obj);
+		double qty = m_config.maxBuyAmt() / curPrice + 1;
+		JsonObject map = postOrderToObj( createOrder2("buy", qty, 138) );
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}

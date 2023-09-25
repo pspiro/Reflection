@@ -23,7 +23,6 @@ public class TestOneOrder {
 		
 		// mint BUSD for user Bob
 		busd.mint(
-				accounts.getId( "Admin1"),
 				accounts.getAddress("Bob"),
 				1);
 		

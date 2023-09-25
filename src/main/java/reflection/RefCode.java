@@ -12,6 +12,7 @@ public enum RefCode {
 	TIMED_OUT,			// order timed out before being filled or canceled, or SIWE auth was too slow
 	REJECTED,			// order was rejected, reason unknown
 	ORDER_TOO_LARGE,	// dollar amt is too high as per config settings
+	ORDER_TOO_SMALL,	// dollar amt is too small
 	NEED_KYC,			// order is above non-KYC max order size
 	PARTIAL_FILL,		// order was partially filled; should never happen, we use AON
 	MISSING_ENV_VAR,

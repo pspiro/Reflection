@@ -42,7 +42,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 		
 		@Override void refresh( ) throws Exception {
 			m_ar = Monitor.m_config.sqlQuery( conn -> conn.queryToJson(m_sql) );
-			m_ar.forEach( obj -> adjust(obj) );
+			m_ar.forEach( obj -> adjust(obj) );  // or override format() to keep the object intact 
 			fireTableDataChanged();
 		}
 

@@ -56,18 +56,4 @@ public class TestMyRedis extends MyTestCase {
 		assertEquals( "f", obj2.get() );
 	}
 
-	public void testPipeline2() throws Exception {
-		MyRedis redis = m_config.newRedis();
-
-		redis.startPipeline(500, ex -> ex.printStackTrace() );
-		redis.runOnPipeline( pipeline -> pipeline.set( "m1", "m2") );
-		redis.startPipeline(500, ex -> ex.printStackTrace() );
-		redis.runOnPipeline( pipeline -> pipeline.set( "m3", "m4") );
-		// set break in here
-		S.out( "waiting to sync");
-		S.sleep(3000);
-
-		assertEquals( "m2", redis.query( jedis -> jedis.get("m1") ) );
-		assertEquals( "m4", redis.query( jedis -> jedis.get("m3") ) );
-	}
 }

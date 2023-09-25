@@ -36,10 +36,7 @@ public class Test {
 		// only Bob can buy with BUSD because only Bob can approve that
 				
 		// mint BUSD for user Bob
-		busd.mint(
-				accounts.getId( "Admin1"),
-				accounts.getAddress("Bob"),
-				1);
+		busd.mint( accounts.getAddress("Bob"), 1);
 		
 		// user to approve buying with BUSD; you must wait for this
 		busd.approve(

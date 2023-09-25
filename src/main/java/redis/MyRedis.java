@@ -10,12 +10,13 @@ import redis.clients.jedis.util.JedisURIHelper;
 
 /** Facilitates reconnecting to Jedis if connection is lost.
  *  And we make sure that we are catching Jedis exceptions for the calls that the user makes.
- *  Handle the pipeline and set a timer to sync the pipeline  */
+ *  Handle the pipeline and set a timer to sync the pipeline.
+ *  
+ *  In summary, it keeps the connection open, but closes and re-opens if there is an error. */
 public class MyRedis {
 	private Jedis m_jedis;
 	final private String m_hostOrURI;
 	final private int m_port;
-	private Pipeline m_pipeline;
 	private String m_name;
 	
 	/** You should only use this if you are leaving the connection open */
@@ -48,12 +49,14 @@ public class MyRedis {
 		});
 	}
 	
+	/** Connect, run a single query, then disconnect */
 	public <T> T singleQuery( Jrt<T> runnable) {
 		T t = query(runnable);
 		disconnect();
 		return t;
 	}
 	
+	/** Run a single query and leave the connection open */
 	public <T> T query( Jrt<T> runnable) {
 		try {
 			checkConnection();
@@ -74,7 +77,6 @@ public class MyRedis {
 			catch( Exception e) { } // swallow it
 		}
 		m_jedis = null;
-		m_pipeline = null;
 	}
 
 
@@ -89,74 +91,12 @@ public class MyRedis {
 		});
 	}
 
-	/** Currently not used.
-	 *  This has severe limitation of only one pipeline at a time.
-	 *  Use this version when all the queries are spread out over time
-	 *  @param batchTimeMs is time until we call sync
-	 *  @param handler will handle exceptions during sync */
-	public synchronized void startPipeline(int batchTimeMs, ExHandler handler) {
-			if (m_pipeline == null) {
-				wrap( () -> {
-					checkConnection();
-					m_pipeline = m_jedis.pipelined();
-					Util.executeIn( batchTimeMs, () -> {
-						try {
-							sync();
-						}
-						catch( Exception e) {
-							handler.handle(e);
-						}
-					});
-				});
-			}
-	}
-	
-	/** Currently not used; 
-	 * 
-	 *  goes along with startPipeline() */
-	public void runOnPipeline( PRun runnable) throws Exception {
-		Util.require( m_jedis != null, "No connection");
-		Util.require( m_pipeline != null, "Not in pipeline");
-		
-		wrap( () -> {
-			runnable.run(m_pipeline);
-		});
-	}
-
-	/** Not used. */
-	public <T> T queryOnPipeline( Prt<T> runnable) throws Exception {
-		Util.require( m_jedis != null, "No connection");
-		Util.require( m_pipeline != null, "Not in pipeline");
-
-		// wrap doesn't work here
-		try {
-			return runnable.run(m_pipeline);
-		}
-		catch( JedisException e) {
-			m_jedis = null;
-			m_pipeline = null;
-			throw e;
-		}
-	}
-	
-	private synchronized void sync() throws Exception {
-		Util.require( m_jedis != null, "No connection");
-		Util.require( m_pipeline != null, "Not in pipeline");
-		
-		wrap( () -> {
-			m_pipeline.sync();
-			m_pipeline = null;
-		});
-	}
-	
-	
 	private void wrap( Runnable run) {
 		try {
 			run.run();
 		}
 		catch( JedisException e) {
 			m_jedis = null;
-			m_pipeline = null;
 			throw e;
 		}
 	}
