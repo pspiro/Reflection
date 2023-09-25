@@ -92,9 +92,8 @@ public class LiveOrderTransaction extends MyTransaction {
 				// for log entries, use the uid and wallet from the order 
 				m_uid = liveOrder.uid();
 				m_walletAddr = liveOrder.walletAddr();
-				
-				// special case: for this log entry, use the uid and wallet of the order 
 				olog( LogType.FB_UPDATE, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
+				
 				liveOrder.onUpdateStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
 			}
 			else {
@@ -113,6 +112,8 @@ public class LiveOrderTransaction extends MyTransaction {
 			JsonObject obj = new JsonObject();
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
+
+			olog( LogType.ERROR, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
 			
 			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
