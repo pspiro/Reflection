@@ -57,6 +57,7 @@ public class TestMany {
 		obj.put( "tokenPrice", price);
 		obj.put( "wallet_public_key", Cookie.wallet);
 		obj.put( "cookie", Cookie.cookie);
+		obj.put( "currency", "USDC");
 		
 		MyAsyncClient.postToJson( base + "/api/order", obj.toString(), json -> json.display() );
 		

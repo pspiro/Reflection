@@ -15,8 +15,8 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-//			new CreateTables().createCryptoTransactions();
-//			new CreateTables().createTrades();
+			//new CreateTables().createCryptoTransactions();
+			new CreateTables().createTrades();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -105,6 +105,7 @@ public class CreateTables  {
 		con.dropTable( "trades");
 		
 		String sql = "create table trades ("  // you could add uid here, but you would have to create a map of orderid or permid to uid or OrderTransaction
+			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
 				+ "tradekey varchar(32),"  // tie the trade to the commission report
 				+ "order_id int,"
 				+ "perm_id int check (perm_id <> 0),"  // can't be zero because then we can't tie it to the crypto_transaction
