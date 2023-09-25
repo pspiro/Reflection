@@ -4,6 +4,8 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.IOException;
+import java.sql.Date;
+import java.text.ParseException;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
@@ -208,9 +210,16 @@ public class BackendTransaction extends MyTransaction {
 				String where = S.isNotNull(wallet) 
 						? String.format( "where lower(wallet_public_key)='%s'", wallet.toLowerCase() )
 						: "";
-				respond(conn.queryToJson("select * from crypto_transactions %s order by created_at desc limit 20", where) );
+				JsonArray ar = conn.queryToJson("select * from crypto_transactions %s order by created_at desc limit 20", where);
+				for (JsonObject obj : ar) fix(obj);
+				respond(ar);
 			});
 		});
+	}
+
+	private void fix(JsonObject obj) throws ParseException {
+		obj.put( "timestamp", Util.yToS.parse(obj.getString("created_at")).getTime() / 1000 );
+		obj.remove("created_at");
 	}
 
 	private JsonArray trim(JsonArray json) {

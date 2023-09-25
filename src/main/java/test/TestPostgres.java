@@ -1,9 +1,9 @@
 package test;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import reflection.Config;
+import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -16,27 +16,12 @@ public class TestPostgres {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
-		JsonObject data0 = new JsonObject();
-		data0.put("type", "jimm");
+		JsonObject obj = config.sqlQuery( conn -> conn.queryToJson("select * from crypto_transactions") ).get(0);
+		S.out(obj);
 		
-		JsonObject data1 = new JsonObject();
-		data1.put("created_at", null);
-		
-		JsonObject data2 = new JsonObject();
-		data2.put("created_at", now);
-		
-		config.sqlCommand( conn -> {
-//			conn.insertJson("log", data0);
-//			Util.pause();
-//			conn.updateJson("log", data1, "type = '%s'", "jimm");
-//			Util.pause();
-			conn.updateJson("log", data2, "type = '%s'", "jimm");
-		});
-		
-		JsonArray ar = config.sqlQuery( conn -> conn.queryToJson("select * from log where type = 'jimm'") );
-		ar.display();
-		
+		config.sqlCommand( sql -> sql.updateJson("crypto_transactions", obj, "uid=%s", obj.getString("uid")) );
 		
 	}
 }
 // create a separate log table for exceptions? what is best way to insert call stack?
+

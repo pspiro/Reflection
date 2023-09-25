@@ -33,8 +33,8 @@ public class Util {
 	static Random rnd = new Random();
 	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
-	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 h clock, useless 
-	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 h clock
+	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 hr clock, useless 
+	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 hr clock
 	//private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");  // what is this?
     //static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
 	//SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");

@@ -126,32 +126,32 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/mint", exch -> new BackendTransaction(this, exch).handleMint() );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() );
-		server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() );
-		server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch).handleAllLiveOrders() );
+		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
+		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
 		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
-		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
+		server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() );
 		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
-		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/get-profile", exch -> new BackendTransaction(this, exch).handleGetProfile() );
-		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
-		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
 		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch).handleFireblocks() ); // report build date/time
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
 		server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch).handleGetType2Config() );
+		server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch).handleAllLiveOrders() );
 		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
-		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
 		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
