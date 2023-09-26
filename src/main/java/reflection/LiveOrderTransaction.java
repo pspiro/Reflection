@@ -113,8 +113,6 @@ public class LiveOrderTransaction extends MyTransaction {
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 
-			olog( LogType.ERROR, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
-			
 			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
 		catch( Exception e) {

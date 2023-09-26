@@ -5,6 +5,7 @@ import java.util.Random;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import fireblocks.MintRusd;
 import http.MyAsyncClient;
 import reflection.Config;
@@ -35,7 +36,7 @@ public class TestMany {
 
 		for (String addr : addrs) {
 			Wal wal = new Wal();
-			wal.init(addr);
+			Util.execute( () -> wal.init(addr) );
 		}
 	}
 	
@@ -57,15 +58,9 @@ public class TestMany {
 		}
 
 		private void placeOrders() {
-			for (int i = 0; i < 1; i++) {
-				new Thread( () -> {
-					try {
-						sendOrder();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}).start();
-				S.sleep( 2000);
+			for (int i = 0; i < 10; i++) {
+				sendOrder();
+				S.sleep( 1000);
 			}
 		}
 		
@@ -83,7 +78,7 @@ public class TestMany {
 			obj.put( "quantity", 1);
 			obj.put( "conid", stock.get("conid") );
 			obj.put( "tokenPrice", price);
-			obj.put( "currency", currency);
+			obj.put( "currency", "RUSD");
 			obj.put( "wallet_public_key", cook.address() );
 			obj.put( "cookie", cook.cookie() );
 			

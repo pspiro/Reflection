@@ -33,7 +33,7 @@ import tw.util.S;
 	
     
  *    */
-public class Stock extends JsonObject implements Comparable<Stock> {
+public class Stock extends JsonObject {
 	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {
@@ -68,8 +68,8 @@ public class Stock extends JsonObject implements Comparable<Stock> {
 		return getBool("isHot");
 	}
 
-	@Override public int compareTo(Stock o) {
-		return S.notNull(getSymbol()).compareTo(S.notNull(o.getSymbol()));
+	@Override public int compareTo(JsonObject o) {
+		return getString("symbol").compareTo(o.getString("symbol"));
 	}
 
 	public double getCurTokens() throws Exception {

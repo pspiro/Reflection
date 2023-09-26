@@ -16,7 +16,7 @@ public class CreateTables  {
 			con.connect(dbUrl, dbUser, dbPassword);
 
 			//new CreateTables().createCryptoTransactions();
-			new CreateTables().createTrades();
+			new CreateTables().createSignupTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -40,6 +40,7 @@ public class CreateTables  {
 		con.dropTable("signup");
 		
 		String sql = "create table signup ("
+			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "name varchar(60),"
 				+ "email varchar(60),"
