@@ -23,11 +23,10 @@ public class TradingHours {
 
 	static final int interval = 60 * 60 * 1000; // 1 hour
     static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
-	static final int stockConid = 8314;    // IBM
-	static final int etf24Conid = 756733;  // SPY
+	static final int ibm = 8314;    // IBM
 
     private ApiController m_controller;
-	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours
+	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours; there will be two entries, one for SMART, and one for OVERNIGHT
 	private boolean m_started;
 	
 	public TradingHours(ApiController main) {
@@ -43,8 +42,8 @@ public class TradingHours {
 			
 			Util.executeEvery( 0, interval, () -> {
 				S.out( "Querying for trading hours now");
-				query( stockConid, "SMART");
-				query( etf24Conid, MktDataServer.Overnight);
+				query( ibm, "SMART");
+				query( ibm, MktDataServer.Overnight);
 			});
 		}
 	}
@@ -66,7 +65,7 @@ public class TradingHours {
 			}
 			catch (Exception e) {
 				e.printStackTrace();
-				Main.jlog( LogType.ERROR, null, null, RefException.eToJson(e) ); 
+				Main.jlog( LogType.TRADING_HOURS_ERROR, null, null, RefException.eToJson(e) ); 
 			}
 		});
 	}
@@ -77,8 +76,10 @@ public class TradingHours {
 				? new Date()
 				: dateAndTime.parse( S.userDate(new Date()) + " " + simTime);
 	}
-    
+
+    /** @return the ContractDetails for the specified exchange */
     private ContractDetails getDeets(String exchange) throws Exception {
+		Util.require( S.isNotNull(exchange), "Error: null exchange"); // this can happen at startup if the mkt data update thread starts before the trading hours have returned
 		ContractDetails deets;
 		synchronized( m_map) {
 			deets = m_map.get(exchange);
@@ -87,6 +88,8 @@ public class TradingHours {
 		return deets;
     }
     
+    /** Confirm that dates are null or start date is in the past and end date is in the future;
+     *  if not, throw an exception; the dates are only set when there is a stock split */
     public void checkSplitDates(String simTime, String startDate, String endDate) throws Exception {
     	// catch the vast majority of checks; only stock splits will get past here
     	if (S.isNull(startDate) && S.isNull(endDate) ) {
@@ -102,29 +105,28 @@ public class TradingHours {
 		Main.require( S.isNull(startDate) || today.compareTo(startDate) >= 0, RefCode.PRE_SPLIT, "This contract has not started trading yet; it starts on %s", startDate); 
 		Main.require( S.isNull(endDate) || today.compareTo(endDate) <= 0, RefCode.POST_SPLIT, "The stock has split and must be converted to the new post-split smart contract"); 
     }
-	
+    
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS
 	 *  @param run gets executed if we want to swtich to IBEOS */
-	boolean insideAnyHours( boolean is24Hour, String simTime, Runnable run) throws Exception {
+	Session insideAnyHours( boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
 		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
-			return true;
+			return Session.Smart;  // for testing only
 		}
 		
 		Date now = getNow(simTime);
 
-		boolean inside = insideHours( "SMART", now);
+		if (insideHours( "SMART", now) ) {
+			return Session.Smart;
+		}
 			
-		if (!inside && is24Hour) {
-			inside = insideHours( MktDataServer.Overnight, now);
-			if (inside) {
-				run.run();  // let the caller switch the exchange to IBEOS
-			}
+		if (is24Hour && insideHours( MktDataServer.Overnight, now) ) {
+			return Session.Overnight;
 		}
 		
-		return inside;
+		return Session.None;
 	}
 
 	/** Return true if now is inside trading hours OR liquid hours. */

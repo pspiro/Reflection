@@ -4,7 +4,6 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.text.ParseException;
 import java.util.HashMap;
 
@@ -22,6 +21,7 @@ import fireblocks.Transfer;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
+import reflection.TradingHours.Session;
 import tw.google.Auth;
 import tw.google.TwMail;
 import tw.util.S;
@@ -86,8 +86,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			Stock stock = m_main.getStock(conid);
 			
-			boolean inside = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null, null);
-			stock.put( "exchangeStatus", inside ? "open" : "closed");  // this updates the global object and better be re-entrant
+			Session session = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null);
+			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
 		});

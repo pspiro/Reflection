@@ -30,5 +30,5 @@ public enum LogType {
 	SUBMITTED_TO_IB, 
 	TRADE,			// trade report received
 	TWS_CONNECTION, 
-	UNWIND_ERR, 
+	UNWIND_ERR, TRADING_HOURS_ERROR, 
 }
