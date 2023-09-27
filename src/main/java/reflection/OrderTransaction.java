@@ -158,7 +158,7 @@ public class OrderTransaction extends MyTransaction {
 				m_main.m_tradingHours.insideAnyHours( 
 						m_stock.getBool("is24hour"), 
 						m_map.get("simtime"), 
-						() -> contract.exchange(MktDataServer.Ibeos) ),  // this executes only if SMART is closed but IBEOS is open 
+						() -> contract.exchange(MktDataServer.Overnight) ),  // this executes only if SMART is closed but IBEOS is open 
 				RefCode.EXCHANGE_CLOSED, 
 				exchangeIsClosed);
 		

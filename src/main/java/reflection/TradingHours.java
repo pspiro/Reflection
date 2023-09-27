@@ -44,7 +44,7 @@ public class TradingHours {
 			Util.executeEvery( 0, interval, () -> {
 				S.out( "Querying for trading hours now");
 				query( stockConid, "SMART");
-				query( etf24Conid, MktDataServer.Ibeos);
+				query( etf24Conid, MktDataServer.Overnight);
 			});
 		}
 	}
@@ -118,7 +118,7 @@ public class TradingHours {
 		boolean inside = insideHours( "SMART", now);
 			
 		if (!inside && is24Hour) {
-			inside = insideHours( MktDataServer.Ibeos, now);
+			inside = insideHours( MktDataServer.Overnight, now);
 			if (inside) {
 				run.run();  // let the caller switch the exchange to IBEOS
 			}
@@ -146,7 +146,7 @@ public class TradingHours {
 		
 		return insideHours( "SMART", now)
 				? Session.Smart
-				: stock.is24Hour() && insideHours( MktDataServer.Ibeos, now) 
+				: stock.is24Hour() && insideHours( MktDataServer.Overnight, now) 
 					? Session.Ibeos 
 					: Session.None;
 	}

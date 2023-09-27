@@ -32,7 +32,7 @@ public class TestMarketData extends ConnectionAdapter {
 		Contract c = new Contract();
 		c.symbol("AAPL");
 		c.currency("USD");
-		c.exchange(MktDataServer.Ibeos);
+		c.exchange(MktDataServer.Overnight);
 		c.secType("STK");
 		c.conid(265598);
 
