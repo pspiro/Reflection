@@ -44,7 +44,7 @@ public class TestMany {
 		
 		for (String addr : addrs) {
 			MintRusd.mint(addr, r.nextInt(5000, 100000) );
-			config.busd().mint(addr, r.nextInt(5000, 100000) );
+			//config.busd().mint(addr, r.nextInt(5000, 100000) );
 		}
 		
 	}
@@ -76,14 +76,13 @@ public class TestMany {
 
 			boolean buy = r.nextBoolean();
 			double price = buy ? stock.getDouble("ask") * 1.01 : stock.getDouble("bid") * .99;
-			String currency = r.nextBoolean() ? "RUSD" : "BUSD";
 			
 			JsonObject obj = new JsonObject();
 			obj.put( "action", buy ? "buy" : "sell");
 			obj.put( "quantity", 1);
 			obj.put( "conid", stock.get("conid") );
 			obj.put( "tokenPrice", price);
-			obj.put( "currency", currency);
+			obj.put( "currency", "RUSD");
 			obj.put( "wallet_public_key", cook.address() );
 			obj.put( "cookie", cook.cookie() );
 			

@@ -293,7 +293,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 		});
 
-		jlog( LogType.SUBMITTED, m_order.getJsonLog(contract) );
+		jlog( LogType.SUBMITTED_TO_IB, m_order.getJsonLog(contract) );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill

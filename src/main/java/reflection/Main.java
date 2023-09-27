@@ -432,11 +432,11 @@ public class Main implements ITradeReportHandler {
 	static void jlog( LogType type, String uid, String wallet, JsonObject json) {
 		try {
 			JsonObject log = Util.toJson(
-					"uid", uid,
 					"type", type,
+					"uid", uid,
 					"wallet_public_key", wallet,
 					"data", json);
-			S.out( "%s %s %s", type, wallet, log);
+			S.out( "%s %s %s %s", type, uid, wallet, json);
 			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
 		}
 		catch( Exception e) {
