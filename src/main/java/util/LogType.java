@@ -2,30 +2,34 @@ package util;
 
 /** Max length is 32 as per postgres log table */
 public enum LogType {
-	AUTO_FILL,		// approveAll config setting is on
+	AUTO_FILL,			// approveAll config setting is on
 	BLOCKCHAIN_FAILED,
-	COMMISSION,		// commission report received
-	ERROR,			// should never happen
-	FB_UPDATE,		// fireblocks update
-	ORDER_FILLED,			// order was completely or partially filled
-	JEDIS,			// Jedis error
-	MDS,			// used only by MktDataServer
-	ORDER_ERR,		// we received an error msg from TWS for this order
-	ORDER_TIMEOUT,	// our timeout occurred before the IB IOC timeout
-	REC_ORDER,		// received order (roundedQty has not been set yet)
-	REDEEM,			// user is redeeming RUSD 
-	RESTART,		// application was restarted
-	SUBMITTED,		// order submitted to IB		
-	TRADE,			// trade report received
-	RESPOND_ORDER,	// responding OK to Frontend
-	NO_SUBMIT, 
-	SUBMITTED_TO_IB, 
-	ORDER_STATUS, 
-	CANCEL_ORDER, 
+	CANCEL_ORDER,		// canceling the IB order because we had a timeout 
+	COMMISSION,			// commission report received
+	DATABASE_ERROR, 
+	ERROR,				// should never happen
+	EXCEPTION,			// error caught in wrap() or shrinkWrap(); check the RefCode
+	FB_UPDATE,			// fireblocks update
+	JEDIS,				// Jedis error
+	MDS,				// used only by MktDataServer
+	NO_STOCK_ORDER,		// there is no IB order because the order size is so small
+	ORDER_COMPLETED,	// blockchain completed
+	ORDER_ERR,			// we received an error msg from TWS for this order
+	ORDER_FAILED,		// IB or blockchain failed
+	ORDER_FILLED,		// IB order was completely or partially filled
+	IB_ORDER_STATUS,	// received IB order status
+	ORDER_STATUS_UPDATED,
+	ORDER_TIMEOUT,		// our timeout occurred before the IB IOC timeout
+	REC_ORDER,			// received order (roundedQty has not been set yet)
+	REDEEM,				// user is redeeming RUSD 
+	RESPOND_ERR,		// exception while sending response to Frontend 
+	RESPOND_ORDER,		// responding OK to Frontend
+	RESTART,			// application was restarted
+	SHUTDOWN,			// received shutdown message from unix kill command
 	SUBMITTED_TO_FIREBLOCKS, 
-	EXCEPTION,
-	UNWIND_ERR, 
-	DATABASE_ERR, 
-	RESPOND_ERR, 
-	ORDER_FAILED, ORDER_COMPLETED, ORDER_STATUS_UPDATED, TWS_CONNECTION, SHUTDOWN
+	SUBMITTED_TO_IB,	// order submitted to IB
+	TRADE,				// trade report received
+	TWS_CONNECTION,		// gained/lost connection to TWS
+	UNWIND_ERROR,		// error while unwinding an order
+	SOCKET_ERROR,		// during quick-response
 }

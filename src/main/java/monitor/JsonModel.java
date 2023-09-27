@@ -80,6 +80,12 @@ public class JsonModel extends MyTableModel {
 	boolean m_filtered;
 	
 	@Override public void onDoubleClick(int row, int col) {
+		String tag = m_namesMap.get(col);
+		Object val = getValueAt(row, col);
+		onDouble(tag, val);
+	}
+	
+	void onDouble(String tag, Object allowed) {
 		if (m_filtered) {
 			try {
 				refresh();
@@ -88,8 +94,6 @@ public class JsonModel extends MyTableModel {
 				return;  // we have no hope
 			}
 		}
-		String tag = m_namesMap.get(col);
-		Object allowed = getValueAt(row, col);
 		
 		for (Iterator<JsonObject> iter = m_ar.iterator(); iter.hasNext(); ) {
 			Object val = iter.next().get(tag);

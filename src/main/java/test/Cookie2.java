@@ -23,7 +23,7 @@ public class Cookie2 {
 	public void signIn(String address, Runnable run) {
 		m_addr = address;
 		
-		S.out( "Signing in with cookie for wallet " + address);
+		S.out( "Signing in with cookie2 for wallet " + address);
 		MyAsyncClient.getJson( base + "/siwe/init", json -> {
 			SiweMessage siweMsg = new SiweMessage.Builder(
 					"Reflection.trading", 

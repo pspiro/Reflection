@@ -15,8 +15,7 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			//new CreateTables().createCryptoTransactions();
-			new CreateTables().createSignupTable();
+			new CreateTables().createCommTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -50,7 +49,7 @@ public class CreateTables  {
 	}
 
 	void createLogTable() throws Exception {
-		con.dropTable("commissions");
+		con.dropTable("log");
 		
 		String sql = "create table log ("
 			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
@@ -91,17 +90,6 @@ public class CreateTables  {
 		con.execute( sql);
 	}
 	
-	void createCommissions() throws Exception {
-		con.dropTable("commissions");
-		
-		String sql = "create table commissions ("
-				+ "tradekey varchar(32),"			// tie commission report to trade
-				+ "commission double precision,"
-				+ "currency varchar(3)"
-				+ ")";
-		con.execute( sql);
-	}
-	
 	void createTrades() throws Exception {
 		con.dropTable( "trades");
 		
@@ -124,34 +112,31 @@ public class CreateTables  {
 		con.execute( sql);
 	}
 	
+	/** This has never been run and probably doesn't work */
 	void createUsers() throws Exception {
-		con.dropTable( "users");
+//		con.dropTable( "users");		
+//		String sql = """
+//			CREATE TABLE users (
+//			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
+//			updated_at timestamp without time zone,
+//			wallet_public_key varchar(42) UNIQUE check (wallet_public_key = LOWER(wallet_public_key)),
+		                                 // OR PRIMARY, if you want to prevent null wallets
+//			first_name varchar(50),
+//			last_name varchar(50),
+//			email varchar,
+//			phone varchar,
+//			kyc_status varchar,
+//			address varchar,
+//			city varchar,
+//			country varchar,
+//			persona_response varchar,
+//			pan_number varchar(10),
+//			aadhaar varchar(12)
+//		""";		
 
-		// to add unique to an existing table:
-		// ALTER TABLE users ADD UNIQUE (wallet_public_key);
-		
-		// fields:
-//		id
-//		first_name varchar(50)
-//		last_name varchar(50)
-//		name   << obsolete
-//		email
-//		phone
-//		wallet_public_key  // must be UNIQUE and lower case, e.g.:
-//		wallet_public_key varchar(42) unique CHECK (lowercase_column = LOWER(lowercase_column))
-//		kyc_status  // should remove this and check 
-//		address
-//		created_at
-//		updated_at
-//		city
-//		country
-//		persona_response
-//		pan_number varchar(10)
-//		aadhaar
-		
-		String sql = "create table users ("
-				// write this
-				+ ")";
-		con.execute( sql);
+//		String sql = "create table users ("
+//				// write this
+//				+ ")";
+//		con.execute( sql);
 	}
 }

@@ -588,7 +588,7 @@ public class Main implements ITradeReportHandler {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, "Exception while sending FAQ");
+			log( LogType.SOCKET_ERROR, "Exception while sending FAQ");
 		}
 	}
 

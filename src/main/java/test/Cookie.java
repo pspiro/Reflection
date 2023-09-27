@@ -26,7 +26,7 @@ public class Cookie {
 	}
 
 	public static void signIn(String address) {
-		S.out( "Signing in with cookie for wallet " + address);
+		S.out( "Signing in with cookie1 for wallet " + address);
 		MyAsyncClient.getJson( base + "/siwe/init", json -> gotNonce( json.getString("nonce"), address) );
 	}
 	

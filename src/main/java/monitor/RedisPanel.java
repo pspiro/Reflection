@@ -16,7 +16,7 @@ import redis.clients.jedis.Response;
 import tw.util.S;
 
 public class RedisPanel extends JPanel implements RefPanel {
-	final JsonModel m_model = new RedisModel();
+	final JsonModel m_model = new Model();
 	
 	RedisPanel() {
 		super( new BorderLayout() );
@@ -40,8 +40,8 @@ public class RedisPanel extends JPanel implements RefPanel {
 		}
 	}
 	
-	static class RedisModel extends JsonModel {
-		RedisModel() {
+	static class Model extends JsonModel {
+		Model() {
 			super("symbol,conid,bid,ask,last,time,close,from");
 			justify("llrrrlr");
 		}

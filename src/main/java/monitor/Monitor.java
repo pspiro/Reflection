@@ -2,10 +2,12 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
@@ -33,6 +35,9 @@ public class Monitor {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
 	static final Config m_config = new Config();
+
+	static Monitor m;
+	static JTextField num = new JTextField(4); // number of entries to return in query
 	JFrame m_frame = new JFrame();
 	NewTabbedPanel m_tabs = new NewTabbedPanel(true);
 	
@@ -42,7 +47,7 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		new Monitor( "Dt-config");
+		m = new Monitor( "Dt-config");
 	}
 	
 	Monitor(String tabName) throws Exception {
@@ -58,13 +63,19 @@ public class Monitor {
 
 		TokensPanel m_tokensPanel = new TokensPanel();
 		PricesPanel m_pricesPanel = new PricesPanel();
+		
 
 		
 		JButton but = new JButton("Refresh");
 		but.addActionListener( e -> refresh() );
+		num.addActionListener( e -> refresh() );
 		
 		JPanel butPanel = new JPanel();
 		butPanel.add(but);
+		butPanel.add(Box.createHorizontalStrut(5));
+		butPanel.add(num);
+		
+		num.setText("40");
 		
 		m_tabs.addTab( "Home", new HomePanel() );
 		m_tabs.addTab( "Misc", new MiscPanel() );
@@ -92,8 +103,12 @@ public class Monitor {
 		m_pricesPanel.initialize();
 	}
 	
+	static int num() {
+		return (int)S.parseDouble( num.getText() );
+	}
+	
 	/** called when Refresh button is clicked */
-	private void refresh() {
+	void refresh() {
 		try {
 			((RefPanel)m_tabs.current()).refresh();
 		} catch (Exception e) {
@@ -106,34 +121,34 @@ public class Monitor {
 	}
 
 	private JComponent createTransPanel() {
-		String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
+		String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time,tradekey";
 		// String sql = "select * from crypto_transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
-		String sql = "select * from crypto_transactions order by created_at desc limit 50";
+		String sql = "select * from crypto_transactions $where order by created_at desc $limit";
 		return new QueryPanel( names, sql);
 	}
 
 	private JComponent createLogPanel() {
 		String names = "created_at,wallet_public_key,uid,type,data"; 
-		String sql = "select * from log order by created_at DESC limit 50";
+		String sql = "select * from log $where order by created_at desc $limit";
 		return new QueryPanel( names, sql);
 	}
 
 	// add the commission here as well
 	private JComponent createTradesPanel() {
 		String names = "created_at,tradekey,order_id,perm_id,time,side,quantity,symbol,price,cumfill,conid,exchange,avgprice,orderref";
-		String sql = "select * from trades order by created_at desc limit 50";
+		String sql = "select * from trades $where order by created_at desc $limit";
 		return new QueryPanel( names, sql);
 	}
 
 	static QueryPanel createUsersPanel() {
 		String names = "created_at,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,id,kyc_status,pan_number,persona_response,updated_at";
-		String sql = "select * from users";
+		String sql = "select * from users $where";
 		return new QueryPanel( names, sql);
 	}
 
 	static QueryPanel createSignupPanel() {
 		String names = "created_at,name,email,phone,wallet_public_key";
-		String sql = "select * from signup";
+		String sql = "select * from signup $where";
 		return new QueryPanel( names, sql);
 	}
 
@@ -177,4 +192,5 @@ public class Monitor {
 		@Override public void refresh() throws Exception {
 		}
 	}
+	
 }

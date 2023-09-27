@@ -26,10 +26,10 @@ public class TestMany {
 	};
 	
 	int index = 0;
+	static int count = 20;
 	
 	public static void main(String[] args) throws Exception {
-		seed();
-		if(true) throw new Exception();
+	//	seed();
 		
 		String data = MyAsyncClient.get( base + "/api/get-stocks-with-prices");
 		stocks = JsonArray.parse(data);
@@ -37,30 +37,22 @@ public class TestMany {
 		for (String addr : addrs) {
 			Wal wal = new Wal();
 			Util.execute( () -> wal.init(addr) );
+			if (count == 1) break;
 		}
-	}
-	
-	static void seed() throws Exception {
-		Config config = Config.readFrom("Dt-config");
-		
-		for (String addr : addrs) {
-			MintRusd.mint(addr, r.nextInt(5000, 100000) );
-			config.busd().mint(addr, r.nextInt(5000, 100000) );
-		}
-		
 	}
 
 	static class Wal {
-		Cookie2 cook = new Cookie2();
+		Cookie2 cook;
 
 		void init(String ad) {
+			cook = new Cookie2();
 			cook.signIn(ad, () -> placeOrders() );
 		}
 
 		private void placeOrders() {
 			for (int i = 0; i < 10; i++) {
 				sendOrder();
-				S.sleep( 1000);
+				S.sleep( 2000);
 			}
 		}
 		
@@ -71,7 +63,7 @@ public class TestMany {
 
 			boolean buy = r.nextBoolean();
 			double price = buy ? stock.getDouble("ask") * 1.01 : stock.getDouble("bid") * .99;
-			String currency = r.nextBoolean() ? "RUSD" : "BUSD";
+			//String currency = r.nextBoolean() ? "RUSD" : "BUSD";
 			
 			JsonObject obj = new JsonObject();
 			obj.put( "action", buy ? "buy" : "sell");
@@ -82,9 +74,38 @@ public class TestMany {
 			obj.put( "wallet_public_key", cook.address() );
 			obj.put( "cookie", cook.cookie() );
 			
-			MyAsyncClient.postToJson( base + "/api/order", obj.toString(), json -> json.display() );
+			MyAsyncClient.postToJson( base + "/api/order", obj.toString(), json -> S.out( json) );
+			S.out( "Submitted " + obj);
 		}
 		
+	}
+	
+	static void seed() throws Exception {
+		S.out( "Seeding");
+		Config config = Config.readFrom("Dt-config");
+
+		for (String wallet : addrs) {
+			//MintRusd.mint(wallet, r.nextInt(5000, 100000) );
+			//config.busd().mint(addr, r.nextInt(5000, 100000) );  // if you use BUSD, you have to approve it first
+			S.out( "minted");
+			createUserProfile(wallet.toLowerCase(), config);
+		}
+		S.out( "done");
+		System.exit(0);
+	}
+
+	private static void createUserProfile(String wallet, Config config) throws Exception {
+		JsonObject o = new JsonObject();
+		o.put( "wallet_public_key", wallet);
+		o.put( "first_name", "peter");
+		o.put( "last_name", "spiro");
+		o.put( "email", "peteraspiro@gmail.com");
+		o.put( "phone", "9143933732");
+		o.put( "address", "Pinecliff Rd");
+		o.put( "pan_number", "8383838383");
+		o.put( "aadhaar", "838383838383");
+		config.sqlCommand(sql -> sql.insertOrUpdate("users", o, "wallet_public_key = '%s'", wallet) );
+		S.out( "Created user profile for %s", wallet);
 	}
 
 	

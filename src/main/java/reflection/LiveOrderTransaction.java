@@ -116,7 +116,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
 		catch( Exception e) {
-			elog( LogType.DATABASE_ERR, e);
+			elog( LogType.DATABASE_ERROR, e);
 			e.printStackTrace();
 		}
 	}

@@ -192,7 +192,7 @@ public class OrderTransaction extends MyTransaction {
 				// are pretty recent; if they are stale, we will fill the order with a bad price
 				require( m_stock.hasRecentPrices(isBuy()), RefCode.STALE_DATA, "There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
 				
-				jlog( LogType.NO_SUBMIT, m_order.getJsonLog(contract) );
+				jlog( LogType.NO_STOCK_ORDER, m_order.getJsonLog(contract) );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false);
 			}
@@ -252,7 +252,7 @@ public class OrderTransaction extends MyTransaction {
 
 				shrinkWrap( () -> {
 					m_order.status(status);
-					olog( LogType.ORDER_STATUS, "status", status);
+					olog( LogType.IB_ORDER_STATUS, "status", status);
 
 					// save the number of shares filled
 					m_filledShares = filled.toDouble();
@@ -294,7 +294,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 		});
 
-		jlog( LogType.SUBMITTED, m_order.getJsonLog(contract) );
+		jlog( LogType.SUBMITTED_TO_IB, m_order.getJsonLog(contract) );
 
 		// use a higher timeout here; it should never happen since we use IOC
 		// order timeout is a special case because there could have been a partial fill
@@ -449,7 +449,7 @@ public class OrderTransaction extends MyTransaction {
 			m_main.sqlConnection( conn -> conn.insertJson("crypto_transactions", obj) );
 		} 
 		catch (Exception e) {
-			elog( LogType.DATABASE_ERR, e);
+			elog( LogType.DATABASE_ERROR, e);
 			e.printStackTrace();
 		}
 	}
@@ -533,7 +533,7 @@ public class OrderTransaction extends MyTransaction {
 			}
 		}
 		catch( Exception e) {
-			elog( LogType.UNWIND_ERR, e);
+			elog( LogType.UNWIND_ERROR, e);
 			e.printStackTrace();
 			alert( "Error occurred while unwinding order", e.getMessage() );
 		}
