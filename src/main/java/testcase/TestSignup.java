@@ -13,6 +13,7 @@ public class TestSignup extends MyTestCase {
 				"wallet_public_key", "0xb95bf9C71e030FA3D8c0940456972885DB60843F");
 		cli().postToJson("/api/signup", obj.toString() ).display();
 		assertEquals( cli.getResponseCode(), 400);
+		startsWith( "Please enter your", cli.getMessage() );
 	}
 	public void testFailEmail() throws Exception {
 		JsonObject obj = Util.toJson( 
@@ -21,6 +22,7 @@ public class TestSignup extends MyTestCase {
 				"wallet_public_key", "0xb95bf9C71e030FA3D8c0940456972885DB60843F");
 		cli().postToJson("/api/signup", obj.toString() ).display();
 		assertEquals( cli.getResponseCode(), 400);
+		startsWith( "Please enter your", cli.getMessage() );
 	}
 	public void testFailWallet() throws Exception {
 		JsonObject obj = Util.toJson( 

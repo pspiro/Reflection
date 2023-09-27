@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import common.Util.ExRunnable;
+import fireblocks.Accounts;
 import fireblocks.StockToken;
 import redis.MktDataServer;
 import tw.util.S;
@@ -411,7 +412,10 @@ public class OrderTransaction extends MyTransaction {
 		// id to the map yet; we could fix this with synchronization
 		insertToCryptoTable(id);
 		
-		olog( LogType.SUBMITTED_TO_FIREBLOCKS, "id", id, "currency", m_map.getParam("currency") );
+		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
+				"id", id, 
+				"currency", m_map.getParam("currency"),
+				"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()

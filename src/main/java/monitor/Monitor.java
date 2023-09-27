@@ -106,7 +106,7 @@ public class Monitor {
 	}
 
 	private JComponent createTransPanel() {
-		String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
+		String names = "created_at,wallet_public_key,uid,action,quantity,conid,price,status,tds,rounded_quantity,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time,order_id,tradekey";
 		// String sql = "select * from crypto_transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
 		String sql = "select * from crypto_transactions order by created_at desc limit 50";
 		return new QueryPanel( names, sql);
@@ -132,7 +132,7 @@ public class Monitor {
 	}
 
 	static QueryPanel createSignupPanel() {
-		String names = "name,email,phone,wallet_public_key";
+		String names = "created_at,name,email,phone,wallet_public_key";
 		String sql = "select * from signup";
 		return new QueryPanel( names, sql);
 	}

@@ -26,7 +26,7 @@ import tw.util.S;
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware {
+public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware, Comparable<JsonObject> {
 	
 	private static final long serialVersionUID = -503443796854799292L;
 	
@@ -320,6 +320,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Return true if val is not null */
 	public boolean has(String key) {
 		return S.isNotNull( getString(key) );
+	}
+
+	@Override public int compareTo(JsonObject o) {
+		return toString().compareTo(o.toString() );
 	}
 	
 }
