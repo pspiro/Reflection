@@ -43,9 +43,9 @@ class DualPrices {
 			m_smart.send( pipeline, m_was != Session.Smart);
 			m_was = Session.Smart;
 		}
-		else if (is24() && inside == Session.Ibeos) {
-			m_ibeos.send(pipeline, m_was != Session.Ibeos); // this won't work if last is never sent from IBEOS
-			m_was = Session.Ibeos;
+		else if (is24() && inside == Session.Overnight) {
+			m_ibeos.send(pipeline, m_was != Session.Overnight); // this won't work if last is never sent from IBEOS
+			m_was = Session.Overnight;
 		}
 		else if (m_was != Session.None) {
 			// clear out the bid/ask, keep the last

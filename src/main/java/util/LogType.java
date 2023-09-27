@@ -32,4 +32,6 @@ public enum LogType {
 	TWS_CONNECTION,		// gained/lost connection to TWS
 	UNWIND_ERROR,		// error while unwinding an order
 	SOCKET_ERROR,		// during quick-response
+	TRADING_HOURS_ERROR,
+	
 }

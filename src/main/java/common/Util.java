@@ -16,12 +16,14 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.BooleanSupplier;
 
 import org.json.simple.JsonObject;
 
 import com.google.iam.v1.AuditLogConfig.LogType;
 import com.ib.client.Decimal;
 
+import common.Util.ExRunnable;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -487,5 +489,19 @@ public class Util {
 		try(Scanner s = new Scanner(System.in)) {
 			s.nextLine();
 		}
+	}
+
+	public static void iff(BooleanSupplier test, Runnable r1, Runnable r2) {
+		if (test.getAsBoolean() )
+			r1.run();
+		else
+			r2.run();
+	}
+	
+	public static void ifEx(BooleanSupplier test, ExRunnable r1, ExRunnable r2) throws Exception {
+		if (test.getAsBoolean() )
+			r1.run();
+		else
+			r2.run();
 	}
 }

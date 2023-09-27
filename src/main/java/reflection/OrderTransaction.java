@@ -22,12 +22,14 @@ import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.StockToken;
-import redis.MktDataServer;
+import reflection.TradingHours.Session;
 import tw.util.S;
 import util.LogType;
 
 public class OrderTransaction extends MyTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
+
+	private static PositionTracker positionTracker = new PositionTracker(); 
 
 	private Order m_order;
 	private double m_desiredQuantity;  // same as Order.m_totalQuantity, but this one is set first
@@ -36,8 +38,6 @@ public class OrderTransaction extends MyTransaction {
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_respondedToOrder;
-	
-	private static PositionTracker positionTracker = new PositionTracker(); 
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
@@ -74,14 +74,15 @@ public class OrderTransaction extends MyTransaction {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
-		int conid = m_map.getRequiredInt( "conid");
-		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
-		m_stock = m_main.getStock(conid);  // throws exception if conid is invalid
-
 		String side = m_map.getRequiredParam("action");
 		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
 		require( m_config.allowTrading().allow(side), RefCode.TRADING_HALTED, "Trading is temporarily halted. Please try your order again later.");
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
+
+		int conid = m_map.getRequiredInt( "conid");
+		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
+		m_stock = m_main.getStock(conid);  // throws exception if conid is invalid
+		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
 		m_desiredQuantity = m_map.getRequiredDouble( "quantity");
 		require( m_desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
@@ -96,9 +97,6 @@ public class OrderTransaction extends MyTransaction {
 		
 		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
 		
-		// make sure trading is not restricted for this stock
-		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
-
 		// get user profile from DB and validate it
 		Profile profile = getProfile(); 
 		profile.validate();
@@ -113,10 +111,19 @@ public class OrderTransaction extends MyTransaction {
 			? price - price * m_config.minBuySpread()
 			: price + price * m_config.minSellSpread();
 		double orderPrice = Util.round( prePrice);  // round to two decimals
+				
+		// check trading hours
+		Session session = m_main.m_tradingHours.insideAnyHours( 
+						m_stock.getBool("is24hour"), 
+						m_map.get("simtime") );
+		require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+
+		// check the dates (applies to stock splits only)
+		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.getStartDate(), m_stock.getEndDate() );
 		
 		Contract contract = new Contract();
 		contract.conid( conid);
-		contract.exchange( m_main.getExchange( conid) );
+		contract.exchange( session.toString().toUpperCase() );
 
 		m_order = new Order();
 		m_order.action( side == "buy" ? Action.BUY : Action.SELL);
@@ -127,10 +134,6 @@ public class OrderTransaction extends MyTransaction {
 		m_order.transmit( true);
 		m_order.outsideRth( true);
 		
-		// the order size has been set and added to the Position Tracker
-		// if the order fails anytime after here, the size must be
-		// subtracted from the position tracker
-
 		// check TDS calculation
 		m_tds = m_map.getDoubleParam("tds");
 		
@@ -152,19 +155,7 @@ public class OrderTransaction extends MyTransaction {
 		
 		// confirm that the user has enough stablecoin or stock token in their wallet
 		// fix this-> requireSufficientStablecoin(order);		
-		
-		// check trading hours
-		require( 
-				m_main.m_tradingHours.insideAnyHours( 
-						m_stock.getBool("is24hour"), 
-						m_map.get("simtime"), 
-						() -> contract.exchange(MktDataServer.Ibeos) ),  // this executes only if SMART is closed but IBEOS is open 
-				RefCode.EXCHANGE_CLOSED, 
-				exchangeIsClosed);
-		
-		// check the dates (applies to stock splits only)
-		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.getStartDate(), m_stock.getEndDate() );
-		
+				
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
 		// explain why there are no prices which should never happen otherwise
@@ -172,7 +163,7 @@ public class OrderTransaction extends MyTransaction {
 		prices.checkOrderPrice( m_order, orderPrice, m_config);
 		
 		// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
-		// * or check that ANY price is pretty recent, to we know prices are updating
+		// * or check that ANY price is pretty recent, so we know prices are updating
 		
 		respond( code, RefCode.OK, "id", m_uid);
 		
