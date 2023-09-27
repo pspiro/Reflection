@@ -19,7 +19,7 @@ import tw.util.S;
 import util.LogType;
 
 public class TradingHours {
-	public enum Session { Smart, Ibeos, None }
+	public enum Session { Smart, Overnight, None }
 
 	static final int interval = 60 * 60 * 1000; // 1 hour
     static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
@@ -147,7 +147,7 @@ public class TradingHours {
 		return insideHours( "SMART", now)
 				? Session.Smart
 				: stock.is24Hour() && insideHours( MktDataServer.Overnight, now) 
-					? Session.Ibeos 
+					? Session.Overnight 
 					: Session.None;
 	}
 
