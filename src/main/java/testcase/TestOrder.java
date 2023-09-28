@@ -167,7 +167,7 @@ public class TestOrder extends MyTestCase {
 	
 	public void testMaxAmtBuy()  throws Exception {
 		double qty = m_config.maxBuyAmt() / curPrice + 1;
-		JsonObject map = postOrderToObj( createOrder2("buy", qty, 138) );
+		JsonObject map = postOrderToObj( createOrder2("buy", qty, curPrice) );
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}

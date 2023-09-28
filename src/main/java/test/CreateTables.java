@@ -63,10 +63,11 @@ public class CreateTables  {
 	}
 	
 	void createCryptoTransactions() throws Exception {
-		con.dropTable("crypto_transactions");
+		con.dropTable("transactions");
 		
-		String sql = "create table crypto_transactions ("   // in Java 13 you have text blocks, you wouldn't need all the + "
-			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+		String sql =""
+				+ "create table transactions ("
+				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
 				+ "fireblocks_id varchar(36) unique check (fireblocks_id <> ''),"
 				+ "uid varchar(8) unique," 
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"

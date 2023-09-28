@@ -16,10 +16,10 @@ public class TestPostgres {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
-		JsonObject obj = config.sqlQuery( conn -> conn.queryToJson("select * from crypto_transactions") ).get(0);
+		JsonObject obj = config.sqlQuery( conn -> conn.queryToJson("select * from transactions") ).get(0);
 		S.out(obj);
 		
-		config.sqlCommand( sql -> sql.updateJson("crypto_transactions", obj, "uid=%s", obj.getString("uid")) );
+		config.sqlCommand( sql -> sql.updateJson("transactions", obj, "uid=%s", obj.getString("uid")) );
 		
 	}
 }

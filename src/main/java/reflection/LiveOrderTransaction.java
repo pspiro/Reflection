@@ -113,7 +113,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			obj.put("status", status.toString() );
 			obj.put("blockchain_hash", hash);
 
-			m_main.sqlConnection( conn -> conn.updateJson("crypto_transactions", obj, "fireblocks_id = '%s'", fbId) );				
+			m_main.sqlConnection( conn -> conn.updateJson("transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
 		catch( Exception e) {
 			elog( LogType.DATABASE_ERROR, e);

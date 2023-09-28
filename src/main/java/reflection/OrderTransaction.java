@@ -437,7 +437,7 @@ public class OrderTransaction extends MyTransaction {
 			//"country"
 			// "crypto_id"
 		
-			m_main.sqlConnection( conn -> conn.insertJson("crypto_transactions", obj) );
+			m_main.sqlConnection( conn -> conn.insertJson("transactions", obj) );
 		} 
 		catch (Exception e) {
 			elog( LogType.DATABASE_ERROR, e);

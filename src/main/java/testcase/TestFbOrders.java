@@ -175,7 +175,7 @@ public class TestFbOrders extends MyTestCase {
 		}
 		
 		m_config.sqlCommand( conn -> {   // fix this
-			JsonArray ar = conn.queryToJson("select * from crypto_transactions where created_at > '%s'", now);
+			JsonArray ar = conn.queryToJson("select * from transactions where created_at > '%s'", now);
 			assertTrue( ar.size() > 0);
 			JsonObject rec = ar.get(0);
 			S.out(rec);
