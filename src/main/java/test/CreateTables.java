@@ -15,7 +15,7 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			new CreateTables().createCommTable();
+			new CreateTables().createTransactions();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -62,14 +62,14 @@ public class CreateTables  {
 		con.execute(sql);
 	}
 	
-	void createCryptoTransactions() throws Exception {
+	void createTransactions() throws Exception {
 		con.dropTable("transactions");
 		
 		String sql =""
 				+ "create table transactions ("
 				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
-				+ "fireblocks_id varchar(36) unique check (fireblocks_id <> ''),"
-				+ "uid varchar(8) unique," 
+				+ "uid varchar(8) primary key," 
+				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "symbol varchar(32),"
 				+ "conid int check (conid > 0),"

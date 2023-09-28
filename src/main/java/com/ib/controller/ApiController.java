@@ -943,18 +943,19 @@ public class ApiController implements EWrapper {
         void handle(int errorCode, String errorMsg);
     }
 
+	public void prepareOrder(Order order) throws Exception {
+		Util.require( order.orderId() == 0, "OrderId should be zero");
+		order.orderId( nextOrderId() );
+	}
+	
 	public void placeOrModifyOrder(Contract contract, final Order order, final IOrderHandler handler) throws Exception {
 		if (!checkConnection())
 			return;
 
-		// when placing new order, assign new order id
-		Util.require( order.orderId() == 0, "Modifying orders is not supported");
+		Util.require( order.orderId() != 0, "Prepare order first");
 		
-		if (order.orderId() == 0) {
-			order.orderId( nextOrderId() );
-			if (handler != null) {
-				m_orderHandlers.put( order.orderId(), handler);
-			}
+		if (handler != null) {
+			m_orderHandlers.put( order.orderId(), handler);
 		}
 		
 		m_client.placeOrder( contract, order);

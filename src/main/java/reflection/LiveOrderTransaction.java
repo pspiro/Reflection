@@ -110,7 +110,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("status", status.toString() );
+			obj.put("status", status.toString() ); // note status is informational only; it's not used for anything; therefore you can set it to whatever you want
 			obj.put("blockchain_hash", hash);
 
 			m_main.sqlConnection( conn -> conn.updateJson("transactions", obj, "fireblocks_id = '%s'", fbId) );				

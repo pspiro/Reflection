@@ -133,6 +133,7 @@ public class OrderTransaction extends MyTransaction {
 		m_order.allOrNone(true);  // all or none, we don't want partial fills
 		m_order.transmit( true);
 		m_order.outsideRth( true);
+		m_main.orderController().prepareOrder( m_order); // set order id
 		
 		// check TDS calculation
 		m_tds = m_map.getDoubleParam("tds");
@@ -171,12 +172,14 @@ public class OrderTransaction extends MyTransaction {
 		// we cannot use wrap() anymore, only shrinkWrap()
 		walletLiveOrders().add( this);
 
-		// update the PositionTracker last; if there is a failure now, we will 
+		// update the PositionTracker last; if there is a failure after this, we will 
 		// unwind the PositionTracker and unwind the IB order if necessary
 		// this happens in the shrinkWrap() catch block
 		m_order.roundedQty( positionTracker.buyOrSell( conid, isBuy(), m_desiredQuantity) );
 
 		shrinkWrap( () -> {
+			insertTransaction();  // this must come after all order values are set and before order is placed to ensure that it happens before we get a response from IB
+
 			// nothing to submit to IB; go straight to blockchain
 			if (m_order.roundedQty() == 0) {
 				// when placing an order that rounds to zero shares, we must check that the prices 
@@ -235,7 +238,7 @@ public class OrderTransaction extends MyTransaction {
 
 	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require() and no wrap(),
 	 *  only shrinkWrap()  */
-	private void submitOrder( Contract contract) throws Exception {
+	private void submitOrder( Contract contract) throws Exception {		
 		// place order for rounded quantity
 		m_main.orderController().placeOrModifyOrder(contract, m_order, new OrderHandlerAdapter() {
 			@Override public void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
@@ -401,7 +404,8 @@ public class OrderTransaction extends MyTransaction {
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		insertToCryptoTable(id);
+		updateTransaction(id);
+		
 		
 		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
 				"id", id, 
@@ -412,22 +416,35 @@ public class OrderTransaction extends MyTransaction {
 		// by shrinkWrap() and the live order will be failed()
 	}
 
-	private void insertToCryptoTable(String id) {
+	/** Update transaction table with fireblocks id */
+	private void updateTransaction(String id) {
+		try {
+			m_main.sqlConnection( conn -> 
+				conn.execute( String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
+					id, m_uid) ) );
+		} 
+		catch (Exception e) {
+			elog( LogType.DATABASE_ERROR, e);
+			e.printStackTrace();
+		}
+	}
+
+	/** Insert into transaction table; called when the IB order is submitted */
+	private void insertTransaction() {
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("fireblocks_id", id);  // primary key
 			obj.put("uid", m_uid);
 			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
 			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
 			obj.put("wallet_public_key", m_walletAddr);
-			obj.put("symbol", m_stock.getSymbol() );
-			obj.put("conid", m_stock.getConid() );
 			obj.put("action", m_order.action().toString() );
 			obj.put("quantity", m_order.totalQty());
 			obj.put("rounded_quantity", m_order.roundedQty() );
+			obj.put("symbol", m_stock.getSymbol() );
+			obj.put("conid", m_stock.getConid() );
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
-			obj.put("tds", m_tds);  // format this? pas
+			obj.put("tds", m_tds);
 			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
 			//"status"
 			//"blockchain_hash"
