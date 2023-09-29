@@ -1,9 +1,9 @@
 package test;
 
-import org.json.simple.JsonObject;
+import java.util.Date;
 
+import common.Util;
 import reflection.Config;
-import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -16,12 +16,10 @@ public class TestPostgres {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Dt-config");
 		
-		JsonObject obj = config.sqlQuery( conn -> conn.queryToJson("select * from transactions") ).get(0);
-		S.out(obj);
+		String now = "2023-09-29 08:15:17.914349";//Util.yToS.format( new Date(System.currentTimeMillis() - 1000*60*60*24) );
 		
-		config.sqlCommand( sql -> sql.updateJson("transactions", obj, "uid=%s", obj.getString("uid")) );
+		config.sqlQuery( conn -> conn.queryToJson("select * from transactions where created_at = '%s'", now) )
+			.display();
 		
 	}
 }
-// create a separate log table for exceptions? what is best way to insert call stack?
-

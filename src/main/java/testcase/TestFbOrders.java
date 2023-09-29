@@ -140,7 +140,7 @@ public class TestFbOrders extends MyTestCase {
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
-		String now = Util.yToS.format( new Date() );		
+		final String now = Util.yToS.format( new Date() );
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
@@ -174,16 +174,12 @@ public class TestFbOrders extends MyTestCase {
 			S.sleep(1000);
 		}
 		
-		m_config.sqlCommand( conn -> {   // fix this
-			JsonArray ar = conn.queryToJson("select * from transactions where created_at > '%s'", now);
-			assertTrue( ar.size() > 0);
-			JsonObject rec = ar.get(0);
-			S.out(rec);
-			assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
-			assertEquals( 1.0, rec.getDouble("quantity") );
-		});
-		
-		
+		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson("select * from transactions where created_at > '%s'", now) );
+		assertTrue( ar.size() > 0);
+		JsonObject rec = ar.get(0);
+		S.out(rec);
+		assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
+		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
 	static void showAmounts(String str) throws Exception {

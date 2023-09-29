@@ -68,7 +68,7 @@ public class OrderTransaction extends MyTransaction {
 
 	private void order() throws Exception {
 		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "The wallet address '%s' is invalid", m_walletAddr);
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
@@ -176,7 +176,7 @@ public class OrderTransaction extends MyTransaction {
 		// unwind the PositionTracker and unwind the IB order if necessary
 		// this happens in the shrinkWrap() catch block
 		m_order.roundedQty( positionTracker.buyOrSell( conid, isBuy(), m_desiredQuantity) );
-
+		
 		shrinkWrap( () -> {
 			insertTransaction();  // this must come after all order values are set and before order is placed to ensure that it happens before we get a response from IB
 
@@ -188,7 +188,7 @@ public class OrderTransaction extends MyTransaction {
 				
 				jlog( LogType.NO_STOCK_ORDER, m_order.getJsonLog(contract) );
 				m_order.status(OrderStatus.Filled);
-				onIBOrderCompleted(false);
+				onIBOrderCompleted(false, false);
 			}
 			// AUTO-FILL - for testing only
 			else if (m_config.autoFill() ) {
@@ -230,10 +230,10 @@ public class OrderTransaction extends MyTransaction {
 				m_order.lmtPrice(),
 				m_order.permId()
 				);
+		
 		m_main.tradeReport( "TK" + rnd.nextInt(), contract, exec);  // you could simulate commission report as well 	
 
-		jlog( LogType.AUTO_FILL, null);  // test system only 
-		onIBOrderCompleted( false ); // you might want to sometimes pass false here when testing
+		onIBOrderCompleted( false, true); // you might want to sometimes pass false here when testing
 	}
 
 	/** NOTE: You MUST call onIBOrderCompleted() once you come in here, so no require() and no wrap(),
@@ -256,7 +256,7 @@ public class OrderTransaction extends MyTransaction {
 
 					if (status.isComplete() ) {
 						m_order.permId(permId);
-						onIBOrderCompleted( false);
+						onIBOrderCompleted( false, false);
 					}
 				});
 			}
@@ -315,7 +315,7 @@ public class OrderTransaction extends MyTransaction {
 						e.printStackTrace();
 					}
 				}
-				onIBOrderCompleted(true);
+				onIBOrderCompleted(true, false);
 			}
 		});
 	}
@@ -326,7 +326,7 @@ public class OrderTransaction extends MyTransaction {
 	 *  This call is shrinkWrapped()
 	 *  In the case where order qty < .5 and we didn't submit an order, orderStatus will be Filled.
 	 *  You must (a) make a log entry and (b) either call m_liveOrder.filled() or throw an exception */ 
-	private synchronized void onIBOrderCompleted(boolean timeout) throws Exception {
+	private synchronized void onIBOrderCompleted(boolean timeout, boolean simulated) throws Exception {
 		if (m_respondedToOrder) {
 			return;    // should never happen, but just to be safe
 		}
@@ -338,11 +338,11 @@ public class OrderTransaction extends MyTransaction {
 				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");
 		
 		// the order has been filled or partially filled; note that filledShares can be zero if the size was rounded down
-		olog( LogType.ORDER_FILLED, "filledShares", m_filledShares);
+		olog( LogType.ORDER_FILLED, "filledShares", m_filledShares, "simulated", simulated);
 		
 		if (fireblocks() ) {
 			onUpdateStatus(FireblocksStatus.STOCK_ORDER_FILLED); // set m_progress to 15%
-			processFireblocks(m_filledShares);
+			startFireblocks(m_filledShares);
 		}
 		else {
 			onCompleted();
@@ -351,7 +351,7 @@ public class OrderTransaction extends MyTransaction {
 	
 	/** Call to this method is shrinkWrapped();
 	 *  any failure in here and the order must be unwound from the PositionTracker */ 
-	private void processFireblocks(double filledShares) throws Exception {
+	private void startFireblocks(double filledShares) throws Exception {
 		// partial fills are not supported
 		require( filledShares == m_order.roundedQty(), RefCode.PARTIAL_FILL, "Order failed due to partial fill");
 
@@ -362,14 +362,14 @@ public class OrderTransaction extends MyTransaction {
 
 		out( "Starting Fireblocks protocol");
 
-		String id;
+		String fbId;
 
 		// buy
 		if (m_order.action() == Action.BUY) {
 			
 			// buy with RUSD?
 			if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-				id = m_config.rusd().buyStockWithRusd(
+				fbId = m_config.rusd().buyStockWithRusd(
 						m_walletAddr, 
 						m_stablecoinAmt,
 						newStockToken(),
@@ -379,7 +379,7 @@ public class OrderTransaction extends MyTransaction {
 			
 			// buy with XUSD
 			else {
-				id = m_config.rusd().buyStock(
+				fbId = m_config.rusd().buyStock(
 						m_walletAddr,
 						m_config.busd(),
 						m_stablecoinAmt,
@@ -391,7 +391,7 @@ public class OrderTransaction extends MyTransaction {
 		
 		// sell
 		else {
-			id = m_config.rusd().sellStockForRusd(
+			fbId = m_config.rusd().sellStockForRusd(
 					m_walletAddr,
 					m_stablecoinAmt,
 					newStockToken(),
@@ -399,34 +399,23 @@ public class OrderTransaction extends MyTransaction {
 			);
 		}
 		
-		allLiveOrders.put(id, this);
-
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		updateTransaction(id);
-		
+		allLiveOrders.put(fbId, this);
+
+		// update transaction table with fireblocks id
+		m_main.queueSql( conn -> conn.execute( 
+				String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
+					fbId, m_uid) ) );
 		
 		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-				"id", id, 
+				"id", fbId, 
 				"currency", m_map.getParam("currency"),
 				"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()
-	}
-
-	/** Update transaction table with fireblocks id */
-	private void updateTransaction(String id) {
-		try {
-			m_main.sqlConnection( conn -> 
-				conn.execute( String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-					id, m_uid) ) );
-		} 
-		catch (Exception e) {
-			elog( LogType.DATABASE_ERROR, e);
-			e.printStackTrace();
-		}
 	}
 
 	/** Insert into transaction table; called when the IB order is submitted */
@@ -446,15 +435,8 @@ public class OrderTransaction extends MyTransaction {
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
 			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
-			//"status"
-			//"blockchain_hash"
-			//"status"
-			//"ip_address"
-			//"city"
-			//"country"
-			// "crypto_id"
 		
-			m_main.sqlConnection( conn -> conn.insertJson("transactions", obj) );
+			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
 		} 
 		catch (Exception e) {
 			elog( LogType.DATABASE_ERROR, e);
@@ -632,6 +614,10 @@ public class OrderTransaction extends MyTransaction {
 			olog( LogType.ORDER_STATUS_UPDATED, "status", stat, "pct", stat.pct() );
 		}
 	}
+	
+//	1. all of the trans.status updates must go into the database thread
+//	2. why does transaction.status say FAILED but there is no corr. log entry;
+//	   note there is no FbActionServer to report any fireblocks status
 
 	/** Called when blockchain goes to CONFIRMING or COMPLETED;
 	 *  also called during testing if we bypass the FB processing;

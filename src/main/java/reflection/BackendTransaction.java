@@ -132,7 +132,7 @@ public class BackendTransaction extends MyTransaction {
 				
 				respondOk();  // wait for completion. pas
 
-				report( m_walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
+				insertRedemption( m_walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
 			}
 			else {  // we don't use require here because we want to call alert()
 				
@@ -142,7 +142,7 @@ public class BackendTransaction extends MyTransaction {
 						"There is already an outstanding redemption request for this wallet; we appreciate your patience.");
 
 				// write unfilled report to DB
-				report( m_walletAddr, busd, rusdPos, false);
+				insertRedemption( m_walletAddr, busd, rusdPos, false);
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
@@ -156,7 +156,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	private static void report(String walletAddr, Busd busd, double rusdPos, boolean fulfilled) {
+	private static void insertRedemption(String walletAddr, Busd busd, double rusdPos, boolean fulfilled) {
 		Util.wrap( () -> {
 			JsonObject obj = new JsonObject();
 			obj.put( "wallet_public_key", walletAddr.toLowerCase() );
@@ -206,7 +206,7 @@ public class BackendTransaction extends MyTransaction {
 			String wallet = m_map.get("wallet_public_key");
 			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
 
-			m_main.sqlConnection( conn -> {
+			m_main.queueSql( conn -> {
 				String where = "where blockchain_hash <> ''";
 				if (S.isNotNull(wallet) ) {
 					where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
@@ -237,14 +237,11 @@ public class BackendTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 			
-			m_main.sqlConnection( conn -> {
-				JsonArray ar = conn.queryToJson(
+			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
 						"select * from users where lower(wallet_public_key) = '%s'", 
-						m_walletAddr.toLowerCase() );
-				Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", m_walletAddr);
-				
-				respond( (JsonObject)trim( ar).get(0) );
-			});
+						m_walletAddr.toLowerCase() ) );
+			Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", m_walletAddr);
+			respond( trim( ar).get(0) );
 		});
 	}
 
@@ -342,17 +339,15 @@ public class BackendTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 			
-			m_main.sqlConnection( conn -> {
-				JsonArray ar = conn.queryToJson(
-						"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
-						m_walletAddr.toLowerCase() );
+			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
+					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
+					m_walletAddr.toLowerCase() ) );
 				
-				JsonObject obj = ar.size() == 0 
-						? new JsonObject() 
-						: (JsonObject)ar.get(0);
+			JsonObject obj = ar.size() == 0 
+					? new JsonObject() 
+					: (JsonObject)ar.get(0);
 				
-				respond(obj);
-			});
+			respond(obj);
 		});
 	}
 
@@ -369,7 +364,7 @@ public class BackendTransaction extends MyTransaction {
 			require( Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email '%s' is invalid for wallet '%s'", email, wallet);
 			
 			String code = Util.uin(5);
-			S.out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);
+			out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);
 			
 			mapWalletToCode.put( wallet, code); // save code 
 			
@@ -406,7 +401,7 @@ public class BackendTransaction extends MyTransaction {
 			profile.remove("email_confirmation"); // don't want to store this in db
 			
 			// insert or update record in users table
-			m_main.sqlConnection( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", wallet) );
+			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", wallet) );
 			respondOk();
 		});
 	}
@@ -420,16 +415,14 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleSignup() {
 		wrap( () -> {
-			JsonObject obj = parseToObject();
-			S.out( "Received " + obj);
-			obj.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
-			require( S.isNotNull( obj.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
-			require( S.isNotNull( obj.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
+			JsonObject signup = parseToObject();
+			out( "Received signup " + signup);
+			signup.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
+			require( S.isNotNull( signup.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
+			require( S.isNotNull( signup.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
+			// don't validate wallet, we don't care
 			
-			String wallet = obj.getString("wallet_public_key");
-			//require( S.isNull( wallet) || wallet.length() == 42, RefCode.INVALID_REQUEST, "The wallet address entered is invalid");
-			
-			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
+			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
 			respondOk();
 		});
 	}

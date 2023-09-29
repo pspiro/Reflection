@@ -65,7 +65,7 @@ public abstract class MyTransaction {
 	/** Note this returns URI in all lower case */
 	String getURI(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
-		out( "----- %s -------------------------", uri);
+		m_timer.next( "%s ----- %s -------------------------", m_uid, uri);
 		return uri;
 	}
 
@@ -94,8 +94,10 @@ public abstract class MyTransaction {
 			/** This code is obsolete; use parseToObject() instead */
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)	            		
-	            out( "  parsed POST request " + m_map);
+	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            if (!(this instanceof OrderTransaction) ) {  // order transaction prints its own log
+	            	out( "  parsed POST request " + m_map);
+	            }
 			}
 			catch( ParseException e) {   // this exception does not set the exception message text
 				throw new RefException( RefCode.INVALID_REQUEST, "Error parsing json - " + e.toString() );
@@ -287,7 +289,7 @@ public abstract class MyTransaction {
 	}
 
 	void jlog(LogType type, JsonObject json) {
-		Main.jlog(type, m_uid, m_walletAddr, json);
+		m_main.jlog(type, m_uid, m_walletAddr, json);
 	}
 
 	/** Assumes the wallet address is the last token in the URI

@@ -88,7 +88,7 @@ public class MktDataServer {
 		S.out( "  done");
 		
 		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
-		m_tradingHours = new TradingHours(m_mdConnMgr.controller() ); // must come after ConnectionMgr
+		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
 		
 		// connect to TWS
 		timer.next("Connecting to TWS");

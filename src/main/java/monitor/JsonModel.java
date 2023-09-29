@@ -73,8 +73,10 @@ public class JsonModel extends MyTableModel {
 	}
 
 	public void onHeaderClicked(int col) {
-		m_ar.sortJson( m_colNames[col] );
-		fireTableDataChanged();
+		if (col < m_colNames.length) {
+			m_ar.sortJson( m_colNames[col] );
+			fireTableDataChanged();
+		}
 	}
 	
 	boolean m_filtered;

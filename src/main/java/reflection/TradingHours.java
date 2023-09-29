@@ -28,9 +28,11 @@ public class TradingHours {
     private ApiController m_controller;
 	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours; there will be two entries, one for SMART, and one for OVERNIGHT
 	private boolean m_started;
+	private Config m_config; // could be null
 	
-	public TradingHours(ApiController main) {
+	public TradingHours(ApiController main, Config config) {
 		m_controller = main;
+		m_config = config;
 	}
 
 	/** This could get called multiple times if there is a disconnect/reconnect */
@@ -65,7 +67,12 @@ public class TradingHours {
 			}
 			catch (Exception e) {
 				e.printStackTrace();
-				Main.jlog( LogType.TRADING_HOURS_ERROR, null, null, RefException.eToJson(e) ); 
+				if ( m_config != null) {
+					Util.wrap( () ->
+						m_config.sqlCommand( conn -> conn.insertJson( "log", Util.toJson(
+								"type", LogType.TRADING_HOURS_ERROR,
+								"data", RefException.eToJson(e) ) ) ) );
+				}
 			}
 		});
 	}
