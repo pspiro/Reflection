@@ -2,7 +2,9 @@ package reflection;
 
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -396,9 +398,15 @@ public class Config extends ConfigBase {
 		return new MyRedis(redisHost, redisPort);
 	}
 	
+	public MySqlConnection createConnection() throws SQLException {
+		MySqlConnection conn = new MySqlConnection();
+		conn.connect( postgresUrl, postgresUser, postgresPassword);
+		return conn;
+	}
+
+	/** Connect, execute a command, then close the connection */
 	public void sqlCommand(SqlCommand command) throws Exception {
-		try ( MySqlConnection conn = new MySqlConnection() ) {
-			conn.connect( postgresUrl, postgresUser, postgresPassword);
+		try ( MySqlConnection conn = createConnection() ) {
 			command.run(conn);
 		}
 	}
@@ -456,4 +464,6 @@ public class Config extends ConfigBase {
 	public double minOrderSize() {
 		return minOrderSize;
 	}
+
+
 }

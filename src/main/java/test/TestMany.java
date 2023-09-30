@@ -28,7 +28,7 @@ public class TestMany {
 	};
 	
 	int index = 0;
-	static int count = 1;
+	static int count = 5;
 	
 	public static void main(String[] args) throws Exception {
 	//	seed();

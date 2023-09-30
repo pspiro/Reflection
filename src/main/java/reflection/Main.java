@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -18,13 +19,13 @@ import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
 import com.ib.client.Execution;
 import com.ib.client.OrderState;
+import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import common.ThreadQueue;
 import common.Util;
 import http.MyHttpClient;
 import redis.MyRedis;
@@ -59,10 +60,11 @@ public class Main implements ITradeReportHandler {
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
-	private ThreadQueue m_dbQueue = new ThreadQueue();  // let DB transactions execute here
+	//private ThreadQueue m_dbQueue = new ThreadQueue();  // let DB transactions execute here
+	private DbQueue m_dbQueue = new DbQueue();
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
-	ThreadQueue dbQueue() { return m_dbQueue; }
+
 
 	public static void main(String[] args) {
 		try {
@@ -94,7 +96,7 @@ public class Main implements ITradeReportHandler {
 		timer.done();
 		
 		// must come after reading config and before writing to log
-		m_dbQueue.start();
+		Util.execute( () -> m_dbQueue.runDbQueue() );
 		
 		// create log entry
 		jlog( LogType.RESTART, null, null, Util.toJson( 
@@ -141,6 +143,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
 		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
@@ -172,7 +175,7 @@ public class Main implements ITradeReportHandler {
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}
-	
+
 	void shutdown() {
 		log( LogType.SHUTDOWN, null);
 		m_redis.disconnect();  // seems like a good idea
@@ -510,7 +513,7 @@ public class Main implements ITradeReportHandler {
 
 	/** Run the sql command in the DbQueue thread */
 	void queueSql(SqlCommand runnable) {  // could be status
-		m_dbQueue.queue( () -> m_config.sqlCommand(runnable) );  // you could just add the runnable to the queue and save an object
+		m_dbQueue.add(runnable);
 	}
 
 	public ApiController orderController() {
@@ -612,9 +615,48 @@ public class Main implements ITradeReportHandler {
 	}
 
 	/** @param side is buy or sell (lower case) */
-	boolean validWallet(String walletAddr, String side) {
+	boolean validWallet(String walletAddr, Action side) {
 		String str = m_blacklist.get(walletAddr);
 		return Util.getEnum(str, Allow.values(), Allow.All).allow(side);
+	}
+
+	/** This class processes database queries in a separate thread so as not
+	 *  to hold up other threads. It waits for the first query and then processes
+	 *  as many as possible, then waits again. */
+	class DbQueue {
+		private LinkedBlockingQueue<SqlCommand> m_queue = new LinkedBlockingQueue<>();
+
+		void add(SqlCommand command) {
+			m_queue.add(command);
+		}
+		
+		// if this is still too slow, you can keep a connection open, like for redis
+
+		/** Runs in a separate thread to execute database commands without holding
+		 *  up the TWS thread */
+		private void runDbQueue() {
+			while (true) {
+				try {
+					// wait for the first one
+					SqlCommand com = m_queue.take();
+					
+					try ( MySqlConnection conn = m_config.createConnection() ) {
+						// then process as many as possible
+						while (com != null) {
+							com.run( conn);
+							com = next();
+						}
+					}
+				}
+				catch( Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		private SqlCommand next() {
+			return m_queue.isEmpty() ? null : m_queue.remove();
+		}
 	}
 }
 

@@ -1,5 +1,7 @@
 package reflection;
 
+import static reflection.Main.require;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,6 +20,15 @@ public class LiveOrderTransaction extends MyTransaction {
 
 	LiveOrderTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
+	}
+	
+	public void clearLiveOrders() {
+		wrap( () -> {
+			require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");
+			liveOrders.clear();
+			allLiveOrders.clear();
+			respondOk();
+		});		
 	}
 
 	/** Called by the Monitor program */

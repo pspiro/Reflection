@@ -42,7 +42,7 @@ public class Order {
     private int  m_parentId; // Parent order Id, to associate Auto STP or TRAIL orders with the original order.
 
     // primary attributes
-    private String      m_action = "BUY";
+    private Action		m_action = Action.Buy;
     private double      m_totalQty;  // total decimal desired quantity
     private int         m_roundedQty;  // quantity submitted to exchange
     private int         m_displaySize;
@@ -231,8 +231,7 @@ public class Order {
 	private OrderStatus m_status = OrderStatus.Unknown;
 	
 	// getters
-    public Action  action()                         { return Action.get(m_action); }
-    public String  getAction()                      { return m_action; }
+    public Action  action()                         { return m_action; }
     public boolean allOrNone()                      { return m_allOrNone; }
     public boolean blockOrder()                     { return m_blockOrder; }
     public boolean hidden()                         { return m_hidden; }
@@ -385,8 +384,7 @@ public class Order {
     public void settlingFirm(String v)                                  { m_settlingFirm = v; }
     public void clearingAccount(String v)                               { m_clearingAccount = v; }
     public void clearingIntent(String v)                                { m_clearingIntent = v; }
-    public void action(Action v)                                        { m_action = ( v == null ) ? null : v.getApiString(); }
-    public void action(String v)                                        { m_action = v; }
+    public void action(Action v)                                        { m_action = v; }
     public void algoStrategy(AlgoStrategy v)                            { m_algoStrategy = ( v == null ) ? null : v.getApiString(); }
     public void algoStrategy(String v)                                  { m_algoStrategy = v; }
     public void algoId(String v)                                        { m_algoId = v; }
@@ -596,6 +594,8 @@ public class Order {
 
     @Override
     public boolean equals(Object p_other) {
+    	if (true) throw new RuntimeException("Why are we here?");
+    	
         if (this == p_other) {
             return true;
         }
@@ -609,6 +609,7 @@ public class Order {
         }
 
         if (m_orderId != l_theOther.m_orderId
+        	|| m_action != l_theOther.m_action        		
             || m_clientId != l_theOther.m_clientId
             || m_totalQty != l_theOther.m_totalQty
         	|| m_lmtPrice != l_theOther.m_lmtPrice
@@ -697,8 +698,7 @@ public class Order {
         	return false;
         }
 
-        if (Util.StringCompare(m_action, l_theOther.m_action) != 0
-            || Util.StringCompare(m_orderType, l_theOther.m_orderType) != 0 
+        if ( Util.StringCompare(m_orderType, l_theOther.m_orderType) != 0 
         	|| Util.StringCompare(m_tif, l_theOther.m_tif) != 0 
         	|| Util.StringCompare(m_activeStartTime, l_theOther.m_activeStartTime) != 0 
         	|| Util.StringCompare(m_activeStopTime, l_theOther.m_activeStopTime) != 0 
@@ -769,28 +769,6 @@ public class Order {
         return (int) (m_permId ^ (m_permId >>> 32));
     }
 
-	/** Log entry for order when order is submitted */ 
-	public String getOrderLog(Contract contract, String walletAddr) {
-		return String.format( ""
-				+ "wallet=%s  "
-				+ "conid=%s  "
-				+ "orderId=%s  "
-				+ "action=%s  "
-				+ "totalQty=%s  "
-				+ "roundedQty=%s  "
-				+ "lmtPrice=%.2f  "
-				+ "exchange=%s",
-				walletAddr, 
-				contract.conid(), 
-				m_orderId,
-				m_action, 
-				m_totalQty, 
-				m_roundedQty, 
-				m_lmtPrice,
-				contract.exchange() 
-				);
-	}
-	
 	public JsonObject getJsonLog(Contract contract) {
 		return common.Util.toJson(
 				"id", m_orderId,
@@ -818,11 +796,11 @@ public class Order {
     }
 
     public void flipSide() {
-    	action( action() == Action.BUY ? Action.SELL : Action.BUY); 
+    	action( action() == Action.Buy ? Action.Sell : Action.Buy); 
 	}
     
     public boolean isBuy() {
-    	return action() == Action.BUY;
+    	return action() == Action.Buy;
     }
 	public void status(OrderStatus status) {
 		m_status = status;

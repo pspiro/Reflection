@@ -74,8 +74,7 @@ public class OrderTransaction extends MyTransaction {
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
 
-		String side = m_map.getRequiredParam("action");
-		require( side == "buy" || side == "sell", RefCode.INVALID_REQUEST, "Side must be 'buy' or 'sell'");
+		Action side = m_map.getEnumParam("action", Action.values() );
 		require( m_config.allowTrading().allow(side), RefCode.TRADING_HALTED, "Trading is temporarily halted. Please try your order again later.");
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 
@@ -91,7 +90,7 @@ public class OrderTransaction extends MyTransaction {
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
 		double preCommAmt = price * m_desiredQuantity;
-		double maxAmt = side == "buy" ? m_config.maxBuyAmt() : m_config.maxSellAmt();
+		double maxAmt = side == Action.Buy ? m_config.maxBuyAmt() : m_config.maxSellAmt();
 		require( Util.isLtEq(preCommAmt, maxAmt), RefCode.ORDER_TOO_LARGE, "The total amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed order size of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) );
 		
@@ -107,7 +106,7 @@ public class OrderTransaction extends MyTransaction {
 		validateCookie(m_walletAddr);
 		
 		// calculate order price
-		double prePrice = side == "buy" 
+		double prePrice = side == Action.Buy 
 			? price - price * m_config.minBuySpread()
 			: price + price * m_config.minSellSpread();
 		double orderPrice = Util.round( prePrice);  // round to two decimals
@@ -126,7 +125,7 @@ public class OrderTransaction extends MyTransaction {
 		contract.exchange( session.toString().toUpperCase() );
 
 		m_order = new Order();
-		m_order.action( side == "buy" ? Action.BUY : Action.SELL);
+		m_order.action( side);
 		m_order.totalQty( m_desiredQuantity);
 		m_order.lmtPrice( orderPrice);
 		m_order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
@@ -231,7 +230,7 @@ public class OrderTransaction extends MyTransaction {
 				m_order.permId()
 				);
 		
-		m_main.tradeReport( "TK" + rnd.nextInt(), contract, exec);  // you could simulate commission report as well 	
+		m_main.tradeReport( "FAKE" + rnd.nextInt(), contract, exec);  // you could simulate commission report as well 	
 
 		onIBOrderCompleted( false, true); // you might want to sometimes pass false here when testing
 	}
@@ -365,7 +364,7 @@ public class OrderTransaction extends MyTransaction {
 		String fbId;
 
 		// buy
-		if (m_order.action() == Action.BUY) {
+		if (m_order.isBuy() ) {
 			
 			// buy with RUSD?
 			if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
@@ -426,7 +425,7 @@ public class OrderTransaction extends MyTransaction {
 			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
 			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
 			obj.put("wallet_public_key", m_walletAddr);
-			obj.put("action", m_order.action().toString() );
+			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_order.totalQty());
 			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("symbol", m_stock.getSymbol() );
@@ -656,7 +655,7 @@ public class OrderTransaction extends MyTransaction {
 		JsonObject order = new JsonObject();
 		order.put( "uid", uid() );
 		order.put( "wallet", m_walletAddr);
-		order.put( "action", isBuy() ? "Buy" : "Sell");
+		order.put( "action", m_order.action() );
 		order.put( "description", getWorkingOrderText() );
 		order.put( "progress", m_progress);
 		order.put( "status", m_status.toString() );
@@ -671,7 +670,7 @@ public class OrderTransaction extends MyTransaction {
 	public synchronized JsonObject getWorkingOrder() {
 		JsonObject order = new JsonObject();
 		order.put( "id", uid() );
-		order.put( "action", isBuy() ? "Buy" : "Sell");     // used to set the color; maybe it should be upper case?
+		order.put( "action", m_order.action().toString().toLowerCase() ); // front end requires lower case to set the right color
 		order.put( "description", getWorkingOrderText() );
 		order.put( "progress", m_progress);
 		return order;
@@ -692,7 +691,7 @@ public class OrderTransaction extends MyTransaction {
 	
 	private String getWorkingOrderText() {
 		return S.format( "%s %s %s for %s",
-				isBuy() ? "Buy" : "Sell", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
+				m_order.action(), m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
 	}
 	
 	private String getCompletedOrderText() {

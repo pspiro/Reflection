@@ -148,14 +148,14 @@ public class Types {
 	}
 
 	public enum Action implements IApiEnum {
-		BUY, SELL, SSHORT;
+		Buy, Sell;
 
         public static Action get(String apiString) {
             return getValueOf(apiString, values(), null);
         }
 
         @Override public String getApiString() {
-			return toString();
+			return toString().toUpperCase();
 		}
 	}
 
@@ -365,7 +365,7 @@ public class Types {
 
 	public static <T extends Enum<?> & IApiEnum> T getValueOf( String v, T[] values, T defaultValue ) {
         for( T currentEnum : values ) {
-            if( currentEnum.getApiString().equals(v) ) {
+            if( currentEnum.getApiString().equalsIgnoreCase(v) ) {
                 return currentEnum;
             }
         }

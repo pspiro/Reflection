@@ -72,7 +72,7 @@ public class Prices {
 	}
 
 	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
-		if (order.action() == Action.BUY) {
+		if (order.isBuy() ) {
 			Main.require( validAsk(), RefCode.NO_PRICES, NO_PRICE, "ask");
 			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, TOO_LOW);  // this is displayed to user
 		}

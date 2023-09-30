@@ -301,8 +301,7 @@ public abstract class MyTransaction {
 	
 	/** Parse a POST message and return JsonObject */
 	JsonObject parseToObject() throws Exception {
-        return (JsonObject)new JSONParser().parse(new InputStreamReader( m_exchange.getRequestBody() ));  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+		return JsonObject.parse( m_exchange.getRequestBody() );
 	}
-	
 	
 }

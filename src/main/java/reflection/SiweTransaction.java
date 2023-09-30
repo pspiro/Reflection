@@ -71,7 +71,7 @@ public class SiweTransaction extends MyTransaction {
 	 *  The response contains a Set-Cookie header with the SIWE message and signature */
 	public void handleSiweSignin() {
 		wrap( () -> {
-            JsonObject signedMsg = JsonObject.parse( m_exchange.getRequestBody() );  // parseMsg() won't work here because it assumes all values are strings
+            JsonObject signedMsg = parseToObject();
             
             out( "received signed msg: %s", signedMsg);
 			
@@ -80,7 +80,7 @@ public class SiweTransaction extends MyTransaction {
 			// validate and remove the nonce so it is no longer valid
 			Main.require( 
 					validNonces.remove(siweMsg.getNonce() ), 
-					RefCode.INVALID_REQUEST, 
+					RefCode.INVALID_NONCE, 
 					"The nonce %s is invalid", siweMsg.getNonce() );
 			
 			out( "nonce is valid");
