@@ -100,6 +100,9 @@ public class QueryPanel extends JPanel implements RefPanel {
 		Util.wrap( () -> refresh() );
 	}
 
+	public void adjust(JsonObject obj) {
+	}
+	
 	/** Override me */
 	public void onRightClick(MouseEvent e, int row, int col) {
 	}
