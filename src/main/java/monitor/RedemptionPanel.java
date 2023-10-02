@@ -14,8 +14,8 @@ import tw.util.S;
 public class RedemptionPanel extends QueryPanel {
 
 	RedemptionPanel() {
-		super( "id,wallet_public_key,stablecoin,amount,fulfilled,created_at,REDEEM NOW",
-			   "select * from redemptions order by updated_at desc");
+		super( "created_at,id,wallet_public_key,stablecoin,amount,fulfilled,REDEEM NOW",
+			   "select * from redemptions order by created_at desc $limit");
 	}
 	
 	@Override protected JsonModel createModel(String allNames, String sql) {

@@ -11,6 +11,8 @@ import reflection.Config;
 import tw.util.S;
 
 public class MyTestCase extends TestCase {
+	public static String dead = "0x000000000000000000000000000000000000dead";
+
 	static Config m_config;
 	static Accounts accounts = Accounts.instance;
 	

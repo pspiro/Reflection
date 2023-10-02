@@ -1,8 +1,7 @@
 package test;
 
-import org.json.simple.JsonObject;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import reflection.Config;
 import tw.util.S;
 
 /** Just test that you can connect to the database. */
@@ -14,14 +13,12 @@ public class TestPostgres {
 	};
 
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Dt-config");
+		//Config config = Config.readFrom("Dt-config");
+		LinkedBlockingQueue q = new LinkedBlockingQueue();
 		
-		JsonObject obj = config.sqlQuery( conn -> conn.queryToJson("select * from transactions") ).get(0);
-		S.out(obj);
 		
-		config.sqlCommand( sql -> sql.updateJson("transactions", obj, "uid=%s", obj.getString("uid")) );
+		q.remove();
+		S.out("done");
 		
 	}
 }
-// create a separate log table for exceptions? what is best way to insert call stack?
-

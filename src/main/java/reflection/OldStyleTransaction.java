@@ -83,7 +83,7 @@ public class OldStyleTransaction extends MyTransaction {
 				getConnStatus();
 				break;
 			case terminate:
-				S.out( "Received terminate message");
+				out( "Received terminate message");
 				System.exit( 0);
 				break;
 			case disconnect:
@@ -248,10 +248,12 @@ public class OldStyleTransaction extends MyTransaction {
 	/** Top-level method; set some prices for use in test systems 
 	 * @throws RefException */
 	void onSeedPrices() throws RefException {
+		require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Only in test env");
+		
 		Jedis jedis = Main.m_config.redisPort() == 0
 			? new Jedis( Main.m_config.redisHost() )  // use full connection string
 			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
-
+		
 		jedis.hset( "8314", "bid", "128.20");
 		jedis.hset( "8314", "ask", "128.30");
 		jedis.hset( "13824", "bid", "148.48");

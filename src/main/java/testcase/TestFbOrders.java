@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Busd;
+import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 import reflection.RefCode;
@@ -86,7 +87,8 @@ public class TestFbOrders extends MyTestCase {
 		// mint BUSD for user Bob
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		busd.mint( bobAddr,	2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+		busd.mint( bobAddr, 2000)  // I don't think this is necessary but I saw it fail without this
+			.waitForHash();
 		
 		// approve too little
 		S.out( "**approving .49");
@@ -140,7 +142,7 @@ public class TestFbOrders extends MyTestCase {
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
-		String now = Util.yToS.format( new Date() );		
+		final String now = Util.yToS.format( new Date() );
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
@@ -174,16 +176,12 @@ public class TestFbOrders extends MyTestCase {
 			S.sleep(1000);
 		}
 		
-		m_config.sqlCommand( conn -> {   // fix this
-			JsonArray ar = conn.queryToJson("select * from transactions where created_at > '%s'", now);
-			assertTrue( ar.size() > 0);
-			JsonObject rec = ar.get(0);
-			S.out(rec);
-			assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
-			assertEquals( 1.0, rec.getDouble("quantity") );
-		});
-		
-		
+		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson("select * from transactions where created_at > '%s'", now) );
+		assertTrue( ar.size() > 0);
+		JsonObject rec = ar.get(0);
+		S.out(rec);
+		assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
+		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
 	static void showAmounts(String str) throws Exception {

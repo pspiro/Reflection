@@ -71,8 +71,6 @@ public class TestBackendMsgs extends MyTestCase {
 	public void testGetCryptosByAddr() throws Exception {
 		cli().get("/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet);
 		JsonArray ar = cli.readJsonArray();
-		S.out( "crypto by addr");
-		S.out( ar.getJsonObj(0));
 		assert200();
 		assertTrue( ar.size() > 1);
 	}

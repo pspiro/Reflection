@@ -28,9 +28,9 @@ public class TestSignup extends MyTestCase {
 				"name", "bob",
 				"email", "838383838",
 				"phone", "838383838", 
-				"wallet_public_key", "0xb95bf9C71e030FA3D8c0940456972885DB608");
+				"wallet_public_key", "0xb95bf9C71e030FA3D8c0940456972885DBwwwwww608");
 		cli().postToJson("/api/signup", obj.toString() ).display();
-		assertEquals( cli.getResponseCode(), 400);
+		assertEquals( 400, cli.getResponseCode() );
 	}
 	public void testSuccess() throws Exception {
 		JsonObject obj = Util.toJson( 

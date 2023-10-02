@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -18,6 +19,7 @@ import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
 import com.ib.client.Execution;
 import com.ib.client.OrderState;
+import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
@@ -58,8 +60,11 @@ public class Main implements ITradeReportHandler {
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
+	//private ThreadQueue m_dbQueue = new ThreadQueue();  // let DB transactions execute here
+	private DbQueue m_dbQueue = new DbQueue();
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
+
 
 	public static void main(String[] args) {
 		try {
@@ -90,6 +95,9 @@ public class Main implements ITradeReportHandler {
 		readSpreadsheet();
 		timer.done();
 		
+		// must come after reading config and before writing to log
+		Util.execute( () -> m_dbQueue.runDbQueue() );
+		
 		// create log entry
 		jlog( LogType.RESTART, null, null, Util.toJson( 
 				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
@@ -102,7 +110,7 @@ public class Main implements ITradeReportHandler {
 		
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
-		sqlConnection( conn -> {} );
+		m_config.sqlCommand( conn -> {} );
 
 		// if port is zero, host contains connection string, otherwise host and port are used
 		timer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
@@ -114,7 +122,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		//checkFbActiveServer();
+		checkFbActiveServer();
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
@@ -125,7 +133,8 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 		server.createContext("/mint", exch -> new BackendTransaction(this, exch).handleMint() );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
-		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() );
+		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
+		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
 		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
@@ -134,12 +143,12 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
+		server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
 		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
-		server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() );
 		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
@@ -157,7 +166,7 @@ public class Main implements ITradeReportHandler {
 		server.start();
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_tradingHours = new TradingHours(orderController()); // must come after ConnectionMgr 
+		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 
 
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
@@ -166,7 +175,7 @@ public class Main implements ITradeReportHandler {
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}
-	
+
 	void shutdown() {
 		log( LogType.SHUTDOWN, null);
 		m_redis.disconnect();  // seems like a good idea
@@ -424,24 +433,20 @@ public class Main implements ITradeReportHandler {
 
 	/** Write to the log file. Don't throw any exception. */
 
-	static void log( LogType type, String text) {
+	void log( LogType type, String text) {
 		jlog( type, null, null, Util.toJson( "text", text) );
 	}
 
 	/** Writes entry to log table in database; must not throw exception */
-	static void jlog( LogType type, String uid, String wallet, JsonObject json) {
-		try {
-			JsonObject log = Util.toJson(
-					"type", type,
-					"uid", uid,
-					"wallet_public_key", wallet,
-					"data", json);
-			S.out( "%s %s %s %s", type, uid, wallet, json);
-			Main.m_config.sqlCommand( conn -> conn.insertJson( "log", log) );
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-		}
+	void jlog( LogType type, String uid, String wallet, JsonObject json) {
+		S.out( "%sLOG %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		
+		JsonObject log = Util.toJson(
+				"type", type,
+				"uid", uid,
+				"wallet_public_key", wallet,
+				"data", json);
+		queueSql( conn -> conn.insertJson( "log", log) );
 	}
 
 	static class Pair {
@@ -469,13 +474,16 @@ public class Main implements ITradeReportHandler {
 		obj.put( "avgprice", exec.avgPrice() );
 		obj.put( "orderref", exec.orderRef() );
 		obj.put( "tradekey", tradeKey);
+
+		JsonObject log = Util.toJson(
+				"type", LogType.TRADE,
+				"data", obj);
 		
-		try {
-			jlog( LogType.TRADE, null, null, obj);  // we don't really need both of these, but it might be convenient for trouble-shooting
-			sqlConnection( conn -> conn.insertJson( "trades", obj) );
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		// insert trade into trades and log tables
+		queueSql( conn -> {
+			conn.insertJson( "log", log);
+			conn.insertJson( "trades", obj);
+		});
 	}
 
 
@@ -497,14 +505,15 @@ public class Main implements ITradeReportHandler {
 					rpt.currency()
 			};
 
-			sqlConnection( conn -> conn.insert( "commissions", vals) );
+			queueSql( conn -> conn.insert( "commissions", vals) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	void sqlConnection(SqlCommand runnable) throws Exception {  // could be status
-		m_config.sqlCommand(runnable);
+
+	/** Run the sql command in the DbQueue thread */
+	void queueSql(SqlCommand runnable) {  // could be status
+		m_dbQueue.add(runnable);
 	}
 
 	public ApiController orderController() {
@@ -606,11 +615,49 @@ public class Main implements ITradeReportHandler {
 	}
 
 	/** @param side is buy or sell (lower case) */
-	boolean validWallet(String walletAddr, String side) {
+	boolean validWallet(String walletAddr, Action side) {
 		String str = m_blacklist.get(walletAddr);
 		return Util.getEnum(str, Allow.values(), Allow.All).allow(side);
 	}
-	
+
+	/** This class processes database queries in a separate thread so as not
+	 *  to hold up other threads. It waits for the first query and then processes
+	 *  as many as possible, then waits again. */
+	class DbQueue {
+		private LinkedBlockingQueue<SqlCommand> m_queue = new LinkedBlockingQueue<>();
+
+		void add(SqlCommand command) {
+			m_queue.add(command);
+		}
+		
+		// if this is still too slow, you can keep a connection open, like for redis
+
+		/** Runs in a separate thread to execute database commands without holding
+		 *  up the TWS thread */
+		private void runDbQueue() {
+			while (true) {
+				try {
+					// wait for the first one
+					SqlCommand com = m_queue.take();
+					
+					try ( MySqlConnection conn = m_config.createConnection() ) {
+						// then process as many as possible
+						while (com != null) {
+							com.run( conn);
+							com = next();
+						}
+					}
+				}
+				catch( Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		private SqlCommand next() {
+			return m_queue.isEmpty() ? null : m_queue.remove();
+		}
+	}
 }
 
 //no change

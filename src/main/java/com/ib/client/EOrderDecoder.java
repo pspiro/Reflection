@@ -6,6 +6,8 @@ package com.ib.client;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import com.ib.client.Types.Action;
+
 public class EOrderDecoder {
 
     private final EDecoder m_eDecoder;
@@ -52,7 +54,7 @@ public class EOrderDecoder {
     }
 
     public void readAction() throws IOException {
-        m_order.action(m_eDecoder.readStr());
+        m_order.action( Types.getValueOf( m_eDecoder.readStr(), Action.values(), Action.Buy) );
     }
 
     public void readTotalQuantity() throws IOException {

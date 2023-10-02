@@ -12,13 +12,16 @@ import reflection.SiweUtil;
 import tw.util.S;
 
 public class Cookie2 {
-	public static final String base = "https://reflection.trading";
-
+	String base = "http://localhost:8383";
 	private String m_addr;
 	private String m_cookie;
 	
 	String cookie() { return m_cookie; }
 	String address() { return m_addr; }
+	
+	Cookie2( String baseIn) {
+		base = baseIn;
+	}
 	
 	public void signIn(String address, Runnable run) {
 		m_addr = address;

@@ -11,11 +11,13 @@ import reflection.Config;
 import tw.util.S;
 
 public class TestMany {
+	//public static final String base = "https://reflection.trading";
+	//public static final String base = "https://reflection.trading";
+	static String base = "http://localhost:8383";
+
 	//static Stocks stocks = new Stocks();
 	static JsonArray stocks;
 	static Random r = new Random(System.currentTimeMillis());
-	static String base = "https://reflection.trading";
-	//static String base = "http://localhost:8383";
 	
 	static String[] addrs = {
 			"0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3",
@@ -25,7 +27,7 @@ public class TestMany {
 	};
 	
 	int index = 0;
-	static int count = 20;
+	static int count = 5;
 	
 	public static void main(String[] args) throws Exception {
 	//	seed();
@@ -41,15 +43,14 @@ public class TestMany {
 	}
 
 	static class Wal {
-		Cookie2 cook;
+		Cookie2 cook = new Cookie2(base);
 
 		void init(String ad) {
-			cook = new Cookie2();
 			cook.signIn(ad, () -> placeOrders() );
 		}
 
 		private void placeOrders() {
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < count; i++) {
 				sendOrder();
 				S.sleep( 2000);
 			}

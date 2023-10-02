@@ -87,8 +87,8 @@ public class QueryPanel extends JPanel implements RefPanel {
 					.replaceAll( "\\$where", where.getText() );
 			
 			m_ar = Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) );
-			m_ar.forEach( obj -> adjust(obj) );  // or override format() to keep the object intact 
-			fireTableDataChanged();
+			m_ar.forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
+			onHeaderClicked(0);
 			S.out( "Refreshed query model to %s", m_ar.size() ); 
 		}
 

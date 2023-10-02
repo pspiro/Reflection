@@ -237,7 +237,8 @@ public class Util {
 		return sb.toString();
 	}
 	
-	/** Execute the runnable in a new thread aka invokeLater. */
+	/** Execute the runnable in a new thread aka invokeLater.
+	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	public static void execute( Runnable runnable) {
 		new Thread(runnable).start();
 	}

@@ -1,5 +1,7 @@
 package reflection;
 
+import static reflection.Main.require;
+
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,6 +20,15 @@ public class LiveOrderTransaction extends MyTransaction {
 
 	LiveOrderTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
+	}
+	
+	public void clearLiveOrders() {
+		wrap( () -> {
+			require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");
+			liveOrders.clear();
+			allLiveOrders.clear();
+			respondOk();
+		});		
 	}
 
 	/** Called by the Monitor program */
@@ -113,7 +124,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			obj.put("status", status.toString() ); // note status is informational only; it's not used for anything; therefore you can set it to whatever you want
 			obj.put("blockchain_hash", hash);
 
-			m_main.sqlConnection( conn -> conn.updateJson("transactions", obj, "fireblocks_id = '%s'", fbId) );				
+			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "fireblocks_id = '%s'", fbId) );				
 		}
 		catch( Exception e) {
 			elog( LogType.DATABASE_ERROR, e);

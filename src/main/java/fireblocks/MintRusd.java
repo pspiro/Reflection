@@ -15,10 +15,8 @@ public class MintRusd {
 		Stocks stocks = new Stocks();
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), config);
 		
-		String id = config
-				.rusd()
-				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0);
-		Fireblocks.waitForStatus(id, "COMPLETED");
+		config.rusd().mint( wallet, amt, stocks.getAnyStockToken() )
+			.waitForStatus("COMPLETED");
 		
 		
 	}

@@ -18,7 +18,7 @@ public class Rusd extends Erc20 {
 	static final String sellRusdKeccak = "5690cc4f"; 
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
-	static final String addOrRemoveKeccak = "89fa2c03";
+	public static final String addOrRemoveKeccak = "89fa2c03";
 	static final String swapKeccak = "62835413";
 
 	// deploy RUSD from owner wallet
@@ -35,7 +35,7 @@ public class Rusd extends Erc20 {
 	 *  code; the value here is not passed into the smart contract constructor 
 	 * @throws Exception */
 	public Rusd( String rusdAddr, int rusdDecimals) throws Exception {
-		super( rusdAddr, rusdDecimals);
+		super( rusdAddr, rusdDecimals, "RUSD");
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
 	}
 	
@@ -65,7 +65,7 @@ public class Rusd extends Erc20 {
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
-	public String buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		return buyStock( 
 				userAddr,
 				this,
@@ -77,7 +77,7 @@ public class Rusd extends Erc20 {
 	
 	/** Buy with either RUSD or BUSD
 	 * @return id */
-	public String buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -94,14 +94,13 @@ public class Rusd extends Erc20 {
 
 		S.out( "Account %s buying %s %s with %s %s for user %s",
 				adminAcctId, params[4], stockToken.address(), params[3], stablecoin.address(), userAddr);
-		return Fireblocks.call( adminAcctId, m_address, 
-				buyStockKeccak, paramTypes, params, "RUSD buy stock");
+		return call( adminAcctId, buyStockKeccak, paramTypes, params, "RUSD buy stock");
 	}
 	
 	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD) */
-	public String sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
@@ -121,8 +120,7 @@ public class Rusd extends Erc20 {
 				params[3], 
 				userAddr);
 		
-		return Fireblocks.call( adminAcctId, m_address, 
-				sellStockKeccak, paramTypes, params, "RUSD sell stock");
+		return call( adminAcctId, sellStockKeccak, paramTypes, params, "RUSD sell stock");
 	}
 	
 	/** Not used yet, for testing only */
@@ -189,17 +187,11 @@ public class Rusd extends Erc20 {
 		Util.require( add, "remove not supported yet for safety");
 		
 		String[] paramTypes = { "address", "uint256" };
-		
-		Object[] params = { 
-				adminAddr, 
-				1 
-		};
+		Object[] params = { adminAddr, 1 };
 		
 		S.out( "Owner adding or removing admin %s (%s)", adminAddr, add);
 		
-		Fireblocks.call( 
-				Accounts.instance.getId( "Owner"),
-				m_address, 
+		call(	Accounts.instance.getId( "Owner"),
 				addOrRemoveKeccak, 
 				paramTypes, 
 				params, 
@@ -220,14 +212,17 @@ public class Rusd extends Erc20 {
 		S.out( "Account %s is swapping %s of %s for %s of %s for wallet %s",
 				adminAcctId, burnAmt, stockToBurn.address(), mintAmt, stockToMint.address(), userAddr);
 		
-		return Fireblocks.call2(
+		return call(
 				adminAcctId,
-				m_address,
-				swapKeccak, // <<<<<<<<<<<<<<<<<<
+				swapKeccak,
 				paramTypes,
 				params,
 				"RUSD swap");
 				
 	}
 
+	/** RUSD has no mint function, so we sell zero shares of stock */
+	public RetVal mint(String address, double amt, StockToken anyStockToken) throws Exception {
+		return sellStockForRusd( address, amt, anyStockToken, 0);
+	}
 }

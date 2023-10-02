@@ -3,17 +3,17 @@ package fireblocks;
 public class RetVal {
 	private String m_id;
 
-	RetVal(String id) {
+	public RetVal(String id) {
 		m_id = id;
 	}
 	
-	String id() {
+	public String id() {
 		return m_id;
 	}
 	
 	/** This blocks for up to 63 seconds */
 	public String waitForHash() throws Exception {
-		return Fireblocks.waitForTransHash(m_id, 60, 1000);
+		return Fireblocks.waitForHash(m_id, 60, 2000);
 	}
 	
 	/** This blocks for up to 90 seconds */

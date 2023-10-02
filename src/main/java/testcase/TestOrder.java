@@ -11,7 +11,6 @@ import tw.util.S;
 public class TestOrder extends MyTestCase {
 	static double curPrice;
 	static boolean m_noFireblocks = true;
-	static String noUserRec = "0x000000000000000000000000000000000000dead";
 	
 //	static double approved;
 	
@@ -43,10 +42,10 @@ public class TestOrder extends MyTestCase {
 
 	// verify user record
 	public void testMissingUserRec() throws Exception {
-		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", noUserRec) );
+		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", dead) );
 		
 		JsonObject obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", noUserRec);
+		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
@@ -54,19 +53,19 @@ public class TestOrder extends MyTestCase {
 				"wallet_public_key", "first_name", "last_name", "email", "phone", "aadhaar", 
 		};
 		Object[] vals = {
-				noUserRec, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
+				dead, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
 		};
 		m_config.sqlCommand( conn -> conn.insert("users", fields, vals) );
 		
 		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", noUserRec);
+		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // missing pan
 		
-		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'abc' where wallet_public_key = '%s'", noUserRec) ) );
+		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'abc' where wallet_public_key = '%s'", dead) ) );
 		
 		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", noUserRec);
+		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // invalid pan, aadhaar
 	}

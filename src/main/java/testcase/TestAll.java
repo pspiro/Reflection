@@ -28,6 +28,8 @@ import junit.framework.TestCase;
 	   TestSignup.class,
 	   TestSiwe.class,
 	   TestSplitDates.class,
+	   TestSmartRusd.class,
+	   TestSmartToken.class,
 	   TestStrings.class,
 	   TestTwoOrdersDifUser.class,
 	   TestTwoOrdersSameUser.class,	   

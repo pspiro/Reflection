@@ -1744,7 +1744,7 @@ public abstract class EClient {
             }
 
             // send main order fields
-            b.send( order.getAction());
+            b.send( order.action().getApiString());
             
             // frac shares not supported
 //			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
