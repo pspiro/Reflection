@@ -36,18 +36,18 @@ public class TestSmartRusd extends MyTestCase {
 				rusd.address() );
 
 		// mint RUSD
-		new RetVal(rusd.mint(dead, 10.0, st))
+		rusd.mint(dead, 10.0, st)
 			.waitForHash();
 		
 		// buy a stock token - succeed
-		new RetVal(rusd.buyStockWithRusd(dead, 1, st, 1))
+		rusd.buyStockWithRusd(dead, 1, st, 1)
 			.waitForHash();
 		
 		// remove admin
 		rusd.addOrRemoveAdmin(dead, false);
 		
 		// buy a stock token - fail
-		new RetVal(rusd.buyStockWithRusd(dead, 1, st, 1))
+		rusd.buyStockWithRusd(dead, 1, st, 1)
 			.waitForStatus("FAILED");
 	}
 }

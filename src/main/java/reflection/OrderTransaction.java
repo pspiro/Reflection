@@ -373,7 +373,7 @@ public class OrderTransaction extends MyTransaction {
 						m_stablecoinAmt,
 						newStockToken(),
 						m_order.totalQty()
-				);
+				).id();
 			}
 			
 			// buy with XUSD
@@ -384,7 +384,7 @@ public class OrderTransaction extends MyTransaction {
 						m_stablecoinAmt,
 						newStockToken(), 
 						m_order.totalQty()
-				);
+				).id();
 			}
 		}
 		
@@ -395,7 +395,7 @@ public class OrderTransaction extends MyTransaction {
 					m_stablecoinAmt,
 					newStockToken(),
 					m_order.totalQty()
-			);
+			).id();
 		}
 		
 		// the FB transaction has been submitted; there is a little window here where an

@@ -11,7 +11,7 @@ public class Busd extends Erc20 {
 	
 	/** This can be called by anybody, the BUSD does not have an owner.
 	 *  For testing only; cannot be called in production */
-	public String mint(String address, double amt) throws Exception {
+	public RetVal mint(String address, double amt) throws Exception {
 		return super.mint( Accounts.instance.getId( "Owner"), address, amt);
 	}
 	

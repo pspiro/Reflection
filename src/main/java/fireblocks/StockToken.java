@@ -18,7 +18,7 @@ public class StockToken extends Erc20 {
 		super( address, stockTokenDecimals, "StockToken");
 	}
 	
-	public String setRusdAddress(int id, String rusdAddr) throws Exception {
+	public RetVal setRusdAddress(int id, String rusdAddr) throws Exception {
 		Util.reqValidAddress( rusdAddr);
 		String[] paramTypes = { "address" };
 		Object[] params = { rusdAddr };

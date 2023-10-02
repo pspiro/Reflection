@@ -162,13 +162,13 @@ public class Erc20 {
 		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		
 	}
 	
-	public String call(int fromAcct, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
-		return Fireblocks.call(fromAcct, m_address, callData, paramTypes, params, note);
+	public RetVal call(int fromAcct, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+		return Fireblocks.call2(fromAcct, m_address, callData, paramTypes, params, note);
 	}
 
 	/** This can be called by anybody, the BUSD does not have an owner.
 	 *  For testing only; cannot be called in production */
-	public String mint(int fromAcct, String address, double amt) throws Exception {
+	public RetVal mint(int fromAcct, String address, double amt) throws Exception {
 		S.out( "Minting %s %s for %s", amt, m_name, fromAcct);
 		
 		String[] paramTypes = { "address", "uint256" };

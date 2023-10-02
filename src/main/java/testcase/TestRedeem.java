@@ -32,9 +32,9 @@ public class TestRedeem extends MyTestCase {
 		Stocks stocks = new Stocks();
 		stocks.readFromSheet(m_config);
 
-		String id = m_config.rusd()
-				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0);
-		Fireblocks.waitForStatus(id, "COMPLETED");
+		m_config.rusd()
+				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
+				.waitForStatus("COMPLETED");
 	}
 	
 	public void testRedeem() throws Exception {

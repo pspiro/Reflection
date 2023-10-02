@@ -87,8 +87,8 @@ public class TestFbOrders extends MyTestCase {
 		// mint BUSD for user Bob
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		String fbId = busd.mint( bobAddr, 2000);  // I don't think this is necessary but I saw it fail without this
-		Fireblocks.waitForHash(fbId, 60, 2000);
+		busd.mint( bobAddr, 2000)  // I don't think this is necessary but I saw it fail without this
+			.waitForHash();
 		
 		// approve too little
 		S.out( "**approving .49");

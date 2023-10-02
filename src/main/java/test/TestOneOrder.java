@@ -38,7 +38,7 @@ public class TestOneOrder {
 				busd,
 				1,
 				stock,
-				100);
+				100).id();
 		
 		while(true) {
 			JsonObject obj = Transactions.getTransaction(id);

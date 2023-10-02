@@ -7,13 +7,13 @@ public class RetVal {
 		m_id = id;
 	}
 	
-	String id() {
+	public String id() {
 		return m_id;
 	}
 	
 	/** This blocks for up to 63 seconds */
 	public String waitForHash() throws Exception {
-		return Fireblocks.waitForHash(m_id, 60, 1000);
+		return Fireblocks.waitForHash(m_id, 60, 2000);
 	}
 	
 	/** This blocks for up to 90 seconds */

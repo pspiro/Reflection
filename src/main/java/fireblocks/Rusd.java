@@ -65,7 +65,7 @@ public class Rusd extends Erc20 {
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD)
 	 *  and you must have enough base coin in the refWallet */
-	public String buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		return buyStock( 
 				userAddr,
 				this,
@@ -77,7 +77,7 @@ public class Rusd extends Erc20 {
 	
 	/** Buy with either RUSD or BUSD
 	 * @return id */
-	public String buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -100,7 +100,7 @@ public class Rusd extends Erc20 {
 	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
 	 *  and you must be approved (if buying with BUSD) */
-	public String sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
@@ -198,7 +198,7 @@ public class Rusd extends Erc20 {
 				"RUSD add admin");
 	}
 	
-	public String swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
+	public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr, 
@@ -222,7 +222,7 @@ public class Rusd extends Erc20 {
 	}
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
-	public String mint(String address, double amt, StockToken anyStockToken) throws Exception {
+	public RetVal mint(String address, double amt, StockToken anyStockToken) throws Exception {
 		return sellStockForRusd( address, amt, anyStockToken, 0);
 	}
 }

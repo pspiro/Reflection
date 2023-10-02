@@ -29,34 +29,34 @@ public class TestSmartToken extends MyTestCase {
 
 	public void testFailSetRusdAddress() throws Exception {
 		// set RUSD address -> fail due to owner-only
-		String id = st.setRusdAddress( Accounts.instance.getId("Admin1"), dead);
-		Fireblocks.waitForStatus(id, "FAILED");
+		st.setRusdAddress( Accounts.instance.getId("Admin1"), dead)
+			.waitForStatus("FAILED");
 
 		// should succeed 
-		id = m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1);
-		Fireblocks.waitForHash(id, 60, 2000);
+		m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1)
+				.waitForHash();
 
 		// set RUSD address -> success
-		id = st.setRusdAddress( Accounts.instance.getId("Owner"), TestOrder.dead);
-		Fireblocks.waitForHash(id, 60, 2000);
+		st.setRusdAddress( Accounts.instance.getId("Owner"), TestOrder.dead)
+				.waitForHash();
 
 		// should fail now that RUSD has been changed
-		id = m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1);
-		Fireblocks.waitForStatus(id, "FAILED");
+		m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1)
+				.waitForStatus("FAILED");
 
 		// set RUSD back to normal
-		id = st.setRusdAddress( Accounts.instance.getId("Owner"), m_config.rusdAddr() );
-		Fireblocks.waitForHash(id, 60, 2000);
+		st.setRusdAddress( Accounts.instance.getId("Owner"), m_config.rusdAddr() )
+				.waitForHash();
 	}
 	
 	public void testTokenMint() throws Exception {
 		// fail, only-RUSD
-		String id = st.mint(Accounts.instance.getId("Admin1"), dead, 1); 
-		Fireblocks.waitForStatus(id, "FAILED");
+		st.mint(Accounts.instance.getId("Admin1"), dead, 1)
+				.waitForStatus("FAILED");
 
 		// fail, only-RUSD
-		id = st.mint(Accounts.instance.getId("Owner"), dead, 1); 
-		Fireblocks.waitForStatus(id, "FAILED");
+		st.mint(Accounts.instance.getId("Owner"), dead, 1) 
+				.waitForStatus("FAILED");
 	}
 
 	public void testTokenBurn() { // onlyRusdAddress {

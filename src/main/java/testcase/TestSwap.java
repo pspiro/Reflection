@@ -68,8 +68,8 @@ public class TestSwap extends MyTestCase {
 		);
 		
 		rusd.buyStockWithRusd(wallet, 0, tokenA, 25);
-		String id = rusd.swap(wallet, tokenA, tokenB, 20, 10);
-		Fireblocks.waitForHash(id, 60, 2000);
+		rusd.swap(wallet, tokenA, tokenB, 20, 10)
+			.waitForHash();
 		S.out( "A pos: %s  B pos: %s", tokenA.getPosition(wallet), tokenB.getPosition(wallet) );
 
 		//Test.run(config, busd, rusd);
@@ -94,9 +94,8 @@ public class TestSwap extends MyTestCase {
 		StockToken tokenB = new StockToken("0x45a8982f82a70723cbe830af3a66eaef7b885a57"); 
 		
 		//rusd.buyStockWithRusd(wallet, 0, tokenA, 25);
-		String id = rusd.swap(wallet, tokenA, tokenB, 20, 10);
-		String hash = Fireblocks.waitForHash(id, 60, 2000);
-		S.out( hash);
+		rusd.swap(wallet, tokenA, tokenB, 20, 10)
+			.waitForHash();
 		
 		//Test.run(config, busd, rusd);
 //		RetVal ret = m_config.rusd().swap( 
