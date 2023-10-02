@@ -17,15 +17,18 @@ public class Erc20 {
 	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;
 										  // for stock tokens, this might not be enough
 	static final String approveKeccak = "095ea7b3";
+	static final String mintKeccak = "40c10f19";
 	static final String totalSupplyAbi = Util.fmtJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	protected String m_address;
 	protected int m_decimals;
+	private String m_name;
 	
-	Erc20( String address, int decimals) throws Exception {
-		Util.reqValidAddress(address);
-		this.m_address = address;
-		this.m_decimals = decimals;
+	Erc20( String address, int decimals, String name) throws Exception {
+		Util.require( S.isNull(address) || Util.isValidAddress(address), "Invalid Erc20 address");
+		m_address = address;
+		m_decimals = decimals;
+		m_name = name;
 	}
 	
 	public String address() {
@@ -35,6 +38,11 @@ public class Erc20 {
 	public int decimals() {
 		return m_decimals;
 	}
+	
+	public String getName() {
+		return m_name;
+	}
+	
 	
 	/** Approve some wallet to spend on behalf of another
 	 *  NOTE: you must wait for the response */
@@ -110,7 +118,7 @@ public class Erc20 {
 	 *  The parameters passed here are the passed to the constructor of the smart contract
 	 *  being deployed. The whole thing takes 30 seconds.
 	 *  @return the deployed contract address */
-	public static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
+	protected static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
 		S.out( "Deploying contract from %s", filename);
 		
 		// very strange, sometimes we get just the bytecode, sometimes we get a json object
@@ -129,7 +137,7 @@ public class Erc20 {
 		S.out( "  fireblocks id is %s", id);
 
 		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.waitForTransHash( id, 60, 1000);
+		String txHash = Fireblocks.waitForHash( id, 60, 1000);
 		S.out( "  blockchain transaction hash is %s", txHash);
 
 		S.out( "  waiting for deployed address");
@@ -152,5 +160,24 @@ public class Erc20 {
 			}
 		}
 		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		
+	}
+	
+	public String call(int fromAcct, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+		return Fireblocks.call(fromAcct, m_address, callData, paramTypes, params, note);
+	}
+
+	/** This can be called by anybody, the BUSD does not have an owner.
+	 *  For testing only; cannot be called in production */
+	public String mint(int fromAcct, String address, double amt) throws Exception {
+		S.out( "Minting %s %s for %s", amt, m_name, fromAcct);
+		
+		String[] paramTypes = { "address", "uint256" };
+		
+		Object[] params = { 
+				address, 
+				toBlockchain( amt) 
+		};
+		
+		return call( fromAcct, mintKeccak, paramTypes, params, "Stablecoin mint");
 	}
 }

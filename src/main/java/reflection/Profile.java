@@ -55,9 +55,9 @@ public class Profile extends JsonObject {
 
 		// validate fields
 		require( Util.isValidAddress(wallet()), RefCode.INVALID_USER_PROFILE, "The wallet '%s' is invalid", wallet() );
-		require( aadhaar().length() == 12, RefCode.INVALID_USER_PROFILE, "Aadhaar '%s' is invalid", aadhaar() ); 
-		require( pan().length() == 10, RefCode.INVALID_USER_PROFILE, "PAN '%s' is invalid", pan() );
-		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "Email '%s' is invalid", email() );		
+		require( aadhaar().length() == 12, RefCode.INVALID_USER_PROFILE, "The Aadhaar '%s' is invalid", aadhaar() ); 
+		require( pan().length() == 10, RefCode.INVALID_USER_PROFILE, "The PAN '%s' is invalid", pan() );
+		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email address '%s' is invalid", email() );		
 	}
 
 	public void checkKyc(boolean smallOrder) throws RefException {

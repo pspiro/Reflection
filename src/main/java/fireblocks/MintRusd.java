@@ -17,7 +17,7 @@ public class MintRusd {
 		
 		String id = config
 				.rusd()
-				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0);
+				.mint( wallet, amt, stocks.getAnyStockToken() );
 		Fireblocks.waitForStatus(id, "COMPLETED");
 		
 		

@@ -1,46 +1,18 @@
 package fireblocks;
 
-import reflection.Config;
 import tw.util.S;
 
 /** This class represents any non-RUSD stablecoin */ 
 public class Busd extends Erc20 {
-	static final String mintKeccak = "40c10f19";
 	
-	public static void main(String[] args) throws Exception {
-		//Accounts.instance.read();
-		
-		Config config = Config.readFrom("Dev-config");
-
-		Busd busd = config.busd();
-		busd.mint( 
-				"0xb95bf9C71e030FA3D8c0940456972885DB60843F",
-				//"0xd953DC148f3A1019132FBD75Ee515E3F786f6634",
-				300000);
-		
-	}
-
 	public Busd( String address, int decimals) throws Exception {
-		super( address, decimals);
-	}
-	
-	public String getName() {
-		return "USDC";
+		super( address, decimals, "BUSD");
 	}
 	
 	/** This can be called by anybody, the BUSD does not have an owner.
 	 *  For testing only; cannot be called in production */
-	public RetVal mint(String address, double amt) throws Exception {
-		S.out( "Minting %s %s for %s", amt, getName(), address);
-		
-		String[] paramTypes = { "address", "uint256" };
-		
-		Object[] params = { 
-				address, 
-				toBlockchain( amt) 
-		};
-		
-		return Fireblocks.call2( Accounts.instance.getId( "Owner"), m_address, mintKeccak, paramTypes, params, "Stablecoin mint");
+	public String mint(String address, double amt) throws Exception {
+		return super.mint( Accounts.instance.getId( "Owner"), address, amt);
 	}
 	
 	/** For testing only, as we cannot deploy the real stablecoin */

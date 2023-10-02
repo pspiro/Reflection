@@ -3,6 +3,7 @@ package testcase;
 import static fireblocks.Accounts.instance;
 
 import fireblocks.Busd;
+import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 import tw.util.S;
@@ -53,7 +54,7 @@ public class TestSwap extends MyTestCase {
 				1000000000); // $1B
 		
 		StockToken tokenA = StockToken.deploy( 
-				"c:/work/smart-contracts/build/contracts/stocktoken.json",						
+				"c:/work/smart-contracts/build/contracts/stocktoken.json",
 				"AAA",
 				"AAA",
 				rusd.address()
@@ -67,7 +68,8 @@ public class TestSwap extends MyTestCase {
 		);
 		
 		rusd.buyStockWithRusd(wallet, 0, tokenA, 25);
-		rusd.swap(wallet, tokenA, tokenB, 20, 10).waitForHash();
+		String id = rusd.swap(wallet, tokenA, tokenB, 20, 10);
+		Fireblocks.waitForHash(id, 60, 2000);
 		S.out( "A pos: %s  B pos: %s", tokenA.getPosition(wallet), tokenB.getPosition(wallet) );
 
 		//Test.run(config, busd, rusd);
@@ -92,7 +94,8 @@ public class TestSwap extends MyTestCase {
 		StockToken tokenB = new StockToken("0x45a8982f82a70723cbe830af3a66eaef7b885a57"); 
 		
 		//rusd.buyStockWithRusd(wallet, 0, tokenA, 25);
-		String hash = rusd.swap(wallet, tokenA, tokenB, 20, 10).waitForHash();
+		String id = rusd.swap(wallet, tokenA, tokenB, 20, 10);
+		String hash = Fireblocks.waitForHash(id, 60, 2000);
 		S.out( hash);
 		
 		//Test.run(config, busd, rusd);
