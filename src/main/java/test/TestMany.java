@@ -11,9 +11,8 @@ import reflection.Config;
 import tw.util.S;
 
 public class TestMany {
-	//public static final String base = "https://reflection.trading";
-	//public static final String base = "https://reflection.trading";
-	static String base = "http://localhost:8383";
+	static final String base = "https://reflection.trading";
+	//static String base = "http://localhost:8383";
 
 	//static Stocks stocks = new Stocks();
 	static JsonArray stocks;
@@ -29,7 +28,7 @@ public class TestMany {
 	int index = 0;
 	static int count = 5;
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Throwable {
 	//	seed();
 		
 		String data = MyAsyncClient.get( base + "/api/get-stocks-with-prices");
@@ -39,6 +38,7 @@ public class TestMany {
 			Wal wal = new Wal();
 			Util.execute( () -> wal.init(addr) );
 			if (count == 1) break;
+			S.sleep(50);
 		}
 	}
 

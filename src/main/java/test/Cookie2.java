@@ -12,7 +12,7 @@ import reflection.SiweUtil;
 import tw.util.S;
 
 public class Cookie2 {
-	String base = "http://localhost:8383";
+	String base;
 	private String m_addr;
 	private String m_cookie;
 	
