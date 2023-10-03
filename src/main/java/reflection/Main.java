@@ -478,6 +478,7 @@ public class Main implements ITradeReportHandler {
 
 		JsonObject log = Util.toJson(
 				"type", LogType.TRADE,
+				"uid", exec.orderRef(),
 				"data", obj);
 		
 		// insert trade into trades and log tables
