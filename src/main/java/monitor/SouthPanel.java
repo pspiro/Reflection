@@ -3,6 +3,7 @@ package monitor;
 import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -45,10 +46,8 @@ public class SouthPanel extends JPanel {
 			test( "https://reflection.trading/fbserver/ok", m_fbServer);
 			test( "https://reflection.trading/mdserver/ok", m_mdServer);
 			
-			Object map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
-			
-			HashMap<String,String> m = (HashMap<String,String>)map; // this is annoying, it shouldn't be necessary
-			m_aapl.setText( String.format( "%s : %s", m.get("bid"), m.get("ask") ) ); 
+			Map<String, String> map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
+			m_aapl.setText( String.format( "%s : %s", map.get("bid"), map.get("ask") ) ); 
 			
 		}
 		catch( Exception e) {

@@ -4,7 +4,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.StockToken;
-import tw.util.S;
 
 /** Represents the static stock as downloaded from the google sheets
  * 

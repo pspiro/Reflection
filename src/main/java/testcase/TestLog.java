@@ -1,7 +1,6 @@
 package testcase;
 
 import org.json.simple.JsonObject;
-import org.postgresql.util.PGobject;
 
 import test.MyTimer;
 import util.LogType;

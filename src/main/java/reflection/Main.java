@@ -441,12 +441,12 @@ public class Main implements ITradeReportHandler {
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
 		S.out( "%sLOG %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
-		JsonObject log = Util.toJson(
-				"type", type,
-				"uid", uid,
-				"wallet_public_key", wallet,
-				"data", json);
-		queueSql( conn -> conn.insertJson( "log", log) );
+//		JsonObject log = Util.toJson(
+//				"type", type,
+//				"uid", uid,
+//				"wallet_public_key", wallet,
+//				"data", json);
+//		queueSql( conn -> conn.insertJson( "log", log) );
 	}
 
 	static class Pair {

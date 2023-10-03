@@ -22,6 +22,10 @@ public class RedemptionPanel extends QueryPanel {
 		return new RedemptionModel(allNames, sql);
 	}
 	
+	@Override public void adjust(JsonObject obj) {
+		obj.update( "created_at", val -> Util.left( val.toString(), 19) );
+	}
+
 	class RedemptionModel extends QueryModel {
 		RedemptionModel(String allNames, String sql) {
 			super(allNames, sql);
@@ -77,9 +81,6 @@ public class RedemptionPanel extends QueryPanel {
 			}
 		}
 
-		@Override public void adjust(JsonObject obj) {
-			obj.update( "created_at", val -> Util.left( val.toString(), 19) );
-		}
 	}
 	
 }

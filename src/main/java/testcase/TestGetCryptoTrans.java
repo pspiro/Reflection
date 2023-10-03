@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 
 import common.Util;
-import tw.util.S;
 
 public class TestGetCryptoTrans extends MyTestCase {
 	public void testGetAll() throws Exception {

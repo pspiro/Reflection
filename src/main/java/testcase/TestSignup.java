@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import tw.util.S;
 
 public class TestSignup extends MyTestCase {
 	public void testFailName() throws Exception {

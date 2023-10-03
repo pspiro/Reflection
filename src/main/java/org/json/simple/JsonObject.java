@@ -301,7 +301,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 
 	/** Add the pair if val is not null */
-	public void putIf(String key, String val) {
+	public void putIf(String key, Object val) {
 		if (val != null) {
 			put(key, val);
 		}
