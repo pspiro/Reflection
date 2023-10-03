@@ -119,7 +119,7 @@ public class JsonModel extends MyTableModel {
 	        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
 	        StringSelection strse1 = new StringSelection(obj.toString());
 	        clip.setContents(strse1, strse1);
-	        S.out( "Copyied %s to cliboard", obj);
+	        S.out( "Copied %s to cliboard", obj);
 		}
 	}
 	

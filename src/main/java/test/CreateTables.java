@@ -15,7 +15,7 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			new CreateTables().createTransactions();
+			new CreateTables().createCommTable();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -30,7 +30,6 @@ public class CreateTables  {
 		String sql = "create table commissions ("
 				+ "tradekey varchar(32),"
 				+ "comm_paid double precision"
-				+ "currency varchar(3)"
 				+ ")";
 		con.execute(sql);
 	}

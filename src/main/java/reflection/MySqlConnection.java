@@ -64,7 +64,7 @@ public class MySqlConnection implements AutoCloseable {
 	
 	public ResultSet query(String sql, Object... params) throws Exception {
 		Util.require( connection != null, "you must connect to the database");
-		String fullSql = String.format( sql, params);
+		String fullSql = params.length == 0 ? sql : String.format( sql, params);
 		return connection.createStatement().executeQuery(fullSql);
 	}
 	
@@ -99,6 +99,10 @@ public class MySqlConnection implements AutoCloseable {
 			vals[i++] = json.get(key);
 		}
 		insert(table, names, vals);
+	}
+	
+	public int execWithParams( String sql, Object...params) throws Exception {
+		return execute( String.format( sql, params) );
 	}
 	
 	/** Do not include the word 'where' in the where clause

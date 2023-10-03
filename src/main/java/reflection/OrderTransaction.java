@@ -33,7 +33,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 	private static PositionTracker positionTracker = new PositionTracker(); 
 
-	private Order m_order;
+	private final Order m_order = new Order();;
 	private double m_desiredQuantity;  // same as Order.m_totalQuantity, but this one is set first
 	private double m_filledShares;
 	private Stock m_stock;
@@ -126,7 +126,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		contract.conid( conid);
 		contract.exchange( session.toString().toUpperCase() );
 
-		m_order = new Order();
 		m_order.action( side);
 		m_order.totalQty( m_desiredQuantity);
 		m_order.lmtPrice( orderPrice);
@@ -134,6 +133,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		m_order.allOrNone(true);  // all or none, we don't want partial fills
 		m_order.transmit( true);
 		m_order.outsideRth( true);
+		m_order.orderRef(m_uid);
 		m_main.orderController().prepareOrder( m_order); // set order id
 		
 		// check TDS calculation
@@ -267,7 +267,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			// better is: if canceled w/ no shares filled, let it go to handle() below
 
 			if (status.isComplete() ) {
+				out( "  updating permid to %s", permId);
 				m_order.permId(permId);
+				Util.wrap( () -> m_main.queueSql( conn -> conn.execWithParams("update transactions set perm_id = '%s'", permId) ) );
 				onIBOrderCompleted( false, false);
 			}
 		});
@@ -425,7 +427,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		// by shrinkWrap() and the live order will be failed()
 	}
 	
-	/** Called when the stock order is filled or we receive an update from the Fireblocks server.
+	/** Called when we receive an update from the Fireblocks server.
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
@@ -474,7 +476,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		}
 		else {
 			m_progress = stat.pct();
-			olog( LogType.ORDER_STATUS_UPDATED, "status", stat, "pct", stat.pct() );
 		}
 	}
 	
@@ -584,12 +585,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 			// if no shares were filled, just remove the balances from the position tracker
 			if (m_filledShares == 0) {
-				out( "Undoing order from PositionTracker"); 
+				out( "Unwinding order from PositionTracker"); 
 				positionTracker.undo( conid, isBuy(), m_order.totalQty(), m_order.roundedQty() );
-
-				String body = String.format( "The blockchain transaction failed; no shares were filledd  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 
-						m_walletAddr, conid, m_order.totalQty(), m_order.roundedQty() ); 
-				alert( "FAILED - UNDOING ORDER", body);
 			}
 			
 			// if shares were filled, have to execute an opposing trade
@@ -598,24 +595,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 				contract.conid( conid);
 				contract.exchange( m_main.getExchange( contract.conid() ) );
 			
-				m_order.orderId(0);
+				m_main.orderController().prepareOrder(m_order);  // reset order id
 				m_order.permId(0);
-				m_order.orderType(OrderType.MKT);
+				m_order.orderType(OrderType.MKT); // this won't work off-hours
 				m_order.flipSide();
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
 						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_order.totalQty() ) ); 
 			
 				if (m_order.roundedQty() > 0 && !m_config.autoFill() ) {
-					String body = String.format( "The blockchain transaction failed and the order will be unwound  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 
-							m_walletAddr, conid, m_order.totalQty(), m_order.roundedQty() ); 
-					alert( "BC FAILED - UNWINDING ORDER", body);
-
 					m_main.orderController().placeOrModifyOrder(contract, m_order, null);
-				}
-				else {
-					String body = String.format( "The blockchain transaction failed; nothing to unwind  wallet=%s  conid=%s  desiredQty=%s  roundedQty=%s", 
-							m_walletAddr, conid, m_order.totalQty(), m_order.roundedQty() ); 
-					alert( "BC FAILED - NOTHING TO DO", body);
 				}
 			}
 		}

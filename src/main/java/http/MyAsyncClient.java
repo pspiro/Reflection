@@ -1,12 +1,9 @@
 package http;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
-
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.asynchttpclient.ListenableFuture;
 import org.asynchttpclient.Response;
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -22,6 +19,10 @@ public class MyAsyncClient {
 	
 	public static void getJson( String url, RetJson ret) {
 		get( url, str -> ret.run( JsonObject.parse(str) ) );  
+	}
+	
+	public static JsonArray getArray( String url) throws Exception, Throwable {
+		return JsonArray.parse( get(url) );
 	}
 	
 	/** Returns response body */

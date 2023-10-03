@@ -194,6 +194,7 @@ public class BackendTransaction extends MyTransaction {
 				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {
+				// with no key, we just want the four social media links
 				respond(m_main.type2Config() );
 			}
 		});
@@ -223,6 +224,8 @@ public class BackendTransaction extends MyTransaction {
 	private void fix(JsonObject obj) throws ParseException {
 		obj.put( "timestamp", Util.yToS.parse(obj.getString("created_at")).getTime() / 1000 );
 		obj.remove("created_at");
+		obj.remove("perm_id");
+		obj.remove("city");
 	}
 
 	private JsonArray trim(JsonArray json) {
@@ -424,6 +427,12 @@ public class BackendTransaction extends MyTransaction {
 			// don't validate wallet, we don't care
 			
 			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
+			respondOk();
+		});
+	}
+
+	public void handleLog() {
+		wrap( () -> {
 			respondOk();
 		});
 	}

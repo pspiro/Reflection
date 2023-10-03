@@ -6,6 +6,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.MintRusd;
 import http.MyAsyncClient;
 import reflection.Config;
 import tw.util.S;
@@ -15,8 +16,10 @@ public class TestMany {
 	//static String base = "http://localhost:8383";
 
 	//static Stocks stocks = new Stocks();
-	static JsonArray stocks;
+	static JsonArray stockPrices;
 	static Random r = new Random(System.currentTimeMillis());
+
+	//static Stocks stocks = new Stocks();
 	
 	static String[] addrs = {
 			"0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3",
@@ -29,10 +32,10 @@ public class TestMany {
 	static int count = 5;
 	
 	public static void main(String[] args) throws Throwable {
-	//	seed();
-		
+		//seed();
+
 		String data = MyAsyncClient.get( base + "/api/get-stocks-with-prices");
-		stocks = JsonArray.parse(data);
+		stockPrices = JsonArray.parse(data);
 
 		for (String addr : addrs) {
 			Wal wal = new Wal();
@@ -59,7 +62,7 @@ public class TestMany {
 		void sendOrder() {
 			// pick random stock, buy or sell, qty 1
 			
-			JsonObject stock = stocks.get( r.nextInt( stocks.size() ) );
+			JsonObject stock = stockPrices.get( r.nextInt( stockPrices.size() ) );
 
 			boolean buy = r.nextBoolean();
 			double price = buy ? stock.getDouble("ask") * 1.01 : stock.getDouble("bid") * .99;
@@ -82,13 +85,12 @@ public class TestMany {
 	
 	static void seed() throws Exception {
 		S.out( "Seeding");
-		Config config = Config.readFrom("Dt-config");
 
 		for (String wallet : addrs) {
-			//MintRusd.mint(wallet, r.nextInt(5000, 100000) );
+			MintRusd.mint( wallet, r.nextInt(5000, 100000) ); 
 			//config.busd().mint(addr, r.nextInt(5000, 100000) );  // if you use BUSD, you have to approve it first
 			S.out( "minted");
-			createUserProfile(wallet.toLowerCase(), config);
+			//createUserProfile(wallet.toLowerCase(), config);
 		}
 		S.out( "done");
 		System.exit(0);

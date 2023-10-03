@@ -123,7 +123,7 @@ public class Monitor {
 	}
 
 	private JComponent createTransPanel() {
-		String names = "created_at,wallet_public_key,uid,action,quantity,conid,symbol,price,status,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time,tradekey";
+		String names = "created_at,wallet_public_key,uid,action,quantity,conid,symbol,price,status,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
 		// String sql = "select * from transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
 		String sql = "select * from transactions $where order by created_at desc $limit";
 		return new QueryPanel( names, sql) {

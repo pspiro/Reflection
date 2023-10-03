@@ -142,6 +142,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+		server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
 		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
@@ -496,13 +497,11 @@ public class Main implements ITradeReportHandler {
 			jlog( LogType.COMMISSION, null, null, Util.toJson( 
 					"execId", rpt.execId(), 
 					"commission", rpt.commission(), 
-					"currency", rpt.currency(),
 					"tradeKey", tradeKey) );
 
 			Object[] vals = {
 					tradeKey,
 					rpt.commission(),
-					rpt.currency()
 			};
 
 			queueSql( conn -> conn.insert( "commissions", vals) );

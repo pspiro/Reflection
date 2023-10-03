@@ -30,7 +30,7 @@ public class Alerts {
 					subject,
 					body,
 					"plain");
-			S.out( "alerting*************");
+			S.out( "Sending alert %s - %s", subject, body);
 		}
 		catch( Exception e) {
 			e.printStackTrace();
