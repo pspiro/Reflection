@@ -476,11 +476,14 @@ public class Main implements ITradeReportHandler {
 		obj.put( "orderref", exec.orderRef() );
 		obj.put( "tradekey", tradeKey);
 
-		JsonObject log = Util.toJson(
+		JsonObject log = Util.toJson(  
 				"type", LogType.TRADE,
 				"uid", exec.orderRef(),
 				"data", obj);
 		
+		// since we don't call jlog, it's not written to the refapi.log file automatically
+		S.out( "%s LOG %s %s", exec.orderRef(), LogType.TRADE, obj); 
+
 		// insert trade into trades and log tables
 		queueSql( conn -> {
 			conn.insertJson( "log", log);

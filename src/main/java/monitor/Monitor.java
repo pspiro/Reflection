@@ -85,8 +85,8 @@ public class Monitor {
 		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
 		m_tabs.addTab( "Transactions", createTransPanel() );
-		m_tabs.addTab( "Log", createLogPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
+		m_tabs.addTab( "Log", createLogPanel() );
 		m_tabs.addTab( "Tokens", new TokensPanel() );
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
@@ -141,7 +141,7 @@ public class Monitor {
 
 	// add the commission here as well
 	private JComponent createTradesPanel() {
-		String names = "created_at,tradekey,order_id,perm_id,time,side,quantity,symbol,price,cumfill,conid,exchange,avgprice,orderref";
+		String names = "created_at,time,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
 		String sql = "select * from trades $where order by created_at desc $limit";
 		return new QueryPanel( names, sql);
 	}
