@@ -211,7 +211,7 @@ public class ApiController implements EWrapper {
 		
 		IOrderHandler handler = m_orderHandlers.get( id);
 		if (handler != null) {
-			handler.handle( errorCode, errorMsg);  // once from here @*&   (fixed)
+			handler.onRecOrderError( errorCode, errorMsg);  // once from here @*&   (fixed)
 		}
 
         IOrderCancelHandler orderCancelHandler = m_orderCancelHandlers.get( id);
@@ -934,8 +934,8 @@ public class ApiController implements EWrapper {
 	 *  Compare to ILiveOrderHandler. */
 	public interface IOrderHandler {
 		void orderState(OrderState orderState);
-		void orderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice);
-		void handle(int errorCode, String errorMsg);
+		void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice);
+		void onRecOrderError(int errorCode, String errorMsg);
 	}
 
     public interface IOrderCancelHandler {
@@ -1067,7 +1067,7 @@ public class ApiController implements EWrapper {
 	@Override public void orderStatus(int orderId, String status, Decimal filled, Decimal remaining, double avgFillPrice, int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 		IOrderHandler handler = m_orderHandlers.get( orderId);
 		if (handler != null) {
-			handler.orderStatus( OrderStatus.valueOf( status), filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice);
+			handler.onRecOrderStatus( OrderStatus.valueOf( status), filled, remaining, avgFillPrice, permId, parentId, lastFillPrice, clientId, whyHeld, mktCapPrice);
 		}
 
         IOrderCancelHandler orderCancelHandler = m_orderCancelHandlers.get( orderId);
