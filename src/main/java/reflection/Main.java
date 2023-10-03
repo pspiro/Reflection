@@ -482,7 +482,7 @@ public class Main implements ITradeReportHandler {
 				"data", obj);
 		
 		// since we don't call jlog, it's not written to the refapi.log file automatically
-		S.out( "%s LOG %s %s", exec.orderRef(), LogType.TRADE, obj); 
+		S.out( "%s LOG %s %s TDB", exec.orderRef(), LogType.TRADE, obj); //!!! 
 
 		// insert trade into trades and log tables
 		queueSql( conn -> {
@@ -642,7 +642,7 @@ public class Main implements ITradeReportHandler {
 				try {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
-					
+					S.out("processing TDB"); //!!!
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						// then process as many as possible
 						while (com != null) {
