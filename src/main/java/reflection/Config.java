@@ -227,7 +227,7 @@ public class Config extends ConfigBase {
 		require( maxBuyAmt > 0 && maxBuyAmt <= 100000, "maxBuyAmt");
 		require( maxSellAmt > 0 && maxSellAmt <= 100000, "maxSellAmt");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
-		require( orderTimeout >= 1000 && orderTimeout <= 20000, "orderTimeout");
+		require( orderTimeout >= 1000 && orderTimeout <= 60000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
