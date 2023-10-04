@@ -642,10 +642,11 @@ public class Main implements ITradeReportHandler {
 				try {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
-					S.out("processing TDB"); //!!!
+					S.out("entered TDB"); //!!!
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						// then process as many as possible
 						while (com != null) {
+							S.out("processed TDB");
 							com.run( conn);
 							com = next();
 						}
