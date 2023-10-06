@@ -473,24 +473,13 @@ public class Main implements ITradeReportHandler {
 		obj.put( "conid", contract.conid() );
 		obj.put( "exchange", exec.exchange() );
 		obj.put( "avgprice", exec.avgPrice() );
-		obj.put( "orderref", exec.orderRef() );
+		obj.put( "orderref", exec.orderRef() ); // this is the uid
 		obj.put( "tradekey", tradeKey);
 
-		JsonObject log = Util.toJson(  
-				"type", LogType.TRADE,
-				"uid", exec.orderRef(),
-				"data", obj);
-		
-		// since we don't call jlog, it's not written to the refapi.log file automatically
-		S.out( "%s LOG %s %s TDB", exec.orderRef(), LogType.TRADE, obj); //!!! 
-
 		// insert trade into trades and log tables
-		queueSql( conn -> {
-			conn.insertJson( "log", log);
-			conn.insertJson( "trades", obj);
-		});
+		queueSql( conn -> conn.insertJson( "trades", obj) );
+		jlog( LogType.TRADE, exec.orderRef(), null, obj);
 	}
-
 
 	/** Ignore this. */
 	@Override public void tradeReportEnd() {

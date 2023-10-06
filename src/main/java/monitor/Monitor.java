@@ -29,8 +29,8 @@ import tw.util.S;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	//static final String base = "https://reflection.trading";
-	static final String base = "http://localhost:8383";
+	static final String base = "https://reflection.trading";
+	//static final String base = "http://localhost:8383";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";

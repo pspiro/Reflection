@@ -11,7 +11,7 @@ public class RefException extends Exception {
 	public RefCode code() { return m_code; }
 
 	public RefException( RefCode code, String first, Object... params) {  // my text is the detail message
-		super( String.format( S.notNull( first), params) );
+		super( S.format( S.notNull( first), params) );  // by using S.format we can avoid some errors when the format string contains %
 		m_code = code;
 	}
 	

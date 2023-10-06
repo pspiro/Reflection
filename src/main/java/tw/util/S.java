@@ -140,9 +140,14 @@ public class S {
 		return hours < 10 ? "0" + String.valueOf( hours) : String.valueOf( hours);
 	}
 
-	/** Double vals get two decimal places.
-	 *  Integer and double get commas. */
+	/** Double vals get two decimal places and commas.
+	 *  Integer.MAX_VALUE -> <none>
+	 *  Can take null but never returns null */
 	public static String format(String string, Object... params) {
+		if (params.length == 0) {
+			return notNull(string);
+		}
+		
 		for (int i = 0; i < params.length; i++) {
 			if (params[i] instanceof Double) {
 				params[i] = fmt2( ((Double)params[i]).doubleValue() );
@@ -807,7 +812,7 @@ public class S {
 	}
 	
 	public static void main(String[] args) {
-		S.out( String.format( "%s", Math.round(.499999999999999) ) );
+		S.out( format( "%s %s", 1234.5323, 8383) );
 	}
 
 	
