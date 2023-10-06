@@ -190,7 +190,7 @@ public class S {
 
 	public static void out( Object str) {
 		System.out.println( String.format( "%s %3s %s", 
-				timeFmt.format( new Date() ), Thread.currentThread().getId(), str) );  
+				timeFmt.format( new Date() ), Thread.currentThread().getName(), str) );  
 	}
 
 	/** @deprecated */

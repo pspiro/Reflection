@@ -1,9 +1,11 @@
 package testcase;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyHttpClient;
+import reflection.Main;
 import reflection.Prices;
 import reflection.RefCode;
 import tw.util.S;
@@ -113,6 +115,16 @@ public class TestOrder extends MyTestCase {
 		S.out("sellTooHigh %s %s", code, text);
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
 		assertEquals( Prices.TOO_HIGH, text);
+	}
+	
+	public void testTransTableEntry() throws Exception {
+		JsonObject obj = createOrder( "BUY", 10, -1);
+		JsonObject map = postOrderToObj(obj);
+		assertEquals(400, cli.getResponseCode() );
+		S.sleep(Main.DB_PAUSE + 200); // wait for db insertion
+		S.out(map);
+		JsonArray ar = m_config.sqlQuery( sql -> sql.queryToJson( "select status from transactions order by created_at desc limit 1") );
+		assertEquals("DENIED", ar.get(0).getString("status"));
 	}
 	
 	// fill order buy order

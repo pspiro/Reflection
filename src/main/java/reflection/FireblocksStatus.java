@@ -1,7 +1,11 @@
 package reflection;
 
 enum FireblocksStatus {
-		STOCK_ORDER_FILLED(15), // Not a FB status
+		// these are NOT Fireblocks status codes
+		LIVE(5), // Live order, waiting for IB order to fill 
+		STOCK_ORDER_FILLED(15), // IB order filled
+		DENIED(100), // Order failed before IB order was placed
+		
 		SUBMITTED(30), // The transaction was submitted to the Fireblocks system and is being processed
 		QUEUED(45), // Transaction is queued. Pending for another transaction to be processed
 		PENDING_AUTHORIZATION(60), // The transaction is pending authorization by other users (as defined in the Transaction Authorization Policy)

@@ -143,7 +143,7 @@ public class ApiController implements EWrapper {
 		
 		reader.start();
 		
-		new Thread(() -> {
+		common.Util.execute( "API-P", () -> {
             while (client().isConnected()) {
                 signal.waitForSignal();
                 try {
@@ -152,7 +152,7 @@ public class ApiController implements EWrapper {
                     error(e);
                 }
             }
-        }).start();
+        });
 	}
 
 	public boolean connect( String host, int port, int clientId, String connectionOpts ) {

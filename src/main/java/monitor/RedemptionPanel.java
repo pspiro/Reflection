@@ -14,12 +14,13 @@ import tw.util.S;
 public class RedemptionPanel extends QueryPanel {
 
 	RedemptionPanel() {
-		super( "created_at,id,wallet_public_key,stablecoin,amount,fulfilled,REDEEM NOW",
+		super( "redemptions",
+			   "created_at,id,wallet_public_key,stablecoin,amount,fulfilled,REDEEM NOW",
 			   "select * from redemptions order by created_at desc $limit");
 	}
 	
-	@Override protected JsonModel createModel(String allNames, String sql) {
-		return new RedemptionModel(allNames, sql);
+	@Override protected JsonModel createModel(String table, String allNames, String sql) {
+		return new RedemptionModel(table, allNames, sql);
 	}
 	
 	@Override public void adjust(JsonObject obj) {
@@ -27,8 +28,8 @@ public class RedemptionPanel extends QueryPanel {
 	}
 
 	class RedemptionModel extends QueryModel {
-		RedemptionModel(String allNames, String sql) {
-			super(allNames, sql);
+		RedemptionModel(String table, String allNames, String sql) {
+			super(table, allNames, sql);
 		}
 	
 		public void onLeftClick(MouseEvent e, int row, int col) {

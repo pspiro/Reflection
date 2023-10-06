@@ -22,7 +22,7 @@ public class QueryPanel extends JPanel implements RefPanel {
 	final JTextField where = new JTextField(20);
 	final LinkedList<String> m_list = new LinkedList<>();
 	
-	QueryPanel(String allNames, String sql) {
+	QueryPanel(String table, String allNames, String sql) {
 		super( new BorderLayout() );
 		
 		where.addActionListener( e -> {
@@ -52,14 +52,14 @@ public class QueryPanel extends JPanel implements RefPanel {
 		
 		where.addActionListener( e -> Monitor.m.refresh() );
 		
-		m_model = createModel(allNames, sql);
+		m_model = createModel(table, allNames, sql);
 		
 		add( topPanel, BorderLayout.NORTH);
 		add( m_model.createTable() );
 	}
 	
-	protected JsonModel createModel(String allNames, String sql) {
-		return new QueryModel(allNames, sql);
+	protected JsonModel createModel(String table, String allNames, String sql) {
+		return new QueryModel(table, allNames, sql);
 	}
 
 	public void refresh() throws Exception {
@@ -67,10 +67,12 @@ public class QueryPanel extends JPanel implements RefPanel {
 	}
 	
 	class QueryModel extends JsonModel {
+		final String m_table;
 		final String m_sql;
 
-		QueryModel( String allNames, String sql) {
+		QueryModel( String table, String allNames, String sql) {
 			super( allNames);
+			m_table = table;
 			m_sql = sql;
 		}
 		
@@ -94,6 +96,17 @@ public class QueryPanel extends JPanel implements RefPanel {
 
 		public void adjust(JsonObject obj) {
 		}
+
+		/** Delete the row based on the first column which must be type string */ 
+		@Override void delete(int row, int col) {
+			try {
+				Monitor.m_config.sqlCommand( sql -> 
+					sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
+				fireTableDataChanged();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} 
+		}
 	}
 
 	@Override public void activated() {
@@ -109,4 +122,5 @@ public class QueryPanel extends JPanel implements RefPanel {
 
 	@Override public void closed() {
 	}
+
 }

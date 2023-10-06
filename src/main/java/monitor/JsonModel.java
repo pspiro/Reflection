@@ -3,10 +3,13 @@ package monitor;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.table.TableCellRenderer;
 
 import org.json.simple.JsonArray;
@@ -111,16 +114,32 @@ public class JsonModel extends MyTableModel {
 	JsonObject getRow(int i) {
 		return m_ar.get(i);
 	}
+
+	public static JMenuItem menuItem(String text, ActionListener listener) {
+		JMenuItem it = new JMenuItem(text);
+		it.addActionListener(listener);
+		return it;
+	}
 	
 	@Override public void onRightClick(MouseEvent e, int row, int col) {
+		JPopupMenu m = new JPopupMenu();
+		m.add( menuItem("Copy", ev -> copy(row, col) ) );
+		m.add( menuItem("Delete", ev -> delete(row, col) ) );
+		m.show( e.getComponent(), 0, 0);
+	}
+	
+	private void copy(int row, int col) {
 		Object obj = getValueAt(row, col);
-		
 		if (obj != null) {
 	        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
 	        StringSelection strse1 = new StringSelection(obj.toString());
 	        clip.setContents(strse1, strse1);
 	        S.out( "Copied %s to cliboard", obj);
 		}
+	}
+	
+	/** Delete the row based on the first column which must be type string */ 
+	void delete(int row, int col) {
 	}
 	
 }

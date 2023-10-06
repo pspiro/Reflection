@@ -3,6 +3,7 @@ package fireblocks;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import fireblocks.FbActiveServer.Trans;
 import reflection.Config;
 import tw.util.S;
 
@@ -11,9 +12,11 @@ import tw.util.S;
 public class Transactions {
 
 	public static void main(String[] args) throws Exception {
-		Config config = new Config();
-		config.readFromSpreadsheet("Dt-config");
-		displayLastTransactions(5);
+		Config.readFrom("Dt-config");
+		//displayLastTransactions(5);
+
+		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
+		Transactions.getTransactions().display();
 	}
 
 	static void displayLastTransactions(int n) throws Exception {
@@ -24,6 +27,7 @@ public class Transactions {
 		}
 	}
 
+	// this is broken; check the docs, maybe it's outdated
 	public static JsonArray getTransactions() throws Exception {
 		return Fireblocks.fetchArray( "/v1/transactions/?");
 	}

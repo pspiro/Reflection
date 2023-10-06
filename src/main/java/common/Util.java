@@ -239,6 +239,12 @@ public class Util {
 	
 	/** Execute the runnable in a new thread aka invokeLater.
 	 *  Consider using ThreadQueue if you want all to execute in the same thread */
+	public static void execute( String name, Runnable runnable) {
+		new Thread(runnable, name).start();
+	}
+	
+	/** Execute the runnable in a new thread aka invokeLater.
+	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	public static void execute( Runnable runnable) {
 		new Thread(runnable).start();
 	}

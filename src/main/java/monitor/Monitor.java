@@ -29,8 +29,8 @@ import tw.util.S;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	//static final String base = "https://reflection.trading";
-	static final String base = "http://localhost:8383";
+	static final String base = "https://reflection.trading";
+	//static final String base = "http://localhost:8383";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -123,10 +123,10 @@ public class Monitor {
 	}
 
 	private JComponent createTransPanel() {
-		String names = "created_at,wallet_public_key,uid,action,quantity,conid,symbol,price,status,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
+		String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
 		// String sql = "select * from transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
 		String sql = "select * from transactions $where order by created_at desc $limit";
-		return new QueryPanel( names, sql) {
+		return new QueryPanel( "transactions", names, sql) {
 			public void adjust(JsonObject obj) {
 				obj.putIf( "symbol", stocks.getStock( obj.getInt("conid") ) );
 			}
@@ -136,26 +136,26 @@ public class Monitor {
 	private JComponent createLogPanel() {
 		String names = "created_at,wallet_public_key,uid,type,data"; 
 		String sql = "select * from log $where order by created_at desc $limit";
-		return new QueryPanel( names, sql);
+		return new QueryPanel( "log", names, sql);
 	}
 
 	// add the commission here as well
 	private JComponent createTradesPanel() {
 		String names = "created_at,time,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
 		String sql = "select * from trades $where order by created_at desc $limit";
-		return new QueryPanel( names, sql);
+		return new QueryPanel( "trades", names, sql);
 	}
 
 	static QueryPanel createUsersPanel() {
 		String names = "created_at,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users $where";
-		return new QueryPanel( names, sql);
+		return new QueryPanel( "users", names, sql);
 	}
 
 	static QueryPanel createSignupPanel() {
 		String names = "created_at,name,email,phone,wallet_public_key";
 		String sql = "select * from signup $where";
-		return new QueryPanel( names, sql);
+		return new QueryPanel( "signup", names, sql);
 	}
 
 	// move to Util?

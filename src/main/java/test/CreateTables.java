@@ -29,7 +29,7 @@ public class CreateTables  {
 		
 		String sql = "create table commissions ("
 				+ "tradekey varchar(32),"
-				+ "comm_paid double precision"
+				+ "comm_paid double precision"  // ties in with tradekey from trade
 				+ ")";
 		con.execute(sql);
 	}

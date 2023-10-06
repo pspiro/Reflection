@@ -42,6 +42,7 @@ public class EReader extends Thread {
      * @param signal A callback that informs that there are messages in msg queue.
      */
     public EReader(EClientSocket parent, EJavaSignal signal, boolean startupReader) {
+    	setName( "API-R");
     	m_clientSocket = parent;
         m_signal = signal;
         m_startupReader = startupReader;

@@ -202,14 +202,20 @@ public abstract class MyTransaction {
 					elog( LogType.EXCEPTION, e);
 				}
 			}
+			postWrap();
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			elog( LogType.EXCEPTION, e);
 			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
+			postWrap();
 		}
 	}
 	
+	/** Overridden in subclass */
+	protected void postWrap() {
+	}
+
 	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas

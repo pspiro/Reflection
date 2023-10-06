@@ -350,7 +350,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		
 		if (fireblocks() ) {
 			// execute this in a new thread because, the theory is, it can take a while
-			Util.execute( () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
+			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
 		}
 		else {
 			onFireblocksSuccess();
@@ -532,6 +532,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
+			obj.put("status", FireblocksStatus.LIVE); // this is now a live order and we are waiting for IB and/or Blockchain
 			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
@@ -698,6 +699,17 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 	@Override public void orderState(OrderState orderState) {
 		// ignore this, we don't care
+	}
+	
+	/** If we come here, it mean the order failed before it went to the LIVE state,
+	 *  so no entry was made in the transactions table. Insert a placeholder into
+	 *  the transactions table so we have a record of the order. */
+	@Override protected void postWrap() {
+		m_main.queueSql( conn -> conn.insertJson("transactions", 
+				Util.toJson( 
+						"uid", m_uid,
+						"wallet_public_key", m_walletAddr,
+						"status", FireblocksStatus.DENIED) ) );
 	}
 }
 // look at all the catch blocks, save message or stack trace

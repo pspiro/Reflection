@@ -161,6 +161,18 @@ class EDecoder implements ObjectInput {
     }
     
     public int processMsg(EMessage msg) throws IOException {
+        long time = System.currentTimeMillis();
+    	try {
+    		return processMsg_(msg);
+    	}
+    	finally {
+    		if (System.currentTimeMillis() - time > 100) {
+    			S.out( "  TDB API msg took %s ms to process", System.currentTimeMillis() - time);
+    		}
+    	}
+    }
+    
+    private int processMsg_(EMessage msg) throws IOException {
     	if (!readMessageToInternalBuf(msg.getStream())) {
     		S.out( "Error: did not read msg to internal buffer");
     		return 0;

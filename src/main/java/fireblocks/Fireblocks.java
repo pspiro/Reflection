@@ -35,7 +35,7 @@ public class Fireblocks {
 	
 	private static String s_apiKey;
 	private static String s_privateKey;
-	public static String platformBase;
+	public static String platformBase;   // base currency of the platform, e.g. ETHER or MATIC
 	
 	private String operation;
 	private String endpoint;
@@ -304,13 +304,45 @@ public class Fireblocks {
 		fb.operation( "POST");
 		fb.body( body);
 		
-		JsonObject obj = fb.transactToObj();
+		return fb.transactToRetVal();
+	}
+
+	public static RetVal transfer(int fromAcct, String dest, String token, double amount, String note) throws Exception {
+		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
+		
+		String bodyTemplate = 
+				"{" + 
+				"'operation': 'TRANSFER'," + 
+				"'amount': '%s'," + 
+				"'assetId': '%s'," + 
+				"'source': {'type': 'VAULT_ACCOUNT', 'id': '%s'}," + 
+				"'destination': {" + 
+				"   'type': 'ONE_TIME_ADDRESS'," + 
+				"   'oneTimeAddress': {'address': '%s'}" + 
+				"}," + 
+				"'note': '%s'" + 
+				"}";
+
+		String body = toJson( 
+				String.format( bodyTemplate, amount, token, fromAcct, dest, note) );
+		
+		S.out( body);
+
+		Fireblocks fb = new Fireblocks();
+		fb.endpoint( "/v1/transactions");
+		fb.operation( "POST");
+		fb.body( body);
+		return fb.transactToRetVal();
+	}
+	
+	private RetVal transactToRetVal() throws Exception {
+		JsonObject obj = transactToObj();
 		String str = obj.getString("message");
-		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.call  msg=%s  code=%s",
+		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.transact  msg=%s  code=%s",
 				str, obj.getString("code") );
 		return new RetVal( obj.getString("id") );
 	}
-
+	
 	public static String toJson( String format, Object... params) {
 		return String.format( format, params).replaceAll( "\\'", "\"").replaceAll( " ", "");
 	}

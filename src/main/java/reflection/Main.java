@@ -46,6 +46,7 @@ public class Main implements ITradeReportHandler {
 	enum Status {
 		Connected, Disconnected
 	};
+	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 	
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
@@ -96,7 +97,7 @@ public class Main implements ITradeReportHandler {
 		timer.done();
 		
 		// must come after reading config and before writing to log
-		Util.execute( () -> m_dbQueue.runDbQueue() );
+		Util.execute( "DBQ", () -> m_dbQueue.runDbQueue() );
 		
 		// create log entry
 		jlog( LogType.RESTART, null, null, Util.toJson( 
@@ -122,7 +123,7 @@ public class Main implements ITradeReportHandler {
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// check that Fireblocks server is running
-		checkFbActiveServer();
+		/////////////checkFbActiveServer();
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
@@ -642,13 +643,18 @@ public class Main implements ITradeReportHandler {
 				try {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
-					S.out("processing TDB"); //!!!
+					int count = 0;
+					S.out("TDB"); //!!!
+					//S.sleep(DB_PAUSE);  // you could sleep a little to try to batch more entries, but connecting takes 200ms anyway
+					
+					// then connect and process as many as possible
 					try ( MySqlConnection conn = m_config.createConnection() ) {
-						// then process as many as possible
 						while (com != null) {
 							com.run( conn);
+							count++;
 							com = next();
 						}
+						S.out( "  TBD DbQueue batched %s queries", count);
 					}
 				}
 				catch( Exception e) {

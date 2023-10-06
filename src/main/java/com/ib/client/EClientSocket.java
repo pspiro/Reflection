@@ -77,12 +77,6 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
     	}       
 	}
 
-	public synchronized void eConnect(Socket socket, int clientId) throws IOException {
-	    m_clientId = clientId;
-	    m_redirectCount = 0;
-	    eConnect(socket);
-	}
-
 	public synchronized boolean eConnect( String host, int port, int clientId, boolean extraAuth) {
 		if( isConnected() ) {
 			S.out( "EClientSocket.connect() already connected");
