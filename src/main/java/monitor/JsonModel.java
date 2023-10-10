@@ -141,5 +141,4 @@ public class JsonModel extends MyTableModel {
 	/** Delete the row based on the first column which must be type string */ 
 	void delete(int row, int col) {
 	}
-	
 }

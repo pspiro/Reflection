@@ -2,18 +2,16 @@ package monitor;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import fireblocks.Fireblocks;
-import monitor.Monitor.RefPanel;
 import positions.Wallet;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
-public class MiscPanel extends JPanel implements RefPanel {
+public class CryptoPanel extends JsonPanel {
 	private JTextField m_usdc = new JTextField(10);
 	private JTextField m_rusd = new JTextField(10);
 	private JTextField m_usdc2 = new JTextField(10);
@@ -22,7 +20,7 @@ public class MiscPanel extends JPanel implements RefPanel {
 	private JTextField m_admin2 = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 
-	MiscPanel() {
+	CryptoPanel() {
 		super( new BorderLayout() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();

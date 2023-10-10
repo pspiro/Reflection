@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture;
 import test.MyTimer;
 import tw.util.S;
 
-/** This test shows that HttpClient is much faster than AsyncClient */
 public class MyNewClient {
 	public static void main(String[] args) throws Throwable {
 		MyTimer t = new MyTimer();

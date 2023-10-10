@@ -15,22 +15,22 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.MyAsyncClient;
 import reflection.Config;
-import reflection.Stock;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
+import tw.util.VerticalPanel;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String base = "https://reflection.trading";
-	//static final String base = "http://localhost:8383";
+	//static final String base = "https://reflection.trading";
+	static final String base = "http://localhost:8383";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -79,8 +79,9 @@ public class Monitor {
 		
 		num.setText("40");
 		
-		m_tabs.addTab( "Home", new HomePanel() );
-		m_tabs.addTab( "Misc", new MiscPanel() );
+		m_tabs.addTab( "Home", new JsonPanel() );
+		m_tabs.addTab( "Status", new StatusPanel() );
+		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
@@ -112,16 +113,12 @@ public class Monitor {
 	/** called when Refresh button is clicked */
 	void refresh() {
 		try {
-			((RefPanel)m_tabs.current()).refresh();
+			((JsonPanel)m_tabs.current()).refresh();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	interface RefPanel extends INewTab {
-		void refresh() throws Exception; // called when Refresh button is clicked
-	}
-
 	private JComponent createTransPanel() {
 		String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
 		// String sql = "select * from transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
@@ -190,13 +187,34 @@ public class Monitor {
 			});
 	}
 	
-	static class HomePanel extends JPanel implements RefPanel {
-		@Override public void activated() {
+	static class StatusPanel extends JsonPanel {
+		JTextField f1 = new JTextField(5);
+		JTextField f2 = new JTextField(5);
+		JTextField f3 = new JTextField(5);
+
+		StatusPanel() {
+			VerticalPanel p = new VerticalPanel();
+			p.add( "RefAPI", f1);
+			p.add( "TWS", f2);
+			p.add( "IB", f3);
+			
+//			VerticalPanel a = new VerticalPanel();
+//			a.add(p);
+			
+			add( p);
 		}
-		@Override public void closed() {
-		}
+		
 		@Override public void refresh() throws Exception {
+			long now = System.currentTimeMillis();
+
+			MyAsyncClient.getJson( Monitor.base + "/api/status", json -> {
+				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+				f2.setText( json.getString("TWS") );
+				f3.setText( json.getString("IB") );
+			});
 		}
 	}
 	
 }
+
+

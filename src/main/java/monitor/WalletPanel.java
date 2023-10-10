@@ -3,7 +3,6 @@ package monitor;
 import java.awt.BorderLayout;
 
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
@@ -11,13 +10,12 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.Monitor.RefPanel;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
-public class WalletPanel extends JPanel implements RefPanel {
+public class WalletPanel extends JsonPanel {
 	private static final double minBalance = .0001;
 	private final JTextField m_wallet = new JTextField(32); 
 	private final JLabel m_rusd = new JLabel(); 

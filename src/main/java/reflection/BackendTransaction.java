@@ -437,4 +437,13 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleStatus() {
+		wrap( () -> {
+			respond( Util.toJson( 
+					code, RefCode.OK,
+					"TWS", m_main.orderConnMgr().isConnected(),
+					"IB", m_main.orderConnMgr().ibConnection() ) );
+		});
+	}
+
 }

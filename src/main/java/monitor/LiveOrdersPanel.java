@@ -2,14 +2,11 @@ package monitor;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JPanel;
-
-import monitor.Monitor.RefPanel;
 import tw.util.MyTable;
 import tw.util.S;
 
 
-public class LiveOrdersPanel extends JPanel implements RefPanel {
+public class LiveOrdersPanel extends JsonPanel {
 	static final String endpoint = "/api/all-live-orders";
 
 	final JsonModel m_model;

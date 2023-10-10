@@ -37,7 +37,8 @@ public class SouthPanel extends JPanel {
 		add( new JLabel("AAPL:"));
 		add( m_aapl);
 		add( Box.createHorizontalStrut(10));
-		//--------Util.executeEvery(100, 10000, () -> update() ); 
+		
+		Util.executeEvery(100, 10000, () -> update() ); 
 	}
 
 	private void update() {

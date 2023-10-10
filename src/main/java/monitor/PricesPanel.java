@@ -3,17 +3,14 @@ package monitor;
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 
-import javax.swing.JPanel;
-
 import org.asynchttpclient.AsyncHttpClient;
 import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.Monitor.RefPanel;
 import tw.util.S;
 
-public class PricesPanel extends JPanel implements RefPanel {
+public class PricesPanel extends JsonPanel {
 	final Model m_model = new Model();
 	final static String AlphaKey = "EKD9A4ZUSQPEPFXK";  // alphavantage API key
 	final static String AlphaUrl = "https://www.alphavantage.co";

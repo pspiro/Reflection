@@ -3,17 +3,15 @@ package monitor;
 import java.awt.BorderLayout;
 import java.util.HashMap;
 
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.StockToken;
-import monitor.Monitor.RefPanel;
 import tw.util.S;
 
-public class TokensPanel extends JPanel implements RefPanel {
+public class TokensPanel extends JsonPanel {
 	JsonModel m_model = new JsonModel("symbol,conid,smartcontractid,tokens,position,dif,isHot"); // you could add 
 
 	HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
