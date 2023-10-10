@@ -188,9 +188,9 @@ public class Monitor {
 	}
 	
 	static class StatusPanel extends JsonPanel {
-		JTextField f1 = new JTextField(5);
-		JTextField f2 = new JTextField(5);
-		JTextField f3 = new JTextField(5);
+		JTextField f1 = new JTextField(7);
+		JTextField f2 = new JTextField(7);
+		JTextField f3 = new JTextField(7);
 
 		StatusPanel() {
 			VerticalPanel p = new VerticalPanel();
@@ -209,8 +209,8 @@ public class Monitor {
 
 			MyAsyncClient.getJson( Monitor.base + "/api/status", json -> {
 				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-				f2.setText( json.getString("TWS") );
-				f3.setText( json.getString("IB") );
+				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
+				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
 			});
 		}
 	}
