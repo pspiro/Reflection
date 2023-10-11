@@ -593,7 +593,7 @@ public class Order {
     }
 
     @Override
-    public boolean equals(Object p_other) {
+    public boolean equals(Object p_other) {  // delete method in 2024
     	if (true) throw new RuntimeException("Why are we here?");
     	
         if (this == p_other) {

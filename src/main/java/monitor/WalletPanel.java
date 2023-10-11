@@ -10,6 +10,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.MyClient;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.S;
@@ -52,7 +53,7 @@ public class WalletPanel extends JsonPanel {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 		
-		Monitor.queryObj("/api/mywallet/" + m_wallet.getText(), obj -> {
+		MyClient.getJson(Monitor.base + "/api/mywallet/" + m_wallet.getText(), obj -> {
 			JsonArray ar = obj.getArray("tokens");
 			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
 

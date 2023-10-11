@@ -7,7 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.MintRusd;
-import http.MyAsyncClient;
+import http.MyClient;
 import reflection.Config;
 import tw.util.S;
 
@@ -34,7 +34,7 @@ public class TestMany {
 	public static void main(String[] args) throws Throwable {
 		//seed();
 
-		String data = MyAsyncClient.get( base + "/api/get-stocks-with-prices");
+		String data = MyClient.getString( base + "/api/get-stocks-with-prices");
 		stockPrices = JsonArray.parse(data);
 
 		for (String addr : addrs) {
@@ -77,7 +77,7 @@ public class TestMany {
 			obj.put( "wallet_public_key", cook.address() );
 			obj.put( "cookie", cook.cookie() );
 			
-			MyAsyncClient.postToJson( base + "/api/order", obj.toString(), json -> S.out( json) );
+			MyClient.postToJson( base + "/api/order", obj.toString(), json -> S.out( json) );
 			S.out( "Submitted " + obj);
 		}
 		

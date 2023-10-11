@@ -1,16 +1,18 @@
 package fireblocks;
 
 import java.math.BigInteger;
+import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
+import java.net.http.HttpResponse;
 import java.util.Random;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
 import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ObjectHolder;
+import http.MyClient;
 import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
@@ -41,7 +43,6 @@ public class Fireblocks {
 	private String endpoint;
 	private String body = "";  // optional
 	
-	public void operation(String v) { operation = v;	}
 	public void body(String v) { body = v;	}
 	public void endpoint(String v) { endpoint = v;	}
 	
@@ -107,32 +108,24 @@ public class Fireblocks {
 				Encrypt.encode( header), Encrypt.encode( payload), signed)
 				.replace( "/", "_").replace( "+", "-");
 		
-		ObjectHolder<Response> holder = new ObjectHolder<>();
+		String url = base + endpoint;
+		MyClient client = S.isNotNull(body) 
+				? MyClient.create( url, body)
+				: MyClient.create( url);
+		HttpResponse<String> response = client
+			.header("X-API-Key", s_apiKey)
+			//.header("Connection", "close") works with AsyncHttpClient but not HttpClient
+			.header("Content-type", "application/json")
+			.header("Accept", "application/json, text/plain, */*")
+			.header("Authorization", "Bearer " + jwt)
+			.query();
 		
-		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
-		client.prepare(operation, base + endpoint)
-			.setHeader("X-API-Key", s_apiKey)
-			.setHeader("Connection", "close")
-			.setHeader("Content-type", "application/json")
-			.setHeader("Accept", "application/json, text/plain, */*")
-			.setHeader("Authorization", "Bearer " + jwt)
-			.setBody(body)
-			.execute()
-			.toCompletableFuture()
-			.thenAccept( obj -> {
-				try {
-					client.close();
-		  			holder.val = obj;
-				}
-				catch( Exception e) {
-					e.printStackTrace();
-				}
-			}).join();
+		Util.require( 
+				response.statusCode() == 200, 
+				"Error status code %s - %s", 
+				response.statusCode(), response.body() );
 		
-		Util.require( holder.val.getStatusCode() == 200, "Error status code %s - %s", 
-				holder.val.getStatusCode(), holder.val.getResponseBody() );
-		
-		return holder.val.getResponseBody();
+		return response.body();
 	}
 	
 	static void process(Response resp) throws Exception {
@@ -151,7 +144,6 @@ public class Fireblocks {
 	public static JsonObject fetchObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
-		fb.operation( "GET");
 		return fb.transactToObj();
 	}
 
@@ -159,7 +151,6 @@ public class Fireblocks {
 	public static JsonArray fetchArray(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( endpoint);
-		fb.operation( "GET");
 		String ret = fb.transact();
 		if (!JsonArray.isArray(ret) ) {
 			throw new Exception( JsonObject.parse(ret).getString("message") );  
@@ -301,7 +292,6 @@ public class Fireblocks {
 
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( "/v1/transactions");
-		fb.operation( "POST");
 		fb.body( body);
 		
 		return fb.transactToRetVal();
@@ -330,7 +320,6 @@ public class Fireblocks {
 
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( "/v1/transactions");
-		fb.operation( "POST");
 		fb.body( body);
 		return fb.transactToRetVal();
 	}

@@ -7,6 +7,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import fireblocks.Fireblocks;
+import http.MyClient;
 import positions.Wallet;
 import tw.util.S;
 import tw.util.VerticalPanel;
@@ -55,7 +56,7 @@ public class CryptoPanel extends JsonPanel {
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
 		
-		Monitor.queryObj( "/api/?msg=getCashBal", obj -> {
+		MyClient.getJson( Monitor.base + "/api/?msg=getCashBal", obj -> {
 			double val = obj.getDouble("TotalCashValue");
 			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
 		});

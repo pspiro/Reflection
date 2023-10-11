@@ -31,6 +31,8 @@ public class FbActiveServer {
 	
 	public static void main(String[] args) {
 		try {
+			Thread.currentThread().setName("FBAS");
+			
 			Util.require( args.length >= 1, "You must specify a config tab name");
 			if (args.length == 2) {
 				m_dots = false;

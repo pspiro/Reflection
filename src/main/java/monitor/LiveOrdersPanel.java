@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import http.MyClient;
 import tw.util.MyTable;
 import tw.util.S;
 
@@ -35,7 +36,7 @@ public class LiveOrdersPanel extends JsonPanel {
 		
 		void refresh( ) throws Exception {
 			super.refresh();
-			Monitor.queryArray(endpoint, ar -> {
+			MyClient.getArray(Monitor.base + endpoint, ar -> {
 				m_ar = ar;
 				fireTableDataChanged();
 			});

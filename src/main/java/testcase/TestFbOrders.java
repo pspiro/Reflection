@@ -192,4 +192,9 @@ public class TestFbOrders extends MyTestCase {
 				m_config.rusd().getPosition(bobAddr),
 				new StockToken("0x5195729466e481de3c63860034fc89efa5fbbb8f").getPosition(bobAddr) );
 	}
+	
+	public void testTotalSupply() throws Exception {
+		double i = m_config.rusd().queryTotalSupply();
+		assertTrue( i > 0);
+	}
 }

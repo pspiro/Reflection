@@ -13,7 +13,7 @@ import javax.swing.JTextField;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.MyAsyncClient;
+import http.MyClient;
 
 /** Test the three servers */
 public class SouthPanel extends JPanel {
@@ -43,9 +43,9 @@ public class SouthPanel extends JPanel {
 
 	private void update() {
 		try {
-			test( "https://reflection.trading/api/ok", m_refApi);
-			test( "https://reflection.trading/fbserver/ok", m_fbServer);
-			test( "https://reflection.trading/mdserver/ok", m_mdServer);
+			test( "/api/ok", m_refApi);
+			test( "/fbserver/ok", m_fbServer);
+			test( "/mdserver/ok", m_mdServer);
 			
 			Map<String, String> map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
 			m_aapl.setText( String.format( "%s : %s", map.get("bid"), map.get("ask") ) ); 
@@ -60,7 +60,7 @@ public class SouthPanel extends JPanel {
 	private void test(String url, JTextField field) {
 		long now = System.currentTimeMillis();
 
-		MyAsyncClient.get( url, data -> {
+		MyClient.getString( Monitor.base + url, data -> {
 			if (data.equals("OK") || JsonObject.isObject(data) && JsonObject.parse( data).getString("code").equals("OK") ) {
 				long elap = System.currentTimeMillis() - now;
 				field.setText( String.format( "%s (%s ms)", elap < 500 ? "OK" : "SLOW", elap) );

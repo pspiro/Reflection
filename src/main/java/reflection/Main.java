@@ -71,6 +71,8 @@ public class Main implements ITradeReportHandler {
 
 	public static void main(String[] args) {
 		try {
+			Thread.currentThread().setName("RefAPI");
+			
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
 			}
@@ -184,17 +186,6 @@ public class Main implements ITradeReportHandler {
 	void shutdown() {
 		log( LogType.SHUTDOWN, null);
 		m_redis.disconnect();  // seems like a good idea
-	}
-
-	private void checkFbActiveServer() throws Exception {
-		try {
-			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
-			client.get();
-			Util.require( client.getResponseCode() == 200, "Error code returned from fireblocks server " + client.getResponseCode() );
-		}
-		catch( Exception e) {
-			throw new Exception("Could not connect to fireblocks server - " + e.getMessage() );
-		}
 	}
 
 	void readSpreadsheet() throws Exception {

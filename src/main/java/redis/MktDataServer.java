@@ -45,6 +45,7 @@ public class MktDataServer {
 	
 	public static void main(String[] args) {
 		try {
+			Thread.currentThread().setName("MDS");
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
 			
 			// ensure that application is not already running

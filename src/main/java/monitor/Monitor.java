@@ -9,13 +9,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import common.Util;
-import http.MyAsyncClient;
+import http.MyClient;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -29,8 +25,8 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	//static final String base = "https://reflection.trading";
-	static final String base = "http://localhost:8383";
+	static final String base = "https://reflection.trading";
+	//static final String base = "http://localhost:8383";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -63,7 +59,6 @@ public class Monitor {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
 		S.out( "  done");
 
-		TokensPanel m_tokensPanel = new TokensPanel();
 		PricesPanel m_pricesPanel = new PricesPanel();
 		
 
@@ -157,35 +152,6 @@ public class Monitor {
 
 	// move to Util?
 	
-	interface MyConsumer<T> {
-		void accept(T param) throws Exception;
-	}
-	
-	static void queryObj(String endpoint, MyConsumer<JsonObject> cli) {
-		AsyncHttpClient client = new DefaultAsyncHttpClient();
-		client.prepare("GET", Monitor.base + endpoint)
-			.execute()
-			.toCompletableFuture()
-			.thenAccept( resp -> {
-				Util.wrap( () -> {
-					client.close();
-					cli.accept( JsonObject.parse( resp.getResponseBody() ) );
-				});
-			});
-	}
-	
-	static void queryArray(String endpoint, MyConsumer<JsonArray> cli) {
-		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
-		client.prepare("GET", Monitor.base + endpoint)
-			.execute()
-			.toCompletableFuture()
-			.thenAccept( resp -> {
-				Util.wrap( () -> {
-					client.close();
-					cli.accept( JsonArray.parse( resp.getResponseBody() ) );
-				});
-			});
-	}
 	
 	static class StatusPanel extends JsonPanel {
 		JTextField f1 = new JTextField(7);
@@ -207,7 +173,7 @@ public class Monitor {
 		@Override public void refresh() throws Exception {
 			long now = System.currentTimeMillis();
 
-			MyAsyncClient.getJson( Monitor.base + "/api/status", json -> {
+			MyClient.getJson( Monitor.base + "/api/status", json -> {
 				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
