@@ -2,18 +2,17 @@ package monitor;
 
 import java.awt.BorderLayout;
 
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import fireblocks.Fireblocks;
-import monitor.Monitor.RefPanel;
+import http.MyClient;
 import positions.Wallet;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
-public class MiscPanel extends JPanel implements RefPanel {
+public class CryptoPanel extends JsonPanel {
 	private JTextField m_usdc = new JTextField(10);
 	private JTextField m_rusd = new JTextField(10);
 	private JTextField m_usdc2 = new JTextField(10);
@@ -22,7 +21,7 @@ public class MiscPanel extends JPanel implements RefPanel {
 	private JTextField m_admin2 = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 
-	MiscPanel() {
+	CryptoPanel() {
 		super( new BorderLayout() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
@@ -57,7 +56,7 @@ public class MiscPanel extends JPanel implements RefPanel {
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
 		
-		Monitor.queryObj( "/api/?msg=getCashBal", obj -> {
+		MyClient.getJson( Monitor.base + "/api/?msg=getCashBal", obj -> {
 			double val = obj.getDouble("TotalCashValue");
 			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
 		});

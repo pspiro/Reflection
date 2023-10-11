@@ -15,8 +15,8 @@ import reflection.RefCode;
 import tw.util.IStream;
 import tw.util.S;
 
-/** Good for testing, don't use this in production, there are many things not handled.
- *  Use AsyncHttpClient. */
+/** @deprecated, use MyAsyncClient
+ *  Good for testing, don't use this in production, there are many things not handled. */
 public class MyHttpClient {
 	private Socket m_socket;
 	private ArrayList<String> m_reqHeaders = new ArrayList<String>();

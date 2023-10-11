@@ -105,7 +105,8 @@ public class Erc20 {
 		Util.reqValidAddress(walletAddr);
 		return new Wallet(walletAddr).getBalance(m_address); 
 	}
-	
+
+	/** note w/ moralis you can also get the token balance by wallet */
 	public double queryTotalSupply() throws Exception {
 		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
 		Util.require( supply != null, "Moralis total supply returned null for " + m_address);

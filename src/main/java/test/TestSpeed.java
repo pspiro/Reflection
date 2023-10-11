@@ -2,9 +2,7 @@ package test;
 
 import java.sql.ResultSet;
 
-import org.asynchttpclient.DefaultAsyncHttpClient;
-
-import common.Util.ObjectHolder;
+import http.MyClient;
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -36,25 +34,7 @@ public class TestSpeed {
 		S.out( "done");  // 3 sec, 3+2  2+3
 	}
 
-	private static String sendReq() {
-		ObjectHolder<String> holder = new ObjectHolder<String>();
-
-		DefaultAsyncHttpClient client = new DefaultAsyncHttpClient(); 
-		
-		client.prepare("GET", "http://34.125.38.193:8383/?msg=getallstocks")
-			.setHeader("accept", "application/json")
-		  	.execute()
-		  	.toCompletableFuture()
-		  	.thenAccept( obj -> {
-		  		try {
-		  			client.close();
-		  			holder.val = obj.getResponseBody();
-		  		}
-		  		catch (Exception e) {
-		  			e.printStackTrace();
-		  		}
-		  	}).join();  // the .join() makes is synchronous
-
-		return holder.val;				
+	private static String sendReq() throws Exception {
+		return MyClient.getString( "https://reflection.trading/api/?msg=getallstocks");
 	}
 }

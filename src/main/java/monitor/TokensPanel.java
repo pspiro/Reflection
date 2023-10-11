@@ -3,17 +3,16 @@ package monitor;
 import java.awt.BorderLayout;
 import java.util.HashMap;
 
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.StockToken;
-import monitor.Monitor.RefPanel;
+import http.MyClient;
 import tw.util.S;
 
-public class TokensPanel extends JPanel implements RefPanel {
+public class TokensPanel extends JsonPanel {
 	JsonModel m_model = new JsonModel("symbol,conid,smartcontractid,tokens,position,dif,isHot"); // you could add 
 
 	HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
@@ -39,7 +38,7 @@ public class TokensPanel extends JPanel implements RefPanel {
 		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 		
 		// add IB positions
-		Monitor.queryArray("/api/?msg=getpositions", positions -> {
+		MyClient.getArray(Monitor.base + "/api/?msg=getpositions", positions -> {
 			positions.forEach( position ->
 				getOrCreate( position.getInt("conid") )
 					.put( "position", position.get("position") )
@@ -52,11 +51,10 @@ public class TokensPanel extends JPanel implements RefPanel {
 		// note that if there are stocks for which we have an IB position but are not in the spreadsheet,
 		// we won't query for the blockchain position
 		Util.execute( () -> {
-			Monitor.stocks.stocks().forEach( stock -> {
+			Monitor.stocks.forEach( stock -> {
 				Util.wrap( () -> {
-					String addr = stock.getString( "smartcontractid");
-					double supply = new StockToken(addr).queryTotalSupply();
-					S.out( "Querying totalSupply for %s ", stock.getString("symbol"), supply);
+					double supply = stock.queryTotalSupply();
+					S.out( "Total supply for %s is %s", stock.getString("symbol"), supply);
 					stock.put("tokens", supply);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 				});

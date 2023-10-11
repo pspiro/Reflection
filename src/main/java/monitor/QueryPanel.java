@@ -12,12 +12,11 @@ import javax.swing.JTextField;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.Monitor.RefPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
 
 /** Querys data from the database */
-public class QueryPanel extends JPanel implements RefPanel {
+public class QueryPanel extends JsonPanel {
 	final JsonModel m_model;
 	final JTextField where = new JTextField(20);
 	final LinkedList<String> m_list = new LinkedList<>();

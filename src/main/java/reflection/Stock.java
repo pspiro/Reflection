@@ -71,7 +71,7 @@ public class Stock extends JsonObject {
 		return getString("symbol").compareTo(o.getString("symbol"));
 	}
 
-	public double getCurTokens() throws Exception {
+	public double queryTotalSupply() throws Exception {
 		return new StockToken( getSmartContractId() ).queryTotalSupply();
 	}
 	

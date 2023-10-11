@@ -43,25 +43,27 @@ import tw.util.S;
 import util.LogType;
 
 public class Main implements ITradeReportHandler {
+	// constants
 	enum Status {
 		Connected, Disconnected
 	};
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 	
+	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 
-	private       MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
+	// member vars
+	private MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
-	private       String m_faqs;
+	private String m_faqs;
 	private String m_type1Config; 
 	private JsonObject m_type2Config;
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
-	//private ThreadQueue m_dbQueue = new ThreadQueue();  // let DB transactions execute here
 	private DbQueue m_dbQueue = new DbQueue();
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
@@ -69,6 +71,8 @@ public class Main implements ITradeReportHandler {
 
 	public static void main(String[] args) {
 		try {
+			Thread.currentThread().setName("RefAPI");
+			
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
 			}
@@ -141,6 +145,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
 		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
+		server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 		server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
@@ -180,17 +185,6 @@ public class Main implements ITradeReportHandler {
 	void shutdown() {
 		log( LogType.SHUTDOWN, null);
 		m_redis.disconnect();  // seems like a good idea
-	}
-
-	private void checkFbActiveServer() throws Exception {
-		try {
-			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
-			client.get();
-			Util.require( client.getResponseCode() == 200, "Error code returned from fireblocks server " + client.getResponseCode() );
-		}
-		catch( Exception e) {
-			throw new Exception("Could not connect to fireblocks server - " + e.getMessage() );
-		}
 	}
 
 	void readSpreadsheet() throws Exception {

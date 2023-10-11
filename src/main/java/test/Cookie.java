@@ -1,13 +1,13 @@
 package test;
 
-import org.asynchttpclient.AsyncHttpClient;
-import org.asynchttpclient.DefaultAsyncHttpClient;
+import java.net.http.HttpRequest.Builder;
+
 import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
 
 import common.Util;
-import http.MyAsyncClient;
+import http.MyClient;
 import reflection.SiweUtil;
 import tw.util.S;
 
@@ -27,7 +27,7 @@ public class Cookie {
 
 	public static void signIn(String address) {
 		S.out( "Signing in with cookie1 for wallet " + address);
-		MyAsyncClient.getJson( base + "/siwe/init", json -> gotNonce( json.getString("nonce"), address) );
+		MyClient.getJson( base + "/siwe/init", json -> gotNonce( json.getString("nonce"), address) );
 	}
 	
 	static void gotNonce(String nonce, String address) throws Exception {
@@ -45,26 +45,16 @@ public class Cookie {
 		JsonObject signedMsgSent = new JsonObject();
 		signedMsgSent.put( "signature", "102268");
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
-
+		
 		// send siwe/signin
-		AsyncHttpClient client = new DefaultAsyncHttpClient();  //might you need the cursor here as well?
-		client
-		.prepare("POST", base + "/siwe/signin")
-		.setBody(signedMsgSent.toString())
-		.execute()
-		.toCompletableFuture()
-		.thenAccept( obj -> {
-			try {
-				client.close();
-				cookie = obj.getHeader("set-cookie");
-				S.out( "set cookie");
-				synchronized( lock) {
-					lock.notify();
-				}
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
+		MyClient
+			.create( base + "/siwe/signin", signedMsgSent.toString() )  
+			.query( resp -> {
+					cookie = resp.headers().firstValue("set-cookie").get();
+					S.out( "set cookie");
+					synchronized( lock) {
+						lock.notify();
+					}
+			});
 	}
 }

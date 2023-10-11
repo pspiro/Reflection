@@ -5,17 +5,14 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-import javax.swing.JPanel;
-
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.Monitor.RefPanel;
 import redis.clients.jedis.Response;
 import tw.util.S;
 
-public class RedisPanel extends JPanel implements RefPanel {
+public class RedisPanel extends JsonPanel {
 	final JsonModel m_model = new Model();
 	
 	RedisPanel() {
