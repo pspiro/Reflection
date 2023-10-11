@@ -30,11 +30,6 @@ public class MdTransaction extends BaseTransaction {
 		});
 	}
 
-	public void onStatus() {
-		wrap( () -> {
-		});
-	}
-	
 	@Override protected void jlog(LogType type, JsonObject json) {
 		super.jlog(type, json);
 	}
