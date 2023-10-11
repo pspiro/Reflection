@@ -11,6 +11,7 @@ import java.io.InputStream;
 
 public class EMessage {
 	ByteArrayOutputStream m_buf;
+	private int m_msgId;
 	
 	public EMessage(byte[] buf, int len) {
 		m_buf = new ByteArrayOutputStream();
@@ -30,5 +31,13 @@ public class EMessage {
 	
 	public byte[] getRawData() {		
 		return m_buf.toByteArray();
+	}
+
+	public void msgId(int msgId) {
+		m_msgId = msgId;
+	}
+
+	public int msgId() {
+		return m_msgId;
 	}
 }

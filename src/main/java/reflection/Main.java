@@ -127,7 +127,6 @@ public class Main implements ITradeReportHandler {
 		
 		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
 		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
-		//HttpServer server = HttpServer.create(new InetSocketAddress( m_config.refApiPort() ), 0);
 		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
 		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
@@ -153,10 +152,10 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
 		server.createContext("/api/get-profile", exch -> new BackendTransaction(this, exch).handleGetProfile() );
 		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
-		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 		server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch).handleFireblocks() ); // report build date/time
 		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
 		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
@@ -633,13 +632,11 @@ public class Main implements ITradeReportHandler {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
 					int count = 0;
-					S.out("TDB"); //!!!
 					//S.sleep(DB_PAUSE);  // you could sleep a little to try to batch more entries, but connecting takes 200ms anyway
 					
 					// then connect and process as many as possible
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						while (com != null) {
-							S.out("processed TDB");
 							com.run( conn);
 							count++;
 							com = next();

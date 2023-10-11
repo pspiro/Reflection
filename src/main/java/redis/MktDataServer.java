@@ -1,7 +1,10 @@
 package redis;
 
+import java.net.BindException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.Executors;
 
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;
@@ -9,10 +12,10 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
+import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
 import common.Util.ExRunnable;
-import http.SimpleTransaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.Stock;
@@ -32,12 +35,13 @@ public class MktDataServer {
 	enum MyTickType { Bid, Ask, Last };
 
 	public static final String Overnight = "OVERNIGHT"; 
-	private static final MktDataConfig m_config = new MktDataConfig();
-	private static final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	static boolean m_debug = false;
+
 	
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	private final MdConnectionMgr m_mdConnMgr;
+	final MdConnectionMgr m_mdConnMgr;
+	private final MktDataConfig m_config = new MktDataConfig();
+	private final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	private final MyRedis m_redis;
 	private final TradingHours m_tradingHours; 
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();
@@ -46,14 +50,10 @@ public class MktDataServer {
 	public static void main(String[] args) {
 		try {
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
-			
-			// ensure that application is not already running
-			SimpleTransaction.listen("0.0.0.0", 6999, SimpleTransaction.nullHandler);			
-			
 			new MktDataServer(args);
 		}
 		catch (Exception e) {
-			m_log.log( e);
+			e.printStackTrace();
 			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
@@ -68,6 +68,23 @@ public class MktDataServer {
 		if (args.length > 1 && (args[1].equals("/d") || args[1].equals("-d") ) ) {
 			m_debug = true;
 			log( "debug mode=true");
+		}
+		
+		try {
+			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
+			server.createContext("/favicon", exch -> {} ); // ignore these requests
+			server.createContext("/ok", exch -> new MdTransaction(this, exch).onOk() ); 
+			server.createContext("/status", exch -> new MdTransaction(this, exch).onStatus() ); 
+			server.setExecutor( Executors.newFixedThreadPool(10) );
+			server.start();
+		}
+		catch( BindException e) {
+			S.out( "The application is already running");
+			System.exit(0);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
 		}
 		
 		MyTimer timer = new MyTimer();
@@ -87,7 +104,7 @@ public class MktDataServer {
 		m_redis.connect();  // test the connection, let it fail now
 		S.out( "  done");
 		
-		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
+		m_mdConnMgr = new MdConnectionMgr( this, m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
 		
 		// connect to TWS
@@ -121,8 +138,8 @@ public class MktDataServer {
 	}
 
 	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
-			super( host, port, clientId, reconnectInterval);
+		MdConnectionMgr( MktDataServer main, String host, int port, int clientId, long reconnectInterval) {
+			super( main, host, port, clientId, reconnectInterval);
 		}
 		
 		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
@@ -222,11 +239,11 @@ public class MktDataServer {
 		return type;
 	}
 
-	static void log( String text, Object... params) {
+	void log( String text, Object... params) {
 		m_log.log( LogType.MDS, text, params);
 	}
 
-	static void log( Exception e) {
+	void log( Exception e) {
 		m_log.log( e);
 	}
 
@@ -238,8 +255,8 @@ public class MktDataServer {
 		return m_mdConnMgr;
 	}
 
-	/** Write to the log file. Don't throw any exception. */
-
+	/** Write to the log file. Don't throw any exception.
+	 *  This only wraps one method: requestPrices. */
 	void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
@@ -248,11 +265,11 @@ public class MktDataServer {
 			// this happens when writing to redis, e.g. when calling pipeline.hdel( conid, type)
 			// we don't know how to recover from this
 			
-			m_log.log(e);
+			log(e);
 			System.exit(0);
 		}
 		catch( Exception e) {
-			m_log.log(e);
+			log(e);
 		}
 	}
 }

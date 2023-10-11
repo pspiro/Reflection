@@ -167,7 +167,7 @@ class EDecoder implements ObjectInput {
     	}
     	finally {
     		if (System.currentTimeMillis() - time > 100) {
-    			S.out( "  TDB API msg took %s ms to process", System.currentTimeMillis() - time);
+    			S.out( "  TDB API msg took %s ms to process msg id %s", System.currentTimeMillis() - time, msg.msgId() );
     		}
     	}
     }
@@ -184,6 +184,8 @@ class EDecoder implements ObjectInput {
     	}
     	
     	int msgId = readInt();
+    	msg.msgId(msgId);
+    	
     	//S.out( "---received msgid %s", msgId);
     	
     	// begin IB message id processing

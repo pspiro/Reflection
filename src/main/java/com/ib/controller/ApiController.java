@@ -944,8 +944,8 @@ public class ApiController implements EWrapper {
     }
 
 	public void prepareOrder(Order order) throws Exception {
-		Util.require( order.orderId() == 0, "OrderId should be zero");
 		order.orderId( nextOrderId() );
+		order.permId(0);
 	}
 	
 	public void placeOrModifyOrder(Contract contract, final Order order, final IOrderHandler handler) throws Exception {

@@ -22,7 +22,7 @@ public class SouthPanel extends JPanel {
 	JTextField m_refApi = new JTextField(10);
 	JTextField m_fbServer = new JTextField(10);
 	JTextField m_mdServer = new JTextField(10);
-	JTextField m_aapl = new JTextField(10);
+	JTextField m_aapl = new JTextField(20);
 
 	SouthPanel() {
 		add( new JLabel("Ref API:"));
@@ -47,7 +47,7 @@ public class SouthPanel extends JPanel {
 			test( "https://reflection.trading/mdserver/ok", m_mdServer);
 			
 			Map<String, String> map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
-			m_aapl.setText( String.format( "%s : %s", map.get("bid"), map.get("ask") ) ); 
+			m_aapl.setText( String.format( "%s : %s : %s : %s", map.get("bid"), map.get("ask"), map.get("last"), map.get("time") ) ); 
 			
 		}
 		catch( Exception e) {
