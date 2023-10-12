@@ -19,17 +19,17 @@ public class RedemptionPanel extends QueryPanel {
 			   "select * from redemptions order by created_at desc $limit");
 	}
 	
-	@Override protected JsonModel createModel(String table, String allNames, String sql) {
-		return new RedemptionModel(table, allNames, sql);
+	@Override protected JsonModel createModel(String allNames) {
+		return new Model(allNames);
 	}
 	
 	@Override public void adjust(JsonObject obj) {
 		obj.update( "created_at", val -> Util.left( val.toString(), 19) );
 	}
 
-	class RedemptionModel extends QueryModel {
-		RedemptionModel(String table, String allNames, String sql) {
-			super(table, allNames, sql);
+	class Model extends QueryModel {
+		Model(String allNames) {
+			super(allNames);
 		}
 	
 		public void onLeftClick(MouseEvent e, int row, int col) {

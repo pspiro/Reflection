@@ -8,11 +8,12 @@ import javax.swing.border.TitledBorder;
 
 import fireblocks.Fireblocks;
 import http.MyClient;
+import monitor.Monitor.MonPanel;
 import positions.Wallet;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
-public class CryptoPanel extends JsonPanel {
+public class CryptoPanel extends MonPanel {
 	private JTextField m_usdc = new JTextField(10);
 	private JTextField m_rusd = new JTextField(10);
 	private JTextField m_usdc2 = new JTextField(10);

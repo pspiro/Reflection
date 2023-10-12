@@ -1,6 +1,7 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.LayoutManager;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -12,6 +13,7 @@ import javax.swing.JTextField;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Transactions;
 import http.MyClient;
 import reflection.Config;
 import reflection.Stocks;
@@ -20,6 +22,7 @@ import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
 import tw.util.S;
 import tw.util.VerticalPanel;
+import tw.util.NewTabbedPanel.INewTab;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -76,7 +79,7 @@ public class Monitor {
 		
 		num.setText("40");
 		
-		m_tabs.addTab( "Home", new JsonPanel() );
+		m_tabs.addTab( "Home", new MonPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
@@ -123,21 +126,23 @@ public class Monitor {
 		TransPanel() {
 			super( "transactions", names, sql);
 		}
-		
-		@Override protected JsonModel createModel(String table, String allNames, String sql) {
-			return new QueryModel(table, allNames, sql) {
-				@Override void onDouble(String tag, Object val) {
-					if (tag.equals("uid") ) {
-						m_tabs.select( "Log");
-						m_logPanel.filterByUid(val.toString());
-					}
-					else {
-						super.onDouble(tag, val);
-					}
-				}
-			};
+
+		@Override void onDouble(String tag, Object val) {
+			switch(tag) {
+			case "uid":
+				m_tabs.select( "Log");
+				m_logPanel.filterByUid(val.toString());
+				break;
+			case "fireblocks_id":
+				Util.wrap( () -> Transactions.getTransaction(val.toString()).display() );
+				break;
+			case "blockchain_hash":
+				// show in explorer
+				break;
+				default:
+					super.onDouble(tag, val);
+			}
 		}
-		
 		
 		public void adjust(JsonObject obj) {
 			obj.putIf( "symbol", stocks.getStock( obj.getInt("conid") ) );
@@ -180,7 +185,7 @@ public class Monitor {
 	// move to Util?
 	
 	
-	static class StatusPanel extends JsonPanel {
+	static class StatusPanel extends JPanel {
 		JTextField f1 = new JTextField(7);
 		JTextField f2 = new JTextField(7);
 		JTextField f3 = new JTextField(7);
@@ -197,17 +202,31 @@ public class Monitor {
 			add( p);
 		}
 		
-		@Override public void refresh() throws Exception {
-			long now = System.currentTimeMillis();
+//		@Override public void refresh() throws Exception {
+//			long now = System.currentTimeMillis();
+//
+//			MyClient.getJson( Monitor.base + "/api/status", json -> {
+//				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+//				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
+//				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
+//			});
+//		}
+	}
+	
+	static class MonPanel extends JPanel implements INewTab {
+		public MonPanel(LayoutManager layout) {
+			super(layout);
+		}
 
-			MyClient.getJson( Monitor.base + "/api/status", json -> {
-				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
-				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
-			});
+		@Override public void activated() {
+			Util.wrap( () -> refresh() );
+		}
+
+		@Override public void closed() {
+		}
+		
+		public void refresh() throws Exception {
 		}
 	}
 	
 }
-
-

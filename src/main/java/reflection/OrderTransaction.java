@@ -718,7 +718,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 				Util.toJson( 
 						"uid", m_uid,
 						"wallet_public_key", m_walletAddr,
-						"status", FireblocksStatus.DENIED) ) );
+						"status", FireblocksStatus.DENIED
+//						"action", m_order.action() ); // enums gets quotes upon insert
+//						"quantity", m_order.totalQty());
+//						"symbol", m_stock.getSymbol() );
+//						"conid", m_stock.getConid() );
+//						"price", m_order.lmtPrice() );
+						
+						) ) );
 	}
 }
 // look at all the catch blocks, save message or stack trace

@@ -10,18 +10,21 @@ import http.MyClient;
 import tw.util.S;
 
 public class PricesPanel extends JsonPanel {
-	final Model m_model = new Model();
 	final static String AlphaKey = "EKD9A4ZUSQPEPFXK";  // alphavantage API key
 	final static String AlphaUrl = "https://www.alphavantage.co";
 	
 	PricesPanel() {
-		super( new BorderLayout() );
+		super( new BorderLayout(), "symbol,conid,bid,ask,last,time,alpha last,alpha bid,alpha ask");
 
 		add( m_model.createTable() );
 	}
+	
+	@Override JsonModel createModel(String allNames) {
+		return new Model(allNames);
+	}
 
 	void initialize() {
-		m_model.initialize();
+		((Model)m_model).initialize();
 	}
 
 	@Override public void refresh() throws Exception {
@@ -29,8 +32,8 @@ public class PricesPanel extends JsonPanel {
 	}
 
 	class Model extends JsonModel {
-		Model() {
-			super( "symbol,conid,bid,ask,last,time,alpha last,alpha bid,alpha ask");
+		Model(String allNames) {
+			super(allNames);
 		}
 		
 		/** Called at startup */

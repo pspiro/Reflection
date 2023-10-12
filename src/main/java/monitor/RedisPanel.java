@@ -13,10 +13,8 @@ import redis.clients.jedis.Response;
 import tw.util.S;
 
 public class RedisPanel extends JsonPanel {
-	final JsonModel m_model = new Model();
-	
 	RedisPanel() {
-		super( new BorderLayout() );
+		super( new BorderLayout(), "symbol,conid,bid,ask,last,time,close,from");
 		
 		add( m_model.createTable() );
 	}
@@ -25,6 +23,10 @@ public class RedisPanel extends JsonPanel {
 		S.out( "Refreshing Redis panel");
 		m_model.refresh();
 		S.out( "  done");
+	}
+	
+	@Override JsonModel createModel(String allNames) {
+		return new Model(allNames);
 	}
 	
 	static class RedisQuery {
@@ -37,9 +39,9 @@ public class RedisPanel extends JsonPanel {
 		}
 	}
 	
-	static class Model extends JsonModel {
-		Model() {
-			super("symbol,conid,bid,ask,last,time,close,from");
+	class Model extends JsonModel {
+		Model(String allNames) {
+			super(allNames);
 			justify("llrrrlr");
 		}
 	

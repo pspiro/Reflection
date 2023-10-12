@@ -26,7 +26,8 @@ public class WalletPanel extends JsonPanel {
 	private final Model m_model = new Model();
 	
 	WalletPanel() throws Exception {
-
+		super( new BorderLayout(), "Symbol,Balance");
+		
 		m_wallet.addActionListener( e -> { 
 			try {
 				refresh();
@@ -45,7 +46,6 @@ public class WalletPanel extends JsonPanel {
 		
 //		QPanel v2 = new QPanel( "select * from users where wallet_public_key = " +
 		
-		setLayout( new BorderLayout() );
 		add( v, BorderLayout.NORTH);
 		add( m_model.createTable() );
 	}

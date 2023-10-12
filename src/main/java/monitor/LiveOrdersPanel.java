@@ -8,20 +8,17 @@ import tw.util.S;
 
 
 public class LiveOrdersPanel extends JsonPanel {
+	static final String allNames = "uid,wallet,action,description,progress,status,errorCode,errorText";
 	static final String endpoint = "/api/all-live-orders";
 
-	final JsonModel m_model;
-	
 	LiveOrdersPanel() {
-		super( new BorderLayout() );
-		
-		m_model = new Model();
+		super( new BorderLayout(), allNames);
 		
 		add( new MyTable(m_model).scroll() );
 	}
 	
-	protected JsonModel createModel(String allNames, String sql) {
-		return new Model();
+	protected JsonModel createModel(String allNames) {
+		return new Model(allNames);
 	}
 
 	public void refresh() throws Exception {
@@ -30,8 +27,8 @@ public class LiveOrdersPanel extends JsonPanel {
 	}
 	
 	class Model extends JsonModel {
-		Model() {
-			super( "uid,wallet,action,description,progress,status,errorCode,errorText");
+		Model(String allNames) {
+			super(allNames);
 		}
 		
 		void refresh( ) throws Exception {

@@ -13,12 +13,10 @@ import http.MyClient;
 import tw.util.S;
 
 public class TokensPanel extends JsonPanel {
-	JsonModel m_model = new JsonModel("symbol,conid,smartcontractid,tokens,position,dif,isHot"); // you could add 
-
 	HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
 
 	TokensPanel() {
-		super( new BorderLayout() );
+		super( new BorderLayout(), "symbol,conid,smartcontractid,tokens,position,dif,isHot");
 		add( m_model.createTable() );
 		m_model.justify("lllrr");
 	}

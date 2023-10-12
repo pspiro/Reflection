@@ -17,12 +17,15 @@ import tw.util.S;
 
 /** Querys data from the database */
 public class QueryPanel extends JsonPanel {
-	final JsonModel m_model;
 	final JTextField where = new JTextField(20);
 	final LinkedList<String> m_list = new LinkedList<>();
+	final String m_table;
+	final String m_sql;
 	
 	QueryPanel(String table, String allNames, String sql) {
-		super( new BorderLayout() );
+		super( new BorderLayout(), allNames);
+		m_table = table;
+		m_sql = sql;
 		
 		where.addActionListener( e -> {
 			Util.wrap( () -> refresh() );
@@ -51,33 +54,26 @@ public class QueryPanel extends JsonPanel {
 		
 		where.addActionListener( e -> Monitor.m.refresh() );
 		
-		m_model = createModel(table, allNames, sql);
-		
 		add( topPanel, BorderLayout.NORTH);
 		add( m_model.createTable() );
 	}
 	
-	protected JsonModel createModel(String table, String allNames, String sql) {
-		return new QueryModel(table, allNames, sql);
+	protected JsonModel createModel( String allNames) {
+		return new QueryModel(allNames);
 	}
 
 	public void refresh() throws Exception {
 		m_model.refresh();
 	}
 	
+	@Override void onDouble(String tag, Object val) {
+		where.setText( String.format( "where %s = '%s'", tag, val) );
+		Util.wrap( () -> refresh() );
+	}
+	
 	class QueryModel extends JsonModel {
-		final String m_table;
-		final String m_sql;
-
-		QueryModel( String table, String allNames, String sql) {
+		QueryModel( String allNames) {
 			super( allNames);
-			m_table = table;
-			m_sql = sql;
-		}
-		
-		@Override void onDouble(String tag, Object val) {
-			where.setText( String.format( "where %s = '%s'", tag, val) );
-			Util.wrap( () -> refresh() );
 		}
 		
 		@Override void refresh( ) throws Exception {
