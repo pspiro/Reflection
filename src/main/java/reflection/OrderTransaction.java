@@ -495,6 +495,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
 			jlog( LogType.ORDER_COMPLETED, null);
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 		}
 	}
 
