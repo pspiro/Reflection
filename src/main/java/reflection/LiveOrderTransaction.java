@@ -93,9 +93,12 @@ public class LiveOrderTransaction extends MyTransaction {
 			String fbId = m_map.getRequiredParam("id");
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
 			String hash = S.notNull( m_map.getParam("txhash") );
-			
-			// fails silently if there is no transaction to update; it's possible that the database entry is not made yet
-			updateTransactionsTable( fbId, status, hash);
+
+			// update hash only in transactions table
+			// fails silently if there is no transaction to update;
+			// it's possible that the database entry was not made yet
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set blockchain_hash = '%s' where fireblocks_id = '%s'", hash, fbId) );
 
 			OrderTransaction liveOrder = allLiveOrders.get(fbId);
 			
@@ -119,17 +122,6 @@ public class LiveOrderTransaction extends MyTransaction {
 
 	private void updateTransactionsTable(String fbId, FireblocksStatus status, String hash) {
 		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
-		try {
-			JsonObject obj = new JsonObject();
-			obj.put("status", status.toString() ); // note status is informational only; it's not used for anything; therefore you can set it to whatever you want
-			obj.put("blockchain_hash", hash);
-
-			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "fireblocks_id = '%s'", fbId) );				
-		}
-		catch( Exception e) {
-			elog( LogType.DATABASE_ERROR, e);
-			e.printStackTrace();
-		}
 	}
 
 }

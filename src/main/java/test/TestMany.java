@@ -49,14 +49,14 @@ public class TestMany {
 		Cookie2 cook = new Cookie2(base);
 
 		void init(String ad) {
-			cook.signIn(ad, () -> placeOrders() );
-		}
-
-		private void placeOrders() {
-			for (int i = 0; i < count; i++) {
-				sendOrder();
-				S.sleep( 2000);
-			}
+			Util.wrap( () -> {
+				cook.signIn(ad);
+				
+				for (int i = 0; i < count; i++) {
+					sendOrder();
+					S.sleep( 2000);
+				}
+			});
 		}
 		
 		void sendOrder() {

@@ -15,7 +15,7 @@ import reflection.MySqlConnection;
  *  This is not really useful because the queries from Moralis are really quick */
 public class MoralisServer {
 	static final String chain = "goerli";  // or eth
-	static final String moralis = "https://deep-index.moralis.io/api/v2";
+	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	
@@ -101,7 +101,19 @@ public class MoralisServer {
 				JsonObject.parse( querySync(url) ).getString("balance"),
 				18);
 	}
-	
-	
+
+	/** Seems useless; returns e.g.
+	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
+	public static String getWalletStats(String wallet) throws Exception {
+		String url = String.format( "%s/wallets/%s/stats", moralis, wallet);
+		return querySync( url);
+		
+	}
+
+	/** useless e.g. {"transfers":{"total":"0"}} */
+	public static String getErc20Stats(String address) throws Exception {
+		String url = String.format( "%s/erc20/%s/stats", moralis, address);
+		return querySync( url);
+	}
 	
 }

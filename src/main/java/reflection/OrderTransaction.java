@@ -171,7 +171,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		
 		// now it is up to the live order system to report success or failure
 		// we cannot use wrap() anymore, only shrinkWrap()
-		// any problem in here calls onFail() and the order gets unwound 
+		// any problem in here calls onFail() and the order gets unwound
+		// only two ways out from here: catch in shrinkWrap() or onFireblocksSuccess()
 		shrinkWrap( () -> {
 			walletLiveOrders().add( this);
 
@@ -293,11 +294,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 			// price does not conform to market rule, e.g. too many decimals
 			if (errorCode == 110) {
+				m_ibOrderCompleted = true;
 				throw new RefException( RefCode.INVALID_PRICE, errorMsg);
 			}
 
 			// order rejected, never sent to exchange; could be not enough liquidity
 			if (errorCode == 201) {
+				m_ibOrderCompleted = true;
 				throw new RefException( RefCode.REJECTED, errorMsg);
 			}
 		});
@@ -316,13 +319,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 			// if order is still live, cancel the order; don't let an error here disrupt processing
 			if (!m_order.status().isComplete() && !m_order.status().isCanceled() ) {
-				try {
+				Util.wrap( () -> {
 					jlog( LogType.CANCEL_ORDER, null);
 					m_main.orderController().cancelOrder( m_order.orderId(), "", null);
-				}
-				catch( Exception e) {
-					e.printStackTrace();
-				}
+				});
 			}
 			onIBOrderCompleted(true, false);
 		});
@@ -338,6 +338,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		if (m_ibOrderCompleted) return;
 
 		m_ibOrderCompleted = true;
+		
+		// update status here with timeout; if some shares were filled, the blockchain will
+		// proceed and the status will be updated further
+		
 
 		require(
 				m_filledShares > 0 || m_order.status() == OrderStatus.Filled,
@@ -500,9 +504,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Failed;
 			
+			// create log entry and update transactions table
 			olog( LogType.ORDER_FAILED, Message, errorText, "code", errorCode);
+			
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.FAILED, m_uid) );
 		
-			// unwind the IB order first and foremost
+			// unwind PositionTracker and IB order first and foremost
 			unwindOrder();
 	
 			// save error text and code which will be sent back to client when they query live order status

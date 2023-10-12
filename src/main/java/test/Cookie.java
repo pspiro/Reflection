@@ -1,6 +1,7 @@
 package test;
 
 import java.net.http.HttpRequest.Builder;
+import java.net.http.HttpResponse;
 
 import org.json.simple.JsonObject;
 
@@ -19,18 +20,16 @@ public class Cookie {
 	public static String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 	public static String cookie;  // that's right, the cookie is a string, not an object
 	public static String base = "https://reflection.trading";
-	public static Object lock = new Object();
-	
+
 	public static void init() {
-		signIn(wallet);
+		Util.wrap( () -> signIn(wallet) );
 	}
 
-	public static void signIn(String address) {
+	static void signIn(String address) throws Exception {
 		S.out( "Signing in with cookie1 for wallet " + address);
-		MyClient.getJson( base + "/siwe/init", json -> gotNonce( json.getString("nonce"), address) );
-	}
-	
-	static void gotNonce(String nonce, String address) throws Exception {
+		String nonce = MyClient.getJson( base + "/siwe/init").getString("nonce");
+
+		// send siwe/init, get nonce
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 
 				address, 
@@ -45,16 +44,12 @@ public class Cookie {
 		JsonObject signedMsgSent = new JsonObject();
 		signedMsgSent.put( "signature", "102268");
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
-		
+
 		// send siwe/signin
-		MyClient
-			.create( base + "/siwe/signin", signedMsgSent.toString() )  
-			.query( resp -> {
-					cookie = resp.headers().firstValue("set-cookie").get();
-					S.out( "set cookie");
-					synchronized( lock) {
-						lock.notify();
-					}
-			});
+		HttpResponse<String> resp = MyClient
+				.create( base + "/siwe/signin", signedMsgSent.toString() )  
+				.query();
+		cookie = resp.headers().firstValue("set-cookie").get();
+		S.out( "set cookie");
 	}
 }

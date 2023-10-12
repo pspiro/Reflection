@@ -52,14 +52,13 @@ public class MyClient {
 		}
 	}
 	
-	/** async query */
+	/** async query; WARNING: the response comes in a daemon thread which will not keep
+	 *  the program alive if there are no other threads */
 	public void query(ExConsumer<HttpResponse<String>> ret) {
 		HttpRequest request = m_builder.build();
 		
-		S.out( "sending query...");
 		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept(response -> {
-					S.out( "received response");
 					Util.wrap( () -> ret.accept(response) );
 				})
 				.exceptionally(ex -> {
