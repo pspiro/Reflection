@@ -56,8 +56,10 @@ public class MyClient {
 	public void query(ExConsumer<HttpResponse<String>> ret) {
 		HttpRequest request = m_builder.build();
 		
+		S.out( "sending query...");
 		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept(response -> {
+					S.out( "received response");
 					Util.wrap( () -> ret.accept(response) );
 				})
 				.exceptionally(ex -> {
@@ -65,6 +67,8 @@ public class MyClient {
 					ex.printStackTrace();
 					return null;
 				});
+		
+//		Util.execute( () -> S.sleep(5000) );
 	}
 	
 	// ----- synchronous helper methods ----------------------------
@@ -87,6 +91,10 @@ public class MyClient {
 		create(url).query( resp -> handler.accept( JsonObject.parse(resp.body() ) ) );
 	}
 
+	public static JsonObject getJson(String url) throws Exception {
+		return JsonObject.parse( getString(url) );
+	}
+
 	/** get json array, async */
 	public static void getArray( String url, ExConsumer<JsonArray> handler) {
 		getString(url, body -> handler.accept( JsonArray.parse(body) ) );
@@ -96,6 +104,7 @@ public class MyClient {
 	public static void postToJson( String url, String body, ExConsumer<JsonObject> ret) {
 		create( url, body).query( resp -> ret.accept( JsonObject.parse(resp.body() ) ) );
 	}
+
 	
 	/** send synchronous request, return full response */
 }

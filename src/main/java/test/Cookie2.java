@@ -1,5 +1,7 @@
 package test;
 
+import java.net.http.HttpResponse;
+
 import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
@@ -21,32 +23,33 @@ public class Cookie2 {
 		base = baseIn;
 	}
 	
-	public void signIn(String address, Runnable run) {
+	public void signIn(String address) throws Exception {
 		m_addr = address;
 		
 		S.out( "Signing in with cookie2 for wallet " + address);
-		MyClient.getJson( base + "/siwe/init", json -> {
-			SiweMessage siweMsg = new SiweMessage.Builder(
-					"Reflection.trading", 
-					address, 
-					base, 
-					"1",	// version 
-					5,      // chainId 
-					json.getString("nonce"),
-					Util.isoNow() )
-					.statement("Sign in to Reflection.")
-					.build();
+		
+		// send init, get nonce
+		JsonObject json = MyClient.getJson( base + "/siwe/init");
 
-			JsonObject signedMsgSent = new JsonObject();
-			signedMsgSent.put( "signature", "102268");
-			signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+		SiweMessage siweMsg = new SiweMessage.Builder(
+				"Reflection.trading", 
+				address, 
+				base, 
+				"1",	// version 
+				5,      // chainId 
+				json.getString("nonce"),
+				Util.isoNow() )
+				.statement("Sign in to Reflection.")
+				.build();
 
-			// send siwe/signin
-			MyClient.create( base + "/siwe/signin", signedMsgSent.toString() )
-				.query(resp -> {
-						m_cookie = resp.headers().firstValue("set-cookie").get();
-						run.run();
-				});
-			});
+		JsonObject signedMsgSent = new JsonObject();
+		signedMsgSent.put( "signature", "102268");
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// send siwe/signin
+		HttpResponse<String> resp = MyClient
+				.create( base + "/siwe/signin", signedMsgSent.toString() )
+				.query();
+		m_cookie = resp.headers().firstValue("set-cookie").get();
 	}
 }
