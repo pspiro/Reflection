@@ -11,6 +11,7 @@ import javax.swing.JTextField;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyClient;
 import reflection.Config;
 import reflection.Stocks;
@@ -38,6 +39,7 @@ public class Monitor {
 	static JTextField num = new JTextField(4); // number of entries to return in query
 	JFrame m_frame = new JFrame();
 	NewTabbedPanel m_tabs = new NewTabbedPanel(true);
+	LogPanel m_logPanel = new LogPanel();
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
@@ -80,9 +82,9 @@ public class Monitor {
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", new WalletPanel() );
-		m_tabs.addTab( "Transactions", createTransPanel() );
+		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
-		m_tabs.addTab( "Log", createLogPanel() );
+		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Tokens", new TokensPanel() );
 		m_tabs.addTab( "Prices", m_pricesPanel);
 		m_tabs.addTab( "Redis", new RedisPanel() );
@@ -114,21 +116,46 @@ public class Monitor {
 		}
 	}
 	
-	private JComponent createTransPanel() {
-		String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
-		// String sql = "select * from transactions ct left join trades tr on ct.order_id = tr.order_id order by ct.created_at desc limit 50";
-		String sql = "select * from transactions $where order by created_at desc $limit";
-		return new QueryPanel( "transactions", names, sql) {
-			public void adjust(JsonObject obj) {
-				obj.putIf( "symbol", stocks.getStock( obj.getInt("conid") ) );
-			}
-		};
+	class TransPanel extends QueryPanel {
+		static String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
+		static String sql = "select * from transactions $where order by created_at desc $limit";
+		
+		TransPanel() {
+			super( "transactions", names, sql);
+		}
+		
+		@Override protected JsonModel createModel(String table, String allNames, String sql) {
+			return new QueryModel(table, allNames, sql) {
+				@Override void onDouble(String tag, Object val) {
+					if (tag.equals("uid") ) {
+						m_tabs.select( "Log");
+						m_logPanel.filterByUid(val.toString());
+					}
+					else {
+						super.onDouble(tag, val);
+					}
+				}
+			};
+		}
+		
+		
+		public void adjust(JsonObject obj) {
+			obj.putIf( "symbol", stocks.getStock( obj.getInt("conid") ) );
+		}
 	}
+	
+	static class LogPanel extends QueryPanel {
+		static String names = "created_at,wallet_public_key,uid,type,data"; 
+		static String sql = "select * from log $where order by created_at desc $limit";
 
-	private JComponent createLogPanel() {
-		String names = "created_at,wallet_public_key,uid,type,data"; 
-		String sql = "select * from log $where order by created_at desc $limit";
-		return new QueryPanel( "log", names, sql);
+		LogPanel() {
+			super( "log", names, sql);
+		}
+		
+		void filterByUid( String uid) {
+			where.setText( String.format( "where uid = '%s'", uid) );
+			Util.wrap( () -> refresh() );
+		}
 	}
 
 	// add the commission here as well
