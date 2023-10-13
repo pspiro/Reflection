@@ -58,8 +58,6 @@ public class Config extends ConfigBase {
 	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
 	private String backendConfigTab;
-	private String redisHost;
-	private int redisPort;
 	private double commission;
 	private String mintHtml;
 	private String mintBusd;
@@ -97,8 +95,6 @@ public class Config extends ConfigBase {
 	public boolean useFireblocks() { return useFireblocks; }
 	
 	public boolean autoFill() { return autoFill; }
-	public String redisHost() { return redisHost; }
-	public int redisPort() { return redisPort; }
 
 	public double maxBuyAmt() { return maxBuyAmt; }
 	public double maxSellAmt() { return maxSellAmt; }
@@ -392,11 +388,6 @@ public class Config extends ConfigBase {
 //	public Jedis newJedis() {
 //		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
 //	}
-	
-	/** WARNING: the connection has to be closed */
-	public MyRedis newRedis() throws Exception {
-		return new MyRedis(redisHost, redisPort);
-	}
 	
 	public MySqlConnection createConnection() throws SQLException {
 		MySqlConnection conn = new MySqlConnection();

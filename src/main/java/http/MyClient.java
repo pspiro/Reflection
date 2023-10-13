@@ -72,9 +72,16 @@ public class MyClient {
 	
 	// ----- synchronous helper methods ----------------------------
 
-	/** get, returns string */ 
+	public static JsonObject getJson(String url) throws Exception {
+		return JsonObject.parse( getString(url) );
+	}
+
 	public static String getString( String url) throws Exception {
-		return create(url).query().body();
+		return getResponse(url).body();
+	}
+
+	public static HttpResponse<String> getResponse(String url) throws Exception {
+		return create(url).query();
 	}
 
 
@@ -88,10 +95,6 @@ public class MyClient {
 	/** get json object, async */
 	public static void getJson( String url, ExConsumer<JsonObject> handler) {
 		create(url).query( resp -> handler.accept( JsonObject.parse(resp.body() ) ) );
-	}
-
-	public static JsonObject getJson(String url) throws Exception {
-		return JsonObject.parse( getString(url) );
 	}
 
 	/** get json array, async */

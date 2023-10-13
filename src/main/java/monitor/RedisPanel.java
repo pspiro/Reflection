@@ -47,11 +47,11 @@ public class RedisPanel extends JsonPanel {
 	
 		void refresh() throws Exception {
 			super.refresh();
-			Set<String> keys = Monitor.m_config.newRedis().query( jedis -> jedis.keys("*") );
+			Set<String> keys = Monitor.m_redis.query( jedis -> jedis.keys("*") );
 
 			ArrayList<RedisQuery> list = new ArrayList<>();
 			
-			Monitor.m_config.newRedis().pipeline( pipe -> {
+			Monitor.m_redis.pipeline( pipe -> {
 				for (String key : keys) {
 					list.add( new RedisQuery( key, pipe.hgetAll(key) ) );  // we have to remember the key or we can't get it
 				}
