@@ -604,6 +604,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 				m_main.orderController().prepareOrder(m_order);  // reset order id
 				m_order.orderType(OrderType.MKT); // this won't work off-hours
 				m_order.flipSide();
+				m_order.orderRef(m_uid + " unwind");
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
 						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_order.totalQty() ) ); 
 			
