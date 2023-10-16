@@ -2,7 +2,6 @@ package monitor;
 
 import java.awt.Color;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -47,8 +46,8 @@ public class SouthPanel extends JPanel {
 			test( "/fbserver/ok", m_fbServer);
 			test( "/mdserver/ok", m_mdServer);
 			
-//			Map<String, String> map = Monitor.m_config.newRedis().query( jedis -> jedis.hgetAll("265598") );
-//			m_aapl.setText( String.format( "%s : %s : %s : %s", map.get("bid"), map.get("ask"), map.get("last"), map.get("time") ) ); 
+			Map<String, String> map = Monitor.m_redis.query( jedis -> jedis.hgetAll("265598") );
+			m_aapl.setText( String.format( "%s : %s : %s : %s", map.get("bid"), map.get("ask"), map.get("last"), map.get("time") ) ); 
 			
 		}
 		catch( Exception e) {

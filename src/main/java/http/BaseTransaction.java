@@ -20,6 +20,7 @@ import util.LogType;
 
 /** Base class for all classes which handle http requests */
 public abstract class BaseTransaction {
+	public static final String code = "code";
 	//static final String message = "message";
 
 	protected HttpExchange m_exchange;
@@ -44,6 +45,10 @@ public abstract class BaseTransaction {
 		String uri = exch.getRequestURI().toString().toLowerCase();
 		m_timer.next( "%s ----- %s -------------------------", m_uid, uri);
 		return uri;
+	}
+
+	public void respondOk() {
+		respond( code, RefCode.OK);
 	}
 
 	/** @param data is an array of key/value pairs, does not work with objects */  // should be made protected. pas

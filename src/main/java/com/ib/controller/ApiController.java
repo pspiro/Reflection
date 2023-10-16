@@ -2199,4 +2199,8 @@ public class ApiController implements EWrapper {
         m_userInfoHandler.userInfo(reqId, whiteBrandingId);
         recEOM();
     }
+
+	public int mdCount() {
+		return m_topMktDataMap.size();
+	}
 }

@@ -33,7 +33,6 @@ public abstract class MyTransaction extends BaseTransaction {
 	static HashMap<String,OrderTransaction> allLiveOrders = new HashMap<>();  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
-	static final String code = "code";
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
 	protected static final String Message = "message";
@@ -84,10 +83,6 @@ public abstract class MyTransaction extends BaseTransaction {
 		}
 	}
 	
-	public void respondOk() {
-		respond( code, RefCode.OK);
-	}
-
 	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas

@@ -11,15 +11,11 @@ public class MktDataConfig extends ConfigBase {
 	private int twsMdPort;  // TWS is listening on this port
 	private int twsMdClientId;
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
-	private String redisHost;
-	private int redisPort;
 	private int redisBatchTime; // in ms
 
 	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
-	public String redisHost() { return redisHost; }
-	public int redisPort() { return redisPort; }
 	public long reconnectInterval() { return reconnectInterval; }
 	public int twsMdClientId() { return twsMdClientId; }
 

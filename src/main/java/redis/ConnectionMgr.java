@@ -130,7 +130,6 @@ class ConnectionMgr implements IConnectionHandler {
 		S.out( "Show: " + string);
 	}
 
-	/** Simulate disconnect to test reconnect */
 	public void disconnect() {
 		m_controller.disconnect();
 	}

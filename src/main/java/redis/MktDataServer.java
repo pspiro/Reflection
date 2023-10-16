@@ -74,7 +74,13 @@ public class MktDataServer {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
-			server.createContext("/ok", exch -> new MdTransaction(this, exch).onOk() ); 
+			server.createContext("/ok", exch -> new MdTransaction(this, exch).onOk() );  //remove this. pas 
+			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onOk() ); 
+			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
+			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
+			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
+			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
+			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
 			server.setExecutor( Executors.newFixedThreadPool(10) );
 			server.start();
 		}
@@ -99,7 +105,7 @@ public class MktDataServer {
 		// if redis port is zero, host contains the full URI;
 		// otherwise, we use host and port
 		timer.next("Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
+		m_redis = m_config.newRedis();
 		m_redis.setName("MktDataServer");
 		m_redis.connect();  // test the connection, let it fail now
 		S.out( "  done");
@@ -157,6 +163,9 @@ public class MktDataServer {
 	/** Might need to sync this with other API calls.  */
 	private void requestPrices() throws Exception {
 		log( "Requesting prices");
+		
+		// clear out any existing prices
+		m_list.clear();
 
 		if (m_config.mode() == Mode.paper) {
 			mdController().reqMktDataType(MarketDataType.DELAYED);
@@ -271,5 +280,14 @@ public class MktDataServer {
 		catch( Exception e) {
 			log(e);
 		}
+	}
+
+	public void desubscribe() {
+		mdController().cancelAllTopMktData();
+		m_list.clear();
+	}
+
+	public void subscribe() {
+		wrap( () -> requestPrices() );
 	}
 }

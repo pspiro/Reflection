@@ -15,6 +15,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
+import redis.MyRedis;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -40,6 +41,7 @@ public class Monitor {
 
 	static Monitor m;
 	static JTextField num = new JTextField(4); // number of entries to return in query
+	static MyRedis m_redis;
 	JFrame m_frame = new JFrame();
 	NewTabbedPanel m_tabs = new NewTabbedPanel(true);
 	LogPanel m_logPanel = new LogPanel();
@@ -64,6 +66,8 @@ public class Monitor {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
 		S.out( "  done");
 
+		m_redis = Monitor.m_config.newRedis();
+		
 		PricesPanel m_pricesPanel = new PricesPanel();
 		
 
@@ -113,7 +117,7 @@ public class Monitor {
 	/** called when Refresh button is clicked */
 	void refresh() {
 		try {
-			((JsonPanel)m_tabs.current()).refresh();
+			((MonPanel)m_tabs.current()).refresh();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -185,32 +189,44 @@ public class Monitor {
 	// move to Util?
 	
 	
-	static class StatusPanel extends JPanel {
+	static class StatusPanel extends MonPanel {
 		JTextField f1 = new JTextField(7);
 		JTextField f2 = new JTextField(7);
 		JTextField f3 = new JTextField(7);
+		JTextField f4 = new JTextField(7);
+		JTextField f5 = new JTextField(7);
+		JTextField f6 = new JTextField(7);
 
 		StatusPanel() {
+			super( new BorderLayout() );
+			
 			VerticalPanel p = new VerticalPanel();
 			p.add( "RefAPI", f1);
 			p.add( "TWS", f2);
 			p.add( "IB", f3);
-			
-//			VerticalPanel a = new VerticalPanel();
-//			a.add(p);
+			p.add( Box.createVerticalStrut(10) );
+			p.add( "MktData", f4);
+			p.add( "TWS", f5);
+			p.add( "IB", f6);
 			
 			add( p);
 		}
 		
-//		@Override public void refresh() throws Exception {
-//			long now = System.currentTimeMillis();
-//
-//			MyClient.getJson( Monitor.base + "/api/status", json -> {
-//				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-//				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
-//				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
-//			});
-//		}
+		@Override public void refresh() throws Exception {
+			long now = System.currentTimeMillis();
+
+			MyClient.getJson( Monitor.base + "/api/status", json -> {
+				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
+				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
+			});
+
+			MyClient.getJson( Monitor.base + "/mdserver/ok", json -> {
+				f4.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+				f5.setText( json.getBool("TWS") ? "OK" : "ERROR" );
+				f6.setText( json.getBool("IB") ? "OK" : "ERROR" );
+			});
+		}
 	}
 	
 	static class MonPanel extends JPanel implements INewTab {

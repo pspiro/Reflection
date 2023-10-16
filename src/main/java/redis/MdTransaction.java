@@ -9,9 +9,10 @@ import http.BaseTransaction;
 import util.LogType;
 
 public class MdTransaction extends BaseTransaction {
-	// copy
-//	wrap( () -> {
-//	});
+	/*
+	wrap( () -> {
+	});
+*/
 
 	private MktDataServer m_main;
 	
@@ -25,12 +26,35 @@ public class MdTransaction extends BaseTransaction {
 			JsonObject obj = Util.toJson(
 					"code", "OK",
 					"TWS", m_main.m_mdConnMgr.isConnected(),
-					"IB", m_main.m_mdConnMgr.ibConnection() );
+					"IB", m_main.m_mdConnMgr.ibConnection(),
+					"mdCount", m_main.mdController().mdCount() 
+					);
 			respond( obj);
 		});
 	}
 
 	@Override protected void jlog(LogType type, JsonObject json) {
 		super.jlog(type, json);
+	}
+
+	public void onDesubscribe() {
+		wrap( () -> {
+			m_main.desubscribe();
+			respondOk();
+		});
+	}
+
+	public void onSubscribe() {
+		wrap( () -> {
+			m_main.subscribe();
+			respondOk();
+		});
+	}
+
+	public void onDisconnect() {
+		wrap( () -> {
+			m_main.mdConnMgr().disconnect();
+			respondOk();
+		});
 	}
 }
