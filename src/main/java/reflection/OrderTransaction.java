@@ -440,6 +440,19 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			onFireblocksSuccess();
 		}
 		else if (stat.pct() == 100) {
+			// write to log file (don't throw, informational only)
+			wrap( () -> {
+				// this is not good, I think it sends the wallet query several time unnecessarily. pas
+				// this is not ideal because it will query the balances again which we just queried
+				// above when trying to determine why the order failed; should be rare, though
+				olog( LogType.BLOCKCHAIN_FAILED, 
+						"desired", m_desiredQuantity,
+						"approved", Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
+						"USDC", Main.m_config.busd().getPosition(m_walletAddr),
+						"RUSD", Main.m_config.rusd().getPosition(m_walletAddr),
+						"stockToken", newStockToken().getPosition( m_walletAddr) );
+			});
+
 			try {
 				// the blockchain transaction has failed; try to determine why
 
@@ -458,24 +471,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			catch( Exception e) {
 				e.printStackTrace();  // not good, it means there was an exception when trying to determin why the blockchain transaction failed
 				onFail( e.getMessage(), null);
-			}
-
-			// write to log file (don't throw, informational only)
-			// this is second log entry for the failed order (see onFail() )
-			try {
-				// this is not good, I think it sends the wallet query several time unnecessarily. pas
-				
-				// this is not ideal because it will query the balances again which we just queried
-				// above when trying to determine why the order failed; should be rare, though
-				olog( LogType.BLOCKCHAIN_FAILED, 
-						"desired", m_desiredQuantity,
-						"approved", Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
-						"USDC", Main.m_config.busd().getPosition(m_walletAddr),
-						"RUSD", Main.m_config.rusd().getPosition(m_walletAddr),
-						"stockToken", newStockToken().getPosition( m_walletAddr) );
-			}
-			catch( Exception e) {
-				e.printStackTrace();
 			}
 		}
 		else {

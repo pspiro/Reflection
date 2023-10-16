@@ -43,7 +43,7 @@ public class JsonPanel extends MonPanel implements INewTab {
 	public class JsonModel extends MyTableModel {
 		final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
 		JsonArray m_ar = new JsonArray();  // can get replaces
-		private final String[] m_colNames;
+		protected final String[] m_colNames;
 		private String m_justify = "";
 		private boolean m_filtered;
 

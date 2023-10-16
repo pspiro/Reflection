@@ -53,6 +53,7 @@ public class Main implements ITradeReportHandler {
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
+	static long m_started; // timestamp that app was started
 
 	// member vars
 	private MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
@@ -65,6 +66,7 @@ public class Main implements ITradeReportHandler {
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
+
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
 
@@ -92,6 +94,7 @@ public class Main implements ITradeReportHandler {
 
 	public Main(String tabName) throws Exception {
 		m_tabName = tabName;
+		m_started = System.currentTimeMillis();
 		
 		MyTimer timer = new MyTimer();
 
