@@ -388,7 +388,7 @@ public class BackendTransaction extends MyTransaction {
 	public void handleUpdateProfile() {
 		wrap( () -> {
             Profile profile = new Profile( parseToObject() );
-			
+			profile.trim(); // trim spaces since this data was entered by the user
 			profile.validate();
 			
 			String wallet = profile.wallet();

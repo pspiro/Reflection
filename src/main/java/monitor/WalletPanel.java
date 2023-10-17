@@ -23,7 +23,6 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_usdc = new JLabel(); 
 	private final JLabel m_approved = new JLabel(); 
 	private final JLabel m_matic = new JLabel(); 
-	private final Model m_model = new Model();
 	
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
@@ -50,6 +49,10 @@ public class WalletPanel extends JsonPanel {
 		add( m_model.createTable() );
 	}
 	
+	@Override JsonModel createModel(String allNames) {
+		return new Model(allNames);
+	}
+	
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 		
@@ -67,10 +70,10 @@ public class WalletPanel extends JsonPanel {
 	}
 	
 	class Model extends JsonModel {
-		Model() {
-			super("Symbol,Balance");
+		public Model(String allNames) {
+			super(allNames);
 		}
-	
+
 		void refresh() throws Exception {
 			super.refresh();
 			m_ar.clear();

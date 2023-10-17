@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.Executors;
 
+import org.json.simple.JsonArray;
+
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;
 import com.ib.client.TickAttrib;
@@ -82,8 +84,7 @@ public class MktDataServer {
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
-			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
-			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
+			server.createContext("/mdserver/getPrices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
 			server.setExecutor( Executors.newFixedThreadPool(10) );
 			server.start();
 		}
@@ -292,5 +293,14 @@ public class MktDataServer {
 
 	public void subscribe() {
 		wrap( () -> requestPrices() );
+	}
+
+	/** Used by Monitor */
+	public JsonArray getAllPrices() {
+		JsonArray ret = new JsonArray();
+		for (DualPrices prices : m_list) {
+			prices.addPricesTo( ret);
+		}
+		return ret;
 	}
 }

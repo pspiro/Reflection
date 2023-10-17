@@ -76,6 +76,12 @@ public class MyClient {
 		return JsonObject.parse( getString(url) );
 	}
 
+	/** get json array 
+	 * @throws Exception */
+	public static JsonArray getArray( String url) throws Exception {
+		return JsonArray.parse( getString(url) );
+	}
+
 	public static String getString( String url) throws Exception {
 		return getResponse(url).body();
 	}

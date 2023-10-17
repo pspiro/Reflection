@@ -57,7 +57,7 @@ public class RedisPanel extends JsonPanel {
 				}
 			});
 			
-			JsonArray ar = new JsonArray();
+			JsonArray ar = new JsonArray(); // build array of rows here
 			
 			list.forEach( query -> {
 				JsonObject obj = new JsonObject();

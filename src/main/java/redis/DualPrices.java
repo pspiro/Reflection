@@ -1,5 +1,9 @@
 package redis;
 
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
+import common.Util;
 import redis.MktDataServer.MyTickType;
 import redis.clients.jedis.Pipeline;
 import reflection.Stock;
@@ -10,7 +14,7 @@ class DualPrices {
 	private Stock m_stock;
 	private Prices m_smart;
 	private Prices m_ibeos;
-	private Session m_was;
+	private Session m_was;   // prevSession would be a better name
 
 	DualPrices( Stock stock) {
 		m_stock = stock;
@@ -38,6 +42,7 @@ class DualPrices {
 		prices.tick( tickType, price, lastExchange);
 	}
 
+	// generally, we force-send if the session type has changed
 	public void send(Pipeline pipeline, Session inside) {
 		if (inside == Session.Smart) {
 			m_smart.send( pipeline, m_was != Session.Smart);
@@ -61,7 +66,9 @@ class DualPrices {
 		private double m_bid;
 		private double m_ask;
 		private double m_last;
-		private long m_time;
+		private long m_bidTime;
+		private long m_askTime;
+		private long m_lastTime;
 		private boolean m_changed;
 		private String m_conid;
 		private String m_from;
@@ -74,13 +81,15 @@ class DualPrices {
 			switch( tickType) {
 				case Bid:
 					m_bid = price;
+					m_bidTime = System.currentTimeMillis();
 					break;
 				case Ask:
 					m_ask = price;
+					m_askTime = System.currentTimeMillis();
 					break;
 				case Last:
 					m_last = price;
-					m_time = System.currentTimeMillis();
+					m_lastTime = System.currentTimeMillis();
 					break;
 			}
 			m_changed = true;
@@ -93,7 +102,7 @@ class DualPrices {
 				pipeline.hset( m_conid, "bid", String.valueOf( m_bid) );  // for -1 you should delete or you can wait for this to happen when it changes session
 				pipeline.hset( m_conid, "ask", String.valueOf( m_ask) ); 
 				pipeline.hset( m_conid, "last", String.valueOf( m_last) ); 
-				pipeline.hset( m_conid, "time", String.valueOf( m_time) );
+				pipeline.hset( m_conid, "time", String.valueOf( m_lastTime) );
 				if (S.isNotNull( m_from) ) {
 					pipeline.hset( m_conid, "from", m_from);
 				}
@@ -105,5 +114,31 @@ class DualPrices {
 			pipeline.hdel( m_conid, "bid");
 			pipeline.hdel( m_conid, "ask");
 		}
-	}	
+
+		public JsonObject getJsonPrices() {
+			return Util.toJson(
+					"bid", m_bid, 
+					"ask", m_ask,
+					"last", m_last,
+					"bid time", m_bidTime,
+					"ask time", m_askTime,
+					"last time", m_lastTime
+					);
+		}
+	}
+
+	/** Return all prices; used by Monitor */
+	public void addPricesTo(JsonArray ret) {
+		addPricesTo( ret, m_smart, "smart");
+		addPricesTo( ret, m_ibeos, "overnight");
+	}
+
+	/** Return one set of prices (smart or ibeos) */
+	private void addPricesTo( JsonArray ret, Prices prices, String from) {
+		JsonObject stockPrices = new JsonObject();
+		stockPrices.putAll( m_stock);
+		stockPrices.putAll( prices.getJsonPrices() );
+		stockPrices.put( "from", from);
+		ret.add( stockPrices);
+	}
 }

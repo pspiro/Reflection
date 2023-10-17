@@ -473,7 +473,7 @@ public class Util {
 
 	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");
 	public static String fmtTime(long t) {
-		return fmt.format( new Date(t) );
+		return t == 0 ? "" : fmt.format( new Date(t) );
 	}
 
 	/** Must be in format of a@b.c */
