@@ -331,7 +331,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		long v = getLong(key);
 		return v == 0 ? "" : fmt.format(v);
 	}
-	
+
+	/** Trim all string values */
+	public JsonObject trim() {
+		entrySet().forEach( entry -> {
+			if (entry.getValue() instanceof String) {
+				entry.setValue( entry.getValue().toString().trim() );
+			}
+		});
+		return this;
+	}
 }
 /** NOTE: Timestamp objects are stored as
  *  
