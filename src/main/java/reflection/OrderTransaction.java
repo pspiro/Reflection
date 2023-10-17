@@ -134,7 +134,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		m_order.transmit( true);
 		m_order.outsideRth( true);
 		m_order.orderRef(m_uid);
-		m_main.orderController().prepareOrder( m_order); // set order id
 		
 		// check TDS calculation
 		m_tds = m_map.getDoubleParam("tds");
@@ -243,7 +242,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 	 *  only shrinkWrap()  */
 	private void submitOrder( Contract contract) throws Exception {		
 		// place order for rounded quantity
-		m_main.orderController().placeOrModifyOrder(contract, m_order, this);
+		m_main.orderController().placeOrder(contract, m_order, this);
 
 		jlog( LogType.SUBMITTED_TO_IB, m_order.getJsonLog(contract) );
 
@@ -299,10 +298,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			}
 
 			// order rejected, never sent to exchange; could be not enough liquidity
-			if (errorCode == 201) {
+			if (errorCode == 201 || errorCode == 103) {  // 103 = dup order id
 				m_ibOrderCompleted = true;
 				throw new RefException( RefCode.REJECTED, errorMsg);
 			}
+			
+			// add other fatal errors here as we see them; maybe some errors are non-fatal
 		});
 	}
 	
@@ -492,6 +493,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			jlog( LogType.ORDER_COMPLETED, null);
 			m_main.queueSql( sql -> sql.execWithParams( 
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
+
+			// send alert, but not when testing, and don't throw an exception, it's just reporting
+			if (!m_map.getBool("testcase")) {
+				alert( "ORDER COMPLETED", getCompletedOrderText() );
+			}
 		}
 	}
 
@@ -504,8 +510,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			// create log entry and update transactions table
 			olog( LogType.ORDER_FAILED, Message, errorText, "code", errorCode);
 			
-			m_main.queueSql( sql -> sql.execWithParams( 
-					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.FAILED, m_uid) );
+			// update order with final status and any fields that were not available when
+			// record was inserted
+			m_main.queueSql( sql -> sql.execWithParams(	""" 
+					update transactions
+					set status = '%s', order_id=%s, perm_id=%s 
+					where uid = '%s'
+					""",
+					FireblocksStatus.FAILED, m_order.orderId(), m_order.permId(), m_uid) );
 		
 			// unwind PositionTracker and IB order first and foremost
 			unwindOrder();
@@ -521,13 +533,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		}
 	}	
 
-	/** Insert into transaction table; called when the IB order is submitted */
+	/** Insert into transaction table; called when the IB order is submitted;
+	 *  note that order id and perm id are not available yet */
 	private void insertTransaction() {
 		try {
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
-			obj.put("order_id", m_order.orderId() );  // ties the order to the trades
-			obj.put("perm_id", m_order.permId() );    // have to make sure this is set. pas
 			obj.put("wallet_public_key", m_walletAddr);
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_order.totalQty());
@@ -601,7 +612,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 				contract.conid( conid);
 				contract.exchange( m_main.getExchange( contract.conid() ) );
 			
-				m_main.orderController().prepareOrder(m_order);  // reset order id
 				m_order.orderType(OrderType.MKT); // this won't work off-hours
 				m_order.flipSide();
 				m_order.orderRef(m_uid + " unwind");
@@ -609,7 +619,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_order.totalQty() ) ); 
 			
 				if (m_order.roundedQty() > 0 && !m_config.autoFill() ) {
-					m_main.orderController().placeOrModifyOrder(contract, m_order, null);
+					m_main.orderController().placeOrder(contract, m_order, null);
 				}
 			}
 		}

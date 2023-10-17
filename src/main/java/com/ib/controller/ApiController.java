@@ -943,27 +943,22 @@ public class ApiController implements EWrapper {
         void handle(int errorCode, String errorMsg);
     }
 
-	public void prepareOrder(Order order) throws Exception {
-		order.orderId( nextOrderId() );
-		order.permId(0);
-	}
-	
-	public void placeOrModifyOrder(Contract contract, final Order order, final IOrderHandler handler) throws Exception {
+	/** This method must be synchronized because we cannot allow orders to get placed out of order
+	 * or you receive dup order id error. This also assumes there is only one ApiController.
+	 * It also means that the order id is not available until after the order is placed */ 
+	public synchronized void placeOrder(Contract contract, final Order order, final IOrderHandler handler) throws Exception {
 		if (!checkConnection())
 			return;
 
-		Util.require( order.orderId() != 0, "Prepare order first");
+		order.orderId( m_orderId++);  // must be in the same sync block as placeOrder()
+		order.permId(0);
 		
 		if (handler != null) {
 			m_orderHandlers.put( order.orderId(), handler);
 		}
-		
-		m_client.placeOrder( contract, order);
-		sendEOM();
-	}
 
-    private int nextOrderId() {
-    	return m_orderId++;
+		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
+		sendEOM();
 	}
 
 	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
