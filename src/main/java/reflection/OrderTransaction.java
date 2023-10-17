@@ -648,7 +648,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			elog( LogType.EXCEPTION, e);
 			onFail(e.getMessage(), e.code() );
 		}
-		catch( Exception e) {
+		catch( Throwable e) {
 			e.printStackTrace();
 			elog( LogType.EXCEPTION, e);
 			onFail(e.getMessage(), null);

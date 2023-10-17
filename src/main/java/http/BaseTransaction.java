@@ -141,7 +141,7 @@ public abstract class BaseTransaction {
 			}
 			postWrap();
 		}
-		catch( Exception e) {
+		catch( Throwable e) {
 			e.printStackTrace();
 			elog( LogType.EXCEPTION, e);
 			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
@@ -166,7 +166,7 @@ public abstract class BaseTransaction {
 		jlog( type, Util.toJson(ar) );
 	}
 	
-	protected void elog(LogType type, Exception e) {
+	protected void elog(LogType type, Throwable e) {
 		jlog(type, RefException.eToJson(e) );
 	}
 
