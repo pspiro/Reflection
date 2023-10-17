@@ -209,6 +209,8 @@ public class Monitor {
 		JTextField f4 = new JTextField(7);
 		JTextField f5 = new JTextField(7);
 		JTextField f6 = new JTextField(7);
+		JTextField f7 = new JTextField(7);
+		JTextField f8 = new JTextField(7);
 
 		StatusPanel() {
 			super( new BorderLayout() );
@@ -217,10 +219,12 @@ public class Monitor {
 			p.add( "RefAPI", f1);
 			p.add( "TWS", f2);
 			p.add( "IB", f3);
+			p.add( "Started", f4);
 			p.add( Box.createVerticalStrut(10) );
-			p.add( "MktData", f4);
-			p.add( "TWS", f5);
-			p.add( "IB", f6);
+			p.add( "MktData", f5);
+			p.add( "TWS", f6);
+			p.add( "IB", f7);
+			p.add( "Started", f8);
 			
 			add( p);
 		}
@@ -232,12 +236,14 @@ public class Monitor {
 				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
+				f4.setText( json.getTime("started", Util.yToS) );
 			});
 
 			MyClient.getJson( Monitor.base + "/mdserver/ok", json -> {
-				f4.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-				f5.setText( json.getBool("TWS") ? "OK" : "ERROR" );
-				f6.setText( json.getBool("IB") ? "OK" : "ERROR" );
+				f5.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+				f6.setText( json.getBool("TWS") ? "OK" : "ERROR" );
+				f7.setText( json.getBool("IB") ? "OK" : "ERROR" );
+				f8.setText( json.getTime("started", Util.yToS) );
 			});
 		}
 	}

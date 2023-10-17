@@ -21,13 +21,14 @@ public class MdTransaction extends BaseTransaction {
 		m_main = main;
 	}
 	
-	public void onOk() {
+	public void onStatus() {
 		wrap( () -> {
 			JsonObject obj = Util.toJson(
 					"code", "OK",
 					"TWS", m_main.m_mdConnMgr.isConnected(),
 					"IB", m_main.m_mdConnMgr.ibConnection(),
-					"mdCount", m_main.mdController().mdCount() 
+					"mdCount", m_main.mdController().mdCount(),
+					"started", m_main.m_started
 					);
 			respond( obj);
 		});

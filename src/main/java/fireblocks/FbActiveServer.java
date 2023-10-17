@@ -24,6 +24,7 @@ public class FbActiveServer {
 	static Accounts accounts = Accounts.instance;
 	static HashMap<String,Trans> m_map = new HashMap<>();
 	private static boolean m_dots = true;
+	static long m_started; // timestamp that app was started
 	
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
@@ -52,6 +53,7 @@ public class FbActiveServer {
 	
 	public static void run(String tab) throws Exception {
 		S.out( "Starting FbActiveServer");
+		m_started = System.currentTimeMillis();
 
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);

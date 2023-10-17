@@ -85,6 +85,10 @@ public class QueryPanel extends JsonPanel {
 			
 			m_ar = Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) );
 			m_ar.forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
+			
+			if (m_colNames[0].equals("created_at") ) {
+				m_ar.forEach( row -> row.update("created_at", date -> Util.left(date.toString(), 22) ) );
+			}
 			onHeaderClicked(0);
 			S.out( "Refreshed query model to %s", m_ar.size() ); 
 		}

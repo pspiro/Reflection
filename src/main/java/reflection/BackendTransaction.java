@@ -442,7 +442,9 @@ public class BackendTransaction extends MyTransaction {
 			respond( Util.toJson( 
 					code, RefCode.OK,
 					"TWS", m_main.orderConnMgr().isConnected(),
-					"IB", m_main.orderConnMgr().ibConnection() ) );
+					"IB", m_main.orderConnMgr().ibConnection(),
+					"started", m_main.m_started
+					) );
 		});
 	}
 

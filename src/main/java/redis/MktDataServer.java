@@ -38,6 +38,7 @@ public class MktDataServer {
 
 	public static final String Overnight = "OVERNIGHT"; 
 	static boolean m_debug = false;
+	static long m_started;  // timestamp that process was started
 
 	
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
@@ -63,6 +64,8 @@ public class MktDataServer {
 
 
 	private MktDataServer(String[] args) throws Exception {
+		m_started = System.currentTimeMillis();
+
 		String tabName = args[0];
 		
 		// create log file folder and open log file
@@ -76,8 +79,8 @@ public class MktDataServer {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
-			server.createContext("/ok", exch -> new MdTransaction(this, exch).onOk() );  //remove this. pas 
-			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onOk() ); 
+			server.createContext("/ok", exch -> new MdTransaction(this, exch).onStatus() );  //remove this. pas 
+			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 

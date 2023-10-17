@@ -29,7 +29,7 @@ public class TestMany {
 	};
 	
 	int index = 0;
-	static int count = 1;
+	static int count = 10;
 	
 	public static void main(String[] args) throws Throwable {
 		//seed();

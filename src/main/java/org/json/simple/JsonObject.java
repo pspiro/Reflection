@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -324,6 +325,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	@Override public int compareTo(JsonObject o) {
 		return toString().compareTo(o.toString() );
+	}
+
+	public String getTime(String key, SimpleDateFormat fmt) {
+		long v = getLong(key);
+		return v == 0 ? "" : fmt.format(v);
 	}
 	
 }
