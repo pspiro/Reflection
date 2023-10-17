@@ -2,6 +2,8 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -21,17 +23,17 @@ import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
+import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
 import tw.util.VerticalPanel;
-import tw.util.NewTabbedPanel.INewTab;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String base = "https://reflection.trading";
-	//static final String base = "http://localhost:8383";
+	//static final String base = "https://reflection.trading";
+	static final String base = "http://localhost:6999";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -82,6 +84,13 @@ public class Monitor {
 		butPanel.add(num);
 		
 		num.setText("40");
+
+		// disconnect redis when application is terminated
+		m_frame.addWindowListener( new WindowAdapter() {
+			public void windowClosed(WindowEvent e) {
+				m_redis.disconnect();
+			}
+		});
 		
 		m_tabs.addTab( "Home", new MonPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
@@ -93,7 +102,8 @@ public class Monitor {
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Tokens", new TokensPanel() );
-		m_tabs.addTab( "Prices", m_pricesPanel);
+		m_tabs.addTab( "REF Prices", m_pricesPanel);
+		m_tabs.addTab( "MDS Prices", new MdsPricesPanel() );
 		m_tabs.addTab( "Redis", new RedisPanel() );
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
@@ -107,7 +117,10 @@ public class Monitor {
 		m_frame.setSize( 1000, 800);
 		m_frame.setVisible(true);
 		
+		
 		m_pricesPanel.initialize();
+		
+
 	}
 	
 	static int num() {

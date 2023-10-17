@@ -57,4 +57,10 @@ public class MdTransaction extends BaseTransaction {
 			respondOk();
 		});
 	}
+
+	public void onGetPrices() {
+		wrap( () -> {
+			respond( m_main.getAllPrices() );
+		});
+	}
 }

@@ -497,6 +497,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			jlog( LogType.ORDER_COMPLETED, null);
 			m_main.queueSql( sql -> sql.execWithParams( 
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
+			// not for test orders alert( "Order Filled", getCompletedOrderText() );
 		}
 	}
 
