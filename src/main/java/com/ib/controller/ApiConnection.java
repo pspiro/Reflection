@@ -80,6 +80,6 @@ public class ApiConnection extends EClientSocket {
             return;
 		}
 
-	    placeOrder(contract, order);
+	    placeOrder(order.orderId(), contract, order);
 	} 
 }

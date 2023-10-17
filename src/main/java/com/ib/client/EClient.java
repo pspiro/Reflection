@@ -1377,14 +1377,12 @@ public abstract class EClient {
         }
     }
 
-    public synchronized void placeOrder( Contract contract, Order order) {
+    public synchronized void placeOrder( int id, Contract contract, Order order) {
         // not connected?
         if( !isConnected()) {
             notConnected();
             return;
         }
-        
-        int id = order.orderId();
         
         if (m_serverVersion < MIN_SERVER_VER_SCALE_ORDERS) {
         	if (order.scaleInitLevelSize() != Integer.MAX_VALUE ||
