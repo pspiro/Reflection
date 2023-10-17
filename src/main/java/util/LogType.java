@@ -10,6 +10,7 @@ public enum LogType {
 	ERROR,				// should never happen
 	EXCEPTION,			// error caught in wrap() or shrinkWrap(); check the RefCode
 	FB_UPDATE,			// fireblocks update
+	IB_ORDER_STATUS,	// received IB order status
 	JEDIS,				// Jedis error
 	MDS,				// used only by MktDataServer
 	NO_STOCK_ORDER,		// there is no IB order because the order size is so small
@@ -17,7 +18,6 @@ public enum LogType {
 	ORDER_ERR,			// we received an error msg from TWS for this order
 	ORDER_FAILED,		// IB or blockchain failed
 	ORDER_FILLED,		// IB order was completely or partially filled
-	IB_ORDER_STATUS,	// received IB order status
 	ORDER_STATUS_UPDATED,
 	ORDER_TIMEOUT,		// our timeout occurred before the IB IOC timeout
 	REC_ORDER,			// received order (roundedQty has not been set yet)
@@ -26,12 +26,12 @@ public enum LogType {
 	RESPOND_ORDER,		// responding OK to Frontend
 	RESTART,			// application was restarted
 	SHUTDOWN,			// received shutdown message from unix kill command
+	SOCKET_ERROR,		// during quick-response
 	SUBMITTED_TO_FIREBLOCKS, 
 	SUBMITTED_TO_IB,	// order submitted to IB
 	TRADE,				// trade report received
+	TRADING_HOURS_ERROR,
 	TWS_CONNECTION,		// gained/lost connection to TWS
 	UNWIND_ERROR,		// error while unwinding an order
-	SOCKET_ERROR,		// during quick-response
-	TRADING_HOURS_ERROR,
 	
 }
