@@ -159,37 +159,40 @@ public class TestSiwe extends MyTestCase {
 	}
 	
 	public void testFailTimeout() throws Exception {
-		// send siwe/init
-		cli().get("/siwe/init");
-		assert200();
-		String nonce = cli.readJsonObject().getString("nonce");
-		assertEquals( 20, nonce.length() );
+		modifySetting( "sessionTimeout", "2000", () -> {
+			
+			// send siwe/init
+			cli().get("/siwe/init");
+			assert200();
+			String nonce = cli.readJsonObject().getString("nonce");
+			assertEquals( 20, nonce.length() );
+	
+			// create siwe message
+			SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
+			JsonObject signedMsgSent = new JsonObject();
+			signedMsgSent.put( "signature", signature);
+			signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+	
+			// send siwe/signin
+			cli().post("/siwe/signin", signedMsgSent.toString() );
+			assert200();
+			String cookie = cli.getHeaders().get("set-cookie");
+			
+			S.sleep(1000);
 
-		// create siwe message
-		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
-		JsonObject signedMsgSent = new JsonObject();
-		signedMsgSent.put( "signature", signature);
-		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
-
-		// send siwe/signin
-		cli = cli();
-		cli.post("/siwe/signin", signedMsgSent.toString() );
-		assert200();
-		String cookie = cli.getHeaders().get("set-cookie");
-		
-		// send siwe/me
-		cli = cli();
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		assert200();
-
-		S.sleep(3000);
-		
-		// fail siwe/me
-		cli = cli();
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		S.out( cli.readJsonObject() );
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( false, cli.readJsonObject().getBool("loggedIn") ); 
+			// send siwe/me
+			cli().addHeader("Cookie", cookie).get("/siwe/me");
+			assert200();
+	
+			S.sleep(2500);
+			
+			// fail siwe/me
+			cli().addHeader("Cookie", cookie).get("/siwe/me");
+			S.out( cli.readJsonObject() );
+			assertEquals( 400, cli.getResponseCode() );
+			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
+			assertEquals( false, cli.readJsonObject().getBool("loggedIn") );
+		});
 	}
 	
 	public void testSiweSignout() throws Exception {

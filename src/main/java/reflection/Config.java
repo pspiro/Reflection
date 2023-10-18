@@ -461,4 +461,14 @@ public class Config extends ConfigBase {
 	public void sendEmail(String to, String subject, String text) {
 		Util.wrap( () -> Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text) );
 	}
+	
+	/** Used by test cases */
+	public String getSetting(String key) {
+		return m_tab.get(key);
+	}
+	
+	/** Used by test cases */
+	public void setSetting(String key, String val) {
+		m_tab.put(key, val);
+	}
 }

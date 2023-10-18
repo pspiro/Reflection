@@ -627,17 +627,14 @@ public class Main implements ITradeReportHandler {
 				try {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
-					int count = 0;
 					//S.sleep(DB_PAUSE);  // you could sleep a little to try to batch more entries, but connecting takes 200ms anyway
 					
 					// then connect and process as many as possible
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						while (com != null) {
 							com.run( conn);
-							count++;
 							com = next();
 						}
-						S.out( "  TBD DbQueue batched %s queries", count);
 					}
 				}
 				catch( Exception e) {
