@@ -1,8 +1,6 @@
 package fireblocks;
 
 import java.math.BigInteger;
-import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.util.Random;
 
@@ -11,7 +9,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import common.Util.ObjectHolder;
 import http.MyClient;
 import positions.Wallet;
 import reflection.Main;

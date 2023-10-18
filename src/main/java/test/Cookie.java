@@ -1,6 +1,5 @@
 package test;
 
-import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 
 import org.json.simple.JsonObject;

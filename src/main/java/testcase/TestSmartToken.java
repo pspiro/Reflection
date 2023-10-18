@@ -1,8 +1,6 @@
 package testcase;
 
 import fireblocks.Accounts;
-import fireblocks.Fireblocks;
-import fireblocks.RetVal;
 import fireblocks.StockToken;
 
 /** You only need to run this once after tokens are deployed */

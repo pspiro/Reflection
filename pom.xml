@@ -163,6 +163,12 @@
 			<version>3.141.59</version>
 		</dependency-->
   
+		<dependency>
+		    <groupId>com.sun.mail</groupId>
+		    <artifactId>javax.mail</artifactId>
+		    <version>1.6.2</version>
+		</dependency>
+  
   	</dependencies>
 	
 	<!-- you can use this for dependency management, they you don't need to add the version

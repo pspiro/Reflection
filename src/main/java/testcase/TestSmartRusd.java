@@ -1,8 +1,8 @@
 package testcase;
 
 import static fireblocks.Accounts.instance;
+
 import fireblocks.Fireblocks;
-import fireblocks.RetVal;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 

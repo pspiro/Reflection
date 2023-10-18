@@ -27,7 +27,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
-import http.MyHttpClient;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -142,7 +141,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
 		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
-		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
+		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );

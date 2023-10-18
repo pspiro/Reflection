@@ -4,8 +4,6 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -18,7 +16,6 @@ import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
 import redis.ConfigBase;
-import redis.MyRedis;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import tw.google.GTable;
@@ -72,6 +69,8 @@ public class Config extends ConfigBase {
 	private String fbAdmins;
 	private Allow allowTrading = Allow.All;  // won't be returned in getConfig message
 	private boolean allowRedemptions;
+	private String m_emailUsername;
+	private String m_emailPassword;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -85,6 +84,7 @@ public class Config extends ConfigBase {
 	private int busdDecimals;
 	private int fbServerPort;
 	private int fbPollIingInterval;
+
 	
 	public Allow allowTrading() { return allowTrading; }
 	
@@ -187,7 +187,8 @@ public class Config extends ConfigBase {
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
 		this.allowRedemptions = m_tab.getBoolean("allowRedemptions");
 		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("non_kyc_max_order_size");
-		
+		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
+		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -456,5 +457,8 @@ public class Config extends ConfigBase {
 		return minOrderSize;
 	}
 
-
+	/** don't throw an exception; it's usually not critical */
+	public void sendEmail(String to, String subject, String text) {
+		Util.wrap( () -> Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text) );
+	}
 }

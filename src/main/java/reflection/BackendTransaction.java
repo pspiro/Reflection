@@ -23,8 +23,6 @@ import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
-import tw.google.Auth;
-import tw.google.TwMail;
 import tw.util.S;
 import util.LogType;
 
@@ -371,16 +369,12 @@ public class BackendTransaction extends MyTransaction {
 			String code = Util.uin(5);
 			out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);
 			
-			mapWalletToCode.put( wallet, code); // save code 
+			mapWalletToCode.put( wallet, code); // save code
 			
-			TwMail mail = Auth.auth().getMail();
-			mail.send(
-					"Reflection", 
-					"josh@reflection.trading", 
+			Main.m_config.sendEmail(
 					email,
 					"Reflection Verification Code",
-					"Your Reflection Verification code is: " + code,
-					"plain");
+					"Your Reflection Verification code is: " + code);
 			
 			respondOk();
 		});

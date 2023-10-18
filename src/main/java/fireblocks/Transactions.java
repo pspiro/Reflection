@@ -3,7 +3,6 @@ package fireblocks;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import fireblocks.FbActiveServer.Trans;
 import reflection.Config;
 import tw.util.S;
 

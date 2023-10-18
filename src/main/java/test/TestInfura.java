@@ -2,8 +2,6 @@ package test;
 
 import static java.lang.String.format;
 
-import java.net.http.HttpRequest.Builder;
-
 import org.json.simple.JsonObject;
 
 import http.MyClient;
