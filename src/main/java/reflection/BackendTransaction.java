@@ -357,6 +357,7 @@ public class BackendTransaction extends MyTransaction {
 
 	static HashMap<String,String> mapWalletToCode = new HashMap<>();
 	
+	/** Send an email with a code to the user; they will enter the code on the profile screen */
 	public void validateEmail() {
 		wrap( () -> {
             JsonObject data = parseToObject();
@@ -375,7 +376,7 @@ public class BackendTransaction extends MyTransaction {
 			TwMail mail = Auth.auth().getMail();
 			mail.send(
 					"Reflection", 
-					"peteraspiro@gmail.com", 
+					"josh@reflection.trading", 
 					email,
 					"Reflection Verification Code",
 					"Your Reflection Verification code is: " + code,
