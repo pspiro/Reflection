@@ -139,12 +139,7 @@ public class Util {
 	
 	
 	public static void main(String[] args) throws Exception {
-		JsonObject f1 = Util.toJson( "a", "b");
-		
-		S.out( Util.toJson(
-				"uid", 123,
-				"type", LogType.ADMIN_READ,
-				"data", f1) );
+		S.out( isValidEmail("ha.boritz@gmail.com") );
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -489,7 +484,7 @@ public class Util {
 	/** Must be in format of a@b.c */
 	public static boolean isValidEmail(String email) {
 		int i = email.indexOf("@");
-		return i >= 1 && email.indexOf(".") > i + 1 && email.length() >= 5;
+		return i >= 1 && email.lastIndexOf(".") > i + 1 && email.length() >= 5;
 	}
 	
 	/** My version of forEach that propogates up an exception */ 
