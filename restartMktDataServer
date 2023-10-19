@@ -1,2 +1,1 @@
-#!/bin/bash
-java -cp target/Reflection-0.0.2-jar-with-dependencies.jar redis.MktDataServer Md-config&
+sudo systemctl restart mktdataserver
