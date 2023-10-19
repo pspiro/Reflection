@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import http.MyHttpClient;
 import junit.framework.TestCase;
@@ -90,6 +91,25 @@ public class MyTestCase extends TestCase {
 		assertTrue( 
 				String.format( "Got %s which was not expected", notExpected),
 				!notExpected.equals(actual) );
+	}
+	
+	/** Modify a config setting, refresh RefAPI, run some code, restore the setting */
+	void modifySetting(String key, String val, ExRunnable run) throws Exception {
+		String saved = m_config.getSetting(key);
+		try {
+			m_config.setSetting(key, val);
+			cli().get("/api/?msg=refreshConfig").readString();
+			assert200();
+			S.out( "Modified config setting '%s' to '%s'", key, val);
+			
+			run.run();
+		}
+		finally {
+			m_config.setSetting(key, saved);
+			cli().get("/api/?msg=refreshConfig").readString();
+			assert200();
+			S.out( "Restored config setting '%s' to '%s'", key, saved);
+		}
 	}
 	
 }
