@@ -474,7 +474,9 @@ public class Main implements ITradeReportHandler {
 
 		// insert trade into trades and log tables
 		queueSql( conn -> conn.insertJson( "trades", obj) );
-		jlog( LogType.TRADE, exec.orderRef(), null, obj);
+		jlog( LogType.TRADE, 
+				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
+				null, obj);  
 	}
 
 	/** Ignore this. */
