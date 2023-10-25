@@ -125,11 +125,9 @@ public class BackendTransaction extends MyTransaction {
 			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
 				olog( LogType.REDEEM, "amt", rusdPos);
 
-				rusd.sellRusd(m_walletAddr, busd, rusdPos)  // rounds to 4 decimals, but RUSD can take 6
-					//.waitForHash();
-					.waitForStatus("COMPLETED");
+				rusd.sellRusd(m_walletAddr, busd, rusdPos).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 				
-				respondOk();  // wait for completion. pas
+				respondOk();  // respond OK as long as there was no exception
 
 				insertRedemption( m_walletAddr, busd, rusdPos, true); // informational only, don't throw an exception
 			}

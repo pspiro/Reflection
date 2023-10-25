@@ -60,9 +60,9 @@ public class WalletPanel extends JsonPanel {
 			JsonArray ar = obj.getArray("tokens");
 			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
 
-			m_rusd.setText("" + ar.get(0).getDouble("balance"));
-			m_usdc.setText("" + ar.get(1).getDouble("balance"));
-			m_approved.setText("" + ar.get(1).getDouble("approvedBalance"));
+			m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
+			m_usdc.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
+			m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
 			m_matic.setText("" + ar.get(2).getDouble("balance"));			
 		});
 		
