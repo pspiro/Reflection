@@ -51,6 +51,7 @@ public class Main implements ITradeReportHandler {
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
+
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 	static long m_started; // timestamp that app was started
 
@@ -127,6 +128,9 @@ public class Main implements ITradeReportHandler {
 
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
+		
+		// write the date every hour
+		Util.executeEvery( Util.HOUR, Util.HOUR, () -> S.out( "today is %s", Util.yyyymmdd.format( System.currentTimeMillis() ) ) );
 		
 		// check that Fireblocks server is running
 		/////////////checkFbActiveServer();
