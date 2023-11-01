@@ -14,7 +14,7 @@ public class MdsPricesPanel extends JsonPanel {
 	}
 	
 	@Override public void refresh() throws Exception {
-		m_model.m_ar = MyClient.getArray(Monitor.mdsBase + "/mdserver/getPrices");
+		m_model.m_ar = MyClient.getArray(Monitor.mdsBase + "/mdserver/get-prices");
 		m_model.fireTableDataChanged();
 	}
 	

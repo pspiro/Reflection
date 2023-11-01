@@ -83,6 +83,7 @@ public class MktDataServer {
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
 			server.createContext("/mdserver/debug-on", exch -> new MdTransaction(this, exch).onDebug(true) ); 
 			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
+			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
 			server.createContext("/", exch -> m_debug = false); 
 			server.setExecutor( Executors.newFixedThreadPool(10) );
 			server.start();
