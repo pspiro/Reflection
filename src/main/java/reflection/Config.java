@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -18,7 +17,6 @@ import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
 import redis.ConfigBase;
-import redis.MyRedis;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import tw.google.GTable;

@@ -27,7 +27,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
-import http.MyHttpClient;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;

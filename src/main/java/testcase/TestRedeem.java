@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import http.MyHttpClient;
 import reflection.RefCode;

@@ -48,7 +48,6 @@ public class MktDataServer {
 	private final MyRedis m_redis;
 	private final TradingHours m_tradingHours; 
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();
-	private final boolean m_testing = false;  // must be false for production; this is used to put lots of fake prices out
 	
 	public static void main(String[] args) {
 		try {
@@ -61,7 +60,6 @@ public class MktDataServer {
 			System.exit(0);  // we need this because listening on the port will keep the app alive
 		}
 	}
-
 
 	private MktDataServer(String[] args) throws Exception {
 		m_started = System.currentTimeMillis();
@@ -79,12 +77,13 @@ public class MktDataServer {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
-			server.createContext("/ok", exch -> new MdTransaction(this, exch).onStatus() );  //remove this. pas 
 			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
-			server.createContext("/mdserver/getPrices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
+			server.createContext("/mdserver/debug-on", exch -> new MdTransaction(this, exch).onDebug(true) ); 
+			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
+			server.createContext("/", exch -> m_debug = false); 
 			server.setExecutor( Executors.newFixedThreadPool(10) );
 			server.start();
 		}
@@ -123,19 +122,7 @@ public class MktDataServer {
 
 		// give it 500 ms to get the trading hours; if it's too slow, you'll see a harmless exception
 		timer.next( "Start market data update timer");
-		Util.executeEvery( 500, m_config.redisBatchTime(), () -> updateRedis(false) ); 
-		
-		// put out lots of fake prices
-		if (m_testing) {
-			Util.executeEvery( 1000, 150, () -> {
-				if (m_list.size() == 0) return;
-				int i = new Random().nextInt(m_list.size() );
-				DualPrices dual = m_list.get(i);
-				dual.tickSmart( MyTickType.Bid, new Random().nextDouble(100) ); 
-				dual.tickSmart( MyTickType.Ask, new Random().nextDouble(100) ); 
-				dual.tickSmart( MyTickType.Last, new Random().nextDouble(100) ); 
-			});
-		}
+		Util.executeEvery( 500, m_config.redisBatchTime(), () -> updateRedis() ); 
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
 	}
@@ -216,19 +203,18 @@ public class MktDataServer {
 	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
 	 * better would be to check against the trading hours of an actual ETF. 
 	 * @throws Exception */
-	private void updateRedis(boolean log) {
-		m_redis.pipeline( pipeline -> {
-			for (DualPrices dual : m_list) {
-				try {
-					dual.send( pipeline, m_testing 
-							? Session.Smart 
-							: m_tradingHours.getSession(dual.stock()) );
+	private void updateRedis() {
+		try {
+			if (m_debug) S.out( "Updating redis");
+			m_redis.pipeline( pipeline -> {
+				for (DualPrices dual : m_list) {
+					Util.wrap( () -> dual.send( pipeline, m_tradingHours.getSession(dual.stock()) ) );
 				}
-				catch( Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+			});
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@SuppressWarnings("incomplete-switch")

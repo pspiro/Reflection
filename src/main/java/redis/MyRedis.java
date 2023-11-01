@@ -5,6 +5,7 @@ import java.net.URI;
 import common.Util;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.exceptions.JedisDataException;
 import redis.clients.jedis.exceptions.JedisException;
 import redis.clients.jedis.util.JedisURIHelper;
 
@@ -82,7 +83,7 @@ public class MyRedis {
 
 	/** Use this version when all the queries are done at once. It sends the real query
 	 *  after all the little queries have been added to the pipeline */
-	public void pipeline( PRun runnable) {
+	public void pipeline( PRun runnable) throws Exception {
 		wrap( () -> {
 			checkConnection();
 			Pipeline pipeline = m_jedis.pipelined();
@@ -91,13 +92,18 @@ public class MyRedis {
 		});
 	}
 
-	private void wrap( Runnable run) {
+	private void wrap( Runnable run) throws JedisException {
 		try {
 			run.run();
 		}
-		catch( JedisException e) {
-			m_jedis = null;
-			throw e;
+		catch( JedisDataException e1) {
+			// this is a problem with the query, not the connection
+			throw e1;
+		}
+		catch( JedisException e2) {
+			// could be a problem with the connection
+			disconnect();  // close the connection to be safe
+			throw e2;
 		}
 	}
 	

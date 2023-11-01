@@ -39,10 +39,15 @@ public class JsonPanel extends MonPanel implements INewTab {
 	void onDouble(String tag, Object allowed) {
 		m_model.filter(tag, allowed);
 	}
-	
+
+	/** Override this */
+	protected Object format(String key, Object value) {
+		return value;
+	}
+
 	public class JsonModel extends MyTableModel {
 		final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
-		JsonArray m_ar = new JsonArray();  // can get replaces
+		JsonArray m_ar = new JsonArray();  // can get replaced
 		protected final String[] m_colNames;
 		private String m_justify = "";
 		private boolean m_filtered;
@@ -94,10 +99,6 @@ public class JsonPanel extends MonPanel implements INewTab {
 			return format( key, m_ar.get(row).get(key) );
 		}
 		
-		protected Object format(String key, Object value) { // you would have to add tag or col to be useful
-			return value;
-		}
-
 		public void onHeaderClicked(int col) {
 			if (col < m_colNames.length) {
 				m_ar.sortJson( m_colNames[col] );

@@ -7,7 +7,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Busd;
-import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 import reflection.RefCode;
@@ -180,7 +179,7 @@ public class TestFbOrders extends MyTestCase {
 		assertTrue( ar.size() > 0);
 		JsonObject rec = ar.get(0);
 		S.out(rec);
-		assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
+		assertEquals( "COMPLETED", rec.getString("status") );  // should later change to COMPLETED. pas
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
