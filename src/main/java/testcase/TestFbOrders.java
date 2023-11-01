@@ -179,7 +179,7 @@ public class TestFbOrders extends MyTestCase {
 		assertTrue( ar.size() > 0);
 		JsonObject rec = ar.get(0);
 		S.out(rec);
-		assertEquals( "CONFIRMING", rec.getString("status") );  // should later change to COMPLETED. pas
+		assertEquals( "COMPLETED", rec.getString("status") );  // should later change to COMPLETED. pas
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	

@@ -50,12 +50,21 @@ public class RedisPanel extends JsonPanel {
 			Set<String> keys = Monitor.m_redis.query( jedis -> jedis.keys("*") );
 
 			ArrayList<RedisQuery> list = new ArrayList<>();
-			
-			Monitor.m_redis.pipeline( pipe -> {
-				for (String key : keys) {
-					list.add( new RedisQuery( key, pipe.hgetAll(key) ) );  // we have to remember the key or we can't get it
-				}
-			});
+
+			try {
+				Monitor.m_redis.pipeline( pipe -> {
+					for (String key : keys) {
+						S.out( "Querying for %s", key);
+						list.add( new RedisQuery( key, pipe.hgetAll(key) ) );  // we have to remember the key or we can't get it
+					}
+				});
+			}
+			catch( Exception e) {
+				S.out( "Redis error; there may be extraneous keys that need to be deleted");
+				S.out( "Keys");
+				S.out( keys);
+				e.printStackTrace();
+			}
 			
 			JsonArray ar = new JsonArray(); // build array of rows here
 			

@@ -2,8 +2,10 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import common.Util;
 import http.MyClient;
 
+/** MktDataServer prices */
 public class MdsPricesPanel extends JsonPanel {
 
 	public MdsPricesPanel() {
@@ -12,8 +14,14 @@ public class MdsPricesPanel extends JsonPanel {
 	}
 	
 	@Override public void refresh() throws Exception {
-		m_model.m_ar = MyClient.getArray(Monitor.base + "/mdserver/getPrices");
+		m_model.m_ar = MyClient.getArray(Monitor.mdsBase + "/mdserver/get-prices");
 		m_model.fireTableDataChanged();
+	}
+	
+	@Override protected Object format(String key, Object value) {
+		return key.indexOf( "time") != -1 && value instanceof Long && ((Long)value) != 0
+				? Util.yToS.format( value)
+				: value;
 	}
 
 }

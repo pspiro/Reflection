@@ -64,4 +64,9 @@ public class MdTransaction extends BaseTransaction {
 			respond( m_main.getAllPrices() );
 		});
 	}
+
+	public void onDebug(boolean v) {
+		MktDataServer.m_debug = v;
+		respondOk();
+	}
 }

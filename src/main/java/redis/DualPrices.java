@@ -111,6 +111,7 @@ class DualPrices {
 		}
 
 		public void clearOut(Pipeline pipeline) {
+			if (MktDataServer.m_debug) S.out( "Clearing out bid/ask in redis for conid %s", m_conid);
 			pipeline.hdel( m_conid, "bid");
 			pipeline.hdel( m_conid, "ask");
 		}
