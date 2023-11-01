@@ -90,7 +90,7 @@ public class SiweTransaction extends MyTransaction {
 				out( "free pass");
 			}
 			else {
-				// better would be to catch it and throw RefException; this return UNKNOWN code
+				// better would be to catch it and throw RefException; this returns UNKNOWN code
 				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
 				out( "verified");
 			}
@@ -107,7 +107,7 @@ public class SiweTransaction extends MyTransaction {
 			Main.require(
 					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
 					RefCode.TOO_FAST,
-					"The 'issuedAt' time on the SIWE login request too far in the future  issuedAt=%s  now=%s  max=%s",
+					"The 'issuedAt' time on the SIWE login request is too far in the future  issuedAt=%s  now=%s  max=%s",
 					issuedAt, now, Main.m_config.siweTimeout() );
 			
 			Main.require(
@@ -162,8 +162,8 @@ public class SiweTransaction extends MyTransaction {
 				return validateCookie( cookie, null);
 			}
 			catch( Exception e) {
-				// this happens quite a bit
-				out( "Unexpected, there was an invalid cookie for %s", address(cookie) );  // this should not happen if we have only one cookie as we expect
+				// we come here if there is more than one cookie OR the session has expired, which is normal
+				out( "Unexpected, there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
 			}
 		}
 
@@ -219,7 +219,7 @@ public class SiweTransaction extends MyTransaction {
 		// check expiration
 		Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
 				RefCode.VALIDATION_FAILED,
-				"Your session has expired; please sign in again and resubmit your request");
+				"Your session has expired; please sign in again and resubmit your request"); // this message makes it back to the client for user actions but not /siwe/me
 		
 		// update expiration time
 		session.update();

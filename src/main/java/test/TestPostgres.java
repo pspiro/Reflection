@@ -1,8 +1,6 @@
 package test;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
-import tw.util.S;
+import reflection.Config;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -13,12 +11,8 @@ public class TestPostgres {
 	};
 
 	public static void main(String[] args) throws Exception {
-		//Config config = Config.readFrom("Dt-config");
-		LinkedBlockingQueue q = new LinkedBlockingQueue();
-		
-		
-		q.remove();
-		S.out("done");
-		
+		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
 	}
+	
+	
 }

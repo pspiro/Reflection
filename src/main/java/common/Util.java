@@ -11,12 +11,22 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+
+import javax.mail.Address;
+import javax.mail.Message;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 import org.json.simple.JsonObject;
 
@@ -129,12 +139,7 @@ public class Util {
 	
 	
 	public static void main(String[] args) throws Exception {
-		JsonObject f1 = Util.toJson( "a", "b");
-		
-		S.out( Util.toJson(
-				"uid", 123,
-				"type", LogType.ADMIN_READ,
-				"data", f1) );
+		S.out( isValidEmail("ha.boritz@gmail.com") );
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -459,7 +464,7 @@ public class Util {
 	public static void wrap(ExRunnable runner) {
 		try {
 			runner.run();
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 	}
@@ -479,7 +484,7 @@ public class Util {
 	/** Must be in format of a@b.c */
 	public static boolean isValidEmail(String email) {
 		int i = email.indexOf("@");
-		return i >= 1 && email.indexOf(".") > i + 1 && email.length() >= 5;
+		return i >= 1 && email.lastIndexOf(".") > i + 1 && email.length() >= 5;
 	}
 	
 	/** My version of forEach that propogates up an exception */ 
@@ -510,4 +515,35 @@ public class Util {
 		else
 			r2.run();
 	}
+
+    /** Send an email using SMTP */
+	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text) throws Exception {
+		Properties props = new Properties();
+		props.put("mail.smtp.auth", "true");
+		props.put("mail.smtp.tlsv1.2.enable", "true");  // tls also works but not smarttls
+		props.put("mail.smtp.host", "smtp.openxchange.eu");  // put any smpt server here
+		props.put("mail.smtp.port", "587");
+
+		Session session = Session.getInstance( props,
+				new javax.mail.Authenticator() {
+					protected PasswordAuthentication getPasswordAuthentication() {
+						return new PasswordAuthentication(username, password);
+					}
+				});
+
+		Message message = new MimeMessage(session);
+		message.setFrom( toEmail( fromName, username) );
+		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+		message.setSubject(subject);
+		message.setText(text);
+
+		Transport.send(message);
+		S.out( "Sent email '%s' to %s", subject, to);
+	}
+
+	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
+	private static Address toEmail(String name, String email) throws AddressException {
+		return new InternetAddress( String.format( "%s <%s>", name, email) );
+	}
+    
 }

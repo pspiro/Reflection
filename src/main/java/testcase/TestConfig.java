@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import http.MyHttpClient;
 import junit.framework.TestCase;
+import reflection.Config;
 import tw.util.S;
 
 public class TestConfig extends TestCase {
@@ -52,8 +53,12 @@ public class TestConfig extends TestCase {
 		obj = cli.get("/api/configurations?key=whitepaper_text").readJsonObject();
 		S.out( obj);
 		assertEquals(1, obj.size() );
-		
-		
-		
 	}
+	
+	public void testSendEmail() throws Exception {
+		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
+	}
+	
+	
+	
 }

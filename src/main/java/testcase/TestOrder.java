@@ -126,7 +126,20 @@ public class TestOrder extends MyTestCase {
 		JsonArray ar = m_config.sqlQuery( sql -> sql.queryToJson( "select status from transactions order by created_at desc limit 1") );
 		assertEquals("DENIED", ar.get(0).getString("status"));
 	}
-	
+
+	/** Test that order failes if the siwe session has timed out */
+	public void testSessionTimeout() throws Exception {
+		Cookie.init = true;  // force signin
+		
+		modifySetting( "sessionTimeout", "500", () -> {
+			S.out( "sleeping");
+			S.sleep(1000);
+			
+			postOrderToObj( TestOrder.createOrder( "BUY", 10, 3) );
+			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() ); 
+		});
+	}
+
 	// fill order buy order
 	public void testFillBuy() throws Exception {
 		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);

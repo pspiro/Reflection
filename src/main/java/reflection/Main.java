@@ -141,7 +141,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
 		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
-		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() ); // report build date/time
+		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
@@ -474,7 +474,9 @@ public class Main implements ITradeReportHandler {
 
 		// insert trade into trades and log tables
 		queueSql( conn -> conn.insertJson( "trades", obj) );
-		jlog( LogType.TRADE, exec.orderRef(), null, obj);
+		jlog( LogType.TRADE, 
+				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
+				null, obj);  
 	}
 
 	/** Ignore this. */
@@ -627,17 +629,14 @@ public class Main implements ITradeReportHandler {
 				try {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
-					int count = 0;
 					//S.sleep(DB_PAUSE);  // you could sleep a little to try to batch more entries, but connecting takes 200ms anyway
 					
 					// then connect and process as many as possible
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						while (com != null) {
 							com.run( conn);
-							count++;
 							com = next();
 						}
-						S.out( "  TBD DbQueue batched %s queries", count);
 					}
 				}
 				catch( Exception e) {

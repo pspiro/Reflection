@@ -2,6 +2,7 @@ package test;
 
 import positions.MoralisServer;
 import reflection.Config;
+import testcase.Cookie;
 import tw.util.S;
 
 public class TestMoralis {
