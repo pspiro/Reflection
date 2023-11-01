@@ -37,11 +37,12 @@ import reflection.RefException;
 import tw.util.S;
 
 public class Util {
+	public static final int HOUR = 60*60*1000;
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
 	static Random rnd = new Random();
-	static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
+	public static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
 	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 hr clock, useless 
 	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 hr clock
