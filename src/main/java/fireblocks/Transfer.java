@@ -11,11 +11,14 @@ public class Transfer {
 	public static void main( String[] ar) throws Exception {
 		Fireblocks.setKeys(prodApi, prodPk, "ETH", "ETH");
 
-		String wallet = "0x92827Fdea96A8Cc107733Ad1356CA80DF7028f9b";
+		String wallet = "0xaa50d56e43e1a95a39b357bf0279f218942a1049";
 		String asset = "USDC";
+		double amt = 198;
+//		String note = "send USDC to Coinzilla";
+		String note = "send the rest to Muneeb";
 		
 		int id = Accounts.instance.getId("Peter Spiro");
-		Fireblocks.transfer(id, wallet, asset, 106.229, "send USDC to Coinzilla").waitForHash();
+		Fireblocks.transfer(id, wallet, asset, amt, note).waitForHash();
 	}
 	
 	public static String transfer(String asset, int srcAccountId, String destAddress, String amount, String note) throws Exception {

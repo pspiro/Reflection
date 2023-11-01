@@ -73,11 +73,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "The wallet address '%s' is invalid", m_walletAddr);
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
-		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker");
+		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
+		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
 		Action side = m_map.getEnumParam("action", Action.values() );
-		require( m_config.allowTrading().allow(side), RefCode.TRADING_HALTED, "Trading is temporarily halted. Please try your order again later.");
+		require( m_config.allowTrading().allow(side), RefCode.TRADING_HALTED, "Trading is temporarily halted; please try your order again later");
 		require( m_main.validWallet( m_walletAddr, side), RefCode.ACCESS_DENIED, "Your order cannot be processed at this time (L9)");  // make sure wallet is not blacklisted
 
 		int conid = m_map.getRequiredInt( "conid");
@@ -98,14 +98,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		
 		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
 		
+		// make sure user is signed in with SIWE and session is not expired
+		// must come before profile and KYC checks
+		validateCookie();
+
 		// get user profile from DB and validate it
 		Profile profile = getProfile(); 
 		profile.validate();
 		profile.checkKyc( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );  // if order is above max non-KYC size, verify they have passed KYC
-		
-		// make sure user is signed in with SIWE and session is not expired
-		// only trade and redeem messages need this
-		validateCookie(m_walletAddr);
 		
 		// calculate order price
 		double prePrice = side == Action.Buy 
@@ -204,7 +204,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 	}
 
 	private Profile getProfile() throws Exception {
-		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
 		require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "No user record found for wallet %s", m_walletAddr);
 		return new Profile(ar.get(0));
 	}

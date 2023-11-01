@@ -123,20 +123,20 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("starting amounts");
 		
 		// mint BUSD for user Bob
-//		S.out( "**minting 2000");
-//		busd.mint(
-//				accounts.getId( "Admin1"),
-//				bobAddr,
-//				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
-//		
-//		// user to approve buying with BUSD; you must wait for this
-//		S.out( "**approving 20000");
-//		busd.approve(
-//				accounts.getId( "Bob"),
-//				rusd.address(),
-//				2000).waitForCompleted();
-//
-//		showAmounts("updated amounts");
+		S.out( "**minting 20000");
+		busd.mint(
+				accounts.getId( "Admin1"),
+				bobAddr,
+				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+		
+		// user to approve buying with BUSD; you must wait for this
+		S.out( "**approving 20000");
+		busd.approve(
+				accounts.getId( "Bob"),
+				rusd.address(),
+				2000).waitForCompleted();
+
+		showAmounts("updated amounts");
 
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );

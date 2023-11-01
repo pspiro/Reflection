@@ -11,6 +11,14 @@ import http.MyClient;
 import reflection.Config;
 import tw.util.S;
 
+
+/*
+ * 
+ * 
+ * REMEMBER, YOU WILL GET TIMEOUTS BECAUSE YOU CANNOT USE IOC IN PAPER SYSTEM
+ * 
+ * 
+ */
 public class TestMany {
 	static final String base = "https://reflection.trading";
 	//static String base = "http://localhost:8383";
@@ -29,7 +37,7 @@ public class TestMany {
 	};
 	
 	int index = 0;
-	static int count = 1;
+	static int count = 10;
 	
 	public static void main(String[] args) throws Throwable {
 		//seed();
@@ -66,6 +74,11 @@ public class TestMany {
 
 			boolean buy = r.nextBoolean();
 			double price = buy ? stock.getDouble("ask") * 1.01 : stock.getDouble("bid") * .99;
+			
+			if (price <= 0) {
+				S.out( "ERROR PRICE IS %s for %s", price, stock.getString("symbol") );
+				return;
+			}
 			//String currency = r.nextBoolean() ? "RUSD" : "BUSD";
 			
 			JsonObject obj = new JsonObject();
