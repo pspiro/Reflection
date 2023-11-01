@@ -294,6 +294,7 @@ public class Fireblocks {
 		return fb.transactToRetVal();
 	}
 
+	/** @param amount is the real world dollar amt */
 	public static RetVal transfer(int fromAcct, String dest, String token, double amount, String note) throws Exception {
 		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
 		

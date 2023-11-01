@@ -44,7 +44,7 @@ public class SouthPanel extends JPanel {
 		try {
 			test( "/api/ok", m_refApi);
 			test( "/fbserver/ok", m_fbServer);
-			test( "/mdserver/ok", m_mdServer);
+			test( "/mdserver/status", m_mdServer);
 			
 			Map<String, String> map = Monitor.m_redis.query( jedis -> jedis.hgetAll("265598") );
 			m_aapl.setText( String.format( "%s : %s : %s : %s", map.get("bid"), map.get("ask"), map.get("last"), map.get("time") ) ); 

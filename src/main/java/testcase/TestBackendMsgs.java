@@ -11,6 +11,11 @@ public class TestBackendMsgs extends MyTestCase {
 
 	String host = "localhost";
 	
+	public void testHotStocks() throws Exception {
+		cli().get("/api/hot-stocks");
+		assertTrue( cli.readJsonArray().size() > 0);
+	}
+
 	public void testGetAllStocks() throws Exception {
 		cli().get("/api/get-all-stocks");
 		JsonArray ar = cli.readJsonArray();

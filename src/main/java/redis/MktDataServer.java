@@ -79,7 +79,6 @@ public class MktDataServer {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
-			server.createContext("/ok", exch -> new MdTransaction(this, exch).onStatus() );  //remove this. pas 
 			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 

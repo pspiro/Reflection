@@ -23,7 +23,6 @@ import tw.util.S;
 public class FbActiveServer {
 	static Accounts accounts = Accounts.instance;
 	static HashMap<String,Trans> m_map = new HashMap<>();
-	private static boolean m_dots = true;
 	static long m_started; // timestamp that app was started
 	
 	// remove COMPLETED items from the queue
@@ -33,11 +32,7 @@ public class FbActiveServer {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("FBAS");
-			
 			Util.require( args.length >= 1, "You must specify a config tab name");
-			if (args.length == 2) {
-				m_dots = false;
-			}
 			run( args[0] );
 		}
 		catch( BindException e) {
@@ -66,9 +61,9 @@ public class FbActiveServer {
 			S.sleep( config.fbPollIingInterval() );
 			
 			// this creates like ten threads for every request which doesn't seem very efficient. pas
-			// we're querying only for transactions in the last five minutes
+			// we're querying only for transactions in the last three minutes
+			// (Q: is this ones started in last three or updated in last three?)
 			try {
-				if (m_dots) System.out.print('.');
 				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 3);
 				
 				for (JsonObject obj : ar) {

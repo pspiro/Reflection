@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import tw.util.S;
+import util.LogType;
 
 public class SiweTransaction extends MyTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>();
@@ -130,6 +131,9 @@ public class SiweTransaction extends MyTransaction {
 			headers.put( "Set-Cookie", cookie);
 		
 			respondFull( Util.toJson( code, "OK"), 200, headers);
+			
+			// log successful sign-in
+			olog( LogType.SIGNED_IN);
 		});
 	}
 	

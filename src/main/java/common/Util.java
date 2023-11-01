@@ -30,7 +30,6 @@ import javax.mail.internet.MimeMessage;
 
 import org.json.simple.JsonObject;
 
-import com.google.iam.v1.AuditLogConfig.LogType;
 import com.ib.client.Decimal;
 
 import reflection.RefCode;

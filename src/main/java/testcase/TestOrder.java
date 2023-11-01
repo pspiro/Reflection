@@ -205,12 +205,12 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testKyc()  throws Exception {
+		m_config.sqlCommand( sql -> sql.delete("delete kyc_status from users where wallet_public_key = '%s'", Cookie.wallet) );
 		double qty = m_config.nonKycMaxOrderSize() / 138 + 1;
 		JsonObject obj = createOrder2("buy", qty, 138);
 		
 		JsonObject map = postOrderToObj(obj);
-		String ret = map.getString( "code");
-		assertEquals( RefCode.NEED_KYC.toString(), ret);
+		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );
 	}
 
 	public void testFracShares()  throws Exception {

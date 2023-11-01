@@ -112,7 +112,7 @@ public class Monitor {
 		m_frame.add( m_tabs);
 		m_frame.add( new SouthPanel(), BorderLayout.SOUTH);
 		
-		m_frame.setTitle( "Reflection Monitor");
+		m_frame.setTitle( "Reflection System Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 1000, 800);
 		m_frame.setVisible(true);
@@ -207,6 +207,7 @@ public class Monitor {
 		JTextField f2 = new JTextField(7);
 		JTextField f3 = new JTextField(7);
 		JTextField f4 = new JTextField(7);
+		JTextField f4a = new JTextField(7);
 		JTextField f5 = new JTextField(7);
 		JTextField f6 = new JTextField(7);
 		JTextField f7 = new JTextField(7);
@@ -220,6 +221,7 @@ public class Monitor {
 			p.add( "TWS", f2);
 			p.add( "IB", f3);
 			p.add( "Started", f4);
+			p.add( "Built", f4a);
 			p.add( Box.createVerticalStrut(10) );
 			p.add( "MktData", f5);
 			p.add( "TWS", f6);
@@ -237,9 +239,10 @@ public class Monitor {
 				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
 				f4.setText( json.getTime("started", Util.yToS) );
+				f4a.setText( json.getString("built") );
 			});
 
-			MyClient.getJson( Monitor.base + "/mdserver/ok", json -> {
+			MyClient.getJson( Monitor.base + "/mdserver/status", json -> {
 				f5.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f6.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f7.setText( json.getBool("IB") ? "OK" : "ERROR" );

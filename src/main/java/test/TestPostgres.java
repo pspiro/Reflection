@@ -1,6 +1,6 @@
 package test;
 
-import reflection.Config;
+import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -9,9 +9,21 @@ public class TestPostgres {
 			return "now()";
 		}
 	};
-
+	
+	static class A implements AutoCloseable {
+		@Override public void close() throws Exception {
+			S.out( "closing");
+			throw new Exception("b");
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
-		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
+		try (A a = new A() ) {
+			throw new Exception("a");
+		}
+		catch( Exception e) {
+			S.out("caught " + e);
+		}
 	}
 	
 	

@@ -3,6 +3,7 @@ package testcase;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util.ObjectHolder;
@@ -55,9 +56,19 @@ public class TestHttpClient extends MyTestCase {
 		assertEquals("OK", ob.val.getString("code") );
 	}
 
-	/** get json array, async */
-	public static void testgetArray() {
-		assertTrue(false);
+	/** get json array, async 
+	 * @throws Exception */
+	public static void testgetArray() throws Exception {
+		String url = "https://reflection.trading/api/positions/0x76274e9a0f0bc4eb9389e013bd00b2c4303cdd37";
+		assertTrue( MyClient.getArray(url).size() > 0);
+		
+		ObjectHolder<JsonArray> ob = new ObjectHolder<>();
+		sync( q ->
+			MyClient.getArray(url, ar -> {
+				ob.val = ar;
+				q.put("");
+			}));
+		assertTrue( ob.val.size() > 0);
 	}
 
 	/** post to json object, async */

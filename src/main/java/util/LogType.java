@@ -26,12 +26,13 @@ public enum LogType {
 	RESPOND_ORDER,		// responding OK to Frontend
 	RESTART,			// application was restarted
 	SHUTDOWN,			// received shutdown message from unix kill command
+	SIGNED_IN,			// user signed in with their wallet private key
 	SOCKET_ERROR,		// during quick-response
 	SUBMITTED_TO_FIREBLOCKS, 
 	SUBMITTED_TO_IB,	// order submitted to IB
 	TRADE,				// trade report received
 	TRADING_HOURS_ERROR,
 	TWS_CONNECTION,		// gained/lost connection to TWS
-	UNWIND_ERROR,		// error while unwinding an order
+	UNWIND_ERROR, 		// error while unwinding an order
 	
 }
