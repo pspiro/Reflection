@@ -147,9 +147,9 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
 		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
 		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
-		server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
+		//server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
 		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
-		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json
+		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 		server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );

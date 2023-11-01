@@ -7,16 +7,17 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 
+/** User profile which can be edited by the user. Note that wallet is not part of this */
 public class Profile extends JsonObject {
-	public Profile(JsonObject profile) {
-		super(profile);
-		
-		put("wallet_public_key", wallet().toLowerCase() );
-	}
+	static String[] fields = "first_name,last_name,address,email,phone,pan_number,aadhaar".split(",");
 	
-	/** Always returns lower case */
-	String wallet() {
-		return getString("wallet_public_key");
+	public Profile(JsonObject source) {
+		for (String field : fields) {
+			Object val = source.get(field);
+			if (val != null) {
+				put( field, val);
+			}
+		}
 	}
 	
 	String first() {
@@ -54,10 +55,21 @@ public class Profile extends JsonObject {
 		}
 
 		// validate fields
-		require( Util.isValidAddress(wallet()), RefCode.INVALID_USER_PROFILE, "The wallet '%s' is invalid", wallet() );
 		require( aadhaar().length() == 12, RefCode.INVALID_USER_PROFILE, "The Aadhaar '%s' is invalid", aadhaar() ); 
 		require( pan().length() == 10, RefCode.INVALID_USER_PROFILE, "The PAN '%s' is invalid", pan() );
-		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email address '%s' is invalid", email() );		
+		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email address '%s' is invalid", email() );
+
+		// don't allow < or > in user entry fields
+		for (String tag : fields) {
+			require( 
+					validUserEntry( getString(tag) ), 
+					RefCode.INVALID_USER_PROFILE, 
+					"The '%s' field contains an invalid character", tag);
+		}
+	}
+
+	private static boolean validUserEntry(String str) {
+		return str.indexOf('<') == -1 && str.indexOf('>') == -1;
 	}
 
 	public void checkKyc(boolean smallOrder) throws RefException {

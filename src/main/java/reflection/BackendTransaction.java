@@ -113,7 +113,7 @@ public class BackendTransaction extends MyTransaction {
 
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
-			validateCookie(m_walletAddr);
+			validateCookie();
 			
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();
@@ -187,9 +187,12 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			String key = m_map.get("key");
 			if (S.isNotNull(key) ) {
+				// this query comes with only two keys:
+				// whitepaper_link and tds_tooltip_text
 				respond( key, m_main.type2Config().getString(key) );
 			}
 			else {
+				// we get this a lot; why?
 				// with no key, we just want the four social media links
 				respond(m_main.type2Config() );
 			}
@@ -232,22 +235,15 @@ public class BackendTransaction extends MyTransaction {
 		return json;
 	}
 
-	public void handleGetUserByWallet() {
-		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
-			
-			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
-						"select * from users where lower(wallet_public_key) = '%s'", 
-						m_walletAddr.toLowerCase() ) );
-			Main.require( ar.size() == 1, RefCode.INVALID_REQUEST, "Wallet address %s not found", m_walletAddr);
-			respond( trim( ar).get(0) );
-		});
-	}
-
+	// what is the purpose of this? pas
 	public void handleWalletUpdate() {
 		wrap( () -> {
-			parseMsg();    // look to see what parameters are being passed; at lease we should update the time  
+			parseMsg();
+			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			validateCookie();
+			
+			// look to see what parameters are being passed; at least we should update the time
+			out( "received wallet-update message with params " + m_map);
 			respondOk();
 		});
 	}
@@ -336,8 +332,9 @@ public class BackendTransaction extends MyTransaction {
 	
 	public void handleGetProfile() {
 		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
+			getWalletFromUri(); // read wallet address into m_walletAddr (last token in URI)
+			parseMsg();         // read cookie from msg body into m_map
+			validateCookie();
 			
 			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
 					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
@@ -380,25 +377,26 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleUpdateProfile() {
 		wrap( () -> {
-            Profile profile = new Profile( parseToObject() );
+			parseMsg();
+			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			validateCookie();
+
+			Profile profile = new Profile( m_map.obj() );
 			profile.trim(); // trim spaces since this data was entered by the user
 			profile.validate();
 			
-			String wallet = profile.wallet();
+			String walletKey = m_walletAddr.toLowerCase();
 			
 			// if email has changed, they must submit a valid verification code from the validateEmail() message
-			if (!profile.email().equalsIgnoreCase( getExistingEmail(wallet) ) ) {
-				require( profile.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(wallet) ),
+			if (!profile.email().equalsIgnoreCase( getExistingEmail(walletKey) ) ) {
+				require( m_map.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(walletKey) ),
 						RefCode.INVALID_REQUEST,
 						"The email verification code is incorrect");
-				mapWalletToCode.remove(wallet); // remove only if there is a match so they can try again
+				mapWalletToCode.remove(walletKey); // remove only if there is a match so they can try again
 			}
 
-			// add/remove fields to prepare for database insertion
-			profile.remove("email_confirmation"); // don't want to store this in db
-			
 			// insert or update record in users table
-			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", wallet) );
+			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletKey) );
 			respondOk();
 		});
 	}
@@ -426,6 +424,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleLog() {
 		wrap( () -> {
+			S.out( "received log entry " + parseToObject() );
 			respondOk();
 		});
 	}
@@ -436,7 +435,8 @@ public class BackendTransaction extends MyTransaction {
 					code, RefCode.OK,
 					"TWS", m_main.orderConnMgr().isConnected(),
 					"IB", m_main.orderConnMgr().ibConnection(),
-					"started", m_main.m_started
+					"started", m_main.m_started,
+					"built", Util.readResource( Main.class, "version.txt")
 					) );
 		});
 	}
