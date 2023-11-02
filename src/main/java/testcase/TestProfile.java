@@ -7,52 +7,13 @@ import org.json.simple.JsonObject;
 import fireblocks.TestSellRusd;
 import reflection.RefCode;
 
-public class TestValidateEmail extends MyTestCase {
-	public void testFailure() throws Exception {
-		JsonObject json;
-		
-		json = createValidProfile();
-		json.put( "wallet_public_key", "junk");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-		
-		json = createValidProfile();
-		json.remove( "first_name");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		json = createValidProfile();
-		json.remove( "last_name");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		json = createValidProfile();
-		json.put( "email", "junk@email");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		json = createValidProfile();
-		json.remove( "phone");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		json = createValidProfile();
-		json.put( "aadhaar", "junk");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		json = createValidProfile();
-		json.put( "pan_number", "junk");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		cli().post("/api/update-profile", createValidProfile().toString() );
-		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );  // wrong validation code
-	}
-
+public class TestProfile extends MyTestCase {
+	static String email = "jack" + ((new Random()).nextInt()) + "@gmail.com";
+	
 	public void testSuccess() throws Exception {
 		JsonObject json = createValidProfile();
 		cli().post("/api/validate-email", json.toString() );
+		assert200();
 
 		// test wrong code
 		json.put("email_confirmation", "wrong code");
@@ -65,14 +26,75 @@ public class TestValidateEmail extends MyTestCase {
 		json.put("email_confirmation", code);
 		cli().post("/api/update-profile", json.toString() );
 		assert200();
+
+		// missing first name 
+		json = createValidProfile();
+		json.remove( "first_name");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// missing last name 
+		json = createValidProfile();
+		json.remove( "last_name");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// invalid email 
+		json = createValidProfile();
+		json.put( "email", "junk@email");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// missing phone 
+		json = createValidProfile();
+		json.remove( "phone");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// missing missing aadhaar 
+		json = createValidProfile();
+		json.remove( "aadhaar");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// wrong aadhaar 
+		json = createValidProfile();
+		json.put( "aadhaar", "junk");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// missing pan
+		json = createValidProfile();
+		json.remove( "pan_number");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// wrong pan
+		json = createValidProfile();
+		json.put( "pan_number", "junk");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
+
+		// missing cookie
+		json = createValidProfile();
+		json.remove("cookie");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
+
+		// final success
+		json = createValidProfile();
+		cli().post("/api/update-profile", json.toString() );
+		assert200();
 	}
 
+	
 	private JsonObject createValidProfile() {
 		JsonObject json = new JsonObject();
 		json.put( "wallet_public_key", Cookie.wallet);
+		json.put( "cookie", Cookie.cookie);
 		json.put( "first_name", "jack");
 		json.put( "last_name", "sprat");
-		json.put( "email", "jack" + ((new Random()).nextInt()) + "@gmail.com" );
+		json.put( "email", email);
 		json.put( "phone", "9149399393");
 		json.put( "aadhaar", "939393939393");
 		json.put( "pan_number", "9393939393");

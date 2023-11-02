@@ -4,6 +4,9 @@
 git restore .googfiles/StoredCredential
 
 git pull
+echo
+echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
+echo
 mvn package
 #sudo systemctl restart mktdataserver   not sure if I want this
 sudo systemctl restart refapi
