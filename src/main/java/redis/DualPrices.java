@@ -26,6 +26,10 @@ class DualPrices {
 		return m_stock;
 	}
 	
+	@Override public String toString() {
+		return String.format( "smart: %s  ibeos: %s", m_smart, m_ibeos);
+	}
+	
 	boolean is24() {
 		return m_stock.is24Hour();
 	}
@@ -75,6 +79,11 @@ class DualPrices {
 		
 		Prices(int conid) {
 			m_conid = String.valueOf( conid);
+		}
+		
+		@Override public String toString() {
+			return S.format( "conid=%s  bid=%s  ask=%s  changed=%s  from=%s",
+					m_conid, m_bid, m_ask, m_changed, m_from);
 		}
 
 		public synchronized void tick(MyTickType tickType, double price, String lastExchange) {

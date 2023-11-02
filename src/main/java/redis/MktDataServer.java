@@ -274,11 +274,13 @@ public class MktDataServer {
 	}
 
 	public void desubscribe() {
+		S.out( "Desubscribing all");
 		mdController().cancelAllTopMktData();
 		m_list.clear();
 	}
 
 	public void subscribe() {
+		S.out( "Subscribing all");
 		wrap( () -> requestPrices() );
 	}
 
