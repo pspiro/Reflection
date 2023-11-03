@@ -27,6 +27,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
+import http.BaseTransaction;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
 import redis.clients.jedis.Response;
@@ -158,7 +159,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
 		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-		server.createContext("/api/ok", exch -> new BackendTransaction(this, exch).respondOk() );
+		server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
 		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
 		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
 		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
@@ -581,7 +582,7 @@ public class Main implements ITradeReportHandler {
 	/** This can be used to serve static json stored in a string
 	 *  @param data must be in json format */
 	private void quickResponse(HttpExchange exch, String data, int code) {
-		new BackendTransaction(this, exch); // print out uri
+		new BaseTransaction(exch); // print out uri
 		
 		try (OutputStream outputStream = exch.getResponseBody() ) {
 			exch.getResponseHeaders().add( "Content-Type", "application/json");
