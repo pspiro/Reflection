@@ -57,9 +57,6 @@ public class Config extends ConfigBase {
 	private String symbolsTab;  // tab name where symbols are stored
 	private String backendConfigTab;
 	private double commission;
-	private String mintHtml;
-	private String mintBusd;
-	private String mintEth;
 	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
 	private int redisQueryInterval;
 	private double minTokenPosition; // minimum token position to display in portfolio section
@@ -171,11 +168,6 @@ public class Config extends ConfigBase {
 		this.postgresUrl = m_tab.get( "postgresUrl");
 		this.postgresUser = m_tab.get( "postgresUser");
 		this.postgresPassword = m_tab.get( "postgresPassword");
-
-		// mint
-		this.mintHtml = m_tab.getRequiredString("mintHtml");
-		this.mintBusd = m_tab.getRequiredString("mintBusd");
-		this.mintEth = m_tab.getRequiredString("mintEth");
 
 		// additional data
 		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
@@ -315,16 +307,6 @@ public class Config extends ConfigBase {
 	
 	public String symbolsTab() {
 		return symbolsTab;
-	}
-
-	public String mintHtml() {
-		return mintHtml;
-	}
-	public String mintBusd() {
-		return mintBusd;
-	}
-	public String mintEth() {
-		return mintEth;
 	}
 
 	/** This causes a dependency that we might not want to have. 

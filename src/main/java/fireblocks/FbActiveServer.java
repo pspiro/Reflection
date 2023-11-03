@@ -60,7 +60,6 @@ public class FbActiveServer {
 		while( true) {
 			S.sleep( config.fbPollIingInterval() );
 			
-			// this creates like ten threads for every request which doesn't seem very efficient. pas
 			// we're querying only for transactions in the last three minutes
 			// (Q: is this ones started in last three or updated in last three?)
 			try {

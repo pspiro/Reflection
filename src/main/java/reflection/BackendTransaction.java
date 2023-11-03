@@ -286,39 +286,6 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** This is for use outside the context of the reflection web site */
-	public void handleMint() throws IOException { 
-		String response;
-
-		try {
-			String addr = Util.getLastToken( m_uri, "/");
-			require( Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Correct usage is: .../mint/wallet_address");
-			mint( addr);
-			response = m_config.mintHtml();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			response = "An error occurred - " + e.getMessage();
-		}
-		
-		respondWithPlainText(response);
-	}
-	
-	/** Transfer some BUSD and ETH to the user's wallet */
-	void mint( String dest) throws Exception {
-		Util.require(dest.length() == 42, "The wallet address is invalid");
-
-		out( "Transferring %s BUSD to %s", m_config.mintBusd(), dest);
-		String id1 = Transfer.transfer( Fireblocks.testBusd, 1, dest, m_config.mintBusd(), "Transfer BUSD");
-		out( "FB id is %s", id1);
-
-		out( "Transferring %s Goerli ETH to %s", m_config.mintEth(), dest);
-		String id2 = Transfer.transfer( Fireblocks.platformBase, 1, dest, m_config.mintEth(), "Transfer ETH");
-		out( "FB id is %s", id2);
-
-		out( "Minted to %s", dest);
-	}
-
 	/** Respond with build date/time */
 	public void about() {
 		wrap( () -> respond( "Built", Util.readResource( Main.class, "version.txt") ) );
