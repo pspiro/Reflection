@@ -9,6 +9,7 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -33,8 +34,8 @@ import tw.util.VerticalPanel;
 
 public class Monitor {
 	static final String base = "https://reflection.trading";
-	//static final String mdsBase = base;
-	static final String mdsBase = "http://localhost:6999";
+	static final String mdsBase = base;
+	//static final String mdsBase = "http://localhost:6999";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -42,7 +43,7 @@ public class Monitor {
 	static final Stocks stocks = new Stocks();
 	static final Config m_config = new Config();
 
-	static Monitor m;
+	static Monitor instance;
 	static JTextField num = new JTextField(4); // number of entries to return in query
 	static MyRedis m_redis;
 	JFrame m_frame = new JFrame();
@@ -55,7 +56,7 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		m = new Monitor( "Dt-config");
+		instance = new Monitor( JOptionPane.showInputDialog("Enter config tab name") );
 	}
 	
 	Monitor(String tabName) throws Exception {

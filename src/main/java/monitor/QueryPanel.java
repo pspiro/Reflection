@@ -52,7 +52,7 @@ public class QueryPanel extends JsonPanel {
 		topPanel.add(Box.createHorizontalStrut(5));
 		topPanel.add( clr);
 		
-		where.addActionListener( e -> Monitor.m.refresh() );
+		where.addActionListener( e -> Monitor.instance.refresh() );
 		
 		add( topPanel, BorderLayout.NORTH);
 		add( m_model.createTable() );
