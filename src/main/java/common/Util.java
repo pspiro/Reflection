@@ -545,5 +545,11 @@ public class Util {
 	private static Address toEmail(String name, String email) throws AddressException {
 		return new InternetAddress( String.format( "%s <%s>", name, email) );
 	}
-    
+
+	/** Convert Throwable to Exception */
+	public static Exception toException(Throwable e) {
+		return e instanceof Exception ? (Exception)e : new Exception(e);
+	}
+
+	
 }
