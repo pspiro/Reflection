@@ -1,1 +1,2 @@
-java -cp target/Reflection-0.0.2-jar-with-dependencies.jar fireblocks.FbActiveServer Dev-config 
+#java -cp target/Reflection-0.0.2-jar-with-dependencies.jar fireblocks.FbActiveServer Dev-config 
+sudo systemctl restart fbactiveserver
