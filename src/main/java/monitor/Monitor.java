@@ -32,9 +32,9 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String base = "https://reflection.trading";
-	//static final String mdsBase = base;
-	static final String mdsBase = "http://localhost:6999";
+	static final String base = "https://live.reflection.trading";
+	static final String mdsBase = base;
+	//static final String mdsBase = "http://localhost:6999";
 	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
@@ -42,7 +42,7 @@ public class Monitor {
 	static final Stocks stocks = new Stocks();
 	static final Config m_config = new Config();
 
-	static Monitor m;
+	static Monitor instance;
 	static JTextField num = new JTextField(4); // number of entries to return in query
 	static MyRedis m_redis;
 	JFrame m_frame = new JFrame();
@@ -55,7 +55,7 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		m = new Monitor( "Dt-config");
+		instance = new Monitor( "Prod-config");
 	}
 	
 	Monitor(String tabName) throws Exception {

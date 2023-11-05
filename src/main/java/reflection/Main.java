@@ -141,7 +141,6 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-		server.createContext("/mint", exch -> new BackendTransaction(this, exch).handleMint() );
 		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
 		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
@@ -173,7 +172,7 @@ public class Main implements ITradeReportHandler {
 		server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch).handleGetType2Config() );
 		server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch).handleAllLiveOrders() );
 		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
-		server.createContext("/", exch -> new OldStyleTransaction(this, exch).handle() );
+		server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
 		server.start();
 
