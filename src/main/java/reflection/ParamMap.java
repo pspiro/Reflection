@@ -83,7 +83,7 @@ public class ParamMap {
 			return Util.getEnum(getRequiredString(tag), values);
 		}
 		catch( IllegalArgumentException e) {			
-			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' has invalid value of %s; valid values are %s", 
+			throw new RefException( RefCode.INVALID_REQUEST, "Param '%s' has an invalid value", 
 					tag, getRequiredParam(tag), Util.allEnumValues( values) );
 		}
 	}

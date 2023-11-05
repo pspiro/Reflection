@@ -160,7 +160,7 @@ public class Config extends ConfigBase {
 
 		// market data
 		this.redisHost = m_tab.get( "redisHost");
-		this.redisPort = m_tab.getRequiredInt( "redisPort");
+		this.redisPort = m_tab.getInt( "redisPort");
 		this.redisQueryInterval = m_tab.getRequiredInt("redisQueryInterval");
 
 		// listen here

@@ -92,6 +92,17 @@ public class GTable extends HashMap<String,String> {
 			throw new Ex( "Tag %s is not an integer", tag);
 		}
 	}
+
+	/** Return int val or zero if null */
+	public int getInt(String tag) throws Exception {
+		try {
+			String val = get(tag);
+			return S.isNotNull(val) ? Integer.valueOf(val) : 0; 
+		}
+		catch( Exception e) {
+			throw new Ex( "Tag %s is not an integer", tag);
+		}
+	}
 	
 	
 	// update map and sheet
