@@ -26,7 +26,7 @@ public class MktDataConfig extends ConfigBase {
 		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 
 		this.redisHost = tab.getRequiredString( "redisHost");
-		this.redisPort = tab.getRequiredInt( "redisPort");
+		this.redisPort = tab.getInt( "redisPort");
 		this.mode = Util.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getRequiredInt( "twsMdPort");

@@ -19,20 +19,25 @@ import tw.util.S;
 import util.LogType;
 
 /** Base class for all classes which handle http requests */
-public abstract class BaseTransaction {
+public class BaseTransaction {
 	public static final String code = "code";
 	//static final String message = "message";
 
-	protected HttpExchange m_exchange;
+	protected final HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality
-	protected String m_uri;
-	protected MyTimer m_timer = new MyTimer();
-	protected String m_uid;
+	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
+	protected final String m_uri;
+	private final MyTimer m_timer;
+	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
 	
 	public BaseTransaction( HttpExchange exchange) {
+		this( exchange, true);
+	}
+
+	public BaseTransaction(HttpExchange exchange, boolean debug) {
 		m_exchange = exchange;
 		m_uid = Util.uid(8);
+		m_timer = debug ? new MyTimer() : null;
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	
@@ -43,7 +48,11 @@ public abstract class BaseTransaction {
 	/** Note this returns URI in all lower case */
 	String getURI(HttpExchange exch) {
 		String uri = exch.getRequestURI().toString().toLowerCase();
-		m_timer.next( "%s ----- %s -------------------------", m_uid, uri);
+		
+		if (m_timer != null) {
+			m_timer.next( "%s ----- %s -------------------------", m_uid, uri);
+		}
+		
 		return uri;
 	}
 
@@ -69,7 +78,8 @@ public abstract class BaseTransaction {
 		return respondFull( response, 200, null);
 	}
 
-	/** @param responseCode is 200 or 400 */
+	/** Respond with json
+	 * @param responseCode is 200 or 400 */
 	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;
@@ -90,7 +100,9 @@ public abstract class BaseTransaction {
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
 
-			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 200) );
+			if (m_timer != null) {
+				out( "  responded in %s ms %s", m_timer.time(), Util.left(data, 200) );
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -110,7 +122,10 @@ public abstract class BaseTransaction {
 			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
 			m_exchange.sendResponseHeaders( 200, data.length() );
 			outputStream.write(data.getBytes());
-			out( "  completed in %s ms %s", m_timer.time(), Util.left(data, 200) );
+			
+			if (m_timer != null) {
+				out( "  responded in %s ms %s", m_timer.time(), Util.left(data, 200) );
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();

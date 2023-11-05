@@ -33,6 +33,14 @@ public class TestSmartToken extends MyTestCase {
 		// should succeed 
 		m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1)
 				.waitForHash();
+		
+		// fail burn, only-RUSD
+		st.burn(Accounts.instance.getId("Admin1"), dead, 1)
+				.waitForStatus("FAILED");
+
+		// fail burn, only-RUSD
+		st.burn(Accounts.instance.getId("Owner"), dead, 1) 
+				.waitForStatus("FAILED");
 
 		// set RUSD address -> success
 		st.setRusdAddress( Accounts.instance.getId("Owner"), TestOrder.dead)
@@ -57,6 +65,7 @@ public class TestSmartToken extends MyTestCase {
 				.waitForStatus("FAILED");
 	}
 
-	public void testTokenBurn() { // onlyRusdAddress {
+	public void testFailTokenBurn() throws Exception {
+		
 	}
 }

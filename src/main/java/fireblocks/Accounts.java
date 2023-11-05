@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.Wallet;
+import reflection.Config;
 import tw.util.S;
 
 /** Works for prod and test. */
@@ -22,10 +23,15 @@ public class Accounts {
 
 	private Accounts() {
 	}
+	
+	public static void main(String[] args) throws Exception {
+		Config.readFrom("Dt-config");
+		S.out( instance.getAddress(4) );
+	}
 
 	public void display() throws Exception {
 		read();
-		m_accounts.display();
+		S.out( m_accounts);
 	}
 	
 	public synchronized void read() throws Exception {

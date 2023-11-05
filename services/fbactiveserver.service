@@ -1,0 +1,22 @@
+[Unit]
+Description=FbActiveServer
+
+[Service]
+User=peteraspiro
+WorkingDirectory=/home/peteraspiro/RefAPI
+ExecStart=/usr/bin/java -cp target/Reflection-0.0.2-jar-with-dependencies.jar fireblocks.FbActiveServer Dev-config
+StandardOutput=append:/home/peteraspiro/RefAPI/fbactiveserver.log
+StandardError=append:/home/peteraspiro/RefAPI/fbactiveserver.log
+TimeoutStopSec=29s
+TimeoutStartSec=30s
+Restart=on-failure
+RestartSec=10s
+StartLimitInterval=5min
+StartLimitBurst=3
+TimeoutStopSec=30s
+ExecStop=/bin/kill -SIGTERM $MAINPID
+KillSignal=SIGCONT
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

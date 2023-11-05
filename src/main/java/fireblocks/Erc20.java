@@ -18,6 +18,7 @@ public class Erc20 {
 										  // for stock tokens, this might not be enough
 	static final String approveKeccak = "095ea7b3";
 	static final String mintKeccak = "40c10f19";
+	static final String burnKeccak = "9dc29fac";
 	static final String totalSupplyAbi = Util.fmtJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	protected String m_address;
@@ -180,5 +181,20 @@ public class Erc20 {
 		};
 		
 		return call( fromAcct, mintKeccak, paramTypes, params, "Stablecoin mint");
+	}
+
+	/** This can be called by anybody, the BUSD does not have an owner.
+	 *  For testing only; cannot be called in production */
+	public RetVal burn(int fromAcct, String address, double amt) throws Exception {
+		S.out( "Burning %s %s for %s", amt, m_name, fromAcct);
+		
+		String[] paramTypes = { "address", "uint256" };
+		
+		Object[] params = { 
+				address, 
+				toBlockchain( amt) 
+		};
+		
+		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
 }

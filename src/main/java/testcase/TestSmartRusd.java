@@ -27,8 +27,10 @@ public class TestSmartRusd extends MyTestCase {
 
 		instance.setAdmins("Admin1");
 		
+		String admin = instance.getAddress( "Admin1");
+		
 		Rusd rusd = new Rusd("", 6);
-		rusd.deploy("c:/work/smart-contracts/build/contracts/rusd.json", dead, instance.getAddress( "Admin1") ); 
+		rusd.deploy("c:/work/smart-contracts/build/contracts/rusd.json", dead, admin); 
 		StockToken st = StockToken.deploy(
 				"c:/work/smart-contracts/build/contracts/stocktoken.json",
 				"AAA",
@@ -37,14 +39,15 @@ public class TestSmartRusd extends MyTestCase {
 
 		// mint RUSD
 		rusd.mint(dead, 10.0, st)
-			.waitForHash();
+			.waitForCompleted();
 		
 		// buy a stock token - succeed
 		rusd.buyStockWithRusd(dead, 1, st, 1)
-			.waitForHash();
+			.waitForCompleted();
 		
 		// remove admin
-		rusd.addOrRemoveAdmin(dead, false);
+		rusd.addOrRemoveAdmin(admin, false)
+			.waitForCompleted();
 		
 		// buy a stock token - fail
 		rusd.buyStockWithRusd(dead, 1, st, 1)

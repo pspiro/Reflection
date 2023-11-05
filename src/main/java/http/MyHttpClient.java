@@ -15,7 +15,7 @@ import reflection.RefCode;
 import tw.util.IStream;
 import tw.util.S;
 
-/** @deprecated, use MyAsyncClient
+/** @deprecated, use MyClient
  *  Good for testing, don't use this in production, there are many things not handled. */
 public class MyHttpClient {
 	private Socket m_socket;

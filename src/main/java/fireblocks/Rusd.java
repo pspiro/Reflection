@@ -173,7 +173,8 @@ public class Rusd extends Erc20 {
 				"RUSD sell RUSD");
 	}
 
-	/** There is a RUSD.buyRusd method but it is for the future, currently never called. */
+	/** There is a RUSD.buyRusd method but it is for the future, currently never called. 
+	 * @return */
 	// public void buyRusd() {
 	// }
 
@@ -183,15 +184,14 @@ public class Rusd extends Erc20 {
 //    uint256 _amount
 
 
-	public void addOrRemoveAdmin(String adminAddr, boolean add) throws Exception {
-		Util.require( add, "remove not supported yet for safety");
-		
+	public RetVal addOrRemoveAdmin(String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
-		Object[] params = { adminAddr, 1 };
+		Object[] params = { adminAddr, add ? 1 : 0 };
 		
 		S.out( "Owner adding or removing admin %s (%s)", adminAddr, add);
 		
-		call(	Accounts.instance.getId( "Owner"),
+		return call(
+				Accounts.instance.getId( "Owner"),
 				addOrRemoveKeccak, 
 				paramTypes, 
 				params, 

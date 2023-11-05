@@ -9,6 +9,7 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -32,7 +33,7 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String base = "https://live.reflection.trading";
+	static final String base = "https://reflection.trading";
 	static final String mdsBase = base;
 	//static final String mdsBase = "http://localhost:6999";
 	static final String chain = "goerli";  // or eth
@@ -55,7 +56,7 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		instance = new Monitor( "Prod-config");
+		instance = new Monitor( JOptionPane.showInputDialog("Enter config tab name") );
 	}
 	
 	Monitor(String tabName) throws Exception {
