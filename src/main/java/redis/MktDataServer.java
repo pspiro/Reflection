@@ -52,6 +52,7 @@ public class MktDataServer {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("MDS");
+			S.out( "Starting MktDataServer");
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
 			new MktDataServer(args);
 		}
@@ -91,7 +92,7 @@ public class MktDataServer {
 			server.createContext("/mdserver/debug-on", exch -> new MdTransaction(this, exch).onDebug(true) ); 
 			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
-			server.createContext("/", exch -> m_debug = false); 
+			server.createContext("/mdserver/ok", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.setExecutor( Executors.newFixedThreadPool(10) );
 			server.start();
 		}
