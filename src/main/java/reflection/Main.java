@@ -75,6 +75,7 @@ public class Main implements ITradeReportHandler {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("RefAPI");
+			S.out( "Starting RefAPI");
 			
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");

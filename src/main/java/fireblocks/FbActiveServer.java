@@ -32,6 +32,7 @@ public class FbActiveServer {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("FBAS");
+			S.out( "Starting FbActiveServer");
 			Util.require( args.length >= 1, "You must specify a config tab name");
 			run( args[0] );
 		}
@@ -47,7 +48,6 @@ public class FbActiveServer {
 	}
 	
 	public static void run(String tab) throws Exception {
-		S.out( "Starting FbActiveServer");
 		m_started = System.currentTimeMillis();
 
 		Config config = new Config();

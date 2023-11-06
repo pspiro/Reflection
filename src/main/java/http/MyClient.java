@@ -45,14 +45,14 @@ public class MyClient {
 	/** query and return response */
 	public HttpResponse<String> query() throws Exception {
 		try {
-			HttpResponse<String> response = HttpClient.newBuilder().build()
-					.send(m_builder.build(), HttpResponse.BodyHandlers.ofString());
+			HttpRequest request = m_builder.build();
 
-			// avoid return html messages from nginx;
-			// you can add more codes here if desired 
-			if (response.statusCode() != 200 && response.statusCode() != 400) {  
-				throw new MyException( "Error: returned status code %s", response.statusCode() );
-			}
+			HttpResponse<String> response = HttpClient.newBuilder().build()
+					.send(request, HttpResponse.BodyHandlers.ofString());
+
+			// avoid returning html messages from nginx;
+			// at least catch 404 and 502 
+			requireNiceCode( response.statusCode(), request.uri() );
 			
 			return response;
 		}
@@ -67,16 +67,29 @@ public class MyClient {
 		HttpRequest request = m_builder.build();
 		
 		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-				.thenAccept(response -> {
-					Util.wrap( () -> ret.accept(response) );
-				})
+				.thenAccept(response ->
+					Util.wrap( () -> {   // catch 502 and 404 here
+						requireNiceCode( response.statusCode(), request.uri() );
+						ret.accept(response);
+					})
+				)
 				.exceptionally(ex -> {
 					S.out( "Error: could not get url %s - %s", request.uri(), ex.getMessage() );  // we need this because the stack trace does not indicate where the error occurred
 					ex.printStackTrace();
 					return null;
 				});
-		
-//		Util.execute( () -> S.sleep(5000) );
+	}
+	
+	private static void requireNiceCode( int statusCode, URI uri) throws Exception {
+		Util.require( 
+				niceCode( statusCode), 
+				"Error: received status code %s fetching URL %s",
+				statusCode, uri);
+	}
+	
+	/** Really we want to at least catch 404 and 502 */
+	private static boolean niceCode( int statusCode) {
+		return statusCode == 200 || statusCode == 400;
 	}
 	
 	// ----- synchronous helper methods - get ----------------------------

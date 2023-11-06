@@ -33,7 +33,7 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String base = "https://reflection.trading";
+	static String base = "https://reflection.trading";
 	static final String mdsBase = base;
 	//static final String mdsBase = "http://localhost:6999";
 	static final String chain = "goerli";  // or eth
@@ -41,7 +41,7 @@ public class Monitor {
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
-	static final Config m_config = new Config();
+	static Config m_config;
 
 	static Monitor instance;
 	static JTextField num = new JTextField(4); // number of entries to return in query
@@ -56,25 +56,28 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
-		instance = new Monitor( JOptionPane.showInputDialog("Enter config tab name") );
+
+		// read config
+		m_config = Config.ask();
+		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
+		
+		instance = new Monitor();
 	}
 	
-	Monitor(String tabName) throws Exception {
-		// read config
-		S.out( "Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-		m_config.readFromSpreadsheet(tabName);
-		S.out( "  done");
-		
+	Monitor() throws Exception {
 		// read stocks
 		S.out( "Reading stock list from google sheet");
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
 		S.out( "  done");
 
 		m_redis = Monitor.m_config.newRedis();
+		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
+		base = m_config.baseUrl();
 		
 		PricesPanel m_pricesPanel = new PricesPanel();
 		
-
+		// monitor won't work until the certificate is fixed
+		
 		
 		JButton but = new JButton("Refresh");
 		but.addActionListener( e -> refresh() );
@@ -208,12 +211,12 @@ public class Monitor {
 		JTextField f1 = new JTextField(7);
 		JTextField f2 = new JTextField(7);
 		JTextField f3 = new JTextField(7);
-		JTextField f4 = new JTextField(7);
-		JTextField f4a = new JTextField(7);
+		JTextField f4 = new JTextField(14);
+		JTextField f4a = new JTextField(14);
 		JTextField f5 = new JTextField(7);
 		JTextField f6 = new JTextField(7);
 		JTextField f7 = new JTextField(7);
-		JTextField f8 = new JTextField(7);
+		JTextField f8 = new JTextField(14);
 
 		StatusPanel() {
 			super( new BorderLayout() );

@@ -26,7 +26,11 @@ public class Erc20 {
 	private String m_name;
 	
 	Erc20( String address, int decimals, String name) throws Exception {
-		Util.require( S.isNull(address) || Util.isValidAddress(address), "Invalid Erc20 address");
+		Util.require( 
+				S.isNull(address) || 
+				address.equalsIgnoreCase("deploy") || 
+				Util.isValidAddress(address), "Invalid Erc20 address");
+		
 		m_address = address;
 		m_decimals = decimals;
 		m_name = name;
@@ -152,13 +156,19 @@ public class Erc20 {
 	public static String getDeployedAddress(String txHash) throws Exception {
 		for (int i = 0; i < 3*60; i++) {
 			if (i > 0) S.sleep(1000);
-			
-			S.out( "    querying...");
-			JsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
-			String addr = obj.getString("receipt_contract_address");
-			if (S.isNotNull(addr) ) {
-				S.out( "contract deployed to " + addr);
-				return addr;
+			try {
+				
+				S.out( "    querying...");
+				JsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
+				String addr = obj.getString("receipt_contract_address");
+				if (S.isNotNull(addr) ) {
+					S.out( "contract deployed to " + addr);
+					return addr;
+				}
+			}
+			catch( Exception e) {
+				// we can get a 404 error; we should keep trying
+				S.out( "Error while querying for deployed address: " + e.getMessage() );
 			}
 		}
 		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		

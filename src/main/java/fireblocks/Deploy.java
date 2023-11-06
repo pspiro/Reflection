@@ -17,7 +17,7 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = new Config();
-		config.readFromSpreadsheet("Dev-config");
+		config.readFromSpreadsheet("Prod-config");
 		Util.require(config.useFireblocks(), "Turn on Fireblocks");
 		
 		Rusd rusd = config.rusd();
@@ -31,7 +31,7 @@ public class Deploy {
 			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
 		}
 		else {
-			Util.require( Util.isValidAddress( busd.address() ), "RUSD must be valid or set to 'deploy'");
+			Util.require( Util.isValidAddress( busd.address() ), "BUSD must be valid or set to 'deploy'");
 		}
 		
 		// deploy RUSD (if set to "deploy")
@@ -48,7 +48,7 @@ public class Deploy {
 					rusd.address(), // approving
 					1000000000); // $1B
 
-			// add a second owner
+			// add a second admin
 			rusd.addOrRemoveAdmin(
 					instance.getAddress( "Admin2"), 
 					true);

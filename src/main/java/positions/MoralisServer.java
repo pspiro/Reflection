@@ -36,6 +36,11 @@ public class MoralisServer {
 	// double-check the synchronization
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
 	
+	public static void main(String[] args) throws Exception {
+		JsonObject t = queryTransaction("0xda3de0d726fdea7eb60af8afc3921e981f48b26e1d08daf5846aee8e3706973d", "polygon");
+		t.display();
+	}
+	
 	public static JsonObject queryTransaction( String transactionHash, String chain) throws Exception {
 		String url = String.format( "%s/transaction/%s?chain=%s",
 				moralis, transactionHash, chain);

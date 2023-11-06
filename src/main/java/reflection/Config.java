@@ -1,9 +1,12 @@
 package reflection;
 
+import java.awt.HeadlessException;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import javax.swing.JOptionPane;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -459,6 +462,14 @@ public class Config extends ConfigBase {
 
 	public String baseUrl() {
 		return baseUrl;
+	}
+
+	public static Config ask() throws HeadlessException, Exception {
+		return readFrom( JOptionPane.showInputDialog("Enter config tab name") );		
+	}
+	
+	public String getTabName() {
+		return m_tab.tabName();
 	}
 }
 //rebuild

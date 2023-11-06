@@ -15,6 +15,8 @@ public class GTable extends HashMap<String,String> {
 	private String m_col2;
 	private boolean m_caseSensitive; // applies to the tags
 	
+	public String tabName() { return m_tab.name(); }
+	
 	public GTable() throws Exception {
 	}
 

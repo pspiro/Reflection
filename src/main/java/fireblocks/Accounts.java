@@ -25,13 +25,9 @@ public class Accounts {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config.readFrom("Dt-config");
-		S.out( instance.getAddress(4) );
-	}
-
-	public void display() throws Exception {
-		read();
-		S.out( m_accounts);
+		Config.readFrom("Prod-config");
+		instance.read();
+		S.out( instance.m_accounts);
 	}
 	
 	public synchronized void read() throws Exception {
