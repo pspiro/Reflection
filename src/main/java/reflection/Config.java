@@ -69,6 +69,7 @@ public class Config extends ConfigBase {
 	private boolean allowRedemptions;
 	private String m_emailUsername;
 	private String m_emailPassword;
+	private String baseUrl;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -182,6 +183,7 @@ public class Config extends ConfigBase {
 		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("non_kyc_max_order_size");
 		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
+		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -453,6 +455,10 @@ public class Config extends ConfigBase {
 	/** Used by test cases */
 	public void setSetting(String key, String val) {
 		m_tab.put(key, val);
+	}
+
+	public String baseUrl() {
+		return baseUrl;
 	}
 }
 //rebuild

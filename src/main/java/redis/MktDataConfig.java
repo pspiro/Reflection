@@ -12,12 +12,14 @@ public class MktDataConfig extends ConfigBase {
 	private int twsMdClientId;
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private int redisBatchTime; // in ms
+	private int mdsPort;
 
 	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
 	public long reconnectInterval() { return reconnectInterval; }
 	public int twsMdClientId() { return twsMdClientId; }
+	public int mdsPort() { return mdsPort; }
 
 	public MktDataConfig() { 
 	}
@@ -31,6 +33,7 @@ public class MktDataConfig extends ConfigBase {
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getRequiredInt( "twsMdPort");
 		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");
+		this.mdsPort = tab.getRequiredInt("mdsPort");
 
 		this.redisBatchTime = tab.getRequiredInt( "redisBatchTime");
 		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");

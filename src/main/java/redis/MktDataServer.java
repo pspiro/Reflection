@@ -74,8 +74,15 @@ public class MktDataServer {
 			log( "debug mode=true");
 		}
 		
+		MyTimer timer = new MyTimer();
+
+		// read config settings from google sheet 
+		timer.next("Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
+		m_config.readFromSpreadsheet(tabName);
+		
 		try {
-			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", 6999), 0);
+			timer.next( "Create http server");
+			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", m_config.mdsPort() ), 0);
 			server.createContext("/favicon", exch -> {} ); // ignore these requests
 			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
@@ -97,11 +104,6 @@ public class MktDataServer {
 			System.exit(0);
 		}
 		
-		MyTimer timer = new MyTimer();
-
-		// read config settings from google sheet 
-		timer.next("Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-		m_config.readFromSpreadsheet(tabName);
 		
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet(m_config);
