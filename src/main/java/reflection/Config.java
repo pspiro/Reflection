@@ -74,6 +74,7 @@ public class Config extends ConfigBase {
 	private String m_emailUsername;
 	private String m_emailPassword;
 	private String baseUrl;
+	private int threads;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -189,6 +190,7 @@ public class Config extends ConfigBase {
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
+		this.threads = m_tab.getRequiredInt("threads");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -293,7 +295,7 @@ public class Config extends ConfigBase {
 	}
 
 	public int threads() {
-		return 10;
+		return threads;
 	}
 
 	public void pullFaq(MySqlConnection database) throws Exception {
