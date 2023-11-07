@@ -54,10 +54,9 @@ public class Profile extends JsonObject {
 			require (has( tag), RefCode.INVALID_USER_PROFILE, "Missing user attribute '%s'", tag);
 		}
 
-		// validate fields
-		require( aadhaar().length() == 12, RefCode.INVALID_USER_PROFILE, "The Aadhaar '%s' is invalid", aadhaar() ); 
-		require( pan().length() == 10, RefCode.INVALID_USER_PROFILE, "The PAN '%s' is invalid", pan() );
-		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email address '%s' is invalid", email() );
+		// validate pan and aadhaar
+		require( aadhaar().replaceAll("-", "").matches( "^\\d{12}$"), RefCode.INVALID_USER_PROFILE, "The Aadhaar entered is invalid"); 
+		require( pan().toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$"), RefCode.INVALID_USER_PROFILE, "The PAN entered is invalid");
 
 		// don't allow < or > in user entry fields
 		for (String tag : fields) {
