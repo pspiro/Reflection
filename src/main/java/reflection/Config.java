@@ -54,6 +54,7 @@ public class Config extends ConfigBase {
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
+	private long recentPrice;
 	private String postgresUrl;
 	private String postgresUser;
 	private String postgresPassword;
@@ -87,7 +88,7 @@ public class Config extends ConfigBase {
 	private int fbServerPort;
 	private int fbPollIingInterval;
 
-	
+	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
 	
 	public int fbPollIingInterval() { return fbPollIingInterval; }
@@ -187,6 +188,7 @@ public class Config extends ConfigBase {
 		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
+		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");

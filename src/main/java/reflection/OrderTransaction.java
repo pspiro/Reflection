@@ -160,17 +160,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 				RefCode.INVALID_REQUEST, 
 				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
-		// confirm that the user has enough stablecoin or stock token in their wallet
-		// fix this-> requireSufficientStablecoin(order);		
-				
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
 		// explain why there are no prices which should never happen otherwise
 		Prices prices = m_main.getStock(conid).prices();
 		prices.checkOrderPrice( m_order, orderPrice, m_config);
-		
-		// ***check that the prices are pretty recent; if they are stale, and order is < .5, we will fill the order with a bad price. pas
-		// * or check that ANY price is pretty recent, so we know prices are updating
 		
 		respond( code, RefCode.OK, "id", m_uid);
 		
@@ -188,12 +182,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 
 			insertTransaction();  // this must come after all order values are set and before order is placed to ensure that it happens before we get a response from IB
 
-			// nothing to submit to IB; go straight to blockchain
+			// nothing to submit to IB?
 			if (m_order.roundedQty() == 0) {
 				// when placing an order that rounds to zero shares, we must check that the prices 
-				// are pretty recent; if they are stale, we will fill the order with a bad price
-				require( m_stock.hasRecentPrices(isBuy()), RefCode.STALE_DATA, "There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
+				// are pretty recent; if they are stale, we could fill the order with a bad price
+				require(
+						System.currentTimeMillis() - m_stock.prices().time() <= m_config.recentPrice(),
+						RefCode.STALE_DATA, 
+						"There is no recent price for this stock. Please try your order again later or increase the order quantity.");  
 				
+				// go straight to blockchain
 				jlog( LogType.NO_STOCK_ORDER, m_order.getJsonLog(contract) );
 				m_order.status(OrderStatus.Filled);
 				onIBOrderCompleted(false, false);
