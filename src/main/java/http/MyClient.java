@@ -50,9 +50,11 @@ public class MyClient {
 			HttpResponse<String> response = HttpClient.newBuilder().build()
 					.send(request, HttpResponse.BodyHandlers.ofString());
 
-			// avoid returning html messages from nginx;
-			// at least catch 404 and 502 
-			requireNiceCode( response.statusCode(), request.uri() );
+			// avoid returning html messages from nginx; at least catch 404 and 502 
+			Util.require( 
+					niceCode( response.statusCode() ), 
+					"Error: received status code %s fetching URL %s",
+					response.statusCode(), request.uri() );
 			
 			return response;
 		}
@@ -67,24 +69,20 @@ public class MyClient {
 		HttpRequest request = m_builder.build();
 		
 		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-				.thenAccept(response ->
-					Util.wrap( () -> {   // catch 502 and 404 here
-						requireNiceCode( response.statusCode(), request.uri() );
-						ret.accept(response);
-					})
-				)
+				.thenAccept(response -> { 
+						if (niceCode( response.statusCode() ) ) {  // catch 502 and 404 here
+							Util.wrap( () -> ret.accept(response) );
+						}
+						else {
+							// if we want, we could pass in the exception with the call stack and throw it here
+							S.out( "Error: received status code %s fetching URL %s", response.statusCode(), request.uri() );
+						}
+				})
 				.exceptionally(ex -> {
 					S.out( "Error: could not get url %s - %s", request.uri(), ex.getMessage() );  // we need this because the stack trace does not indicate where the error occurred
 					ex.printStackTrace();
 					return null;
 				});
-	}
-	
-	private static void requireNiceCode( int statusCode, URI uri) throws Exception {
-		Util.require( 
-				niceCode( statusCode), 
-				"Error: received status code %s fetching URL %s",
-				statusCode, uri);
 	}
 	
 	/** Really we want to at least catch 404 and 502 */
