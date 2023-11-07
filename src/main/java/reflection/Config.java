@@ -55,6 +55,7 @@ public class Config extends ConfigBase {
 	private long timeout = 7000;  // all other messages timeout 
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private String postgresUrl;
+	private String postgresExtUrl;  // external URL, used by Monitor
 	private String postgresUser;
 	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
@@ -73,6 +74,7 @@ public class Config extends ConfigBase {
 	private String m_emailUsername;
 	private String m_emailPassword;
 	private String baseUrl;
+	private String mdBaseUrl;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -170,6 +172,7 @@ public class Config extends ConfigBase {
 		
 		// database
 		this.postgresUrl = m_tab.get( "postgresUrl");
+		this.postgresExtUrl = m_tab.get( "postgresExtUrl");
 		this.postgresUser = m_tab.get( "postgresUser");
 		this.postgresPassword = m_tab.get( "postgresPassword");
 
@@ -187,6 +190,7 @@ public class Config extends ConfigBase {
 		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
+		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -464,12 +468,22 @@ public class Config extends ConfigBase {
 		return baseUrl;
 	}
 
+	public String mdBaseUrl() {
+		return mdBaseUrl;
+	}
+
 	public static Config ask() throws HeadlessException, Exception {
-		return readFrom( JOptionPane.showInputDialog("Enter config tab name") );		
+		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config" );		
 	}
 	
 	public String getTabName() {
 		return m_tab.tabName();
 	}
+
+	/** RefAPI uses internal url; Monitor uses external url 
+	 * @throws Exception */ 
+	public void useExteranDbUrl() throws Exception {
+		require( S.isNotNull(postgresExtUrl), "No external URL set");
+		postgresUrl = postgresExtUrl;
+	}
 }
-//rebuild
