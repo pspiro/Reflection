@@ -151,11 +151,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 			m_stablecoinAmt = m_map.getDoubleParam("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
 		
-		// add this after the tds is fixed for buy order
+		// check the stablecoin amt calculation
 		double myStablecoinAmt = m_order.isBuy()
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
-		// fix this-> require( Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), RefCode.INVALID_REQUEST, "The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
+		require( 
+				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), 
+				RefCode.INVALID_REQUEST, 
+				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
 		// confirm that the user has enough stablecoin or stock token in their wallet
 		// fix this-> requireSufficientStablecoin(order);		
