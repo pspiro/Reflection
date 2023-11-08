@@ -40,7 +40,9 @@ public class JsonPanel extends MonPanel implements INewTab {
 		m_model.filter(tag, allowed);
 	}
 
-	/** Override this */
+	/** Override this
+	 * @param value could be null
+	 * @return formatted value */
 	protected Object format(String key, Object value) {
 		return value;
 	}

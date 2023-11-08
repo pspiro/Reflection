@@ -38,7 +38,7 @@ public class CryptoPanel extends MonPanel {
 	}
 	
 	public void refresh() throws Exception {
-		S.out( "Refreshing Misc panel");
+		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
 		double usdc = refWallet.getBalance(Monitor.m_config.busdAddr());

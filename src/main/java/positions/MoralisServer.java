@@ -9,12 +9,13 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Erc20;
 import http.MyClient;
+import reflection.Config;
 import reflection.MySqlConnection;
 
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick */
 public class MoralisServer {
-	static final String chain = "goerli";  // or eth
+	public static String chain;  // or eth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
@@ -37,11 +38,14 @@ public class MoralisServer {
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
 	
 	public static void main(String[] args) throws Exception {
-		JsonObject t = queryTransaction("0xda3de0d726fdea7eb60af8afc3921e981f48b26e1d08daf5846aee8e3706973d", "polygon");
-		t.display();
+		//JsonObject t = queryTransaction("0xda3de0d726fdea7eb60af8afc3921e981f48b26e1d08daf5846aee8e3706973d", "polygon");
+		//t.display();
+		Config config = Config.ask();
+		config.busd().queryTotalSupply();
 	}
 	
 	public static JsonObject queryTransaction( String transactionHash, String chain) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/transaction/%s?chain=%s",
 				moralis, transactionHash, chain);
 		return JsonObject.parse( querySync( url) );
@@ -57,6 +61,7 @@ public class MoralisServer {
 	}
 
 	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
 				moralis, contractAddress, chain, functionName);
 		return post( url, abi);
@@ -82,6 +87,7 @@ public class MoralisServer {
 		name : Reflection BUSD,
 		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
 	public static JsonArray reqPositionsList(String wallet) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/%s/erc20?chain=%s",
 				moralis, wallet, chain);
 		String ret = querySync(url);
@@ -95,12 +101,14 @@ public class MoralisServer {
 	}
 	
 	public static JsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
 				moralis, contract, chain, owner, spender);
 		return JsonObject.parse( querySync(url) );
 	}
 	
 	public static double getNativeBalance(String address) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
 		return Erc20.fromBlockchain(
 				JsonObject.parse( querySync(url) ).getString("balance"),

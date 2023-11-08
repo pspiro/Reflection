@@ -19,6 +19,7 @@ import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
+import positions.MoralisServer;
 import redis.ConfigBase;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
@@ -54,6 +55,7 @@ public class Config extends ConfigBase {
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
+	private long recentPrice;
 	private String postgresUrl;
 	private String postgresExtUrl;  // external URL, used by Monitor
 	private String postgresUser;
@@ -75,6 +77,7 @@ public class Config extends ConfigBase {
 	private String m_emailPassword;
 	private String baseUrl;
 	private String mdBaseUrl;
+	private int threads;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -89,7 +92,7 @@ public class Config extends ConfigBase {
 	private int fbServerPort;
 	private int fbPollIingInterval;
 
-	
+	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
 	
 	public int fbPollIingInterval() { return fbPollIingInterval; }
@@ -191,6 +194,8 @@ public class Config extends ConfigBase {
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
 		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
+		this.recentPrice = m_tab.getRequiredInt("recentPrice");
+		this.threads = m_tab.getRequiredInt("threads");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -217,6 +222,9 @@ public class Config extends ConfigBase {
 			// update Fireblocks static keys and admins
 			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
 			Accounts.instance.setAdmins( fbAdmins);
+			
+			// update Moralis chain
+			MoralisServer.chain = moralisPlatform;
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -295,7 +303,7 @@ public class Config extends ConfigBase {
 	}
 
 	public int threads() {
-		return 10;
+		return threads;
 	}
 
 	public void pullFaq(MySqlConnection database) throws Exception {
@@ -473,6 +481,7 @@ public class Config extends ConfigBase {
 	}
 
 	public static Config ask() throws HeadlessException, Exception {
+		java.awt.Toolkit.getDefaultToolkit().beep();
 		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config" );		
 	}
 	
@@ -485,5 +494,11 @@ public class Config extends ConfigBase {
 	public void useExteranDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
+	}
+
+	public Stocks readStocks() throws Exception {
+		Stocks stocks = new Stocks();
+		stocks.readFromSheet(this);
+		return stocks;
 	}
 }

@@ -112,7 +112,7 @@ public class OldStyleTransaction extends MyTransaction {
 		respond( m_main.m_tradingHours.getHours() );
 	}
 
-	/** I think this is by the Monitor  */ 
+	/** This is by the Monitor to get cash in IB account  */ 
 	private void onCashBal() {
 		JsonObject obj = new JsonObject();
 		

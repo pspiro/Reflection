@@ -9,7 +9,7 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -33,10 +33,9 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static String base = "https://reflection.trading";
-	static final String mdsBase = base;
+	static String base;
+	static String mdBase;
 	//static final String mdsBase = "http://localhost:6999";
-	static final String chain = "goerli";  // or eth
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
@@ -59,7 +58,10 @@ public class Monitor {
 
 		// read config
 		m_config = Config.ask();
+		m_config.useExteranDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
+		base = m_config.baseUrl();
+		mdBase = m_config.mdBaseUrl();
 		
 		instance = new Monitor();
 	}
@@ -72,7 +74,6 @@ public class Monitor {
 
 		m_redis = Monitor.m_config.newRedis();
 		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
-		base = m_config.baseUrl();
 		
 		PricesPanel m_pricesPanel = new PricesPanel();
 		
@@ -84,6 +85,8 @@ public class Monitor {
 		num.addActionListener( e -> refresh() );
 		
 		JPanel butPanel = new JPanel();
+		butPanel.add(new JLabel(base) );
+		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
@@ -119,7 +122,7 @@ public class Monitor {
 		
 		m_frame.setTitle( "Reflection System Monitor");
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		m_frame.setSize( 1000, 800);
+		m_frame.setSize( 1100, 800);
 		m_frame.setVisible(true);
 		
 		
