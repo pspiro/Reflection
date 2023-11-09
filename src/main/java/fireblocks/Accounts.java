@@ -25,7 +25,7 @@ public class Accounts {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config.readFrom("Prod-config");
+		Config.ask();
 		instance.read();
 		S.out( instance.m_accounts);
 	}

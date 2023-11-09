@@ -75,6 +75,7 @@ public class Config extends ConfigBase {
 	private String m_emailPassword;
 	private String baseUrl;
 	private int threads;
+	private int myWalletRefresh;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -91,7 +92,7 @@ public class Config extends ConfigBase {
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
-	
+	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
 	public int rusdDecimals() { return rusdDecimals; }
 	public int busdDecimals() { return busdDecimals; }
@@ -191,6 +192,7 @@ public class Config extends ConfigBase {
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
+		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
