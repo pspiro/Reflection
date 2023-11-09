@@ -37,6 +37,7 @@ public class MktDataServer {
 	enum MyTickType { Bid, Ask, Last };
 
 	public static final String Overnight = "OVERNIGHT"; 
+	public static final String Smart = "SMART"; 
 	static boolean m_debug = false;
 	static long m_started;  // timestamp that process was started
 
@@ -174,7 +175,6 @@ public class MktDataServer {
 			m_list.add( dual);
 
 			// request price on SMART
-			S.out( "  requesting stock prices for %s on SMART", stock.getConid() );
 			contract.exchange( "SMART");
 			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
@@ -188,7 +188,6 @@ public class MktDataServer {
 			
 			// request price on IBEOS
 			if (stock.is24Hour() ) {
-				S.out( "  requesting stock prices for %s on OVERNIGHT", stock.getConid() );
 				contract.exchange( Overnight);
 				mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {

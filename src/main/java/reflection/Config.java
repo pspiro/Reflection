@@ -19,6 +19,7 @@ import fireblocks.Busd;
 import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import junit.framework.TestCase;
+import positions.MoralisServer;
 import redis.ConfigBase;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
@@ -56,6 +57,7 @@ public class Config extends ConfigBase {
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private long recentPrice;
 	private String postgresUrl;
+	private String postgresExtUrl;  // external URL, used by Monitor
 	private String postgresUser;
 	private String postgresPassword;
 	private String symbolsTab;  // tab name where symbols are stored
@@ -74,6 +76,7 @@ public class Config extends ConfigBase {
 	private String m_emailUsername;
 	private String m_emailPassword;
 	private String baseUrl;
+	private String mdBaseUrl;
 	private int threads;
 	private int myWalletRefresh;
 	
@@ -173,6 +176,7 @@ public class Config extends ConfigBase {
 		
 		// database
 		this.postgresUrl = m_tab.get( "postgresUrl");
+		this.postgresExtUrl = m_tab.get( "postgresExtUrl");
 		this.postgresUser = m_tab.get( "postgresUser");
 		this.postgresPassword = m_tab.get( "postgresPassword");
 
@@ -190,6 +194,7 @@ public class Config extends ConfigBase {
 		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
+		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
@@ -219,6 +224,9 @@ public class Config extends ConfigBase {
 			// update Fireblocks static keys and admins
 			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
 			Accounts.instance.setAdmins( fbAdmins);
+			
+			// update Moralis chain
+			MoralisServer.chain = moralisPlatform;
 		}
 		
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -470,12 +478,29 @@ public class Config extends ConfigBase {
 		return baseUrl;
 	}
 
+	public String mdBaseUrl() {
+		return mdBaseUrl;
+	}
+
 	public static Config ask() throws HeadlessException, Exception {
-		return readFrom( JOptionPane.showInputDialog("Enter config tab name") );		
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config" );		
 	}
 	
 	public String getTabName() {
 		return m_tab.tabName();
 	}
+
+	/** RefAPI uses internal url; Monitor uses external url 
+	 * @throws Exception */ 
+	public void useExteranDbUrl() throws Exception {
+		require( S.isNotNull(postgresExtUrl), "No external URL set");
+		postgresUrl = postgresExtUrl;
+	}
+
+	public Stocks readStocks() throws Exception {
+		Stocks stocks = new Stocks();
+		stocks.readFromSheet(this);
+		return stocks;
+	}
 }
-//rebuild

@@ -11,7 +11,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ExConsumer;
-import tw.util.MyException;
 import tw.util.S;
 
 /** Client for all HttpRequests */

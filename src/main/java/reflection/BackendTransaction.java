@@ -298,7 +298,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			getWalletFromUri(); // read wallet address into m_walletAddr (last token in URI)
 			parseMsg();         // read cookie from msg body into m_map
-			validateCookie();
+			//validateCookie();
 			
 			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
 					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
@@ -343,7 +343,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			validateCookie();
+			//validateCookie();
 
 			Profile profile = new Profile( m_map.obj() );
 			profile.trim(); // trim spaces since this data was entered by the user

@@ -8,6 +8,7 @@ import org.json.simple.JsonObject;
 
 import common.Util.ObjectHolder;
 import http.MyClient;
+import tw.util.S;
 
 public class TestHttpClient extends MyTestCase {
 	/** get string, async 
@@ -15,6 +16,28 @@ public class TestHttpClient extends MyTestCase {
 	public static void testgetString() throws Exception {
 		String str = MyClient.getString("https://reflection.trading/api/ok");
 		assertTrue( str.contains("OK") );
+	}
+
+	/** Nginx will return 502 for this endpoint */
+	public static void test502() throws Exception {
+		try {
+			S.out( MyClient.getString("https://reflection.trading/test502") );
+			assertTrue(false);
+		}
+		catch( Exception e) {
+			assertTrue(true);
+		}
+	}
+	
+	/** You have to kill api server for this to pass */
+	public static void test404() throws Exception {
+		try {
+			S.out( MyClient.getString("https://reflection.trading/keke") );
+			assertTrue(false);
+		}
+		catch( Exception e) {
+			assertTrue(true);
+		}
 	}
 	
 	/** get json object, sync */ 

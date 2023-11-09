@@ -1,11 +1,9 @@
 package testcase;
 
-import common.Util;
+import reflection.Config;
 
 public class TestMail extends MyTestCase {
 	public void test() throws Exception {
-		final String username = "josh@reflection.trading";
-		final String password = "KyvuPRpi7uscVE@";
-		Util.sendEmail(username, password, "Reflect", "peteraspiro@gmail.com", "test subject", "test body"); 
+		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "test subject", "test body"); 
 	}
 }

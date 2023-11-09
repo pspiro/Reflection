@@ -14,9 +14,9 @@ public class PricesPanel extends JsonPanel {
 	final static String AlphaUrl = "https://www.alphavantage.co";
 	
 	PricesPanel() {
-		super( new BorderLayout(), "symbol,conid,bid,ask,last,time,alpha last,alpha bid,alpha ask");
-
+		super( new BorderLayout(), "symbol,conid,bid,ask,last,time");
 		add( m_model.createTable() );
+		m_model.justify("llrrr");
 	}
 	
 	@Override JsonModel createModel(String allNames) {
@@ -29,6 +29,12 @@ public class PricesPanel extends JsonPanel {
 
 	@Override public void refresh() throws Exception {
 		m_model.refresh();
+	}
+	
+	@Override protected Object format(String key, Object value) {
+		return key.equals("bid") || key.equals("ask") || key.equals("last")
+				? MdsPricesPanel.fmtPrice(value) 
+				: value;
 	}
 
 	class Model extends JsonModel {

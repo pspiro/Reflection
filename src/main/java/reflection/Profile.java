@@ -49,9 +49,10 @@ public class Profile extends JsonObject {
 	}
 	
 	void validate() throws RefException {
-		// check for missing fields
+		// check for missing fields or too long fields
 		for (String tag : "first_name,last_name,phone".split(",") ) {
-			require (has( tag), RefCode.INVALID_USER_PROFILE, "Missing user attribute '%s'", tag);
+			require( has(tag), RefCode.INVALID_USER_PROFILE, "Missing user attribute '%s'", tag);
+			require( getString(tag).length() <= 100, RefCode.INVALID_USER_PROFILE, "The '%s' entered is invalid", tag);
 		}
 
 		// validate pan and aadhaar
