@@ -2,14 +2,12 @@ package reflection;
 
 import java.io.OutputStream;
 import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
@@ -24,9 +22,9 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
+import fireblocks.MyServer;
 import http.BaseTransaction;
 import redis.MyRedis;
 import redis.clients.jedis.Pipeline;
@@ -137,46 +135,45 @@ public class Main implements ITradeReportHandler {
 		// check that Fireblocks server is running
 		/////////////checkFbActiveServer();
 		
-		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiHost(), m_config.refApiPort(), m_config.threads() );
-		HttpServer server = HttpServer.create(new InetSocketAddress(m_config.refApiHost(), m_config.refApiPort() ), 0);
-		server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
-		server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-		server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-		server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-		server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
-		server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
-		server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
-		server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
-		server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
-		//server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
-		server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
-		server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
-		server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
-		server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
-		server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
-		server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
-		server.createContext("/api/redemptions/redeem", exch -> new BackendTransaction(this, exch).handleRedeem() );
-		server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
-		server.createContext("/api/redeemRUSD", exch -> new BackendTransaction(this, exch).handleRedeem() );
-		server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
-		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-		server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
-		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
-		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
-		server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
-		server.createContext("/api/get-profile", exch -> new BackendTransaction(this, exch).handleGetProfile() );
-		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
-		server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch).handleFireblocks() ); // report build date/time
-		server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
-		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
-		server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch).handleGetType2Config() );
-		server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch).handleAllLiveOrders() );
-		server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
-		server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
-		server.setExecutor( Executors.newFixedThreadPool(m_config.threads()) );  // multiple threads but we are synchronized for single execution
-		server.start();
+		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiPort(), m_config.threads() );
+		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
+			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
+			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
+			server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
+			server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+			server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
+			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
+			server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
+			server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
+			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
+			//server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch).handleGetUserByWallet() );
+			server.createContext("/api/update-profile", exch -> new BackendTransaction(this, exch).handleUpdateProfile() );
+			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
+			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
+			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
+			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
+			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
+			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
+			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
+			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
+			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch).handleMyWallet() );
+			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch).handleHotStocks() );
+			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
+			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
+			server.createContext("/api/get-profile", exch -> new BackendTransaction(this, exch).handleGetProfile() );
+			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch).handleGetPrice() );
+			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch).handleFireblocks() ); // report build date/time
+			server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
+			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch).handleReqCryptoTransactions(exch) );
+			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch).handleGetType2Config() );
+			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch).handleAllLiveOrders() );
+			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time
+			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
+		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 

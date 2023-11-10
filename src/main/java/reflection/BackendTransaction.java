@@ -9,14 +9,19 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import fireblocks.Accounts;
+import fireblocks.Busd;
+import fireblocks.Rusd;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
+import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -94,6 +99,13 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
+	/** Redeem (sell) RUSD */ 
+	public void handleRedeem() {
+		wrap( () -> {
+			respondOk();  // respond OK as long as there was no exception
+		});
+	}
+
 	private static double getPrice(HashMap stock) {
 		Double bid = (Double)stock.get("bid");
 		Double ask = (Double)stock.get("ask");
