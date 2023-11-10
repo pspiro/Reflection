@@ -135,7 +135,7 @@ public class Main implements ITradeReportHandler {
 		// check that Fireblocks server is running
 		/////////////checkFbActiveServer();
 		
-		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiPort(), m_config.threads() );
+		timer.next( "Listening on 0.0.0.0:%s  (%s threads)", m_config.refApiPort(), m_config.threads() );
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
@@ -153,8 +153,8 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
-			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
-			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+//			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+//			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
 			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
