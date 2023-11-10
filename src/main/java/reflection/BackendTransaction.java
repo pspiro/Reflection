@@ -9,19 +9,14 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import fireblocks.Accounts;
-import fireblocks.Busd;
-import fireblocks.Rusd;
 import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
-import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -174,8 +169,9 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
 			validateCookie();
-			
+
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
 			respondOk();
@@ -235,8 +231,9 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			getWalletFromUri(); // read wallet address into m_walletAddr (last token in URI)
 			parseMsg();         // read cookie from msg body into m_map
-			//validateCookie();
-			
+			S.out( "GET PROFILE COOKIE " + m_map.get("cookie") );
+			validateCookie();
+
 			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
 					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
 					m_walletAddr.toLowerCase() ) );
@@ -280,7 +277,8 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			//validateCookie();
+			S.out( "UPDATE PROFILE COOKIE " + m_map.get("cookie") );
+			validateCookie();
 
 			Profile profile = new Profile( m_map.obj() );
 			profile.trim(); // trim spaces since this data was entered by the user
