@@ -102,7 +102,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			respondOk();  // respond OK as long as there was no exception
+			respond(code, RefCode.OK, "message", "Redeem is temporarily disabled");  // respond OK as long as there was no exception
 		});
 	}
 
@@ -182,7 +182,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
-			validateCookie();
+			//validateCookie();
 
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
@@ -244,7 +244,7 @@ public class BackendTransaction extends MyTransaction {
 			getWalletFromUri(); // read wallet address into m_walletAddr (last token in URI)
 			parseMsg();         // read cookie from msg body into m_map
 			S.out( "GET PROFILE COOKIE " + m_map.get("cookie") );
-			validateCookie();
+			//validateCookie();
 
 			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
 					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
@@ -290,7 +290,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 			S.out( "UPDATE PROFILE COOKIE " + m_map.get("cookie") );
-			validateCookie();
+			//validateCookie();
 
 			Profile profile = new Profile( m_map.obj() );
 			profile.trim(); // trim spaces since this data was entered by the user
