@@ -1,6 +1,5 @@
 package test;
 
-import java.awt.HeadlessException;
 import java.io.IOException;
 
 import com.ib.client.Contract;

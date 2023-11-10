@@ -33,6 +33,6 @@ public enum LogType {
 	TRADE,				// trade report received
 	TRADING_HOURS_ERROR,
 	TWS_CONNECTION,		// gained/lost connection to TWS
-	UNWIND_ERROR, 		// error while unwinding an order
+	UNWIND_ERROR, REDEMPTION_FAILED, REDEMPTION_COMPLETED, 		// error while unwinding an order
 	
 }

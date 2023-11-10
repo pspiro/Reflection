@@ -203,6 +203,18 @@ public class BackendTransaction extends MyTransaction {
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
+			// add info about outstanding RUSD redemption request, if any
+			RedeemTransaction trans = liveRedemptions.get(m_walletAddr.toLowerCase() );
+			if (trans != null) {
+				if (trans.progress() == 100) {
+					rusd.put( "text", trans.text() );  // success or error message
+					rusd.put( "status", trans.status() );  // Completed or Failed 
+				}
+				else {
+					rusd.put( "progress", trans.progress() );
+				}
+			}
+			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", "USDC");
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );

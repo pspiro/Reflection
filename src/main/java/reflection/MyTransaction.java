@@ -4,7 +4,9 @@ import static reflection.Main.require;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -30,7 +32,8 @@ public abstract class MyTransaction extends BaseTransaction {
 	}
 	
 	static HashMap<String,Vector<OrderTransaction>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
-	static HashMap<String,OrderTransaction> allLiveOrders = new HashMap<>();  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
+	static HashMap<String,RedeemTransaction> liveRedemptions = new HashMap<>();  // key is wallet address; just one outstanding Redemption per wallet 
+	static Map<String,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<String,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
@@ -151,4 +154,8 @@ public abstract class MyTransaction extends BaseTransaction {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 	}
 	
+	/** This method implements the interface method from LiveOrderTransaction in the subclasses */
+	public String walletAddr() {
+		return m_walletAddr;
+	}
 }

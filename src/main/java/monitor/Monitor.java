@@ -220,6 +220,9 @@ public class Monitor {
 		JTextField f6 = new JTextField(7);
 		JTextField f7 = new JTextField(7);
 		JTextField f8 = new JTextField(14);
+		JTextField f10 = new JTextField(14);
+		JTextField f11 = new JTextField(14);
+		JTextField f12 = new JTextField(14);
 
 		StatusPanel() {
 			super( new BorderLayout() );
@@ -235,6 +238,10 @@ public class Monitor {
 			p.add( "TWS", f6);
 			p.add( "IB", f7);
 			p.add( "Started", f8);
+			p.add( Box.createVerticalStrut(10) );
+			p.add( "FbActiveServer", f10);
+			p.add( "Started", f11);
+			p.add( "Map size", f12);
 			
 			add( p);
 		}
@@ -255,6 +262,12 @@ public class Monitor {
 				f6.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f7.setText( json.getBool("IB") ? "OK" : "ERROR" );
 				f8.setText( json.getTime("started", Util.yToS) );
+			});
+			
+			MyClient.getJson( Monitor.base + "/fbserver/status", json -> {
+				f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+				f11.setText( json.getTime("started", Util.yToS) );
+				f12.setText( json.getString("mapSize").toString() );
 			});
 		}
 	}
