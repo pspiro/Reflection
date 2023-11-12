@@ -2,9 +2,8 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
-import common.Util;
-import fireblocks.Rusd;
 import http.MyHttpClient;
+import positions.Wallet;
 import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
@@ -15,8 +14,7 @@ public class TestRedeem extends MyTestCase {
 	static String host = "localhost"; // "34.125.38.193";
 
 	public void testMyAfter() throws Exception {
-		MyHttpClient cli = cli();
-		JsonObject obj = cli.get("/api/mywallet/" + Cookie.wallet).readJsonObject();
+		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject();
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
@@ -39,16 +37,15 @@ public class TestRedeem extends MyTestCase {
 	public void testRedeem() throws Exception {
 		// make sure we have at least some RUSD
 		mint(Cookie.wallet, 1.00009);  // the 9 should get truncated and we should end up with .00009 in the wallet
+		S.out( "After mint balance: " + new Wallet(Cookie.wallet).getBalance(m_config.rusdAddr() ) );
 		
 		JsonObject payload = new JsonObject();
 		payload.put("cookie", Cookie.cookie);
 
-		cli().post("/api/redeemRUSD/" + Cookie.wallet, payload.toString() );
+		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, payload.toString() )
+			.display();
 		assert200();     // confirm that Cookie wallet has some RUSD in it
-
-		// second time should fail
-		cli().post("/api/redeemRUSD/" + Cookie.wallet, payload.toString() );
-		assertEquals( 400, cli.getResponseCode() );
+		S.out( "After redeem1 balance: " + new Wallet(Cookie.wallet).getBalance(m_config.rusdAddr() ) );
 	}
 	
 	public void testMyBefore() throws Exception {
@@ -84,14 +81,5 @@ public class TestRedeem extends MyTestCase {
 		cli().get("/api/redeemRUSD/" + Cookie.wallet);
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
-	}
-	
-	public static void main(String[] args) throws Exception {
-		String walletAddr = Cookie.wallet;
-		
-		Rusd rusd = m_config.rusd();
-
-		double rusdPos = Util.truncate( rusd.getPosition(walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
-		S.out( rusdPos);
 	}
 }

@@ -21,10 +21,17 @@ public class FbTransaction extends BaseTransaction {
 		wrap( () -> {
 			JsonObject obj = Util.toJson(
 					"code", "OK",
-					"started", FbActiveServer.started,
+					"started", FbActiveServer.m_started,
 					"mapSize", FbActiveServer.m_map.size()
 			);
 			respond( obj);
+		});
+	}
+
+	public void onDebug(boolean b) {
+		wrap( () -> {
+			FbActiveServer.m_debug = b;
+			respondOk();
 		});
 	}
 	

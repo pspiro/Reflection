@@ -115,6 +115,9 @@ public class LiveOrderTransaction extends MyTransaction {
 					allLiveTransactions.remove(fbId);
 				}
 			}
+			else {
+				S.out( "Ignoring transaction %s %s", fbId, status);
+			}
 			
 			respondOk();
 		});

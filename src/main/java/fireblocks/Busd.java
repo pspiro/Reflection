@@ -1,9 +1,17 @@
 package fireblocks;
 
+import java.awt.HeadlessException;
+
+import reflection.Config;
 import tw.util.S;
 
 /** This class represents any non-RUSD stablecoin */ 
 public class Busd extends Erc20 {
+	public static void main(String[] args) throws HeadlessException, Exception {
+		Config.ask().busd()
+			.mint(	Accounts.instance.getAddress("RefWallet"), 
+					1000000);
+	}
 	
 	public Busd( String address, int decimals) throws Exception {
 		super( address, decimals, "BUSD");

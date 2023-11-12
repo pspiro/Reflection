@@ -1,7 +1,6 @@
 package reflection;
 
 import java.io.OutputStream;
-import java.net.BindException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,11 +80,6 @@ public class Main implements ITradeReportHandler {
 
 			new Main( args[0] );
 		}
-		catch( BindException e) {
-			S.out( "The application is already running");
-			e.printStackTrace();
-			System.exit(1);
-		}
 		catch (Exception e) {
 			e.printStackTrace();
 			System.exit(2);  // we need this because listening on the port will keep the app alive
@@ -135,7 +129,7 @@ public class Main implements ITradeReportHandler {
 		// check that Fireblocks server is running
 		/////////////checkFbActiveServer();
 		
-		timer.next( "Listening on %s:%s  (%s threads)", m_config.refApiPort(), m_config.threads() );
+		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );

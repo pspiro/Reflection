@@ -35,19 +35,16 @@ import tw.util.VerticalPanel;
 public class Monitor {
 	static String base;
 	static String mdBase;
-	//static final String mdsBase = "http://localhost:6999";
+	static Config m_config;
+	static MyRedis m_redis;
+	static NewTabbedPanel m_tabs;
+	static LogPanel m_logPanel;
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
-	static Config m_config;
-
-	static Monitor instance;
-	static JTextField num = new JTextField(4); // number of entries to return in query
-	static MyRedis m_redis;
-	JFrame m_frame = new JFrame();
-	NewTabbedPanel m_tabs = new NewTabbedPanel(true);
-	LogPanel m_logPanel = new LogPanel();
+	static final JTextField num = new JTextField(4); // number of entries to return in query
+	static final JFrame m_frame = new JFrame();
 	
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
@@ -55,6 +52,9 @@ public class Monitor {
 		}
 
 		NewLookAndFeel.register();
+		
+		m_tabs = new NewTabbedPanel(true);
+		m_logPanel = new LogPanel();
 
 		// read config
 		m_config = Config.ask();
@@ -62,11 +62,7 @@ public class Monitor {
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		base = m_config.baseUrl();
 		mdBase = m_config.mdBaseUrl();
-		
-		instance = new Monitor();
-	}
-	
-	Monitor() throws Exception {
+
 		// read stocks
 		S.out( "Reading stock list from google sheet");
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
@@ -136,7 +132,7 @@ public class Monitor {
 	}
 	
 	/** called when Refresh button is clicked */
-	void refresh() {
+	static void refresh() {
 		try {
 			((MonPanel)m_tabs.current()).refresh();
 		} catch (Exception e) {
@@ -144,7 +140,7 @@ public class Monitor {
 		}
 	}
 	
-	class TransPanel extends QueryPanel {
+	static class TransPanel extends QueryPanel {
 		static String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
 		static String sql = "select * from transactions $where order by created_at desc $limit";
 		
@@ -189,19 +185,19 @@ public class Monitor {
 	}
 
 	// add the commission here as well
-	private JComponent createTradesPanel() {
+	private static JComponent createTradesPanel() {
 		String names = "created_at,time,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
 		String sql = "select * from trades $where order by created_at desc $limit";
 		return new QueryPanel( "trades", names, sql);
 	}
 
-	static QueryPanel createUsersPanel() {
+	private static QueryPanel createUsersPanel() {
 		String names = "created_at,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,id,kyc_status,pan_number,persona_response,updated_at";
 		String sql = "select * from users $where";
 		return new QueryPanel( "users", names, sql);
 	}
 
-	static QueryPanel createSignupPanel() {
+	private static QueryPanel createSignupPanel() {
 		String names = "created_at,name,email,phone,wallet_public_key";
 		String sql = "select * from signup $where";
 		return new QueryPanel( "signup", names, sql);

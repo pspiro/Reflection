@@ -79,6 +79,7 @@ public class Config extends ConfigBase {
 	private String mdBaseUrl;
 	private int threads;
 	private int myWalletRefresh;
+	private double fbLookback;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -198,6 +199,7 @@ public class Config extends ConfigBase {
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
+		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -502,5 +504,9 @@ public class Config extends ConfigBase {
 		Stocks stocks = new Stocks();
 		stocks.readFromSheet(this);
 		return stocks;
+	}
+
+	public double fbLookback() {
+		return fbLookback;
 	}
 }

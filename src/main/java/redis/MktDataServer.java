@@ -1,9 +1,6 @@
 package redis;
 
-import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
 
 import org.json.simple.JsonArray;
 
@@ -13,7 +10,6 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
-import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
 import common.Util.ExRunnable;

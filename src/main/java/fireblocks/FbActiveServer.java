@@ -20,7 +20,9 @@ import tw.util.S;
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbActiveServer {
 	static HashMap<String,Trans> m_map = new HashMap<>();
-	static long started;
+	static long m_started;
+	static boolean m_debug;
+	static Config m_config = new Config();
 	
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
@@ -40,23 +42,31 @@ public class FbActiveServer {
 	}
 	
 	public static void run(String tab) throws Exception {
-		started = System.currentTimeMillis();
+		m_started = System.currentTimeMillis();
 
-		Config config = new Config();
-		config.readFromSpreadsheet(tab);
+		m_config.readFromSpreadsheet(tab);
 		
-		MyServer.listen( config.fbServerPort(), 10, server -> {
+		MyServer.listen( m_config.fbServerPort(), 10, server -> {
 			server.createContext("/fbserver/ok", exch -> new FbTransaction(exch).onOk() ); 
 			server.createContext("/fbserver/status", exch -> new FbTransaction(exch).onStatus() );
+			server.createContext("/fbserver/debug-on", exch -> new FbTransaction(exch).onDebug(true) );
+			server.createContext("/fbserver/debug-off", exch -> new FbTransaction(exch).onDebug(false) );
 		});
 		
 		while( true) {
-			S.sleep( config.fbPollIingInterval() );
+			S.sleep( m_config.fbPollIingInterval() );
 			
 			// we're querying only for transactions in the last three minutes
 			// (Q: is this ones started in last three or updated in last three?)
 			try {
-				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - 60000 * 3);
+				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - (long)(60000 * m_config.fbLookback()) );
+				
+				if (m_debug) {
+					S.out();
+					S.out( "Transactions");
+					S.out(ar);
+					S.out();
+				}
 				
 				for (JsonObject obj : ar) {
 					process( new Trans(obj) );
@@ -73,7 +83,7 @@ public class FbActiveServer {
 		if (old == null || !trans.status().equals(old.status() ) ) {
 			m_map.put(trans.id(), trans);
 
-			S.out( trans.obj() );
+			S.out( m_debug ? trans.obj() : trans);  // in debug mode, print the whole object
 			
 			try {
 				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", 
@@ -85,7 +95,7 @@ public class FbActiveServer {
 				}
 	
 				// use MyHttpClient since this is a local transaction
-				MyHttpClient client = new MyHttpClient("localhost", 8383);
+				MyHttpClient client = new MyHttpClient("localhost", m_config.refApiPort() );
 				client.get(uri);
 				
 				Util.require( 
@@ -122,7 +132,7 @@ public class FbActiveServer {
 		
 		@Override public String toString() {
 			try {
-				return S.format( "%s %s %s", id(), status(), hash() );
+				return S.format( "%s %s %s %s", m_obj.getString("note"), id(), status(), hash() );
 			} catch (Exception e) {
 				return "error";
 			}

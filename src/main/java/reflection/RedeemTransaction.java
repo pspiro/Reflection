@@ -49,6 +49,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();
 
+			// note there is some delay after a completed transaction before it is reflected 
+			// in the wallet position that would cause this test to pass or fail erroneously
 			double rusdPos = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
 			require( rusdPos > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			

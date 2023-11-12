@@ -15,7 +15,7 @@ public class CreateTables  {
 		try {
 			con.connect(dbUrl, dbUser, dbPassword);
 
-			new CreateTables().createCommTable();
+			new CreateTables().createRedemptions();
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -108,7 +108,7 @@ public class CreateTables  {
 				+ "status varchar(32),"       // value from LiveStatus
 				
 				+ "stablecoin varchar(6),"
-				+ "amount double precision,"
+				+ "amount double precision"
 				+ ")";
 		con.execute( sql);
 	}
