@@ -31,8 +31,8 @@ public abstract class MyTransaction extends BaseTransaction {
 		RUSD, USDC
 	}
 	
-	static HashMap<String,Vector<OrderTransaction>> liveOrders = new HashMap<>();  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
-	static HashMap<String,RedeemTransaction> liveRedemptions = new HashMap<>();  // key is wallet address; just one outstanding Redemption per wallet 
+	static Map<String,Vector<OrderTransaction>> liveOrders = Collections.synchronizedMap( new HashMap<String,Vector<OrderTransaction>>() );  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
+	static Map<String,RedeemTransaction> liveRedemptions = Collections.synchronizedMap( new HashMap<String,RedeemTransaction>() );  // key is wallet address; just one outstanding Redemption per wallet 
 	static Map<String,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<String,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled

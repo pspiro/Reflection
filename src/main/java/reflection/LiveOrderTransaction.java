@@ -46,7 +46,8 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Return live orders to Frontend for a single wallet */
+	/** Return live orders to Frontend for a single wallet; 
+	 *  the list is displayed in the Working Orders panel */
 	public void handleLiveOrders() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)

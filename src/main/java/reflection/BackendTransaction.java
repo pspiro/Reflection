@@ -204,6 +204,7 @@ public class BackendTransaction extends MyTransaction {
 				if (trans.progress() == 100) {
 					rusd.put( "text", trans.text() );  // success or error message
 					rusd.put( "status", trans.status() );  // Completed or Failed 
+					liveRedemptions.remove( trans);
 				}
 				else {
 					rusd.put( "progress", trans.progress() );
