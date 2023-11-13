@@ -8,7 +8,7 @@ import common.Util;
 import fireblocks.Erc20;
 import tw.util.S;
 
-/** Get token positions */
+/** Get token positions; will only send one query */
 public class Wallet {
 	static String test = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";  // for testing only
 	
@@ -20,13 +20,12 @@ public class Wallet {
 		m_address = address;
 	}
 
-	/** Only send the request the first time
-	 *  @param token must be lower case */ 
+	/** Only send the request the first time */
 	public double getBalance(String token) throws Exception {
 		if (m_map == null) {
 			m_map = reqPositionsMap(m_address);
 		}
-		Double val = m_map.get(token);
+		Double val = m_map.get(token.toLowerCase() );
 		return val != null ? val : 0.;
 	}
 
@@ -48,6 +47,11 @@ public class Wallet {
 
 	public double getNativeTokenBalance() throws Exception {
 		return MoralisServer.getNativeBalance(m_address);
+	}
+	
+	/** Sends a new query every time */
+	public static double getBalance(String wallet, String tokenAddr) throws Exception {
+		return new Wallet(wallet).getBalance(tokenAddr);
 	}
 	
 }

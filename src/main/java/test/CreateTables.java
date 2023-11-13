@@ -105,7 +105,7 @@ public class CreateTables  {
 				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "blockchain_hash varchar(66),"
-				+ "status varchar(32),"       // value from LiveStatus
+				+ "status varchar(32),"       // value from RedeemTransaction.LiveStatus
 				
 				+ "stablecoin varchar(6),"
 				+ "amount double precision"

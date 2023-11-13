@@ -16,12 +16,12 @@ public class RetVal {
 		return Fireblocks.waitForHash(m_id, 60, 2000);
 	}
 	
-	/** This blocks for up to 90 seconds */
+	/** This blocks for up to 2 min */
 	public void waitForCompleted() throws Exception {
 		waitForStatus("COMPLETED");
 	}
 	
-	/** This blocks for up to 90 seconds */
+	/** This blocks for up to 2 min */
 	public void waitForStatus(String status) throws Exception {
 		Fireblocks.waitForStatus(m_id, status);
 	}

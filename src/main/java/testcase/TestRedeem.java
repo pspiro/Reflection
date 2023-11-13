@@ -2,6 +2,7 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyHttpClient;
 import positions.Wallet;
 import reflection.RefCode;
@@ -13,17 +14,6 @@ public class TestRedeem extends MyTestCase {
 	
 	static String host = "localhost"; // "34.125.38.193";
 
-	public void testMyAfter() throws Exception {
-		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject();
-		obj.display("My Wallet");
-		
-		assertTrue( obj.getInt("refresh") > 100);
-		
-		JsonObject tok = obj.getArray("tokens").getJsonObj(0);
-		startsWith("RUSD", tok.getString("name"));
-		assertTrue( tok.getDouble("balance") > 0 );
-	}
-
 	public static void mint(String wallet, double amt) throws Exception {
 		S.out( "Minting %s RUSD into %s", amt, wallet);
 		Stocks stocks = new Stocks();
@@ -33,30 +23,61 @@ public class TestRedeem extends MyTestCase {
 				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
 				.waitForStatus("COMPLETED");
 	}
-	
-	public void testRedeem() throws Exception {
-		// make sure we have at least some RUSD
-		mint(Cookie.wallet, 1.00009);  // the 9 should get truncated and we should end up with .00009 in the wallet
-		S.out( "After mint balance: " + new Wallet(Cookie.wallet).getBalance(m_config.rusdAddr() ) );
-		
-		JsonObject payload = new JsonObject();
-		payload.put("cookie", Cookie.cookie);
 
-		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, payload.toString() )
+	public void testRedeem() throws Exception {
+		// mint some RUSD into the wallet
+		if (Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) == 0) {
+			mint(Cookie.wallet, 1.10009);  // the 9 should get truncated and we should end up with .00009 in the wallet
+			waitForBalance(1, false);
+		}
+
+		// redeem RUSD
+		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();
-		assert200();     // confirm that Cookie wallet has some RUSD in it
-		S.out( "After redeem1 balance: " + new Wallet(Cookie.wallet).getBalance(m_config.rusdAddr() ) );
+		assert200();
+
+		// second one should fail w/ REDEMPTION_PENDING
+		S.sleep(200);
+		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+			.display();
+		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
+		
+		waitForRedeem(Cookie.wallet);
+		waitForBalance(.0001, true);
 	}
 	
-	public void testMyBefore() throws Exception {
-		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject();
-		obj.display("My Wallet");
+	/** Wait up to 10 sec for Moralis to catch up 
+	 * @throws Exception */
+	private void waitForBalance(double bal, boolean lt) throws Exception {
+		for (int i = 0; i < 10; i++) {
+			double balance = Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() );
+			if (lt && balance < bal || !lt && balance > bal) {
+				return;
+			}
+			S.out( "balance: " + balance);
+			S.sleep(1000);
+		}
+		assertTrue("Never achieved expected balance", false);
+	}
+
+	public void testCheckBalance() throws Exception {
+		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
+	}
 		
-		assertTrue( obj.getInt("refresh") > 100);
-		
-		JsonObject tok = obj.getArray("tokens").getJsonObj(0);
-		startsWith("RUSD", tok.getString("name"));
-		assertTrue( tok.getDouble("balance") > 0 );
+	
+	private void waitForRedeem(String wallet) throws Exception {
+		S.sleep(100); // give it time to get into the map
+		while (true) {
+			JsonObject rusd = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject().getArray("tokens").getJsonObj(0);
+			String status = rusd.getString("status");
+			if (S.isNotNull(status) ) {
+				S.out( rusd.getString("text"));
+				assertEquals( "Completed", status);
+				break;
+			}
+			S.out( rusd.getInt("progress") );
+			S.sleep(1000);
+		}
 	}
 
 	public void testFailAddress() throws Exception {

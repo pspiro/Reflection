@@ -55,7 +55,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			require( rusdPos > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			
 			// check for previous unfilled request (either Delayed or Submitted) 
-			require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and (status = 'Delayed' or status = 'Submitted')", m_walletAddr.toLowerCase()) ).isEmpty(), 
+			require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and (status = 'Delayed' or status = 'Working')", m_walletAddr.toLowerCase()) ).isEmpty(), 
 					RefCode.REDEMPTION_PENDING, 
 					"There is already an outstanding redemption request for this wallet; we appreciate your patience");
 	
@@ -65,7 +65,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 				String fbId = rusd.sellRusd(m_walletAddr, busd, rusdPos).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 				
-				respondOk();  // respond OK as long as there was no exception
+				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 
 				insertRedemption( busd, rusdPos, fbId); // informational only, don't throw an exception
 				
@@ -138,8 +138,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 	private void updateRedemption(LiveStatus status) {
 		m_main.queueSql( sql -> sql.execWithParams( 
-				"update redemptions set status = '%s' where uid = 's'", status, m_uid) ); 
-
+				"update redemptions set status = '%s' where uid = '%s'", status, m_uid) );
+		
 		if (!m_map.getBool("testcase")) {
 			alert( "REDEMPTION", status.toString() );
 		}

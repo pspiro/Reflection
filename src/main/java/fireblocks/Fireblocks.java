@@ -368,10 +368,11 @@ public class Fireblocks {
 		throw new RefException( RefCode.TIMED_OUT, "Timed out waiting for transaction hash"); // should never happen
 	}
 	
+	/** Wait for up to two minutes */
 	public static void waitForStatus(String fireblocksId, String statusIn) throws Exception {
 		// it always takes at least a few seconds, I think
 
-		for (int i = 0; i < 90; i++) {
+		for (int i = 0; i < 120; i++) {
 			S.sleep(1000);
 			JsonObject trans = Transactions.getTransaction( fireblocksId);
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );

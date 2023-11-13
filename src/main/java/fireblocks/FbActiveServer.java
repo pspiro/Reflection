@@ -73,6 +73,7 @@ public class FbActiveServer {
 				}
 			}
 			catch( Exception e) {
+				S.out( "Error - " + e.getMessage() );
 				e.printStackTrace();
 			}
 		}
