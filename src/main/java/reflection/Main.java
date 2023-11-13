@@ -153,8 +153,8 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
-//			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
-//			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch).clearLiveOrders() );
 			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch).handleReqPositions() );
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );

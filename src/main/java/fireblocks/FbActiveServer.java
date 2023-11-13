@@ -1,6 +1,5 @@
 package fireblocks;
 
-import java.net.BindException;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
@@ -8,7 +7,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyHttpClient;
-import http.SimpleTransaction;
 import reflection.Config;
 import tw.util.S;
 
@@ -21,9 +19,8 @@ import tw.util.S;
  *  Note that this functionality could be included in the RefAPI but has been broken
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbActiveServer {
-	static Accounts accounts = Accounts.instance;
 	static HashMap<String,Trans> m_map = new HashMap<>();
-	static long m_started; // timestamp that app was started
+	static long started;
 	
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
@@ -36,11 +33,6 @@ public class FbActiveServer {
 			Util.require( args.length >= 1, "You must specify a config tab name");
 			run( args[0] );
 		}
-		catch( BindException e) {
-			S.out( "The application is already running");
-			e.printStackTrace();
-			System.exit(1);
-		}
 		catch (Exception e) {
 			e.printStackTrace();
 			System.exit(2);  // we need this because listening on the port will keep the app alive
@@ -48,14 +40,15 @@ public class FbActiveServer {
 	}
 	
 	public static void run(String tab) throws Exception {
-		m_started = System.currentTimeMillis();
+		started = System.currentTimeMillis();
 
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
-
-		// don't allow two instances of the application, and give a way to 
-		// test if the application is running
-		SimpleTransaction.listen("0.0.0.0", config.fbServerPort(), trans -> trans.respond("OK") );
+		
+		MyServer.listen( config.fbServerPort(), 10, server -> {
+			server.createContext("/fbserver/ok", exch -> new FbTransaction(exch).onOk() ); 
+			server.createContext("/fbserver/status", exch -> new FbTransaction(exch).onStatus() );
+		});
 		
 		while( true) {
 			S.sleep( config.fbPollIingInterval() );

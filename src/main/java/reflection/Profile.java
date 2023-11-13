@@ -4,7 +4,6 @@ import static reflection.Main.require;
 
 import org.json.simple.JsonObject;
 
-import common.Util;
 import tw.util.S;
 
 /** User profile which can be edited by the user. Note that wallet is not part of this */

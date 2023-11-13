@@ -50,7 +50,7 @@ public class Config extends ConfigBase {
 	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
-	private String refApiHost = "0.0.0.0"; // host for RefAPI to listen on
+	//private String refApiHost; // not currently used; everyone listens on 0.0.0.0
 	private int refApiPort = 8383;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
@@ -120,7 +120,7 @@ public class Config extends ConfigBase {
 	public String twsOrderHost() { return twsOrderHost; }
 	public int twsOrderPort() { return twsOrderPort; }
 
-	public String refApiHost() { return refApiHost; }
+	//public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
 	public String rusdAddr() { return rusdAddr; }  // lower case
@@ -171,7 +171,7 @@ public class Config extends ConfigBase {
 		this.redisQueryInterval = m_tab.getRequiredInt("redisQueryInterval");
 
 		// listen here
-		this.refApiHost = m_tab.getRequiredString( "refApiHost");
+		//this.refApiHost = m_tab.getRequiredString( "refApiHost");
 		this.refApiPort = m_tab.getRequiredInt( "refApiPort");
 		
 		// database

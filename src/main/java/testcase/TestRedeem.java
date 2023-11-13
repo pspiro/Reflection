@@ -86,12 +86,12 @@ public class TestRedeem extends MyTestCase {
 		assertEquals(400, cli.getResponseCode() );
 	}
 	
-	public static void main(String[] args) throws Exception {
-		String walletAddr = Cookie.wallet;
-		
-		Rusd rusd = m_config.rusd();
-
-		double rusdPos = Util.truncate( rusd.getPosition(walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
-		S.out( rusdPos);
-	}
+//	public static void main(String[] args) throws Exception {
+//		String walletAddr = Cookie.wallet;
+//		
+//		Rusd rusd = m_config.rusd();
+//
+//		double rusdPos = Util.truncate( rusd.getPosition(walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
+//		S.out( rusdPos);
+//	}
 }

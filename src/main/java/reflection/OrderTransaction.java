@@ -3,6 +3,7 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
@@ -28,7 +29,7 @@ import reflection.TradingHours.Session;
 import tw.util.S;
 import util.LogType;
 
-public class OrderTransaction extends MyTransaction implements IOrderHandler {
+public class OrderTransaction extends MyTransaction implements IOrderHandler, LiveTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
 
 	private static PositionTracker positionTracker = new PositionTracker(); 
@@ -43,18 +44,18 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
-	private LiveOrderStatus m_status = LiveOrderStatus.Working;
-	private int m_progress = 5;
+	private LiveOrderStatus m_status = LiveOrderStatus.Working;   // move up to base class
+	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
 	
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
  	}
 	
-	String walletAddr() {
-		return m_walletAddr;
+	@Override public String tableName() {
+		return "transactions";
 	}
-	
+
 	/** Msg received directly from Frontend via nginx */
 	public void backendOrder() {
 		// any problem in here calls respond()
@@ -420,7 +421,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		allLiveOrders.put(fbId, this);
+		allLiveTransactions.put(fbId, this);
 
 		// update transaction table with fireblocks id
 		m_main.queueSql( conn -> conn.execute( 
@@ -440,8 +441,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
-	synchronized void onUpdateFbStatus(FireblocksStatus stat) {
-		if (stat == FireblocksStatus.CONFIRMING || stat == FireblocksStatus.COMPLETED) {
+	public synchronized void onUpdateFbStatus(FireblocksStatus stat) {
+		if (stat == FireblocksStatus.COMPLETED) {
 			onFireblocksSuccess();
 		}
 		else if (stat.pct() == 100) {
@@ -487,7 +488,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 //	2. why does transaction.status say FAILED but there is no corr. log entry;
 //	   note there is no FbActionServer to report any fireblocks status
 
-	/** Called when blockchain goes to CONFIRMING or COMPLETED;
+	/** Called when blockchain goes to COMPLETED;
 	 *  also called during testing if we bypass the FB processing;
 	 *  set up the order so that user will received Filled msg on next update */
 	synchronized void onFireblocksSuccess() {
@@ -641,7 +642,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler {
 	private Vector<OrderTransaction> walletLiveOrders() {
 		return Util.getOrCreate(liveOrders, m_walletAddr.toLowerCase(), () -> new Vector<OrderTransaction>() );
 	}
-	
+
 	/** Like wrap, but instead of notifying the http client, we unwind the IB order */
 	private void shrinkWrap(ExRunnable runnable) {
 		try {

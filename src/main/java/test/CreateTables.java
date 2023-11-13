@@ -61,15 +61,20 @@ public class CreateTables  {
 		con.execute(sql);
 	}
 	
+	/** Note that first six are/must be same as redemptions table */
 	void createTransactions() throws Exception {
 		con.dropTable("transactions");
 		
 		String sql =""
 				+ "create table transactions ("
+				
 				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
 				+ "uid varchar(8) primary key," 
 				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
+				+ "blockchain_hash varchar(66),"
+				+ "status varchar(32),"       // value from LiveOrderStatus
+				
 				+ "symbol varchar(32),"
 				+ "conid int check (conid > 0),"
 				+ "action varchar(10),"
@@ -78,14 +83,32 @@ public class CreateTables  {
 				+ "price double precision check (price > 0),"
 				+ "order_id int,"  // could be zero
 				+ "perm_id int,"  // could be zero
-				+ "blockchain_hash varchar(66),"
 				+ "commission double precision,"  // change this to comm_charged
 				+ "tds double precision,"				
 				+ "currency varchar(32),"
-				+ "status varchar(32),"       // value from FireblocksStatus
 				+ "ip_address varchar(32),"   // big enough to store v6 IP format
 				+ "city varchar(32),"
 				+ "country varchar(32)"
+				+ ")";
+		con.execute( sql);
+	}
+
+	/** Note that first six are/must be same as transactions table */
+	void createRedemptions() throws Exception {
+		con.dropTable("redemptions");
+		
+		String sql =""
+				+ "create table redemptions ("
+				
+				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+				+ "uid varchar(8) primary key," 
+				+ "fireblocks_id varchar(36) unique,"
+				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
+				+ "blockchain_hash varchar(66),"
+				+ "status varchar(32),"       // value from LiveStatus
+				
+				+ "stablecoin varchar(6),"
+				+ "amount double precision,"
 				+ ")";
 		con.execute( sql);
 	}

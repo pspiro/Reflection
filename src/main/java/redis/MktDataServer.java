@@ -3,7 +3,6 @@ package redis;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.concurrent.Executors;
 
 import org.json.simple.JsonArray;
@@ -18,12 +17,12 @@ import com.sun.net.httpserver.HttpServer;
 
 import common.Util;
 import common.Util.ExRunnable;
+import fireblocks.MyServer;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.Stock;
 import reflection.Stocks;
 import reflection.TradingHours;
-import reflection.TradingHours.Session;
 import test.MyTimer;
 import tw.google.NewSheet;
 import tw.util.S;
@@ -82,10 +81,8 @@ public class MktDataServer {
 		timer.next("Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
 		m_config.readFromSpreadsheet(tabName);
 		
-		try {
-			timer.next( "Create http server");
-			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", m_config.mdsPort() ), 0);
-			server.createContext("/favicon", exch -> {} ); // ignore these requests
+		timer.next( "Creating http server");
+		MyServer.listen( m_config.mdsPort(), 10, server -> {
 			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
@@ -94,18 +91,7 @@ public class MktDataServer {
 			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
 			server.createContext("/mdserver/ok", exch -> new MdTransaction(this, exch).onStatus() ); 
-			server.setExecutor( Executors.newFixedThreadPool(10) );
-			server.start();
-		}
-		catch( BindException e) {
-			S.out( "The application is already running");
-			System.exit(0);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			System.exit(0);
-		}
-		
+		});
 		
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet(m_config);

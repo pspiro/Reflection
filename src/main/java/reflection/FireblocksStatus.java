@@ -9,9 +9,9 @@ enum FireblocksStatus {
 		SUBMITTED(30), // The transaction was submitted to the Fireblocks system and is being processed
 		QUEUED(45), // Transaction is queued. Pending for another transaction to be processed
 		PENDING_AUTHORIZATION(60), // The transaction is pending authorization by other users (as defined in the Transaction Authorization Policy)
-		PENDING_SIGNATURE(75), // The transaction is pending the initiator to sign the transaction
-		BROADCASTING(90), // The transaction is pending broadcast to the blockchain network
-		CONFIRMING(100), // Pending confirmation on the blockchain; it seems this is as good as complete
+		PENDING_SIGNATURE(70), // The transaction is pending the initiator to sign the transaction
+		BROADCASTING(80), // The transaction is pending broadcast to the blockchain network
+		CONFIRMING(90), // Pending confirmation on the blockchain; it seems this is as good as complete
 		COMPLETED(100), // Successfully completed
 		CANCELLED(100), // The transaction was cancelled or rejected by the user on the Fireblocks platform or by the 3rd party service from which the funds are withdrawn
 		REJECTED(100), // The transaction was rejected by the Fireblocks system or by the 3rd party service

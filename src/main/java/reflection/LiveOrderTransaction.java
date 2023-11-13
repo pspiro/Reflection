@@ -26,7 +26,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		wrap( () -> {
 			require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");
 			liveOrders.clear();
-			allLiveOrders.clear();
+			allLiveTransactions.clear();
 			respondOk();
 		});		
 	}
@@ -38,7 +38,7 @@ public class LiveOrderTransaction extends MyTransaction {
 			
 			liveOrders.forEach( (walletAddr, list) -> {  // can't use allLiveOrders because it is not the complete list
 				for (OrderTransaction order : list) {
-					retLiveOrders.add( order.getLiveOrder() );
+					retLiveOrders.add( order.getLiveOrder() );  // change this to use allLiveOrders to you pick up the redemption requests, but that will miss this 
 				}
 			});
 			
@@ -46,7 +46,8 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Return live orders to Frontend for a single wallet */
+	/** Return live orders to Frontend for a single wallet; 
+	 *  the list is displayed in the Working Orders panel */
 	public void handleLiveOrders() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -94,34 +95,30 @@ public class LiveOrderTransaction extends MyTransaction {
 			FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );
 			String hash = S.notNull( m_map.getParam("txhash") );
 
-			// update hash only in transactions table
-			// fails silently if there is no transaction to update;
-			// it's possible that the database entry was not made yet
-			m_main.queueSql( sql -> sql.execWithParams( 
-					"update transactions set blockchain_hash = '%s' where fireblocks_id = '%s'", hash, fbId) );
-
-			OrderTransaction liveOrder = allLiveOrders.get(fbId);
+			LiveTransaction liveTrans = allLiveTransactions.get(fbId);  // could be Order or Redemption
 			
-			if (liveOrder != null) {
+			if (liveTrans != null) {
+				// update hash only in transactions or redemptions table
+				// fails silently if there is no transaction to update;
+				// it's possible that the database entry was not made yet
+				m_main.queueSql( sql -> sql.execWithParams( 
+						"update %s set blockchain_hash = '%s' where fireblocks_id = '%s'", liveTrans.tableName(), hash, fbId) );
+
 				// for log entries, use the uid and wallet from the order 
-				m_uid = liveOrder.uid();
-				m_walletAddr = liveOrder.walletAddr();
+				m_uid = liveTrans.uid();
+				m_walletAddr = liveTrans.walletAddr();
 				olog( LogType.FB_UPDATE, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
 				
-				liveOrder.onUpdateFbStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
-			}
-			else {
-				//olog( LogType.FB_UPDATE, "status", status, "hash", hash); // this gives us the history of the timing
-				// this will happen anytime this is a FB transactions that is not an order; we can remove it
-				out( "  ignoring live order update for %s", fbId);
+				liveTrans.onUpdateFbStatus(status);  // note that we don't update live order w/ COMPLETED status; that will happen after the method returns
+
+				// remove the transaction from allLiveTransactions if it is completed
+				if (status.pct() == 100) {
+					allLiveTransactions.remove(fbId);
+				}
 			}
 			
 			respondOk();
 		});
-	}
-
-	private void updateTransactionsTable(String fbId, FireblocksStatus status, String hash) {
-		// update the crypto-transactions table IF there is a hash code which means the transaction has succeeded
 	}
 
 }
