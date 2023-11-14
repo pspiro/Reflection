@@ -135,7 +135,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 			server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 			server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-			server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
+			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); // remove. pas
 			server.createContext("/api/live-orders",    exch -> new LiveOrderTransaction(this, exch).handleLiveOrders() ); 
 			server.createContext("/api/validate-email", exch -> new BackendTransaction(this, exch).validateEmail() );
