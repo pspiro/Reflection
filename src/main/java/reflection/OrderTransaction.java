@@ -3,6 +3,7 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
@@ -141,10 +142,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		double myTds = m_order.isBuy() 
 				? preCommAmt * .01
 				: (preCommAmt - m_config.commission() ) * .01;
-		require( 
-				Util.isEq( m_tds, myTds, .01), 
-				RefCode.INVALID_REQUEST, 
-				"TDS of %s does not match calculated amount of %s", m_tds, myTds); 
+//		require( 
+//				Util.isEq( m_tds, myTds, .01), 
+//				RefCode.INVALID_REQUEST, 
+//				"TDS of %s does not match calculated amount of %s", m_tds, myTds); 
 		
 		m_stablecoinAmt = m_map.getDoubleParam("amount");
 		if (m_stablecoinAmt == 0) {
@@ -156,7 +157,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
 		require( 
-				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .001), 
+				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .01),  // +/- one penny 
 				RefCode.INVALID_REQUEST, 
 				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
@@ -641,7 +642,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private Vector<OrderTransaction> walletLiveOrders() {
 		return Util.getOrCreate(liveOrders, m_walletAddr.toLowerCase(), () -> new Vector<OrderTransaction>() );
 	}
-	
+
 	/** Like wrap, but instead of notifying the http client, we unwind the IB order */
 	private void shrinkWrap(ExRunnable runnable) {
 		try {

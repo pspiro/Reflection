@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
@@ -448,17 +449,25 @@ public class Util {
 	public interface Creator<T> {
 		T instance();
 	}
-	
-	public static <Tag,Val> Val getOrCreate(HashMap<Tag,Val> map, Tag tag, Creator<Val> creator) {
+
+	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Creator<Val> creator) {
 		synchronized(map) {
 			Val val = map.get(tag);
 			if (val == null) {
 				val = creator.instance();
-				map.put( tag, val);
+				map.put( tag, val);  // could use putIfAbsent() here
 			}
 			return val;
 		}
 	}
+	
+	/** Put if absent and return the value currently stored in the map;
+	 *  use this on synchronized maps */
+	// not used
+//	public static <Tag,Val> Val putIfAbsent( Map<Tag,Val> map, Tag tag, Val newVal) { 
+//		Val oldVal = map.putIfAbsent(tag, newVal);
+//		return oldVal != null ? oldVal : newVal;
+//	}
 
 	/** Simple wrapper which prints stack trace */
 	public static void wrap(ExRunnable runner) {

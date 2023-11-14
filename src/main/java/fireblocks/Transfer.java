@@ -10,11 +10,10 @@ public class Transfer {
 	public static void main( String[] ar) throws Exception {
 		Config.ask();
 
-		String wallet = "";
-		String asset = "USDC";
-		double amt = 198;
-//		String note = "send USDC to Coinzilla";
-		String note = "send the rest to Muneeb";
+		String wallet = "0xcc8d49d715c045011858e49201a71e057a6425d8";
+		String asset = "BUSD_BSC";
+		double amt = 19420.54959346867;
+		String note = "BUSD to binance.us";
 		
 		int id = Accounts.instance.getId("Peter Spiro");
 		Fireblocks.transfer(id, wallet, asset, amt, note).waitForHash();
