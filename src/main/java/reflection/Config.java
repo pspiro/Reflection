@@ -462,8 +462,8 @@ public class Config extends ConfigBase {
 	}
 
 	/** don't throw an exception; it's usually not critical */
-	public void sendEmail(String to, String subject, String text) {
-		Util.wrap( () -> Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text) );
+	public void sendEmail(String to, String subject, String text, boolean isHtml) {
+		Util.wrap( () -> Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text, isHtml) );
 	}
 	
 	/** Used by test cases */

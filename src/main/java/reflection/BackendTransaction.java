@@ -287,7 +287,8 @@ public class BackendTransaction extends MyTransaction {
 			Main.m_config.sendEmail(
 					email,
 					"Reflection Verification Code",
-					"Your Reflection Verification code is: " + code);
+					"Your Reflection Verification code is: " + code,
+					false);
 			
 			respondOk();
 		});

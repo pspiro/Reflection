@@ -70,7 +70,13 @@ public class MyClient {
 		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept(response -> { 
 						if (niceCode( response.statusCode() ) ) {  // catch 502 and 404 here
-							Util.wrap( () -> ret.accept(response) );
+							try {
+								ret.accept(response);
+							}
+							catch( Exception e) {
+								S.out( "Error processing url %s", request.uri() );
+								e.printStackTrace();
+							}
 						}
 						else {
 							// if we want, we could pass in the exception with the call stack and throw it here

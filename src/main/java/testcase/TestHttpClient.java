@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import common.Util.ObjectHolder;
 import http.MyClient;
 import tw.util.S;
@@ -16,6 +17,15 @@ public class TestHttpClient extends MyTestCase {
 	public static void testgetString() throws Exception {
 		String str = MyClient.getString("https://reflection.trading/api/ok");
 		assertTrue( str.contains("OK") );
+	}
+
+	/** Nginx will return 502 for this endpoint */
+	public static void testExc() throws Exception {
+		MyClient.getJson("https://reflection.trading/api/ok", obj -> {
+			S.out( "look for the URL in the std output");
+			throw new Exception("Aack!");
+		});
+		S.sleep(3000);
 	}
 
 	/** Nginx will return 502 for this endpoint */
