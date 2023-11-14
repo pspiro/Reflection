@@ -56,7 +56,7 @@ public class TestConfig extends TestCase {
 	}
 	
 	public void testSendEmail() throws Exception {
-		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
+		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def", false);		
 	}
 	
 	

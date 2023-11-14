@@ -517,13 +517,13 @@ public class Util {
 	}
 
     /** Send an email using SMTP */
-	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text) throws Exception {
+	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "true");
 		props.put("mail.smtp.tlsv1.2.enable", "true");  // tls also works but not smarttls
 		props.put("mail.smtp.host", "smtp.openxchange.eu");  // put any smpt server here
 		props.put("mail.smtp.port", "587");
-
+		
 		Session session = Session.getInstance( props,
 				new javax.mail.Authenticator() {
 					protected PasswordAuthentication getPasswordAuthentication() {
@@ -531,16 +531,17 @@ public class Util {
 					}
 				});
 
-		Message message = new MimeMessage(session);
+		MimeMessage message = new MimeMessage(session);
 		message.setFrom( toEmail( fromName, username) );
 		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
 		message.setSubject(subject);
-		message.setText(text);
+		message.setText(text, null, isHtml ? "html" : "plain");
 
 		Transport.send(message);
 		S.out( "Sent email '%s' to %s", subject, to);
 	}
 
+	
 	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
 	private static Address toEmail(String name, String email) throws AddressException {
 		return new InternetAddress( String.format( "%s <%s>", name, email) );
