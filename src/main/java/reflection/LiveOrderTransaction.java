@@ -118,7 +118,7 @@ public class LiveOrderTransaction extends MyTransaction {
 				}
 			}
 			else {
-				S.out( "Ignoring transaction %s %s", fbId, status);
+				out( "Ignoring transaction %s %s", fbId, status);
 			}
 			
 			respondOk();

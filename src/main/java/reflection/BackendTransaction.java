@@ -263,7 +263,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleLog() {
 		wrap( () -> {
-			S.out( "received log entry " + parseToObject() );
+			out( "received log entry " + parseToObject() );
 			respondOk();
 		});
 	}
