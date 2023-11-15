@@ -155,10 +155,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		double myStablecoinAmt = m_order.isBuy()
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
-		require( 
-				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .01),  // +/- one penny 
-				RefCode.INVALID_REQUEST, 
-				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
+//		require( 
+//				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .01),  // +/- one penny 
+//				RefCode.INVALID_REQUEST, 
+//				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
