@@ -3,7 +3,6 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
-import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 

@@ -6,9 +6,9 @@ import org.json.simple.JsonObject;
 
 import tw.util.S;
 
-/** User profile which can be edited by the user. Note that wallet is not part of this */
+/** User profile which can be edited by the user. */
 public class Profile extends JsonObject {
-	static String[] fields = "first_name,last_name,address,email,phone,pan_number,aadhaar".split(",");
+	static String[] fields = "wallet_public_key,first_name,last_name,address,email,phone,pan_number,aadhaar".split(",");
 	
 	public Profile(JsonObject source) {
 		for (String field : fields) {
@@ -17,6 +17,9 @@ public class Profile extends JsonObject {
 				put( field, val);
 			}
 		}
+		
+		// wallet address must be lower case because this object is inserted into database
+		update( "wallet_public_key", val -> val.toString().toLowerCase() ); // must be lower case because this gets inserted into the db
 	}
 	
 	String first() {
