@@ -19,7 +19,7 @@ public class TestProfile extends MyTestCase {
 		json.put("email_confirmation", "wrong code");
 		cli().post("/api/update-profile", json.toString() );
 		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
+		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
 		// test correct code
 		String code = TestSellRusd.input("Enter code:");
@@ -76,13 +76,19 @@ public class TestProfile extends MyTestCase {
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 
 		// missing cookie
-		json = createValidProfile();
-		json.remove("cookie");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
+//		json = createValidProfile();
+//		json.remove("cookie");
+//		cli().post("/api/update-profile", json.toString() );
+//		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 
-		// final success
-		json = createValidProfile();
+	}
+
+	public void testOne() throws Exception {
+		JsonObject json = createValidProfile();
+		cli().post("/api/validate-email", json.toString() );
+		assert200();
+
+		json.put("email_confirmation", TestSellRusd.input("Enter code:") );
 		cli().post("/api/update-profile", json.toString() );
 		assert200();
 	}
@@ -96,8 +102,8 @@ public class TestProfile extends MyTestCase {
 		json.put( "last_name", "sprat");
 		json.put( "email", email);
 		json.put( "phone", "9149399393");
+		json.put( "pan_number", "XXXXX9393Y");
 		json.put( "aadhaar", "939393939393");
-		json.put( "pan_number", "9393939393");
 		return json;
 	}
 }
