@@ -74,7 +74,7 @@ public class RedisPanel extends JsonPanel {
 				query.resp.get().forEach( (key,val) -> obj.put( key, val) );
 				ar.add( obj);
 				
-				obj.put("symbol", Monitor.stocks.getStock(Integer.parseInt(query.key)).getSymbol() ); // lookup symbol
+				obj.put("symbol", Monitor.stocks.getStock(Integer.parseInt(query.key)).symbol() ); // lookup symbol
 				obj.update("time", val -> Util.fmtTime(Long.parseLong((String)val) ) );  // format date 
 			});
 			

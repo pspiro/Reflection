@@ -563,7 +563,7 @@ public class Main implements ITradeReportHandler {
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			log( LogType.ERROR, e.getMessage() );
+			log( LogType.ERROR_4, e.getMessage() );
 		}
 	}
 
@@ -621,23 +621,33 @@ public class Main implements ITradeReportHandler {
 		/** Runs in a separate thread to execute database commands without holding
 		 *  up the TWS thread */
 		private void runDbQueue() {
-			while (true) {
-				try {
+			try {
+				while (true) {
 					// wait for the first one
 					SqlCommand com = m_queue.take();
 					//S.sleep(DB_PAUSE);  // you could sleep a little to try to batch more entries, but connecting takes 200ms anyway
-					
+
 					// then connect and process as many as possible
 					try ( MySqlConnection conn = m_config.createConnection() ) {
 						while (com != null) {
-							com.run( conn);
+							try {
+								com.run( conn);   // (wrap() doesn't work here)
+							}
+							catch( Exception e) {
+								S.out( "Error while executing DbQueue command - " + e.getMessage() );
+								e.printStackTrace();  // this would be an error on one specific database operation
+							}
 							com = next();
 						}
+					} 
+					catch (Exception e) {
+						S.out( "Error while connecting to database - " + e.getMessage() );
+						e.printStackTrace();  // this could be an error connecting to the database; ideally we would put the command, which didn't execute, back in the queue
 					}
 				}
-				catch( Exception e) {
-					e.printStackTrace();
-				}
+			}
+			catch( InterruptedException e) {
+				S.out( "Fatal error: DbQueue thread was interrupted");
 			}
 		}
 		

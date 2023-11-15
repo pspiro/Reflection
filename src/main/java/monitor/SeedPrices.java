@@ -20,7 +20,7 @@ public class SeedPrices {
 		Stocks stocks = new Stocks();
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), config);
 		
-		stocks.forEach( stock -> update( "" + stock.getConid(), jedis ) );
+		stocks.forEach( stock -> update( "" + stock.conid(), jedis ) );
 		
 		S.out( "done");
 	}

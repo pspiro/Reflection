@@ -50,12 +50,12 @@ public class Stock extends JsonObject {
 		return getString("smartcontractid");
 	}
 
-	public String getSymbol() {
+	public String symbol() {
 		return getString("symbol");
 	}
 
 	/** Returns zero if not found */
-	public int getConid() {
+	public int conid() {
 		return getInt("conid");
 	}
 	
@@ -91,7 +91,7 @@ public class Stock extends JsonObject {
 		return getString("convertsToAddress");
 	}
 
-	public Allow getAllow() {
+	public Allow allow() {
 		return Util.getEnum( getString("allow"), Allow.values(), Allow.All);
 	}
 }

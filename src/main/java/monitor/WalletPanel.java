@@ -83,7 +83,7 @@ public class WalletPanel extends JsonPanel {
 				JsonObject obj = new JsonObject();
 				double bal = wallet.getBalance( stock.getSmartContractId() );
 				if (bal > minBalance) {
-					obj.put( "Symbol", stock.getSymbol() );
+					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
 					m_ar.add(obj);
 				}

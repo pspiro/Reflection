@@ -46,8 +46,8 @@ public class PricesPanel extends JsonPanel {
 		void initialize() {
 			Monitor.stocks.stockSet().forEach( stockIn -> {
 				JsonObject stock = new JsonObject();
-				stock.put( "symbol", stockIn.getSymbol() );
-				stock.put( "conid", stockIn.getConid() );
+				stock.put( "symbol", stockIn.symbol() );
+				stock.put( "conid", stockIn.conid() );
 				m_ar.add( stock);
 			});
 			

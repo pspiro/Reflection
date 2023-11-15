@@ -84,7 +84,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
 		m_stock = m_main.getStock(conid);  // throws exception if conid is invalid
-		require( m_stock.getAllow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
+		require( m_stock.allow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
 		m_desiredQuantity = m_map.getRequiredDouble( "quantity");
 		require( m_desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
@@ -548,8 +548,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_order.totalQty());
 			obj.put("rounded_quantity", m_order.roundedQty() );
-			obj.put("symbol", m_stock.getSymbol() );
-			obj.put("conid", m_stock.getConid() );
+			obj.put("symbol", m_stock.symbol() );
+			obj.put("conid", m_stock.conid() );
 			obj.put("price", m_order.lmtPrice() );
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
@@ -650,12 +650,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 		catch( RefException e) {
 			out( e);
-			elog( LogType.EXCEPTION, e);
+			elog( LogType.ERROR_5, e);
 			onFail(e.getMessage(), e.code() );
 		}
 		catch( Throwable e) {
 			e.printStackTrace();
-			elog( LogType.EXCEPTION, e);
+			elog( LogType.ERROR_6, e);
 			onFail(e.getMessage(), null);
 		}
 	}
@@ -709,12 +709,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	
 	private String getWorkingOrderText() {
 		return S.format( "%s %s %s for %s",
-				m_order.action(), m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
+				m_order.action(), m_desiredQuantity, m_stock.symbol(), m_stablecoinAmt);
 	}
 	
 	private String getCompletedOrderText() {
 		return S.format( "%s %s %s for %s",
-				isBuy() ? "Bought" : "Sold", m_desiredQuantity, m_stock.getSymbol(), m_stablecoinAmt);
+				isBuy() ? "Bought" : "Sold", m_desiredQuantity, m_stock.symbol(), m_stablecoinAmt);
 	}
 
 	@Override public void orderState(OrderState orderState) {

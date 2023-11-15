@@ -42,11 +42,11 @@ public class TestMarketData extends ConnectionAdapter {
 		
 		for( reflection.Stock stock : stocks) {
 			Contract c = new Contract();
-			c.symbol(stock.getSymbol() );
+			c.symbol(stock.symbol() );
 			c.currency("USD");
 			c.exchange(MktDataServer.Smart);
 			c.secType("STK");
-			c.conid(stock.getConid());
+			c.conid(stock.conid());
 	
 			m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {

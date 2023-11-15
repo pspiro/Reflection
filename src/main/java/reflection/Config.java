@@ -493,11 +493,12 @@ public class Config extends ConfigBase {
 		return m_tab.tabName();
 	}
 
-	/** RefAPI uses internal url; Monitor uses external url 
+	/** RefAPI uses internal url; Monitor and java programs use external url 
 	 * @throws Exception */ 
-	public void useExteranDbUrl() throws Exception {
+	public Config useExteranDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
+		return this; // for chaining calls
 	}
 
 	public Stocks readStocks() throws Exception {

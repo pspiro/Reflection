@@ -22,6 +22,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		super(main, exchange);
 	}
 	
+	/** Could be used to clear live orders off the screen without restarting RefAPI */
 	public void clearLiveOrders() {
 		wrap( () -> {
 			require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");

@@ -7,8 +7,7 @@ public enum LogType {
 	CANCEL_ORDER,		// canceling the IB order because we had a timeout 
 	COMMISSION,			// commission report received
 	DATABASE_ERROR, 
-	ERROR,				// should never happen
-	EXCEPTION,			// error caught in wrap() or shrinkWrap(); check the RefCode
+	ERROR_1,ERROR_2,ERROR_3,ERROR_4,ERROR_5,ERROR_6,  // use a dif. value depending on where it's caught
 	FB_UPDATE,			// fireblocks update
 	IB_ORDER_STATUS,	// received IB order status
 	JEDIS,				// Jedis error
