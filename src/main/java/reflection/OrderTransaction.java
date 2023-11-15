@@ -3,7 +3,6 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
-import java.util.Map;
 import java.util.Random;
 import java.util.Vector;
 
@@ -108,7 +107,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		profile.validate();
 		profile.checkKyc( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );  // if order is above max non-KYC size, verify they have passed KYC
 		
-		// calculate order price
+		// calculate IB order price
 		double prePrice = side == Action.Buy 
 			? price - price * m_config.minBuySpread()
 			: price + price * m_config.minSellSpread();

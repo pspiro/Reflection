@@ -11,6 +11,8 @@ import reflection.TradingHours.Session;
 import tw.util.S;
 
 class DualPrices {
+	static Prices NullPrices = new Prices(0);
+	
 	private Stock m_stock;
 	private Prices m_smart;
 	private Prices m_ibeos;
@@ -135,6 +137,18 @@ class DualPrices {
 					"last time", m_lastTime
 					);
 		}
+
+		public double bid() {
+			return m_bid;
+		}
+
+		public double ask() {
+			return m_ask;
+		}
+		
+		public double last() {
+			return m_last;
+		}
 	}
 
 	/** Return all prices; used by Monitor */
@@ -150,5 +164,13 @@ class DualPrices {
 		stockPrices.putAll( prices.getJsonPrices() );
 		stockPrices.put( "from", from);
 		ret.add( stockPrices);
+	}
+
+	public Prices getPrices(Session session) {
+		return switch( session) {
+				case Smart -> m_smart;
+				case Overnight -> m_ibeos;
+				default -> NullPrices;
+		};
 	}
 }

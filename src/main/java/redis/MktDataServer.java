@@ -3,6 +3,7 @@ package redis;
 import java.util.ArrayList;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Contract;
 import com.ib.client.MarketDataType;
@@ -14,11 +15,13 @@ import com.ib.controller.ApiController.TopMktDataAdapter;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.MyServer;
+import redis.DualPrices.Prices;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.Stock;
 import reflection.Stocks;
 import reflection.TradingHours;
+import reflection.TradingHours.Session;
 import test.MyTimer;
 import tw.google.NewSheet;
 import tw.util.S;
@@ -85,7 +88,8 @@ public class MktDataServer {
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
 			server.createContext("/mdserver/debug-on", exch -> new MdTransaction(this, exch).onDebug(true) ); 
 			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
-			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetPrices() ); 
+			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetAllPrices() ); 
+			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction(this, exch).onGetRefPrices() ); 
 			server.createContext("/mdserver/ok", exch -> new MdTransaction(this, exch).onStatus() ); 
 		});
 		
@@ -268,11 +272,39 @@ public class MktDataServer {
 		wrap( () -> requestPrices() );
 	}
 
-	/** Used by Monitor */
+	/** Used by Monitor. Returns both smart and overnight prices */
 	public JsonArray getAllPrices() {
 		JsonArray ret = new JsonArray();
 		for (DualPrices prices : m_list) {
 			prices.addPricesTo( ret);
+		}
+		return ret;
+	}
+
+	/** Called by RefAPI. Returns the prices for the current session.
+	 * 
+	 *  YOU COULD build a static array that doesn't change and just update
+	 *  the prices within the array, and always return the same array
+	 *  
+	 * @throws Exception */
+	public JsonArray getRefPrices() throws Exception {
+		Session session = null;
+		JsonArray ret = new JsonArray();
+		
+		for (DualPrices dual : m_list) {
+			if (session == null) {  // assume the same session for all stocks
+				session = m_tradingHours.getSession( dual.stock() );
+			}
+
+			Prices prices = dual.getPrices(session); 
+			
+			JsonObject stockPrices = new JsonObject();
+			stockPrices.put( "conid", dual.stock().getConid() );
+			stockPrices.put( "bid", prices.bid() );
+			stockPrices.put( "ask", prices.ask() );
+			stockPrices.put( "last", prices.last() );
+			
+			ret.add( stockPrices);
 		}
 		return ret;
 	}

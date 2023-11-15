@@ -1,7 +1,6 @@
 package reflection;
 
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -25,10 +24,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import fireblocks.MyServer;
 import http.BaseTransaction;
-import redis.MyRedis;
-import redis.clients.jedis.Pipeline;
-import redis.clients.jedis.Response;
-import redis.clients.jedis.exceptions.JedisException;
+import http.MyClient;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
 import test.MyTimer;
@@ -54,7 +50,6 @@ public class Main implements ITradeReportHandler {
 	static long m_started; // timestamp that app was started
 
 	// member vars
-	private MyRedis m_redis;  // used for periodically querying the prices  // can't be final because an exception can occur before it is initialized 
 	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private String m_faqs;
@@ -114,20 +109,11 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
 
-		// if port is zero, host contains connection string, otherwise host and port are used
-		timer.next( "Connecting to redis with %s:%s", m_config.redisHost(), m_config.redisPort() );
-		m_redis = new MyRedis(m_config.redisHost(), m_config.redisPort() );
-		m_redis.connect(); // this is not required but we want to bail out if redis is not running
-		m_redis.setName("RefAPI");
-
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
 		
 		// write the date every hour
 		Util.executeEvery( Util.HOUR, Util.HOUR, () -> S.out( "today is %s", Util.yyyymmdd.format( System.currentTimeMillis() ) ) );
-		
-		// check that Fireblocks server is running
-		/////////////checkFbActiveServer();
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
@@ -182,7 +168,6 @@ public class Main implements ITradeReportHandler {
 
 	void shutdown() {
 		log( LogType.SHUTDOWN, null);
-		m_redis.disconnect();  // seems like a good idea
 	}
 
 	void readSpreadsheet() throws Exception {
@@ -518,48 +503,23 @@ public class Main implements ITradeReportHandler {
 		m_config.dump();
 	}
 
-	/** Used to query prices from Redis. */
-	static class PriceQuery {
-		Stock m_stock;
-		private Response<Map<String, String>> m_res;  // returns a map of tag->val where tag =bid/ask/... and val is price
-
-		public PriceQuery(Pipeline pipeline, Stock stock) {
-			m_stock = stock;
-			m_res = pipeline.hgetAll( conidStr() );
-		}
-
-		/** Update the stock from the prices in m_res;
-		 *  Must be called after the pipeline is closed. */
-		void updateStock() {
-			m_stock.setPrices( new Prices(m_res.get() ) );
-		}
-
-		public String conidStr() {
-			return (String)m_stock.get( "conid");
-		}
-	}
-
 	public void queryAllPrices() {  // might want to move this into a separate microservice
-		//S.out( "querying prices");
-
 		try {
-			// send a single query to Redis for the prices
-			// the responses are fed into the PriceQuery objects
-			ArrayList<PriceQuery> list = new ArrayList<PriceQuery>();
-			
-			m_redis.pipeline( pipeline -> {
-				for (Object stock : m_stocks.stocks()) {
-					list.add( new PriceQuery(pipeline, (Stock)stock) );
+			String url = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
+			MyClient.getArray( url).forEach( prices -> {
+				Stock stock = m_stocks.getStock( prices.getInt("conid") );
+				if (stock != null) {
+					// bid/ask should always be current
+					stock.put( "bid", prices.getDouble("bid") );
+					stock.put( "ask", prices.getDouble("ask") );
+				
+					// we never delete a valid last price
+					double last = prices.getDouble("last");
+					if (last > 0) {
+						stock.put( "last", last);
+					}
 				}
 			});
-			
-			// update the stock object in place       // synchronize this? pas
-			for (PriceQuery priceQuery : list) {
-				priceQuery.updateStock();
-			}
-		}
-		catch( JedisException e) {
-			log(LogType.JEDIS, e.getMessage() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
