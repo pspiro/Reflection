@@ -80,6 +80,7 @@ public class Config extends ConfigBase {
 	private int threads;
 	private int myWalletRefresh;
 	private double fbLookback;
+	private int mdsPort;  // port that mdServer runs on where RefAPI will send MD requests 
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -200,6 +201,7 @@ public class Config extends ConfigBase {
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
+		this.mdsPort = m_tab.getRequiredInt("mdsPort");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -508,5 +510,9 @@ public class Config extends ConfigBase {
 
 	public double fbLookback() {
 		return fbLookback;
+	}
+	
+	public int mdsPort() {
+		return mdsPort;
 	}
 }
