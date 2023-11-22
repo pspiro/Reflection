@@ -146,19 +146,19 @@ public class BaseTransaction {
 			synchronized(this) {      // must synchronize access to m_responded
 				// if we haven't responded yet, log the error and respond
 				if (!m_responded) {
-					elog( LogType.EXCEPTION, e);
+					elog( LogType.ERROR_1, e);
 					respondFull(e.toJson(), 400, null);
 				}
 				// display errors that occurred after the response except for timeouts since that is normal
 				else if (e.code() != RefCode.TIMED_OUT) {
-					elog( LogType.EXCEPTION, e);
+					elog( LogType.ERROR_2, e);
 				}
 			}
 			postWrap();
 		}
 		catch( Throwable e) {
 			e.printStackTrace();
-			elog( LogType.EXCEPTION, e);
+			elog( LogType.ERROR_3, e);
 			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
 			postWrap();
 		}

@@ -1,25 +1,28 @@
 package test;
 
+import common.Util;
+import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
 /** Create trades and commissions tables */
 public class CreateTables  {
-	static String dbUrl = "jdbc:postgresql://34.86.193.58:5432/reflection";
-	static String dbUser = "postgres";
-	static String dbPassword = "1359";
-	static MySqlConnection con = new MySqlConnection();
+	static MySqlConnection con;
 	static final int tradeKeyLen = 64; 
+	
 
 	public static void main(String[] args) {
 		try {
-			con.connect(dbUrl, dbUser, dbPassword);
-
+			con = Config.ask().useExteranDbUrl().createConnection();
 			new CreateTables().createRedemptions();
 			
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		finally {
+			if (con != null) {
+				Util.wrap( () -> con.close() );
+			}
 		}
 		S.out( "done");
 	}

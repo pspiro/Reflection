@@ -46,6 +46,8 @@ public class FbActiveServer {
 
 		m_config.readFromSpreadsheet(tab);
 		
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> S.out("Shutdown message received") ) );
+		
 		MyServer.listen( m_config.fbServerPort(), 10, server -> {
 			server.createContext("/fbserver/ok", exch -> new FbTransaction(exch).onOk() ); 
 			server.createContext("/fbserver/status", exch -> new FbTransaction(exch).onStatus() );

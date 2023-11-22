@@ -211,7 +211,7 @@ public class SiweTransaction extends MyTransaction {
 		
 		// find session object
 		Session session = sessionMap.get( bodyAddress.toLowerCase() );
-		Main.require( session != null, RefCode.VALIDATION_FAILED, "No session object found for address " + siweMsg.getString("address") );
+		Main.require( session != null, RefCode.VALIDATION_FAILED, "No session object found; please sign in and resubmit your request");
 		
 		// validate nonce
 		Main.require( 

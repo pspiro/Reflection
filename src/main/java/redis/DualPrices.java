@@ -26,8 +26,8 @@ class DualPrices {
 
 	DualPrices( Stock stock) {
 		m_stock = stock;
-		m_smart = new Prices(m_stock.getConid());
-		m_overnight = new Prices(m_stock.getConid());
+		m_smart = new Prices(m_stock.conid());
+		m_overnight = new Prices(m_stock.conid());
 	}
 	
 	Prices smart() {

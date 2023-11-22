@@ -155,7 +155,7 @@ public class MktDataServer {
 
 		for (Stock stock : m_stocks) {
 			final Contract contract = new Contract();
-			contract.conid( stock.getConid() );
+			contract.conid( stock.conid() );
 			
 			DualPrices dual = new DualPrices( stock);
 			m_list.add( dual);
@@ -166,7 +166,7 @@ public class MktDataServer {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 					MyTickType myTickType = getTickType(tickType);
 					if (myTickType != null) {
-						if (m_debug) S.out( "Ticking smart %s %s %s", stock.getConid(), myTickType, price);
+						if (m_debug) S.out( "Ticking smart %s %s %s", stock.conid(), myTickType, price);
 						dual.tickSmart(myTickType, price);
 					}
 				}
@@ -179,7 +179,7 @@ public class MktDataServer {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 						MyTickType myTickType = getTickType(tickType);
 						if (myTickType != null) {
-							if (m_debug) S.out( "Ticking ibeos %s %s %s", stock.getConid(), myTickType, price);
+							if (m_debug) S.out( "Ticking ibeos %s %s %s", stock.conid(), myTickType, price);
 							dual.tickIbeos(myTickType, price);
 						}
 					}
@@ -297,7 +297,7 @@ public class MktDataServer {
 			}
 
 			JsonObject stockPrices = new JsonObject();
-			stockPrices.put( "conid", dual.stock().getConid() );
+			stockPrices.put( "conid", dual.stock().conid() );
 			dual.getRefPrices(session).update(stockPrices); 
 			
 			// if all sessions are closed, use last from smart

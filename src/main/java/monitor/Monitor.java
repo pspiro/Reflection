@@ -47,6 +47,8 @@ public class Monitor {
 	static final JFrame m_frame = new JFrame();
 	
 	public static void main(String[] args) throws Exception {
+		Thread.currentThread().setName("Monitor");
+		
 		if (args.length == 0) {
 			throw new Exception( "You must specify a config tab name");
 		}
