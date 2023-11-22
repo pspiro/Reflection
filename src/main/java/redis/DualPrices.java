@@ -11,15 +11,27 @@ import reflection.TradingHours.Session;
 import tw.util.S;
 
 class DualPrices {
+	static Prices NullPrices = new Prices(0);  // used when all sessions are closed; bid/ask is -2, so we know where it came from
+	
 	private Stock m_stock;
 	private Prices m_smart;
-	private Prices m_ibeos;
+	private Prices m_overnight;
 	private Session m_was;   // prevSession would be a better name
+	
+	static {
+		NullPrices.m_bid = -2;  // this value is not used anywhere but it shows up in Monitor and means there is no session
+		NullPrices.m_ask = -2;
+		NullPrices.m_last = -2;
+	}
 
 	DualPrices( Stock stock) {
 		m_stock = stock;
 		m_smart = new Prices(m_stock.conid());
-		m_ibeos = new Prices(m_stock.conid());
+		m_overnight = new Prices(m_stock.conid());
+	}
+	
+	Prices smart() {
+		return m_smart;
 	}
 	
 	Stock stock() {
@@ -27,7 +39,7 @@ class DualPrices {
 	}
 	
 	@Override public String toString() {
-		return String.format( "smart: %s  ibeos: %s", m_smart, m_ibeos);
+		return String.format( "smart: %s  ibeos: %s", m_smart, m_overnight);
 	}
 	
 	boolean is24() {
@@ -39,7 +51,7 @@ class DualPrices {
 	}
 
 	public void tickIbeos(MyTickType tickType, double price) {
-		tick( m_ibeos, tickType, price, "overnight");
+		tick( m_overnight, tickType, price, "overnight");
 	}
 	
 	private void tick( Prices prices, MyTickType tickType, double price, String lastExchange) {
@@ -53,7 +65,7 @@ class DualPrices {
 			m_was = Session.Smart;
 		}
 		else if (is24() && inside == Session.Overnight) {
-			m_ibeos.send(pipeline, m_was != Session.Overnight); // this won't work if last is never sent from IBEOS
+			m_overnight.send(pipeline, m_was != Session.Overnight); // this won't work if last is never sent from IBEOS
 			m_was = Session.Overnight;
 		}
 		else if (m_was != Session.None) {
@@ -74,7 +86,7 @@ class DualPrices {
 		private long m_askTime;
 		private long m_lastTime;
 		private boolean m_changed;
-		private String m_conid;
+		private String m_conid;  // not used anymore, good for de
 		private String m_from;
 		
 		Prices(int conid) {
@@ -82,8 +94,8 @@ class DualPrices {
 		}
 		
 		@Override public String toString() {
-			return S.format( "conid=%s  bid=%s  ask=%s  changed=%s  from=%s",
-					m_conid, m_bid, m_ask, m_changed, m_from);
+			return S.format( "conid=%s  bid=%s  ask=%s  last=%s  changed=%s  from=%s",
+					m_conid, m_bid, m_ask, m_last, m_changed, m_from);
 		}
 
 		public synchronized void tick(MyTickType tickType, double price, String lastExchange) {
@@ -135,12 +147,36 @@ class DualPrices {
 					"last time", m_lastTime
 					);
 		}
+
+		public double bid() {
+			return m_bid;
+		}
+
+		public double ask() {
+			return m_ask;
+		}
+		
+		public double last() {
+			return m_last;
+		}
+
+		public Prices clearBidAsk() {
+			m_bid = -2;
+			m_ask = -2;
+			return this;
+		}
+
+		public void update(JsonObject stockPrices) {
+			stockPrices.put( "bid", m_bid);
+			stockPrices.put( "ask", m_ask);
+			stockPrices.put( "last", m_last);
+		}
 	}
 
 	/** Return all prices; used by Monitor */
 	public void addPricesTo(JsonArray ret) {
 		addPricesTo( ret, m_smart, "smart");
-		addPricesTo( ret, m_ibeos, "overnight");
+		addPricesTo( ret, m_overnight, "overnight");
 	}
 
 	/** Return one set of prices (smart or ibeos) */
@@ -151,4 +187,13 @@ class DualPrices {
 		stockPrices.put( "from", from);
 		ret.add( stockPrices);
 	}
+
+	public Prices getRefPrices(Session session) {
+		return switch(session) {
+			case Smart -> m_smart;
+			case Overnight -> m_overnight;
+			default -> NullPrices;
+		};
+	}
+
 }

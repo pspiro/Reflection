@@ -33,7 +33,7 @@ import fireblocks.StockToken;
     
  *    */
 public class Stock extends JsonObject {
-	Prices m_prices = Prices.NULL;  // this does not get serialized into the json
+	private Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {
 		m_prices = prices;

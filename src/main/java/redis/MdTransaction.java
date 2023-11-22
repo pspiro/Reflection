@@ -59,9 +59,17 @@ public class MdTransaction extends BaseTransaction {
 		});
 	}
 
-	public void onGetPrices() {
+	/** Called by monitor; returns all prices */
+	public void onGetAllPrices() {
 		wrap( () -> {
 			respond( m_main.getAllPrices() );
+		});
+	}
+
+	/** Called by RefAPI; returns current prices */
+	public void onGetRefPrices() {
+		wrap( () -> {
+			respond( m_main.getRefPrices() );
 		});
 	}
 
