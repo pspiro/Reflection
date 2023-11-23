@@ -23,37 +23,24 @@ public class Prices {
 	private double m_bid;
 	private double m_ask;
 	private double m_last;
-	private double m_close;
-	private long m_time;  // ms since epoch
+	private long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
 
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
 	public double last() { return m_last; }
-	public double close() { return m_close; }
 	public long time() { return m_time; }
 
-	public Prices(Map<String, String> map) {
-		m_bid = getDouble(map, "bid");
-		m_ask = getDouble(map, "ask");
-		m_last = getDouble(map, "last");
-		m_close = getDouble(map, "close");
-		m_time = getLong(map, "time");
+	public Prices(JsonObject obj) {
+		m_bid = obj.getDouble("bid");
+		m_ask = obj.getDouble("ask");
+		m_last = obj.getDouble("last");
+		m_time = obj.getLong("time");
 	}
 	
 	/** Used only by NULL prices. */
 	public Prices() {
 	}
 
-	private long getLong(Map<String, String> map, String key) {
-		String val = map.get(key);
-		return val != null ? Long.valueOf( val) : 0;
-	}
-
-	double getDouble( Map<String, String> map, String key) {
-		String val = map.get(key);
-		return val != null ? Double.valueOf( val) : 0;
-	}
-	
 	public String getFormattedTime() {
 		return S.isNull( m_time)
 				? ""
@@ -88,28 +75,24 @@ public class Prices {
 	
 	/** Used for display on the Watch List */
 	double anyBid() {
-		return validBid() ? m_bid : validLast() ? m_last - .05 : validClose() ? m_close : 0;
+		return validBid() ? m_bid : validLast() ? m_last - .05 : 0;
 	}
 
 	/** Used for display on the Watch List */
 	double anyAsk() {
-		return validAsk() ? m_ask : validLast() ? m_last + .05 : validClose() ? m_close : 0;
+		return validAsk() ? m_ask : validLast() ? m_last + .05 : 0;
 	}
 
 	boolean validLast() {
 		return m_last > 0;
 	}
 	
-	boolean validClose() {
-		return m_close > 0;
-	}
-	
 	public boolean hasSomePrice() {
 		return validBid() || validAsk();
 	}
 
-	public boolean hasAnyPrice() {
-		return validBid() || validAsk() || validLast() || validClose();
+	public boolean hasAnyPrice() { // seems useless. pas
+		return validBid() || validAsk() || validLast();
 	}
 
 	public double midpoint() {
@@ -131,8 +114,8 @@ public class Prices {
 	}
 
 	public void dump(int conid) {
-		S.out( "conid=%s  bid=%s  ask=%s  last=%s  close=%s",
-				conid, m_bid, m_ask, m_last, m_close);	
+		S.out( "conid=%s  bid=%s  ask=%s  last=%s",
+				conid, m_bid, m_ask, m_last);	
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");
