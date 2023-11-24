@@ -9,7 +9,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.ib.controller.ConnectionAdapter;
 
-import redis.MktDataServer;
+import redis.MdServer;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
@@ -44,7 +44,7 @@ public class TestMarketData extends ConnectionAdapter {
 			Contract c = new Contract();
 			c.symbol(stock.symbol() );
 			c.currency("USD");
-			c.exchange(MktDataServer.Smart);
+			c.exchange(MdServer.Smart);
 			c.secType("STK");
 			c.conid(stock.conid());
 	
@@ -54,7 +54,7 @@ public class TestMarketData extends ConnectionAdapter {
 				}
 			});
 
-			c.exchange(MktDataServer.Overnight);
+			c.exchange(MdServer.Overnight);
 	
 			m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {

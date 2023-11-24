@@ -4,7 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import redis.MktDataServer.MyTickType;
+import redis.MdServer.MyTickType;
 import redis.clients.jedis.Pipeline;
 import reflection.Stock;
 import reflection.TradingHours.Session;
@@ -119,7 +119,7 @@ class DualPrices {
 
 		public synchronized void send(Pipeline pipeline, boolean force) {  // better would be to store separate changed flags for each field
 			if (m_changed || force) {
-				if (MktDataServer.m_debug) S.out( "Updating redis with all prices for conid %s", m_conid);
+				if (MdServer.m_debug) S.out( "Updating redis with all prices for conid %s", m_conid);
 				pipeline.hset( m_conid, "bid", String.valueOf( m_bid) );  // for -1 you should delete or you can wait for this to happen when it changes session
 				pipeline.hset( m_conid, "ask", String.valueOf( m_ask) ); 
 				pipeline.hset( m_conid, "last", String.valueOf( m_last) ); 
@@ -132,7 +132,7 @@ class DualPrices {
 		}
 
 		public void clearOut(Pipeline pipeline) {
-			if (MktDataServer.m_debug) S.out( "Clearing out bid/ask in redis for conid %s", m_conid);
+			if (MdServer.m_debug) S.out( "Clearing out bid/ask in redis for conid %s", m_conid);
 			pipeline.hdel( m_conid, "bid");
 			pipeline.hdel( m_conid, "ask");
 		}

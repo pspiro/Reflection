@@ -14,7 +14,7 @@ import com.ib.client.ContractDetails;
 import com.ib.controller.ApiController;
 
 import common.Util;
-import redis.MktDataServer;
+import redis.MdServer;
 import tw.util.S;
 import util.LogType;
 
@@ -45,7 +45,7 @@ public class TradingHours {
 			Util.executeEvery( 0, interval, () -> {
 				S.out( "Querying for trading hours now");
 				query( ibm, "SMART");
-				query( ibm, MktDataServer.Overnight);
+				query( ibm, MdServer.Overnight);
 			});
 		}
 	}
@@ -129,7 +129,7 @@ public class TradingHours {
 			return Session.Smart;
 		}
 			
-		if (is24Hour && insideHours( MktDataServer.Overnight, now) ) {
+		if (is24Hour && insideHours( MdServer.Overnight, now) ) {
 			return Session.Overnight;
 		}
 		
@@ -155,7 +155,7 @@ public class TradingHours {
 		
 		return insideHours( "SMART", now)
 				? Session.Smart
-				: stock.is24Hour() && insideHours( MktDataServer.Overnight, now) 
+				: stock.is24Hour() && insideHours( MdServer.Overnight, now) 
 					? Session.Overnight 
 					: Session.None;
 	}

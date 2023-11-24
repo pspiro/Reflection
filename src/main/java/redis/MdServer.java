@@ -30,7 +30,7 @@ import util.LogType;
 
 /** Puts bid, ask, last, and last time to redis; pulls bid/ask from either smart or ibeos,
  *  depending on which session we are in. Last always comes from... */
-public class MktDataServer {
+public class MdServer {
 	//enum Status { Connected, Disconnected };
 	enum MyTickType { Bid, Ask, Last };
 
@@ -53,7 +53,7 @@ public class MktDataServer {
 			Thread.currentThread().setName("MDS");
 			S.out( "Starting MktDataServer");
 			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
-			new MktDataServer(args);
+			new MdServer(args);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -61,7 +61,7 @@ public class MktDataServer {
 		}
 	}
 
-	private MktDataServer(String[] args) throws Exception {
+	private MdServer(String[] args) throws Exception {
 		m_started = System.currentTimeMillis();
 
 		String tabName = args[0];
@@ -126,7 +126,7 @@ public class MktDataServer {
 	}
 
 	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr( MktDataServer main, String host, int port, int clientId, long reconnectInterval) {
+		MdConnectionMgr( MdServer main, String host, int port, int clientId, long reconnectInterval) {
 			super( main, host, port, clientId, reconnectInterval);
 		}
 		

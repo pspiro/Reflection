@@ -12,7 +12,7 @@ import tw.util.S;
 /** Manage the connection from this client to TWS. */
 // share this with Main; need logging support, reconnect interval. pas
 class ConnectionMgr implements IConnectionHandler {
-	private MktDataServer m_main;
+	private MdServer m_main;
 	private String m_host;
 	private int m_port;
 	private int m_clientId;
@@ -27,7 +27,7 @@ class ConnectionMgr implements IConnectionHandler {
 		return m_controller;
 	}
 	
-	ConnectionMgr( MktDataServer main, String host, int port, int clientId, long reconnectInterval) {
+	ConnectionMgr( MdServer main, String host, int port, int clientId, long reconnectInterval) {
 		m_main = main;
 		m_host = host;
 		m_port = port;

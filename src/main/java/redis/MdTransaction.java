@@ -14,9 +14,9 @@ public class MdTransaction extends BaseTransaction {
 	});
 */
 
-	private MktDataServer m_main;
+	private MdServer m_main;
 	
-	MdTransaction(MktDataServer main, HttpExchange exchange) {
+	MdTransaction(MdServer main, HttpExchange exchange) {
 		super(exchange, true);
 		m_main = main;
 	}
@@ -74,7 +74,7 @@ public class MdTransaction extends BaseTransaction {
 	}
 
 	public void onDebug(boolean v) {
-		MktDataServer.m_debug = v;
+		MdServer.m_debug = v;
 		respondOk();
 	}
 }
