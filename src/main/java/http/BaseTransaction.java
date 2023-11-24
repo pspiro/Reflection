@@ -30,10 +30,6 @@ public class BaseTransaction {
 	private final MyTimer m_timer;
 	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
 	
-	public BaseTransaction( HttpExchange exchange) {
-		this( exchange, true);
-	}
-
 	public BaseTransaction(HttpExchange exchange, boolean debug) {
 		m_exchange = exchange;
 		m_uid = Util.uid(8);

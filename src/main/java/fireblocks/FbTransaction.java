@@ -10,7 +10,7 @@ import http.BaseTransaction;
 public class FbTransaction extends BaseTransaction {
 
 	public FbTransaction(HttpExchange exchange) {
-		super(exchange);
+		super(exchange, true);
 	}
 
 	public void onOk() {

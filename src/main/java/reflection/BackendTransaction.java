@@ -22,7 +22,11 @@ import tw.util.S;
 public class BackendTransaction extends MyTransaction {
 
 	public BackendTransaction(Main main, HttpExchange exch) {
-		super(main,exch);
+		super(main, exch);
+	}
+
+	public BackendTransaction(Main main, HttpExchange exch, boolean debug) {
+		super(main, exch, debug);
 	}
 	
 	/** Used by the portfolio section on the dashboard

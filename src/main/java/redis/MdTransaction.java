@@ -17,7 +17,7 @@ public class MdTransaction extends BaseTransaction {
 	private MktDataServer m_main;
 	
 	MdTransaction(MktDataServer main, HttpExchange exchange) {
-		super(exchange);
+		super(exchange, true);
 		m_main = main;
 	}
 	

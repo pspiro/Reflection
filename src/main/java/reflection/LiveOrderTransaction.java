@@ -18,8 +18,8 @@ import util.LogType;
  *  to use WebSockets and push the change to the client w/ no query */
 public class LiveOrderTransaction extends MyTransaction {
 
-	LiveOrderTransaction(Main main, HttpExchange exchange) {
-		super(main, exchange);
+	LiveOrderTransaction(Main main, HttpExchange exchange, boolean debug) {
+		super(main, exchange, debug);
 	}
 	
 	/** Could be used to clear live orders off the screen without restarting RefAPI */

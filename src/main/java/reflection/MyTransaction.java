@@ -44,7 +44,11 @@ public abstract class MyTransaction extends BaseTransaction {
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
 
 	MyTransaction( Main main, HttpExchange exchange) {
-		super(exchange);
+		this( main, exchange, true);
+	}
+
+	MyTransaction( Main main, HttpExchange exchange, boolean debug) {
+		super(exchange, debug);
 		m_main = main;
 	}
 
