@@ -148,17 +148,18 @@ public class BackendTransaction extends MyTransaction {
 			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
 
 			m_main.queueSql( conn -> {
-				String where = "where blockchain_hash <> ''";
-				if (S.isNotNull(wallet) ) {
-					where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
-				}
-				JsonArray ar = conn.queryToJson("select * from transactions %s order by created_at desc limit 20", where);
-				for (JsonObject obj : ar) fix(obj);  // switch "created_at" to "timestamp"
-				respond(ar);
+				wrap( () -> {
+					String where = "where blockchain_hash <> ''";
+					if (S.isNotNull(wallet) ) {
+						where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
+					}
+					JsonArray ar = conn.queryToJson("select * from transactions %s order by created_at desc limit 20", where);
+					for (JsonObject obj : ar) fix(obj);  // switch "created_at" to "timestamp"
+					respond(ar);
+				});
 			});
 		});
 	}
-
 	
 	private void fix(JsonObject obj) throws ParseException {
 		obj.put( "timestamp", Util.yToS.parse(obj.getString("created_at")).getTime() / 1000 );
