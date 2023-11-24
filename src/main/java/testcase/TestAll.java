@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 //	   TestHttpClient.class,
 //	   TestKyc.class,
 //	   TestLog.class,
-	   TestMail.class,
+	   TestEmail.class,
 //	   TestMint.class,
 	   TestMktDataServer.class,
 //	   TestMyRedis.class,

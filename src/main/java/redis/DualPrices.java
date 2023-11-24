@@ -170,6 +170,11 @@ class DualPrices {
 			stockPrices.put( "bid", m_bid);
 			stockPrices.put( "ask", m_ask);
 			stockPrices.put( "last", m_last);
+			stockPrices.put( "time", maxTime() );
+		}
+
+		private long maxTime() {
+			return Math.max( m_bidTime, Math.max( m_askTime, m_lastTime) );
 		}
 	}
 

@@ -289,7 +289,6 @@ public class OldStyleTransaction extends MyTransaction {
 			single.put( "bid", round( stk.prices().bid() ) );
 			single.put( "ask", round( stk.prices().ask() ) );
 			single.put( "last", round( stk.prices().last() ) );
-			single.put( "close", round( stk.prices().close() ) );
 			single.put( "time", stk.prices().getFormattedTime() );
 
 			whole.put( stk.get("conid").toString(), single);

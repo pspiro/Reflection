@@ -59,7 +59,7 @@ public class Main implements ITradeReportHandler {
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
-	private String m_mdsUrl;
+	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
 	
 	JsonArray stocks() { return m_stocks.stocks(); }
@@ -517,9 +517,7 @@ public class Main implements ITradeReportHandler {
 			MyClient.getArray( m_mdsUrl).forEach( prices -> {
 				Stock stock = m_stocks.getStock( prices.getInt("conid") );
 				if (stock != null) {
-					// bid/ask should always be current
-					stock.put( "bid", prices.getDouble("bid") );
-					stock.put( "ask", prices.getDouble("ask") );
+					stock.setPrices( new Prices(prices) );
 				
 					// we never delete a valid last price
 					double last = prices.getDouble("last");
