@@ -18,7 +18,7 @@ import tw.util.S;
  *  
  *  Note that this functionality could be included in the RefAPI but has been broken
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
-public class FbActiveServer {
+public class FbServer {
 	static HashMap<String,Trans> m_map = new HashMap<>();
 	static long m_started;
 	static boolean m_debug;
