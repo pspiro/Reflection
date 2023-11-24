@@ -237,7 +237,10 @@ public class SiweTransaction extends MyTransaction {
 			for (String cookie : authCookies() ) {
 				String address = S.notNull(address(cookie));
 				if (sessionMap.remove(address.toLowerCase()) != null) {  // alternatively, we could update the session to be false
-					out( "%s has been signed out", address);
+					out( "  %s has been signed out", address);
+				}
+				else {
+					out( "  %s was already signed out", address);
 				}
 			}
 			

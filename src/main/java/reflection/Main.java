@@ -145,6 +145,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 			
 			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
+			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
@@ -155,7 +156,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
 			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
-			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch).handleGetStockWithPrice() );
+			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
