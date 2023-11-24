@@ -159,15 +159,22 @@ public class SiweTransaction extends MyTransaction {
 	}
 
 	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
-	 * @throws RefException */
+	 *  @return siwe message */
 	private JsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
+			String address = address(cookie);
+			
 			try {
-				return validateCookie( cookie, null);
+				JsonObject msg = validateCookie( cookie, null);
+				out( "  %s is signed in", address);
+				return msg;
+			}
+			catch( RefException ex) {
+				out( "  %s is not signed in - %s", address, ex.code() );  // this should not happen if we have only one cookie as we expect
 			}
 			catch( Exception e) {
 				// we come here if there is more than one cookie OR the session has expired, which is normal
-				out( "Unexpected, there was an invalid cookie for %s - %s", address(cookie), e.getMessage() );  // this should not happen if we have only one cookie as we expect
+				out( "  %s is not signed in - %s", address, e.getMessage() );  // this should not happen if we have only one cookie as we expect
 			}
 		}
 
@@ -175,7 +182,8 @@ public class SiweTransaction extends MyTransaction {
 	}
 	
 	/** @param cookie could come from header or message body
-	 *  @param wallet may be null */ 
+	 *  @param wallet may be null
+	 *  @return siwe message */ 
 	static JsonObject validateCookie( String cookie, String wallet) throws Exception {
 		// the cookie has two parts: tag=value
 		// the tag is __Host_authToken<address><chainid>
