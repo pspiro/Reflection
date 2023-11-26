@@ -112,6 +112,12 @@ class DualPrices {
 					m_last = price;
 					m_lastTime = System.currentTimeMillis();
 					break;
+				case Close:  // use the close only if we have no last
+					if (m_last <= 0 && price > 0) {
+						m_last = price;
+						m_lastTime = System.currentTimeMillis();
+					}
+					break;
 			}
 			m_changed = true;
 			m_from = lastExchange;
