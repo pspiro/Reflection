@@ -33,7 +33,7 @@ public class LiveOrdersPanel extends JsonPanel {
 		
 		void refresh( ) throws Exception {
 			super.refresh();
-			MyClient.getArray(Monitor.base + endpoint, ar -> {
+			MyClient.getArray(Monitor.refApiBaseUrl() + endpoint, ar -> {
 				m_ar = ar;
 				fireTableDataChanged();
 			});

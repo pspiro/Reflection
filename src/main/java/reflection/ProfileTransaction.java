@@ -11,7 +11,6 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import tw.util.S;
 
 public class ProfileTransaction extends MyTransaction {
 	static HashMap<String,String> mapWalletToCode = new HashMap<>();
@@ -88,7 +87,9 @@ public class ProfileTransaction extends MyTransaction {
 
 			// insert or update record in users table
 			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletKey) );
-			respondOk();
+			respond( Util.toJson(
+					code, RefCode.OK,
+					Message, "Your profile was updated") );
 		});
 	}
 

@@ -32,13 +32,13 @@ public class TestRedeem extends MyTestCase {
 		}
 
 		// redeem RUSD
-		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();
 		assert200();
 
 		// second one should fail w/ REDEMPTION_PENDING
 		S.sleep(200);
-		cli().postToJson("/api/redeemRUSD/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 		
@@ -83,7 +83,7 @@ public class TestRedeem extends MyTestCase {
 	public void testFailAddress() throws Exception {
 		// invalid address (wrong length)
 		cli().addHeader("Cookie", Cookie.cookie)
-			.get("/api/redeemRUSD/" + Cookie.wallet + "a");
+			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
 		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
@@ -92,14 +92,14 @@ public class TestRedeem extends MyTestCase {
 		String wallet = ("0xaaa" + Cookie.wallet).substring(0, 42);
 		cli = new MyHttpClient("localhost", 8383);
 		cli.addHeader("Cookie", Cookie.cookie)
-			.get("/api/redeemRUSD/" + wallet);
+			.get("/api/redemptions/redeem/" + wallet);
 		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
 	
 	public void testFailNoCookie() throws Exception {
-		cli().get("/api/redeemRUSD/" + Cookie.wallet);
+		cli().get("/api/redemptions/redeem/" + Cookie.wallet);
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
 	}

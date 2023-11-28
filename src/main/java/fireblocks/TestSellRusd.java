@@ -1,11 +1,9 @@
 package fireblocks;
 
-import java.util.Scanner;
-
+import common.Util;
 import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
-import tw.util.S;
 
 /** Tests all BUSD and StockToken features */
 public class TestSellRusd {
@@ -54,7 +52,7 @@ public class TestSellRusd {
 				stock,
 				1);
 
-		input("Check balances, should be 1 BUSD in RefWallet");
+		Util.input("Check balances, should be 1 BUSD in RefWallet");
 
 		// sell stock for 1 RUSD
 		rusd.sellStockForRusd(
@@ -63,7 +61,7 @@ public class TestSellRusd {
 				stock,
 				1);
 		
-		input("Check balances, should be 1 BUSD in RefWallet and 1 RUSD in Bob");
+		Util.input("Check balances, should be 1 BUSD in RefWallet and 1 RUSD in Bob");
 		
 		// redeem RUSD for BUSD
 		rusd.sellRusd(
@@ -71,11 +69,4 @@ public class TestSellRusd {
 				busd,
 				1);
 	}
-	
-	@SuppressWarnings("resource")
-	public static String input(String str) {
-		S.out( str);
-		return new Scanner(System.in).nextLine();  // do not close the stream
-	}
-
 }

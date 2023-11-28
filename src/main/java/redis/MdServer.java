@@ -15,7 +15,7 @@ import com.ib.controller.ApiController.TopMktDataAdapter;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.MyServer;
-import redis.DualPrices.Prices;
+import http.BaseTransaction;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.Stock;
@@ -36,7 +36,6 @@ public class MdServer {
 
 	public static final String Overnight = "OVERNIGHT"; 
 	public static final String Smart = "SMART"; 
-	static boolean m_debug = false;
 	static long m_started;  // timestamp that process was started
 
 	
@@ -69,7 +68,7 @@ public class MdServer {
 		log( Util.readResource( Main.class, "version.txt") );  // print build date/time
 
 		if (args.length > 1 && (args[1].equals("/d") || args[1].equals("-d") ) ) {
-			m_debug = true;
+			BaseTransaction.setDebug(true);
 			log( "debug mode=true");
 		}
 		
@@ -85,11 +84,13 @@ public class MdServer {
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
-			server.createContext("/mdserver/debug-on", exch -> new MdTransaction(this, exch).onDebug(true) ); 
-			server.createContext("/mdserver/debug-off", exch -> new MdTransaction(this, exch).onDebug(false) );
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetAllPrices() ); 
 			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction(this, exch).onGetRefPrices() ); 
-			server.createContext("/mdserver/ok", exch -> new MdTransaction(this, exch).onStatus() ); 
+
+			// generic messages
+			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext("/mdserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
+			server.createContext("/mdserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 		});
 		
 		timer.next( "Reading stock list from google sheet");
@@ -102,10 +103,6 @@ public class MdServer {
 		timer.next("Connecting to TWS");
 		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
 
-		// give it 500 ms to get the trading hours; if it's too slow, you'll see a harmless exception
-//		timer.next( "Start market data update timer");
-//		Util.executeEvery( 500, m_config.redisBatchTime(), () -> updateRedis() ); 
-		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> onShutdown() ) );
 	}
 
@@ -162,7 +159,7 @@ public class MdServer {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 					MyTickType myTickType = getTickType(tickType);
 					if (myTickType != null) {
-						if (m_debug) S.out( "Ticking smart %s %s %s", stock.conid(), myTickType, price);
+						if (BaseTransaction.debug()) S.out( "Ticking smart %s %s %s", stock.conid(), myTickType, price);
 						dual.tickSmart(myTickType, price);
 					}
 				}
@@ -175,7 +172,7 @@ public class MdServer {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 						MyTickType myTickType = getTickType(tickType);
 						if (myTickType != null) {
-							if (m_debug) S.out( "Ticking ibeos %s %s %s", stock.conid(), myTickType, price);
+							if (BaseTransaction.debug()) S.out( "Ticking ibeos %s %s %s", stock.conid(), myTickType, price);
 							dual.tickIbeos(myTickType, price);
 						}
 					}

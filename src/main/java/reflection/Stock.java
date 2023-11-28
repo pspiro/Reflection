@@ -1,5 +1,7 @@
 package reflection;
 
+import java.util.Objects;
+
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -36,6 +38,7 @@ public class Stock extends JsonObject {
 	private Prices m_prices = Prices.NULL;  // this does not get serialized into the json
 
 	void setPrices( Prices prices) {
+		Objects.requireNonNull(prices, "prices cannot be null");
 		m_prices = prices;
 
 		put( "bid", Main.round( prices.anyBid() ) );  // for front-end display

@@ -2,8 +2,6 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -13,13 +11,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import org.json.simple.JsonObject;
-
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
 import redis.MyRedis;
-import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
@@ -33,9 +28,8 @@ import tw.util.VerticalPanel;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static String base;
-	static String mdBase;
-	static Config m_config;
+	static MonitorConfig m_config;
+	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
 	static final String farDate = "12-31-2999";
@@ -45,6 +39,10 @@ public class Monitor {
 	static final JTextField num = new JTextField(4); // number of entries to return in query
 	static final JFrame m_frame = new JFrame();
 	
+	static String refApiBaseUrl() { 
+		return m_config.baseUrl();
+	}
+
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("Monitor");
 		
@@ -58,11 +56,9 @@ public class Monitor {
 		m_logPanel = new LogPanel();
 
 		// read config
-		m_config = Config.ask();
+		m_config = MonitorConfig.ask();
 		m_config.useExteranDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
-		base = m_config.baseUrl();
-		mdBase = m_config.mdBaseUrl();
 
 		// read stocks
 		S.out( "Reading stock list from google sheet");
@@ -81,7 +77,7 @@ public class Monitor {
 		num.addActionListener( e -> refresh() );
 		
 		JPanel butPanel = new JPanel();
-		butPanel.add(new JLabel(base) );
+		butPanel.add(new JLabel(refApiBaseUrl() ) );
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
@@ -156,10 +152,6 @@ public class Monitor {
 					super.onDouble(tag, val);
 			}
 		}
-		
-		public void adjust(JsonObject obj) {
-			obj.putIf( "symbol", stocks.getStock( obj.getInt("conid") ) );
-		}
 	}
 	
 	static class LogPanel extends QueryPanel {
@@ -227,7 +219,7 @@ public class Monitor {
 			p.add( "IB", f7);
 			p.add( "Started", f8);
 			p.add( Box.createVerticalStrut(10) );
-			p.add( "FbActiveServer", f10);
+			p.add( "FbServer", f10);
 			p.add( "Started", f11);
 			p.add( "Map size", f12);
 			
@@ -237,7 +229,7 @@ public class Monitor {
 		@Override public void refresh() throws Exception {
 			long now = System.currentTimeMillis();
 
-			MyClient.getJson( Monitor.base + "/api/status", json -> {
+			MyClient.getJson( m_config.baseUrl() + "/api/status", json -> {
 				f1.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f2.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f3.setText( json.getBool("IB") ? "OK" : "ERROR" );
@@ -245,14 +237,14 @@ public class Monitor {
 				f4a.setText( json.getString("built") );
 			});
 
-			MyClient.getJson( Monitor.base + "/mdserver/status", json -> {
+			MyClient.getJson( m_config.mdBaseUrl() + "/mdserver/status", json -> {
 				f5.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f6.setText( json.getBool("TWS") ? "OK" : "ERROR" );
 				f7.setText( json.getBool("IB") ? "OK" : "ERROR" );
 				f8.setText( json.getTime("started", Util.yToS) );
 			});
 			
-			MyClient.getJson( Monitor.base + "/fbserver/status", json -> {
+			MyClient.getJson( m_config.fbBaseUrl() + "/fbserver/status", json -> {
 				f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 				f11.setText( json.getTime("started", Util.yToS) );
 				f12.setText( json.getString("mapSize").toString() );

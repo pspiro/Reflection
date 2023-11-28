@@ -1,6 +1,5 @@
 package reflection;
 
-import java.awt.HeadlessException;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,7 +32,7 @@ import tw.util.S;
 
 public class Config extends ConfigBase {
 	
-	private GTable m_tab;
+	protected GTable m_tab;
 
 	// user experience parameters
 	private double maxBuyAmt; // max buy amt in dollars
@@ -75,8 +74,6 @@ public class Config extends ConfigBase {
 	private boolean allowRedemptions;
 	private String m_emailUsername;
 	private String m_emailPassword;
-	private String baseUrl;
-	private String mdBaseUrl;
 	private int threads;
 	private int myWalletRefresh;
 	private double fbLookback;
@@ -146,7 +143,7 @@ public class Config extends ConfigBase {
 		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
 	}
 	
-	private void readFromSpreadsheet(Tab tab) throws Exception {
+	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		m_tab = new GTable( tab, "Tag", "Value", true);
 		
 		// user experience parameters
@@ -195,8 +192,6 @@ public class Config extends ConfigBase {
 		this.nonKycMaxOrderSize = m_tab.getRequiredDouble("non_kyc_max_order_size");
 		this.m_emailUsername = m_tab.getRequiredString("emailUsername");
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
-		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
-		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
@@ -478,17 +473,9 @@ public class Config extends ConfigBase {
 		m_tab.put(key, val);
 	}
 
-	public String baseUrl() {
-		return baseUrl;
-	}
-
-	public String mdBaseUrl() {
-		return mdBaseUrl;
-	}
-
-	public static Config ask() throws HeadlessException, Exception {
+	public static Config ask() throws Exception {
 		java.awt.Toolkit.getDefaultToolkit().beep();
-		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config" );		
+		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config");
 	}
 	
 	public String getTabName() {
