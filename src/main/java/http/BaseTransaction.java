@@ -101,8 +101,14 @@ public class BaseTransaction {
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
-			elog( LogType.RESPOND_ERR, e);
+			if ( S.notNull( e.getMessage() ).equals( "Broken pipe") ) {
+				S.out( "Error: Broken pipe while responding processing " + m_exchange.getRequestURI() ); // client should wait for a response
+				// no need for a stack trace here
+			}
+			else {
+				S.out( e.getMessage() + " while responding processing " + m_exchange.getRequestURI() );
+				e.printStackTrace();
+			}
 		}
 		m_responded = true;
 		return true;

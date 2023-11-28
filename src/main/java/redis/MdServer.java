@@ -44,7 +44,6 @@ public class MdServer {
 	final MdConnectionMgr m_mdConnMgr;
 	private final MktDataConfig m_config = new MktDataConfig();
 	private final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
-	private final MyRedis m_redis;
 	private final TradingHours m_tradingHours; 
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();
 	
@@ -96,14 +95,6 @@ public class MdServer {
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet(m_config);
 
-		// if redis port is zero, host contains the full URI;
-		// otherwise, we use host and port
-		timer.next("Connecting to redis server on %s:%s", m_config.redisHost(), m_config.redisPort() );
-		m_redis = m_config.newRedis();
-		m_redis.setName("MktDataServer");
-		m_redis.connect();  // test the connection, let it fail now
-		S.out( "  done");
-		
 		m_mdConnMgr = new MdConnectionMgr( this, m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
 		
@@ -115,7 +106,12 @@ public class MdServer {
 //		timer.next( "Start market data update timer");
 //		Util.executeEvery( 500, m_config.redisBatchTime(), () -> updateRedis() ); 
 		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> log("Received shutdown msg from linux kill command")));
+		Runtime.getRuntime().addShutdownHook(new Thread( () -> onShutdown() ) );
+	}
+
+	private void onShutdown() {
+		log("Received shutdown msg from linux kill command");
+		//savePrices();
 	}
 
 	/** Refresh list of stocks and re-request market data. */ 
@@ -185,24 +181,6 @@ public class MdServer {
 					}
 				});
 			}
-		}
-	}
-	
-	/** Check to see if we are in extended trading hours or not so we know which 
-	 * market data to use for the ETF's. For now it's hard-coded from 4am to 8pm; 
-	 * better would be to check against the trading hours of an actual ETF. 
-	 * @throws Exception */
-	private void updateRedis() {
-		try {
-			if (m_debug) S.out( "Updating redis");
-			m_redis.pipeline( pipeline -> {
-				for (DualPrices dual : m_list) {
-					Util.wrap( () -> dual.send( pipeline, m_tradingHours.getSession(dual.stock()) ) );
-				}
-			});
-		}
-		catch( Exception e) {
-			e.printStackTrace();
 		}
 	}
 	

@@ -19,6 +19,7 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import redis.Mode;
 import tw.util.S;
 import util.LogType;
 
@@ -145,8 +146,8 @@ public class SiweTransaction extends MyTransaction {
 			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
 			if (cookies.size() > 1) {
-				out( "Warning: receiving /siwe/me with multiple cookies is unexpected");
-				out( cookies);
+				out( "Warning: received /siwe/me with multiple cookies");  // this happens when the user switches wallets from MetaMask
+				cookies.forEach( cookie -> out( "  " + address(cookie) ) ); // don't print whole cookie which gives access to user's wallet
 			}
 			
 			JsonObject siweMsg = validateAnyCookie( cookies);
@@ -158,7 +159,8 @@ public class SiweTransaction extends MyTransaction {
 		});
 	}
 
-	/** Return the Siwe message for the valid cookie; there should be only one, but we will accept any valid one
+	/** Return the Siwe message for the valid cookie; there could be more than one if the user
+	 *  switched wallets because the cookie from the old wallet is not removed
 	 *  @return siwe message */
 	private JsonObject validateAnyCookie( ArrayList<String> cookies) throws RefException {
 		for (String cookie : cookies) {
@@ -170,11 +172,10 @@ public class SiweTransaction extends MyTransaction {
 				return msg;
 			}
 			catch( RefException ex) {
-				out( "  %s is not signed in - %s", address, ex.code() );  // this should not happen if we have only one cookie as we expect
+				out( "  %s is not signed in - %s", address, ex.code() );  // could come here if the session expired or user switched wallets
 			}
 			catch( Exception e) {
-				// we come here if there is more than one cookie OR the session has expired, which is normal
-				out( "  %s is not signed in - %s", address, e.getMessage() );  // this should not happen if we have only one cookie as we expect
+				out( "  %s is not signed in - %s", address, e);  // some unexpected error
 			}
 		}
 

@@ -36,7 +36,6 @@ public class Monitor {
 	static String base;
 	static String mdBase;
 	static Config m_config;
-	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
 	static final String farDate = "12-31-2999";
@@ -70,7 +69,6 @@ public class Monitor {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
 		S.out( "  done");
 
-		m_redis = Monitor.m_config.newRedis();
 		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
 		
 		PricesPanel m_pricesPanel = new PricesPanel();
@@ -91,13 +89,6 @@ public class Monitor {
 		
 		num.setText("40");
 
-		// disconnect redis when application is terminated
-		m_frame.addWindowListener( new WindowAdapter() {
-			public void windowClosed(WindowEvent e) {
-				m_redis.disconnect();
-			}
-		});
-		
 		m_tabs.addTab( "Home", new MonPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
