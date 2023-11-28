@@ -74,10 +74,12 @@ public class SiweTransaction extends MyTransaction {
 	public void handleSiweSignin() {
 		wrap( () -> {
             JsonObject signedMsg = parseToObject();
-            
-            out( "received signed msg: %s", signedMsg);
-			
+            			
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
+			
+			// set m_wallet so it will appear in log messages
+			m_walletAddr = siweMsg.getAddress();  // mixed-case
+            out( "  received sign-in for %s", siweMsg.getAddress() );
 			
 			// validate and remove the nonce so it is no longer valid
 			Main.require( 
@@ -85,16 +87,16 @@ public class SiweTransaction extends MyTransaction {
 					RefCode.INVALID_NONCE, 
 					"The nonce %s is invalid", siweMsg.getNonce() );
 			
-			out( "nonce is valid");
+			out( "  nonce is valid");
 			
 			// verify signature
 			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
-				out( "free pass");
+				out( "  free pass");
 			}
 			else {
 				// better would be to catch it and throw RefException; this returns UNKNOWN code
 				siweMsg.verify(siweMsg.getDomain(), siweMsg.getNonce(), signedMsg.getString( "signature") );  // we should not take the domain and nonce from here. pas
-				out( "verified");
+				out( "  verified");
 			}
 			
 			// verify issuedAt is not too far in future or past
@@ -120,7 +122,7 @@ public class SiweTransaction extends MyTransaction {
 			// store session object; let the wallet address be the key for the session 
 			Session session = new Session( siweMsg.getNonce() );
 			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
-			out( "mapping %s to %s", siweMsg.getAddress(), session);
+			out( "  mapping %s to %s", siweMsg.getAddress(), session);
 		
 			// create the cookie to send back in the 'Set-Cookie' message header
 			String cookie = String.format( "__Host_authToken%s%s=%s",
@@ -262,6 +264,7 @@ public class SiweTransaction extends MyTransaction {
 		return Util.substring(cookie, 16, 58).toLowerCase();
 	}
 	
+	/** Return the cookies from the HTTP request header */
 	private ArrayList<String> authCookies() {
 		return SiweTransaction.findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
 	}
