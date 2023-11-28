@@ -34,7 +34,7 @@ public class TestGetPositions extends MyTestCase {
 	
 	public void testStockPos() throws Exception {
 		MyHttpClient cli = cli();
-		cli.get("?msg=getpositions");
+		cli.get("/api/?msg=getpositions");
 		assert200();
 
 		JsonArray ar = cli.readJsonArray();

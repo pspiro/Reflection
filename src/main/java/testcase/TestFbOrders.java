@@ -127,7 +127,7 @@ public class TestFbOrders extends MyTestCase {
 		busd.mint(
 				accounts.getId( "Admin1"),
 				bobAddr,
-				2000).waitForHash();  // I don't think this is necessary but I saw it fail without this
+				2000).waitForCompleted();
 		
 		// user to approve buying with BUSD; you must wait for this
 		S.out( "**approving 20000");
@@ -137,7 +137,6 @@ public class TestFbOrders extends MyTestCase {
 				2000).waitForCompleted();
 
 		showAmounts("updated amounts");
-
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 

@@ -95,8 +95,8 @@ public class Monitor {
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Tokens", new TokensPanel() );
-		m_tabs.addTab( "RefAPI Prices", m_pricesPanel);
 		m_tabs.addTab( "MDServer Prices", new MdsPricesPanel() );
+		m_tabs.addTab( "RefAPI Prices", m_pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		

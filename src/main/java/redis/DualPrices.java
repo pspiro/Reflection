@@ -194,9 +194,10 @@ class DualPrices {
 	/** Return one set of prices (smart or ibeos) */
 	private void addPricesTo( JsonArray ret, Prices prices, String from) {
 		JsonObject stockPrices = new JsonObject();
-		stockPrices.putAll( m_stock);
-		stockPrices.putAll( prices.getJsonPrices() );
+		stockPrices.put( "conid", m_stock.conid() );
+		stockPrices.put( "symbol", m_stock.symbol() );
 		stockPrices.put( "from", from);
+		stockPrices.putAll( prices.getJsonPrices() );
 		ret.add( stockPrices);
 	}
 

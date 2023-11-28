@@ -18,7 +18,7 @@ public class TestErrors extends TestCase {
 	/** This version does not include the cookie */
 	public static JsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = new MyHttpClient( host, 8383);
-		cli.post( Util.fmtJson( data) );
+		cli.post( "/api", Util.fmtJson( data) );
 		return cli.readJsonObject();
 	}
 	
@@ -42,7 +42,7 @@ public class TestErrors extends TestCase {
 		String data = "{ 'msg': 'notamsg' }";
 		JsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
-		assertStartsWith( "Param 'msg' has invalid value", map.getString(message) ); 
+		assertStartsWith( "Param 'msg' has an invalid value", map.getString(message) ); 
 	}
 	
 	public static void assertStartsWith(String expected, Object actual) {
