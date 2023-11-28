@@ -41,7 +41,7 @@ public class MdServer {
 	
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	final MdConnectionMgr m_mdConnMgr;
-	private final MktDataConfig m_config = new MktDataConfig();
+	private final MdConfig m_config = new MdConfig();
 	private final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	private final TradingHours m_tradingHours; 
 	private final ArrayList<DualPrices> m_list = new ArrayList<>();

@@ -4,7 +4,7 @@ import common.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 
-public class MktDataConfig extends ConfigBase {
+public class MdConfig extends ConfigBase {
 	// program parameters
 	private Mode mode = Mode.paper;  // paper or production
 	private String twsMdHost;  // TWS is listening on this host
@@ -21,7 +21,7 @@ public class MktDataConfig extends ConfigBase {
 	public int twsMdClientId() { return twsMdClientId; }
 	public int mdsPort() { return mdsPort; }
 
-	public MktDataConfig() { 
+	public MdConfig() { 
 	}
 	
 	public void readFromSpreadsheet(String tabName) throws Exception {
