@@ -22,18 +22,19 @@ import util.LogType;
 public class BaseTransaction {
 	public static final String code = "code";
 	//static final String message = "message";
+	protected static boolean m_debug; // if true, will print all messages to log file; also used by each application to print more debug to log
 
 	protected final HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
 	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
 	protected final String m_uri;
-	private final MyTimer m_timer;
+	private final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
 	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
-	
+
 	public BaseTransaction(HttpExchange exchange, boolean debug) {
 		m_exchange = exchange;
 		m_uid = Util.uid(8);
-		m_timer = debug ? new MyTimer() : null;
+		m_timer = debug || m_debug ? new MyTimer() : null;
 		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
 	}
 	
@@ -160,7 +161,7 @@ public class BaseTransaction {
 		}
 	}
 	
-	/** Overridden in subclass */
+	/** Overridden in subclass. Called only if there is an exception. */
 	protected void postWrap() {
 	}
 
@@ -194,5 +195,19 @@ public class BaseTransaction {
 	protected JsonObject parseToObject() throws Exception {
 		return JsonObject.parse( m_exchange.getRequestBody() );
 	}
+
+	public static void setDebug(boolean b) {
+		m_debug = b;
+	}
 	
+	public static boolean debug() {
+		return m_debug;
+	}
+
+	public void handleDebug(boolean v) {
+		wrap( () -> {
+			m_debug = v;
+			respondOk();
+		});
+	}
 }

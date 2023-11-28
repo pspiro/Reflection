@@ -87,7 +87,7 @@ public class LiveOrderTransaction extends MyTransaction {
 		});
 	}
 
-	/** This handles a message from the FbActiveServer which is monitoring for blockchain transactions */
+	/** This handles a message from the FbServer which is monitoring for blockchain transactions */
 	public void handleFireblocks() {
 		wrap( () -> {
 			parseMsg();  // (all keys -> lower case)

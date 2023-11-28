@@ -57,7 +57,7 @@ public class CryptoPanel extends MonPanel {
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
 		
-		MyClient.getJson( Monitor.base + "/api/?msg=getCashBal", obj -> {
+		MyClient.getJson( Monitor.refApiBaseUrl + "/api/?msg=getCashBal", obj -> {
 			double val = obj.getDouble("TotalCashValue");
 			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
 		});

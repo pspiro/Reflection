@@ -42,9 +42,9 @@ public class SouthPanel extends JPanel {
 
 	private void update() {
 		try {
-			test( "/api/ok", m_refApi);
-			test( "/fbserver/ok", m_fbServer);
-			test( "/mdserver/status", m_mdServer);
+			test( Monitor.m_config.baseUrl() + "/api/ok", m_refApi);
+			test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);
+			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
 			
 			Map<String, String> map = Monitor.m_redis.query( jedis -> jedis.hgetAll("265598") );
 			m_aapl.setText( String.format( "%s : %s : %s : %s", map.get("bid"), map.get("ask"), map.get("last"), map.get("time") ) ); 
@@ -59,7 +59,7 @@ public class SouthPanel extends JPanel {
 	private void test(String url, JTextField field) {
 		long now = System.currentTimeMillis();
 
-		MyClient.getString( Monitor.base + url, data -> {
+		MyClient.getString( url, data -> {
 			if (data.equals("OK") || JsonObject.isObject(data) && JsonObject.parse( data).getString("code").equals("OK") ) {
 				long elap = System.currentTimeMillis() - now;
 				field.setText( String.format( "%s (%s ms)", elap < 500 ? "OK" : "SLOW", elap) );

@@ -13,10 +13,6 @@ public class FbTransaction extends BaseTransaction {
 		super(exchange, true);
 	}
 
-	public void onOk() {
-		wrap( () -> respondOk() );
-	}
-
 	public void onStatus() {
 		wrap( () -> {
 			JsonObject obj = Util.toJson(
@@ -27,12 +23,4 @@ public class FbTransaction extends BaseTransaction {
 			respond( obj);
 		});
 	}
-
-	public void onDebug(boolean b) {
-		wrap( () -> {
-			FbServer.m_debug = b;
-			respondOk();
-		});
-	}
-	
 }

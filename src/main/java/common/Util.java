@@ -1,7 +1,9 @@
 package common;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
@@ -139,7 +141,6 @@ public class Util {
 	
 	
 	public static void main(String[] args) throws Exception {
-		S.out( isValidEmail("ha.boritz@gmail.com") );
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -560,5 +561,15 @@ public class Util {
 		return e instanceof Exception ? (Exception)e : new Exception(e);
 	}
 
+	/** Show prompt and input string; Scanner does not work */
+	public static String input(String str) {
+		S.out( str);
+		try (BufferedReader buf = new BufferedReader(new InputStreamReader(System.in) ) ) {
+			return buf.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
 }

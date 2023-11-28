@@ -6,6 +6,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.BaseTransaction;
 import http.MyHttpClient;
 import reflection.Config;
 import tw.util.S;
@@ -21,7 +22,6 @@ import tw.util.S;
 public class FbServer {
 	static HashMap<String,Trans> m_map = new HashMap<>();
 	static long m_started;
-	static boolean m_debug;
 	static Config m_config = new Config();
 	
 	// remove COMPLETED items from the queue
@@ -31,7 +31,7 @@ public class FbServer {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("FBAS");
-			S.out( "Starting FbActiveServer");
+			S.out( "Starting FbServer");
 			Util.require( args.length >= 1, "You must specify a config tab name");
 			run( args[0] );
 		}
@@ -49,10 +49,11 @@ public class FbServer {
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> S.out("Shutdown message received") ) );
 		
 		MyServer.listen( m_config.fbServerPort(), 10, server -> {
-			server.createContext("/fbserver/ok", exch -> new FbTransaction(exch).onOk() ); 
 			server.createContext("/fbserver/status", exch -> new FbTransaction(exch).onStatus() );
-			server.createContext("/fbserver/debug-on", exch -> new FbTransaction(exch).onDebug(true) );
-			server.createContext("/fbserver/debug-off", exch -> new FbTransaction(exch).onDebug(false) );
+			
+			server.createContext("/fbserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext("/fbserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
+			server.createContext("/fbserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 		});
 		
 		while( true) {
@@ -63,7 +64,7 @@ public class FbServer {
 			try {
 				JsonArray ar = Transactions.getSince( System.currentTimeMillis() - (long)(60000 * m_config.fbLookback()) );
 				
-				if (m_debug) {
+				if (BaseTransaction.debug()) {
 					S.out();
 					S.out( "Transactions");
 					S.out(ar);
@@ -75,7 +76,7 @@ public class FbServer {
 				}
 			}
 			catch( Exception e) {
-				S.out( "Error - " + e.getMessage() );
+				S.out( "Error - " + e.getMessage() + " - " + e.toString() );
 				e.printStackTrace();
 			}
 		}
@@ -86,7 +87,7 @@ public class FbServer {
 		if (old == null || !trans.status().equals(old.status() ) ) {
 			m_map.put(trans.id(), trans);
 
-			S.out( m_debug ? trans.obj() : trans);  // in debug mode, print the whole object
+			S.out( BaseTransaction.debug() ? trans.obj() : trans);  // in debug mode, print the whole object
 			
 			try {
 				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", 

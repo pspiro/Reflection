@@ -56,7 +56,7 @@ public class PricesPanel extends JsonPanel {
 
 		void refresh() throws Exception {
 			super.refresh();
-			MyClient.getJson(Monitor.base + "/api/?msg=getallprices", map -> {
+			MyClient.getJson(Monitor.refApiBaseUrl + "/api/?msg=getallprices", map -> {
 				map.forEach( (conid,prices) -> update(Integer.parseInt(conid), (JsonObject)prices) ); 
 				fireTableDataChanged();
 			});

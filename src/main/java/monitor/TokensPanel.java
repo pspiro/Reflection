@@ -35,7 +35,7 @@ public class TokensPanel extends JsonPanel {
 		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 		
 		// add IB positions
-		MyClient.getArray(Monitor.base + "/api/?msg=getpositions", positions -> {
+		MyClient.getArray(Monitor.refApiBaseUrl + "/api/?msg=getpositions", positions -> {
 			positions.forEach( position ->
 				getOrCreate( position.getInt("conid") )
 					.put( "position", position.get("position") )

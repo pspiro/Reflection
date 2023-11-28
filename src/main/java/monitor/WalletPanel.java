@@ -56,7 +56,7 @@ public class WalletPanel extends JsonPanel {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 		
-		MyClient.getJson(Monitor.base + "/api/mywallet/" + m_wallet.getText(), obj -> {
+		MyClient.getJson(Monitor.refApiBaseUrl + "/api/mywallet/" + m_wallet.getText(), obj -> {
 			JsonArray ar = obj.getArray("tokens");
 			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
 

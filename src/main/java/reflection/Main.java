@@ -2,7 +2,6 @@ package reflection;
 
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -142,7 +141,9 @@ public class Main implements ITradeReportHandler {
 
 			// remove one of these
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
-			server.createContext("/api/redeemRUSD", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+
+			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
+			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			
 			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
@@ -523,7 +524,7 @@ public class Main implements ITradeReportHandler {
 					// we never delete a valid last price
 					double last = prices.getDouble("last");
 					if (last > 0) {
-						stock.put( "last", last);
+						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
 				}
 			});

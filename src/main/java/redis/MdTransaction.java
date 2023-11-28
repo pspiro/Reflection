@@ -9,15 +9,14 @@ import http.BaseTransaction;
 import util.LogType;
 
 public class MdTransaction extends BaseTransaction {
-	/*
-	wrap( () -> {
-	});
-*/
-
 	private MdServer m_main;
 	
 	MdTransaction(MdServer main, HttpExchange exchange) {
-		super(exchange, true);
+		this( main, exchange, true);
+	}
+	
+	MdTransaction(MdServer main, HttpExchange exchange, boolean debug) {
+		super(exchange, debug);
 		m_main = main;
 	}
 	
@@ -71,10 +70,5 @@ public class MdTransaction extends BaseTransaction {
 		wrap( () -> {
 			respond( m_main.getRefPrices() );
 		});
-	}
-
-	public void onDebug(boolean v) {
-		MdServer.m_debug = v;
-		respondOk();
 	}
 }
