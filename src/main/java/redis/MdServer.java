@@ -96,7 +96,7 @@ public class MdServer {
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet(m_config);
 
-		m_mdConnMgr = new MdConnectionMgr( this, m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
+		m_mdConnMgr = new MdConnectionMgr( this, m_config.twsMdHost(), m_config.twsMdPort(), 827, m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
 		
 		// connect to TWS

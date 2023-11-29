@@ -46,10 +46,6 @@ public class Monitor {
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("Monitor");
 		
-		if (args.length == 0) {
-			throw new Exception( "You must specify a config tab name");
-		}
-
 		NewLookAndFeel.register();
 		
 		m_tabs = new NewTabbedPanel(true);
@@ -68,9 +64,6 @@ public class Monitor {
 		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
 		
 		PricesPanel m_pricesPanel = new PricesPanel();
-		
-		// monitor won't work until the certificate is fixed
-		
 		
 		JButton but = new JButton("Refresh");
 		but.addActionListener( e -> refresh() );

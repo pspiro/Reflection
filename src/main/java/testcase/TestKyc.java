@@ -18,6 +18,7 @@ public class TestKyc extends MyTestCase {
 		S.out( "wal=%s  qty = %s  amt=%s", Cookie.wallet, qty, amt);
 		JsonObject obj = TestOrder.createOrder2("buy", qty, price);
 		postOrderToObj(obj);
+		S.out(cli.readJsonObject().get("message"));
 		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );
 		
 		m_config.sqlCommand( sql -> sql.execWithParams(
