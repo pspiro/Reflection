@@ -33,10 +33,6 @@ public class MdTransaction extends BaseTransaction {
 		});
 	}
 
-	@Override protected void jlog(LogType type, JsonObject json) {
-		super.jlog(type, json);
-	}
-
 	public void onDesubscribe() {
 		wrap( () -> {
 			m_main.desubscribe();

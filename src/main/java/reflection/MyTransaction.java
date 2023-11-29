@@ -148,7 +148,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	}
 
 	@Override protected void jlog(LogType type, JsonObject json) {
-		m_main.jlog(type, m_uid, m_walletAddr, json);
+		m_main.jlog(type, m_uid, S.notNull(m_walletAddr).toLowerCase(), json);
 	}
 
 	/** Assumes the wallet address is the last token in the URI

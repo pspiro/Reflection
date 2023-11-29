@@ -180,15 +180,15 @@ public class BaseTransaction {
 		S.out( m_uid + " " + format, params);
 	}
 
-	protected void olog(LogType type, Object... ar) {
+	protected final void olog(LogType type, Object... ar) {
 		jlog( type, Util.toJson(ar) );
 	}
 	
-	protected void elog(LogType type, Throwable e) {
+	protected final void elog(LogType type, Throwable e) {
 		jlog(type, RefException.eToJson(e) );
 	}
 
-	protected void elog(LogType type, RefException e) {
+	protected final void elog(LogType type, RefException e) {
 		jlog(type, e.toJson() );
 	}
 
