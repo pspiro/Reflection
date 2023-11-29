@@ -42,7 +42,7 @@ public class ConnectionAdapter implements IConnectionHandler  {
 	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 		S.out( errorMsg);
 		if (errorCode == 502) {
-			S.out( "Possible duplicate API client id");
+			S.out( "Possible duplicate API client id running on another host");
 		}
 	}
 

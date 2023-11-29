@@ -43,7 +43,7 @@ class ConnectionMgr implements IConnectionHandler {
 				@Override public void run() {
 					onTimer();
 				}
-			}, 0, m_reconnectInterval);
+			}, 500, m_reconnectInterval);  // give initial 500ms delay because we can go into a loop where we connect/disconnect (502 error)
 		}
 	}
 
@@ -121,6 +121,8 @@ class ConnectionMgr implements IConnectionHandler {
 			case 10197:
 				m_main.log( "You can't get market data in your paper account while logged into your production account");
 				break;
+			case 502:
+				m_main.log( "Received 502 - there may be another client connected to TWS with the same client ID");
 		}
 	
 		m_main.log( "Received from TWS %s %s %s", id, errorCode, errorMsg);
