@@ -1,53 +1,62 @@
 package fireblocks;
 
+import common.Util;
+import positions.Wallet;
 import reflection.Config;
-import tw.google.GTable;
-import tw.google.NewSheet;
+import reflection.Stocks;
+import tw.util.S;
 
+/** This tests two wallets at the same time which will cause both 
+ *  Admin1 and Amin2 accounts to be used */
 public class TestTwoAdmins {
-	static Busd busd;
-	static Rusd rusd;
-	static StockToken stock;
+	static final String user1 = "0x614EF3Ebe43314fa73515b155e319E34C8CA348b";
+	static final String user2 = "0x4b92327b67A5F1DB38032277B3d46BC4D0e3D05b";
 	
 	public static void main(String[] args) throws Exception {
-		Config config = new Config();
-		config.readFromSpreadsheet("Test-config");
-
-		GTable tab = new GTable( NewSheet.Reflection, "Test-symbols", "ContractSymbol", "TokenAddress");
-		stock = new StockToken( tab.get( "GOOG") );
-
-		rusd = config.rusd();
-		busd = config.busd();
+		Config config = Config.ask();
+		Rusd rusd = config.rusd();
 		
-		prepare("Bob");
-		prepare("Sam");
-
-		buy("Bob");
-		buy("Sam");
-		buy("Bob");
-		buy("Sam");
-	}
-	
-	static void buy(String name) throws Exception {
-		rusd.buyStock(
-				Accounts.instance.getAddress(name),
-				busd,
-				1,
-				stock,
-				1);
-	}
-
-	/** Mint BUSD for user and approve RUSD for trading it */
-	static void prepare(String name) throws Exception {
-		String addr = Accounts.instance.getAddress(name);
+		Stocks stocks = config.readStocks();
+		StockToken token = stocks.getStock(265598).getToken();
 		
-		busd.mint(addr, 2);
+		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
+		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
 
-		// user to approve buying with BUSD; you must wait for this
-		busd.approve(
-				Accounts.instance.getId(name),
-				rusd.address(),
-				2).waitForHash();
+		rusd.burnRusd( user1, 4, token).waitForCompleted();  // change this to 1!!!
+		rusd.burnRusd( user2, 3, token).waitForCompleted();  // change this to 1!!!
+		
+		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
+		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		
+	}
+	public static void mainn(String[] args) throws Exception {
+		Config config = Config.ask();
+		Rusd rusd = config.rusd();
+		
+		Stocks stocks = config.readStocks();
+		StockToken token = stocks.getStock(265598).getToken();
+
+		
+		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
+		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+
+		Util.executeAndWrap( () -> {
+			rusd.mintRusd( user1, 1, token).waitForCompleted();
+			rusd.buyStockWithRusd( user1, 1, token, 1).waitForCompleted();
+			rusd.sellStockForRusd( user1, 1, token, 1).waitForCompleted();
+			rusd.burnRusd( user1, 1, token).waitForCompleted();  // change this to 1!!!
+		});
+		
+		Util.executeAndWrap( () -> {
+			rusd.mintRusd( user2, 1, token).waitForCompleted();
+			rusd.buyStockWithRusd( user2, 1, token, 1).waitForCompleted();
+			rusd.sellStockForRusd( user2, 1, token, 1).waitForCompleted();
+			rusd.burnRusd( user2, 1, token).waitForCompleted();  // change this to 1!!!
+		});
+		
+		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
+		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		
 	}
 }
 

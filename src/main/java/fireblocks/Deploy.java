@@ -16,8 +16,7 @@ public class Deploy {
 	
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
-		Config config = new Config();
-		config.readFromSpreadsheet("Prod-config");
+		Config config = Config.ask();
 		Util.require(config.useFireblocks(), "Turn on Fireblocks");
 		
 		Rusd rusd = config.rusd();
@@ -35,7 +34,7 @@ public class Deploy {
 		}
 		
 		// deploy RUSD (if set to "deploy")
-		if ("deploy".equals( rusd.address() ) ) {
+		if ("deploy".equalsIgnoreCase( rusd.address() ) ) {
 			rusd.deploy( 
 					"c:/work/smart-contracts/build/contracts/rusd.json",
 					instance.getAddress( "RefWallet"),

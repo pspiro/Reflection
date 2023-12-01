@@ -11,24 +11,16 @@ import tw.util.S;
 public class Transactions {
 
 	public static void main(String[] args) throws Exception {
-		Config.readFrom("Dt-config");
-		//displayLastTransactions(5);
+		Config.ask();
+		//S.out( getLastTransactions(5) );
+		getTransaction("a0ad82f8-810b-4a54-8273-49f25658e853").display();
 
-		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
-		Transactions.getTransactions().display();
+//		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
+//		Transactions.getTransactions().display();
 	}
 
-	static void displayLastTransactions(int n) throws Exception {
-		JsonArray ar = getTransactions();
-		
-		for (int i = 0; i < n; i++) { 
-			ar.getJsonObj(i).display();
-		}
-	}
-
-	// this is broken; check the docs, maybe it's outdated
-	public static JsonArray getTransactions() throws Exception {
-		return Fireblocks.fetchArray( "/v1/transactions/?");
+	static JsonArray getLastTransactions(int limit) throws Exception {
+		return Fireblocks.fetchArray( "/v1/transactions/?limit=" + limit);
 	}
 
 	public static JsonArray getSince(long start) throws Exception {

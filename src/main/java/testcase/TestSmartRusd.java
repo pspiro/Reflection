@@ -38,7 +38,7 @@ public class TestSmartRusd extends MyTestCase {
 				rusd.address() );
 
 		// mint RUSD
-		rusd.mint(dead, 10.0, st)
+		rusd.mintRusd(dead, 10.0, st)
 			.waitForCompleted();
 		
 		// buy a stock token - succeed

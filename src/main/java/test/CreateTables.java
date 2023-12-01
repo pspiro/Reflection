@@ -5,7 +5,10 @@ import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
-/** Create trades and commissions tables */
+/** Create trades and commissions tables
+ * 
+ *  NOTE: According to chart, varchar is as-efficient as varchar(#)
+ */
 public class CreateTables  {
 	static MySqlConnection con;
 	static final int tradeKeyLen = 64; 

@@ -182,7 +182,20 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
 			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
-			//validateCookie();
+
+			// look to see what parameters are being passed; at least we should update the time
+			out( "received wallet-update message with params " + m_map);
+			respondOk();
+		});
+	}
+
+	/** Handle the Persona KYC info */
+	public void handleRegister() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
+			validateCookie();
 
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);

@@ -18,19 +18,10 @@ public class TestOrder extends MyTestCase {
 	
 	static {
 		try {
-			String conid = "265598";
-			
-			curPrice = m_config.newRedis().singleQuery( 
-					jedis -> {
-						String bid = jedis.hget(conid, "bid");
-						String ask = jedis.hget(conid, "ask");
-						if (S.isNull(bid) || S.isNull(ask) ) {
-							jedis.hset( conid, "bid", "138.2");
-							jedis.hset( conid, "ask", "138.4");
-							return 138.3;
-						}
-						return Double.valueOf(bid);
-					});
+			JsonObject json = new MyHttpClient("localhost", 8383) 
+					.get( "/api/get-price/265598")
+					.readJsonObject();
+			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
 			S.out( "TestOrder: Current AAPL price is %s", curPrice);
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			

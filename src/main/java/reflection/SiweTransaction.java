@@ -19,7 +19,6 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import redis.Mode;
 import tw.util.S;
 import util.LogType;
 

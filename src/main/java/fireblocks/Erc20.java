@@ -167,8 +167,12 @@ public class Erc20 {
 				}
 			}
 			catch( Exception e) {
-				// we can get a 404 error; we should keep trying
-				S.out( "Error while querying for deployed address: " + e.getMessage() );
+				if (S.notNull(e.getMessage()).contains("404") ) {
+					// swallow it
+				}
+				else {
+					S.out( "Error while querying for deployed address: " + e.getMessage() );
+				}
 			}
 		}
 		throw new RefException( RefCode.UNKNOWN, "Could not get blockchain transaction");		

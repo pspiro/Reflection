@@ -88,9 +88,9 @@ public class TestOutsideHours extends MyTestCase {
 		assertEquals( RefCode.OK.toString(), ret);
 	}
 	
-	// need to change this to the 30 min time that IBEOS is closed
+	// need to change this to the 10 min time that IBEOS is closed
 	public void testPostClose() throws Exception {
-		JsonObject map = testHours( IBM, "20:00");
+		JsonObject map = testHours( IBM, "03:55");
 
 		String ret = (String)map.getString("code");
 		String text = (String)map.getString("message");
@@ -172,7 +172,7 @@ public class TestOutsideHours extends MyTestCase {
 	}
 	
 	public void testShowHours() throws Exception {
-		cli().get( "/?msg=getTradingHours").readJsonObject().display();
+		cli().get( "/api/?msg=getTradingHours").readJsonObject().display();
 	}
 
 }

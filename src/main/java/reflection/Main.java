@@ -146,6 +146,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			
 			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
+			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );

@@ -16,7 +16,7 @@ public class TestPanic extends MyTestCase {
 		GTable tab = new GTable(NewSheet.Reflection, "Dt-config", "Tag", "Value");
 		
 		tab.put( "allowTrading", Allow.Sell.toString() );
-		cli().get("/?msg=refreshconfig");
+		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
@@ -28,7 +28,7 @@ public class TestPanic extends MyTestCase {
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 		
 		tab.put( "allowTrading", Allow.None.toString() );
-		cli().get("/?msg=refreshconfig");
+		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		obj = TestOrder.createOrder( "BUY", 10, 3);
@@ -41,7 +41,7 @@ public class TestPanic extends MyTestCase {
 
 		// put it back to all
 		tab.put( "allowTrading", Allow.All.toString() );
-		cli().get("/?msg=refreshconfig");
+		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		obj = TestOrder.createOrder( "BUY", 10, 3);

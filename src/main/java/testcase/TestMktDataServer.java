@@ -11,10 +11,11 @@ public class TestMktDataServer extends MyTestCase {
 	public void testStatus() throws Exception {
 		JsonObject json = MyClient.getJson( base + "/status");
 		S.out(json);
-		assertEquals( "OK", json.getString("OK") ); 
-		assertEquals( "OK", json.getString("TWS") ); 
-		assertEquals( "OK", json.getString("IB") );
+		assertEquals( true, json.getBool("TWS") ); 
+		assertEquals( true, json.getBool("IB") ); 
+		assertEquals( "OK", json.getString("code") ); 
 		assertTrue( json.getInt("mdCount") > 0);
+		assertTrue( json.getLong("started") > 0);
 	}
 
 	public void testSubscribe() throws Exception {
@@ -25,11 +26,14 @@ public class TestMktDataServer extends MyTestCase {
 		assertEquals( 200, MyClient.getResponse( base + "/desubscribe").statusCode() );
 	}
 
-	public void testDisconnect() throws Exception {
+	/** Cause a disconnec, and see that MdServer can reconnect okay */
+	public void testReconnect() throws Exception {
+		assertEquals( "true", MyClient.getJson( base + "/status").getString("TWS") );
 		assertEquals( 200, MyClient.getResponse( base + "/disconnect").statusCode() );
-		assertEquals( "OK", MyClient.getJson( base + "/status").getString("TWS") );
-		S.sleep(10000);
-		assertEquals( "OK", MyClient.getJson( base + "/status").getString("TWS") );
+		S.sleep(10);
+		assertEquals( "false", MyClient.getJson( base + "/status").getString("TWS") );
+		S.sleep(5000);
+		assertEquals( "true", MyClient.getJson( base + "/status").getString("TWS") );
 	}
 
 }
