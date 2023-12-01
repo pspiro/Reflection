@@ -429,7 +429,7 @@ public class Main implements ITradeReportHandler {
 
 	/** Writes entry to log table in database; must not throw exception */
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
-		S.out( "%sLOG %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		S.out( "%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,

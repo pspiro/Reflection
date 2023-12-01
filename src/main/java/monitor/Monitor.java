@@ -11,6 +11,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.json.simple.JsonObject;
+
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
@@ -32,6 +34,7 @@ public class Monitor {
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
+	static WalletPanel m_walletPanel;
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
@@ -50,7 +53,8 @@ public class Monitor {
 		
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-
+		m_walletPanel = new WalletPanel();
+		
 		// read config
 		m_config = MonitorConfig.ask();
 		m_config.useExteranDbUrl();
@@ -63,7 +67,7 @@ public class Monitor {
 
 		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
 		
-		PricesPanel m_pricesPanel = new PricesPanel();
+		PricesPanel pricesPanel = new PricesPanel();
 		
 		JButton but = new JButton("Refresh");
 		but.addActionListener( e -> refresh() );
@@ -88,13 +92,13 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
 		m_tabs.addTab( "Signup", createSignupPanel() );
-		m_tabs.addTab( "Wallet", new WalletPanel() );
+		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Tokens", new TokensPanel() );
 		m_tabs.addTab( "MDServer Prices", new MdsPricesPanel() );
-		m_tabs.addTab( "RefAPI Prices", m_pricesPanel);
+		m_tabs.addTab( "RefAPI Prices", pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		
@@ -110,7 +114,7 @@ public class Monitor {
 		m_frame.setSize( 1100, 800);
 		m_frame.setVisible(true);
 		
-		m_pricesPanel.initialize();
+		pricesPanel.initialize();
 	}
 	
 	private static void refreshConfig() {
@@ -142,6 +146,10 @@ public class Monitor {
 
 		@Override void onDouble(String tag, Object val) {
 			switch(tag) {
+			case "wallet_public_key":
+				m_tabs.select( "Wallet");
+				m_walletPanel.filter( val.toString() );
+				break;
 			case "uid":
 				m_tabs.select( "Log");
 				m_logPanel.filterByUid(val.toString());
@@ -169,6 +177,19 @@ public class Monitor {
 		void filterByUid( String uid) {
 			where.setText( String.format( "where uid = '%s'", uid) );
 			Util.wrap( () -> refresh() );
+		}
+		
+		@Override protected String getTooltip(int row, String tag) {
+			try {
+				if (tag.equals("data") ) {
+					String val = m_model.m_ar.get(row).getString(tag);
+					return S.isNotNull(val) ? JsonObject.parse(val).toHtml() : null;
+				}
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+			}
+			return null;
 		}
 	}
 

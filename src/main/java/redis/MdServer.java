@@ -277,12 +277,7 @@ public class MdServer {
 
 			JsonObject stockPrices = new JsonObject();
 			stockPrices.put( "conid", dual.stock().conid() );
-			dual.getRefPrices(session).update(stockPrices); 
-			
-			// if all sessions are closed, use last from smart
-			if (session == Session.None) {
-				stockPrices.put( "last", dual.smart().last() );
-			}
+			dual.update(stockPrices, session);
 			
 			ret.add( stockPrices);
 		}

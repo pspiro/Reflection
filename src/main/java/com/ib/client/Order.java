@@ -607,8 +607,11 @@ public class Order {
 				"totalQty", m_totalQty, 
 				"roundedQty", m_roundedQty, 
 				"conid", contract.conid(), 
-				"lmtPrice=", m_lmtPrice,
-				"exchange", contract.exchange()
+				"lmtPrice", m_lmtPrice,
+				"exchange", contract.exchange(),
+				"tif", m_tif,
+				"outsideRth", m_outsideRth,
+				"orderRef", m_orderRef
 				);
 	}
 

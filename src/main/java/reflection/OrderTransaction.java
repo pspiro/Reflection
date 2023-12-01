@@ -622,6 +622,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
 						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_order.totalQty() ) ); 
 			
+				jlog( LogType.UNWIND_ORDER, m_order.getJsonLog(contract) );
+				
 				if (m_order.roundedQty() > 0 && !m_config.autoFill() ) {
 					m_main.orderController().placeOrder(contract, m_order, null);
 				}

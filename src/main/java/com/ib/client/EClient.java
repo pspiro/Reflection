@@ -10,6 +10,8 @@ import java.util.List;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.WhatToShow;
 
+import tw.util.S;
+
 public abstract class EClient {
 
     // Client version history
@@ -2167,6 +2169,7 @@ public abstract class EClient {
            }
 
            closeAndSend(b);
+           S.out( "Placed order " + order.getJsonLog(contract));
         }
         catch(EClientException e) {
             error(id, e.error(), e.text());

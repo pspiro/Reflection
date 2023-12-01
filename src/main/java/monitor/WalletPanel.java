@@ -97,4 +97,9 @@ public class WalletPanel extends JsonPanel {
 
 	@Override public void closed() {
 	}
+
+	public void filter(String wallet) {
+		m_wallet.setText(wallet);
+		Util.wrap( () -> refresh() );
+	}
 }

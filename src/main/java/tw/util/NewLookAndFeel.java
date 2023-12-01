@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.Timer;
+import javax.swing.ToolTipManager;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -55,6 +56,13 @@ public class NewLookAndFeel extends MetalLookAndFeel {
 	public static void register() {
 		try {
 			UIManager.setLookAndFeel( new NewLookAndFeel() );
+			
+			// Set the tooltip to show up after 500 milliseconds
+			//ToolTipManager.sharedInstance().setInitialDelay(500);
+
+			// Set the tooltip to stay visible for 10000 milliseconds (10 seconds)
+			ToolTipManager.sharedInstance().setDismissDelay(60000);
+			
 			
 			// don't show selected cell in table
 			Border border = new EmptyBorder(1, 1, 1, 1);

@@ -301,6 +301,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return (Comparable)get(key);
 	}
 
+	public boolean isComparable(String key) {
+		return get(key) instanceof Comparable;
+	}
+
 	/** Add the pair if val is not null */
 	public void putIf(String key, Object val) {
 		if (val != null) {
@@ -340,6 +344,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			}
 		});
 		return this;
+	}
+	
+	public String toHtml() {
+		StringBuilder b = new StringBuilder();
+		b.append( "<html><table>\n");
+		entrySet().forEach( entry -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>\n", entry.getKey(), entry.getValue() ) ) );
+		b.append( "</table></html>");
+		return b.toString();
 	}
 }
 /** NOTE: Timestamp objects are stored as

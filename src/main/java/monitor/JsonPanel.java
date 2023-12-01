@@ -16,6 +16,7 @@ import javax.swing.table.TableCellRenderer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import monitor.Monitor.MonPanel;
 import tw.util.MyTableModel;
 import tw.util.NewTabbedPanel.INewTab;
@@ -46,6 +47,10 @@ public class JsonPanel extends MonPanel implements INewTab {
 	protected Object format(String key, Object value) {
 		return value;
 	}
+	
+	protected String getTooltip(int row, String tag) {
+		return null;
+	}	
 
 	public class JsonModel extends MyTableModel {
 		final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
@@ -102,7 +107,7 @@ public class JsonPanel extends MonPanel implements INewTab {
 		}
 		
 		public void onHeaderClicked(int col) {
-			if (col < m_colNames.length) {
+			if (col < m_colNames.length && m_ar.isSortable(m_colNames[col])) {
 				m_ar.sortJson( m_colNames[col] );
 				fireTableDataChanged();
 			}
@@ -128,7 +133,7 @@ public class JsonPanel extends MonPanel implements INewTab {
 			JPopupMenu m = new JPopupMenu();
 			m.add( menuItem("Copy", ev -> copy(row, col) ) );
 			m.add( menuItem("Delete", ev -> delete(row, col) ) );
-			m.show( e.getComponent(), 0, 0);
+			m.show( e.getComponent(), e.getX(), e.getY() );
 		}
 		
 		private void copy(int row, int col) {
@@ -167,5 +172,11 @@ public class JsonPanel extends MonPanel implements INewTab {
 			m_filtered = true;
 		}
 		
-	}	
+		protected String getTooltip(int row, int col) {
+			return col < m_colNames.length && row < m_ar.size()
+						? JsonPanel.this.getTooltip(row, m_colNames[col])
+						: null;
+		}
+	}
+
 }
