@@ -15,8 +15,8 @@ class DualPrices {
 	static Prices NullPrices = new Prices(0);  // used when all sessions are closed; bid/ask is -2, so we know where it came from
 	
 	private Stock m_stock;
-	private Prices m_smart;
-	private Prices m_overnight;
+	private final Prices m_smart;
+	private final Prices m_overnight;
 	private Session m_was;   // prevSession would be a better name
 	
 	static {
@@ -209,4 +209,15 @@ class DualPrices {
 		};
 	}
 
+	public void update(JsonObject stockPrices, Session session) {
+		getRefPrices(session).update(stockPrices); 
+		
+		// if all sessions are closed, or we are in overnight and there
+		// is no last there, use last from smart
+		if (session == Session.None ||
+			session == Session.Overnight && m_overnight.last() <= 0) {
+			
+			stockPrices.put( "last", smart().last() );
+		}
+	}
 }

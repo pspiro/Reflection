@@ -83,7 +83,12 @@ public class MyTable extends JTable { // nicole
 	@Override public boolean isCellEditable(int row, int col) {
 		return getModel().isCellEditable( row, col);
 	}
-
+	
+	@Override public String getToolTipText(MouseEvent e) {
+		return getModel().getTooltip(
+				rowAtPoint( e.getPoint() ),
+				columnAtPoint( e.getPoint() ) );
+	}
 
 	static class MyDefaultCellEditor extends DefaultCellEditor {
 		public MyDefaultCellEditor(JTextField textField) {

@@ -143,6 +143,10 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		
 	}
 
+	public boolean isSortable(String colname) {
+		return size() > 1 && get(0).isComparable(colname);
+	}
+		
 	public void sortJson(String colname) {
 		sort( (a, b) -> {
 			Comparable v1 = a.getComparable(colname);

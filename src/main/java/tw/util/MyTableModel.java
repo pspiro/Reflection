@@ -46,4 +46,8 @@ public abstract class MyTableModel extends AbstractTableModel {
 	public JScrollPane createTable() {
 		return new JScrollPane( new MyTable( this) );
 	}
+
+	protected String getTooltip(int row, int col) {
+		return null;
+	}
 }
