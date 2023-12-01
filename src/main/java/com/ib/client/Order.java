@@ -610,7 +610,8 @@ public class Order {
 				"lmtPrice", m_lmtPrice,
 				"exchange", contract.exchange(),
 				"tif", m_tif,
-				"outsideRth", m_outsideRth
+				"outsideRth", m_outsideRth,
+				"orderRef", m_orderRef
 				);
 	}
 
