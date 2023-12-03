@@ -124,10 +124,6 @@ public class MyHttpClient {
 //		return new String( ar);
 	}
 	
-	public void post( String data) throws Exception {
-		post( "/", data);
-	}
-
 	/** e.g. post2( "/api", */
 	public MyHttpClient post( String url, String data) throws Exception {
 		addHeader( "Content-length", "" + data.length() );

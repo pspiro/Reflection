@@ -5,7 +5,8 @@ import org.json.simple.JsonObject;
 
 import tw.util.S;
 
-/** This test should work if autoFill is turned off */
+/** This test should work if autoFill is turned off AND IB actually 
+ *  fills the order in the paper system */
 public class TestUnwindOrder extends MyTestCase {
 	static String host = "localhost";
 
@@ -15,7 +16,7 @@ public class TestUnwindOrder extends MyTestCase {
 		S.out( "pos1 = " + pos1);
 		
 		// place order set to fail
-		JsonObject order = TestOrder.createOrder2("BUY", 100, 183);
+		JsonObject order = TestOrder.createOrder2("BUY", 100, TestOrder.curPrice + 2);
 		order.put("fail", true);
 		
 		postOrderToObj(order);
@@ -35,7 +36,7 @@ public class TestUnwindOrder extends MyTestCase {
 	/** Returns the stock position in IB account */
 	private double getPos(int conid) throws Exception {
 		JsonArray ar = cli()
-				.get("?msg=getpositions")
+				.get("/api/?msg=getpositions")
 				.readJsonArray();
 		JsonObject obj = find(ar, 265598);
 		return obj != null ? obj.getDouble("conid") : 0;

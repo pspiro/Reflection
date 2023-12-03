@@ -29,6 +29,7 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
 
@@ -249,6 +250,12 @@ public class Util {
 	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	public static void execute( String name, Runnable runnable) {
 		new Thread(runnable, name).start();
+	}
+	
+	/** Execute the runnable in a new thread aka invokeLater.
+	 *  Consider using ThreadQueue if you want all to execute in the same thread */
+	public static void executeAndWrap( ExRunnable runnable) {
+		execute( () -> wrap( () -> runnable.run() ) );
 	}
 	
 	/** Execute the runnable in a new thread aka invokeLater.
@@ -573,5 +580,11 @@ public class Util {
 			return null;
 		}
 	}
+	
+	public static String ask(String prompt) {
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		return JOptionPane.showInputDialog(prompt);
+	}
+	
 	
 }

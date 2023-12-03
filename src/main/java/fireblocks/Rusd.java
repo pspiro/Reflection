@@ -75,7 +75,7 @@ public class Rusd extends Erc20 {
 		);
 	}
 	
-	/** Buy with either RUSD or BUSD
+	/** Buy with either RUSD or BUSD; can also be used to burn RUSD
 	 * @return id */
 	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
@@ -94,12 +94,14 @@ public class Rusd extends Erc20 {
 
 		S.out( "Account %s buying %s %s with %s %s for user %s",
 				adminAcctId, params[4], stockToken.address(), params[3], stablecoin.address(), userAddr);
-		return call( adminAcctId, buyStockKeccak, paramTypes, params, "RUSD buy stock");
+		return call( adminAcctId, buyStockKeccak, paramTypes, params, stockTokenAmt == 0 ? "RUSD burn" : "RUSD buy stock");
 	}
 	
 	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
-	 *  and you must be approved (if buying with BUSD) */
+	 *  and you must be approved (if buying with BUSD)
+	 *  
+	 *  Also used to mint RUSD */
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 
@@ -120,7 +122,7 @@ public class Rusd extends Erc20 {
 				params[3], 
 				userAddr);
 		
-		return call( adminAcctId, sellStockKeccak, paramTypes, params, "RUSD sell stock");
+		return call( adminAcctId, sellStockKeccak, paramTypes, params, stockTokenAmt == 0 ? "RUSD mint" : "RUSD sell stock");
 	}
 	
 	/** Not used yet, for testing only */
@@ -222,7 +224,12 @@ public class Rusd extends Erc20 {
 	}
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
-	public RetVal mint(String address, double amt, StockToken anyStockToken) throws Exception {
+	public RetVal mintRusd(String address, double amt, StockToken anyStockToken) throws Exception {
 		return sellStockForRusd( address, amt, anyStockToken, 0);
+	}
+
+	/** RUSD has no mint function, so we sell zero shares of stock */
+	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
+		return buyStockWithRusd( address, amt, anyStockToken, 0);
 	}
 }

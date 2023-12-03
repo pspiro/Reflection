@@ -374,7 +374,17 @@ public class Fireblocks {
 
 		for (int i = 0; i < 120; i++) {
 			S.sleep(1000);
-			JsonObject trans = Transactions.getTransaction( fireblocksId);
+			
+			// if there is an error, keep trying, it might go away, e.g. 402
+			JsonObject trans;
+			try {
+				trans = Transactions.getTransaction( fireblocksId);
+			}
+			catch( Exception e) {
+				S.out( "Error while checking status - " + e.getMessage() );
+				continue;
+			}
+			
 			S.out( "%s  %s  hash: %s", fireblocksId, trans.getString("status"), trans.getString("txHash") );
 			
 			String status = trans.getString("status");

@@ -5,8 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import javax.swing.JOptionPane;
-
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -39,7 +37,7 @@ public class Config extends ConfigBase {
 	private double maxSellAmt; // max sell amt in dollars
 	private double minBuySpread;  // as pct of price
 	private double minSellSpread;  // as pct of price
-	double minOrderSize;  // in dollars
+	private double minOrderSize;  // in dollars
 
 	// needed by back-end server
 	private double buySpread;  // as pct of price
@@ -468,8 +466,7 @@ public class Config extends ConfigBase {
 	}
 
 	public static Config ask() throws Exception {
-		java.awt.Toolkit.getDefaultToolkit().beep();
-		return readFrom( JOptionPane.showInputDialog("Enter config tab name prefix") + "-config");
+		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
 	}
 	
 	public String getTabName() {

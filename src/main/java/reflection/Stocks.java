@@ -31,7 +31,7 @@ public class Stocks implements Iterable<Stock> {
 		m_hotStocks.clear();
 		
 		// read master list of symbols and map conid to entry
-		HashMap<Integer,ListEntry> map = readMasterSymbols(book);
+		HashMap<Integer,ListEntry> masterList = readMasterSymbols(book);
 		
 		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
 			Stock stock = new Stock();
@@ -50,7 +50,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "allow", row.getString("Allow") );
 				
 				
-				ListEntry masterRow = map.get(conid);
+				ListEntry masterRow = masterList.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
 				stock.put( "symbol", masterRow.getString("Symbol") );
 				stock.put( "description", masterRow.getString("Description") );

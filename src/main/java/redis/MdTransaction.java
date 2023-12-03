@@ -6,7 +6,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import http.BaseTransaction;
-import util.LogType;
 
 public class MdTransaction extends BaseTransaction {
 	private MdServer m_main;

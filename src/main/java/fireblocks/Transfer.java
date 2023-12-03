@@ -1,5 +1,6 @@
 package fireblocks;
 
+import common.Util;
 import reflection.Config;
 
 public class Transfer {
@@ -9,11 +10,11 @@ public class Transfer {
 	
 	public static void main( String[] ar) throws Exception {
 		Config.ask();
-
-		String wallet = "0xaa50d56e43e1a95a39b357bf0279f218942a1049";
+		
+		String wallet = Util.input( "Enter wallet:");
+		String note = Util.input( "Enter note:");
 		String asset = "USDC";
 		double amt = 100;
-		String note = "Send 100 USDC to Qazi";
 		
 		int id = Accounts.instance.getId("Peter Spiro");
 		Fireblocks.transfer(id, wallet, asset, amt, note).waitForHash();

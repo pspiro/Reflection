@@ -6,6 +6,7 @@ import reflection.Prices;
 import reflection.RefCode;
 import tw.util.S;
 
+// these test fail because the initial order is accepted, then later it is rejected
 public class TestOrderNoAutoFill extends MyTestCase {
 	static double curPrice;
 	static boolean m_noFireblocks = true;
@@ -14,7 +15,7 @@ public class TestOrderNoAutoFill extends MyTestCase {
 
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
-		JsonObject obj = TestOrder.createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '10', 'tokenPrice': '200', 'cryptoid': 'testmaxamtbuy' }");		
+		JsonObject obj = TestOrder.createOrder( "BUY", 1, 30);
 		JsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -25,7 +26,7 @@ public class TestOrderNoAutoFill extends MyTestCase {
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellTooLow() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "SELL", 100, -30);
+		JsonObject obj = TestOrder.createOrder( "SELL", 1, -30);
 		JsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");

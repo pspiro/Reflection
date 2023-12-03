@@ -5,16 +5,30 @@ import java.util.HashMap;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Accounts;
 import fireblocks.Erc20;
+import reflection.Config;
 import tw.util.S;
 
 /** Get token positions; will only send one query */
 public class Wallet {
-	static String test = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";  // for testing only
-	
 	private String m_address;
 	private HashMap<String, Double> m_map; // map token (lower case) to balance
 	
+	public static void main(String[] args) throws Exception {
+		Config.ask();
+		String addr = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce"; //Accounts.instance.getAddress("Peter Spiro");
+		Wallet wallet = new Wallet(addr);
+		wallet.showAll();
+	}
+	
+	private void showAll() throws Exception {
+		if (m_map == null) {
+			m_map = reqPositionsMap(m_address);
+		}
+		S.out(m_map);
+	}
+
 	public Wallet(String address) throws Exception {
 		Util.reqValidAddress(address);
 		m_address = address;

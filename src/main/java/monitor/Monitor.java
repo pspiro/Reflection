@@ -73,12 +73,17 @@ public class Monitor {
 		but.addActionListener( e -> refresh() );
 		num.addActionListener( e -> refresh() );
 		
+		JButton but2 = new JButton("Refresh Config");
+		but2.addActionListener( e -> refreshConfig() );
+		
 		JPanel butPanel = new JPanel();
 		butPanel.add(new JLabel(refApiBaseUrl() ) );
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
+		butPanel.add(Box.createHorizontalStrut(15));
+		butPanel.add(but2);
 		
 		num.setText("40");
 
@@ -101,15 +106,23 @@ public class Monitor {
 		m_frame.add( m_tabs);
 		m_frame.add( new SouthPanel(), BorderLayout.SOUTH);
 		
-		m_frame.setTitle( "Reflection System Monitor");
+		m_frame.setTitle( String.format( 
+				"Reflection System Monitor - %s - %s", 
+				m_config.getTabName(), 
+				refApiBaseUrl() ) );
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 1100, 800);
 		m_frame.setVisible(true);
 		
-		
 		pricesPanel.initialize();
 	}
 	
+	private static void refreshConfig() {
+		Util.wrap( () -> S.inform( 
+					m_frame,
+					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
+	}
+
 	static int num() {
 		return (int)S.parseDouble( num.getText() );
 	}

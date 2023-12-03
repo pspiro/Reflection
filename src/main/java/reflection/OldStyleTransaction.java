@@ -45,7 +45,6 @@ public class OldStyleTransaction extends MyTransaction {
 
 	OldStyleTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
-		out( "  ***FOR DEBUG OR ADMIN ONLY***");
 	}
 
 	void handle() {
