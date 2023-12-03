@@ -272,8 +272,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			if (status.isComplete() ) {
 				out( "  updating permid to %s", permId);
+				
 				m_order.permId(permId);
-				Util.wrap( () -> m_main.queueSql( conn -> conn.execWithParams("update transactions set perm_id = '%s'", permId) ) );
+				
+				Util.wrap( () -> m_main.queueSql( conn -> 
+					conn.execWithParams("update transactions set perm_id = '%s' where uid = '%s'", permId, m_uid) ) );
+				
 				onIBOrderCompleted( false, false);
 			}
 		});
