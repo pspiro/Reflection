@@ -57,6 +57,7 @@ import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
+import common.Util;
 import tw.util.S;
 
 public class ApiController implements EWrapper {
@@ -951,6 +952,8 @@ public class ApiController implements EWrapper {
 
 		order.orderId( m_orderId++);  // must be in the same sync block as placeOrder()
 		order.permId(0);
+		
+		Util.require( order.roundedQty() > 0, "Set rounded quantity");
 		
 		if (handler != null) {
 			m_orderHandlers.put( order.orderId(), handler);
