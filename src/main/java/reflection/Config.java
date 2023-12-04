@@ -106,7 +106,6 @@ public class Config extends ConfigBase {
 	public double minSellSpread() { return minSellSpread; }
 	public double minBuySpread() { return minBuySpread; }
 	
-	public String postgresPassword() { return postgresPassword; }
 	public String postgresUser() { return postgresUser; }
 	public String postgresUrl() { return postgresUrl; }
 
@@ -384,11 +383,6 @@ public class Config extends ConfigBase {
 		return sessionTimeout;
 	}
 
-	// no good, the connection has to be closed, use a wrapper
-//	public Jedis newJedis() {
-//		return redisPort == 0 ? new Jedis(redisHost) : new Jedis(redisHost, redisPort);
-//	}
-	
 	public MySqlConnection createConnection() throws SQLException {
 		MySqlConnection conn = new MySqlConnection();
 		conn.connect( postgresUrl, postgresUser, postgresPassword);
