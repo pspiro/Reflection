@@ -29,7 +29,7 @@ public class BackendTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-	/** Used by the portfolio section on the dashboard
+	/** Used by the My Reflection (portfolio) section on the dashboard
 	 *  We're returning the token positions from the blockchain, not IB positions */
 	public void handleReqPositions() {
 		wrap( () -> {
@@ -54,6 +54,7 @@ public class BackendTransaction extends MyTransaction {
 				}
 			});
 			
+			retVal.sortJson( "symbol");
 			respond(retVal);
 		});
 	}

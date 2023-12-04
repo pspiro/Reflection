@@ -151,7 +151,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
-			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() );
+			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // for My Reflection panel
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
