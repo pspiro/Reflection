@@ -59,6 +59,7 @@ public class Monitor {
 		m_config = MonitorConfig.ask();
 		m_config.useExteranDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
+		S.out( "Using database %s", m_config.postgresUrl() );
 
 		// read stocks
 		S.out( "Reading stock list from google sheet");

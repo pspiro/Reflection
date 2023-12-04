@@ -88,7 +88,9 @@ public class QueryPanel extends JsonPanel {
 				m_ar.forEach( row -> row.update("created_at", date -> Util.left(date.toString(), 22) ) );
 			}
 			onHeaderClicked(0);
-			S.out( "Refreshed query model to %s", m_ar.size() ); 
+
+			fireTableDataChanged();
+			S.out( "Refreshed query model to %s", m_ar.size() );
 		}
 
 		public void adjust(JsonObject obj) {
