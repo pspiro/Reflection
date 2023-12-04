@@ -62,21 +62,19 @@ public class QueryPanel extends JsonPanel {
 		return new QueryModel(allNames);
 	}
 
-	public void refresh() throws Exception {
-		m_model.refresh();
-	}
-	
 	@Override void onDouble(String tag, Object val) {
 		where.setText( String.format( "where %s = '%s'", tag, val) );
 		Util.wrap( () -> refresh() );
 	}
 	
+	/** This panel is for SQL queries to the database */
 	class QueryModel extends JsonModel {
 		QueryModel( String allNames) {
 			super( allNames);
 		}
 		
 		@Override void refresh( ) throws Exception {
+			S.out( "Refreshing QueryModel");
 			m_list.push(where.getText());
 			
 			String str = m_sql
@@ -108,18 +106,11 @@ public class QueryPanel extends JsonPanel {
 		}
 	}
 
-	@Override public void activated() {
-		Util.wrap( () -> refresh() );
-	}
-
 	public void adjust(JsonObject obj) {
 	}
 	
 	/** Override me */
 	public void onRightClick(MouseEvent e, int row, int col) {
-	}
-
-	@Override public void closed() {
 	}
 
 }

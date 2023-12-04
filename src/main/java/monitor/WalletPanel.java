@@ -53,7 +53,7 @@ public class WalletPanel extends JsonPanel {
 		return new Model(allNames);
 	}
 	
-	public void refresh() throws Exception {
+	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 		
 		MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + m_wallet.getText(), obj -> {
@@ -90,12 +90,6 @@ public class WalletPanel extends JsonPanel {
 			}
 			fireTableDataChanged();
 		}
-	}
-
-	@Override public void activated() {
-	}
-
-	@Override public void closed() {
 	}
 
 	public void filter(String wallet) {

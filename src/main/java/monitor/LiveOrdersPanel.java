@@ -21,11 +21,6 @@ public class LiveOrdersPanel extends JsonPanel {
 		return new Model(allNames);
 	}
 
-	public void refresh() throws Exception {
-		S.out( "Refreshing Live Orders panel");
-		m_model.refresh();
-	}
-	
 	class Model extends JsonModel {
 		Model(String allNames) {
 			super(allNames);
@@ -38,16 +33,5 @@ public class LiveOrdersPanel extends JsonPanel {
 				fireTableDataChanged();
 			});
 		}
-	}
-
-	@Override public void activated() {
-		try {
-			refresh();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override public void closed() {
 	}
 }

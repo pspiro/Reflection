@@ -109,10 +109,13 @@ public class NewTabbedPanel extends JPanel {
 			tab.m_button.setSelected( tab == selectedTab);
 		}
 
-		// call activated() on selected tab?
-		if (!selectedTab.m_activated && selectedTab.m_comp instanceof INewTab) {
-			((INewTab)selectedTab.m_comp).activated();
-			selectedTab.m_activated = true;
+		// call activated() and/or refresh() selected tab
+		if (selectedTab.m_comp instanceof INewTab) {
+			if (!selectedTab.m_activated) {
+				((INewTab)selectedTab.m_comp).activated();
+				selectedTab.m_activated = true;
+			}
+			common.Util.wrap( () -> ((INewTab)selectedTab.m_comp).refresh() );
 		}
 	}
 	
@@ -137,9 +140,7 @@ public class NewTabbedPanel extends JPanel {
 	public interface INewTab {
 		void activated(); // called when the tab is first visited
 		void closed();    // called when the tab is closed
-	}
-	
-	public static abstract class NewTabPanel extends JPanel implements INewTab {
+		void refresh() throws Exception;   // called when the tab is activated after the first time
 	}
 	
 	private static class Tab {

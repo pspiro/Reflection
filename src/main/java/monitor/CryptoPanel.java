@@ -37,7 +37,7 @@ public class CryptoPanel extends MonPanel {
 		add(rusdPanel);
 	}
 	
-	public void refresh() throws Exception {
+	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
@@ -62,16 +62,4 @@ public class CryptoPanel extends MonPanel {
 			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
 		});
 	}
-
-	@Override public void activated() {
-		try {
-			refresh();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override public void closed() {
-	}
-
 }

@@ -20,7 +20,7 @@ public class TokensPanel extends JsonPanel {
 		m_model.justify("lllrr");
 	}
 	
-	public void refresh() throws Exception {
+	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Tokens panel");
 		
 		m_model.m_ar.clear();
@@ -57,13 +57,6 @@ public class TokensPanel extends JsonPanel {
 				});
 			});
 		});
-	}
-	
-	@Override public void activated() {
-		Util.wrap( () -> refresh() );
-	}
-
-	@Override public void closed() {
 	}
 	
 	private JsonObject getOrCreate(int conid) {

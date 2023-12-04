@@ -23,14 +23,11 @@ public class PricesPanel extends JsonPanel {
 		return new Model(allNames);
 	}
 
-	void initialize() {
+	@Override public void activated() {
+		S.out( "Initializing Prices panel");
 		((Model)m_model).initialize();
 	}
 
-	@Override public void refresh() throws Exception {
-		m_model.refresh();
-	}
-	
 	@Override protected Object format(String key, Object value) {
 		return key.equals("bid") || key.equals("ask") || key.equals("last")
 				? MdsPricesPanel.fmtPrice(value) 

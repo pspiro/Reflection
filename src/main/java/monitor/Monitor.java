@@ -87,7 +87,7 @@ public class Monitor {
 		
 		num.setText("40");
 
-		m_tabs.addTab( "Home", new MonPanel(new BorderLayout()) );
+		m_tabs.addTab( "Home", new EmptyPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", createUsersPanel() );
@@ -113,8 +113,6 @@ public class Monitor {
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		m_frame.setSize( 1100, 800);
 		m_frame.setVisible(true);
-		
-		pricesPanel.initialize();
 	}
 	
 	private static void refreshConfig() {
@@ -277,20 +275,24 @@ public class Monitor {
 		}
 	}
 	
-	static class MonPanel extends JPanel implements INewTab {
+	static abstract class MonPanel extends JPanel implements INewTab {
 		public MonPanel(LayoutManager layout) {
 			super(layout);
 		}
 
 		@Override public void activated() {
-			Util.wrap( () -> refresh() );
 		}
 
 		@Override public void closed() {
 		}
-		
-		public void refresh() throws Exception {
-		}
 	}
 	
+	static class EmptyPanel extends MonPanel {
+		EmptyPanel(LayoutManager layout) {
+			super(layout);
+		}
+		
+		@Override public void refresh() throws Exception {
+		}
+	}
 }

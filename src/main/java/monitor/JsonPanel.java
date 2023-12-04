@@ -16,7 +16,6 @@ import javax.swing.table.TableCellRenderer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import common.Util;
 import monitor.Monitor.MonPanel;
 import tw.util.MyTableModel;
 import tw.util.NewTabbedPanel.INewTab;
@@ -24,7 +23,7 @@ import tw.util.S;
 
 /** Panel with a table that contains rows of Json objects; each column header is a key 
  *  in the Json table */
-public class JsonPanel extends MonPanel implements INewTab {
+public abstract class JsonPanel extends MonPanel implements INewTab {
 	final JsonModel m_model;
 	
 	public JsonPanel(LayoutManager layout, String allNames) {
@@ -51,6 +50,11 @@ public class JsonPanel extends MonPanel implements INewTab {
 	protected String getTooltip(int row, String tag) {
 		return null;
 	}	
+	
+	@Override public void refresh() throws Exception {
+		S.out( "Refreshing JsonPanel");
+		m_model.refresh();
+	}
 
 	public class JsonModel extends MyTableModel {
 		final HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
@@ -86,6 +90,7 @@ public class JsonPanel extends MonPanel implements INewTab {
 		}
 		
 		void refresh() throws Exception {
+			S.out( "Refreshing JsonModel");
 			m_filtered = false;
 		}
 		
