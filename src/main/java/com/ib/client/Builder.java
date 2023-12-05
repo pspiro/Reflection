@@ -14,11 +14,11 @@ import java.util.Optional;
 
 /** This class is used to build messages so the entire message can be
  *  sent to the socket in a single write. */
-class Builder implements ObjectOutput {
+public class Builder implements ObjectOutput {
 	private static final char SEP = 0;
 	private static final byte[] EMPTY_LENGTH_HEADER = new byte[ 4 ];
 
-	private final ByteBuffer m_sb;
+	public final ByteBuffer m_sb;
 
 	public Builder( int size ) {
 	    m_sb = new ByteBuffer( size );
@@ -128,7 +128,7 @@ class Builder implements ObjectOutput {
     }
 
     /** inner class: ByteBuffer - storage for bytes and direct access to buffer. */
-    private static class ByteBuffer extends ByteArrayOutputStream {
+    public static class ByteBuffer extends ByteArrayOutputStream {
         private final int paddingSize; // 1 disables padding, 4 is normal if padding is used
 
         ByteBuffer(int capacity) {
