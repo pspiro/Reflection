@@ -611,7 +611,8 @@ public class Order {
 				"exchange", contract.exchange(),
 				"tif", m_tif,
 				"outsideRth", m_outsideRth,
-				"orderRef", m_orderRef
+				"orderRef", m_orderRef,
+				"all-or-none", m_allOrNone
 				);
 	}
 

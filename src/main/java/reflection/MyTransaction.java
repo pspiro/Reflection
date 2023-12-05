@@ -28,7 +28,7 @@ import util.LogType;
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {
 	public enum Stablecoin {
-		RUSD, USDC
+		RUSD, USDT
 	}
 	
 	static Map<String,Vector<OrderTransaction>> liveOrders = Collections.synchronizedMap( new HashMap<String,Vector<OrderTransaction>>() );  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
@@ -139,12 +139,6 @@ public abstract class MyTransaction extends BaseTransaction {
 			out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
 			respond( prices.toJson(conid) );
 		}
-	}
-
-	/** Top-level method. */
-	protected Erc20 stablecoin() throws Exception {
-		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC
-				? Main.m_config.busd() : Main.m_config.rusd();
 	}
 
 	@Override protected void jlog(LogType type, JsonObject json) {

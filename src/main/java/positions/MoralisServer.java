@@ -100,6 +100,8 @@ public class MoralisServer {
 		return JsonArray.parse( ret);
 	}
 	
+	/** For ERC-20 token, tells you how much the spender is authorized to spend on behalf of owner.
+	 *  In our case, token is non-RUSD stablecoin, owner is the user, and spender is RUSD */  
 	public static JsonObject reqAllowance(String contract, String owner, String spender) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
