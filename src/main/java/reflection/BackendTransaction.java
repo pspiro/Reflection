@@ -231,7 +231,7 @@ public class BackendTransaction extends MyTransaction {
 			}
 			
 			JsonObject busd = new JsonObject();
-			busd.put( "name", "USDC");
+			busd.put( "name", Stablecoin.USDC);
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );

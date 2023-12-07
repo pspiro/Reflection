@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 
 import http.MyClient;
 import tw.util.MyTable;
-import tw.util.S;
 
 
 public class LiveOrdersPanel extends JsonPanel {
@@ -17,21 +16,10 @@ public class LiveOrdersPanel extends JsonPanel {
 		add( new MyTable(m_model).scroll() );
 	}
 	
-	protected JsonModel createModel(String allNames) {
-		return new Model(allNames);
-	}
-
-	class Model extends JsonModel {
-		Model(String allNames) {
-			super(allNames);
-		}
-		
-		void refresh( ) throws Exception {
-			super.refresh();
-			MyClient.getArray(Monitor.refApiBaseUrl() + endpoint, ar -> {
-				m_ar = ar;
-				fireTableDataChanged();
-			});
-		}
+	public void refresh() throws Exception {
+		MyClient.getArray(Monitor.refApiBaseUrl() + endpoint, ar -> {
+			m_model.m_ar = ar;
+			m_model.fireTableDataChanged();
+		});
 	}
 }

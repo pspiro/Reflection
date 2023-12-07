@@ -244,20 +244,6 @@ public class Config extends ConfigBase {
 		}
 	}
 
-	public JsonObject toJson() throws Exception {
-		ArrayList<Object> list = new ArrayList<Object>();
-		
-		for (Field field : Config.class.getDeclaredFields() ) {
-			Object obj = field.get(this);
-			if (obj != null && Util.isPrimitive(obj.getClass()) ) { // add || obj instanceof Enum if you want to support enum member vars
-				list.add( field.getName() );
-				list.add(obj);
-			}
-		}
-		
-		return Util.toJson( list.toArray() );
-	}
-
 	/** Populate google sheet from database. */
 	void pullBackendConfig(MySqlConnection database) throws Exception {
 		Main.require( S.isNotNull( backendConfigTab), RefCode.UNKNOWN, "'backendConfigTab' setting missing from Reflection configuration");

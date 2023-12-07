@@ -3,6 +3,7 @@ package monitor;
 import java.awt.BorderLayout;
 
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
@@ -11,6 +12,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
+import monitor.Monitor.TransPanel;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.S;
@@ -24,6 +26,8 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_approved = new JLabel(); 
 	private final JLabel m_matic = new JLabel(); 
 	
+	private final TransPanel transPanel = new TransPanel();
+	
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
 		
@@ -35,61 +39,69 @@ public class WalletPanel extends JsonPanel {
 			} 
 		});
 
-		VerticalPanel v = new VerticalPanel();
-		v.setBorder( new TitledBorder( "Balances") );
-		v.add( "Wallet", m_wallet);
-		v.add( "RUSD", m_rusd);
-		v.add( "USDC", m_usdc);
-		v.add( "Approved", m_approved);
-		v.add( "MATIC", m_matic);
+		VerticalPanel vp = new VerticalPanel();
+		vp.setBorder( new TitledBorder( "Balances") );
+		vp.add( "Wallet", m_wallet);
+		vp.add( "RUSD", m_rusd);
+		vp.add( "USDC", m_usdc);
+		vp.add( "Approved", m_approved);
+		vp.add( "MATIC", m_matic);
 		
-//		QPanel v2 = new QPanel( "select * from users where wallet_public_key = " +
+		JPanel leftPanel = new JPanel(new BorderLayout() );
+		leftPanel.add( vp, BorderLayout.NORTH);
+		leftPanel.add( m_model.createTable() );
 		
-		add( v, BorderLayout.NORTH);
-		add( m_model.createTable() );
+		add( leftPanel, BorderLayout.WEST);
+		add( transPanel);
+	}
+
+	public void setWallet(String addr) {
+		m_wallet.setText(addr);
+		Util.wrap( () -> refresh() );
 	}
 	
-	@Override JsonModel createModel(String allNames) {
-		return new Model(allNames);
-	}
-	
-	@Override public void refresh() throws Exception {
+	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 		
-		MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + m_wallet.getText(), obj -> {
-			JsonArray ar = obj.getArray("tokens");
-			Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet.getText() ); 
+		m_model.m_ar.clear();
 
-			m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
-			m_usdc.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
-			m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
-			m_matic.setText("" + ar.get(2).getDouble("balance"));			
-		});
+		String walletAddr = m_wallet.getText();
 		
-		m_model.refresh();		
-	}
+		if (Util.isValidAddress(walletAddr)) {
+			MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + walletAddr, obj -> {
+				JsonArray ar = obj.getArray("tokens");
+				Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", walletAddr ); 
 	
-	class Model extends JsonModel {
-		public Model(String allNames) {
-			super(allNames);
-		}
+				m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
+				m_usdc.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
+				m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
+				m_matic.setText("" + ar.get(2).getDouble("balance"));			
+			});
 
-		void refresh() throws Exception {
-			super.refresh();
-			m_ar.clear();
-
-			Wallet wallet = new Wallet( m_wallet.getText() );
+			Wallet wallet = new Wallet( walletAddr);
 			for (Stock stock : Monitor.stocks) {
 				JsonObject obj = new JsonObject();
 				double bal = wallet.getBalance( stock.getSmartContractId() );
 				if (bal > minBalance) {
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
-					m_ar.add(obj);
+					m_model.m_ar.add(obj);
 				}
 			}
-			fireTableDataChanged();
+
+			transPanel.where.setText( String.format("where wallet_public_key = '%s'", walletAddr) );
+			transPanel.refresh();
 		}
+		else {
+			m_rusd.setText(null);
+			m_usdc.setText(null);
+			m_approved.setText(null);
+			m_matic.setText(null);
+			
+			transPanel.clear();
+		}
+
+		m_model.fireTableDataChanged();
 	}
 
 	public void filter(String wallet) {

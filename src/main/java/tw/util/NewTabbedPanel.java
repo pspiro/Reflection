@@ -115,7 +115,9 @@ public class NewTabbedPanel extends JPanel {
 				((INewTab)selectedTab.m_comp).activated();
 				selectedTab.m_activated = true;
 			}
-			common.Util.wrap( () -> ((INewTab)selectedTab.m_comp).refresh() );
+			else {
+				((INewTab)selectedTab.m_comp).switchTo();
+			}
 		}
 	}
 	
@@ -140,7 +142,7 @@ public class NewTabbedPanel extends JPanel {
 	public interface INewTab {
 		void activated(); // called when the tab is first visited
 		void closed();    // called when the tab is closed
-		void refresh() throws Exception;   // called when the tab is activated after the first time
+		void switchTo();
 	}
 	
 	private static class Tab {

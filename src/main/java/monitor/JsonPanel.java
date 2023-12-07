@@ -7,7 +7,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -16,6 +15,7 @@ import javax.swing.table.TableCellRenderer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import monitor.Monitor.MonPanel;
 import tw.util.MyTableModel;
 import tw.util.NewTabbedPanel.INewTab;
@@ -37,7 +37,6 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 
 	/** Show only rows that have the clicked-on value */
 	void onDouble(String tag, Object allowed) {
-		m_model.filter(tag, allowed);
 	}
 
 	/** Override this
@@ -49,9 +48,14 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 	
 	protected String getTooltip(int row, String tag) {
 		return null;
-	}	
+	}
 	
-	@Override public void refresh() throws Exception {
+	@Override public void activated() {
+		S.out( "Activating JsonPanel");
+		Util.wrap( () -> m_model.refresh() );
+	}
+
+	public void refresh() throws Exception {
 		S.out( "Refreshing JsonPanel");
 		m_model.refresh();
 	}
@@ -61,7 +65,6 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 		JsonArray m_ar = new JsonArray();  // can get replaced
 		protected final String[] m_colNames;
 		private String m_justify = "";
-		private boolean m_filtered;
 
 		JsonModel(String allNames) {
 			m_colNames = allNames.split(",");
@@ -90,8 +93,6 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 		}
 		
 		void refresh() throws Exception {
-			S.out( "Refreshing JsonModel");
-			m_filtered = false;
 		}
 		
 		@Override public int getRowCount() {
@@ -153,28 +154,6 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 		
 		/** Delete the row based on the first column which must be type string */ 
 		void delete(int row, int col) {
-		}
-		
-		void filter(String tag, Object allowed) {
-			
-			if (m_filtered) {
-				try {
-					refresh();
-				} catch (Exception e) {
-					e.printStackTrace();
-					return;  // we have no hope
-				}
-			}
-			
-			for (Iterator<JsonObject> iter = m_ar.iterator(); iter.hasNext(); ) {
-				Object val = iter.next().get(tag);
-				if (val == null || !val.equals(allowed) ) {
-					iter.remove();
-				}
-			}
-		
-			fireTableDataChanged();
-			m_filtered = true;
 		}
 		
 		protected String getTooltip(int row, int col) {
