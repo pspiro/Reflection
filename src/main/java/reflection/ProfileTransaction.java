@@ -68,7 +68,6 @@ public class ProfileTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			out( "UPDATE PROFILE COOKIE " + m_map.get("cookie") );
 			validateCookie();
 
 			Profile profile = new Profile( m_map.obj() );

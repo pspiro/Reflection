@@ -23,7 +23,9 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
+import fireblocks.Erc20;
 import fireblocks.StockToken;
+import reflection.MyTransaction.Stablecoin;
 import reflection.TradingHours.Session;
 import tw.util.S;
 import util.LogType;
@@ -130,7 +132,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		m_order.totalQty( m_desiredQuantity);
 		m_order.lmtPrice( orderPrice);
 		m_order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
-		m_order.allOrNone(true);  // all or none, we don't want partial fills
+		m_order.allOrNone(session == Session.Smart);  // all or none, we don't want partial fills (not supported for Overnight)
 		m_order.transmit( true);
 		m_order.outsideRth( true);
 		m_order.orderRef(m_uid);
@@ -584,7 +586,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void requireSufficientApproval() throws Exception {
 		// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-		if (m_order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDC) {
+		if (m_order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT) {
 			double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 			require( 
 					Util.isGtEq(approvedAmt, m_stablecoinAmt), 
@@ -592,6 +594,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 		}
 		
+	}
+
+	/** Return RUSD or non-RUSD token */
+	private Erc20 stablecoin() throws Exception {
+		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT
+				? Main.m_config.busd() : Main.m_config.rusd();
 	}
 
 	private StockToken newStockToken() throws Exception {

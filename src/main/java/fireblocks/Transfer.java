@@ -14,7 +14,7 @@ public class Transfer {
 		String wallet = Util.input( "Enter wallet:");
 		String note = Util.input( "Enter note:");
 		String asset = "USDC";
-		double amt = 100;
+		double amt = 0;
 		
 		int id = Accounts.instance.getId("Peter Spiro");
 		Fireblocks.transfer(id, wallet, asset, amt, note).waitForHash();

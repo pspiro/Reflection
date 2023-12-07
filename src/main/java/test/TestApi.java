@@ -12,6 +12,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.IOrderHandler;
 
+import common.Util;
 import reflection.Config;
 import tw.util.S;
 
@@ -34,15 +35,17 @@ public class TestApi implements IConnectionHandler {
 	@Override
 	public void onRecNextValidId(int id) {
 		Contract c = new Contract();
-		c.conid(8314);
+		c.conid(265598);
 		c.exchange("OVERNIGHT");
 		
 		Order o = new Order();
 		o.action(Action.Buy);
 		o.totalQty(1);
 		o.roundedQty(1);
-		o.lmtPrice(158);
+		o.lmtPrice(186);
 		o.transmit(true);
+		o.outsideRth(true);
+		o.orderRef("ZZZZZZZZ");
 
 		try {
 			m_controller.placeOrder(c, o, new IOrderHandler() {
@@ -66,6 +69,8 @@ public class TestApi implements IConnectionHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		Util.executeIn( 6000, () -> System.exit(0) );
 	}
 
 	@Override

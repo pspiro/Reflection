@@ -574,9 +574,10 @@ public class Util {
 	/** Show prompt and input string; Scanner does not work */
 	public static String input(String str) {
 		S.out( str);
-		try (BufferedReader buf = new BufferedReader(new InputStreamReader(System.in) ) ) {
-			return buf.readLine();
-		} catch (IOException e) {
+		try {
+			return new BufferedReader(new InputStreamReader(System.in) ).readLine();
+		} 
+		catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
