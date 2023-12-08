@@ -25,7 +25,6 @@ public class OldStyleTransaction extends MyTransaction {
 		getAllPrices,
 		//getAllStocks,
 		getTradingHours(),
-		getConfig,
 		getConnectionStatus,
 		getDescription,
 		getPositions,
@@ -71,9 +70,6 @@ public class OldStyleTransaction extends MyTransaction {
 				break;
 			case getDescription:
 				getDescription();
-				break;
-			case getConfig:
-				getConfig();
 				break;
 			case refreshConfig:
 				refreshConfig();
@@ -172,12 +168,6 @@ public class OldStyleTransaction extends MyTransaction {
 		out( "Sending connection status");
 		respond( "orderConnectedToTWS", m_main.orderController().isConnected(),
 				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection() );
-	}
-
-	/** Top-level message handler, return RefAPI config */
-	void getConfig() throws Exception {
-		out( "Sending config");
-		respond( Main.m_config.toJson() );
 	}
 
 	/** Top-level message handler, refresh all config and stock tokens */

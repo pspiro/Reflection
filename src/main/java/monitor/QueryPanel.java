@@ -114,5 +114,10 @@ public class QueryPanel extends JsonPanel {
 	/** Override me */
 	public void onRightClick(MouseEvent e, int row, int col) {
 	}
+	
+	public void clear() {
+		m_model.m_ar.clear();
+		m_model.fireTableDataChanged();
+	}
 
 }
