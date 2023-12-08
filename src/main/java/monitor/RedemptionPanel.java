@@ -2,6 +2,7 @@ package monitor;
 
 
 import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
 
 import org.json.simple.JsonObject;
 
@@ -62,18 +63,13 @@ public class RedemptionPanel extends QueryPanel {
 			}
 		}
 		
+		static DecimalFormat six = new DecimalFormat("#,###.000000");
+		
 		private void redeem(JsonObject redemption) throws Exception {
 			String walletAddr = redemption.getString( "wallet_public_key");
 			Rusd rusd = Monitor.m_config.rusd();
 			Busd busd = Monitor.m_config.busd();
 			
-			if (!S.confirm(
-					RedemptionPanel.this, 
-					String.format("Are you sure you want to redeem RUSD for %s?",
-					walletAddr) ) ) {
-				return;
-			}
-
 			// already fulfilled?
 			if (!redemption.getString("status").equals("Delayed") ) {
 				S.inform(RedemptionPanel.this, "Only 'Delayed' status can be redeemed");
@@ -84,6 +80,13 @@ public class RedemptionPanel extends QueryPanel {
 			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
 			if (rusdPos < .005) {
 				S.inform(RedemptionPanel.this, "User has no RUSD to redeem");
+				return;
+			}
+			
+			if (!S.confirm(
+					RedemptionPanel.this, 
+					String.format("Are you sure you want to redeem %s RUSD for %s?",
+							six.format(rusdPos), walletAddr) ) ) {
 				return;
 			}
 			
@@ -98,19 +101,19 @@ public class RedemptionPanel extends QueryPanel {
 			}
 			
 			// dont tie up the UI thread
-			Util.execute( () ->
-				Util.wrap( () -> {
-					rusd.sellRusd(walletAddr, busd, rusdPos)
-						.waitForCompleted();
+			Util.executeAndWrap( () -> {
+				String hash = rusd.sellRusd(walletAddr, busd, rusdPos)
+					.waitForHash();
 
-					// update redemptions table in DB and screen
-					String sql = String.format( "update redemptions set status = 'Completed' where uid = '%s'", redemption.getString("uid") );
-					Monitor.m_config.sqlCommand( conn -> conn.execute(sql) );
-					
-					RedemptionPanel.this.refresh();
-					S.inform( RedemptionPanel.this, "Completed");
-				})
-			);
+				// update redemptions table in DB and screen
+				String sql = String.format( 
+						"update redemptions set status = 'Completed', blockchain_hash = '%s' where uid = '%s'", 
+						hash, redemption.getString("uid") );
+				Monitor.m_config.sqlCommand( conn -> conn.execute(sql) );
+				
+				RedemptionPanel.this.refresh();
+				S.inform( RedemptionPanel.this, "Completed");
+			});
 		}
 	}
 	

@@ -194,8 +194,17 @@ public class Monitor {
 
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
-		String names = "created_at,time,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
-		String sql = "select * from trades $where order by created_at desc $limit";
+		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
+		String sql = """
+				select trades.*, transactions.wallet_public_key
+				from trades
+				left join transactions
+				on trades.orderref = transactions.uid
+				$where
+				order by created_at
+				desc $limit
+				""";
+		 
 		return new QueryPanel( "trades", names, sql);
 	}
 

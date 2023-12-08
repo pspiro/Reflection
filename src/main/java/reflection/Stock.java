@@ -53,8 +53,14 @@ public class Stock extends JsonObject {
 		return getString("smartcontractid");
 	}
 
+	/** From master tab, e.g. AAPL (Apple) */
 	public String symbol() {
 		return getString("symbol");
+	}
+
+	/** From specific tab, e.g. AAPL */
+	public String tokenSmbol() {
+		return getString("tokenSymbol");
 	}
 
 	/** Returns zero if not found */

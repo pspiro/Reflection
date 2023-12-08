@@ -48,11 +48,12 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "convertsToAmt", row.getDouble("Converts To Amt") );
 				stock.put( "convertsToAddress", row.getString( "Converts To Address") );
 				stock.put( "allow", row.getString("Allow") );
+				stock.put( "tokenSymbol", row.getString("Token Symbol"));
 				
 				
 				ListEntry masterRow = masterList.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
-				stock.put( "symbol", masterRow.getString("Symbol") );
+				stock.put( "symbol", masterRow.getString("Symbol") );  // e.g. AAPL (Apple)
 				stock.put( "description", masterRow.getString("Description") );
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
@@ -108,8 +109,19 @@ public class Stocks implements Iterable<Stock> {
 		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
 	}
 
+	/** Return the stock or NULL stock */
 	public Stock getStock(int conid) {
 		Stock stock = m_stockMap.get(conid);
 		return stock != null ? stock : NULL;
+	}
+
+	/** takes the token symbol from the release-specific tab */ 
+	public Stock getStock(String tokenSymbol) throws Exception {
+		for (Stock stock : this) {
+			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {
+				return stock;
+			}
+		}
+		throw new Exception("Stock not found");
 	}
 }
