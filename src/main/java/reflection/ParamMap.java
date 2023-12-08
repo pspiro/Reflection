@@ -58,6 +58,10 @@ public class ParamMap {
 		}
 	}
 
+	int getInt(String tag) throws RefException {
+		return Integer.valueOf( getRequiredString( tag) );
+	}
+
 	double getRequiredDouble(String tag) throws RefException {
 		try {
 			return Double.valueOf( getRequiredString( tag) );

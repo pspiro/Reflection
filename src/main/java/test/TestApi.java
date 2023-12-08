@@ -40,7 +40,6 @@ public class TestApi implements IConnectionHandler {
 		
 		Order o = new Order();
 		o.action(Action.Buy);
-		o.totalQty(1);
 		o.roundedQty(1);
 		o.lmtPrice(186);
 		o.transmit(true);

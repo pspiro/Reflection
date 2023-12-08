@@ -205,7 +205,7 @@ public class Fireblocks {
 				Util.require( val instanceof String, "Wrong type");
 				
 				String str = (String)val;
-				Util.require( str.length() <= 32, "String too long");
+				Util.require( str.length() <= 100, "String too long");
 				
 				// total number of parameters plus the number of strings (or other static types) that came before
 				int num = (types.length + statics * 2) * 32;
