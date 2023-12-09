@@ -1,5 +1,7 @@
 package reflection;
 
+import static reflection.Main.m_config;
+
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -61,7 +63,7 @@ public class Config extends ConfigBase {
 	private String backendConfigTab;
 	private double commission;
 	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
-	private int redisQueryInterval;
+	private int redisQueryInterval;  // mdserver query interval
 	private double minTokenPosition; // minimum token position to display in portfolio section
 	private int siweTimeout; // max time between issuedAt field and now
 	private int sessionTimeout; // session times out after this amount of inactivity
@@ -161,9 +163,6 @@ public class Config extends ConfigBase {
 		this.orderTimeout = m_tab.getRequiredInt( "orderTimeout");
 		this.timeout = m_tab.getRequiredInt( "timeout");
 
-		// market data
-		this.redisHost = m_tab.get( "redisHost");
-		this.redisPort = m_tab.getInt( "redisPort");
 		this.redisQueryInterval = m_tab.getRequiredInt("redisQueryInterval");
 
 		// listen here
@@ -224,7 +223,9 @@ public class Config extends ConfigBase {
 			// update Moralis chain
 			MoralisServer.chain = moralisPlatform;
 		}
-		
+
+		require( useFireblocks || !m_config.isProduction(), "Must use fireblocks in production");
+		require( !autoFill || !m_config.isProduction(), "No auto-fill in production");
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
@@ -320,6 +321,7 @@ public class Config extends ConfigBase {
 		return new Busd( busdAddr, busdDecimals);
 	}
 
+	/** mdserver query interval */
 	public int redisQueryInterval() {
 		return redisQueryInterval;
 	}
