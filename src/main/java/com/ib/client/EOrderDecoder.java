@@ -58,7 +58,7 @@ public class EOrderDecoder {
     }
 
     public void readTotalQuantity() throws IOException {
-        m_order.totalQty(m_eDecoder.readDecimal().toDouble());
+        m_order.roundedQty( (int)(double)m_eDecoder.readDecimal().toDouble());  // bit of a red flag, you would need to round up. pas
     }
 
     public void readOrderType() throws IOException {

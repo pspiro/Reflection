@@ -35,6 +35,7 @@ public enum LogType {
 	UNWIND_ERROR, 		// error while unwinding an order
 	UNWIND_ORDER,
 	REDEMPTION_FAILED, 
-	REDEMPTION_COMPLETED, 		
+	REDEMPTION_COMPLETED, 
+	PARTIAL_FILL, 		
 	
 }

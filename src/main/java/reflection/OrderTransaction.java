@@ -25,7 +25,6 @@ import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Erc20;
 import fireblocks.StockToken;
-import reflection.MyTransaction.Stablecoin;
 import reflection.TradingHours.Session;
 import tw.util.S;
 import util.LogType;
@@ -36,7 +35,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private static PositionTracker positionTracker = new PositionTracker(); 
 
 	private final Order m_order = new Order();;
-	private double m_desiredQuantity;  // same as Order.m_totalQuantity, but this one is set first
+	private double m_desiredQuantity;  // decimal desired quantity
 	private double m_filledShares;
 	private Stock m_stock;
 	private double m_stablecoinAmt;
@@ -129,7 +128,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		contract.exchange( session.toString().toUpperCase() );
 
 		m_order.action( side);
-		m_order.totalQty( m_desiredQuantity);
 		m_order.lmtPrice( orderPrice);
 		m_order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
 		m_order.allOrNone(session == Session.Smart);  // all or none, we don't want partial fills (not supported for Overnight)
@@ -215,11 +213,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
 		
 		Random rnd = new Random(System.currentTimeMillis());
+		
+		int simPartial = m_map.getInt("simPartial");
 
 		m_order.orderId( rnd.nextInt(Integer.MAX_VALUE) );
 		m_order.permId( rnd.nextInt(Integer.MAX_VALUE) );
 		m_order.status(OrderStatus.Filled);
-		m_filledShares = m_order.roundedQty();
+		m_filledShares = simPartial > 0 ? simPartial : m_order.roundedQty();  // simPartial can be passed by the test cases
 
 		// simulate the trade
 		Execution exec = new Execution(
@@ -348,7 +348,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// update status here with timeout; if some shares were filled, the blockchain will
 		// proceed and the status will be updated further
-		
 
 		require(
 				m_filledShares > 0 || m_order.status() == OrderStatus.Filled,
@@ -356,9 +355,28 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				timeout ? "Order timed out, please try again" : "The order could not be filled; it may be that the price changed. Please try again.");
 		
 		// the order has been filled or partially filled; note that filledShares can be zero if the size was rounded down
-		m_progress = FireblocksStatus.STOCK_ORDER_FILLED.pct(); // set m_progress to 15%
-		olog( LogType.ORDER_FILLED, "filledShares", m_filledShares, "simulated", simulated);
+
+		// partial fills
+		if (m_filledShares < m_order.roundedQty() ) {
+			double ratio = m_filledShares / m_order.roundedQty();
+			olog( LogType.PARTIAL_FILL, "desiredQty", m_desiredQuantity, "filledQty", m_filledShares, "ratio", ratio);
+
+			// reject and unwind if we filled less than half; this is debatable 
+			require( ratio >= .49999, RefCode.PARTIAL_FILL, "Order failed due to partial fill");
+			
+			m_stablecoinAmt *= ratio;
+			m_desiredQuantity *= ratio;
+			m_tds *= ratio;
+			
+			updateAfterPartialFill();
+		}
+		else {
+			olog( LogType.ORDER_FILLED, "filledShares", m_filledShares, "simulated", simulated);
+		}
 		
+		// set m_progress to 15%
+		m_progress = FireblocksStatus.STOCK_ORDER_FILLED.pct();
+
 		if (fireblocks() ) {
 			// execute this in a new thread because, the theory is, it can take a while
 			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
@@ -372,9 +390,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  any failure in here and the order must be unwound from the PositionTracker;
 	 *  Runs in a separate thread so as not to hold up the API thread */ 
 	private void startFireblocks(double filledShares) throws Exception {
-		// partial fills are not supported
-		require( filledShares == m_order.roundedQty(), RefCode.PARTIAL_FILL, "Order failed due to partial fill");
-
 		// for testing
 		if (m_map.getBool("fail") ) {
 			throw new Exception("Blockchain transaction failed intentially during testing"); 
@@ -393,7 +408,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						m_walletAddr, 
 						m_stablecoinAmt,
 						newStockToken(),
-						m_order.totalQty()
+						m_desiredQuantity
 				).id();
 			}
 			
@@ -404,7 +419,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						m_config.busd(),
 						m_stablecoinAmt,
 						newStockToken(), 
-						m_order.totalQty()
+						m_desiredQuantity
 				).id();
 			}
 		}
@@ -415,7 +430,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					m_walletAddr,
 					m_stablecoinAmt,
 					newStockToken(),
-					m_order.totalQty()
+					m_desiredQuantity
 			).id();
 		}
 		
@@ -437,7 +452,22 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()
 	}
-	
+
+	private void updateAfterPartialFill() {
+		try {
+			JsonObject obj = new JsonObject();
+			obj.put("quantity", m_order.roundedQty() );
+			obj.put("rounded_quantity", m_order.roundedQty() );
+			obj.put("commission", m_config.commission() / 2); // not so good, we should get it from the order. pas
+			obj.put("tds", m_tds);
+		
+			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "where uid = '%s'", m_uid) );
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	/** Called when we receive an update from the Fireblocks server.
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
@@ -547,7 +577,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
-			obj.put("quantity", m_order.totalQty());
+			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("symbol", m_stock.symbol() );
 			obj.put("conid", m_stock.conid() );
@@ -615,7 +645,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			// if no shares were filled, just remove the balances from the position tracker
 			if (m_filledShares == 0) {
 				out( "Unwinding order from PositionTracker"); 
-				positionTracker.undo( conid, isBuy(), m_order.totalQty(), m_order.roundedQty() );
+				positionTracker.undo( conid, isBuy(), m_desiredQuantity, m_order.roundedQty() );
 			}
 			
 			// if shares were filled, have to execute an opposing trade
@@ -628,7 +658,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				m_order.flipSide();
 				m_order.orderRef(m_uid + " unwind");
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
-						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_order.totalQty() ) ); 
+						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_desiredQuantity) ); 
 			
 				jlog( LogType.UNWIND_ORDER, m_order.getJsonLog(contract) );
 				

@@ -43,7 +43,6 @@ public class Order {
 
     // primary attributes
     private Action		m_action = Action.Buy;
-    private double      m_totalQty;  // total decimal desired quantity
     private int         m_roundedQty;  // quantity submitted to exchange
     private int         m_displaySize;
     private String      m_orderType = "LMT";
@@ -460,7 +459,6 @@ public class Order {
     public void sweepToFill(boolean v)                                  { m_sweepToFill = v; }
     public void tif(TimeInForce v)                                      { m_tif = ( v == null ) ? null : v.getApiString(); }
     public void tif(String v)                                           { m_tif = v; }
-    public void totalQty(double v)                                      { m_totalQty = v; }
     public void trailingPercent(double v)                               { m_trailingPercent = v; }
     public void trailStopPrice(double v)                                { m_trailStopPrice = v; }
     public void transmit(boolean v)                                     { m_transmit = v; }
@@ -604,7 +602,6 @@ public class Order {
 				"id", m_orderId,
 				"permId", m_permId,
 				"action", m_action, 
-				"totalQty", m_totalQty, 
 				"roundedQty", m_roundedQty, 
 				"conid", contract.conid(), 
 				"lmtPrice", m_lmtPrice,
@@ -616,11 +613,6 @@ public class Order {
 				);
 	}
 
-    /** total decimal desired quantity */
-    public double totalQty() { 
-    	return m_totalQty; 
-    }
-	
     public int roundedQty() {
 		return m_roundedQty;
 	}

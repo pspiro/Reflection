@@ -201,6 +201,19 @@ public class BackendTransaction extends MyTransaction {
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
 			respondOk();
+			
+			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
+			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
+			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
+			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
+			
+			JsonObject dbObj = Util.toJson(
+					"kyc_status", m_map.get("kyc_status"),
+					"persona_response", m_map.get("persona_response"),
+					"country", m_map.get("country"),
+					"city", m_map.get("city") );
+			
+			m_main.queueSql( sql -> sql.insertOrUpdate("users", dbObj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 		});
 	}
 

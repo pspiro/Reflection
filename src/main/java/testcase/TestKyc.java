@@ -2,6 +2,7 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -30,5 +31,31 @@ public class TestKyc extends MyTestCase {
 		postOrderToObj(obj);
 		assert200();
 	}
+	
+	public void testSetKyc() throws Exception {
+		m_config.sqlCommand( sql -> sql.delete( "delete from users where wallet_public_key = '%s'",  Cookie.wallet.toLowerCase() ) );
+
+		assertEquals(0, m_config
+				.sqlQuery(String.format("select * from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase() ) )
+				.size() );
+		
+		JsonObject data = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"kyc_status", "OKK",
+				"persona_response", "my persona response",
+				"country", "my country",
+				"city", "my city");
+		data.put("cookie", Cookie.cookie);
+		
+		cli().post("/api/users/register", data.toString() );
+		assert200();
+		
+		S.sleep(1000);
+		JsonObject row = m_config
+				.sqlQuery(String.format("select * from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase() ) )
+				.get(0);
+		assertEquals("OKK", row.getString("kyc_status"));
+	}
+		
 
 }

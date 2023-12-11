@@ -12,7 +12,6 @@ import tw.util.S;
 
 public class TestOrder extends MyTestCase {
 	static double curPrice;
-	static boolean m_noFireblocks = true;
 	
 //	static double approved;
 	
@@ -261,7 +260,7 @@ public class TestOrder extends MyTestCase {
 	static JsonObject createOrder3(String json) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.fmtJson(json) );
 		obj.put("cookie", Cookie.cookie);
-		obj.put("currency", "USDC");
+		obj.put("currency", "USDT");
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("noFireblocks", true);
 		obj.put("testcase", true);
@@ -276,7 +275,9 @@ public class TestOrder extends MyTestCase {
 				: (amt - m_config.commission() ) * .01;
 		obj.put("tds", tds);
 		
-		double total = buy ? amt + m_config.commission() : amt - m_config.commission() - tds;
+		double extra = m_config.commission() + tds;
+		
+		double total = buy ? amt + extra : amt - extra;
 		obj.put("amount", total);
 		
 		return obj;

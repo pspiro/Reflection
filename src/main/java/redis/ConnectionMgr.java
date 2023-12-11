@@ -11,7 +11,7 @@ import tw.util.S;
 
 /** Manage the connection from this client to TWS. */
 // share this with Main; need logging support, reconnect interval. pas
-class ConnectionMgr implements IConnectionHandler {
+public class ConnectionMgr implements IConnectionHandler {
 	private MdServer m_main;
 	private String m_host;
 	private int m_port;
