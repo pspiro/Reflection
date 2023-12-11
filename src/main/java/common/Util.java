@@ -35,7 +35,6 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
-import reflection.MyTransaction.Stablecoin;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;

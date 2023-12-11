@@ -4,7 +4,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import tw.util.S;
-import util.LogType;
 
 public class TestPartialFill extends MyTestCase {
 	

@@ -15,8 +15,10 @@ import tw.util.S;
 
 /** Client for all HttpRequests */
 public class MyClient {
-	Builder m_builder;
-	
+	static HttpClient client = HttpClient.newBuilder().build();
+
+	private Builder m_builder;
+
 	/** build GET request; call this directly to add headers */
 	public static MyClient create(String url) {
 		return new MyClient( HttpRequest.newBuilder()
@@ -40,14 +42,13 @@ public class MyClient {
 		m_builder.header( tag, val);
 		return this;
 	}
-
+	
 	/** query and return response */
 	public HttpResponse<String> query() throws Exception {
 		try {
 			HttpRequest request = m_builder.build();
 
-			HttpResponse<String> response = HttpClient.newBuilder().build()
-					.send(request, HttpResponse.BodyHandlers.ofString());
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
 			Util.require( 

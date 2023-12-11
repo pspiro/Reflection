@@ -19,7 +19,7 @@ import junit.framework.TestCase;
 //	   TestGetPositions.class,
 //	   TestGtable.class,
 //	   TestHttpClient.class,
-//	   TestKyc.class,
+	   TestKyc.class,
 //	   TestLog.class,
 //	   TestEmail.class,
 //	   TestMktDataServer.class,
@@ -28,6 +28,7 @@ import junit.framework.TestCase;
 //	   TestOrderNoAutoFill.class,
 //	   TestOutsideHours.class,  // all pass except TestOutsideHours
 //	   TestPanic.class,
+	   TestPartialFill.class,
 //	   TestPositionTracker.class,
 //	   TestPrices.class,
 //	   TestProfile.class,

@@ -20,7 +20,6 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.Erc20;
 import http.BaseTransaction;
 import tw.util.S;
 import util.LogType;

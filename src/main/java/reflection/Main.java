@@ -111,7 +111,7 @@ public class Main implements ITradeReportHandler {
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
-		Util.executeEvery( 0, m_config.redisQueryInterval(), () -> queryAllPrices() );  // improve this, set up redis stream
+		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
 		
 		// write the date every hour
 		Util.executeEvery( Util.HOUR, Util.HOUR, () -> S.out( "today is %s", Util.yyyymmdd.format( System.currentTimeMillis() ) ) );

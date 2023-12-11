@@ -1,12 +1,9 @@
 package reflection;
 
-import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
 import org.json.simple.JsonArray;
-import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
@@ -48,7 +45,7 @@ public class Config extends ConfigBase {
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
 	//private String refApiHost; // not currently used; everyone listens on 0.0.0.0
-	private int refApiPort = 8383;  // port for RefAPI to listen on
+	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
@@ -320,7 +317,7 @@ public class Config extends ConfigBase {
 		return new Busd( busdAddr, busdDecimals);
 	}
 
-	public int redisQueryInterval() {
+	public int mdQueryInterval() {
 		return redisQueryInterval;
 	}
 	

@@ -13,7 +13,6 @@ import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.IOrderHandler;
 
 import common.Util;
-import reflection.Config;
 import tw.util.S;
 
 public class TestApi implements IConnectionHandler {
