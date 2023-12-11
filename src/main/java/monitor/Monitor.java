@@ -88,7 +88,7 @@ public class Monitor {
 		num.setText("40");
 
 		m_tabs.addTab( "Home", new EmptyPanel(new BorderLayout()) );
-		//m_tabs.addTab( "Status", new StatusPanel() );
+		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Signup", createSignupPanel() );

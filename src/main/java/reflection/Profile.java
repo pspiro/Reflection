@@ -76,7 +76,7 @@ public class Profile extends JsonObject {
 
 	public void checkKyc(boolean smallOrder) throws RefException {
 		require( 
-				smallOrder || getBool("persona_response") && S.isNotNull( getString("kyc_status") ),
+				smallOrder || S.isNotNull( "persona_response") && getString("kyc_status").equalsIgnoreCase("completed"),
 				RefCode.NEED_KYC,
 				"KYC is required for this order");
 
