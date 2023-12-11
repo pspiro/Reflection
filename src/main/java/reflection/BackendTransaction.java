@@ -194,26 +194,25 @@ public class BackendTransaction extends MyTransaction {
 	public void handleRegister() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
-			validateCookie();
 
-			// look to see what parameters are being passed; at least we should update the time
-			out( "received wallet-update message with params " + m_map);
-			respondOk();
+			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+
+			validateCookie();
 			
 			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
 			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
 			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
 			
-			JsonObject dbObj = Util.toJson(
-					"kyc_status", m_map.get("kyc_status"),
-					"persona_response", m_map.get("persona_response"),
-					"country", m_map.get("country"),
-					"city", m_map.get("city") );
-			
-			m_main.queueSql( sql -> sql.insertOrUpdate("users", dbObj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+			// look to see what parameters are being passed; at least we should update the time
+			out( "received wallet-update message with params " + m_map);
+
+			respondOk();  // user db is messed up, allows empty and up wallet
+
+			m_map.obj().remove("cookie");
+			m_map.obj().update("wallet_public_key", val -> val.toString().toLowerCase() );
+			m_main.queueSql( sql -> sql.insertOrUpdate("users", m_map.obj(), "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 		});
 	}
 

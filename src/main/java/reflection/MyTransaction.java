@@ -51,7 +51,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		m_main = main;
 	}
 
-	/** keys are all lower case */
+	/** keys are all lower case; you must use this if you want to call validateCookie() */
 	void parseMsg() throws Exception {
 		require( m_uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 

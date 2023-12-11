@@ -41,7 +41,7 @@ public class TestKyc extends MyTestCase {
 		
 		JsonObject data = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"kyc_status", "OKK",
+				"kyc_status", "OKKK",
 				"persona_response", "my persona response",
 				"country", "my country",
 				"city", "my city");
@@ -54,7 +54,7 @@ public class TestKyc extends MyTestCase {
 		JsonObject row = m_config
 				.sqlQuery(String.format("select * from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase() ) )
 				.get(0);
-		assertEquals("OKK", row.getString("kyc_status"));
+		assertEquals("OKKK", row.getString("kyc_status"));
 	}
 		
 
