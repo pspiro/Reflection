@@ -1,11 +1,7 @@
 package reflection;
 
-<<<<<<< HEAD
 import static reflection.Main.m_config;
 
-import java.lang.reflect.Field;
-=======
->>>>>>> partialfill
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
