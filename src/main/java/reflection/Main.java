@@ -214,6 +214,7 @@ public class Main implements ITradeReportHandler {
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
 	void readFaqsFromSheet(Book book) throws Exception {
+		S.out( "Reading FAQs");
 		JsonArray ar = new JsonArray();
 		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
 			if (row.getBool("Active") ) {

@@ -34,7 +34,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private static PositionTracker positionTracker = new PositionTracker(); 
 
-	private final Order m_order = new Order();;
+	private final Order m_order = new Order();
 	private double m_desiredQuantity;  // decimal desired quantity
 	private double m_filledShares;
 	private Stock m_stock;
@@ -368,6 +368,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_desiredQuantity *= ratio;
 			m_tds *= ratio;
 			
+			// we need to set order.m_roundedQuantity; probably should set it to the filled amt, or the ratio amount
+			
 			updateAfterPartialFill();
 		}
 		else {
@@ -456,12 +458,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private void updateAfterPartialFill() {
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("quantity", m_order.roundedQty() );
+			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("commission", m_config.commission() / 2); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
+			
+			S.out("***");
+			obj.display();
 		
-			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "where uid = '%s'", m_uid) );
+			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "uid = '%s'", m_uid) );
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
