@@ -4,14 +4,15 @@ import common.Util;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
+import tw.util.S;
 
 public class MintRusd {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.ask();
 		String wallet = Util.ask( "Enter wallet:");
-		double amt = Double.parseDouble(
-				Util.ask( "Enter amount:") );
+		double amt = Double.parseDouble( Util.ask( "Enter amount:") );
 		
+		S.out( "Minting %s RUSD for %s in %s", amt, wallet, config.getTabName() );
 		mint(wallet, amt, config);
 	}
 	
