@@ -35,7 +35,7 @@ class StatusPanel extends MonPanel {
 		p.add( "Started", f4);
 		p.add( "Built", f4a);
 		p.add( Box.createVerticalStrut(10) );
-		p.add( "MktData", f5);
+		p.add( "MdServer", f5);
 		p.add( "TWS", f6);
 		p.add( "IB", f7);
 		p.add( "Started", f8);

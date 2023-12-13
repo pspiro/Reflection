@@ -26,6 +26,8 @@ public class PricesPanel extends JsonPanel {
 	@Override public void activated() {
 		S.out( "Initializing Prices panel");
 		((Model)m_model).initialize();
+		
+		Util.wrap( () -> refresh() );
 	}
 
 	@Override protected Object format(String key, Object value) {
