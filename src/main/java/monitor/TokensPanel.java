@@ -12,12 +12,21 @@ import http.MyClient;
 import tw.util.S;
 
 public class TokensPanel extends JsonPanel {
-	HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
-
+	private HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
+	private HoldersPanel m_holdersPanel = new HoldersPanel();
+	
 	TokensPanel() {
 		super( new BorderLayout(), "symbol,conid,smartcontractid,tokens,position,dif,isHot");
 		add( m_model.createTable() );
+		add( m_holdersPanel, BorderLayout.EAST);
 		m_model.justify("lllrr");
+	}
+	
+	@Override
+	void onDouble(String tag, Object val) {
+		if (tag.equals( "smartcontractid")) {
+			m_holdersPanel.refresh(val.toString());
+		}
 	}
 	
 	@Override public void refresh() throws Exception {

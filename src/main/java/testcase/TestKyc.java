@@ -9,7 +9,7 @@ import tw.util.S;
 public class TestKyc extends MyTestCase {
 	public void testKyc()  throws Exception {
 		m_config.sqlCommand( sql -> sql.execWithParams(
-				"update users set kyc_status = false where wallet_public_key = '%s'",
+				"update users set kyc_status = 'non' where wallet_public_key = '%s'",
 				Cookie.wallet) );
 		
 		double price = TestOrder.curPrice * 1.1;
@@ -33,12 +33,10 @@ public class TestKyc extends MyTestCase {
 	}
 	
 	public void testSetKyc() throws Exception {
-		m_config.sqlCommand( sql -> sql.delete( "delete from users where wallet_public_key = '%s'",  Cookie.wallet.toLowerCase() ) );
+		m_config.sqlCommand( sql -> sql.execWithParams( 
+				"update users set kyc_status = '', persona_response = '' where wallet_public_key = '%s'",
+				Cookie.wallet.toLowerCase() ) );
 
-		assertEquals(0, m_config
-				.sqlQuery(String.format("select * from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase() ) )
-				.size() );
-		
 		JsonObject data = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"kyc_status", "OKKK",
