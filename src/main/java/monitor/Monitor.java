@@ -2,6 +2,8 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -29,33 +31,39 @@ import tw.util.S;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
+	static final String farDate = "12-31-2999";
+	static final String moralis = "https://deep-index.moralis.io/api/v2";
+	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
+	static final Stocks stocks = new Stocks();
+
 	static MonitorConfig m_config;
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
 	static WalletPanel m_walletPanel;
-	static final String farDate = "12-31-2999";
-	static final String moralis = "https://deep-index.moralis.io/api/v2";
-	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
-	static final Stocks stocks = new Stocks();
-	static final JTextField num = new JTextField(4); // number of entries to return in query
-	static final JFrame m_frame = new JFrame();
+	static JTextField num;
+	static JFrame m_frame;
 	
 	static String refApiBaseUrl() { 
 		return m_config.baseUrl();
 	}
 
 	public static void main(String[] args) throws Exception {
-		Thread.currentThread().setName("Monitor");
-		
+		Thread.currentThread().setName("Monitor");		
 		NewLookAndFeel.register();
-		
+		start();
+	}
+	
+	private static void start() throws Exception {
+		// read config
+		m_config = MonitorConfig.ask();
+
+		num = new JTextField(4); // number of entries to return in query
+		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
 		m_walletPanel = new WalletPanel();
 		
-		// read config
-		m_config = MonitorConfig.ask();
 		m_config.useExteranDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		S.out( "Using database %s", m_config.postgresUrl() );
@@ -110,9 +118,15 @@ public class Monitor {
 				"Reflection System Monitor - %s - %s", 
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
-		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		m_frame.setSize( 1100, 800);
 		m_frame.setVisible(true);
+		
+		m_frame.addWindowListener(new WindowAdapter() {
+		    public void windowClosed(WindowEvent e) {
+		    	Util.execute( () -> Util.wrap( () -> start() ) );
+		    }
+		});
 	}
 	
 	private static void refreshConfig() {

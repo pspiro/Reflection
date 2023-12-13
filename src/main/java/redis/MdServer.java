@@ -198,9 +198,11 @@ public class MdServer {
 			case DELAYED_LAST:
 				type = MyTickType.Last;
 				break;
+			case DELAYED_BID_SIZE:
 			case BID_SIZE:
 				type = MyTickType.BidSize;
 				break;
+			case DELAYED_ASK_SIZE:
 			case ASK_SIZE:
 				type = MyTickType.AskSize;
 				break;

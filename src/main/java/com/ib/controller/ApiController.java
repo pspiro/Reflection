@@ -676,13 +676,13 @@ public class ApiController implements EWrapper {
 		recEOM();
 	}
 
-	@Override public void tickSize(int reqId, int tickType, Decimal size) {
-		ITopMktDataHandler handler = m_topMktDataMap.get( reqId);
-		if (handler != null) {
-			handler.tickSize( TickType.get( tickType), size);
-		}
-		recEOM();
-	}
+//	@Override public void tickSize(int reqId, int tickType, Decimal size) {
+//		ITopMktDataHandler handler = m_topMktDataMap.get( reqId);
+//		if (handler != null) {
+//			handler.tickSize( TickType.get( tickType), size);
+//		}
+//		recEOM();
+//	}
 
 	@Override public void tickString(int reqId, int tickType, String value) {
 		ITopMktDataHandler handler = m_topMktDataMap.get( reqId);
