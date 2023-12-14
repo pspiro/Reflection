@@ -23,8 +23,6 @@ public class Fireblocks {
 	static String testApi = "bbce654d-08da-2216-5b20-bed4deaad1be";
 	static String prodApi = "e3f1c5b4-48f3-f495-7b14-23e729bc3628";
 
-	public static String moralisPlatform;  // chain name (e.g. goerli)
-
 	public static String testBusd = "BUSD_ETH_TEST3_6ZNB";  // Fireblocks asset id
 	public static String testRusd = "RUSD_ETH_TEST3_S89L";
 	
@@ -43,13 +41,12 @@ public class Fireblocks {
 	public void body(String v) { body = v;	}
 	public void endpoint(String v) { endpoint = v;	}
 	
-	public static void setKeys( String apiKey, String privateKey, String _platformBase, String _moralisPlatform) {
+	public static void setKeys( String apiKey, String privateKey, String _platformBase) {
 		s_apiKey = apiKey;
 		s_privateKey = privateKey;
 		platformBase = _platformBase;
-		moralisPlatform = _moralisPlatform;
 		
-		S.out( "Platform native token is %s/%s", moralisPlatform, platformBase);
+		S.out( "Platform native token is %s", platformBase);
 
 		// read keys
 //		s_apiKey = Util.getenv("api_key");

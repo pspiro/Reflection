@@ -59,7 +59,12 @@ public class ParamMap {
 	}
 
 	int getInt(String tag) throws RefException {
-		return Integer.valueOf( getRequiredString( tag) );
+		try {
+			return Integer.valueOf( getString( tag) );
+		}
+		catch( NumberFormatException e) {
+			return 0;
+		}
 	}
 
 	double getRequiredDouble(String tag) throws RefException {

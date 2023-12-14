@@ -353,6 +353,15 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		b.append( "</table></html>");
 		return b.toString();
 	}
+
+	/** Copy all tags from other to this object; null values are okay but not added */
+	public void copyFrom(JsonObject other, String... tags) {
+		for (String tag : tags) {
+			if (other.get(tag) != null) {
+				put( tag, other.get(tag) );
+			}
+		}
+	}
 }
 /** NOTE: Timestamp objects are stored as
  *  

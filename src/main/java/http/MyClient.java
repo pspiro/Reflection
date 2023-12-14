@@ -86,7 +86,7 @@ public class MyClient {
 				})
 				.exceptionally(ex -> {
 					S.out( "Error: could not get url %s - %s", request.uri(), ex.getMessage() );  // we need this because the stack trace does not indicate where the error occurred
-					ex.printStackTrace();
+					// ex.printStackTrace(); this stack trace is useless because it does not contain any of our functions
 					return null;
 				});
 	}

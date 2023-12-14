@@ -10,12 +10,13 @@ import tw.util.S;
 public class MdsPricesPanel extends JsonPanel {
 
 	public MdsPricesPanel() {
-		super( new BorderLayout(), "symbol,conid,bid,ask,last,bid time,ask time,last time,from");
+		super( new BorderLayout(), "symbol,conid,bid,ask,last,bid time,ask time,last time,bidSize,askSize,from");
 		add( m_model.createTable() );
 		m_model.justify("llrrr");
 	}
 	
 	@Override public void refresh() throws Exception {
+		S.out( "Refreshing mdserver prices");
 		m_model.m_ar = MyClient.getArray(Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices");
 		m_model.fireTableDataChanged();
 	}

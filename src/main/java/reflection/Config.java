@@ -214,7 +214,7 @@ public class Config extends ConfigBase {
 			}
 
 			// update Fireblocks static keys and admins
-			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase, moralisPlatform);
+			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase);
 			Accounts.instance.setAdmins( fbAdmins);
 			
 			// update Moralis chain

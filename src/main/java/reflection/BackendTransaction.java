@@ -178,7 +178,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	// what is the purpose of this? pas
-	public void handleWalletUpdate() {
+	public void handleWalletUpdate() {  // obsolete, remove it
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
@@ -202,17 +202,19 @@ public class BackendTransaction extends MyTransaction {
 			
 			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
-			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
-			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
+//			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
+//			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
 			
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
+			
+			JsonObject obj = new JsonObject();
+			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
+			obj.copyFrom( m_map.obj(), "kyc_status", "persona_response");
+
+			m_main.queueSql( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
 			respondOk();  // user db is messed up, allows empty and up wallet
-
-			m_map.obj().remove("cookie");
-			m_map.obj().update("wallet_public_key", val -> val.toString().toLowerCase() );
-			m_main.queueSql( sql -> sql.insertOrUpdate("users", m_map.obj(), "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 		});
 	}
 

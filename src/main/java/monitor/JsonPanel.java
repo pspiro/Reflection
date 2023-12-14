@@ -36,7 +36,7 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 	}
 
 	/** Show only rows that have the clicked-on value */
-	void onDouble(String tag, Object allowed) {
+	void onDouble(String tag, Object val) {
 	}
 
 	/** Override this
@@ -52,7 +52,7 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 	
 	@Override public void activated() {
 		S.out( "Activating JsonPanel");
-		Util.wrap( () -> m_model.refresh() );
+		Util.wrap( () -> refresh() );
 	}
 
 	public void refresh() throws Exception {

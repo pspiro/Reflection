@@ -11,6 +11,7 @@ import fireblocks.Erc20;
 import http.MyClient;
 import reflection.Config;
 import reflection.MySqlConnection;
+import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick */
@@ -38,13 +39,18 @@ public class MoralisServer {
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
 	
 	public static void main(String[] args) throws Exception {
-		//JsonObject t = queryTransaction("0xda3de0d726fdea7eb60af8afc3921e981f48b26e1d08daf5846aee8e3706973d", "polygon");
-		//t.display();
 		Config config = Config.ask();
-		config.busd().queryTotalSupply();
+		S.out( queryBalances("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c") );
 	}
 	
-	public static JsonObject queryTransaction( String transactionHash, String chain) throws Exception {
+	public static String queryBalances(String contract) throws Exception {
+		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
+//		return JsonObject.parse( querySync( url) );
+		return querySync( url);
+		
+	}
+	
+	public static JsonObject queryTransaction( String transactionHash) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/transaction/%s?chain=%s",
 				moralis, transactionHash, chain);

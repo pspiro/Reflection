@@ -32,7 +32,7 @@ import util.LogType;
  *  depending on which session we are in. Last always comes from... */
 public class MdServer {
 	//enum Status { Connected, Disconnected };
-	enum MyTickType { Bid, Ask, Last, Close };
+	enum MyTickType { Bid, Ask, Last, Close, BidSize, AskSize };
 
 	public static final String Overnight = "OVERNIGHT"; 
 	public static final String Smart = "SMART"; 
@@ -197,6 +197,14 @@ public class MdServer {
 			case LAST:
 			case DELAYED_LAST:
 				type = MyTickType.Last;
+				break;
+			case DELAYED_BID_SIZE:
+			case BID_SIZE:
+				type = MyTickType.BidSize;
+				break;
+			case DELAYED_ASK_SIZE:
+			case ASK_SIZE:
+				type = MyTickType.AskSize;
 				break;
 			case CLOSE:
 			case DELAYED_CLOSE:

@@ -1759,9 +1759,11 @@ class EDecoder implements ObjectInput {
 		int tickType = readInt();
 		Decimal size = readDecimal();
 
-		m_EWrapper.tickSize( tickerId, tickType, size);
+		//m_EWrapper.tickSize( tickerId, tickType, size);
+		m_EWrapper.tickPrice( tickerId, tickType, size.toDouble(), null);
 	}
 
+	/** This actually ticks price and size; you could add them together */
 	private void processTickPriceMsg() throws IOException {
 		int version = readInt();
 		int tickerId = readInt();
@@ -1820,7 +1822,8 @@ class EDecoder implements ObjectInput {
                     sizeTickType = -1; // not a tick
 		    }
 		    if (sizeTickType != -1) {
-		        m_EWrapper.tickSize( tickerId, sizeTickType, size);
+		        //m_EWrapper.tickSize( tickerId, sizeTickType, size);
+		        m_EWrapper.tickPrice( tickerId, sizeTickType, size.toDouble(), null);
 		    }
 		}
 	}

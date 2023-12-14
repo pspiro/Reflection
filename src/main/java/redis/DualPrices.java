@@ -59,30 +59,14 @@ class DualPrices {
 		prices.tick( tickType, price, lastExchange);
 	}
 
-	// generally, we force-send if the session type has changed
-	public void send(Pipeline pipeline, Session inside) {
-		if (inside == Session.Smart) {
-			m_smart.send( pipeline, m_was != Session.Smart);
-			m_was = Session.Smart;
-		}
-		else if (is24() && inside == Session.Overnight) {
-			m_overnight.send(pipeline, m_was != Session.Overnight); // this won't work if last is never sent from IBEOS
-			m_was = Session.Overnight;
-		}
-		else if (m_was != Session.None) {
-			// clear out the bid/ask, keep the last
-			m_smart.clearOut(pipeline);
-			m_was = Session.None;
-		}
-	}
-	
-	
 	static public class Prices {
 //		private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
 		
 		private double m_bid;
 		private double m_ask;
 		private double m_last;
+		private double m_bidSize;
+		private double m_askSize;
 		private long m_bidTime;
 		private long m_askTime;
 		private long m_lastTime;
@@ -109,6 +93,12 @@ class DualPrices {
 					m_ask = price;
 					m_askTime = System.currentTimeMillis();
 					break;
+				case BidSize:
+					m_bidSize = price;
+					break;
+				case AskSize:
+					m_askSize = price;
+					break;
 				case Last:
 					m_last = price;
 					m_lastTime = System.currentTimeMillis();
@@ -124,30 +114,12 @@ class DualPrices {
 			m_from = lastExchange;
 		}
 
-		public synchronized void send(Pipeline pipeline, boolean force) {  // better would be to store separate changed flags for each field
-			if (m_changed || force) {
-				if (BaseTransaction.debug() ) S.out( "Updating redis with all prices for conid %s", m_conid);
-				pipeline.hset( m_conid, "bid", String.valueOf( m_bid) );  // for -1 you should delete or you can wait for this to happen when it changes session
-				pipeline.hset( m_conid, "ask", String.valueOf( m_ask) ); 
-				pipeline.hset( m_conid, "last", String.valueOf( m_last) ); 
-				pipeline.hset( m_conid, "time", String.valueOf( m_lastTime) );
-				if (S.isNotNull( m_from) ) {
-					pipeline.hset( m_conid, "from", m_from);
-				}
-				m_changed = false;
-			}
-		}
-
-		public void clearOut(Pipeline pipeline) {
-			if (BaseTransaction.debug()) S.out( "Clearing out bid/ask in redis for conid %s", m_conid);
-			pipeline.hdel( m_conid, "bid");
-			pipeline.hdel( m_conid, "ask");
-		}
-
 		public JsonObject getJsonPrices() {
 			return Util.toJson(
 					"bid", m_bid, 
 					"ask", m_ask,
+					"bidSize", m_bidSize, 
+					"askSize", m_askSize,
 					"last", m_last,
 					"bid time", m_bidTime,
 					"ask time", m_askTime,
@@ -155,14 +127,6 @@ class DualPrices {
 					);
 		}
 
-		public double bid() {
-			return m_bid;
-		}
-
-		public double ask() {
-			return m_ask;
-		}
-		
 		public double last() {
 			return m_last;
 		}
@@ -173,6 +137,7 @@ class DualPrices {
 			return this;
 		}
 
+		/** This is for the RefAPI (no sizes) */
 		public void update(JsonObject stockPrices) {
 			stockPrices.put( "bid", m_bid);
 			stockPrices.put( "ask", m_ask);
@@ -191,7 +156,7 @@ class DualPrices {
 		addPricesTo( ret, m_overnight, "overnight");
 	}
 
-	/** Return one set of prices (smart or ibeos) */
+	/** Add one set of prices to the array (smart or ibeos) */
 	private void addPricesTo( JsonArray ret, Prices prices, String from) {
 		JsonObject stockPrices = new JsonObject();
 		stockPrices.put( "conid", m_stock.conid() );

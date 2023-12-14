@@ -93,9 +93,9 @@ public class TestProfile extends MyTestCase {
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
 
-	private JsonObject createValidProfile() {
+	static JsonObject createValidProfile() {
 		JsonObject json = new JsonObject();
-		json.put( "wallet_public_key", Cookie.wallet);
+		json.put( "wallet_public_key", Cookie.wallet.toLowerCase());
 		json.put( "cookie", Cookie.cookie);
 		json.put( "first_name", "jack");
 		json.put( "last_name", "sprat");
@@ -103,6 +103,12 @@ public class TestProfile extends MyTestCase {
 		json.put( "phone", "9149399393");
 		json.put( "pan_number", "XXXXX9393Y");
 		json.put( "aadhaar", "939393939393");
+		return json;
+	}
+
+	static JsonObject createProfileNC() {
+		JsonObject json = createValidProfile();
+		json.remove("cookie");
 		return json;
 	}
 }

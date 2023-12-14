@@ -159,7 +159,7 @@ public class Erc20 {
 			try {
 				
 				S.out( "    querying...");
-				JsonObject obj = MoralisServer.queryTransaction(txHash, Fireblocks.moralisPlatform);
+				JsonObject obj = MoralisServer.queryTransaction(txHash);
 				String addr = obj.getString("receipt_contract_address");
 				if (S.isNotNull(addr) ) {
 					S.out( "contract deployed to " + addr);

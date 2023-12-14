@@ -34,7 +34,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private static PositionTracker positionTracker = new PositionTracker(); 
 
-	private final Order m_order = new Order();;
+	private final Order m_order = new Order();
 	private double m_desiredQuantity;  // decimal desired quantity
 	private double m_filledShares;
 	private Stock m_stock;
@@ -103,10 +103,23 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// must come before profile and KYC checks
 		validateCookie();
 
-		// get user profile from DB and validate it
-		Profile profile = getProfile(); 
-		profile.validate();
-		profile.checkKyc( Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) );  // if order is above max non-KYC size, verify they have passed KYC
+		// get record from Users table
+		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
+		require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your order");
+
+		// validate user profile fields
+		JsonObject userRecord = ar.get(0);
+		new Profile(userRecord).validate();
+
+		// validate KYC fields
+		require( 
+				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ||
+				
+				S.isNotNull( userRecord.getString("persona_response")) && 
+				S.isNotNull( userRecord.getString("kyc_status")),
+				
+				RefCode.NEED_KYC,
+				"Please verify your identity and then resubmit your order");
 		
 		// calculate IB order price
 		double prePrice = side == Action.Buy 
@@ -201,12 +214,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				submitOrder( contract);
 			}
 		});
-	}
-
-	private Profile getProfile() throws Exception {
-		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
-		require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "No user record found for wallet %s", m_walletAddr);
-		return new Profile(ar.get(0));
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
@@ -368,6 +375,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_desiredQuantity *= ratio;
 			m_tds *= ratio;
 			
+			// we need to set order.m_roundedQuantity; probably should set it to the filled amt, or the ratio amount
+			
 			updateAfterPartialFill();
 		}
 		else {
@@ -456,12 +465,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private void updateAfterPartialFill() {
 		try {
 			JsonObject obj = new JsonObject();
-			obj.put("quantity", m_order.roundedQty() );
+			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );
 			obj.put("commission", m_config.commission() / 2); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
+			
+			S.out("***");
+			obj.display();
 		
-			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "where uid = '%s'", m_uid) );
+			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "uid = '%s'", m_uid) );
 		} 
 		catch (Exception e) {
 			e.printStackTrace();

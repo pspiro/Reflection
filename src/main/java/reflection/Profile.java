@@ -74,12 +74,5 @@ public class Profile extends JsonObject {
 		return str.indexOf('<') == -1 && str.indexOf('>') == -1;
 	}
 
-	public void checkKyc(boolean smallOrder) throws RefException {
-		require( 
-				smallOrder || getBool("persona_response") && S.isNotNull( getString("kyc_status") ),
-				RefCode.NEED_KYC,
-				"KYC is required for this order");
-
-	}
 }
 //you have to see what they are sending; this check looks backwards

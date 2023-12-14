@@ -145,7 +145,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			
-			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() );
+			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() ); // obsolete, remove this
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
@@ -214,6 +214,7 @@ public class Main implements ITradeReportHandler {
 	/** You could shave 300 ms by sharing the same Book as Config 
 	 * @param book */ 
 	void readFaqsFromSheet(Book book) throws Exception {
+		S.out( "Reading FAQs");
 		JsonArray ar = new JsonArray();
 		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
 			if (row.getBool("Active") ) {
@@ -347,7 +348,7 @@ public class Main implements ITradeReportHandler {
 			// order id's; it's because sometimes, after a reconnect or if TWS
 			// is just startup up, or if we tried and failed, we don't ever receive
 			// it
-			jlog( LogType.TWS_CONNECTION, null, null, Util.toJson( "validId", id) );
+			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
 		}
 
 		@Override public synchronized void onDisconnected() {
@@ -424,7 +425,7 @@ public class Main implements ITradeReportHandler {
 	/** Write to the log file. Don't throw any exception. */
 
 	void log( LogType type, String text) {
-		jlog( type, null, null, Util.toJson( "text", text) );
+		jlog( type, "-", "-", Util.toJson( "text", text) );
 	}
 
 	/** Writes entry to log table in database; must not throw exception */

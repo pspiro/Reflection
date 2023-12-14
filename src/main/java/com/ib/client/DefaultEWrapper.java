@@ -17,11 +17,11 @@ public class DefaultEWrapper implements EWrapper {
 		
 	}
 
-	@Override
-	public void tickSize(int tickerId, int field, Decimal size) {
-		// TODO Auto-generated method stub
-		
-	}
+//	@Override
+//	public void tickSize(int tickerId, int field, Decimal size) {
+//		// TODO Auto-generated method stub
+//		
+//	}
 
 	@Override
 	public void tickOptionComputation(int tickerId, int field, int tickAttrib,

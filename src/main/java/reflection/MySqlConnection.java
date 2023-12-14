@@ -109,6 +109,8 @@ public class MySqlConnection implements AutoCloseable {
 	/** Do not include the word 'where' in the where clause
 	 *  Don't forget single quotes around string values in where clause */
 	public int updateJson( String table, JsonObject json, String where, Object... params) throws Exception {
+		Util.require( !where.startsWith( "where"), "Don't include where" );
+
 		StringBuilder values = new StringBuilder();
 		for (Object key : json.keySet() ) {
 			if (values.length() > 0) {

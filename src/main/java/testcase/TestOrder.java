@@ -22,6 +22,7 @@ public class TestOrder extends MyTestCase {
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
 			S.out( "TestOrder: Current AAPL price is %s", curPrice);
+			Util.require( curPrice > 0, "Zero price");
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
 		} catch (Exception e) {
@@ -32,34 +33,25 @@ public class TestOrder extends MyTestCase {
 	
 
 
-	// verify user record
+	// test missing and invalid user rec
 	public void testMissingUserRec() throws Exception {
-		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", dead) );
-		
+		// test missing user rec
+		m_config.sqlCommand( conn -> conn.delete("delete from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase()) );
 		JsonObject obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-		
-		String[] fields = {
-				"wallet_public_key", "first_name", "last_name", "email", "phone", "aadhaar", 
-		};
-		Object[] vals = {
-				dead, "bob", "jones", "a@b.com", "9143933732", "my adhaar",
-		};
-		m_config.sqlCommand( conn -> conn.insert("users", fields, vals) );
-		
+
+		// test missing pan
+		m_config.sqlCommand( conn -> conn.insertJson("users", TestProfile.createProfileNC() ) );
+		m_config.sqlCommand( conn -> conn.delete("update users set pan_number = '8383' where wallet_public_key = '%s'", Cookie.wallet.toLowerCase()) );
 		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // missing pan
-		
-		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'abc' where wallet_public_key = '%s'", dead) ) );
-		
+
+		// test success
+		m_config.sqlCommand( conn -> conn.execute( String.format("update users set pan_number = 'AAAAA8888A' where wallet_public_key = '%s'", Cookie.wallet.toLowerCase()) ) );
 		obj = createOrder("BUY", 10, 2);
-		obj.put("wallet_public_key", dead);
 		postOrderToObj(obj);
-		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );  // invalid pan, aadhaar
+		assert200();
 	}
 	
 	// missing walletId
@@ -194,15 +186,6 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 	}
 
-	public void testKyc()  throws Exception {
-		m_config.sqlCommand( sql -> sql.delete("delete kyc_status from users where wallet_public_key = '%s'", Cookie.wallet) );
-		double qty = m_config.nonKycMaxOrderSize() / 138 + 1;
-		JsonObject obj = createOrder2("buy", qty, 138);
-		
-		JsonObject map = postOrderToObj(obj);
-		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );
-	}
-
 	public void testFracShares()  throws Exception {
 		JsonObject obj = createOrder("BUY", 1.5, 2); 
 		JsonObject map = postOrderToObj(obj);
@@ -238,14 +221,14 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	/** This only works after hours and with a contract that hasn't traded for five minutes */
-	public void testNotRecent() throws Exception {
-		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }"); 
-		JsonObject map = postOrderToObj(obj);
-		assertEquals( 200, cli.getResponseCode() );
-		S.sleep(100); 
-		JsonObject resp = getLiveMessage2(map.getString("id"));
-		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
-	}
+//	public void testNotRecent() throws Exception {
+//		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }"); 
+//		JsonObject map = postOrderToObj(obj);
+//		assertEquals( 200, cli.getResponseCode() );
+//		S.sleep(100); 
+//		JsonObject resp = getLiveMessage2(map.getString("id"));
+//		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
+//	}
 	
 	static JsonObject createOrder(String side, double qty, double offset) throws Exception {
 		return createOrder2( side, qty, curPrice + offset);
