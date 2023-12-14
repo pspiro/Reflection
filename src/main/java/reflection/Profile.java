@@ -82,3 +82,4 @@ public class Profile extends JsonObject {
 
 	}
 }
+//you have to see what they are sending; this check looks backwards

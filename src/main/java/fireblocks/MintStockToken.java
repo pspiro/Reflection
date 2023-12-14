@@ -8,7 +8,7 @@ public class MintStockToken {
 	public static void main(String[] args) throws Exception {
 		Config config = Config.ask();
 		double amt = Double.parseDouble( Util.ask( "Enter amount:") );
-		String tok = Util.ask("Enter FULL token name");
+		String tok = Util.ask("Enter token name");
 		String wallet = Util.ask( "Enter destination wallet:");
 		
 		StockToken st = config.readStocks().getStock(tok).getToken();

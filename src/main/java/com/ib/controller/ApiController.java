@@ -952,6 +952,7 @@ public class ApiController implements EWrapper {
 
 		order.orderId( m_orderId++);  // must be in the same sync block as placeOrder()
 		order.permId(0);
+		order.status(OrderStatus.Unknown);
 		
 		Util.require( order.roundedQty() > 0, "Set rounded quantity");
 		

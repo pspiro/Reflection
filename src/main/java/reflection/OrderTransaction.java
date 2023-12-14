@@ -654,16 +654,30 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				contract.conid( conid);
 				contract.exchange( m_main.getExchange( contract.conid() ) );
 			
-				m_order.orderType(OrderType.MKT); // this won't work off-hours
+				m_order.orderType(OrderType.LMT); // this won't work off-hours
 				m_order.flipSide();
 				m_order.orderRef(m_uid + " unwind");
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
-						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_desiredQuantity) ); 
-			
+						positionTracker.buyOrSell( contract.conid(), m_order.isBuy(), m_desiredQuantity) );
+				
 				jlog( LogType.UNWIND_ORDER, m_order.getJsonLog(contract) );
 				
 				if (m_order.roundedQty() > 0 && !m_config.autoFill() ) {
+					
+					// start w/ bid/ask and adjust price
+					// this is tricky; too aggressive and we risk a bad fill; 
+					// too conservative and we risk not filling at all
+					Prices prices = m_main.getStock(conid).prices();
+					double price = m_order.isBuy() ? prices.bid() * 1.01 : prices.ask() * .99;
+					Util.require( price > 0, "Can't unwind, no market price");  // adjustment won't affect this 
 					m_main.orderController().placeOrder(contract, m_order, null);
+					
+					// cancel the order; if it already filled, there's no harm done
+					// we can't wait too long for this to fill because it will prevent us from
+					// placing orders for the same contract on the opposite side
+					Util.executeIn( 5000, () -> m_main.orderController().cancelOrder( m_order.orderId(), "", null) );
+					
+					// better would be to monitor the order and only cancel if not filled
 				}
 			}
 		}

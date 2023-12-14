@@ -8,37 +8,39 @@ import tw.util.S;
 
 public class TestKyc extends MyTestCase {
 	public void testKyc()  throws Exception {
+		// clear kyc status
 		m_config.sqlCommand( sql -> sql.execWithParams(
-				"update users set kyc_status = false where wallet_public_key = '%s'",
+				"update users set kyc_status = '', persona_response = false where wallet_public_key = '%s'",
 				Cookie.wallet) );
-		
+
+		// place an order larger than kyc; it should fail
 		double price = TestOrder.curPrice * 1.1;
-		
 		double qty = m_config.nonKycMaxOrderSize() / price + 10;
-		double amt = qty * price;
-		S.out( "wal=%s  qty = %s  amt=%s", Cookie.wallet, qty, amt);
-		JsonObject obj = TestOrder.createOrder2("buy", qty, price);
-		postOrderToObj(obj);
+		JsonObject order = TestOrder.createOrder2("buy", qty, price);
+		postOrderToObj(order);
 		S.out(cli.readJsonObject().get("message"));
 		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );
-		
+
+		// set key status to true
 		m_config.sqlCommand( sql -> sql.execWithParams(
 				"update users set kyc_status = true where wallet_public_key = '%s'",
 				Cookie.wallet) );
-		
-		qty = m_config.nonKycMaxOrderSize() / price - 10;
-		obj = TestOrder.createOrder2("buy", qty, price);
-		postOrderToObj(obj);
+
+		// place another order; it should pass
+		qty = m_config.nonKycMaxOrderSize() / price + 10;
+		order = TestOrder.createOrder2("buy", qty, price);
+		postOrderToObj(order);
 		assert200();
 	}
 	
 	public void testSetKyc() throws Exception {
-		m_config.sqlCommand( sql -> sql.delete( "delete from users where wallet_public_key = '%s'",  Cookie.wallet.toLowerCase() ) );
+		// clear
+		JsonObject d1 = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"kyc_status", "false",
+				"persona_response", "empty");
+		m_config.sqlCommand( sql -> sql.updateJson( "users", d1, "wallet_public_key = '%s'", Cookie.wallet) ); 
 
-		assertEquals(0, m_config
-				.sqlQuery(String.format("select * from users where wallet_public_key = '%s'", Cookie.wallet.toLowerCase() ) )
-				.size() );
-		
 		JsonObject data = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"kyc_status", "OKKK",
