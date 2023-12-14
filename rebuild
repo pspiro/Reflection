@@ -8,5 +8,8 @@ echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
 mvn package
-#sudo systemctl restart mktdataserver   not sure if I want this
+sudo systemctl restart mdserver
+sleep 2
+sudo systemctl restart fbserver
+sleep 2
 sudo systemctl restart refapi
