@@ -26,8 +26,14 @@ public class MdsPricesPanel extends JsonPanel {
 				key.indexOf( "time") != -1 && value instanceof Long && ((Long)value) != 0
 					? Util.yToS.format( value) :
 				key.equals("bid") || key.equals("ask") || key.equals("last")
-					? fmtPrice(value) 
+					? fmtPrice(value) :
+				key.equals("bidSize") || key.equals("askSize")
+					? fmtSize(value)
 					: value;
+	}
+
+	private Object fmtSize(Object val) {
+		return val instanceof Double ? (int)(double)val : val; 
 	}
 
 	static Object fmtPrice(Object val) {

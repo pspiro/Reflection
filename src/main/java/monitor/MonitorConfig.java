@@ -4,6 +4,7 @@ import javax.swing.JOptionPane;
 
 import reflection.Config;
 import tw.google.NewSheet.Book.Tab;
+import tw.util.S;
 
 public class MonitorConfig extends Config {
 	private String baseUrl;
@@ -33,6 +34,9 @@ public class MonitorConfig extends Config {
 	public static MonitorConfig ask() throws Exception {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		String tab = JOptionPane.showInputDialog("Enter config tab name prefix") + "-config";
+		if (S.isNull(tab)) {
+			System.exit(0);
+		}
 		MonitorConfig config = new MonitorConfig();
 		config.readFromSpreadsheet(tab);
 		return config;

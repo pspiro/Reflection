@@ -14,9 +14,8 @@ import tw.util.S;
 import tw.util.VerticalPanel;
 
 public class CryptoPanel extends MonPanel {
-	private JTextField m_usdc = new JTextField(10);
 	private JTextField m_rusd = new JTextField(10);
-	private JTextField m_usdc2 = new JTextField(10);
+	private JTextField m_busd = new JTextField(10);
 	private JTextField m_nativeToken = new JTextField(10);
 	private JTextField m_admin1 = new JTextField(10);
 	private JTextField m_admin2 = new JTextField(10);
@@ -28,7 +27,7 @@ public class CryptoPanel extends MonPanel {
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
 		rusdPanel.add( "RUSD Outstanding", m_rusd);
-		rusdPanel.add( "USDC in RefWallet", m_usdc2);
+		rusdPanel.add( "Non-RUSD in RefWallet", m_busd);
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		rusdPanel.add( "RefWallet MATIC", m_nativeToken);
 		rusdPanel.add( "Admin1 MATIC", m_admin1);
@@ -41,9 +40,8 @@ public class CryptoPanel extends MonPanel {
 		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
-		double usdc = refWallet.getBalance(Monitor.m_config.busdAddr());
-		SwingUtilities.invokeLater( () -> m_usdc.setText( S.fmt2(usdc) ) );
-		SwingUtilities.invokeLater( () -> m_usdc2.setText( S.fmt2(usdc) ) );
+		double busd = refWallet.getBalance(Monitor.m_config.busdAddr());
+		SwingUtilities.invokeLater( () -> m_busd.setText( S.fmt2(busd) ) );
 
 		double nativeBal = refWallet.getNativeTokenBalance();
 		SwingUtilities.invokeLater( () -> m_nativeToken.setText( S.fmt2(nativeBal) ) );
