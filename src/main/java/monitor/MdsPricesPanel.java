@@ -2,8 +2,11 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import javax.swing.JPanel;
+
 import common.Util;
 import http.MyClient;
+import tw.util.HtmlButton;
 import tw.util.S;
 
 /** MktDataServer prices */
@@ -13,8 +16,19 @@ public class MdsPricesPanel extends JsonPanel {
 		super( new BorderLayout(), "symbol,conid,bid,ask,last,bid time,ask time,last time,bidSize,askSize,from");
 		add( m_model.createTable() );
 		m_model.justify("llrrr");
+		
+		JPanel butPanel = new JPanel();
+		butPanel.add( new HtmlButton("Reconnect", act -> reconnect() ) );
+		add( butPanel, BorderLayout.EAST);
 	}
 	
+	private void reconnect() {
+		Util.wrap( () -> {
+			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/disconnect");
+			Util.inform(this, resp);
+		});
+	}
+
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing mdserver prices");
 		m_model.m_ar = MyClient.getArray(Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices");

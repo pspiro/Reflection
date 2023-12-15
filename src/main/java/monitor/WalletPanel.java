@@ -11,7 +11,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.MintRusd;
 import http.MyClient;
 import monitor.Monitor.TransPanel;
 import positions.Wallet;

@@ -4,9 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.BaseTransaction;
 import redis.MdServer.MyTickType;
-import redis.clients.jedis.Pipeline;
 import reflection.Stock;
 import reflection.TradingHours.Session;
 import tw.util.S;

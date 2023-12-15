@@ -1,7 +1,6 @@
 package tw.util;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,8 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import javax.swing.JOptionPane;
 
 import tw.grep.DirProcessor;
 import tw.grep.FileProcessor;

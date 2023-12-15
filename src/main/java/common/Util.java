@@ -36,7 +36,6 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
-import monitor.WalletPanel;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;

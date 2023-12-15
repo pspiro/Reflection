@@ -33,12 +33,12 @@ public class MonitorConfig extends Config {
 	
 	public static MonitorConfig ask() throws Exception {
 		java.awt.Toolkit.getDefaultToolkit().beep();
-		String tab = JOptionPane.showInputDialog("Enter config tab name prefix") + "-config";
+		String tab = JOptionPane.showInputDialog("Enter config tab name prefix");
 		if (S.isNull(tab)) {
 			System.exit(0);
 		}
 		MonitorConfig config = new MonitorConfig();
-		config.readFromSpreadsheet(tab);
+		config.readFromSpreadsheet(tab + "-config");
 		return config;
 	}
 }
