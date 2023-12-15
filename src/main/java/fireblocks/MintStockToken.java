@@ -13,7 +13,7 @@ public class MintStockToken {
 		
 		StockToken st = config.readStocks().getStock(tok).getToken();
 		
-		if (S.confirm( null, String.format("You will mint %s %s for %s", amt, tok, wallet) ) ) {
+		if (Util.confirm( null, String.format("You will mint %s %s for %s", amt, tok, wallet) ) ) {
 			config.rusd().buyStock(wallet, config.rusd(), 0, st, amt).waitForHash();
 		}	
 	}

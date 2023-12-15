@@ -1,5 +1,6 @@
 package common;
 
+import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +36,7 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
+import monitor.WalletPanel;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -586,6 +588,23 @@ public class Util {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		return JOptionPane.showInputDialog(prompt);
 	}
+
+	public static double askForVal(String prompt) {
+		String val = ask(prompt);
+		return S.isNull(val) ? 0 : Double.parseDouble(val);
+	}
+	
+	public static boolean confirm(Component parent, String format, Object... params) {
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		return JOptionPane.showConfirmDialog( 
+				parent, String.format(format,params), "Confirm", JOptionPane.YES_NO_OPTION) == 0;
+	}
+
+	public static void inform(Component parent, String message, Object... params) {
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		JOptionPane.showMessageDialog( parent, String.format( S.notNull( message), params) );
+	}
+	
 	
 	
 }

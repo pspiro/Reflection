@@ -11,10 +11,12 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.MintRusd;
 import http.MyClient;
 import monitor.Monitor.TransPanel;
 import positions.Wallet;
 import reflection.Stock;
+import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
@@ -25,12 +27,12 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_usdc = new JLabel(); 
 	private final JLabel m_approved = new JLabel(); 
 	private final JLabel m_matic = new JLabel(); 
-	
+
 	private final TransPanel transPanel = new TransPanel();
-	
+
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
-		
+
 		m_wallet.addActionListener( e -> { 
 			try {
 				refresh();
@@ -39,6 +41,9 @@ public class WalletPanel extends JsonPanel {
 			} 
 		});
 
+		HtmlButton mint = new HtmlButton("Mint", e -> mint() );
+		HtmlButton burn = new HtmlButton("Burn", e -> burn() );
+
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
@@ -46,32 +51,63 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "USDC", m_usdc);
 		vp.add( "Approved", m_approved);
 		vp.add( "MATIC", m_matic);
-		
+		vp.add( "Mint", mint); 
+		vp.add( "Burn", burn); 
+
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
 		leftPanel.add( m_model.createTable() );
-		
+
 		add( leftPanel, BorderLayout.WEST);
 		add( transPanel);
+	}
+
+	private void mint() {
+		try {
+			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+			
+			double amt = Util.askForVal( "Enter amt");
+			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+			
+				String hash = Monitor.m_config.rusd().mintRusd( 
+						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+				
+				Util.inform(this, hash);
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void burn() {
+		try {
+			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+
+			Util.inform(this, "Not hooked up yet");
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
 		Util.wrap( () -> refresh() );
 	}
-	
+
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
-		
+
 		m_model.m_ar.clear();
 
 		String walletAddr = m_wallet.getText();
-		
+
 		if (Util.isValidAddress(walletAddr)) {
 			MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + walletAddr, obj -> {
 				JsonArray ar = obj.getArray("tokens");
 				Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", walletAddr ); 
-	
+
 				m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
 				m_usdc.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
 				m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
@@ -97,7 +133,7 @@ public class WalletPanel extends JsonPanel {
 			m_usdc.setText(null);
 			m_approved.setText(null);
 			m_matic.setText(null);
-			
+
 			transPanel.clear();
 		}
 

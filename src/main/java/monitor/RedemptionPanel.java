@@ -72,18 +72,18 @@ public class RedemptionPanel extends QueryPanel {
 			
 			// already fulfilled?
 			if (!redemption.getString("status").equals("Delayed") ) {
-				S.inform(RedemptionPanel.this, "Only 'Delayed' status can be redeemed");
+				Util.inform(RedemptionPanel.this, "Only 'Delayed' status can be redeemed");
 				return;
 			}
 		
 			// nothing to redeem?
 			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less
 			if (rusdPos < .005) {
-				S.inform(RedemptionPanel.this, "User has no RUSD to redeem");
+				Util.inform(RedemptionPanel.this, "User has no RUSD to redeem");
 				return;
 			}
 			
-			if (!S.confirm(
+			if (!Util.confirm(
 					RedemptionPanel.this, 
 					String.format("Are you sure you want to redeem %s RUSD for %s?",
 							six.format(rusdPos), walletAddr) ) ) {
@@ -96,7 +96,7 @@ public class RedemptionPanel extends QueryPanel {
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
 						walletAddr, rusdPos, ourStablePos, (rusdPos - ourStablePos) );
-				S.inform( RedemptionPanel.this, str);
+				Util.inform( RedemptionPanel.this, str);
 				return;
 			}
 			
@@ -112,7 +112,7 @@ public class RedemptionPanel extends QueryPanel {
 				Monitor.m_config.sqlCommand( conn -> conn.execute(sql) );
 				
 				RedemptionPanel.this.refresh();
-				S.inform( RedemptionPanel.this, "Completed");
+				Util.inform( RedemptionPanel.this, "Completed");
 			});
 		}
 	}

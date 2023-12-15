@@ -12,8 +12,10 @@ public class MintRusd {
 		String wallet = Util.ask( "Enter wallet:");
 		double amt = Double.parseDouble( Util.ask( "Enter amount:") );
 		
-		S.out( "Minting %s RUSD for %s in %s", amt, wallet, config.getTabName() );
-		mint(wallet, amt, config);
+		if (Util.confirm(null, String.format("Mint %s for %s", amt, wallet) ) ) {
+			S.out( "Minting %s RUSD for %s in %s", amt, wallet, config.getTabName() );
+			mint(wallet, amt, config);
+		}
 	}
 	
 	public static void mint(String wallet, double amt, Config config) throws Exception {

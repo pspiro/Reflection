@@ -635,17 +635,6 @@ public class S {
 		return cls.isPrimitive() || m_set.contains( cls);
 	}
 
-	public static void inform(Component parent, String message, Object... params) {
-		java.awt.Toolkit.getDefaultToolkit().beep();
-		JOptionPane.showMessageDialog( parent, String.format( notNull( message), params) );
-	}
-	
-	public static boolean confirm(Component parent, String message) {
-		java.awt.Toolkit.getDefaultToolkit().beep();
-		return JOptionPane.showConfirmDialog( 
-				parent, message, "Confirm", JOptionPane.YES_NO_OPTION) == 0;
-	}
-	
 	public static List<String> list(String... strings) {
 		ArrayList<String> list = new ArrayList<String>();
 		for (String string : strings) {

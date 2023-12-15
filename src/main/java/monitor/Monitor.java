@@ -130,7 +130,7 @@ public class Monitor {
 	}
 	
 	private static void refreshConfig() {
-		Util.wrap( () -> S.inform( 
+		Util.wrap( () -> Util.inform( 
 					m_frame,
 					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
 	}

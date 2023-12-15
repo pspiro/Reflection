@@ -6,6 +6,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
+import common.Util;
 import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.Monitor.MonPanel;
@@ -13,6 +14,7 @@ import positions.Wallet;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
+/** Not a json panel */
 public class CryptoPanel extends MonPanel {
 	private JTextField m_rusd = new JTextField(10);
 	private JTextField m_busd = new JTextField(10);
@@ -34,6 +36,10 @@ public class CryptoPanel extends MonPanel {
 		rusdPanel.add( "Admin2 MATIC", m_admin2);
 		
 		add(rusdPanel);
+	}
+	
+	@Override public void activated() {
+		Util.wrap( () -> refresh() );
 	}
 	
 	@Override public void refresh() throws Exception {
