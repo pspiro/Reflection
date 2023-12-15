@@ -1,29 +1,77 @@
-//package coinstore;
-//
-//import static reflection.Main.m_config;
-//
-//import com.ib.client.Contract;
-//import com.ib.client.Order;
-//
-//import common.Util;
-//import fireblocks.MyServer;
-//import http.MyClient;
-//import reflection.Config;
-//import reflection.Prices;
-//import reflection.Stock;
-//import reflection.Stocks;
-//import reflection.TradingHours.Session;
-//import tw.util.S;
-//import util.LogType;
-//
-//public class Coinstore {
+package coinstore;
+
+import java.net.http.HttpResponse;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+import fireblocks.Encrypt;
+import http.MyClient;
+import tw.util.S;
+
+public class Coinstore {
 //	private static String m_mdsUrl = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
 //	private static Config m_config;
 //	private static Stocks m_stocks;
-//	
-//	public static void main( String[] args) {
-//		m_config = Config.ask();
-//		
+	
+	static String apiKey = "476644a6179165d624eaa8a170487d0a";
+	static String secretKey = "7e5823785f38ed211e97fd9a00874ec7";	
+	
+	public static void main( String[] args) throws Exception {
+		String json = """
+		{
+		  "symbolCodes":["BTCUSDT"],
+		  "symbolIds":[10]
+		} """;
+				 
+		post( "/v2/public/config/spot/symbols", json);
+	}
+	
+	public static String sign(String data, String secret) {
+	    try {
+	        // Create HMAC SHA256 key from secret
+	        SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+
+	        // Get Mac instance and initialize with the HMAC SHA256 key
+	        Mac mac = Mac.getInstance("HmacSHA256");
+	        mac.init(secretKeySpec);
+
+	        // Perform HMAC SHA256 and get the result
+	        byte[] result = mac.doFinal(data.getBytes());
+
+	        // Convert the result to a Hex String
+	        return Encrypt.bytesToHex(result);
+	    } 
+	    catch (NoSuchAlgorithmException | InvalidKeyException e) {
+	        throw new RuntimeException("Failed to calculate HMAC SHA256", e);
+	    }
+	}
+	
+	
+	static void post( String path, String json) throws Exception {
+		long cur = System.currentTimeMillis();
+		String expires = "" + cur / 30000;
+		String key = sign(expires, secretKey);
+		String sign = sign( json, key);
+		
+		HttpResponse<String> resp = MyClient
+			.create( "https://api.coinstore.com/api" + path, json)
+			.header( "X-CS-APIKEY", apiKey)
+			.header( "X-CS-EXPIRES", "" + cur)
+			.header( "X-CS-SIGN", sign)
+			.header( "Content-Type", "application/json")
+			.query();
+		S.out( resp.statusCode() + " " + resp.body() );
+		
+		
+	}
+}
+		
+		
+		
+		
 //		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 //			server.createContext("/path", exch -> new CsTransaction( this, exch).handle() );
 //		});
