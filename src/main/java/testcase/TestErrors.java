@@ -7,7 +7,7 @@ import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.RefCode;
 
-public class TestErrors extends TestCase {
+public class TestErrors extends MyTestCase {
 	String message = "message";
 	String code = "code";
 	
@@ -18,7 +18,7 @@ public class TestErrors extends TestCase {
 	/** This version does not include the cookie */
 	public static JsonObject sendData( String data) throws Exception {
 		MyHttpClient cli = new MyHttpClient( host, 8383);
-		cli.post( "/api", Util.fmtJson( data) );
+		cli.post( "/api", Util.easyJson( data) );
 		return cli.readJsonObject();
 	}
 	
@@ -43,10 +43,6 @@ public class TestErrors extends TestCase {
 		JsonObject map = sendData( data);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), map.getString(code) );
 		assertStartsWith( "Param 'msg' has an invalid value", map.getString(message) ); 
-	}
-	
-	public static void assertStartsWith(String expected, Object actual) {
-		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
 	}
 
 	public void testJson2() throws Exception {

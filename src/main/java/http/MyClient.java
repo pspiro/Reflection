@@ -51,10 +51,9 @@ public class MyClient {
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
-			Util.require( 
-					niceCode( response.statusCode() ), 
-					"Error: received status code %s fetching URL %s",
-					response.statusCode(), request.uri() );
+			if (!niceCode( response.statusCode() ) ) {
+				throw new ClientException( response.statusCode(), response.body(), request.uri() );
+			}
 			
 			return response;
 		}

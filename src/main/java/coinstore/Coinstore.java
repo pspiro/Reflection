@@ -1,12 +1,17 @@
 package coinstore;
 
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.json.simple.JsonObject;
+
+import common.Util;
 import fireblocks.Encrypt;
 import http.MyClient;
 import tw.util.S;
@@ -20,52 +25,70 @@ public class Coinstore {
 	static String secretKey = "7e5823785f38ed211e97fd9a00874ec7";	
 	
 	public static void main( String[] args) throws Exception {
-		String json = """
-		{
-		  "symbolCodes":["BTCUSDT"],
-		  "symbolIds":[10]
-		} """;
-				 
-		post( "/v2/public/config/spot/symbols", json);
+		//getPairInfo("BTCUSDT");
+		getAssets("BTCUSDT");
 	}
 	
-	public static String sign(String data, String secret) {
-	    try {
-	        // Create HMAC SHA256 key from secret
-	        SecretKeySpec secretKeySpec = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
-
-	        // Get Mac instance and initialize with the HMAC SHA256 key
-	        Mac mac = Mac.getInstance("HmacSHA256");
-	        mac.init(secretKeySpec);
-
-	        // Perform HMAC SHA256 and get the result
-	        byte[] result = mac.doFinal(data.getBytes());
-
-	        // Convert the result to a Hex String
-	        return Encrypt.bytesToHex(result);
-	    } 
-	    catch (NoSuchAlgorithmException | InvalidKeyException e) {
-	        throw new RuntimeException("Failed to calculate HMAC SHA256", e);
-	    }
+	static void getAssets(String pair) throws Exception {
+		String json = Util.easyJson( "{ 'symbolCodes': [ '%s' ] }", pair);
+		post( "/spot/accountList", json);
 	}
 	
+	static void getPairInfo(String pair) throws Exception {
+		String json = Util.easyJson( "{ 'symbolCodes': [ '%s' ] }", pair);
+		post( "/v2/public/config/spot/symbols", json.toString() );
+	}
 	
 	static void post( String path, String json) throws Exception {
+		S.out(json);
 		long cur = System.currentTimeMillis();
 		String expires = "" + cur / 30000;
-		String key = sign(expires, secretKey);
-		String sign = sign( json, key);
+
+		String nextKey = sign(secretKey, expires);
+		
+		String signed = sign( nextKey, json);
+		
+//		sign( nextKey, "{ \"symbolCodes\": [ \"BTCUSDT\" ] }");
+//		sign( nextKey, "\"symbolCodes\": [ \"BTCUSDT\" ]");
+//		sign( nextKey, "symbolCodes BTCUSDT");
 		
 		HttpResponse<String> resp = MyClient
 			.create( "https://api.coinstore.com/api" + path, json)
 			.header( "X-CS-APIKEY", apiKey)
 			.header( "X-CS-EXPIRES", "" + cur)
-			.header( "X-CS-SIGN", sign)
+			.header( "X-CS-SIGN", signed)
 			.header( "Content-Type", "application/json")
 			.query();
-		S.out( resp.statusCode() + " " + resp.body() );
 		
-		
+		S.out( "Response code: %s", resp.statusCode() );
+		JsonObject.parse( resp.body() ).display();
+	}
+	
+	public static String sign(String key, String data) {
+	    try {
+	        // Create HMAC SHA256 key from secret
+	        SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(), "HmacSHA256");
+
+	        // Get Mac instance and initialize with the HMAC SHA256 key
+	        Mac mac = Mac.getInstance("HmacSHA256");
+	        mac.init(keySpec);
+
+	        // Perform HMAC SHA256 and get the result
+	        byte[] result = mac.doFinal(data.getBytes());
+
+	        // Convert the result to a Hex String
+	        String ret = Encrypt.bytesToHex(result);
+	        
+	        S.out( "key: %s", key);
+	        S.out( "data: %s", data);
+	        S.out( "encrypted: ** %s **", ret);
+	        S.out();
+	        
+	        return ret;
+	    } 
+	    catch (NoSuchAlgorithmException | InvalidKeyException e) {
+	        throw new RuntimeException("Failed to calculate HMAC SHA256", e);
+	    }
 	}
 }
 		

@@ -19,7 +19,7 @@ public class Erc20 {
 	static final String approveKeccak = "095ea7b3";
 	static final String mintKeccak = "40c10f19";
 	static final String burnKeccak = "9dc29fac";
-	static final String totalSupplyAbi = Util.fmtJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
+	static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	protected String m_address;
 	protected int m_decimals;

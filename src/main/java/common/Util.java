@@ -40,7 +40,8 @@ import reflection.RefException;
 import tw.util.S;
 
 public class Util {
-	public static final int HOUR = 60*60*1000;
+	public static final int MINUTE = 60 * 1000;
+	public static final int HOUR = 60 * MINUTE;
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
@@ -343,8 +344,8 @@ public class Util {
 
 	/** Replace single-quotes with double-quotes
 	 *  @deprecated, use toJsonMsg() instead */
-	public static String fmtJson(String str) {  // not a good name
-		return str.replaceAll( "\\'", "\"");
+	public static String easyJson(String format, Object... params) {
+		return String.format(format, params).replaceAll( "\\'", "\"");
 	}
 	
 	public static boolean isValidAddress( String str) {

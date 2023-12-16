@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -41,6 +42,21 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	protected Main m_main;
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
+
+	// create a config setting for this
+	static final int stale = 5 * Util.MINUTE;
+	
+	public static void clearMaps() {
+//		liveOrders.values().forEach( walletOrders -> {
+//			synchronized( walletOrders) {
+//				for (Iterator<OrderTransaction> iter = walletOrders.iterator(); iter.hasNext(); ) {
+//					if (iter.next().isStale() ) {
+//						iter.remove();
+//					}
+//				}
+//			}
+//		});
+	}
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, true);

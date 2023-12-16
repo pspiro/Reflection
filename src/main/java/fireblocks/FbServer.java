@@ -17,12 +17,16 @@ import tw.util.S;
  *  We could use Webhooks instead, but this server gets the status ten seconds before
  *  the Webhooks server.
  *  
+ *  Note that transactions are never deleted; if the map gets large, you'll need to fix this. 
+ *  
  *  Note that this functionality could be included in the RefAPI but has been broken
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbServer {
-	static HashMap<String,Trans> m_map = new HashMap<>();
+	static HashMap<String,Trans> m_map = new HashMap<>(); /** Map fireblock id to transaction */
 	static long m_started;
 	static Config m_config = new Config();
+	static long m_lastSuccess;
+	static long m_lastError;
 	
 	// remove COMPLETED items from the queue
 	// stop processing when queue is empty
@@ -74,10 +78,12 @@ public class FbServer {
 				for (JsonObject obj : ar) {
 					process( new Trans(obj) );
 				}
+				
+				m_lastSuccess = System.currentTimeMillis();
 			}
 			catch( Exception e) {
-				S.out( "Error - " + e.getMessage() + " - " + e.toString() );
-				e.printStackTrace();
+				S.out( "Error - " + e.getMessage() );
+				m_lastError = System.currentTimeMillis();
 			}
 		}
 	}
@@ -87,7 +93,7 @@ public class FbServer {
 		if (old == null || !trans.status().equals(old.status() ) ) {
 			m_map.put(trans.id(), trans);
 
-			S.out( BaseTransaction.debug() ? trans.obj() : trans);  // in debug mode, print the whole object
+			S.out( trans);
 			
 			try {
 				String uri = String.format( "/api/fireblocks/?id=%s&status=%s", 
@@ -134,9 +140,18 @@ public class FbServer {
 			return m_obj.getString("status");
 		}
 		
+		long createdAt() throws Exception {
+			return m_obj.getLong("createdAt");
+		}
+		
+		long lastUpdated() throws Exception {
+			return m_obj.getLong("lastUpdated");
+		}
+		
 		@Override public String toString() {
 			try {
-				return S.format( "%s %s %s %s", m_obj.getString("note"), id(), status(), hash() );
+				return m_obj.toString();
+				//return S.format( "%s %s %s %s", m_obj.getString("note"), id(), status(), hash() );
 			} catch (Exception e) {
 				return "error";
 			}

@@ -803,6 +803,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						
 						) ) );
 	}
+
+	public boolean isStale() {
+		return false; 
+	}
 }
 // look at all the catch blocks, save message or stack trace
 // you have to not log the cookie

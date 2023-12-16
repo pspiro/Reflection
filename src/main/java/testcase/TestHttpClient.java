@@ -6,7 +6,9 @@ import java.util.function.Consumer;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import common.Util.ObjectHolder;
+import http.ClientException;
 import http.MyClient;
 import tw.util.S;
 
@@ -20,9 +22,8 @@ public class TestHttpClient extends MyTestCase {
 
 	/** Nginx will return 502 for this endpoint */
 	public static void testExc() throws Exception {
-		MyClient.getJson("https://reflection.trading/api/ok", obj -> {
+		MyClient.getJson("https://reflection.trading/test502", obj -> {
 			S.out( "look for the URL in the std output");
-			throw new Exception("Aack!");
 		});
 		S.sleep(3000);
 	}
@@ -33,8 +34,13 @@ public class TestHttpClient extends MyTestCase {
 			S.out( MyClient.getString("https://reflection.trading/test502") );
 			assertTrue(false);
 		}
+		catch( ClientException e) {
+			S.out(e);
+			assertEquals(502, e.statusCode() );
+		}
 		catch( Exception e) {
-			assertTrue(true);
+			S.out(e);
+			assertTrue(false);
 		}
 	}
 	
@@ -44,8 +50,12 @@ public class TestHttpClient extends MyTestCase {
 			S.out( MyClient.getString("https://reflection.trading/keke") );
 			assertTrue(false);
 		}
+		catch( ClientException e) {
+			S.out(e);
+			assertEquals(404, e.statusCode() );
+		}
 		catch( Exception e) {
-			assertTrue(true);
+			assertTrue(false);
 		}
 	}
 	

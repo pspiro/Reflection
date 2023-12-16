@@ -18,7 +18,9 @@ public class FbTransaction extends BaseTransaction {
 			JsonObject obj = Util.toJson(
 					"code", "OK",
 					"started", FbServer.m_started,
-					"mapSize", FbServer.m_map.size()
+					"mapSize", FbServer.m_map.size(),
+					"lastError", FbServer.m_lastError,
+					"lastSuccess", FbServer.m_lastSuccess
 			);
 			respond( obj);
 		});

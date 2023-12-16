@@ -195,7 +195,11 @@ public class Monitor {
 			try {
 				if (tag.equals("data") ) {
 					String val = m_model.m_ar.get(row).getString(tag);
-					return S.isNotNull(val) ? JsonObject.parse(val).toHtml() : null;
+					if ( S.isNotNull(val) ) {
+						JsonObject obj = JsonObject.parse(val);
+						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
+						return obj.toHtml();
+					}
 				}
 			}
 			catch( Exception e) {
