@@ -57,7 +57,7 @@ public class Monitor {
 	private static void start() throws Exception {
 		// read config
 		m_config = MonitorConfig.ask();
-
+		
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
@@ -130,7 +130,7 @@ public class Monitor {
 	}
 	
 	private static void refreshConfig() {
-		Util.wrap( () -> S.inform( 
+		Util.wrap( () -> Util.inform( 
 					m_frame,
 					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
 	}
@@ -154,6 +154,16 @@ public class Monitor {
 		
 		TransPanel() {
 			super( "transactions", names, sql);
+		}
+		
+		@Override
+		protected Object format(String tag, Object value) {  // build this into JsonPanel class
+			if (value != null) {
+				if (tag.equals("tds") || tag.equals("price") ) {
+					return value instanceof Double ? S.fmt2((double)value) : value; 
+				}
+			}
+			return value;
 		}
 
 		@Override void onDouble(String tag, Object val) {
@@ -211,9 +221,9 @@ public class Monitor {
 
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
-		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
+		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,token_price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
 		String sql = """
-				select trades.*, transactions.wallet_public_key
+				select trades.*, transactions.wallet_public_key, transactions.price as token_price
 				from trades
 				left join transactions
 				on trades.orderref = transactions.uid

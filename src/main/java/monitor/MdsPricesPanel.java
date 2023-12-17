@@ -2,8 +2,11 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import javax.swing.JPanel;
+
 import common.Util;
 import http.MyClient;
+import tw.util.HtmlButton;
 import tw.util.S;
 
 /** MktDataServer prices */
@@ -13,8 +16,19 @@ public class MdsPricesPanel extends JsonPanel {
 		super( new BorderLayout(), "symbol,conid,bid,ask,last,bid time,ask time,last time,bidSize,askSize,from");
 		add( m_model.createTable() );
 		m_model.justify("llrrr");
+		
+		JPanel butPanel = new JPanel();
+		butPanel.add( new HtmlButton("Reconnect", act -> reconnect() ) );
+		add( butPanel, BorderLayout.EAST);
 	}
 	
+	private void reconnect() {
+		Util.wrap( () -> {
+			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/disconnect");
+			Util.inform(this, resp);
+		});
+	}
+
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing mdserver prices");
 		m_model.m_ar = MyClient.getArray(Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices");
@@ -26,8 +40,14 @@ public class MdsPricesPanel extends JsonPanel {
 				key.indexOf( "time") != -1 && value instanceof Long && ((Long)value) != 0
 					? Util.yToS.format( value) :
 				key.equals("bid") || key.equals("ask") || key.equals("last")
-					? fmtPrice(value) 
+					? fmtPrice(value) :
+				key.equals("bidSize") || key.equals("askSize")
+					? fmtSize(value)
 					: value;
+	}
+
+	private Object fmtSize(Object val) {
+		return val instanceof Double ? (int)(double)val : val; 
 	}
 
 	static Object fmtPrice(Object val) {

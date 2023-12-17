@@ -143,19 +143,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		m_order.action( side);
 		m_order.lmtPrice( orderPrice);
 		m_order.tif( m_config.tif() );  // VERY STRANGE: IOC does not work for API orders in paper system; TWS it works, and DAY works; if we have the same problem in the prod system, we will have to rely on our own timeout mechanism
-		m_order.allOrNone(session == Session.Smart);  // all or none, we don't want partial fills (not supported for Overnight)
 		m_order.transmit( true);
 		m_order.outsideRth( true);
 		m_order.orderRef(m_uid);
+		// note that allOrNone is not supported for overnight session 
 		
 		// check TDS calculation
 		m_tds = m_map.getDoubleParam("tds");
 		
-		double myTds = m_order.isBuy() 
-				? preCommAmt * .01
-				: (preCommAmt - m_config.commission() ) * .01;
-		
-		m_stablecoinAmt = m_map.getDoubleParam("amount");
+		m_stablecoinAmt = m_map.getDoubleParam("amount");  // incorporates commission and tds
 		if (m_stablecoinAmt == 0) {
 			m_stablecoinAmt = m_map.getDoubleParam("price");  // remove this after frontend is upgraded and change above to "getrequireddouble()"
 		}
@@ -271,7 +267,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			// save the number of shares filled
 			m_filledShares = filled.toDouble();
-			//shares.value = filled.toDouble() - 1;  // to test partial fills
 
 			// better is: if canceled w/ no shares filled, let it go to handle() below
 
@@ -365,19 +360,17 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// partial fills
 		if (m_filledShares < m_order.roundedQty() ) {
-			double ratio = m_filledShares / m_order.roundedQty();
+			double ratio = m_filledShares / Math.min(m_order.roundedQty(), m_desiredQuantity);  // by using the smaller of the two, we will give the user a slightly higher percentage fill for a better user experience
 			olog( LogType.PARTIAL_FILL, "desiredQty", m_desiredQuantity, "filledQty", m_filledShares, "ratio", ratio);
 
 			// reject and unwind if we filled less than half; this is debatable 
-			require( ratio >= .49999, RefCode.PARTIAL_FILL, "Order failed due to partial fill");
+			require( ratio >= m_config.minPartialFillPct(), RefCode.PARTIAL_FILL, "Order failed due to partial fill");
 			
 			m_stablecoinAmt *= ratio;
 			m_desiredQuantity *= ratio;
 			m_tds *= ratio;
 			
-			// we need to set order.m_roundedQuantity; probably should set it to the filled amt, or the ratio amount
-			
-			updateAfterPartialFill();
+			updateAfterPartialFill(ratio);
 		}
 		else {
 			olog( LogType.ORDER_FILLED, "filledShares", m_filledShares, "simulated", simulated);
@@ -462,12 +455,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// by shrinkWrap() and the live order will be failed()
 	}
 
-	private void updateAfterPartialFill() {
+	private void updateAfterPartialFill(double ratio) {
 		try {
 			JsonObject obj = new JsonObject();
 			obj.put("quantity", m_desiredQuantity);
-			obj.put("rounded_quantity", m_order.roundedQty() );
-			obj.put("commission", m_config.commission() / 2); // not so good, we should get it from the order. pas
+			obj.put("commission", m_config.commission() * ratio); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
 			
 			S.out("***");
@@ -649,7 +641,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 
 	/** The order was submitted. It may have been filled, maybe not. We must unwind the order from the
-	 *  PositionTracker and submit a reverse order if necessary. */ 
+	 *  PositionTracker and submit a reverse order if necessary.
+	 *  
+	 *  This method changes all the main attributes of the order including price, size, and side
+	 *  
+	 *  */ 
 	private void unwindOrder() {
 		try {
 			int conid = m_map.getRequiredInt("conid");

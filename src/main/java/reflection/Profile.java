@@ -4,19 +4,12 @@ import static reflection.Main.require;
 
 import org.json.simple.JsonObject;
 
-import tw.util.S;
-
 /** User profile which can be edited by the user. */
 public class Profile extends JsonObject {
-	static String[] fields = "wallet_public_key,first_name,last_name,address,email,phone,pan_number,aadhaar".split(",");
+	static final String fields = "wallet_public_key,first_name,last_name,address,email,phone,pan_number,aadhaar";
 	
 	public Profile(JsonObject source) {
-		for (String field : fields) {
-			Object val = source.get(field);
-			if (val != null) {
-				put( field, val);
-			}
-		}
+		copyFrom(source, fields.split(",") );
 		
 		// wallet address must be lower case because this object is inserted into database
 		update( "wallet_public_key", val -> val.toString().toLowerCase() ); // must be lower case because this gets inserted into the db
@@ -62,7 +55,7 @@ public class Profile extends JsonObject {
 		require( pan().toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$"), RefCode.INVALID_USER_PROFILE, "The PAN entered is invalid");
 
 		// don't allow < or > in user entry fields
-		for (String tag : fields) {
+		for (String tag : keySet() ) {
 			require( 
 					validUserEntry( getString(tag) ), 
 					RefCode.INVALID_USER_PROFILE, 

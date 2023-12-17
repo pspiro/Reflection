@@ -25,14 +25,16 @@ public class TestPartialFill extends MyTestCase {
 		JsonObject t = m_config.sqlQuery( query -> query.queryToJson("select * from transactions where uid = '%s'", uid ) ).get(0);
 		t.display();
 		assertEquals(5, (int)t.getDouble("quantity") );
-		assertEquals(5, (int)t.getDouble("rounded_quantity") );
 		assertEquals(m_config.commission() / 2, t.getDouble("commission") );
+		// you should check that the blockchain amounts are correct as well
 		//assertEquals(5, t.getDouble("tds"));
 	}
-
+	// test rounding up and down
+	
+	/** This order fails because it is below the 10% threshold */
 	public void testLess() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
-		obj.put("simPartial", 4);
+		JsonObject obj = TestOrder.createOrder( "BUY", 11, 3);
+		obj.put("simPartial", 1);
 		
 		String uid = postOrderToId(obj);
 		assert200();
