@@ -2,6 +2,7 @@ package positions;
 
 
 import java.net.http.HttpResponse;
+import java.util.HashMap;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -10,6 +11,7 @@ import common.Util;
 import fireblocks.Erc20;
 import http.MyClient;
 import reflection.Config;
+import reflection.ModifiableDecimal;
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -37,11 +39,6 @@ public class MoralisServer {
 	// test that you can handle events while you are sending out the client requests 
 	// double-check the synchronization
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
-	
-	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
-		S.out( queryBalances("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c") );
-	}
 	
 	public static String queryBalances(String contract) throws Exception {
 		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
@@ -126,15 +123,83 @@ public class MoralisServer {
 	/** Seems useless; returns e.g.
 	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
 	public static String getWalletStats(String wallet) throws Exception {
-		String url = String.format( "%s/wallets/%s/stats", moralis, wallet);
+		String url = String.format( "%s/wallets/%s/stats?chain=%s", moralis, wallet, chain);
 		return querySync( url);
 		
 	}
 
 	/** useless e.g. {"transfers":{"total":"0"}} */
 	public static String getErc20Stats(String address) throws Exception {
-		String url = String.format( "%s/erc20/%s/stats", moralis, address);
+		String url = String.format( "%s/erc20/%s/stats?chain=%s", moralis, address, chain);
 		return querySync( url);
 	}
 	
+	/** this works for transfer events, which probably catches everything, but not
+	 *  my custom events such as BuyRusd and SellRusd, which don't even appear in
+	 *  the logs on PolyScan
+	 * @param address
+	 * @param topic
+	 * @return
+	 * @throws Exception
+	 */
+	public static String logs(String address, String topic) throws Exception {
+		String url = String.format( "%s/%s/logs?chain=%s&limit=10&topic0=%s", moralis, address, chain, topic);
+		S.out();
+		S.out( url);
+		return querySync(url);
+		
+	}
+	
+	public static JsonArray getTransactions(String address) throws Exception {
+		String url = String.format( "%s/erc20/%s/transfers?chain=%s", moralis, address, chain);
+		String ret = querySync(url);
+		JsonObject obj = JsonObject.parse(ret);
+		return obj.getArray("result");
+	}
+	
+	public static getBalances(String address) {
+		JsonArray ar = getTransactions(address);
+		
+		HashMap<String,ModifiableDecimal> map = new HashMap<>();
+		
+		ar.forEach( obj -> ) {
+			String from = obj.getString("from_address");
+			String to = obj.getString("to_address");
+			
+			double value = Erc20.fromBlockchain( obj.getString("value"), 18) ); // pass this in
+						
+			inc( map, from, -value);
+			inc( map, to, value);
+		}
+	}
+	
+	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
+		Util.getOrCreate(map, address, null)
+	}
+
+	static class ModInt {
+		int val;
+		
+		void inc( int v) {
+			val += v;
+		}
+		
+	}
+	public static void main(String[] args) throws Exception {
+		Config config = Config.readFrom("Prod-config"); //ask();
+		getTransactions("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c").display();
+		
+//		String str = logs(
+//				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",
+//				//"0xf4e116c5af669bd0b672b4498a0a9b172a0029e608d2ab109e51480f6abc8414"
+//				transferTopic
+//				);
+//		JsonObject.parse(str).display();
+	}
+	
 }
+
+// topic0 is full keccak of the event (initial cap)
+
+//transferTopic
+//0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef

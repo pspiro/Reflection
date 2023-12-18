@@ -21,6 +21,7 @@ public class MyClient {
 
 	/** build GET request; call this directly to add headers */
 	public static MyClient create(String url) {
+		S.out( url + " GET");
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.GET() );

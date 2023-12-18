@@ -2,7 +2,7 @@ package reflection;
 
 import tw.util.S;
 
-class ModifiableDecimal {
+public class ModifiableDecimal {
 	private double value = 0;
 
 	@Override public String toString() {
@@ -23,5 +23,9 @@ class ModifiableDecimal {
 
 	public void value(double val) {
 		value = val;
+	}
+	
+	public void inc( double val) {
+		value += val;
 	}
 }

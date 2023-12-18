@@ -1,10 +1,8 @@
 package coinstore;
 
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -26,10 +24,36 @@ public class Coinstore {
 	
 	public static void main( String[] args) throws Exception {
 		//getPairInfo("BTCUSDT");
-		getAssets("BTCUSDT");
+		//getPositions("AAPL");
+		getTrades("USDCUSDT");
 	}
 	
-	static void getAssets(String pair) throws Exception {
+	static void getTrades(String symbol) throws Exception {
+		String params = String.format("symbol=%s", symbol);
+		get( "/trade/match/accountMatches", params);
+	}
+	
+	static void get(String path, String params) throws Exception {
+		long cur = System.currentTimeMillis();
+		String expires = "" + cur / 30000;
+
+		String nextKey = sign(secretKey, expires);
+		
+		String signed = sign( nextKey, params);
+
+		HttpResponse<String> resp = MyClient
+			.create( String.format( "https://api.coinstore.com/api%s?%s", path, params) )
+			.header( "X-CS-APIKEY", apiKey)
+			.header( "X-CS-EXPIRES", "" + cur)
+			.header( "X-CS-SIGN", signed)
+			.header( "Content-Type", "application/json")
+			.query();
+
+		S.out( "Response code: %s", resp.statusCode() );
+		JsonObject.parse( resp.body() ).display();
+	}
+	
+	static void getPositions(String pair) throws Exception {
 		String json = Util.easyJson( "{ 'symbolCodes': [ '%s' ] }", pair);
 		post( "/spot/accountList", json);
 	}
@@ -47,10 +71,6 @@ public class Coinstore {
 		String nextKey = sign(secretKey, expires);
 		
 		String signed = sign( nextKey, json);
-		
-//		sign( nextKey, "{ \"symbolCodes\": [ \"BTCUSDT\" ] }");
-//		sign( nextKey, "\"symbolCodes\": [ \"BTCUSDT\" ]");
-//		sign( nextKey, "symbolCodes BTCUSDT");
 		
 		HttpResponse<String> resp = MyClient
 			.create( "https://api.coinstore.com/api" + path, json)

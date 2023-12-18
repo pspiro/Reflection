@@ -13,7 +13,7 @@ import tw.util.S;
 public class MdsPricesPanel extends JsonPanel {
 
 	public MdsPricesPanel() {
-		super( new BorderLayout(), "symbol,conid,bid,ask,last,bid time,ask time,last time,bidSize,askSize,from");
+		super( new BorderLayout(), "symbol,conid,bidSize,bid,ask,askSize,last,bid time,ask time,last time,from");
 		add( m_model.createTable() );
 		m_model.justify("llrrr");
 		
