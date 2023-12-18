@@ -18,6 +18,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
+import http.MyHttpClient;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -109,6 +110,7 @@ public class Monitor {
 		m_tabs.addTab( "RefAPI Prices", pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
+		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -288,4 +290,24 @@ public class Monitor {
 		@Override public void refresh() throws Exception {
 		}
 	}
+	
+	static class FbServerPanel extends JsonPanel {
+		FbServerPanel() {
+			super( new BorderLayout(), "id,status,createdAt");
+			add( m_model.createTable() );
+		}
+		
+		@Override protected Object format(String key, Object value) {
+			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
+		}
+		
+		@Override
+		public void refresh() throws Exception {
+			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
+			client.get( "/fbserver/get-all");
+			m_model.m_ar = client.readJsonArray();
+			m_model.fireTableDataChanged();
+		}
+	}
+	
 }

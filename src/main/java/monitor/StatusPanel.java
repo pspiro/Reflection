@@ -26,6 +26,7 @@ class StatusPanel extends MonPanel {
 	JTextField f12 = new JTextField(14);
 	JTextField f13 = new JTextField(14);
 	JTextField f14 = new JTextField(14);
+	JTextField f15 = new JTextField(14);
 
 	StatusPanel() {
 		super( new BorderLayout() );
@@ -46,7 +47,8 @@ class StatusPanel extends MonPanel {
 		p.add( "Map size", f12);
 		p.add( "Started", f11);
 		p.add( "Last error", f13);
-		p.add( "Last success", f14);
+		p.add( "Last successful fetch", f14);
+		p.add( "Last successful put", f15);
 		
 		add( p);
 	}
@@ -77,8 +79,8 @@ class StatusPanel extends MonPanel {
 			f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 			f11.setText( json.getTime("started", Util.yToS) );
 			f12.setText( json.getString("mapSize").toString() );
-			f13.setText( json.getString("lastError").toString() );
-			f14.setText( json.getString("lastSuccess").toString() );
+			f14.setText( json.getString("lastSuccessfulFetch").toString() );
+			f14.setText( json.getString("lastSuccessfulPut").toString() );
 		});
 	}
 }
