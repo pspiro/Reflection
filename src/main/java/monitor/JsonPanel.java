@@ -35,8 +35,10 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 		return new JsonModel(allNames);
 	}
 
-	/** Show only rows that have the clicked-on value */
 	void onDouble(String tag, Object val) {
+	}
+
+	void onCtrlClick(JsonObject row, String tag) {
 	}
 
 	/** Override this
@@ -123,6 +125,12 @@ public abstract class JsonPanel extends MonPanel implements INewTab {
 			String tag = m_namesMap.get(col);
 			Object val = getValueAt(row, col);
 			onDouble(tag, val);
+		}
+
+		@Override public void onCtrlClick(MouseEvent e, int row, int col) {
+			String tag = m_namesMap.get(col);
+			Object val = getValueAt(row, col);
+			JsonPanel.this.onCtrlClick(m_ar.get(row), tag);
 		}
 		
 		JsonObject getRow(int i) {

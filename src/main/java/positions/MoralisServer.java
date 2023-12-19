@@ -2,7 +2,7 @@ package positions;
 
 
 import java.net.http.HttpResponse;
-import java.util.HashMap;
+import java.util.function.Consumer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -11,7 +11,6 @@ import common.Util;
 import fireblocks.Erc20;
 import http.MyClient;
 import reflection.Config;
-import reflection.ModifiableDecimal;
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -143,51 +142,35 @@ public class MoralisServer {
 	 * @throws Exception
 	 */
 	public static String logs(String address, String topic) throws Exception {
-		String url = String.format( "%s/%s/logs?chain=%s&limit=10&topic0=%s", moralis, address, chain, topic);
-		S.out();
-		S.out( url);
+		String url = String.format( "%s/%s/logs?chain=%s&topic0=%s", moralis, address, chain, topic);
 		return querySync(url);
 		
 	}
 	
-	public static JsonArray getTransactions(String address) throws Exception {
-		String url = String.format( "%s/erc20/%s/transfers?chain=%s", moralis, address, chain);
-		String ret = querySync(url);
-		JsonObject obj = JsonObject.parse(ret);
-		return obj.getArray("result");
+	/** returns one page of transactions */
+	public static JsonObject getTransactions(String address, String cursor) throws Exception {
+		String url = String.format( "%s/erc20/%s/transfers?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
+		return JsonObject.parse( querySync(url) );
 	}
 	
-	public static getBalances(String address) {
-		JsonArray ar = getTransactions(address);
+	public static void getAllTransactions(String address, Consumer<JsonArray> consumer) throws Exception {
+		String cursor = "";
 		
-		HashMap<String,ModifiableDecimal> map = new HashMap<>();
-		
-		ar.forEach( obj -> ) {
-			String from = obj.getString("from_address");
-			String to = obj.getString("to_address");
+		while (true) {
+			JsonObject full = MoralisServer.getTransactions(address, cursor);
 			
-			double value = Erc20.fromBlockchain( obj.getString("value"), 18) ); // pass this in
-						
-			inc( map, from, -value);
-			inc( map, to, value);
+			consumer.accept( full.getArray("result") );
+			
+			cursor = full.getString( "cursor");
+			if (S.isNull(cursor) ) {
+				break;
+			}
 		}
-	}
+	}		
 	
-	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
-		Util.getOrCreate(map, address, null)
-	}
-
-	static class ModInt {
-		int val;
-		
-		void inc( int v) {
-			val += v;
-		}
-		
-	}
 	public static void main(String[] args) throws Exception {
 		Config config = Config.readFrom("Prod-config"); //ask();
-		getTransactions("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c").display();
+		getAllTransactions("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c", ar -> ar.display() );
 		
 //		String str = logs(
 //				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",

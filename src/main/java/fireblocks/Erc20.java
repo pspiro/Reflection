@@ -2,12 +2,16 @@ package fireblocks;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
+import reflection.ModifiableDecimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
@@ -211,4 +215,33 @@ public class Erc20 {
 		
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
+
+	/** print out the balances of all wallets holding this token
+	 * @return map wallet address -> token balance */
+	public void showBalances() throws Exception {
+		HashMap<String,ModifiableDecimal> map = new HashMap<>();
+
+		// get all transactions in batches and build the map
+		MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);
+				inc( map, obj.getString("from_address"), -value);
+				inc( map, obj.getString("to_address"), value);
+		} ) );
+		
+		JsonObject out = new JsonObject();
+		out.putAll(map);
+		out.display();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config config = Config.readFrom("Prod-config"); //ask();
+		config.readStocks().getStock("AAPL").getToken().showBalances();
+		
+	}
+	
+	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
+		Util.getOrCreate(map, address, () -> new ModifiableDecimal() ).inc(amt);
+	}
+
+	
 }

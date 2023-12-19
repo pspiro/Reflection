@@ -584,9 +584,9 @@ public class Util {
 		}
 	}
 	
-	public static String ask(String prompt) {
+	public static String ask(String prompt, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
-		return JOptionPane.showInputDialog(prompt);
+		return JOptionPane.showInputDialog( String.format( prompt, params) );
 	}
 
 	public static double askForVal(String prompt) {

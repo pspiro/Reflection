@@ -34,16 +34,23 @@ public class MyTable extends JTable { // nicole
 		// listen for events in the table
 		addMouseListener( new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				int row = rowAtPoint( e.getPoint() );
+				int col = columnAtPoint(e.getPoint());
+				
 				if (SwingUtilities.isRightMouseButton(e) ) {
-					getModel().onRightClick(e, rowAtPoint(e.getPoint()), columnAtPoint(e.getPoint()) );
+					getModel().onRightClick(e, row, col);
 				}
 				else if (e.getClickCount() == 2) {
-					int row = rowAtPoint( e.getPoint() );
-					int col = MyTable.this.getTableHeader().columnAtPoint( e.getPoint() );
+					int coll = MyTable.this.getTableHeader().columnAtPoint( e.getPoint() );  // why table header???
 					getModel().onDoubleClick(row, col);
 				}
 				else if (SwingUtilities.isLeftMouseButton(e)) {
-					getModel().onLeftClick(e, rowAtPoint(e.getPoint()), columnAtPoint(e.getPoint()) );
+					if (e.isControlDown() ) {
+						getModel().onCtrlClick(e, row, col);
+					}
+					else {
+						getModel().onLeftClick(e, row, col);
+					}
 				}
 			}
 		});
