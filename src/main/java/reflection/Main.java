@@ -533,8 +533,6 @@ public class Main implements ITradeReportHandler {
 		}
 		catch( Exception e) {
 			S.out( "Error fetching prices - " + e.getMessage() ); // need this because the exception doesn't give much info
-			// e.printStackTrace(); the stack trace is useless here and fills up the log
-			log( LogType.ERROR_4, e.getMessage() );
 		}
 	}
 
