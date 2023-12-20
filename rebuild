@@ -8,8 +8,12 @@ echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
 mvn package
+echo completed build
+echo restarting mdserver
 sudo systemctl restart mdserver
 sleep 2
+echo restarting fbserver
 sudo systemctl restart fbserver
 sleep 2
+echo restarting refapi
 sudo systemctl restart refapi
