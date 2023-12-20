@@ -177,12 +177,11 @@ public class BackendTransaction extends MyTransaction {
 		return json;
 	}
 
-	// what is the purpose of this? pas
-	public void handleWalletUpdate() {  // obsolete, remove it
+	/** obsolete, */
+	public void handleWalletUpdate() {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
 
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
@@ -205,14 +204,13 @@ public class BackendTransaction extends MyTransaction {
 //			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
 //			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
 			
-			// look to see what parameters are being passed; at least we should update the time
-			out( "received wallet-update message with params " + m_map);
-			
 			JsonObject obj = new JsonObject();
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			obj.copyFrom( m_map.obj(), "kyc_status", "persona_response");
 
-			m_main.queueSql( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+			m_main.queueSql( sql -> {
+				sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+			});
 
 			respondOk();  // user db is messed up, allows empty and up wallet
 		});

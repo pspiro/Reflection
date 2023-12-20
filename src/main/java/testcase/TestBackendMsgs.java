@@ -19,7 +19,7 @@ public class TestBackendMsgs extends MyTestCase {
 	public void testGetAllStocks() throws Exception {
 		cli().get("/api/get-all-stocks");
 		JsonArray ar = cli.readJsonArray();
-		assertTrue( ar.size() > 0);
+		assertTrue( ar.size() == 3);
 		JsonObject item = ar.getJsonObj(0);
 		assertNotNull(item.getString("symbol"));
 		assertNotNull(item.getString("type"));
