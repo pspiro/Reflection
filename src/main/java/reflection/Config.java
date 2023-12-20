@@ -377,7 +377,9 @@ public class Config extends ConfigBase {
 		return conn;
 	}
 
-	/** Connect, execute a command, then close the connection */
+	/** Connect, execute a command, then close the connection.
+	 *  Since executions is delayed, don't use it to update data
+	 *  that will be used by a subsequent operation */
 	public void sqlCommand(SqlCommand command) throws Exception {
 		try ( MySqlConnection conn = createConnection() ) {
 			command.run(conn);

@@ -70,8 +70,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	// for the 
 
 	private void order() throws Exception {
-		m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "The wallet address '%s' is invalid", m_walletAddr);
+		m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");

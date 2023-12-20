@@ -1,5 +1,7 @@
 package reflection;
 
+import static reflection.Main.require;
+
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -31,6 +33,14 @@ public class ParamMap {
 	String getRequiredParam(String tag) throws RefException {
 		String val = getParam( tag);
 		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
+		return val;
+	}
+
+	/** Returns lower case, interned string. */
+	String getWalletAddress(String tag) throws RefException {
+		String val = getParam( tag);
+		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
+		Main.require( Util.isValidAddress(val), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		return val;
 	}
 
