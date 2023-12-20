@@ -2,12 +2,15 @@ package fireblocks;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 
 import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
+import reflection.ModifiableDecimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
@@ -19,13 +22,13 @@ public class Erc20 {
 	static final String approveKeccak = "095ea7b3";
 	static final String mintKeccak = "40c10f19";
 	static final String burnKeccak = "9dc29fac";
-	static final String totalSupplyAbi = Util.fmtJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
+	static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	protected String m_address;
 	protected int m_decimals;
 	private String m_name;
 	
-	Erc20( String address, int decimals, String name) throws Exception {
+	public Erc20( String address, int decimals, String name) throws Exception {
 		Util.require( 
 				S.isNull(address) || 
 				address.equalsIgnoreCase("deploy") || 
@@ -211,4 +214,45 @@ public class Erc20 {
 		
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
+
+	public void showBalances() throws Exception {
+		new JsonObject( getAllBalances() ).display();
+	}
+
+	/** print out the balances of all wallets holding this token
+	 * @return map wallet address -> token balance */
+	public HashMap<String,ModifiableDecimal> getAllBalances() throws Exception {
+		HashMap<String,ModifiableDecimal> map = new HashMap<>();
+
+		// get all transactions in batches and build the map
+		MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
+				inc( map, obj.getString("from_address"), -value);
+				inc( map, obj.getString("to_address"), value);
+		} ) );
+		
+		return map;
+	}
+	
+	public void showAllTransactions() throws Exception {
+			MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+				S.out( "%8s %s %s %s", 
+						obj.getString("value_decimal"), 
+						Util.left( obj.getString("from_address"), 8),
+						Util.left( obj.getString("to_address"), 8),
+						obj.getString("transaction_hash") );
+		} ) );
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config config = Config.readFrom("Prod-config"); //ask();
+		config.readStocks().getStock("AAPL").getToken().showBalances();
+		
+	}
+	
+	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
+		Util.getOrCreate(map, address, () -> new ModifiableDecimal() ).inc(amt);
+	}
+
+	
 }

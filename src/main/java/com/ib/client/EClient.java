@@ -1748,11 +1748,8 @@ public abstract class EClient {
             // send main order fields
             b.send( order.action().getApiString());
             
-            // frac shares not supported
-//			if (m_serverVersion >= MIN_SERVER_VER_FRACTIONAL_POSITIONS)
-//				b.send( order.totalQty() );
-//			else
-				b.send( order.roundedQty() );
+            // send integer quantity; frac shares not supported
+			b.send( order.roundedQty() );
             
 			b.send( order.getOrderType());
             if (m_serverVersion < MIN_SERVER_VER_ORDER_COMBO_LEGS_PRICE) {

@@ -112,4 +112,8 @@ public class MyTestCase extends TestCase {
 		}
 	}
 	
+	public static void assertStartsWith(String expected, Object actual) {
+		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
+	}
+	
 }

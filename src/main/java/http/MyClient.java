@@ -21,6 +21,7 @@ public class MyClient {
 
 	/** build GET request; call this directly to add headers */
 	public static MyClient create(String url) {
+		S.out( url + " GET");
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.GET() );
@@ -28,6 +29,7 @@ public class MyClient {
 		
 	/** build POST request; call this directly to add headers */
 	public static MyClient create(String url, String body) {
+		S.out( url + " POST");
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.POST(HttpRequest.BodyPublishers.ofString(body)));
@@ -51,10 +53,9 @@ public class MyClient {
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
-			Util.require( 
-					niceCode( response.statusCode() ), 
-					"Error: received status code %s fetching URL %s",
-					response.statusCode(), request.uri() );
+			if (!niceCode( response.statusCode() ) ) {
+				throw new ClientException( response.statusCode(), response.body(), request.uri() );
+			}
 			
 			return response;
 		}
@@ -93,7 +94,7 @@ public class MyClient {
 	
 	/** Really we want to at least catch 404 and 502 */
 	private static boolean niceCode( int statusCode) {
-		return statusCode == 200 || statusCode == 400;
+		return statusCode == 200 || statusCode == 400; // 400 is returned by RefAPI along w/ an error message
 	}
 	
 	// ----- synchronous helper methods - get ----------------------------

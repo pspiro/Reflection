@@ -2,7 +2,6 @@ package fireblocks;
 
 import common.Util;
 import reflection.Config;
-import tw.util.S;
 
 public class MintStockToken {
 	public static void main(String[] args) throws Exception {
@@ -13,7 +12,7 @@ public class MintStockToken {
 		
 		StockToken st = config.readStocks().getStock(tok).getToken();
 		
-		if (S.confirm( null, String.format("You will mint %s %s for %s", amt, tok, wallet) ) ) {
+		if (Util.confirm( null, String.format("You will mint %s %s for %s", amt, tok, wallet) ) ) {
 			config.rusd().buyStock(wallet, config.rusd(), 0, st, amt).waitForHash();
 		}	
 	}

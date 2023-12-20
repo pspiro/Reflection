@@ -19,6 +19,7 @@ import com.google.api.services.sheets.v4.model.SheetProperties;
 import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
+import common.Util;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;
 import tw.util.OStream;
@@ -208,6 +209,8 @@ public class NewSheet {
 				List<List<Object>> rows = getRows(false);
 				if (rows == null) return;  // some sheets may have no rows
 				
+				Util.require( m_headerRow != null, "null header row on tab %s; no garbage data allowed on those tabs", m_name);
+
 				JsonArray ar = new JsonArray();
 				
 				for (int i = 1; i < rows.size(); i++) {  // skip header row

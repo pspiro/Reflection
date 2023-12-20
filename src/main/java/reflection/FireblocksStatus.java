@@ -1,6 +1,6 @@
 package reflection;
 
-enum FireblocksStatus {
+public enum FireblocksStatus {
 		// these are NOT Fireblocks status codes
 		LIVE(5), // Live order, waiting for IB order to fill 
 		STOCK_ORDER_FILLED(15), // IB order filled
@@ -26,11 +26,11 @@ enum FireblocksStatus {
 		
 		private int m_pct; // 0 to 100
 
-		FireblocksStatus(int pct) {
+		private FireblocksStatus(int pct) {
 			m_pct = pct;
 		}
 		
-		int pct() { 
+		public int pct() { 
 			return m_pct; 
 		}
 	}

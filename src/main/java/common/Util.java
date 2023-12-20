@@ -1,5 +1,6 @@
 package common;
 
+import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +41,8 @@ import reflection.RefException;
 import tw.util.S;
 
 public class Util {
-	public static final int HOUR = 60*60*1000;
+	public static final int MINUTE = 60 * 1000;
+	public static final int HOUR = 60 * MINUTE;
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
@@ -343,8 +345,8 @@ public class Util {
 
 	/** Replace single-quotes with double-quotes
 	 *  @deprecated, use toJsonMsg() instead */
-	public static String fmtJson(String str) {  // not a good name
-		return str.replaceAll( "\\'", "\"");
+	public static String easyJson(String format, Object... params) {
+		return String.format(format, params).replaceAll( "\\'", "\"");
 	}
 	
 	public static boolean isValidAddress( String str) {
@@ -582,10 +584,27 @@ public class Util {
 		}
 	}
 	
-	public static String ask(String prompt) {
+	public static String ask(String prompt, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
-		return JOptionPane.showInputDialog(prompt);
+		return JOptionPane.showInputDialog( String.format( prompt, params) );
 	}
+
+	public static double askForVal(String prompt) {
+		String val = ask(prompt);
+		return S.isNull(val) ? 0 : Double.parseDouble(val);
+	}
+	
+	public static boolean confirm(Component parent, String format, Object... params) {
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		return JOptionPane.showConfirmDialog( 
+				parent, String.format(format,params), "Confirm", JOptionPane.YES_NO_OPTION) == 0;
+	}
+
+	public static void inform(Component parent, String message, Object... params) {
+		java.awt.Toolkit.getDefaultToolkit().beep();
+		JOptionPane.showMessageDialog( parent, String.format( S.notNull( message), params) );
+	}
+	
 	
 	
 }

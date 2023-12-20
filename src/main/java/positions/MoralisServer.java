@@ -2,6 +2,7 @@ package positions;
 
 
 import java.net.http.HttpResponse;
+import java.util.function.Consumer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -37,11 +38,6 @@ public class MoralisServer {
 	// test that you can handle events while you are sending out the client requests 
 	// double-check the synchronization
 	// you should periodically query for the current balance and compare to what you have to check for mistakes
-	
-	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
-		S.out( queryBalances("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c") );
-	}
 	
 	public static String queryBalances(String contract) throws Exception {
 		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
@@ -126,15 +122,68 @@ public class MoralisServer {
 	/** Seems useless; returns e.g.
 	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
 	public static String getWalletStats(String wallet) throws Exception {
-		String url = String.format( "%s/wallets/%s/stats", moralis, wallet);
+		String url = String.format( "%s/wallets/%s/stats?chain=%s", moralis, wallet, chain);
 		return querySync( url);
 		
 	}
 
 	/** useless e.g. {"transfers":{"total":"0"}} */
 	public static String getErc20Stats(String address) throws Exception {
-		String url = String.format( "%s/erc20/%s/stats", moralis, address);
+		String url = String.format( "%s/erc20/%s/stats?chain=%s", moralis, address, chain);
 		return querySync( url);
 	}
 	
+	/** this works for transfer events, which probably catches everything, but not
+	 *  my custom events such as BuyRusd and SellRusd, which don't even appear in
+	 *  the logs on PolyScan
+	 * @param address
+	 * @param topic
+	 * @return
+	 * @throws Exception
+	 */
+	public static String logs(String address, String topic) throws Exception {
+		String url = String.format( "%s/%s/logs?chain=%s&topic0=%s", moralis, address, chain, topic);
+		return querySync(url);
+		
+	}
+	
+	/** returns one page of transactions */
+	public static JsonObject getTransactions(String address, String cursor) throws Exception {
+		String url = String.format( "%s/erc20/%s/transfers?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
+		return JsonObject.parse( querySync(url) );
+	}
+	
+	public static void getAllTransactions(String address, Consumer<JsonArray> consumer) throws Exception {
+		String cursor = "";
+		
+		while (true) {
+			JsonObject full = MoralisServer.getTransactions(address, cursor);
+			
+			consumer.accept( full.getArray("result") );
+			
+			cursor = full.getString( "cursor");
+			if (S.isNull(cursor) ) {
+				break;
+			}
+			S.sleep(10);  // don't break pacing limits
+		}
+	}		
+	
+	public static void main(String[] args) throws Exception {
+		Config config = Config.readFrom("Prod-config"); //ask();
+		getAllTransactions("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c", ar -> ar.display() );
+		
+//		String str = logs(
+//				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",
+//				//"0xf4e116c5af669bd0b672b4498a0a9b172a0029e608d2ab109e51480f6abc8414"
+//				transferTopic
+//				);
+//		JsonObject.parse(str).display();
+	}
+	
 }
+
+// topic0 is full keccak of the event (initial cap)
+
+//transferTopic
+//0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef

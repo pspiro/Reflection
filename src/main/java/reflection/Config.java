@@ -75,6 +75,7 @@ public class Config extends ConfigBase {
 	private int myWalletRefresh;
 	private double fbLookback;
 	private int mdsPort;  // port that mdServer runs on where RefAPI will send MD requests 
+	private double minPartialFillPct;  // min pct for partial fills
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -128,6 +129,7 @@ public class Config extends ConfigBase {
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
+		S.out( "Using config tab %s", tab);
 		return config;
 	}
 
@@ -190,6 +192,7 @@ public class Config extends ConfigBase {
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
 		this.mdsPort = m_tab.getRequiredInt("mdsPort");
+		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -487,5 +490,9 @@ public class Config extends ConfigBase {
 	
 	public int mdsPort() {
 		return mdsPort;
+	}
+	
+	public double minPartialFillPct() {
+		return minPartialFillPct;
 	}
 }

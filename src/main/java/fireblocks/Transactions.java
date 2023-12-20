@@ -3,6 +3,7 @@ package fireblocks;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import reflection.Config;
 import tw.util.S;
 
@@ -23,6 +24,7 @@ public class Transactions {
 		return Fireblocks.fetchArray( "/v1/transactions/?limit=" + limit);
 	}
 
+	/** This queries based on the createdAt timestamp; doesn't matter when it was updated */
 	public static JsonArray getSince(long start) throws Exception {
 		return Fireblocks.fetchArray( "/v1/transactions/?after=" + start);
 	}
@@ -31,10 +33,10 @@ public class Transactions {
 		return Fireblocks.fetchObject( "/v1/transactions/" + id);
 	}
 
-	public static void getTransactions(String wallet) throws Exception {
+	public static void showFor(String wallet) throws Exception {
 		S.out( "Looking for " + wallet);
 		
-		long since = System.currentTimeMillis() - 120 * 60000;
+		long since = System.currentTimeMillis() - 2 * Util.HOUR;
 		
 		// String admin = Accounts.instance.getAdmin( wallet);
 		// int id = Accounts.instance.getId( admin);		

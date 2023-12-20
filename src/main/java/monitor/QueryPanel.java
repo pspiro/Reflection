@@ -58,6 +58,19 @@ public class QueryPanel extends JsonPanel {
 		add( m_model.createTable() );
 	}
 	
+	@Override void onCtrlClick(JsonObject row, String tag) {
+		Util.wrap( () -> {
+			String val = Util.ask( "Enter new value for %s field", tag);
+			
+			Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+					m_table, 
+					Util.toJson( tag, val), 
+					"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
+					row.getString("wallet_public_key") ) );
+			refresh();
+		});
+	}
+
 	protected JsonModel createModel( String allNames) {
 		return new QueryModel(allNames);
 	}

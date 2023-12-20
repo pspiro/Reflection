@@ -16,6 +16,7 @@ public class Cookie {
 	//public static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
 	//public static String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 	public static String wallet = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce";
+	public static String prod = "ba51ddc2189107376bc8548638ce5d30d7bba480685d5ca603200087073d89";
 	//public static String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 	public static String cookie;  // that's right, the cookie is a string, not an object
 	public static String base = "https://reflection.trading";

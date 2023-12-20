@@ -29,6 +29,9 @@ public abstract class MyTableModel extends AbstractTableModel {
 	public void onRightClick(MouseEvent e, int row, int col) {
 	}
 
+	public void onCtrlClick(MouseEvent e, int row, int col) {
+	}
+
 	public void onDoubleClick(int row, int col) {
 	}
 

@@ -18,6 +18,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
+import http.MyHttpClient;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -57,7 +58,7 @@ public class Monitor {
 	private static void start() throws Exception {
 		// read config
 		m_config = MonitorConfig.ask();
-
+		
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
@@ -99,7 +100,6 @@ public class Monitor {
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", new UsersPanel() );
-		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
@@ -109,6 +109,8 @@ public class Monitor {
 		m_tabs.addTab( "RefAPI Prices", pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
+		m_tabs.addTab( "FbServer", new FbServerPanel() );
+		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -119,7 +121,7 @@ public class Monitor {
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
 		m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		m_frame.setSize( 1100, 800);
+		m_frame.setSize( 1300, 800);
 		m_frame.setVisible(true);
 		
 		m_frame.addWindowListener(new WindowAdapter() {
@@ -130,7 +132,7 @@ public class Monitor {
 	}
 	
 	private static void refreshConfig() {
-		Util.wrap( () -> S.inform( 
+		Util.wrap( () -> Util.inform( 
 					m_frame,
 					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
 	}
@@ -154,6 +156,16 @@ public class Monitor {
 		
 		TransPanel() {
 			super( "transactions", names, sql);
+		}
+		
+		@Override
+		protected Object format(String tag, Object value) {  // build this into JsonPanel class
+			if (value != null) {
+				if (tag.equals("tds") || tag.equals("price") ) {
+					return value instanceof Double ? S.fmt2((double)value) : value; 
+				}
+			}
+			return value;
 		}
 
 		@Override void onDouble(String tag, Object val) {
@@ -195,7 +207,11 @@ public class Monitor {
 			try {
 				if (tag.equals("data") ) {
 					String val = m_model.m_ar.get(row).getString(tag);
-					return S.isNotNull(val) ? JsonObject.parse(val).toHtml() : null;
+					if ( S.isNotNull(val) ) {
+						JsonObject obj = JsonObject.parse(val);
+						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
+						return obj.toHtml();
+					}
 				}
 			}
 			catch( Exception e) {
@@ -207,9 +223,9 @@ public class Monitor {
 
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
-		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
+		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,token_price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
 		String sql = """
-				select trades.*, transactions.wallet_public_key
+				select trades.*, transactions.wallet_public_key, transactions.price as token_price
 				from trades
 				left join transactions
 				on trades.orderref = transactions.uid
@@ -239,15 +255,6 @@ public class Monitor {
 		
 	}
 
-	private static QueryPanel createSignupPanel() {
-		String names = "created_at,name,email,phone,wallet_public_key";
-		String sql = "select * from signup $where";
-		return new QueryPanel( "signup", names, sql);
-	}
-
-	// move to Util?
-	
-	
 	static abstract class MonPanel extends JPanel implements INewTab {
 		public MonPanel(LayoutManager layout) {
 			super(layout);
@@ -274,4 +281,24 @@ public class Monitor {
 		@Override public void refresh() throws Exception {
 		}
 	}
+	
+	static class FbServerPanel extends JsonPanel {
+		FbServerPanel() {
+			super( new BorderLayout(), "id,status,createdAt");
+			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
+		}
+		
+		@Override protected Object format(String key, Object value) {
+			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
+		}
+		
+		@Override
+		public void refresh() throws Exception {
+			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
+			client.get( "/fbserver/get-all");
+			m_model.m_ar = client.readJsonArray();
+			m_model.fireTableDataChanged();
+		}
+	}
+	
 }
