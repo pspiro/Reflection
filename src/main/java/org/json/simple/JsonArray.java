@@ -159,5 +159,17 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 							? -1 : 1;
 		});
 	}
-
+	
+	public static interface Tester {
+		public boolean show(JsonObject obj);
+	}
+	
+	public void filter( Tester tester) {
+		for (Iterator<JsonObject> iter = iterator(); iter.hasNext(); ) {
+			if (!tester.show(iter.next() ) ) {
+				iter.remove();
+			}
+		}
+	}
+	
 }

@@ -129,6 +129,7 @@ public class Config extends ConfigBase {
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
+		S.out( "Using config tab %s", tab);
 		return config;
 	}
 

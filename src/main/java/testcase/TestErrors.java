@@ -4,7 +4,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyHttpClient;
-import junit.framework.TestCase;
 import reflection.RefCode;
 
 public class TestErrors extends MyTestCase {

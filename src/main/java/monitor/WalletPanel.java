@@ -40,9 +40,6 @@ public class WalletPanel extends JsonPanel {
 			} 
 		});
 
-		HtmlButton mint = new HtmlButton("Mint", e -> mint() );
-		HtmlButton burn = new HtmlButton("Burn", e -> burn() );
-
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
@@ -50,8 +47,8 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "USDC", m_usdc);
 		vp.add( "Approved", m_approved);
 		vp.add( "MATIC", m_matic);
-		vp.add( "Mint", mint); 
-		vp.add( "Burn", burn); 
+		vp.add( "Mint RUSD", new HtmlButton("Mint", e -> mint() ) ); 
+		vp.add( "Burn RUSD", new HtmlButton("Burn", e -> burn() ) ); 
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);

@@ -165,6 +165,7 @@ public class MoralisServer {
 			if (S.isNull(cursor) ) {
 				break;
 			}
+			S.sleep(10);  // don't break pacing limits
 		}
 	}		
 	

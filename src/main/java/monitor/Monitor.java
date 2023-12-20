@@ -100,7 +100,6 @@ public class Monitor {
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Users", new UsersPanel() );
-		m_tabs.addTab( "Signup", createSignupPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
@@ -111,6 +110,7 @@ public class Monitor {
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
+		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -121,7 +121,7 @@ public class Monitor {
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
 		m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		m_frame.setSize( 1100, 800);
+		m_frame.setSize( 1300, 800);
 		m_frame.setVisible(true);
 		
 		m_frame.addWindowListener(new WindowAdapter() {
@@ -255,15 +255,6 @@ public class Monitor {
 		
 	}
 
-	private static QueryPanel createSignupPanel() {
-		String names = "created_at,name,email,phone,wallet_public_key";
-		String sql = "select * from signup $where";
-		return new QueryPanel( "signup", names, sql);
-	}
-
-	// move to Util?
-	
-	
 	static abstract class MonPanel extends JPanel implements INewTab {
 		public MonPanel(LayoutManager layout) {
 			super(layout);
@@ -294,7 +285,7 @@ public class Monitor {
 	static class FbServerPanel extends JsonPanel {
 		FbServerPanel() {
 			super( new BorderLayout(), "id,status,createdAt");
-			add( m_model.createTable() );
+			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
 		}
 		
 		@Override protected Object format(String key, Object value) {

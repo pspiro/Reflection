@@ -29,6 +29,7 @@ public class MyClient {
 		
 	/** build POST request; call this directly to add headers */
 	public static MyClient create(String url, String body) {
+		S.out( url + " POST");
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.POST(HttpRequest.BodyPublishers.ofString(body)));
@@ -93,7 +94,7 @@ public class MyClient {
 	
 	/** Really we want to at least catch 404 and 502 */
 	private static boolean niceCode( int statusCode) {
-		return statusCode == 200 || statusCode == 400;
+		return statusCode == 200 || statusCode == 400; // 400 is returned by RefAPI along w/ an error message
 	}
 	
 	// ----- synchronous helper methods - get ----------------------------

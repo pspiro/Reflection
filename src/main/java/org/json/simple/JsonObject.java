@@ -36,7 +36,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		super();
 	}
 
-	public JsonObject(HashMap<String,Object> base) {
+	public JsonObject(Map<String, ? extends Object> base) {
 		super(base);
 	}
 

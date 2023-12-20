@@ -1,6 +1,5 @@
 package fireblocks;
 
-import common.Util;
 import reflection.Config;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -8,14 +7,12 @@ import tw.util.S;
 
 public class MintRusd {
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
-		String wallet = Util.ask( "Enter wallet:");
-		double amt = Double.parseDouble( Util.ask( "Enter amount:") );
+		Config config = Config.readFrom("Prod-config");
+		String wallet = "0x2703161D6DD37301CEd98ff717795E14427a462B";
+		double amt = 1;
 		
-		if (Util.confirm(null, String.format("Mint %s for %s", amt, wallet) ) ) {
-			S.out( "Minting %s RUSD for %s in %s", amt, wallet, config.getTabName() );
-			mint(wallet, amt, config);
-		}
+		S.out( "Minting %s RUSD for %s in %s", amt, wallet, config.getTabName() );
+		mint(wallet, amt, config);
 	}
 	
 	public static void mint(String wallet, double amt, Config config) throws Exception {

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -29,7 +28,7 @@ public class Erc20 {
 	protected int m_decimals;
 	private String m_name;
 	
-	Erc20( String address, int decimals, String name) throws Exception {
+	public Erc20( String address, int decimals, String name) throws Exception {
 		Util.require( 
 				S.isNull(address) || 
 				address.equalsIgnoreCase("deploy") || 
@@ -216,21 +215,33 @@ public class Erc20 {
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
 
+	public void showBalances() throws Exception {
+		new JsonObject( getAllBalances() ).display();
+	}
+
 	/** print out the balances of all wallets holding this token
 	 * @return map wallet address -> token balance */
-	public void showBalances() throws Exception {
+	public HashMap<String,ModifiableDecimal> getAllBalances() throws Exception {
 		HashMap<String,ModifiableDecimal> map = new HashMap<>();
 
 		// get all transactions in batches and build the map
 		MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
-				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);
+				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
 				inc( map, obj.getString("from_address"), -value);
 				inc( map, obj.getString("to_address"), value);
 		} ) );
 		
-		JsonObject out = new JsonObject();
-		out.putAll(map);
-		out.display();
+		return map;
+	}
+	
+	public void showAllTransactions() throws Exception {
+			MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+				S.out( "%8s %s %s %s", 
+						obj.getString("value_decimal"), 
+						Util.left( obj.getString("from_address"), 8),
+						Util.left( obj.getString("to_address"), 8),
+						obj.getString("transaction_hash") );
+		} ) );
 	}
 	
 	public static void main(String[] args) throws Exception {
