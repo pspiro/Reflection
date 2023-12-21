@@ -86,11 +86,7 @@ public class MySqlConnection implements AutoCloseable {
 	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON */
 	public void insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
 		if (updateJson( table, json, where, params) == 0) {
-			S.out( "***inserting %s to %s", json, table);
 			insertJson( table, json);
-		}
-		else {
-			S.out( "***updated %s on %s where %s", json, table, String.format(where, params) );
 		}
 	}
 	
