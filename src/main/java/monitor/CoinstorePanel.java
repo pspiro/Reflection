@@ -1,7 +1,11 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.util.HashMap;
 import java.util.HashSet;
+
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import coinstore.Coinstore;
 import common.Util;
@@ -33,24 +37,43 @@ class CoinstorePanel extends MonPanel {
 
 	static class PositionsPanel extends JsonPanel {
 		PositionsPanel() {
-			super(new BorderLayout(), "uid,accountId,currency,balance,typeName");
+			super(new BorderLayout(), "currency,available,frozen,total");
+			m_model.justify("lrrr");  // let numbers be right-aligned
 			add( m_model.createTable() );
 		}
 		
+		@Override public void refresh() throws Exception {
+			HashMap<String,JsonObject> map = new HashMap<>();
+			Coinstore.getPositions().forEach( pos -> {
+				JsonObject record = Util.getOrCreate(map, pos.getString("currency"), () -> new JsonObject() );
+				
+				record.put("currency", pos.getString("currency"));
+				
+				double balance = pos.getDouble("balance");
+				if (pos.getString("typeName").equalsIgnoreCase("Frozen")) {
+					record.put( "frozen", balance);
+				}
+				else {
+					record.put( "available", balance);
+				}
+				record.increment( "total", balance);
+			});
+			
+			JsonArray ar = new JsonArray();
+			map.values().forEach( val -> ar.add(val));
+
+			m_model.m_ar = ar;
+			m_model.fireTableDataChanged();
+		}
+
 		@Override protected Object format(String key, Object value) {
 			switch( key) {
-				case "balance":
+				case "available":
+				case "frozen":
+				case "total":
 					return S.fmt(value.toString());
 			}
 			return value;
-		}
-
-		@Override public void refresh() throws Exception {
-			m_model.m_ar = Coinstore.getPositions();
-			m_model.m_ar.filter( obj -> 
-			obj.getString("typeName").equalsIgnoreCase("available") || obj.getDouble("balance") > 0);
-
-			m_model.fireTableDataChanged();
 		}
 	}
 

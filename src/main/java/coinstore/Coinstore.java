@@ -1,5 +1,6 @@
 package coinstore;
 
+import java.awt.BorderLayout;
 import java.net.http.HttpResponse;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -36,6 +37,7 @@ public class Coinstore {
 		return obj.getArray("data");
 	}
 	
+	/** fields are uid,accountId,currency,balance,typeName, maybe others */
 	public static JsonArray getPositions() throws Exception {
 		String pair = ""; // ignored
 		String json = Util.easyJson( "{ 'symbolCodes': [ '%s' ] }", pair);

@@ -98,9 +98,6 @@ public class EventFetcher {
 	
 	/** Map conid to balance */
 	static class Balances extends JsonObject {
-		void increment( String token, double val) {
-			put( token, getDouble( token) + val);
-		}
 	}
 	
 	public synchronized void increment(String wallet, String token, double val) {
