@@ -29,7 +29,7 @@ public class CryptoPanel extends MonPanel {
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
 		rusdPanel.add( "RUSD Outstanding", m_rusd);
-		rusdPanel.add( "Non-RUSD in RefWallet", m_busd);
+		rusdPanel.add( "USDT in RefWallet", m_busd);
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		rusdPanel.add( "RefWallet MATIC", m_nativeToken);
 		rusdPanel.add( "Admin1 MATIC", m_admin1);

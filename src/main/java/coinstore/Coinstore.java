@@ -13,6 +13,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Encrypt;
 import http.MyClient;
+import tw.util.S;
 
 public class Coinstore {
 //	private static String m_mdsUrl = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
@@ -26,7 +27,20 @@ public class Coinstore {
 	public static void main( String[] args) throws Exception {
 		//getPairInfo("BTCUSDT");
 		//getPositions().display();
-		getTrades("AAPLUSDT").display();
+		JsonArray ar = getAllTrades("AAPLUSDT");
+		S.out( ar.get(0).keySet() );
+		
+		double buys;
+		double sells;
+		double buyQty;
+		double sellQty;
+		ar.forEach( trade -> {
+			double qty = trade.getDouble("execQty");
+			double amt = trade.getDouble("execQty");
+			if (trade.getString("side") == 1) {
+				
+			}
+		}
 	}
 	
 	public static JsonArray getTrades(String symbol) throws Exception {
@@ -34,6 +48,25 @@ public class Coinstore {
 		JsonObject obj = get( "/trade/match/accountMatches", params);
 		Util.require( obj.getInt("code") == 0, "Coinstore getTrades returned code %s", obj.getInt("code") );
 		return obj.getArray("data");
+	}
+	
+	public static JsonArray getAllTrades(String symbol) throws Exception {
+		JsonArray ar = new JsonArray();
+		int page = 1;
+		
+		while (true) {
+			String params = String.format("symbol=%s&pageNum=%s&pageSize=%s", symbol, 1, pageSize);
+			JsonObject obj = get( "/trade/match/accountMatches", params);
+			Util.require( obj.getInt("code") == 0, "Coinstore getTrades returned code %s", obj.getInt("code") );
+			JsonArray ret = obj.getArray("data");
+			ar.addAll( ret);
+			if (ret.size() < pageSize) {
+				break;
+			}
+			S.sleep(10);
+			page++;
+		}
+		return ar;
 	}
 	
 	public static JsonArray getPositions() throws Exception {

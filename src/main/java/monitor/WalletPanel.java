@@ -80,7 +80,14 @@ public class WalletPanel extends JsonPanel {
 		try {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 
-			Util.inform(this, "Not hooked up yet");
+			double amt = Util.askForVal( "Enter amt");
+			if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
+			
+				String hash = Monitor.m_config.rusd().burnRusd( 
+						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+				
+				Util.inform(this, hash);
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
