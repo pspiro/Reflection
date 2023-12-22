@@ -22,7 +22,7 @@ class CoinstorePanel extends MonPanel {
 		tradesPanel = new TradesPanel();
 
 		add( positionsPanel, BorderLayout.NORTH);
-		add( tradesPanel);
+		add( tradesPanel, BorderLayout.SOUTH);
 	}
 
 	@Override public void activated() {
@@ -85,9 +85,9 @@ class CoinstorePanel extends MonPanel {
 		HashSet<String> ids = new HashSet<>();
 		
 		TradesPanel() {
-			super( new BorderLayout(), "matchTime,side,execQty,execAmt,matchRole,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,orderState,acturalFeeRate,feeCurrencyId,id,remainingQty,matchId,tradeId");
+			super( new BorderLayout(), "matchTime,side,execQty,price,execAmt,matchRole,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,orderState,acturalFeeRate,feeCurrencyId,id,remainingQty,matchId,tradeId");
 			add( m_model.createTable() );
-			m_model.justify( "llrr");
+			m_model.justify( "llrrr");
 			// matchRole, TAKER(1),MAKER(-1) remove ro
 		}
 		
@@ -96,7 +96,11 @@ class CoinstorePanel extends MonPanel {
 			m_model.m_ar = Coinstore.getTrades(symbol);
 			m_model.fireTableDataChanged();
 			
-			m_model.m_ar.forEach( trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
+			m_model.m_ar.forEach( 
+					trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
+
+			m_model.m_ar.forEach( trade -> 
+				trade.put( "price", trade.getDouble("execAmt") / trade.getDouble("execQty") ) );
 			
 			//Util.executeEvery(period, period, () -> check() );
 		}
@@ -106,6 +110,8 @@ class CoinstorePanel extends MonPanel {
 				case "matchTime":
 					return Util.yToS.format( Long.valueOf(value.toString()) * 1000);
 				case "fee":
+				case "price":
+				case "execQty":
 				case "execAmt":
 					return S.fmt(value.toString());
 				case "side":
