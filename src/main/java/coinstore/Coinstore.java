@@ -1,6 +1,5 @@
 package coinstore;
 
-import java.awt.BorderLayout;
 import java.net.http.HttpResponse;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -14,6 +13,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Encrypt;
 import http.MyClient;
+import tw.util.S;
 
 public class Coinstore {
 //	private static String m_mdsUrl = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
@@ -27,7 +27,7 @@ public class Coinstore {
 	public static void main( String[] args) throws Exception {
 		//getPairInfo("BTCUSDT");
 		//getPositions().display();
-		getTrades("AAPLUSDT").display();
+		getTrades("AAPLUSDT").forEach( trade -> S.out( trade) );
 	}
 	
 	public static JsonArray getTrades(String symbol) throws Exception {

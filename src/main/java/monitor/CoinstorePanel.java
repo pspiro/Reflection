@@ -81,37 +81,39 @@ class CoinstorePanel extends MonPanel {
 		static final String tag = "id"; // there is also "tradeId" which seems to be unique; not sure which to use
 
 		int period = 5000;
-		String symbol = "USDCUSDT";
+		String symbol = "AAPLUSDT";
 		HashSet<String> ids = new HashSet<>();
 		
 		TradesPanel() {
-			super( new BorderLayout(), "side,matchRole,role,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,matchTime,orderState,execAmt,selfDealingQty,accountId,taxRate,acturalFeeRate,feeCurrencyId,id,remainingQty,execQty,matchId,tradeId");
+			super( new BorderLayout(), "matchTime,side,execQty,execAmt,matchRole,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,orderState,acturalFeeRate,feeCurrencyId,id,remainingQty,matchId,tradeId");
 			add( m_model.createTable() );
+			m_model.justify( "llrr");
+			// matchRole, TAKER(1),MAKER(-1) remove ro
+		}
+		
+		/** Load up existing trades */
+		@Override public void refresh() throws Exception {
+			m_model.m_ar = Coinstore.getTrades(symbol);
+			m_model.fireTableDataChanged();
+			
+			m_model.m_ar.forEach( trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
+			
+			//Util.executeEvery(period, period, () -> check() );
 		}
 		
 		@Override protected Object format(String key, Object value) {
 			switch( key) {
 				case "matchTime":
-					return Util.hhmmss.format( Long.valueOf(value.toString()) * 1000);
+					return Util.yToS.format( Long.valueOf(value.toString()) * 1000);
 				case "fee":
 				case "execAmt":
 					return S.fmt(value.toString());
 				case "side":
 					return value.toString().equals("-1") ? "Sell" : value.toString().equals("1") ? "Buy" : value;
+				case "matchRole":
+					return ((Long)value) == 1 ? "Taker" : "Maker";
 			}
 			return value;
-		}
-
-		/** Load up existing trades */
-		@Override public void activated() {
-			Util.wrap( () -> {
-				m_model.m_ar = Coinstore.getTrades(symbol);
-				m_model.fireTableDataChanged();
-				
-				m_model.m_ar.forEach( trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
-				
-				Util.executeEvery(period, period, () -> check() );
-			});
 		}
 
 		/** Check for new trades */
@@ -125,10 +127,10 @@ class CoinstorePanel extends MonPanel {
 						Monitor.m_config.sendEmail("peteraspiro@gmail.com", "COINSTORE TRADE", trade.toString(), false);
 
 						ids.add(trade.getString(tag));
+						
+						Util.wrap( () -> refresh() );
 					}
 				});
-
-				m_model.fireTableDataChanged();
 			});
 		}
 	}
