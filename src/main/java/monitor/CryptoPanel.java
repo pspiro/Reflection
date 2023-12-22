@@ -11,6 +11,7 @@ import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.Monitor.MonPanel;
 import positions.Wallet;
+import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
@@ -22,20 +23,22 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_admin1 = new JTextField(10);
 	private JTextField m_admin2 = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
+	HoldersPanel holdersPanel = new HoldersPanel();
 
 	CryptoPanel() {
 		super( new BorderLayout() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
-		rusdPanel.add( "RUSD Outstanding", m_rusd);
-		rusdPanel.add( "USDT in RefWallet", m_busd);
+		rusdPanel.add( "RUSD Outstanding", m_rusd, new HtmlButton( "Show Wallets", ev -> holdersPanel.refresh( Monitor.m_config.rusdAddr() ) ) );
+		rusdPanel.add( "Non-RUSD in RefWallet", m_busd);
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		rusdPanel.add( "RefWallet MATIC", m_nativeToken);
 		rusdPanel.add( "Admin1 MATIC", m_admin1);
 		rusdPanel.add( "Admin2 MATIC", m_admin2);
 		
 		add(rusdPanel);
+		add(holdersPanel, BorderLayout.EAST);
 	}
 	
 	@Override public void activated() {

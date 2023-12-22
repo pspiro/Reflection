@@ -19,32 +19,55 @@ public class Coinstore {
 //	private static String m_mdsUrl = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
 //	private static Config m_config;
 //	private static Stocks m_stocks;
-	static final int pageSize = 100;
+	static final int maxPageSize = 100;
 	
 	static String apiKey = "476644a6179165d624eaa8a170487d0a";
-	static String secretKey = "7e5823785f38ed211e97fd9a00874ec7";	
+	static String secretKey = "7e5823785f38ed211e97fd9a00874ec7";
+	static String aapl = "AAPLUSDT";
 	
 	public static void main( String[] args) throws Exception {
 		//getPairInfo("BTCUSDT");
 		//getPositions().display();
-		JsonArray ar = getAllTrades("AAPLUSDT");
-		S.out( ar.get(0).keySet() );
-		
-		double buys;
-		double sells;
-		double buyQty;
-		double sellQty;
-		ar.forEach( trade -> {
-			double qty = trade.getDouble("execQty");
-			double amt = trade.getDouble("execQty");
-			if (trade.getString("side") == 1) {
-				
-			}
-		}
+		getOpenOrders().forEach(ord -> S.out(ord) );
 	}
 	
-	public static JsonArray getTrades(String symbol) throws Exception {
-		String params = String.format("symbol=%s&pageNum=%s&pageSize=%s", symbol, 1, pageSize);
+	static void showTrades() throws Exception {
+		
+		getLatestTrades(aapl).forEach( trade -> S.out(trade) );
+		
+		JsonArray ar = getAllTrades(aapl);
+		S.out( ar.get(0).keySet() );
+		
+		double buyAmt = 0;
+		double sellAmt = 0;
+		double buyQty = 0;
+		double sellQty = 0;
+		for (JsonObject trade : ar) {
+			double qty = trade.getDouble("execQty");
+			double amt = trade.getDouble("execAmt");
+			if (trade.getString("side").equals("1") ) {
+				buyAmt += amt;
+				buyQty += qty;
+			}
+			else {
+				sellAmt += amt;
+				sellQty += qty;
+			}
+		}
+		S.out( "trades=%s buyAmt=%s sellAmt=%s buyQty=%s sellQty=%s avgBuy=%s avgSell=%s",
+				ar.size(), buyAmt, sellAmt, buyQty, sellQty, buyAmt / buyQty, sellAmt / sellQty);
+		
+	}
+	
+	public static JsonArray getOpenOrders() throws Exception {
+		String params = String.format("symbol=%s", aapl);
+		JsonObject obj = get( "/v2/trade/order/active", params);
+		Util.require( obj.getInt("code") == 0, "Coinstore getTrades returned code %s", obj.getInt("code") );
+		return obj.getArray("data");
+	}
+	
+	public static JsonArray getLatestTrades(String symbol) throws Exception {
+		String params = String.format("symbol=%s&pageNum=%s&pageSize=%s", symbol, 1, 20);
 		JsonObject obj = get( "/trade/match/accountMatches", params);
 		Util.require( obj.getInt("code") == 0, "Coinstore getTrades returned code %s", obj.getInt("code") );
 		return obj.getArray("data");
@@ -55,12 +78,12 @@ public class Coinstore {
 		int page = 1;
 		
 		while (true) {
-			String params = String.format("symbol=%s&pageNum=%s&pageSize=%s", symbol, 1, pageSize);
+			String params = String.format("symbol=%s&pageNum=%s&pageSize=%s", symbol, page, maxPageSize);
 			JsonObject obj = get( "/trade/match/accountMatches", params);
 			Util.require( obj.getInt("code") == 0, "Coinstore getTrades returned code %s", obj.getInt("code") );
 			JsonArray ret = obj.getArray("data");
 			ar.addAll( ret);
-			if (ret.size() < pageSize) {
+			if (ret.size() < maxPageSize) {
 				break;
 			}
 			S.sleep(10);
@@ -69,6 +92,7 @@ public class Coinstore {
 		return ar;
 	}
 	
+	/** fields are uid,accountId,currency,balance,typeName, maybe others */
 	public static JsonArray getPositions() throws Exception {
 		String pair = ""; // ignored
 		String json = Util.easyJson( "{ 'symbolCodes': [ '%s' ] }", pair);
