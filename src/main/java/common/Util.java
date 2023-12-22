@@ -21,6 +21,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import javax.mail.Address;
 import javax.mail.Message;
@@ -457,15 +458,11 @@ public class Util {
 		return b.toString();
 	}
 
-	public interface Creator<T> {
-		T instance();
-	}
-
-	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Creator<Val> creator) {
+	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Supplier<Val> creator) {
 		synchronized(map) {
 			Val val = map.get(tag);
 			if (val == null) {
-				val = creator.instance();
+				val = creator.get();
 				map.put( tag, val);  // could use putIfAbsent() here
 			}
 			return val;

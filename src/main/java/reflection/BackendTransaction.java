@@ -200,8 +200,6 @@ public class BackendTransaction extends MyTransaction {
 			
 			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
-//			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
-//			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
 
 			// create record
 			JsonObject obj = new JsonObject();

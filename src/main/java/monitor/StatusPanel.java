@@ -79,8 +79,8 @@ class StatusPanel extends MonPanel {
 			f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 			f11.setText( json.getTime("started", Util.yToS) );
 			f12.setText( json.getString("mapSize").toString() );
-			f14.setText( json.getString("lastSuccessfulFetch").toString() );
-			f14.setText( json.getString("lastSuccessfulPut").toString() );
+			f14.setText( json.getTime( "lastSuccessfulFetch", Util.hhmmss) );
+			f14.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
 		});
 	}
 }

@@ -362,6 +362,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			}
 		}
 	}
+
+	/** Increment the key by val; stored value must be a Double */
+	public void increment(String key, double val) {
+		put( key, getDouble(key) + val);
+	}
 }
 /** NOTE: Timestamp objects are stored as
  *  
