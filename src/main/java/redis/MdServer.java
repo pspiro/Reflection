@@ -86,6 +86,7 @@ public class MdServer {
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetAllPrices() ); 
 			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction(this, exch).onGetRefPrices() ); 
+			server.createContext("/mdserver/get-stock-prices", exch -> new MdTransaction(this, exch).onGetStockPrices() ); 
 
 			// generic messages
 			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
@@ -290,5 +291,10 @@ public class MdServer {
 			ret.add( stockPrices);
 		}
 		return ret;
+	}
+
+	public Object getStockPrices() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

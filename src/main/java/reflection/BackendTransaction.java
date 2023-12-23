@@ -75,12 +75,7 @@ public class BackendTransaction extends MyTransaction {
 	 */
 	public void handleGetStockWithPrice() {
 		wrap( () -> {
-			String conidStr = Util.getLastToken(m_uri, "/");
-			require( !conidStr.equals("undefined"), RefCode.INVALID_REQUEST, "get-stock-with-price should not be called with 'undefined' conid");
-			require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "%s is not a valid conid", conidStr);
-			int conid = Integer.parseInt(conidStr);
-			
-			Stock stock = m_main.getStock(conid);
+			Stock stock = m_main.getStock( getConidFromUri() );
 			
 			Session session = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null);
 			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
@@ -92,10 +87,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Backend-style msg; conid is last parameter */  // when is this used? pas
 	public void handleGetPrice() {
 		wrap( () -> {
-			String conidStr = Util.getLastToken(m_uri, "/");
-			require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "%s is not a valid conid", conidStr);
-			int conid = Integer.parseInt(conidStr);
-			returnPrice(conid, false);
+			returnPrice( getConidFromUri(), false);
 		});
 	}
 	

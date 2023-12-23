@@ -88,7 +88,6 @@ class CoinstorePanel extends MonPanel {
 			super( new BorderLayout(), "matchTime,side,execQty,price,execAmt,matchRole,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,orderState,acturalFeeRate,feeCurrencyId,id,remainingQty,matchId,tradeId");
 			add( m_model.createTable() );
 			m_model.justify( "llrrr");
-			// matchRole, TAKER(1),MAKER(-1) remove ro
 		}
 		
 		/** Load up existing trades */

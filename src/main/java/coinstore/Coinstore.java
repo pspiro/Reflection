@@ -7,8 +7,11 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.json.simple.JSONValue;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+
+import com.ib.client.Types.Action;
 
 import common.Util;
 import fireblocks.Encrypt;
@@ -24,10 +27,29 @@ public class Coinstore {
 	static String apiKey = "476644a6179165d624eaa8a170487d0a";
 	static String secretKey = "7e5823785f38ed211e97fd9a00874ec7";	
 	
+	public static void cancelAll() throws Exception {
+		JsonObject obj = get( "/trade/order/cancelAll", "");
+		obj.display();
+	}
+	
+	public static void cancelAll(String symbol) throws Exception {
+		String params = String.format( "symbol=%s", symbol);
+		get( "/trade/order/cancelAll", params).display();
+	}
+	
 	public static void main( String[] args) throws Exception {
-		//getPairInfo("BTCUSDT");
-		//getPositions().display();
-		getTrades("AAPLUSDT").forEach( trade -> S.out( trade) );
+		placeOrder(Action.Buy, 1, aapl, 192);
+	}
+	
+	public static void placeOrder(Action action, double qty, String symbol, double price) throws Exception {
+		JsonObject json = Util.toJson(
+				"symbol", symbol,
+				"side", action.toString().toUpperCase(),
+				"ordType", "LIMIT",
+				"ordPrice", JSONValue.fmt.format(price), 
+				"timestamp", System.currentTimeMillis() );
+				
+		post("/trade/order/place", json.toString() );
 	}
 	
 	public static JsonArray getTrades(String symbol) throws Exception {
