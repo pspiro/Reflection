@@ -10,7 +10,7 @@ public class Transfer {
 	public static void main( String[] ar) throws Exception {
 		Config.ask();
 		
-		double amt = 1;
+		double amt = 100;
 		String asset = "MATIC_POLYGON";
 		int from = Accounts.instance.getId("Admin1");
 		String to = "0x50576E2D58d8605a09fD71c3a36fA8394e43eF16"; // admin2 

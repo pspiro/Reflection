@@ -16,7 +16,7 @@ public class HoldersPanel extends JsonPanel {
 		add( m_model.createTable() );
 	}
 
-	public void refresh(String contractAddr) {
+	public void refresh(String contractAddr) {  // the decimal is wrong here, that's why rusd doesn't work
 		Util.wrap( () -> {
 			HashMap<String, ModifiableDecimal> map = new Erc20( contractAddr, 18, "").getAllBalances();
 

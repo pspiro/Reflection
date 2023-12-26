@@ -26,6 +26,8 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_usdc = new JLabel(); 
 	private final JLabel m_approved = new JLabel(); 
 	private final JLabel m_matic = new JLabel(); 
+	private final JTextField m_qty = new JTextField(3); 
+	private final JTextField m_stock = new JTextField(6); 
 
 	private final TransPanel transPanel = new TransPanel();
 
@@ -49,6 +51,7 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "MATIC", m_matic);
 		vp.add( "Mint RUSD", new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", new HtmlButton("Burn", e -> burn() ) ); 
+		vp.add( "Buy stock", m_qty, m_stock, new HtmlButton("Burn", e -> buy() ) ); 
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
@@ -58,6 +61,9 @@ public class WalletPanel extends JsonPanel {
 		add( transPanel);
 	}
 
+	private void buy() {
+	}
+	
 	private void mint() {
 		try {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
@@ -80,7 +86,14 @@ public class WalletPanel extends JsonPanel {
 		try {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 
-			Util.inform(this, "Not hooked up yet");
+			double amt = Util.askForVal( "Enter amt");
+			if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
+			
+				String hash = Monitor.m_config.rusd().burnRusd( 
+						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+				
+				Util.inform(this, hash);
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();

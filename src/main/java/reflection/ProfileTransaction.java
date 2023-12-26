@@ -67,7 +67,7 @@ public class ProfileTransaction extends MyTransaction {
 	public void handleUpdateProfile() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie();
 
 			Profile profile = new Profile( m_map.obj() );
@@ -86,6 +86,7 @@ public class ProfileTransaction extends MyTransaction {
 
 			// insert or update record in users table
 			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletKey) );
+			
 			respond( Util.toJson(
 					code, RefCode.OK,
 					Message, "Your profile was updated") );

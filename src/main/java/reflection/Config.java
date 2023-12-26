@@ -9,6 +9,7 @@ import org.json.simple.JsonArray;
 
 import com.ib.client.Types.TimeInForce;
 
+import common.Alerts;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Busd;
@@ -74,8 +75,9 @@ public class Config extends ConfigBase {
 	private int threads;
 	private int myWalletRefresh;
 	private double fbLookback;
-	private int mdsPort;  // port that mdServer runs on where RefAPI will send MD requests 
+	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
+	private String alertEmail;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -191,8 +193,11 @@ public class Config extends ConfigBase {
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
-		this.mdsPort = m_tab.getRequiredInt("mdsPort");
+		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
+		this.alertEmail = m_tab.getRequiredString("alertEmail");
+		
+		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -377,7 +382,9 @@ public class Config extends ConfigBase {
 		return conn;
 	}
 
-	/** Connect, execute a command, then close the connection */
+	/** Connect, execute a command, then close the connection.
+	 *  Since executions is delayed, don't use it to update data
+	 *  that will be used by a subsequent operation */
 	public void sqlCommand(SqlCommand command) throws Exception {
 		try ( MySqlConnection conn = createConnection() ) {
 			command.run(conn);
@@ -487,9 +494,9 @@ public class Config extends ConfigBase {
 	public double fbLookback() {
 		return fbLookback;
 	}
-	
-	public int mdsPort() {
-		return mdsPort;
+
+	public String mdsConnection() {
+		return mdsConnection;
 	}
 	
 	public double minPartialFillPct() {

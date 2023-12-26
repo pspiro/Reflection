@@ -50,6 +50,10 @@ public abstract class MyTableModel extends AbstractTableModel {
 		return new JScrollPane( new MyTable( this) );
 	}
 
+	public MyTable createNoScroll() {
+		return new MyTable( this);
+	}
+
 	protected String getTooltip(int row, int col) {
 		return null;
 	}

@@ -1,7 +1,14 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
+import java.util.HashMap;
 import java.util.HashSet;
+
+import javax.swing.Box;
+
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import coinstore.Coinstore;
 import common.Util;
@@ -33,24 +40,43 @@ class CoinstorePanel extends MonPanel {
 
 	static class PositionsPanel extends JsonPanel {
 		PositionsPanel() {
-			super(new BorderLayout(), "uid,accountId,currency,balance,typeName");
-			add( m_model.createTable() );
+			super(new FlowLayout(), "currency,available,frozen,total");
+			m_model.justify("lrrr");  // let numbers be right-aligned
+			add( m_model.createNoScroll() );
 		}
 		
+		@Override public void refresh() throws Exception {
+			HashMap<String,JsonObject> map = new HashMap<>();
+			Coinstore.getPositions().forEach( pos -> {
+				JsonObject record = Util.getOrCreate(map, pos.getString("currency"), () -> new JsonObject() );
+				
+				record.put("currency", pos.getString("currency"));
+				
+				double balance = pos.getDouble("balance");
+				if (pos.getString("typeName").equalsIgnoreCase("Frozen")) {
+					record.put( "frozen", balance);
+				}
+				else {
+					record.put( "available", balance);
+				}
+				record.increment( "total", balance);
+			});
+			
+			JsonArray ar = new JsonArray();
+			map.values().forEach( val -> ar.add(val));
+
+			m_model.m_ar = ar;
+			m_model.fireTableDataChanged();
+		}
+
 		@Override protected Object format(String key, Object value) {
 			switch( key) {
-				case "balance":
+				case "available":
+				case "frozen":
+				case "total":
 					return S.fmt(value.toString());
 			}
 			return value;
-		}
-
-		@Override public void refresh() throws Exception {
-			m_model.m_ar = Coinstore.getPositions();
-			m_model.m_ar.filter( obj -> 
-			obj.getString("typeName").equalsIgnoreCase("available") || obj.getDouble("balance") > 0);
-
-			m_model.fireTableDataChanged();
 		}
 	}
 
@@ -58,43 +84,57 @@ class CoinstorePanel extends MonPanel {
 		static final String tag = "id"; // there is also "tradeId" which seems to be unique; not sure which to use
 
 		int period = 5000;
-		String symbol = "USDCUSDT";
+		String symbol = "AAPLUSDT";
 		HashSet<String> ids = new HashSet<>();
 		
 		TradesPanel() {
-			super( new BorderLayout(), "side,matchRole,role,orderId,instrumentId,fee,quoteCurrencyId,baseCurrencyId,matchTime,orderState,execAmt,selfDealingQty,accountId,taxRate,acturalFeeRate,feeCurrencyId,id,remainingQty,execQty,matchId,tradeId");
+			super( new BorderLayout(), "matchTime,side,execQty,price,execAmt,matchRole,orderId,instrumentId,fee,orderState,acturalFeeRate,feeCurrencyId,id,remainingQty,matchId,tradeId");
+			add( Box.createVerticalStrut(20), BorderLayout.NORTH);
 			add( m_model.createTable() );
+			m_model.justify( "llrrr");
+			// matchRole, TAKER(1),MAKER(-1) remove ro
+		}
+		
+		@Override public void activated() {
+			Util.wrap( () -> refresh() );
+			
+			S.out( "Monitoring for new trades");
+			Util.executeEvery(period, period, () -> check() );
+		}
+		
+		/** Load up existing trades */
+		@Override public void refresh() throws Exception {
+			m_model.m_ar = Coinstore.getAllTrades(symbol);
+			m_model.fireTableDataChanged();
+			
+			m_model.m_ar.forEach( 
+					trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
+
+			m_model.m_ar.forEach( trade -> 
+				trade.put( "price", trade.getDouble("execAmt") / trade.getDouble("execQty") ) );
 		}
 		
 		@Override protected Object format(String key, Object value) {
 			switch( key) {
 				case "matchTime":
-					return Util.hhmmss.format( Long.valueOf(value.toString()) * 1000);
+					return Util.yToS.format( Long.valueOf(value.toString()) * 1000);
 				case "fee":
+				case "price":
+				case "execQty":
 				case "execAmt":
 					return S.fmt(value.toString());
 				case "side":
 					return value.toString().equals("-1") ? "Sell" : value.toString().equals("1") ? "Buy" : value;
+				case "matchRole":
+					return ((Long)value) == 1 ? "Taker" : "Maker";
 			}
 			return value;
-		}
-
-		/** Load up existing trades */
-		@Override public void activated() {
-			Util.wrap( () -> {
-				m_model.m_ar = Coinstore.getTrades(symbol);
-				m_model.fireTableDataChanged();
-				
-				m_model.m_ar.forEach( trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
-				
-				Util.executeEvery(period, period, () -> check() );
-			});
 		}
 
 		/** Check for new trades */
 		private void check() {
 			Util.wrap( () -> {
-				Coinstore.getTrades(symbol).forEach( trade -> { // will max out at 100 trades
+				Coinstore.getLatestTrades(symbol).forEach( trade -> { // will max out at 100 trades
 					if (!ids.contains(trade.getString(tag)) ) {
 						
 						S.out( "THERE WAS A NEW TRADE: " + trade);
@@ -104,8 +144,6 @@ class CoinstorePanel extends MonPanel {
 						ids.add(trade.getString(tag));
 					}
 				});
-
-				m_model.fireTableDataChanged();
 			});
 		}
 	}

@@ -177,12 +177,11 @@ public class BackendTransaction extends MyTransaction {
 		return json;
 	}
 
-	// what is the purpose of this? pas
-	public void handleWalletUpdate() {  // obsolete, remove it
+	/** obsolete, */
+	public void handleWalletUpdate() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			S.out( "WALLET UPDATE COOKIE " + m_map.get("cookie") );
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
@@ -195,26 +194,23 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 
-			m_walletAddr = m_map.getRequiredParam("wallet_public_key");
-			require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 
 			validateCookie();
 			
 			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
-//			require( S.isNotNull( m_map.get("country") ), RefCode.INVALID_REQUEST, "null country");
-//			require( S.isNotNull( m_map.get("city") ), RefCode.INVALID_REQUEST, "null city");
-			
-			// look to see what parameters are being passed; at least we should update the time
-			out( "received wallet-update message with params " + m_map);
-			
+
+			// create record
 			JsonObject obj = new JsonObject();
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			obj.copyFrom( m_map.obj(), "kyc_status", "persona_response");
 
-			m_main.queueSql( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+			// insert or update record in users table with KYC info
+			Main.m_config.sqlCommand(sql -> 
+				sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
-			respondOk();  // user db is messed up, allows empty and up wallet
+			respondOk();
 		});
 	}
 
