@@ -108,7 +108,7 @@ public class WalletPanel extends JsonPanel {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 
-		m_model.m_ar.clear();
+		rows().clear();
 
 		String walletAddr = m_wallet.getText();
 
@@ -130,7 +130,7 @@ public class WalletPanel extends JsonPanel {
 				if (bal > minBalance) {
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
-					m_model.m_ar.add(obj);
+					rows().add(obj);
 				}
 			}
 

@@ -11,6 +11,7 @@ import javax.swing.JTextField;
 
 import org.json.simple.JsonObject;
 
+import common.JsonModel;
 import common.Util;
 import tw.util.HtmlButton;
 import tw.util.S;
@@ -58,7 +59,19 @@ public class QueryPanel extends JsonPanel {
 		add( m_model.createTable() );
 	}
 	
-	@Override void onCtrlClick(JsonObject row, String tag) {
+	protected JsonModel createModel( String allNames) {
+		return new QueryModel(allNames);
+	}
+
+	@Override protected Object format(String key, Object value) {
+		if (key.equals("created_at") ) {
+			return Util.left( value.toString(), 22);
+		}
+		return super.format(key, value);
+	}
+	
+
+	@Override protected void onCtrlClick(JsonObject row, String tag) {
 		Util.wrap( () -> {
 			String val = Util.ask( "Enter new value for %s field", tag);
 			
@@ -71,46 +84,36 @@ public class QueryPanel extends JsonPanel {
 		});
 	}
 
-	protected JsonModel createModel( String allNames) {
-		return new QueryModel(allNames);
-	}
-
-	@Override void onDouble(String tag, Object val) {
+	@Override protected void onDouble(String tag, Object val) {
 		where.setText( String.format( "where %s = '%s'", tag, val) );
 		Util.wrap( () -> refresh() );
 	}
 	
+	@Override protected void refresh() throws Exception {
+		S.out( "Refreshing QueryModel");
+		m_list.push(where.getText());
+		
+		String str = m_sql
+				.replaceAll( "\\$limit", "limit " + Monitor.num() )
+				.replaceAll( "\\$where", where.getText() );
+		
+		setRows( Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) ) );
+		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
+		
+		m_model.onHeaderClicked(0);
+
+		m_model.fireTableDataChanged();
+		S.out( "Refreshed query model to %s", rows().size() );
+	}
+	
 	/** This panel is for SQL queries to the database */
-	class QueryModel extends JsonModel {
+	class QueryModel extends JsonPanelModel {
 		QueryModel( String allNames) {
 			super( allNames);
 		}
 		
-		@Override void refresh( ) throws Exception {
-			S.out( "Refreshing QueryModel");
-			m_list.push(where.getText());
-			
-			String str = m_sql
-					.replaceAll( "\\$limit", "limit " + Monitor.num() )
-					.replaceAll( "\\$where", where.getText() );
-			
-			m_ar = Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) );
-			m_ar.forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
-			
-			if (m_colNames[0].equals("created_at") ) {
-				m_ar.forEach( row -> row.update("created_at", date -> Util.left(date.toString(), 22) ) );
-			}
-			onHeaderClicked(0);
-
-			fireTableDataChanged();
-			S.out( "Refreshed query model to %s", m_ar.size() );
-		}
-
-		public void adjust(JsonObject obj) {
-		}
-
 		/** Delete the row based on the first column which must be type string */ 
-		@Override void delete(int row, int col) {
+		@Override protected void delete(int row, int col) {
 			try {
 				Monitor.m_config.sqlCommand( sql -> 
 					sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
@@ -129,7 +132,7 @@ public class QueryPanel extends JsonPanel {
 	}
 	
 	public void clear() {
-		m_model.m_ar.clear();
+		rows().clear();
 		m_model.fireTableDataChanged();
 	}
 

@@ -6,6 +6,7 @@ import java.text.DecimalFormat;
 
 import org.json.simple.JsonObject;
 
+import common.JsonModel;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Busd;
@@ -33,7 +34,7 @@ public class RedemptionPanel extends QueryPanel {
 		return S.notNull(key).equals("REDEEM NOW") ? "R" : super.format(key, value);
 	}
 	
-	@Override void onDouble(String tag, Object val) {
+	@Override protected void onDouble(String tag, Object val) {
 		switch(tag) {
 		case "uid":
 			Monitor.m_tabs.select( "Log");
