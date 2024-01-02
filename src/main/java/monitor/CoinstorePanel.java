@@ -65,7 +65,7 @@ class CoinstorePanel extends MonPanel {
 			JsonArray ar = new JsonArray();
 			map.values().forEach( val -> ar.add(val));
 
-			m_model.m_ar = ar;
+			setRows( ar);
 			m_model.fireTableDataChanged();
 		}
 
@@ -92,7 +92,6 @@ class CoinstorePanel extends MonPanel {
 			add( Box.createVerticalStrut(20), BorderLayout.NORTH);
 			add( m_model.createTable() );
 			m_model.justify( "llrrr");
-			// matchRole, TAKER(1),MAKER(-1) remove ro
 		}
 		
 		@Override public void activated() {
@@ -104,13 +103,13 @@ class CoinstorePanel extends MonPanel {
 		
 		/** Load up existing trades */
 		@Override public void refresh() throws Exception {
-			m_model.m_ar = Coinstore.getAllTrades(symbol);
+			setRows( Coinstore.getAllTrades(symbol) );
 			m_model.fireTableDataChanged();
 			
-			m_model.m_ar.forEach( 
+			rows().forEach( 
 					trade -> ids.add( trade.getString(tag) ) ); // add all id's to set
 
-			m_model.m_ar.forEach( trade -> 
+			rows().forEach( trade -> 
 				trade.put( "price", trade.getDouble("execAmt") / trade.getDouble("execQty") ) );
 		}
 		
@@ -138,7 +137,7 @@ class CoinstorePanel extends MonPanel {
 					if (!ids.contains(trade.getString(tag)) ) {
 						
 						S.out( "THERE WAS A NEW TRADE: " + trade);
-						m_model.m_ar.add(trade);
+						rows().add(trade);
 						Monitor.m_config.sendEmail("peteraspiro@gmail.com", "COINSTORE TRADE", trade.toString(), false);
 
 						ids.add(trade.getString(tag));

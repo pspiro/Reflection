@@ -27,10 +27,14 @@ public class CryptoPanel extends MonPanel {
 
 	CryptoPanel() {
 		super( new BorderLayout() );
+		
+		HtmlButton button = new HtmlButton( "Show Wallets", ev -> {
+			Util.wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
+		});
 
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
-		rusdPanel.add( "RUSD Outstanding", m_rusd, new HtmlButton( "Show Wallets", ev -> holdersPanel.refresh( Monitor.m_config.rusdAddr() ) ) );
+		rusdPanel.add( "RUSD Outstanding", m_rusd, button); 
 		rusdPanel.add( "Non-RUSD in RefWallet", m_busd);
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		rusdPanel.add( "RefWallet MATIC", m_nativeToken);
