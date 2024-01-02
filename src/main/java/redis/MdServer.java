@@ -11,11 +11,13 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
+import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.MyServer;
 import http.BaseTransaction;
+import redis.DualPrices.Prices;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 import reflection.Main;
 import reflection.Stock;
@@ -80,12 +82,13 @@ public class MdServer {
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.mdsPort(), 10, server -> {
-			server.createContext("/mdserver/status", exch -> new MdTransaction(this, exch).onStatus() ); 
-			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction(this, exch).onDesubscribe() ); 
-			server.createContext("/mdserver/subscribe", exch -> new MdTransaction(this, exch).onSubscribe() ); 
-			server.createContext("/mdserver/disconnect", exch -> new MdTransaction(this, exch).onDisconnect() ); 
-			server.createContext("/mdserver/get-prices", exch -> new MdTransaction(this, exch).onGetAllPrices() ); 
-			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction(this, exch).onGetRefPrices() ); 
+			server.createContext("/mdserver/status", exch -> new MdTransaction( exch).onStatus() ); 
+			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction( exch).onDesubscribe() ); 
+			server.createContext("/mdserver/subscribe", exch -> new MdTransaction( exch).onSubscribe() ); 
+			server.createContext("/mdserver/disconnect", exch -> new MdTransaction( exch).onDisconnect() ); 
+			server.createContext("/mdserver/get-prices", exch -> new MdTransaction( exch).onGetAllPrices() ); 
+			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch).onGetRefPrices() ); 
+			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() ); 
 
 			// generic messages
 			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
@@ -247,48 +250,118 @@ public class MdServer {
 			log(e);
 		}
 	}
-
-	public void desubscribe() {
-		S.out( "Desubscribing all");
-		mdController().cancelAllTopMktData();
-		m_list.clear();
-	}
-
-	public void subscribe() {
-		S.out( "Subscribing all");
-		wrap( () -> requestPrices() );
-	}
-
-	/** Used by Monitor. Returns both smart and overnight prices */
-	public JsonArray getAllPrices() {
-		JsonArray ret = new JsonArray();
-		for (DualPrices prices : m_list) {
-			prices.addPricesTo( ret);
-		}
-		return ret;
-	}
-
-	/** Called by RefAPI. Returns the prices for the current session.
-	 * 
-	 *  YOU COULD build a static array that doesn't change and just update
-	 *  the prices within the array, and always return the same array
-	 *  
-	 * @throws Exception */
-	public JsonArray getRefPrices() throws Exception {
-		Session session = null;
-		JsonArray ret = new JsonArray();
-		
+	
+	/** Change this to a map when we start having more stocks */
+	DualPrices getDualPrices(int conid) throws Exception {
 		for (DualPrices dual : m_list) {
-			if (session == null) {  // assume the same session for all stocks
-				session = m_tradingHours.getSession( dual.stock() );
+			if (dual.conid() == conid) {
+				return dual;
 			}
-
-			JsonObject stockPrices = new JsonObject();
-			stockPrices.put( "conid", dual.stock().conid() );
-			dual.update(stockPrices, session);
-			
-			ret.add( stockPrices);
 		}
-		return ret;
+		throw new Exception( "No dual prices for conid " + conid);
 	}
+
+	class MdTransaction extends BaseTransaction {
+		MdTransaction(HttpExchange exchange) {
+			this( exchange, true);
+		}
+		
+		MdTransaction(HttpExchange exchange, boolean debug) {
+			super(exchange, debug);
+		}
+		
+		public void onStatus() {
+			wrap( () -> {
+				JsonObject obj = Util.toJson(
+						"code", "OK",
+						"TWS", m_mdConnMgr.isConnected(),
+						"IB", m_mdConnMgr.ibConnection(),
+						"mdCount", mdController().mdCount(),
+						"started", m_started
+						);
+				respond( obj);
+			});
+		}
+
+		public void onSubscribe() {
+			wrap( () -> {
+				S.out( "Subscribing all");
+				requestPrices();
+				respondOk();
+			});
+		}
+
+		public void onDesubscribe() {
+			wrap( () -> {
+				S.out( "Desubscribing all");
+				mdController().cancelAllTopMktData();
+				m_list.clear();
+				respondOk();
+			});
+		}
+
+		/** Trigger a disconnect/reconnect to TWS; used to reset MdServer */
+		public void onDisconnect() {
+			wrap( () -> {
+				mdConnMgr().disconnect();
+				respondOk();
+			});
+		}
+
+		/** Used by Monitor. Returns both smart and overnight prices */
+		public void onGetAllPrices() {
+			wrap( () -> {
+				JsonArray ret = new JsonArray();
+				for (DualPrices dual : m_list) {
+					dual.addPricesTo( ret);
+				}
+				respond( ret);
+			});
+		}
+
+		/** Called by Coinstore Server to get bid/ask/last for a single stock */
+		public void onGetStockPrice() {
+			wrap( () -> {
+				DualPrices dual = getDualPrices( getConidFromUri() );
+
+				Prices prices = dual.getPrices( m_tradingHours.getSession( dual.stock() ) );
+
+				double last = prices.last() > 0 
+						? prices.last()
+						: dual.getAnyLast(); 
+				
+				respond( Util.toJson( 
+						"bid", prices.bid(), 
+						"ask", prices.ask(),
+						"last", last) ); 
+			});
+		}
+
+		/** Called by RefAPI. Returns the prices for the current session.
+		 * 
+		 *  YOU COULD build a static array that doesn't change and just update
+		 *  the prices within the array, and always return the same array
+		 *  
+		 * @throws Exception */
+		public void onGetRefPrices() {
+			wrap( () -> {
+				Session session = null;
+				JsonArray ret = new JsonArray();
+				
+				for (DualPrices dual : m_list) {
+					if (session == null) {  // assume the same session for all stocks
+						session = m_tradingHours.getSession( dual.stock() );
+					}
+
+					JsonObject stockPrices = new JsonObject();
+					stockPrices.put( "conid", dual.stock().conid() );
+					dual.update(stockPrices, session);
+					
+					ret.add( stockPrices);
+				}
+				respond( ret);
+			});
+		}
+	}
+	
 }

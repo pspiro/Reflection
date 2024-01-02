@@ -113,11 +113,13 @@ public class VerticalPanel extends JPanel {
 	}
 
 	public static class FlowPanel extends JPanel {
-		public FlowPanel(int h, int v) {
+		public FlowPanel(int h, int v, Component... cs) {
 			setLayout( new FlowLayout( FlowLayout.LEFT, h, v) );
+			addAll(cs);
 		}
 		
-		public void add(Component... cs) {
+		/** Doesn't work w/ just add(...) */
+		public void addAll(Component... cs) {
 			for (Component c : cs) {
 				add( c);
 			}

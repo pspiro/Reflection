@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 
 import javax.swing.JLabel;
+import javax.swing.border.TitledBorder;
 
 public class HtmlButton extends JLabel {
 	static Color light = new Color( 220, 220, 220);
@@ -56,6 +57,8 @@ public class HtmlButton extends JLabel {
 		addMouseListener( a);
 		addMouseMotionListener(a);
 		setFont( getFont().deriveFont( Font.PLAIN) );
+		
+		setBorder( new TitledBorder("") );
 	}
 	
 	protected void onEntered(MouseEvent e) {
