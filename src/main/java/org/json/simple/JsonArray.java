@@ -9,6 +9,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
 
 import org.json.simple.parser.JSONParser;
 
@@ -107,7 +108,7 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return toJSONString();
 	}
 
-	public JsonObject getJsonObj( int i) throws Exception {
+	public JsonObject getJsonObj( int i) throws Exception {  // this is not needed, remove. pas
 		return super.get(i);
 	}
 
@@ -123,6 +124,12 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	public void display() {
 		JsonObject.display(this, 0, false);
 	}
+	
+
+	/** Print one record per line */
+	public void print() {
+		forEach( record -> S.out( record) );
+	}
 
 	/** Return the item in the array that has tag=value (where value is a string) */
 	public JsonObject find(String tag, String value) throws Exception {
@@ -134,29 +141,16 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return null;
 	}
 
-	public void displayShort() {
-		S.out( "[{");
-		for (JsonObject item : this) {
-			S.out(item + ",");  // leaves an extra , at the end 
-		}
-		S.out("]");
-		
-	}
-
-	public boolean isSortable(String colname) {
-		return size() > 1 && get(0).isComparable(colname);
+	/** All values must be of the same type */
+	public boolean isSortable(String tag) {
+		return size() > 1 && get(0).isComparable(tag);
 	}
 		
-	public void sortJson(String colname) {
+	public void sortJson(String tag, boolean forward) {
 		sort( (a, b) -> {
-			Comparable v1 = a.getComparable(colname);
-			Comparable v2 = b.getComparable(colname);
-			return v1 != null && v2 != null
-					? v1.compareTo(v2)
-					: v1 == null && v2 == null
-						? 0
-						: v1 == null
-							? -1 : 1;
+			Comparable v1 = a.getComparable(tag);
+			Comparable v2 = b.getComparable(tag);
+			return forward ? Util.compare( v1, v2) : Util.compare( v2, v1);
 		});
 	}
 	
@@ -170,6 +164,16 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 				iter.remove();
 			}
 		}
+	}
+
+	/** Update all members of the array */
+	public void update(String key, Function<Object,Object> updater) {
+		forEach( row -> row.update( key, updater) );
+	}
+
+	/** Convert some field from String or Integer to Double */ 
+	public void convertToDouble(String key) {
+		update( key, value -> Double.valueOf( value.toString() ) );
 	}
 	
 }
