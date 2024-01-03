@@ -140,8 +140,11 @@ public class FbServer {
 					
 					// update RefAPI with new or changed status
 					MyHttpClient client = new MyHttpClient("localhost", m_config.refApiPort() );
-					client.get( String.format( "/api/fireblocks/?id=%s&status=%s",	
-							trans.id(), trans.status() ) );
+					client.get( String.format( "/api/fireblocks/?id=%s&status=%s%s",	
+							trans.id(),
+							trans.status(),
+							S.isNotNull(trans.hash()) ? "&txhash=" + trans.hash() : "") // append hash only if not null; RefAPI can't handle null params in URI
+							);  	
 					
 					Util.require( 
 							client.getResponseCode() == 200, 
