@@ -142,7 +142,7 @@ public class BackendTransaction extends MyTransaction {
 
 			m_main.queueSql( conn -> {
 				wrap( () -> {
-					String where = "where blockchain_hash <> ''";
+					String where = "where blockchain_hash <> ''";  // use blockchain hash because the link is clickable for the user
 					if (S.isNotNull(wallet) ) {
 						where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
 					}
