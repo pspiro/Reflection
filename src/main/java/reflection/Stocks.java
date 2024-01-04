@@ -40,6 +40,7 @@ public class Stocks implements Iterable<Stock> {
 
 				stock.put( "conid", String.valueOf( conid) );
 				
+				// read fields from from specific tab 
 				String address = row.getString("TokenAddress");
 				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
 				stock.put( "smartcontractid", address);
@@ -50,7 +51,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "allow", row.getString("Allow") );
 				stock.put( "tokenSymbol", row.getString("Token Symbol"));
 				
-				
+				// read fields from Master tab
 				ListEntry masterRow = masterList.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
 				stock.put( "symbol", masterRow.getString("Symbol") );  // e.g. AAPL (Apple)

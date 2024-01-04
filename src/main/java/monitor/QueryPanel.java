@@ -100,6 +100,7 @@ public class QueryPanel extends JsonPanel {
 		setRows( Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) ) );
 		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
 		
+		// sort by first column but it will retain forward/reverse ordering
 		m_model.onHeaderClicked(0);
 
 		m_model.fireTableDataChanged();

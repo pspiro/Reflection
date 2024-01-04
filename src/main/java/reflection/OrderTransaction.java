@@ -92,9 +92,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		require( price > 0, RefCode.INVALID_REQUEST, "Price must be positive");
 
 		double preCommAmt = price * m_desiredQuantity;
-		double maxAmt = side == Action.Buy ? m_config.maxBuyAmt() : m_config.maxSellAmt();
-		require( Util.isLtEq(preCommAmt, maxAmt), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) ); // this is displayed to user
-		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed order size of %s", S.formatPrice( preCommAmt), S.formatPrice( maxAmt) );
+		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
+		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
 		
 		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
 		

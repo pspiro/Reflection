@@ -111,6 +111,7 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
+		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -152,7 +153,7 @@ public class Monitor {
 	
 	static class TransPanel extends QueryPanel {
 		static String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
-		static String sql = "select * from transactions $where order by created_at desc $limit";
+		static String sql = "select * from transactions $where order by created_at desc $limit";  // you must order by desc to get the latest entries
 		
 		TransPanel() {
 			super( "transactions", names, sql);
@@ -182,12 +183,12 @@ public class Monitor {
 	
 	static class LogPanel extends QueryPanel {
 		static String names = "created_at,wallet_public_key,uid,type,data"; 
-		static String sql = "select * from log $where order by created_at desc $limit";
+		static String sql = "select * from log $where order by created_at desc $limit";  // you must order by desc to get the latest entries
 
 		LogPanel() {
 			super( "log", names, sql);
 		}
-		
+			
 		void filterByUid( String uid) {
 			where.setText( String.format( "where uid = '%s'", uid) );
 			Util.wrap( () -> refresh() );
@@ -220,9 +221,9 @@ public class Monitor {
 				left join transactions
 				on trades.orderref = transactions.uid
 				$where
-				order by created_at
-				desc $limit
-				""";
+				order by created_at desc
+				$limit
+				""";  // you must order by desc to get the latest entries
 		 
 		return new QueryPanel( "trades", names, sql);
 	}
@@ -262,8 +263,7 @@ public class Monitor {
 			super(layout);
 		}
 		
-		protected void refresh() throws Exception {
-		}
+		protected abstract void refresh() throws Exception;
 		
 		@Override public void switchTo() {
 		}
@@ -301,6 +301,17 @@ public class Monitor {
 			setRows( client.readJsonArray() );
 			m_model.fireTableDataChanged();
 		}
+	}
+	
+	static class SimTradesPanel extends MonPanel {
+		public SimTradesPanel() {
+			super( new BorderLayout() );
+		}
+
+		@Override protected void refresh() throws Exception {
+			
+		}
+		
 	}
 	
 }

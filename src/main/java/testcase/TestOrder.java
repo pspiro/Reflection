@@ -171,19 +171,28 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.ORDER_TOO_SMALL.toString(), ret);
 	}
 	
-	public void testMaxAmtBuy()  throws Exception {
-		double qty = m_config.maxBuyAmt() / curPrice + 1;
+	public void testMaxAmt()  throws Exception {
+		// fail buy
+		double qty = m_config.maxOrderSize() / curPrice + 1;
 		JsonObject map = postOrderToObj( createOrder2("buy", qty, curPrice) );
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
-	}
 
-	public void testMaxAmtSell()  throws Exception {
-		double qty = m_config.maxSellAmt() / 138 + 1;
-		JsonObject obj = createOrder2("buy", qty, 138);
-		JsonObject map = postOrderToObj(obj);
-		String ret = map.getString( "code");
+		// fail sell
+		qty = m_config.maxOrderSize() / curPrice + 1;
+		map = postOrderToObj( createOrder2("sell", qty, curPrice) );
+		ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
+
+		// succeed buy
+		qty = m_config.maxOrderSize() / curPrice - .1;
+		postOrderToObj( createOrder2("buy", qty, curPrice) );
+		assert200();
+
+		// succeed sell
+		qty = m_config.maxOrderSize() / curPrice - .1;
+		map = postOrderToObj( createOrder2("sell", qty, curPrice) );
+		assert200();
 	}
 
 	public void testFracShares()  throws Exception {
