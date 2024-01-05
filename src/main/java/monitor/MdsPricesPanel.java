@@ -31,7 +31,7 @@ public class MdsPricesPanel extends JsonPanel {
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing mdserver prices");
-		m_model.m_ar = MyClient.getArray(Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices");
+		setRows( MyClient.getArray(Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices") );
 		m_model.fireTableDataChanged();
 	}
 	

@@ -111,6 +111,7 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
+		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -152,23 +153,13 @@ public class Monitor {
 	
 	static class TransPanel extends QueryPanel {
 		static String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
-		static String sql = "select * from transactions $where order by created_at desc $limit";
+		static String sql = "select * from transactions $where order by created_at desc $limit";  // you must order by desc to get the latest entries
 		
 		TransPanel() {
 			super( "transactions", names, sql);
 		}
 		
-		@Override
-		protected Object format(String tag, Object value) {  // build this into JsonPanel class
-			if (value != null) {
-				if (tag.equals("tds") || tag.equals("price") ) {
-					return value instanceof Double ? S.fmt2((double)value) : value; 
-				}
-			}
-			return value;
-		}
-
-		@Override void onDouble(String tag, Object val) {
+		@Override protected void onDouble(String tag, Object val) {
 			switch(tag) {
 			case "wallet_public_key":
 				m_tabs.select( "Wallet");
@@ -192,21 +183,21 @@ public class Monitor {
 	
 	static class LogPanel extends QueryPanel {
 		static String names = "created_at,wallet_public_key,uid,type,data"; 
-		static String sql = "select * from log $where order by created_at desc $limit";
+		static String sql = "select * from log $where order by created_at desc $limit";  // you must order by desc to get the latest entries
 
 		LogPanel() {
 			super( "log", names, sql);
 		}
-		
+			
 		void filterByUid( String uid) {
 			where.setText( String.format( "where uid = '%s'", uid) );
 			Util.wrap( () -> refresh() );
 		}
 		
-		@Override protected String getTooltip(int row, String tag) {
+		@Override protected String getTooltip(JsonObject row, String tag) {
 			try {
 				if (tag.equals("data") ) {
-					String val = m_model.m_ar.get(row).getString(tag);
+					String val = row.getString(tag);
 					if ( S.isNotNull(val) ) {
 						JsonObject obj = JsonObject.parse(val);
 						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
@@ -230,9 +221,9 @@ public class Monitor {
 				left join transactions
 				on trades.orderref = transactions.uid
 				$where
-				order by created_at
-				desc $limit
-				""";
+				order by created_at desc
+				$limit
+				""";  // you must order by desc to get the latest entries
 		 
 		return new QueryPanel( "trades", names, sql);
 	}
@@ -245,8 +236,20 @@ public class Monitor {
 			super( "users", names, sql);
 		}
 		
-		@Override
-		void onDouble(String tag, Object val) {
+		@Override protected String getTooltip(JsonObject row, String tag) {
+			String ret = null;
+
+			if (tag.equals("persona_response")) {
+				try {
+					ret = JsonObject.parse( row.getString(tag) ).getObject("fields").toHtml();
+				} catch (Exception e) {
+					// eat it
+				}
+			}
+			return ret;
+		}
+		
+		@Override protected void onDouble(String tag, Object val) {
 			if (S.notNull(tag).equals("wallet_public_key") ) {
 				m_tabs.select("Wallet");
 				m_walletPanel.setWallet(val.toString());
@@ -260,8 +263,7 @@ public class Monitor {
 			super(layout);
 		}
 		
-		public void refresh() throws Exception {
-		}
+		protected abstract void refresh() throws Exception;
 		
 		@Override public void switchTo() {
 		}
@@ -296,9 +298,20 @@ public class Monitor {
 		public void refresh() throws Exception {
 			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
 			client.get( "/fbserver/get-all");
-			m_model.m_ar = client.readJsonArray();
+			setRows( client.readJsonArray() );
 			m_model.fireTableDataChanged();
 		}
+	}
+	
+	static class SimTradesPanel extends MonPanel {
+		public SimTradesPanel() {
+			super( new BorderLayout() );
+		}
+
+		@Override protected void refresh() throws Exception {
+			
+		}
+		
 	}
 	
 }

@@ -1,5 +1,7 @@
 package http;
 
+import static reflection.Main.require;
+
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -216,4 +218,14 @@ public class BaseTransaction {
 			respondOk();
 		});
 	}
+	
+	/** Assumes the wallet address is the last token in the URI
+	 *  Read it into the member variable so it is available for log entries */
+	public int getConidFromUri() throws RefException {
+		String conidStr = Util.getLastToken(m_uri, "/");
+		require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "the conid is invalid", conidStr);
+		return Integer.parseInt(conidStr);
+	}
+	
+	
 }

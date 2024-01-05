@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,6 +31,7 @@ import tw.util.S;
 public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware, Comparable<JsonObject> {
 	
 	private static final long serialVersionUID = -503443796854799292L;
+	private DecimalFormat m_doubleFormat; 
 	
 	
 	public JsonObject() {
@@ -269,10 +271,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 				out( "\n%s]", Util.tab(level) );
 			}
 		}
+		else if (objIn instanceof Number) {
+			out( JSONValue.toJSONString(objIn) );
+		}
 		else {
 			out( objIn);
 		}
-		
 	}
 	
 	static void out( String format, Object... params) {
@@ -366,6 +370,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Increment the key by val; stored value must be a Double */
 	public void increment(String key, double val) {
 		put( key, getDouble(key) + val);
+	}
+	
+	public void doubleFormat( DecimalFormat fmt) {
+		m_doubleFormat = fmt;
+	}
+	
+	public <T> T getEnum( String key, T[] values) throws Exception {
+		return (T)get(key);
 	}
 }
 /** NOTE: Timestamp objects are stored as

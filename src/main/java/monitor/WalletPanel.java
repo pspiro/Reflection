@@ -28,6 +28,7 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_matic = new JLabel(); 
 	private final JTextField m_qty = new JTextField(3); 
 	private final JTextField m_stock = new JTextField(6); 
+	private final JTextField m_username = new JTextField(8); 
 
 	private final TransPanel transPanel = new TransPanel();
 
@@ -51,7 +52,8 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "MATIC", m_matic);
 		vp.add( "Mint RUSD", new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", new HtmlButton("Burn", e -> burn() ) ); 
-		vp.add( "Buy stock", m_qty, m_stock, new HtmlButton("Burn", e -> buy() ) ); 
+		//vp.add( "Buy stock", m_qty, m_stock, new HtmlButton("Burn", e -> buy() ) );
+		vp.add( "Create user", m_username, new HtmlButton("Create", e -> createUser() ) );
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
@@ -61,9 +63,16 @@ public class WalletPanel extends JsonPanel {
 		add( transPanel);
 	}
 
-	private void buy() {
+	private void createUser() {
+		Util.wrap( () -> {
+			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "users",
+					Util.toJson( 
+							"wallet_public_key", m_wallet.getText().toLowerCase(),
+							"first_name", m_username.getText() ) ) );
+			Util.inform( this, "Done");
+		});
 	}
-	
+
 	private void mint() {
 		try {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
@@ -108,7 +117,7 @@ public class WalletPanel extends JsonPanel {
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
 
-		m_model.m_ar.clear();
+		rows().clear();
 
 		String walletAddr = m_wallet.getText();
 
@@ -130,7 +139,7 @@ public class WalletPanel extends JsonPanel {
 				if (bal > minBalance) {
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
-					m_model.m_ar.add(obj);
+					rows().add(obj);
 				}
 			}
 

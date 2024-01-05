@@ -20,7 +20,6 @@ public class SouthPanel extends JPanel {
 	JTextField m_refApi = new JTextField(10);
 	JTextField m_fbServer = new JTextField(10);
 	JTextField m_mdServer = new JTextField(10);
-	JTextField m_aapl = new JTextField(20);
 
 	SouthPanel() {
 		add( new JLabel("Ref API:"));
@@ -32,9 +31,6 @@ public class SouthPanel extends JPanel {
 		add( new JLabel("MD Server:"));
 		add( m_mdServer);
 		add( Box.createHorizontalStrut(10));
-		add( new JLabel("AAPL:"));
-		add( m_aapl);
-		add( Box.createHorizontalStrut(10));
 		
 		Util.executeEvery(100, 30000, () -> update() ); 
 	}
@@ -44,10 +40,6 @@ public class SouthPanel extends JPanel {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
-			
-//			MyClient.getJson( Monitor.m_config.mdBaseUrl() + "/mdserver/get-prices
-//				m_aapl.setText(	String.format( "%s : %s : %s : %s", 
-//							prices.bid(), prices.ask(), prices.last(), Util.yToS.format(prices.time() ) ) ) ); 
 		}
 		catch( Exception e) {
 			e.printStackTrace();

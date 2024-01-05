@@ -8,6 +8,7 @@ import javax.swing.SwingUtilities;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.StockToken;
 import http.MyClient;
 import tw.util.S;
 
@@ -22,23 +23,26 @@ public class TokensPanel extends JsonPanel {
 		m_model.justify("lllrr");
 	}
 	
-	@Override
-	void onDouble(String tag, Object val) {
+	@Override protected void onDouble(String tag, Object val) {
 		if (tag.equals( "smartcontractid")) {
-			m_holdersPanel.refresh(val.toString());
+			try {
+				m_holdersPanel.refresh( new StockToken( val.toString() ) );
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Tokens panel");
 		
-		m_model.m_ar.clear();
+		rows().clear();
 		m_map.clear();
 		
 		// start with the stocks from the spreadsheet and add each to the map
 		// this shows active stocks only
 		Monitor.stocks.stocks().forEach( stock -> {
-			m_model.m_ar.add(stock);
+			rows().add(stock);
 			m_map.put(stock.getInt("conid"), stock);
 		});
 		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
@@ -72,7 +76,7 @@ public class TokensPanel extends JsonPanel {
 		return Util.getOrCreate(m_map, conid, () -> {
 			JsonObject obj = new JsonObject();
 			obj.put("conid", String.valueOf(conid) );
-			m_model.m_ar.add( obj);
+			rows().add( obj);
 			return obj;
 		});
 	}
