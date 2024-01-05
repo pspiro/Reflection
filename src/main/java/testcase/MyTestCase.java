@@ -116,4 +116,5 @@ public class MyTestCase extends TestCase {
 		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
 	}
 	
+	static int a = 3;
 }

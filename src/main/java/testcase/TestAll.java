@@ -5,6 +5,7 @@ import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
 
+// NOTE: static variables are shared across tests
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
@@ -14,7 +15,7 @@ import junit.framework.TestCase;
 //	   TestErrors.class,
 //	   TestFaqs.class,
 //	   TestFireblocks.class,
-	   TestFbOrders.class,
+//	   TestFbOrders.class,
 //	   TestGetCryptoTrans.class,
 //	   TestGetPositions.class,
 //	   TestGtable.class,
@@ -28,7 +29,7 @@ import junit.framework.TestCase;
 //	   TestOrderNoAutoFill.class,
 //	   TestOutsideHours.class,  // all pass except TestOutsideHours
 //	   TestPanic.class,
-	   TestPartialFill.class,
+//	   TestPartialFill.class,
 //	   TestPositionTracker.class,
 //	   TestPrices.class,
 //	   TestProfile.class,
@@ -36,11 +37,11 @@ import junit.framework.TestCase;
 //	   TestSignup.class,
 //	   TestSiwe.class,
 //	   TestSplitDates.class,
-//	   TestSmartRusd.class,
-//	   TestSmartToken.class,
+	   TestSmartRusd.class,
+	   TestSmartToken.class,
 //	   TestSwap.class,
 //	   TestStrings.class,
-	   TestUnwindOrder.class,
+//	   TestUnwindOrder.class,  // not done
 //	   TestWallet.class,
 })
 public class TestAll extends TestCase {

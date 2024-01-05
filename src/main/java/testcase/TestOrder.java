@@ -21,7 +21,7 @@ public class TestOrder extends MyTestCase {
 					.get( "/api/get-price/265598")
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
-			S.out( "TestOrder: Current AAPL price is %s", curPrice);
+			S.out( "TestOrder: Current AMZN price is %s", curPrice);
 			Util.require( curPrice > 0, "Zero price");
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
@@ -164,35 +164,51 @@ public class TestOrder extends MyTestCase {
 		startsWith( "Sold 10", ret.getString("text") );
 	}
 
+	// user must have passed KYC for this to pass
 	public void testMinOrderSize() throws Exception {
-		double qty = m_config.minOrderSize() / curPrice - .01;
-		JsonObject map = postOrderToObj( createOrder2("buy", qty, 138) );
+		// fail buy
+		JsonObject map = placeOrder( "buy", m_config.minOrderSize() - .1, curPrice * 1.1);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_SMALL.toString(), ret);
+
+		// fail sell
+		map = placeOrder( "sell", m_config.minOrderSize() - .1, curPrice * .9);
+		ret = map.getString( "code");
+		assertEquals( RefCode.ORDER_TOO_SMALL.toString(), ret);
+
+		// succeed buy
+		map = placeOrder( "buy", m_config.minOrderSize() + .1, curPrice * 1.1);
+		assert200();
+
+		// succeed sell
+		map = placeOrder( "sell", m_config.minOrderSize() + .1, curPrice * .9);
+		assert200();
 	}
 	
+	// user must have passed KYC for this to pass
 	public void testMaxAmt()  throws Exception {
 		// fail buy
-		double qty = m_config.maxOrderSize() / curPrice + 1;
-		JsonObject map = postOrderToObj( createOrder2("buy", qty, curPrice) );
+		JsonObject map = placeOrder( "buy", m_config.maxOrderSize() + 1, curPrice * 1.1);
 		String ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 
 		// fail sell
-		qty = m_config.maxOrderSize() / curPrice + 1;
-		map = postOrderToObj( createOrder2("sell", qty, curPrice) );
+		map = placeOrder( "sell", m_config.maxOrderSize() + 1, curPrice * .9);
 		ret = map.getString( "code");
 		assertEquals( RefCode.ORDER_TOO_LARGE.toString(), ret);
 
 		// succeed buy
-		qty = m_config.maxOrderSize() / curPrice - .1;
-		postOrderToObj( createOrder2("buy", qty, curPrice) );
+		map = placeOrder( "buy", m_config.maxOrderSize() - 1, curPrice * 1.1);
 		assert200();
 
 		// succeed sell
-		qty = m_config.maxOrderSize() / curPrice - .1;
-		map = postOrderToObj( createOrder2("sell", qty, curPrice) );
+		map = placeOrder( "sell", m_config.maxOrderSize() - 1, curPrice * .9);
 		assert200();
+	}
+	
+	private JsonObject placeOrder( String side, double amt, double price) throws Exception {
+		S.out( "%s %s at %s total %s", side, amt / price, price, amt);
+		return postOrderToObj( createOrder2(side, amt / price, price) );
 	}
 
 	public void testFracShares()  throws Exception {

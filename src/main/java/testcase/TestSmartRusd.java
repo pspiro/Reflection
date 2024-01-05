@@ -6,6 +6,7 @@ import fireblocks.Fireblocks;
 import fireblocks.Rusd;
 import fireblocks.StockToken;
 
+/** Test smart contracts */
 public class TestSmartRusd extends MyTestCase {
 	public void testAORA() throws Exception {
 		String[] paramTypes = { "address", "uint256" };
