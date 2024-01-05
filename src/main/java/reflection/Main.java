@@ -200,7 +200,7 @@ public class Main implements ITradeReportHandler {
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		
 		m_stocks.readFromSheet(book, m_config);
-		m_mdsUrl = String.format( "http://localhost:%s/mdserver/get-ref-prices", m_config.mdsPort() );
+		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 	}
 
 	private String readType1Config(Book book) throws Exception {

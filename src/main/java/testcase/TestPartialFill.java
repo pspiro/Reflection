@@ -7,7 +7,6 @@ import tw.util.S;
 
 public class TestPartialFill extends MyTestCase {
 	
-	private static double curPrice = TestOrder.curPrice;
 
 	// fill order buy order
 	public void testMore() throws Exception {

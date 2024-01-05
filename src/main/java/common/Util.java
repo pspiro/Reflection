@@ -21,6 +21,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import javax.mail.Address;
 import javax.mail.Message;
@@ -46,7 +47,7 @@ public class Util {
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
-	static Random rnd = new Random();
+	public static Random rnd = new Random();
 	public static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
 	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 hr clock, useless 
@@ -457,15 +458,11 @@ public class Util {
 		return b.toString();
 	}
 
-	public interface Creator<T> {
-		T instance();
-	}
-
-	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Creator<Val> creator) {
+	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Supplier<Val> creator) {
 		synchronized(map) {
 			Val val = map.get(tag);
 			if (val == null) {
-				val = creator.instance();
+				val = creator.get();
 				map.put( tag, val);  // could use putIfAbsent() here
 			}
 			return val;
@@ -583,28 +580,45 @@ public class Util {
 			return null;
 		}
 	}
-	
+
+	/** Pop up a dialog, beep, and get user input */ 
 	public static String ask(String prompt, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		return JOptionPane.showInputDialog( String.format( prompt, params) );
 	}
 
+	/** Pop up a dialog, beep, and get user input (double) */ 
 	public static double askForVal(String prompt) {
 		String val = ask(prompt);
 		return S.isNull(val) ? 0 : Double.parseDouble(val);
 	}
 	
+	/** Show message, beep, and wait for user input */
 	public static boolean confirm(Component parent, String format, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		return JOptionPane.showConfirmDialog( 
 				parent, String.format(format,params), "Confirm", JOptionPane.YES_NO_OPTION) == 0;
 	}
 
+	/** Show a message and make a beep */
 	public static void inform(Component parent, String message, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		JOptionPane.showMessageDialog( parent, String.format( S.notNull( message), params) );
 	}
-	
-	
-	
+
+	/** Compare two doubles */
+	public static int comp( double v1, double v2) {
+		return v1 < v2 ? -1 : v1 > v2 ? 1 : 0;
+	}
+
+	/** Compare two Comparables but allow for one or both to be null */
+	public static int compare(Comparable v1, Comparable v2) {
+		return v1 != null && v2 != null
+				? v1.compareTo(v2)
+				: v1 == null && v2 == null
+					? 0
+					: v1 == null
+						? -1 : 1;
+	}
+
 }

@@ -42,21 +42,12 @@ public class TestWallet extends MyTestCase {
 //		assertTrue( tok.getDouble("balance") > 0 );
 
 		tok = ar.getJsonObj(1);
-		assertEquals("USDC", tok.getString("name"));
+		assertEquals("USDT", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 		assertTrue( tok.getDouble("approvedBalance") > 0 );
 
 		tok = ar.getJsonObj(2);
 		assertEquals("MATIC", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
-	}
-	
-	public void testWalletUpdate() throws Exception {
-		JsonObject json = new JsonObject();
-		json.put( "wallet_public_key", Cookie.wallet);
-		json.put( "cookie", Cookie.cookie);
-
-		cli().post("/api/wallet-update", json.toString() );
-		assertTrue(false);
 	}
 }

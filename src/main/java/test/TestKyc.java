@@ -1,9 +1,6 @@
 package test;
 
-import org.json.simple.JsonObject;
-
 import http.MyClient;
-import reflection.Config;
 
 public class TestKyc {
 	static public void main( String[] args) throws Exception {

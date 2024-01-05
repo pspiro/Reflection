@@ -122,7 +122,7 @@ public class ConnectionMgr implements IConnectionHandler {
 				m_main.log( "You can't get market data in your paper account while logged into your production account");
 				break;
 			case 502:
-				m_main.log( "Received 502 - there may be another client connected to TWS with the same client ID");
+				m_main.log( "Received 502. It may be that EITHER another client is connected with the same client ID OR TWS is not accepting connections from this IP address");
 		}
 	
 		m_main.log( "Received from TWS %s %s %s", id, errorCode, errorMsg);

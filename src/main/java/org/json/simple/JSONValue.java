@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -174,7 +175,9 @@ public class JSONValue {
 	 * @param value
 	 * @return JSON text, or "null" if value is null or it's an NaN or an INF number.
 	 */
-	public static String toJSONString(Object value){
+	public static DecimalFormat fmt = new DecimalFormat( "0.########"); // get rid of .000000001 which we sometimes see
+			
+	public static String toJSONString(Object value){ // this is where you could put custom decimal format
 		if(value == null)
 			return "null";
 		
@@ -184,15 +187,13 @@ public class JSONValue {
 		if(value instanceof Double){
 			if(((Double)value).isInfinite() || ((Double)value).isNaN())
 				return "null";
-			else
-				return value.toString();
+			return fmt.format(value); 
 		}
 		
 		if(value instanceof Float){
 			if(((Float)value).isInfinite() || ((Float)value).isNaN())
 				return "null";
-			else
-				return value.toString();
+			return fmt.format(value); 
 		}		
 		
 		if(value instanceof Number)

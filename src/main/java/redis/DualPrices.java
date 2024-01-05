@@ -15,7 +15,6 @@ class DualPrices {
 	private Stock m_stock;
 	private final Prices m_smart;
 	private final Prices m_overnight;
-	private Session m_was;   // prevSession would be a better name
 	
 	static {
 		NullPrices.m_bid = -2;  // this value is not used anywhere but it shows up in Monitor and means there is no session
@@ -74,6 +73,14 @@ class DualPrices {
 		
 		Prices(int conid) {
 			m_conid = String.valueOf( conid);
+		}
+		
+		double bid() {
+			return m_bid;
+		}
+		
+		double ask() {
+			return m_ask;
 		}
 		
 		@Override public String toString() {
@@ -164,7 +171,7 @@ class DualPrices {
 		ret.add( stockPrices);
 	}
 
-	public Prices getRefPrices(Session session) {
+	Prices getPrices(Session session) {
 		return switch(session) {
 			case Smart -> m_smart;
 			case Overnight -> m_overnight;
@@ -173,7 +180,7 @@ class DualPrices {
 	}
 
 	public void update(JsonObject stockPrices, Session session) {
-		getRefPrices(session).update(stockPrices); 
+		getPrices(session).update(stockPrices); 
 		
 		// if all sessions are closed, or we are in overnight and there
 		// is no last there, use last from smart
@@ -182,5 +189,13 @@ class DualPrices {
 			
 			stockPrices.put( "last", smart().last() );
 		}
+	}
+
+	public int conid() {
+		return m_stock.conid();
+	}
+
+	public double getAnyLast() {
+		return m_smart.last() > 0 ? m_smart.last() : m_overnight.last();
 	}
 }

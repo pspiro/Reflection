@@ -9,6 +9,7 @@ import org.json.simple.JsonArray;
 
 import com.ib.client.Types.TimeInForce;
 
+import common.Alerts;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Busd;
@@ -32,11 +33,10 @@ public class Config extends ConfigBase {
 	protected GTable m_tab;
 
 	// user experience parameters
-	private double maxBuyAmt; // max buy amt in dollars
-	private double maxSellAmt; // max sell amt in dollars
+	private double minOrderSize;  // in dollars
+	private double maxOrderSize; // max buy amt in dollars
 	private double minBuySpread;  // as pct of price
 	private double minSellSpread;  // as pct of price
-	private double minOrderSize;  // in dollars
 
 	// needed by back-end server
 	private double buySpread;  // as pct of price
@@ -74,8 +74,9 @@ public class Config extends ConfigBase {
 	private int threads;
 	private int myWalletRefresh;
 	private double fbLookback;
-	private int mdsPort;  // port that mdServer runs on where RefAPI will send MD requests 
+	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
+	private String alertEmail;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -101,8 +102,9 @@ public class Config extends ConfigBase {
 	
 	public boolean autoFill() { return autoFill; }
 
-	public double maxBuyAmt() { return maxBuyAmt; }
-	public double maxSellAmt() { return maxSellAmt; }
+	public double minOrderSize() { return minOrderSize; }
+	public double maxOrderSize() { return maxOrderSize; }
+	
 	public double minSellSpread() { return minSellSpread; }
 	public double minBuySpread() { return minBuySpread; }
 	
@@ -149,9 +151,8 @@ public class Config extends ConfigBase {
 		this.sellSpread = m_tab.getRequiredDouble( "sell_spread");
 		this.minBuySpread = m_tab.getRequiredDouble( "minBuySpread");   // should be changed to read table without formatting. pas
 		this.minSellSpread = m_tab.getRequiredDouble( "minSellSpread");
-		this.maxBuyAmt = m_tab.getRequiredDouble( "max_order_size");
-		this.maxSellAmt = m_tab.getRequiredDouble( "max_order_size");
 		this.minOrderSize = m_tab.getRequiredDouble( "min_order_size");
+		this.maxOrderSize = m_tab.getRequiredDouble( "max_order_size");
 		this.minTokenPosition = m_tab.getRequiredDouble("minTokenPosition");
 		this.commission = m_tab.getRequiredDouble( "commission");
 
@@ -191,8 +192,11 @@ public class Config extends ConfigBase {
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
-		this.mdsPort = m_tab.getRequiredInt("mdsPort");
+		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
+		this.alertEmail = m_tab.getRequiredString("alertEmail");
+		
+		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
@@ -230,8 +234,8 @@ public class Config extends ConfigBase {
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
 		require( minSellSpread > 0 && minSellSpread < .05 && minSellSpread < sellSpread, "minSellSpread");
-		require( maxBuyAmt > 0 && maxBuyAmt <= 100000, "maxBuyAmt");
-		require( maxSellAmt > 0 && maxSellAmt <= 100000, "maxSellAmt");
+		require( minOrderSize > 0 && minOrderSize <= 100, "minOrderSize");
+		require( maxOrderSize > 0 && maxOrderSize <= 100000, "maxOrderSize");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 60000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
@@ -445,9 +449,6 @@ public class Config extends ConfigBase {
 	double getRequiredDouble(String key) throws Exception {
 		return m_tab.getRequiredDouble(key);
 	}
-	public double minOrderSize() {
-		return minOrderSize;
-	}
 
 	/** don't throw an exception; it's usually not critical */
 	public void sendEmail(String to, String subject, String text, boolean isHtml) {
@@ -489,9 +490,9 @@ public class Config extends ConfigBase {
 	public double fbLookback() {
 		return fbLookback;
 	}
-	
-	public int mdsPort() {
-		return mdsPort;
+
+	public String mdsConnection() {
+		return mdsConnection;
 	}
 	
 	public double minPartialFillPct() {
