@@ -11,5 +11,5 @@ mvn package
 
 # must restart all servers or you can get classnotfound errors
 sudo systemctl restart fbserver
-sudo systemctl restart mktdataserver
+sudo systemctl restart mdserver
 sudo systemctl restart refapi
