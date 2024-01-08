@@ -35,7 +35,6 @@ public class OldStyleTransaction extends MyTransaction {
 		//pushBackendConfig,
 		//pushFaq,
 		refreshConfig,
-		seedPrices,
 		terminate,
 		testAlert,
 		//wallet,
@@ -93,9 +92,6 @@ public class OldStyleTransaction extends MyTransaction {
 				break;
 			case testAlert:
 				onTestAlert();
-				break;
-			case seedPrices:
-				onSeedPrices();
 				break;
 			case getCashBal:
 				onCashBal();
@@ -233,37 +229,6 @@ public class OldStyleTransaction extends MyTransaction {
 		boolean csv = m_map.getBool("csv");
 		returnPrice(conid, csv);
 	}	
-
-	/** Top-level method; set some prices for use in test systems 
-	 * @throws RefException */
-	void onSeedPrices() throws RefException {
-		require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Only in test env");
-		
-		Jedis jedis = Main.m_config.redisPort() == 0
-			? new Jedis( Main.m_config.redisHost() )  // use full connection string
-			: new Jedis( Main.m_config.redisHost(), Main.m_config.redisPort() );
-		
-		jedis.hset( "8314", "bid", "128.20");
-		jedis.hset( "8314", "ask", "128.30");
-		jedis.hset( "13824", "bid", "148.48");
-		jedis.hset( "13824", "ask", "148.58");
-		jedis.hset( "13977", "bid", "116.05");
-		jedis.hset( "13977", "ask", "116.15");
-		jedis.hset( "265598", "bid", "165.03");
-		jedis.hset( "265598", "ask", "165.13");
-		jedis.hset( "320227571", "bid", "318.57");
-		jedis.hset( "320227571", "ask", "328.57");
-		jedis.hset( "73128548", "bid", "341.03");
-		jedis.hset( "73128548", "ask", "342.05");
-		jedis.hset( "72063691", "bid", "328.55");
-		jedis.hset( "72063691", "ask", "330.55");
-		
-		// update the prices on the objects
-		m_main.queryAllPrices();
-		
-		// respond with prices
-		getAllPrices();
-	}
 
 	/** Top-level message, return prices for debugging */
 	private void getAllPrices() throws RefException {
