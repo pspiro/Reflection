@@ -14,24 +14,24 @@
 ///** Copy any table from one postgres to another */
 //public class UpdateEmails {
 //	static ChromeDriver driver;
-//	
+//
 //	public static void main(String[] args) throws Exception {
 //
 ////		login("heather@briscoinvestments.com", "16Sixteen!");
 ////		S.sleep(1000);
 ////		process("Heather");
 ////		driver.close();
-//			
+//
 //		login("peteraspiro@gmail.com", "1359ab");
 //		S.sleep(1000);
 //		process("Pete");
 //		driver.close();
 //	}
-//	
+//
 //	static void process(String tabName) {
 //		try {
 //			GTable tab = new GTable( NewSheet.LinkedIn, tabName, "URL", "Email Address");
-//			
+//
 //			tab.keySet().forEach( url -> {
 //				String email = tab.get(url);
 //				if (S.isNotNull(url) && S.isNull(email) ) {
@@ -51,11 +51,11 @@
 //			e.printStackTrace();
 //		}
 //	}
-//	
+//
 //	static Random rnd = new Random();
-//	
+//
 //	static String getEmail(String urlIn) throws Exception {
-//		String url = urlIn + "/overlay/contact-info/"; 
+//		String url = urlIn + "/overlay/contact-info/";
 //		S.out( "Checking " + url);
 //
 //		// go to one person
@@ -79,13 +79,13 @@
 //			}
 //		}
 //	}
-//	
+//
 //	static String get(String xpath) {
 //		String email = driver
 //				.findElement(By.xpath(xpath))
 //				.getAttribute("href")
 //				.substring(7);
-//		
+//
 //		S.out("  found " + email);
 //		return email;
 //	}
@@ -94,7 +94,7 @@
 ////		ChromeOptions o = new ChromeOptions();
 ////		o.setBrowserVersion("116");  // if you want to use a different version
 //
-//		driver = new ChromeDriver(); 
+//		driver = new ChromeDriver();
 //		driver.get("https://www.linkedin.com/");
 //		//S.sleep(1000);
 //		Util.pause();
@@ -109,6 +109,7 @@
 //		// click Login
 //		ele = driver.findElement(By.cssSelector("#main-content > section.section.min-h-\\[560px\\].flex-nowrap.pt-\\[40px\\].babybear\\:flex-col.babybear\\:min-h-\\[0\\].babybear\\:px-mobile-container-padding.babybear\\:pt-\\[24px\\] > div > div > form > div.flex.justify-between.sign-in-form__footer--full-width > button"));
 //		ele.click();
-//		
+//
 //	}
 //}
+// test sending emails
