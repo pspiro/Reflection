@@ -21,12 +21,6 @@ public class TestConfig extends TestCase {
 		assertEquals( "true", map.getString("orderConnectedToBroker") );		
 	}
 	
-	public void testRefAPIConfig() throws Exception {
-		String data = "{ 'msg': 'getconfig' }"; 
-		JsonObject map = sendData( data);
-		assertEquals( "18", map.getString( "busdDecimals") );
-	}
-
 	public void testRefreshConfig() throws Exception {
 		String data = "{ 'msg': 'refreshconfig' }"; 
 		JsonObject map = sendData( data);

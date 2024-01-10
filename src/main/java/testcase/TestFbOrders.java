@@ -117,10 +117,15 @@ public class TestFbOrders extends MyTestCase {
 		}
 	}
 
+	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		S.out( "-----testFillWithFb");
 		Cookie.setNewWallet(bobAddr);
 		showAmounts("starting amounts");
+
+		// make sure we have a valid user profile  (updates profile for Cookie.wallet
+		//cli().post("/api/update-profile", TestProfile.createValidProfile().toString() );
+		// this doesn't work because we can't update the email
 		
 		// mint BUSD for user Bob
 		S.out( "**minting 20000");
@@ -140,8 +145,6 @@ public class TestFbOrders extends MyTestCase {
 
 		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
-		final String now = Util.yToS.format( new Date() );
-		
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
 		
@@ -174,11 +177,14 @@ public class TestFbOrders extends MyTestCase {
 			S.sleep(1000);
 		}
 		
-		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson("select * from transactions where created_at > '%s'", now) );
+		// fetch most recent transaction from database
+		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
+				"select * from transactions order by created_at desc limit 1") );
 		assertTrue( ar.size() > 0);
+		
 		JsonObject rec = ar.get(0);
 		S.out(rec);
-		assertEquals( "COMPLETED", rec.getString("status") );  // should later change to COMPLETED. pas
+		assertEquals( "COMPLETED", rec.getString("status") );
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	

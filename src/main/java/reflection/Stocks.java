@@ -40,6 +40,7 @@ public class Stocks implements Iterable<Stock> {
 
 				stock.put( "conid", String.valueOf( conid) );
 				
+				// read fields from from specific tab 
 				String address = row.getString("TokenAddress");
 				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
 				stock.put( "smartcontractid", address);
@@ -49,8 +50,9 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "convertsToAddress", row.getString( "Converts To Address") );
 				stock.put( "allow", row.getString("Allow") );
 				stock.put( "tokenSymbol", row.getString("Token Symbol"));
+				stock.put( "isHot", row.getBool("Hot") );
 				
-				
+				// read fields from Master tab
 				ListEntry masterRow = masterList.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
 				stock.put( "symbol", masterRow.getString("Symbol") );  // e.g. AAPL (Apple)
@@ -58,7 +60,6 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
 				stock.put( "is24hour", masterRow.getBool("24-Hour") );
-				stock.put( "isHot", masterRow.getBool("Hot") );
 				stock.put( "tradingView", masterRow.getString("Trading View") );
 
 				m_stocks.add( stock);

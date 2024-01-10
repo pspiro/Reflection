@@ -56,9 +56,9 @@ public class Deploy {
 			Util.require( Util.isValidAddress( rusd.address() ), "RUSD must be valid or set to 'deploy'");
 		}
 		
-		// deploy stock tokens that are active and have an empty token address
+		// deploy stock tokens where address is set to deploy (should be inactive to prevent errors in RefAPI)
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
-			if ("Y".equals( row.getString( "Active") ) && S.isNull( row.getString( "Token Address") ) ) {
+			if (row.getString( "Token Address").equalsIgnoreCase("deploy") ) {
 				// deploy stock token
 				StockToken token = StockToken.deploy( 
 						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
@@ -75,5 +75,5 @@ public class Deploy {
 		
 		//Test.run(config, busd, rusd);
 	}
-	
+// test build	
 }

@@ -100,7 +100,7 @@ public class TestHttpClient extends MyTestCase {
 	/** get json array, async 
 	 * @throws Exception */
 	public static void testgetArray() throws Exception {
-		String url = "https://reflection.trading/api/positions/0x76274e9a0f0bc4eb9389e013bd00b2c4303cdd37";
+		String url = "https://reflection.trading/api/positions/" + Cookie.wallet;
 		assertTrue( MyClient.getArray(url).size() > 0);
 		
 		ObjectHolder<JsonArray> ob = new ObjectHolder<>();
