@@ -29,6 +29,7 @@ public class WalletPanel extends JsonPanel {
 	private final JTextField m_qty = new JTextField(3); 
 	private final JTextField m_stock = new JTextField(6); 
 	private final JTextField m_username = new JTextField(8); 
+	private final JTextField m_mintAmt = new JTextField(8); 
 
 	private final TransPanel transPanel = new TransPanel();
 
@@ -47,10 +48,10 @@ public class WalletPanel extends JsonPanel {
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
 		vp.add( "RUSD", m_rusd);
-		vp.add( "USDC", m_usdc);
+		vp.add( "USDT", m_usdc);
 		vp.add( "Approved", m_approved);
 		vp.add( "MATIC", m_matic);
-		vp.add( "Mint RUSD", new HtmlButton("Mint", e -> mint() ) ); 
+		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", new HtmlButton("Burn", e -> burn() ) ); 
 		//vp.add( "Buy stock", m_qty, m_stock, new HtmlButton("Burn", e -> buy() ) );
 		vp.add( "Create user", m_username, new HtmlButton("Create", e -> createUser() ) );
@@ -77,7 +78,7 @@ public class WalletPanel extends JsonPanel {
 		try {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 			
-			double amt = Util.askForVal( "Enter amt");
+			double amt = Double.parseDouble( m_mintAmt.getText() );
 			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
 			
 				String hash = Monitor.m_config.rusd().mintRusd( 

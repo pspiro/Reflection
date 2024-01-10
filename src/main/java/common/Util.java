@@ -621,4 +621,9 @@ public class Util {
 						? -1 : 1;
 	}
 
+	/** Handle null objects */
+	public static String toString(Object obj) {
+		return obj == null ? "" : obj.toString();
+	}
+
 }

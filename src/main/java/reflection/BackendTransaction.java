@@ -188,7 +188,7 @@ public class BackendTransaction extends MyTransaction {
 
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 
-			validateCookie();
+			validateCookie("register");
 			
 			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
@@ -232,12 +232,15 @@ public class BackendTransaction extends MyTransaction {
 				}
 			}
 			
+			// fix a display issue where some users approved a huge size by mistake
+			double approved = Math.min(1000000,m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ));
+			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", Stablecoin.USDT);
 			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
-			busd.put( "approvedBalance", m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ) );
+			busd.put( "approvedBalance", approved);
 			busd.put( "stablecoin", true);
 			
 			JsonObject base = new JsonObject();

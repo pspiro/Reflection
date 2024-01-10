@@ -99,7 +99,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
-		validateCookie();
+		validateCookie("order");
 
 		// get record from Users table
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values

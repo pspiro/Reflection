@@ -124,8 +124,9 @@ public abstract class MyTransaction extends BaseTransaction {
 	}
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
-	 *  They could just send the nonce, it's the only part of the cookie we are using*/
-	JsonObject validateCookie() throws Exception {
+	 *  They could just send the nonce, it's the only part of the cookie we are using
+	 *  @param caller is a string describing the caller used for error msg only */
+	JsonObject validateCookie(String caller) throws Exception {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
 		// we can take cookie from map or header
 		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
@@ -133,7 +134,7 @@ public abstract class MyTransaction extends BaseTransaction {
 //		if (cookie == null) {  // we could pull from the cookie header if desired, but then you have to look for the one with the matching address because there could be multiple __Auth cookies
 //			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 //		}
-		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on message requring validation");
+		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message", caller);
 		
 		return SiweTransaction.validateCookie( cookie, m_walletAddr);
 	}
