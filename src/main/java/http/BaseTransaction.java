@@ -37,22 +37,15 @@ public class BaseTransaction {
 		m_exchange = exchange;
 		m_uid = Util.uid(8);
 		m_timer = debug || m_debug ? new MyTimer() : null;
-		m_uri = getURI(m_exchange);  // all lower case, prints out the URI
+		m_uri = m_exchange.getRequestURI().toString().toLowerCase();
+		
+		if (m_timer != null) {
+			m_timer.next( "%s ----- %s -------------------------", m_uid, m_uri);
+		}
 	}
 	
 	public String uid() {
 		return m_uid;
-	}
-
-	/** Note this returns URI in all lower case */
-	String getURI(HttpExchange exch) {
-		String uri = exch.getRequestURI().toString().toLowerCase();
-		
-		if (m_timer != null) {
-			m_timer.next( "%s ----- %s -------------------------", m_uid, uri);
-		}
-		
-		return uri;
 	}
 
 	public void respondOk() {
@@ -102,6 +95,12 @@ public class BaseTransaction {
 			if (m_timer != null) {
 				out( "  responded in %s ms %s", m_timer.time(), Util.left(data, 200) );
 			}
+			else if (responseCode != 200) {
+				// if m_timer is null, it means we didn't print out the URI because it's a
+				// frequently repeating message; we should print it now since there was an error
+				out( m_exchange.getRequestURI().toString().toLowerCase() );
+				out( Util.left(data, 200) );
+			}				
 		}
 		catch (Exception e) {
 			if ( S.notNull( e.getMessage() ).equals( "Broken pipe") ) {
