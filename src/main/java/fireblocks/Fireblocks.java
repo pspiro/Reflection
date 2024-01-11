@@ -291,8 +291,13 @@ public class Fireblocks {
 		return fb.transactToRetVal();
 	}
 
-	/** @param amount is the real world dollar amt */
+	/** @param amount is the real world dollar amt
+	 * @param token is the name of the token on Fireblocks */
 	public static RetVal transfer(int fromAcct, String dest, String token, double amount, String note) throws Exception {
+		Util.reqValidAddress(dest);
+		Util.require( S.isNotNull(token), "Null token name");
+		Util.require( S.isNotNull(note), "You must supply a note");
+		
 		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
 		
 		String bodyTemplate = 

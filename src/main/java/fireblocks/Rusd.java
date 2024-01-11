@@ -1,6 +1,7 @@
 package fireblocks;
 
 import common.Util;
+import reflection.Config;
 import tw.util.S;
 
 public class Rusd extends Erc20 {
@@ -78,6 +79,8 @@ public class Rusd extends Erc20 {
 	/** Buy with either RUSD or BUSD; can also be used to burn RUSD
 	 * @return id */
 	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+		Util.require( stockTokenAmt > 0, "Cannot buy zero tokens");
+		
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr,
@@ -222,6 +225,11 @@ public class Rusd extends Erc20 {
 				"RUSD swap");
 				
 	}
+
+//	/** RUSD has no mint function, so we sell zero shares of stock */
+//	public RetVal mintStock(double qty, StockToken stockToken, String address) throws Exception {
+//		return buyStockWithRusd( address, 0, stockToken, qty);
+//	}
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
 	public RetVal mintRusd(String address, double amt, StockToken anyStockToken) throws Exception {

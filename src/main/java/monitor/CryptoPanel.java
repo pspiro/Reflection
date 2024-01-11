@@ -36,6 +36,7 @@ public class CryptoPanel extends MonPanel {
 		});
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
+		HtmlButton ownderSendBusd = new HtmlButton( "Send to", ev -> ownerSendBusd() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
@@ -44,7 +45,7 @@ public class CryptoPanel extends MonPanel {
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
-		rusdPanel.add( "Owner USDT", m_ownerBusd);
+		rusdPanel.add( "Owner USDT", m_ownerBusd, ownderSendBusd);
 		rusdPanel.add( "Owner MATIC", m_ownerMatic);
 		
 		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
@@ -56,6 +57,19 @@ public class CryptoPanel extends MonPanel {
 		add(holdersPanel, BorderLayout.EAST);
 	}
 	
+	private void ownerSendBusd() {
+		Util.wrap( () -> {
+			Fireblocks.transfer( 
+					Accounts.instance.getId("Owner"),
+					Util.ask("Enter dest wallet address"),
+					Monitor.m_config.fbStablecoin(),
+					Double.parseDouble( Util.ask( "Enter amount")),
+					Util.ask("Enter note")
+			).waitForHash();
+			Util.inform(this, "Done");
+		});
+	}
+
 	private void emptyRefWallet() {
 		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
 			Util.wrap( () -> {
@@ -84,11 +98,11 @@ public class CryptoPanel extends MonPanel {
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
 		Wallet owner = Fireblocks.getWallet("Owner");
-		double ownerBal = owner.getNativeTokenBalance();
-		double busdBal = owner.getBalance(Monitor.m_config.busdAddr());
+		double ownerMatic = owner.getNativeTokenBalance();
+		double ownerBusd = owner.getBalance(Monitor.m_config.busdAddr());
 		SwingUtilities.invokeLater( () -> {
-			m_ownerMatic.setText( S.fmt2(ownerBal) );
-			m_ownerBusd.setText( S.fmt2(busdBal) );
+			m_ownerBusd.setText( S.fmt2(ownerBusd) );
+			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
 		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeTokenBalance();
