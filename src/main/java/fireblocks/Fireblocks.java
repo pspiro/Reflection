@@ -34,7 +34,6 @@ public class Fireblocks {
 	private static String s_privateKey;
 	public static String platformBase;   // base currency of the platform, e.g. ETHER or MATIC
 	
-	private String operation;
 	private String endpoint;
 	private String body = "";  // optional
 	
@@ -47,10 +46,6 @@ public class Fireblocks {
 		platformBase = _platformBase;
 		
 		S.out( "Platform native token is %s", platformBase);
-
-		// read keys
-//		s_apiKey = Util.getenv("api_key");
-//		s_privateKey = Util.getenv("private_key");
 	}
 	
 	/** Returns the Fireblocks ID. Throws exception if there is no id */
@@ -67,10 +62,6 @@ public class Fireblocks {
 	}
 			
 	String transact() throws Exception {
-		//S.out( "Sending Fireblocks transaction  %s  %s  '%s'", operation, endpoint, body);
-
-		//S.out( "api key: %s", apiKey);
-
 		long start = System.currentTimeMillis() / 1000 - 5;  // minus 5 because you get an error if your timestamp is in the future
 		long expire = start + 30;
 
