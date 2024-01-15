@@ -237,10 +237,6 @@ public class Util {
 		return str != null && str.toLowerCase().startsWith( str2.toLowerCase() );
 	}
 	
-	public static boolean validToken(String token) {
-		return token != null && token.length() == 42 && startsWith( token, "0x");
-	}
-	
 	public static String tab(int level) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < level * 3; i++) {
@@ -351,7 +347,7 @@ public class Util {
 	}
 	
 	public static boolean isValidAddress( String str) {
-		return str.length() == 42 && str.toLowerCase().startsWith("0x"); 
+		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
 	public static void reqValidAddress(String str) throws Exception {
@@ -414,6 +410,11 @@ public class Util {
 		return str.substring( str.length() - Math.min(str.length(), max) );
 	}
 
+	/** Return string all the way to the end */
+	public static String substring(String str, int start) {
+		return substring( str, start, Integer.MAX_VALUE);
+	}
+	
 	/** Clip the bounds, don't throw exception, handle null string */
 	public static String substring(String str, int start, int end) {
 		str = S.notNull(str);

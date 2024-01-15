@@ -166,9 +166,17 @@ public class Fireblocks {
 		return Util.padRight( str, 64, '0'); 
 	}
 	
-
+	public static void main(String[] args) throws Exception {
+		S.out( encodeParameters( 
+				new String[] { "string", "address", "string"}, 
+				new Object[] { "0x79da550edc0874fd3da72a70577081fd59fa7ddb", "0x79da550edc0874fd3da72a70577081fd59fa7ddb", "ABC"  }
+				) );
+	}
+	
 	/** For encoding parameters for deployment or contract calls.
-	 *  Assume all string length <= 32 bytes 
+	 *  Assume all string length <= 32 bytes
+	 *  Encoded as follows: 64 characters per line, one line per parameter
+	 *  add the strings at the end: one line for the length, then the data  
 	 * @throws RefException */
 	public static String encodeParameters( String[] types, Object[] params) throws Exception {
 		Util.require( 
@@ -183,23 +191,23 @@ public class Fireblocks {
 		
 		StringBuilder sb = new StringBuilder();
 		
-		int statics = 0;
-
+		int offsetBytes = types.length * 32;
+		
 		// encode the parameters; strings just get a placeholder
 		for (int i = 0; i < types.length; i++) {
 			String type = types[i];
 			Object val = params[i];
+			
 			if (type.equals("string") ) {
 				Util.require( val instanceof String, "Wrong type");
 				
 				String str = (String)val;
-				Util.require( str.length() <= 100, "String too long");
-				
-				// total number of parameters plus the number of strings (or other static types) that came before
-				int num = (types.length + statics * 2) * 32;
-				sb.append( padInt( num) );
+				Util.require( str.length() <= 100, "That's an awfully long string");
 
-				statics++;
+				// encode the starting offset for the string
+				sb.append( padInt( offsetBytes) );
+
+				offsetBytes += 32 + stringBytes( str.length() );  // add 32 for the row which encodes the string length
 			}
 			else if (type.equals( "address") ) {
 				sb.append( padAddr( (String)val) );
@@ -223,14 +231,27 @@ public class Fireblocks {
 			String type = types[i];
 			Object val = params[i];
 			if (type.equals("string") ) {
-				sb.append( padInt( ((String)val).length() ) );
-				String bytes = stringToBytes( (String)val);
-				sb.append( padRight( bytes) );
+				sb.append( padInt( ((String)val).length() ) );  // encode the length (one row)
+				encodeString(sb, (String)val);   // encode the string (could be one or more rows)
 			}
 		}
 		return sb.toString();
 	}
 
+	/** Encode the string one row of 32 bytes at a time */
+	private static void encodeString(StringBuilder sb, String val) {
+		while (val.length() > 0) {
+			sb.append( padRight( stringToBytes( Util.left(val, 32) ) ) );
+			val = Util.substring(val, 32);
+		}
+	}
+
+	/** Return the number of rows it takes to encode the string * 32
+	 *  as there are 32 bytes per row */
+	private static int stringBytes(int length) {
+		return (int)Math.ceil(length / 32.0) * 32;
+	}
+	
 	/** Return each byte's hex value */
 	public static String stringToBytes(String val) {
 		StringBuilder sb = new StringBuilder();

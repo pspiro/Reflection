@@ -31,8 +31,11 @@ public class HoldersPanel extends JsonPanel {
 			HashMap<String, ModifiableDecimal> map = token.getAllBalances();
 
 			JsonArray ar = new JsonArray();
-			map.forEach( (wallet, balance) -> 
-					ar.add( Util.toJson( "wallet", Util.left(wallet, 8), "balance", balance ) ) );
+			map.forEach( (wallet, balance) -> { 
+				if (balance.value() >= .009) {
+					ar.add( Util.toJson( "wallet", Util.left(wallet, 8), "balance", balance ) );
+				}
+			});
 			
 			setRows( ar);
 			m_model.fireTableDataChanged();

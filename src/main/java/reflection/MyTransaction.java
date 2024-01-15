@@ -120,7 +120,12 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** don't throw an exception here, it should not disrupt any other process */
 	protected static void alert(String subject, String body) {
-		Alerts.alert( "RefAPI", subject, body);
+		if (Main.m_config.isProduction() ) {
+			Alerts.alert( "RefAPI", subject, body);
+		}
+		else {
+			S.out( "Alert %s - %s", subject, body);
+		}
 	}
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
