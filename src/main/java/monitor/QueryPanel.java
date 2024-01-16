@@ -93,9 +93,16 @@ public class QueryPanel extends JsonPanel {
 		S.out( "Refreshing QueryModel");
 		m_list.push(where.getText());
 		
+		String whereText = where.getText();
+		
+		if (whereText.trim().length() > 0 && !Util.left(whereText,5).equals("where") ) {
+			whereText = "where " + whereText;
+		}
+		
 		String str = m_sql
 				.replaceAll( "\\$limit", "limit " + Monitor.num() )
-				.replaceAll( "\\$where", where.getText() );
+				.replaceAll( "'wallet'", "'wallet_public_key'" + Monitor.num() )
+				.replaceAll( "\\$where", whereText );
 		
 		setRows( Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) ) );
 		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
