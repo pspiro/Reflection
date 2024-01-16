@@ -159,7 +159,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
 		require( 
-				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .01),  // +/- one penny 
+				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .02),  // +/- two cents; for some reason, Front end is sometimes off by .01; there's a bug assigned, but in the meantime, don't sweat it 
 				RefCode.INVALID_REQUEST, 
 				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
