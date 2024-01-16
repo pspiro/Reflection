@@ -79,7 +79,8 @@ public class Rusd extends Erc20 {
 	/** Buy with either RUSD or BUSD; can also be used to burn RUSD
 	 * @return id */
 	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		Util.require( stockTokenAmt > 0, "Cannot buy zero tokens");
+		Util.isValidAddress(userAddr);
+		Util.require( stablecoinAmt > 0, "Cannot buy stock with zero stablecoin");
 		
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 

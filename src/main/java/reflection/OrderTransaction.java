@@ -533,7 +533,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
-			if (!m_map.getBool("testcase")) {
+			if (m_config.isProduction() && !m_map.getBool("testcase")) {
 				alert( "ORDER COMPLETED", getCompletedOrderText() );
 			}
 		}
@@ -565,7 +565,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_errorCode = errorCode;
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
-			if (!m_map.getBool("testcase")) {
+			if (m_config.isProduction() && !m_map.getBool("testcase")) {
 				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s", m_uid, m_errorText, m_errorCode) );
 			}
 		}
