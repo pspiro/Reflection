@@ -51,7 +51,7 @@ public class EventFetcher {
 			int conid = row.getInt("Conid");
 			
 			if (S.isNotNull( symbol) ) {
-				if (Util.validToken(token) ) { 
+				if (Util.isValidAddress(token) ) { 
 					MorStock stock = new MorStock( symbol, token, conid);
 					stockMap.put( token, stock);
 				}

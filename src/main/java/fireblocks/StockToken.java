@@ -37,6 +37,7 @@ public class StockToken extends Erc20 {
 	public static StockToken deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		Util.require( S.isNotNull( name), "Null name" );
 		Util.require( S.isNotNull( symbol), "Null symbol" );
+		Util.require( symbol.length() <= 18, "Symbol too long"); // it may work with longer but I only tested up to this point
 		Util.reqValidAddress( rusdAddr);
 
 		String[] paramTypes = { "string", "string", "address" };

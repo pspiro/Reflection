@@ -44,7 +44,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
-			validateCookie();
+			validateCookie("redeem");
 			
 			Rusd rusd = m_config.rusd();
 			Busd busd = m_config.busd();

@@ -12,7 +12,7 @@ import tw.util.S;
 /** Get token positions; will only send one query */
 public class Wallet {
 	private String m_address;
-	private HashMap<String, Double> m_map; // map token (lower case) to balance
+	private HashMap<String, Double> m_map; // map token address (lower case) to balance
 	
 	public static void main(String[] args) throws Exception {
 		Config.ask();
@@ -33,7 +33,8 @@ public class Wallet {
 		m_address = address;
 	}
 
-	/** Only send the request the first time */
+	/** Only send the request the first time
+	 *  @param token is token address */
 	public double getBalance(String token) throws Exception {
 		if (m_map == null) {
 			m_map = reqPositionsMap(m_address);

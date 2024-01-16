@@ -76,6 +76,17 @@ public class JsonModel extends MyTableModel {
 		Object val = m_ar.get(row).get(key);
 		return val != null ? format( key, val) : null;
 	}
+	
+	/** Sort on first column ascending */
+	public void resetSort() {
+		if (m_colNames.length > 0 && m_ar.isSortable(m_colNames[0])) {
+			m_ar.sortJson( m_colNames[0], true); 
+			lastSortedCol = 0;
+		}
+		else {
+			lastSortedCol = -1;
+		}
+	}
 
 	/** Sort when column is clicked */
 	@Override public final void onHeaderClicked(int col) {

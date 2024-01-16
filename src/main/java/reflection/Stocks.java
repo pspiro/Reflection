@@ -50,6 +50,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "convertsToAddress", row.getString( "Converts To Address") );
 				stock.put( "allow", row.getString("Allow") );
 				stock.put( "tokenSymbol", row.getString("Token Symbol"));
+				stock.put( "isHot", row.getBool("Hot") );
 				
 				// read fields from Master tab
 				ListEntry masterRow = masterList.get(conid);
@@ -59,7 +60,6 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "type", masterRow.getString("Type") ); // Stock, ETF, ETF-24
 				stock.put( "exchange", masterRow.getString("Exchange") );
 				stock.put( "is24hour", masterRow.getBool("24-Hour") );
-				stock.put( "isHot", masterRow.getBool("Hot") );
 				stock.put( "tradingView", masterRow.getString("Trading View") );
 
 				m_stocks.add( stock);

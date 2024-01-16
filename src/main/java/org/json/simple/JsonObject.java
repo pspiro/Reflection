@@ -353,7 +353,9 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
 		b.append( "<html><table>\n");
-		entrySet().forEach( entry -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>\n", entry.getKey(), entry.getValue() ) ) );
+		entrySet().forEach( entry -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>\n", 
+				entry.getKey(), 
+				Util.left(Util.toString(entry.getValue()), 100) ) ) );  // trim it too 100 because Cookies are really long
 		b.append( "</table></html>");
 		return b.toString();
 	}

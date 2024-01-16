@@ -7,6 +7,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 
 import common.Util;
+import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.Monitor.MonPanel;
@@ -17,11 +18,13 @@ import tw.util.VerticalPanel;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {
-	private JTextField m_rusd = new JTextField(10);
-	private JTextField m_busd = new JTextField(10);
-	private JTextField m_nativeToken = new JTextField(10);
-	private JTextField m_admin1 = new JTextField(10);
-	private JTextField m_admin2 = new JTextField(10);
+	private JTextField m_rusdOutstanding = new JTextField(10);
+	private JTextField m_refWalletBusd = new JTextField(10);
+	private JTextField m_ownerBusd = new JTextField(10);
+	private JTextField m_refWalletMatic = new JTextField(10);
+	private JTextField m_admin1Matic = new JTextField(10);
+	private JTextField m_admin2Matic = new JTextField(10);
+	private JTextField m_ownerMatic = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 	HoldersPanel holdersPanel = new HoldersPanel();
 
@@ -32,19 +35,54 @@ public class CryptoPanel extends MonPanel {
 			Util.wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
 		});
 
+		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
+		HtmlButton ownderSendBusd = new HtmlButton( "Send to", ev -> ownerSendBusd() );
+
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
-		rusdPanel.add( "RUSD Outstanding", m_rusd, button); 
-		rusdPanel.add( "Non-RUSD in RefWallet", m_busd);
+		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
+		
+		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
+		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
+		
+		rusdPanel.add( "Owner USDT", m_ownerBusd, ownderSendBusd);
+		rusdPanel.add( "Owner MATIC", m_ownerMatic);
+		
+		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
+		rusdPanel.add( "Admin2 MATIC", m_admin2Matic);
+
 		rusdPanel.add( "Cash in brokerage", m_cash);
-		rusdPanel.add( "RefWallet MATIC", m_nativeToken);
-		rusdPanel.add( "Admin1 MATIC", m_admin1);
-		rusdPanel.add( "Admin2 MATIC", m_admin2);
 		
 		add(rusdPanel);
 		add(holdersPanel, BorderLayout.EAST);
 	}
 	
+	private void ownerSendBusd() {
+		Util.wrap( () -> {
+			Fireblocks.transfer( 
+					Accounts.instance.getId("Owner"),
+					Util.ask("Enter dest wallet address"),
+					Monitor.m_config.fbStablecoin(),
+					Double.parseDouble( Util.ask( "Enter amount")),
+					Util.ask("Enter note")
+			).waitForHash();
+			Util.inform(this, "Done");
+		});
+	}
+
+	private void emptyRefWallet() {
+		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
+			Util.wrap( () -> {
+				int from = Accounts.instance.getId("RefWallet");
+				String to = Accounts.instance.getAddress("Owner");
+				String note = "empty the RefWallet of stablecoin";;
+				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
+				
+				Fireblocks.transfer(from, to, "USDT_POLYGON", amt, note).waitForHash();
+			});
+		}		
+	}
+
 	@Override public void activated() {
 		Util.wrap( () -> refresh() );
 	}
@@ -54,19 +92,27 @@ public class CryptoPanel extends MonPanel {
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
 		double busd = refWallet.getBalance(Monitor.m_config.busdAddr());
-		SwingUtilities.invokeLater( () -> m_busd.setText( S.fmt2(busd) ) );
+		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
 		double nativeBal = refWallet.getNativeTokenBalance();
-		SwingUtilities.invokeLater( () -> m_nativeToken.setText( S.fmt2(nativeBal) ) );
+		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
+
+		Wallet owner = Fireblocks.getWallet("Owner");
+		double ownerMatic = owner.getNativeTokenBalance();
+		double ownerBusd = owner.getBalance(Monitor.m_config.busdAddr());
+		SwingUtilities.invokeLater( () -> {
+			m_ownerBusd.setText( S.fmt2(ownerBusd) );
+			m_ownerMatic.setText( S.fmt2(ownerMatic) );
+		});
 
 		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeTokenBalance();
-		SwingUtilities.invokeLater( () -> m_admin1.setText( S.fmt2(admin1Bal) ) );
+		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
 		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeTokenBalance();
-		SwingUtilities.invokeLater( () -> m_admin2.setText( S.fmt2(admin2Bal) ) );
+		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
 
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
-		SwingUtilities.invokeLater( () -> m_rusd.setText( S.fmt2(rusd) ) );
+		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {
 			double val = obj.getDouble("TotalCashValue");
