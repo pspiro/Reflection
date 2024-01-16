@@ -7,8 +7,12 @@ git pull
 echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
-mvn package
-echo completed build
+mvn package > build.out
+
+if ! grep -q "BUILD SUCCESS" build.out; then
+  echo failure
+  exit 1
+fi
 
 # must restart all servers or you can get classnotfound errors
 echo restarting mdserver
