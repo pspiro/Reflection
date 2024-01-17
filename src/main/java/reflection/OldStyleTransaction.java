@@ -15,7 +15,6 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import redis.clients.jedis.Jedis;
 import tw.util.S;
 
 public class OldStyleTransaction extends MyTransaction {

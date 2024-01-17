@@ -395,7 +395,7 @@ public class Fireblocks {
 				trans = Transactions.getTransaction( fireblocksId);
 			}
 			catch( Exception e) {
-				S.out( "Error while checking status - " + e.getMessage() );
+				S.err( "Error while checking status", e);
 				continue;
 			}
 			

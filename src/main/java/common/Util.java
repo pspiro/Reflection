@@ -483,7 +483,7 @@ public class Util {
 		try {
 			runner.run();
 		} catch (Throwable e) {
-			e.printStackTrace();
+			e.printStackTrace();  // calls toString() which prints exception type and message
 		}
 	}
 
@@ -626,5 +626,11 @@ public class Util {
 	public static String toString(Object obj) {
 		return obj == null ? "" : obj.toString();
 	}
+
+	public static String toMsg(Throwable e) {
+		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
+	}
+	
+	
 
 }

@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import common.Util;
 import tw.grep.DirProcessor;
 import tw.grep.FileProcessor;
 
@@ -193,15 +194,6 @@ public class S {
 	public static void out( Object str) {
 		System.out.println( String.format( "%s %3s %s", 
 				timeFmt.format( new Date() ), Thread.currentThread().getName(), str) );  
-	}
-
-	/** @deprecated */
-	public static void err( Object str) {
-		System.out.println( str);
-	}
-
-	public static void print( Object str) {
-		System.out.print( str);
 	}
 
 	public static void deleteFile(String pnlFilename) {
@@ -843,5 +835,8 @@ public class S {
 			}
 		}		
 	}
-	
+
+	public static String err(String str, Exception e) {
+		return str + " - " + Util.toMsg(e); 
+	}
 }

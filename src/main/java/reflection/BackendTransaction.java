@@ -161,14 +161,6 @@ public class BackendTransaction extends MyTransaction {
 		obj.remove("city");
 	}
 
-	private JsonArray trim(JsonArray json) {
-		json.forEach( obj -> {
-			((HashMap)obj).remove("created_at");
-			((HashMap)obj).remove("updated_at");
-		});
-		return json;
-	}
-
 	/** obsolete, */
 	public void handleWalletUpdate() {
 		wrap( () -> {

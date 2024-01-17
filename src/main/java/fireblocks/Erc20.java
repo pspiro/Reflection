@@ -174,7 +174,7 @@ public class Erc20 {
 					// swallow it
 				}
 				else {
-					S.out( "Error while querying for deployed address: " + e.getMessage() );
+					S.err( "Error while querying for deployed address", e);
 				}
 			}
 		}

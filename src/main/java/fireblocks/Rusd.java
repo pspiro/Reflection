@@ -1,7 +1,6 @@
 package fireblocks;
 
 import common.Util;
-import reflection.Config;
 import tw.util.S;
 
 public class Rusd extends Erc20 {

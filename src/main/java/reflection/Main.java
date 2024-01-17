@@ -446,7 +446,7 @@ public class Main implements ITradeReportHandler {
 			});
 		}
 		catch( Exception e) {
-			S.out( "Error fetching prices - " + e.getMessage() ); // need this because the exception doesn't give much info
+			S.err( "Error fetching prices", e); // need this because the exception doesn't give much info
 		}
 	}
 
@@ -517,14 +517,14 @@ public class Main implements ITradeReportHandler {
 								com.run( conn);   // (wrap() doesn't work here)
 							}
 							catch( Exception e) {
-								S.out( "Error while executing DbQueue command - " + e.getMessage() );
+								S.err( "Error while executing DbQueue command", e);
 								e.printStackTrace();  // this would be an error on one specific database operation
 							}
 							com = next();
 						}
 					} 
 					catch (Exception e) {
-						S.out( "Error while connecting to database - " + e.getMessage() );
+						S.err( "Error while connecting to database", e);
 						e.printStackTrace();  // this could be an error connecting to the database; ideally we would put the command, which didn't execute, back in the queue
 					}
 				}
