@@ -47,7 +47,7 @@ public class Erc20 {
 		return m_decimals;
 	}
 	
-	public String getName() {
+	public String name() {
 		return m_name;
 	}
 	
@@ -252,6 +252,16 @@ public class Erc20 {
 	
 	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
 		Util.getOrCreate(map, address, () -> new ModifiableDecimal() ).inc(amt);
+	}
+	
+	public static class Stablecoin extends Erc20 {
+		public Stablecoin(String address, int decimals, String name) throws Exception {
+			super( address, decimals, name);
+		}
+
+		public final boolean isRusd() {
+			return this instanceof Rusd;
+		}
 	}
 
 	

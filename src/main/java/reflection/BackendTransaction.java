@@ -228,8 +228,8 @@ public class BackendTransaction extends MyTransaction {
 			double approved = Math.min(1000000,m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ));
 			
 			JsonObject busd = new JsonObject();
-			busd.put( "name", Stablecoin.USDT);
-			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
+			busd.put( "name", m_config.busd().name() );
+			busd.put( "balance", wallet.getBalance( m_config.busd().address() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);

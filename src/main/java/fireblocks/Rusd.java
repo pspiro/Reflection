@@ -1,9 +1,10 @@
 package fireblocks;
 
 import common.Util;
+import fireblocks.Erc20.Stablecoin;
 import tw.util.S;
 
-public class Rusd extends Erc20 {
+public class Rusd extends Stablecoin {
 	
 	// BUSD on binance and ethereum has 18 decimals
 	// USDP on ethereum has 18 decimals

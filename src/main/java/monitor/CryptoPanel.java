@@ -91,7 +91,7 @@ public class CryptoPanel extends MonPanel {
 		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
 
-		double busd = refWallet.getBalance(Monitor.m_config.busdAddr());
+		double busd = refWallet.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
 		double nativeBal = refWallet.getNativeTokenBalance();
@@ -99,7 +99,7 @@ public class CryptoPanel extends MonPanel {
 
 		Wallet owner = Fireblocks.getWallet("Owner");
 		double ownerMatic = owner.getNativeTokenBalance();
-		double ownerBusd = owner.getBalance(Monitor.m_config.busdAddr());
+		double ownerBusd = owner.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> {
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
