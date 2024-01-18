@@ -98,7 +98,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
 		String currency = m_map.getRequiredString("currency").toUpperCase();
-		if (currency.equals( RUSD) ) {
+		if (currency.equals( m_config.rusd().name() ) ) {
 			m_stablecoin = m_config.rusd();
 		}
 		else if (currency.equals(m_config.busd().name() ) ) {
@@ -409,15 +409,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		String fbId;
 
 		// buy
-		if (m_order.isBuy() ) {			
-				fbId = m_config.rusd().buyStock(
-						m_walletAddr,
-						m_stablecoin,
-						m_stablecoinAmt,
-						newStockToken(), 
-						m_desiredQuantity
-				).id();
-			}
+		if (m_order.isBuy() ) {
+			fbId = m_config.rusd().buyStock(
+					m_walletAddr,
+					m_stablecoin,
+					m_stablecoinAmt,
+					newStockToken(), 
+					m_desiredQuantity
+			).id();
 		}
 		
 		// sell
@@ -614,7 +613,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void requireSufficientApproval() throws Exception {
 		// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-		if (m_order.isBuy() && !m_stablecoin.equals(RUSD) ) {
+		if (m_order.isBuy() && !m_stablecoin.isRusd() ) {
 			double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 			require( 
 					Util.isGtEq(approvedAmt, m_stablecoinAmt), 
