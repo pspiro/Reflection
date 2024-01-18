@@ -228,7 +228,7 @@ public class Monitor {
 	}
 
 	static class UsersPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,first_name,last_name,email,kyc_status,phone,aadhaar,address,city,country,id,pan_number,persona_response,updated_at";
+		static String names = "created_at,wallet_public_key,first_name,last_name,email,kyc_status,phone,aadhaar,address,city,country,id,pan_number,persona_response";
 		static String sql = "select * from users $where";
 		
 		UsersPanel() {

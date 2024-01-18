@@ -26,7 +26,7 @@ public class HoldersPanel extends JsonPanel {
 
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work
 		Util.wrap( () -> {
-			m_title.setText( token.getName() );
+			m_title.setText( token.name() );
 			
 			HashMap<String, ModifiableDecimal> map = token.getAllBalances();
 

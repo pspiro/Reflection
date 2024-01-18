@@ -23,7 +23,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
-import fireblocks.Erc20;
+import fireblocks.Erc20.Stablecoin;
 import fireblocks.StockToken;
 import reflection.TradingHours.Session;
 import tw.util.S;
@@ -41,6 +41,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_ibOrderCompleted;
+	private Stablecoin m_stablecoin;  // stablecoin (upper-case) being used to purchase the stock token
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
@@ -95,8 +96,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
 		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
 		
-		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
-		
+		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
+		String currency = m_map.getRequiredString("currency").toUpperCase();
+		if (currency.equals( m_config.rusd().name() ) ) {
+			m_stablecoin = m_config.rusd();
+		}
+		else if (currency.equals(m_config.busd().name() ) ) {
+			m_stablecoin = m_config.busd();
+		}
+		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
+			
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");
@@ -401,27 +410,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// buy
 		if (m_order.isBuy() ) {
-			
-			// buy with RUSD?
-			if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-				fbId = m_config.rusd().buyStockWithRusd(
-						m_walletAddr, 
-						m_stablecoinAmt,
-						newStockToken(),
-						m_desiredQuantity
-				).id();
-			}
-			
-			// buy with XUSD
-			else {
-				fbId = m_config.rusd().buyStock(
-						m_walletAddr,
-						m_config.busd(),
-						m_stablecoinAmt,
-						newStockToken(), 
-						m_desiredQuantity
-				).id();
-			}
+			fbId = m_config.rusd().buyStock(
+					m_walletAddr,
+					m_stablecoin,
+					m_stablecoinAmt,
+					newStockToken(), 
+					m_desiredQuantity
+			).id();
 		}
 		
 		// sell
@@ -587,7 +582,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
 			obj.put("status", FireblocksStatus.LIVE); // this is now a live order and we are waiting for IB and/or Blockchain
-			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
+			obj.put("currency", m_stablecoin.name() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
 		} 
@@ -601,7 +596,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  This could be called before or after submitting the stock order */
 	private void requireSufficientCrypto() throws Exception {
 		if (m_order.isBuy() ) {
-			double balance = stablecoin().getPosition( m_walletAddr );
+			double balance = m_stablecoin.getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_stablecoinAmt ), 
 					RefCode.INSUFFICIENT_FUNDS,
 					"The stablecoin balance (%s) is less than the total order amount (%s)", 
@@ -618,7 +613,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void requireSufficientApproval() throws Exception {
 		// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-		if (m_order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT) {
+		if (m_order.isBuy() && !m_stablecoin.isRusd() ) {
 			double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 			require( 
 					Util.isGtEq(approvedAmt, m_stablecoinAmt), 
@@ -626,12 +621,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 		}
 		
-	}
-
-	/** Return RUSD or non-RUSD token */
-	private Erc20 stablecoin() throws Exception {
-		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT
-				? Main.m_config.busd() : Main.m_config.rusd();
 	}
 
 	private StockToken newStockToken() throws Exception {

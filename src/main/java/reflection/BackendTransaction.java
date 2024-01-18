@@ -161,14 +161,6 @@ public class BackendTransaction extends MyTransaction {
 		obj.remove("city");
 	}
 
-	private JsonArray trim(JsonArray json) {
-		json.forEach( obj -> {
-			((HashMap)obj).remove("created_at");
-			((HashMap)obj).remove("updated_at");
-		});
-		return json;
-	}
-
 	/** obsolete, */
 	public void handleWalletUpdate() {
 		wrap( () -> {
@@ -238,8 +230,8 @@ public class BackendTransaction extends MyTransaction {
 			double approved = Math.min(1000000,m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ));
 			
 			JsonObject busd = new JsonObject();
-			busd.put( "name", Stablecoin.USDT);
-			busd.put( "balance", wallet.getBalance( m_config.busdAddr() ) );
+			busd.put( "name", m_config.busd().name() );
+			busd.put( "balance", wallet.getBalance( m_config.busd().address() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);
@@ -300,7 +292,7 @@ public class BackendTransaction extends MyTransaction {
 					code, RefCode.OK,
 					"TWS", m_main.orderConnMgr().isConnected(),
 					"IB", m_main.orderConnMgr().ibConnection(),
-					"started", m_main.m_started,
+					"started", Main.m_started,
 					"built", Util.readResource( Main.class, "version.txt")
 					) );
 		});

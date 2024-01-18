@@ -8,12 +8,13 @@ import tw.util.S;
 public class TestPartialFill extends MyTestCase {
 	
 
-	// fill order buy order
+	// IMPORTANT TEST because it tests that transactions are added to the database properly
 	public void testMore() throws Exception {
 		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
 		obj.put("simPartial", 5);
 		
 		String uid = postOrderToId(obj);
+		S.out( "Test more uid " + uid);
 		assert200();
 		
 		S.sleep(1000);

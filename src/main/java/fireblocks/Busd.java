@@ -2,19 +2,20 @@ package fireblocks;
 
 import java.awt.HeadlessException;
 
+import fireblocks.Erc20.Stablecoin;
 import reflection.Config;
 import tw.util.S;
 
 /** This class represents any non-RUSD stablecoin */ 
-public class Busd extends Erc20 {
+public class Busd extends Stablecoin {
 	public static void main(String[] args) throws HeadlessException, Exception {
 		Config.ask().busd()
 			.mint(	Accounts.instance.getAddress("RefWallet"), 
 					1000000);
 	}
 	
-	public Busd( String address, int decimals) throws Exception {
-		super( address, decimals, "BUSD");
+	public Busd( String address, int decimals, String name) throws Exception {
+		super( address, decimals, name);
 	}
 	
 	/** This can be called by anybody, the BUSD does not have an owner.
@@ -25,7 +26,7 @@ public class Busd extends Erc20 {
 	
 	/** For testing only, as we cannot deploy the real stablecoin */
 	void deploy(String filename) throws Exception {
-		S.out( "Deploying %s from owner", getName() );
+		S.out( "Deploying %s from owner", name() );
 		
 		m_address = deploy( 
 				filename, 

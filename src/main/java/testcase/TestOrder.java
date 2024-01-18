@@ -268,7 +268,7 @@ public class TestOrder extends MyTestCase {
 	static JsonObject createOrder3(String json) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.easyJson(json) );
 		obj.put("cookie", Cookie.cookie);
-		obj.put("currency", "USDT");
+		obj.put("currency", m_config.busd().name() );
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("noFireblocks", true);
 		obj.put("testcase", true);

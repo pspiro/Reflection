@@ -146,7 +146,6 @@ public class CreateTables  {
 //		String sql = """
 //			CREATE TABLE users (
 //			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
-//			updated_at timestamp without time zone,
 //			wallet_public_key varchar(42) UNIQUE check (wallet_public_key = LOWER(wallet_public_key)),
 		                                 // OR PRIMARY, if you want to prevent null wallets
 //			first_name varchar(50),

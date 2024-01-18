@@ -25,12 +25,6 @@ public class MyHttpClient {
 	private boolean m_read;
 	private String m_data;
 	
-	public static void main(String[] args) throws Exception {
-		MyHttpClient cli = new MyHttpClient( "34.125.124.211", 5001);
-		cli.get();
-		S.out( cli.readString() );
-	}
-
 	public MyHttpClient( String host, int port) throws Exception {
 		m_socket = new Socket( host, port);
 	}
@@ -137,10 +131,6 @@ public class MyHttpClient {
 		return this;
 	}
 
-	public void get() throws Exception {
-		get( "");
-	}
-	
 	/** @param data may or not start with / 
 	 * @return */
 	public MyHttpClient get( String data) throws Exception {
