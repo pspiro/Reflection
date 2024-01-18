@@ -42,7 +42,7 @@ public class TestWallet extends MyTestCase {
 //		assertTrue( tok.getDouble("balance") > 0 );
 
 		tok = ar.getJsonObj(1);
-		assertEquals("USDT", tok.getString("name"));
+		assertEquals("BUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 		assertTrue( tok.getDouble("approvedBalance") > 0 );
 

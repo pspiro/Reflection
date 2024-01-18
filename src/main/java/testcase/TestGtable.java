@@ -6,20 +6,20 @@ import tw.google.NewSheet;
 
 public class TestGtable extends TestCase {
 	static String aapl = "Test";
-	static String tab = "Master-symbols";
+	static String tab = "Prod-symbols";
 	
-	public void testTable1() throws Exception {
-		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Description", true);
-		assertEquals( "Apple Inc.", map.get( "AAPL"));
+	public void testCsPass() throws Exception {
+		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Conid", true);
+		assertEquals( "265598", map.get( "AAPL.r"));
 	}
 
-	public void testTable2() throws Exception {
-		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Description", true);
-		assertEquals( null, map.get( "Aapl"));
+	public void testCsFail() throws Exception {
+		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Conid", true);
+		assertEquals( null, map.get( "Aapl.r"));
 	}
 	
-	public void testTable3() throws Exception {
-		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Description", false);
-		assertEquals( "Apple Inc.", map.get( "Aapl"));
+	public void testNonCsPass() throws Exception {
+		GTable map = new GTable(NewSheet.Reflection, tab, "TokenSymbol", "Conid", false);
+		assertEquals( "265598", map.get( "Aapl.R"));
 	}
 }

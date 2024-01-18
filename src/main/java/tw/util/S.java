@@ -836,7 +836,7 @@ public class S {
 		}		
 	}
 
-	public static String err(String str, Exception e) {
-		return str + " - " + Util.toMsg(e); 
+	public static void err(String str, Exception e) {
+		out( str + " - " + Util.toMsg(e) ); 
 	}
 }

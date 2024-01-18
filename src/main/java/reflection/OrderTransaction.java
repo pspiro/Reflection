@@ -582,7 +582,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
 			obj.put("status", FireblocksStatus.LIVE); // this is now a live order and we are waiting for IB and/or Blockchain
-			obj.put("currency", m_stablecoin);
+			obj.put("currency", m_stablecoin.name() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
 		} 

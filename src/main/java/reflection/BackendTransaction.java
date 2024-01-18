@@ -290,7 +290,7 @@ public class BackendTransaction extends MyTransaction {
 					code, RefCode.OK,
 					"TWS", m_main.orderConnMgr().isConnected(),
 					"IB", m_main.orderConnMgr().ibConnection(),
-					"started", m_main.m_started,
+					"started", Main.m_started,
 					"built", Util.readResource( Main.class, "version.txt")
 					) );
 		});
