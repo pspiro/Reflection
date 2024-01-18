@@ -36,7 +36,8 @@ public class CryptoPanel extends MonPanel {
 		});
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
-		HtmlButton ownderSendBusd = new HtmlButton( "Send to", ev -> ownerSendBusd() );
+		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
+		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
@@ -45,7 +46,7 @@ public class CryptoPanel extends MonPanel {
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
-		rusdPanel.add( "Owner USDT", m_ownerBusd, ownderSendBusd);
+		rusdPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
 		rusdPanel.add( "Owner MATIC", m_ownerMatic);
 		
 		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
@@ -57,6 +58,21 @@ public class CryptoPanel extends MonPanel {
 		add(holdersPanel, BorderLayout.EAST);
 	}
 	
+	/** Send from Owner to RefWallet */
+	private void sendToRefWallet() {
+		Util.wrap( () -> {
+			Fireblocks.transfer( 
+					Accounts.instance.getId("Owner"),
+					Accounts.instance.getAddress("RefWallet"),
+					Monitor.m_config.fbStablecoin(),
+					Double.parseDouble( Util.ask( "Enter amount")),
+					"Move USDT from Owner to RefWallet"
+			).waitForHash();
+			Util.inform(this, "Done");
+		});
+	}
+
+	/** Send from Owner to somewhere else */
 	private void ownerSendBusd() {
 		Util.wrap( () -> {
 			Fireblocks.transfer( 
@@ -70,23 +86,19 @@ public class CryptoPanel extends MonPanel {
 		});
 	}
 
+	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
 		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
 			Util.wrap( () -> {
 				int from = Accounts.instance.getId("RefWallet");
 				String to = Accounts.instance.getAddress("Owner");
-				String note = "empty the RefWallet of stablecoin";;
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
-				
+				String note = "Move all USDT from RefWallet to Owner";;
 				Fireblocks.transfer(from, to, "USDT_POLYGON", amt, note).waitForHash();
 			});
 		}		
 	}
 
-	@Override public void activated() {
-		Util.wrap( () -> refresh() );
-	}
-	
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");

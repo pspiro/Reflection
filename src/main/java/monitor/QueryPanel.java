@@ -15,6 +15,7 @@ import common.JsonModel;
 import common.Util;
 import tw.util.HtmlButton;
 import tw.util.S;
+import tw.util.UI;
 
 /** Querys data from the database */
 public class QueryPanel extends JsonPanel {
@@ -70,11 +71,10 @@ public class QueryPanel extends JsonPanel {
 		return super.format(key, value);
 	}
 	
-
 	@Override protected void onCtrlClick(JsonObject row, String tag) {
-		Util.wrap( () -> {
-			String val = Util.ask( "Enter new value for %s field", tag);
-			
+		String val = Util.ask( "Enter new value for %s field", tag);
+
+		UI.watch( Monitor.m_frame, () -> {
 			Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
 					m_table, 
 					Util.toJson( tag, val), 

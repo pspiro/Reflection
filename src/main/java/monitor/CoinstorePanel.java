@@ -95,7 +95,7 @@ class CoinstorePanel extends MonPanel {
 		}
 		
 		@Override public void activated() {
-			Util.wrap( () -> refresh() );
+			refreshTop();
 			
 			S.out( "Monitoring for new trades");
 			Util.executeEvery(period, period, () -> check() );
