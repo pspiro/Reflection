@@ -26,11 +26,18 @@ public class RefException extends Exception {
 	public static JsonObject eToJson(Throwable e) {
 		return eToJson(e, RefCode.UNKNOWN);
 	}
-	
+
+	public static void main(String[] args) {
+		eToJson( new Exception("bad"), RefCode.TOO_SLOW).display();
+	}
+
 	public static JsonObject eToJson(Throwable e, RefCode refCode) {
+		String text = Util.toMsg(e);
+		
 		return Util.toJson(
 				"code", refCode, 
-				"message", Util.toMsg(e),
+				"message", text,
+				"error", Util.toJson("message", text),
 				"statusCode", 400
 			);
 	}
