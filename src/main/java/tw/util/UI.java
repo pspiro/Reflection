@@ -24,6 +24,10 @@ import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
 import javax.swing.border.LineBorder;
 
+import common.Util;
+import common.Util.ExRunnable;
+import monitor.Monitor;
+
 public class UI {
 
 	private static final Object COMMAND_CANCEL = "cancel";
@@ -75,6 +79,7 @@ public class UI {
 		});
 	}
 
+	/** Display a quick message popup */
 	public static void quick( Window parent, String str) {
 		JPanel p = new JPanel( new FlowLayout( FlowLayout.CENTER, 10, 10));
 		p.setBorder( new LineBorder( Color.black) );
@@ -100,6 +105,31 @@ public class UI {
 		return S.parseDouble2( field.getText() );
 	}
 	
+	public static void main(String[] args) throws Exception {
+		JPanel p = new JPanel( new FlowLayout( FlowLayout.CENTER, 10, 10));
+		p.setBorder( new LineBorder( Color.black) );
+		p.add( new JLabel( "lkj") );
+		p.setBackground( Color.yellow);
+
+		final JFrame d = new JFrame();
+		d.add( p);
+		d.setSize( 400, 400);
+		d.setVisible( true);
+		d.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		Hourglass g = new Hourglass(d);
+		S.sleep(2000);
+		g.restore();
+		
+//		final JDialog d = new JDialog(parent, ModalityType.MODELESS);
+//		d.setUndecorated(true);
+//		d.add( p);
+//		d.pack();
+//		UI.centerOnOwner( d);
+//		d.setVisible( true);
+		
+	}
+	
 	public static class Hourglass {
 		private Cursor m_current;
 		private JFrame m_frame;
@@ -113,5 +143,12 @@ public class UI {
 		public void restore() {
 			m_frame.setCursor(m_current);
 		}
+	}
+	
+	/** Display hourglass and catch exceptions */
+	public static void watch( JFrame frame, ExRunnable runnable) {
+		Hourglass glass = new Hourglass( frame);
+		Util.wrap( () -> runnable.run() );
+		glass.restore();
 	}
 }

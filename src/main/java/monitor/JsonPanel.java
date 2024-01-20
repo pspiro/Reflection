@@ -34,11 +34,6 @@ public abstract class JsonPanel extends MonPanel {
 		return m_model.ar();
 	}
 	
-	@Override public void activated() {
-		S.out( "Activating JsonPanel");
-		Util.wrap( () -> refresh() );
-	}
-
 	protected String getTooltip(JsonObject row, String tag) {
 		return null;
 	}

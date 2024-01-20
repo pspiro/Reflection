@@ -195,6 +195,8 @@ public class BackendTransaction extends MyTransaction {
 				sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
 			respondOk();
+			
+			alert("KYC COMPLETED", m_walletAddr);
 		});
 	}
 

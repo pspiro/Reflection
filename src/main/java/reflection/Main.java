@@ -175,10 +175,11 @@ public class Main implements ITradeReportHandler {
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 
-		timer.done();
 
 		// connect to TWS
+		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
+		timer.done();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}

@@ -29,7 +29,7 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 		m_reconnectInterval = reconnectInterval;
 	}
 
-	/** Attempto to connect every n seconds */
+	/** Attempt to connect every n seconds */
 	public synchronized void startTimer() {
 		if (m_timer == null) {
 			m_timer = new Timer();
@@ -49,7 +49,7 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 		}
 	}
 
-	/** Called by the timer every n seconds */
+	/** Called by timer every n seconds */
 	protected final void onTimer() {
 		try {
 			connectNow();
@@ -59,15 +59,15 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 			e.printStackTrace();
 		}
 	}
-
-	/** Attempt to connect now (synchronized) */
+	
+	/** Attempt to connect now */
 	private synchronized void connectNow() throws Exception {
 		S.out( "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
 		if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
 			throw new Exception("Could not connect to TWS");
 		}
 	}
-
+	
 	/** Called when connection is established */
 	@Override public void onConnected() {
 		stopTimer();
@@ -79,6 +79,7 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 		m_controller.disconnect();
 	}
 	
+	/** Dump top market data subscriptions */
 	public final void dump() {
 		m_controller.dump();
 	}
@@ -102,6 +103,7 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 		return m_controller.isConnected();
 	}
 	
+	/** Update IB connection status and handle some common codes */
 	@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 		switch (errorCode) {
 			case 1100:

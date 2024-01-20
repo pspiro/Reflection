@@ -53,10 +53,6 @@ class StatusPanel extends MonPanel {
 		add( p);
 	}
 	
-	@Override public void activated() {
-		Util.wrap( () -> refresh() );
-	}
-	
 	@Override public void refresh() throws Exception {
 		long now = System.currentTimeMillis();
 

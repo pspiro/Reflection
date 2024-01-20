@@ -1,6 +1,8 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.Cursor;
+import java.awt.Window;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -11,6 +13,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import common.Util.ExRunnable;
 import http.MyClient;
 import monitor.Monitor.TransPanel;
 import positions.Wallet;
@@ -35,13 +38,7 @@ public class WalletPanel extends JsonPanel {
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
 
-		m_wallet.addActionListener( e -> { 
-			try {
-				refresh();
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			} 
-		});
+		m_wallet.addActionListener( e -> refreshTop() );
 
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
@@ -110,11 +107,14 @@ public class WalletPanel extends JsonPanel {
 
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
-		Util.wrap( () -> refresh() );
+		refreshTop();
 	}
 
 	public void refresh() throws Exception {
 		S.out( "Refreshing Wallet panel");
+		
+        
+        
 
 		rows().clear();
 
@@ -155,10 +155,5 @@ public class WalletPanel extends JsonPanel {
 		}
 
 		m_model.fireTableDataChanged();
-	}
-
-	public void filter(String wallet) {
-		m_wallet.setText(wallet);
-		Util.wrap( () -> refresh() );
 	}
 }
