@@ -243,9 +243,8 @@ public class Erc20 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Prod-config"); //ask();
-		config.readStocks().getStock("AAPL").getToken().showBalances();
-		
+//		Config config = Config.readFrom("Prod-config"); //ask();
+//		config.readStocks().getStock("AAPL").getToken().showBalances();
 	}
 	
 	public static void inc(HashMap<String, Double> map, String address, double amt) {
