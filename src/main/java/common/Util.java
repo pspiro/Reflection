@@ -1,18 +1,23 @@
 package common;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
@@ -21,6 +26,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.mail.Address;
@@ -37,6 +43,7 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
+import reflection.ModifiableDecimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -630,7 +637,24 @@ public class Util {
 	public static String toMsg(Throwable e) {
 		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
 	}
-	
-	
 
+	public static void browse(String url) {
+		wrap( () -> Desktop.getDesktop().browse(new URI(url) ) );
+	}
+
+	public static void show(HashMap<String,?> m_map) {
+		S.out( "[");
+		m_map.forEach( (key, val) -> S.out( "%s : %s", key, val) );
+		S.out( "]");
+	}
+
+	/** Remove all items that return false; could be improved such that
+	 *  the filter takes tag/val */
+	public static <T,V> void filter(HashMap<T,V> map, Predicate<V> filter) {
+		for (Iterator<Entry<T,V>> iter = map.entrySet().iterator(); iter.hasNext(); ) {
+			if (!filter.test( iter.next().getValue() ) ) {
+				iter.remove();
+			}
+		}
+	}
 }
