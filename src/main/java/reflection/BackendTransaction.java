@@ -4,11 +4,15 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
@@ -296,6 +300,24 @@ public class BackendTransaction extends MyTransaction {
 					"IB", m_main.orderConnMgr().ibConnection(),
 					"started", Main.m_started,
 					"built", Util.readResource( Main.class, "version.txt")
+					) );
+		});
+	}
+
+	/** Top-level method handler */
+	public void allowConnection() {
+		wrap( () -> {
+			String country = getHeader("X-Country-Code");
+			String ip = getHeader("X-Real-IP");
+			
+			boolean allow =
+					m_main.isAllowedCountry(country ) ||
+					m_main.isAllowedIP(ip);
+			
+			respond( Util.toJson( 
+					"allow", allow,
+					"country", country,
+					"ip", ip
 					) );
 		});
 	}
