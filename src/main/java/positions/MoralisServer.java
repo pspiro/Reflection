@@ -88,19 +88,20 @@ public class MoralisServer {
 		decimals : 18,
 		name : Reflection BUSD,
 		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
-	public static JsonArray reqPositionsList(String wallet) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format("%s/%s/erc20?chain=%s",
-				moralis, wallet, chain);
-		String ret = querySync(url);
-		
-		// we expect an array; if we get an object, there must have been an error
-		if (JsonObject.isObject(ret) ) {
-			throw new Exception( "Moralis " + JsonObject.parse(ret).getString("message") );
-		}
-
-		return JsonArray.parse( ret);
-	}
+//	public static JsonArray reqPositionsList(String wallet) throws Exception {
+//		throw new Exception("broken"); // was not working reliably as of 1/24/24; see chat w/ Moralis support 
+//		Util.require(chain != null, "Set the Moralis chain");
+//		String url = String.format("%s/%s/erc20?chain=%s",
+//				moralis, wallet, chain);
+//		String ret = querySync(url);
+//		
+//		// we expect an array; if we get an object, there must have been an error
+//		if (JsonObject.isObject(ret) ) {
+//			throw new Exception( "Moralis " + JsonObject.parse(ret).getString("message") );
+//		}
+//
+//		return JsonArray.parse( ret);
+//	}
 	
 	/** For ERC-20 token, tells you how much the spender is authorized to spend on behalf of owner.
 	 *  In our case, token is non-RUSD stablecoin, owner is the user, and spender is RUSD */  
@@ -147,17 +148,32 @@ public class MoralisServer {
 		
 	}
 	
-	/** returns one page of transactions */
-	public static JsonObject getTransactions(String address, String cursor) throws Exception {
+	/** returns one page of transactions for a specific token
+	 *  @address is ERC20 token address */
+	public static JsonObject getTokenTransfers(String address, String cursor) throws Exception {
 		String url = String.format( "%s/erc20/%s/transfers?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
 		return JsonObject.parse( querySync(url) );
 	}
 	
-	public static void getAllTransactions(String address, Consumer<JsonArray> consumer) throws Exception {
+	/** returns one page of transactions for a specific token
+	 *  @address is ERC20 token address */
+	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
+		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
+		return JsonObject.parse( querySync(url) );
+	}
+	
+	interface Query {
+		JsonObject produce(String cursor) throws Exception;
+	}
+	
+	/** Query for all the data, one page at a time, and call consumer.accept() with each page 
+	 *  @producer is the method that queries for one page of data
+	 *  @consumer is the method that processes one page of data */
+	public static void getAll(Consumer<JsonArray> consumer, Query producer) throws Exception {
 		String cursor = "";
 		
 		while (true) {
-			JsonObject full = MoralisServer.getTransactions(address, cursor);
+			JsonObject full = producer.produce(cursor);
 			
 			consumer.accept( full.getArray("result") );
 			
@@ -167,11 +183,22 @@ public class MoralisServer {
 			}
 			S.sleep(10);  // don't break pacing limits
 		}
-	}		
+	}	
+	
+	/** returns all transactions for a specific token */
+	public static void getAllTokenTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
+		getAll( consumer, cursor -> getTokenTransfers(address, cursor) );  
+	}
+	
+	/** returns all transactions for a specific token */
+	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
+		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+	}
 	
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Prod-config"); //ask();
-		getAllTransactions("0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c", ar -> ar.display() );
+		Config.ask();
+		getAllTokenTransfers("0x4470033bd3cbf4f4f6ac4076b1085f819c7d0844", ar -> ar.display() );
+		//getAllWalletTransfers("0xa14749d89e1ad2a4de15ca4463cd903842ffc15d", ar -> ar.display() );
 		
 //		String str = logs(
 //				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",

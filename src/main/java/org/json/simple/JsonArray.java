@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.json.simple.parser.JSONParser;
 
@@ -154,13 +155,9 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		});
 	}
 	
-	public static interface Tester {
-		public boolean show(JsonObject obj);
-	}
-	
-	public void filter( Tester tester) {
+	public void filter( Predicate<JsonObject> tester) {
 		for (Iterator<JsonObject> iter = iterator(); iter.hasNext(); ) {
-			if (!tester.show(iter.next() ) ) {
+			if (!tester.test(iter.next() ) ) {
 				iter.remove();
 			}
 		}
