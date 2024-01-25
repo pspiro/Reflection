@@ -26,9 +26,9 @@ import util.LogType;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {
-	public enum Stablecoin {
-		RUSD, USDT
-	}
+//	public enum Stablecoin {
+//		RUSD, USDT
+//	}
 	
 	static Map<String,Vector<OrderTransaction>> liveOrders = Collections.synchronizedMap( new HashMap<String,Vector<OrderTransaction>>() );  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
 	static Map<String,RedeemTransaction> liveRedemptions = Collections.synchronizedMap( new HashMap<String,RedeemTransaction>() );  // key is wallet address; just one outstanding Redemption per wallet 

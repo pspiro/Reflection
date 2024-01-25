@@ -9,8 +9,6 @@ import org.json.simple.JsonObject;
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
-import reflection.Config;
-import reflection.ModifiableDecimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
@@ -47,7 +45,7 @@ public class Erc20 {
 		return m_decimals;
 	}
 	
-	public String getName() {
+	public String name() {
 		return m_name;
 	}
 	
@@ -174,7 +172,7 @@ public class Erc20 {
 					// swallow it
 				}
 				else {
-					S.out( "Error while querying for deployed address: " + e.getMessage() );
+					S.err( "Error while querying for deployed address", e);
 				}
 			}
 		}
@@ -221,11 +219,11 @@ public class Erc20 {
 
 	/** print out the balances of all wallets holding this token
 	 * @return map wallet address -> token balance */
-	public HashMap<String,ModifiableDecimal> getAllBalances() throws Exception {
-		HashMap<String,ModifiableDecimal> map = new HashMap<>();
+	public HashMap<String,Double> getAllBalances() throws Exception {
+		HashMap<String,Double> map = new HashMap<>();
 
 		// get all transactions in batches and build the map
-		MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
 				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
 				inc( map, obj.getString("from_address"), -value);
 				inc( map, obj.getString("to_address"), value);
@@ -235,7 +233,7 @@ public class Erc20 {
 	}
 	
 	public void showAllTransactions() throws Exception {
-			MoralisServer.getAllTransactions(m_address, ar -> ar.forEach( obj -> {
+			MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
 				S.out( "%8s %s %s %s", 
 						obj.getString("value_decimal"), 
 						Util.left( obj.getString("from_address"), 8),
@@ -245,13 +243,24 @@ public class Erc20 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Prod-config"); //ask();
-		config.readStocks().getStock("AAPL").getToken().showBalances();
-		
+//		Config config = Config.readFrom("Prod-config"); //ask();
+//		config.readStocks().getStock("AAPL").getToken().showBalances();
 	}
 	
-	private static void inc(HashMap<String, ModifiableDecimal> map, String address, double amt) {
-		Util.getOrCreate(map, address, () -> new ModifiableDecimal() ).inc(amt);
+	public static void inc(HashMap<String, Double> map, String address, double amt) {
+		Double v = map.get(address);
+		map.put( address, v == null ? amt : v + amt);
+	}
+	
+	
+	public static class Stablecoin extends Erc20 {
+		public Stablecoin(String address, int decimals, String name) throws Exception {
+			super( address, decimals, name);
+		}
+
+		public final boolean isRusd() {
+			return this instanceof Rusd;
+		}
 	}
 
 	

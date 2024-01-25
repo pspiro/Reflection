@@ -91,7 +91,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	}
 
 	
-	@Override public synchronized void onUpdateFbStatus(FireblocksStatus status) {
+	@Override public synchronized void onUpdateFbStatus(FireblocksStatus status, String hash) {
 		if (m_status == LiveStatus.Working) {
 			m_progress = status.pct();
 	
@@ -124,7 +124,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			JsonObject obj = new JsonObject();
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
-			obj.put( "stablecoin", busd.getName() );
+			obj.put( "stablecoin", busd.name() );
 			obj.put( "amount", rusdPos);
 			obj.put( "status", m_status);
 			

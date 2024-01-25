@@ -1,18 +1,24 @@
 package common;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
@@ -21,6 +27,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.mail.Address;
@@ -178,7 +185,8 @@ public class Util {
 	public static String formatStrWc = ", \"%s\": \"%s\"";
 
 	/** Create the whole Json message, including the time.
-	 * Note that enums are added as object but deserialized as strings
+	 *  Note that enums are added as object but deserialized as strings.
+	 *  Null values are not added.
 	 *  @param strs tag/value pairs */
 	public static JsonObject toJson( Object... strs) {
 		JsonObject obj = new JsonObject();
@@ -189,7 +197,9 @@ public class Util {
 				tag = val;
 			}
 			else {
-				obj.put( tag.toString(), val);
+				if (val != null) {
+					obj.put( tag.toString(), val);
+				}
 				tag = null;
 			}
 		}
@@ -483,7 +493,7 @@ public class Util {
 		try {
 			runner.run();
 		} catch (Throwable e) {
-			e.printStackTrace();
+			e.printStackTrace();  // calls toString() which prints exception type and message
 		}
 	}
 
@@ -627,4 +637,36 @@ public class Util {
 		return obj == null ? "" : obj.toString();
 	}
 
+	public static String toMsg(Throwable e) {
+		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
+	}
+
+	public static void browse(String url) {
+		wrap( () -> Desktop.getDesktop().browse(new URI(url) ) );
+	}
+
+	public static void show(HashMap<String,?> m_map) {
+		S.out( "[");
+		m_map.forEach( (key, val) -> S.out( "%s : %s", key, val) );
+		S.out( "]");
+	}
+
+	/** Remove all items that return false; could be improved such that
+	 *  the filter takes tag/val */
+	public static <T,V> void filter(HashMap<T,V> map, Predicate<V> filter) {
+		for (Iterator<Entry<T,V>> iter = map.entrySet().iterator(); iter.hasNext(); ) {
+			if (!filter.test( iter.next().getValue() ) ) {
+				iter.remove();
+			}
+		}
+	}
+	
+	@SafeVarargs
+	public static <T> T[] toArray( T... ts) {
+		return ts;
+	}
+	
+	public static double toDouble( Double v) {
+		return v == null ? 0 : v;
+	}
 }

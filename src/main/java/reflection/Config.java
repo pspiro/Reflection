@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.m_config;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -78,6 +76,7 @@ public class Config extends ConfigBase {
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
 	private String fbStablecoin;
+	private String blockchainExplorer;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -85,19 +84,15 @@ public class Config extends ConfigBase {
 	private String fireblocksPrivateKey;
 	private String moralisPlatform;  // lower case
 	private String platformBase;
-	protected String rusdAddr; // lower case
-	private String busdAddr; // lower case
-	private int rusdDecimals;
-	private int busdDecimals;
 	private int fbServerPort;
 	private int fbPollIingInterval;
+	private Busd m_busd;
+	private Rusd m_rusd;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
 	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
-	public int rusdDecimals() { return rusdDecimals; }
-	public int busdDecimals() { return busdDecimals; }
 	
 	public boolean useFireblocks() { return useFireblocks; }
 	
@@ -122,8 +117,7 @@ public class Config extends ConfigBase {
 	//public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
-	public String rusdAddr() { return rusdAddr; }  // lower case
-	public String busdAddr() { return busdAddr; }  // lower case
+	public String rusdAddr() { return m_rusd.address(); }  // lower case
 	public double minTokenPosition() { return minTokenPosition; }
 	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
 	public TimeInForce tif() { return tif; }
@@ -202,18 +196,23 @@ public class Config extends ConfigBase {
 		// Fireblocks
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.rusdAddr = m_tab.getRequiredString("rusdAddr").toLowerCase(); 
-			this.busdAddr = m_tab.getRequiredString("busdAddr").toLowerCase();
 			this.platformBase = m_tab.getRequiredString("platformBase");
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-			this.rusdDecimals = m_tab.getRequiredInt("rusdDecimals");
-			this.busdDecimals = m_tab.getRequiredInt("busdDecimals");
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
 			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
 			this.fbStablecoin = m_tab.get("fbStablecoin");
+			
+			m_busd = new Busd( 
+					m_tab.getRequiredString("busdAddr").toLowerCase(),
+					m_tab.getRequiredInt("busdDecimals"),
+					m_tab.getRequiredString ("busdName") );
+
+			m_rusd = new Rusd(
+					m_tab.getRequiredString("rusdAddr").toLowerCase(),
+					m_tab.getRequiredInt("rusdDecimals") );
 			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
@@ -229,9 +228,12 @@ public class Config extends ConfigBase {
 			// update Moralis chain
 			MoralisServer.chain = moralisPlatform;
 		}
+		
+		if (isProduction() ) {
+			this.blockchainExplorer = m_tab.getRequiredString("blockchainExplorer");
+		}
 
-		require( useFireblocks || !m_config.isProduction(), "Must use fireblocks in production");
-		require( !autoFill || !m_config.isProduction(), "No auto-fill in production");
+		require( !autoFill || !isProduction(), "No auto-fill in production");
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
@@ -320,11 +322,13 @@ public class Config extends ConfigBase {
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
 	public Rusd rusd() throws Exception {
-		return new Rusd( rusdAddr, rusdDecimals);
+		Util.require( m_rusd != null, "Fireblocks not set");
+		return m_rusd;
 	}
 
 	public Busd busd() throws Exception {
-		return new Busd( busdAddr, busdDecimals);
+		Util.require( m_busd != null, "Fireblocks not set");
+		return m_busd;
 	}
 
 	/** mdserver query interval, called redisQueryInterval in config file */
@@ -332,14 +336,14 @@ public class Config extends ConfigBase {
 		return redisQueryInterval;
 	}
 	
+	/** Update spreadsheet */
 	public void setRusdAddress(String address) throws Exception {
-		rusdAddr = address;
-		m_tab.put( "rusdAddr", rusdAddr);
+		m_tab.put( "rusdAddr", address);
 	}
 	
+	/** Update spreadsheet */
 	public void setBusdAddress(String address) {
-		busdAddr = address;
-		m_tab.put( "busdAddr", busdAddr);
+		m_tab.put( "busdAddress", address);
 	}
 
 	static class RefApiConfig extends Config {
@@ -348,7 +352,7 @@ public class Config extends ConfigBase {
 			super.readFromSpreadsheet(tabName);
 			
 			if (useFireblocks) {
-				require(S.isNotNull( this.rusdAddr), "rusdAddr");
+				require(S.isNotNull( this.rusdAddr()), "rusdAddr");
 			}
 		}
 	}
@@ -503,5 +507,9 @@ public class Config extends ConfigBase {
 	
 	public String fbStablecoin() {
 		return fbStablecoin;
+	}
+	
+	public String blockchainExplorer() {
+		return blockchainExplorer;
 	}
 }

@@ -15,7 +15,6 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
-import redis.clients.jedis.Jedis;
 import tw.util.S;
 
 public class OldStyleTransaction extends MyTransaction {
@@ -25,7 +24,6 @@ public class OldStyleTransaction extends MyTransaction {
 		getAllPrices,
 		//getAllStocks,
 		getTradingHours(),
-		getConnectionStatus,
 		getDescription,
 		getPositions,
 		getPrice,
@@ -72,9 +70,6 @@ public class OldStyleTransaction extends MyTransaction {
 				break;
 			case refreshConfig:
 				refreshConfig();
-				break;
-			case getConnectionStatus:
-				getConnStatus();
 				break;
 			case terminate:
 				out( "Received terminate message");
@@ -152,33 +147,12 @@ public class OldStyleTransaction extends MyTransaction {
 		respondOk();
 	}
 
-	/** Top-level message handler */
-//	private void pushBackendConfig() throws Exception {
-//		out( "Pushing backend config from google sheet to database");
-//		Main.m_config.pushBackendConfig( m_main.sqlConnection() );
-//		respondOk();
-//	}
-
-	/** Top-level message handler, show TWS connection status */
-	private void getConnStatus() {
-		out( "Sending connection status");
-		respond( "orderConnectedToTWS", m_main.orderController().isConnected(),
-				 "orderConnectedToBroker", m_main.orderConnMgr().ibConnection() );
-	}
-
 	/** Top-level message handler, refresh all config and stock tokens */
 	void refreshConfig() throws Exception {
 		out( "Refreshing config and FAQs from google sheet");
 		m_main.readSpreadsheet();
 		respondOk();
 	}
-
-	/** Top-level message handler, return all stocks with prices */
-//	private void getAllStocks() throws RefException {
-//		require( !m_main.stocks().isEmpty(), RefCode.NO_STOCKS, "We don't have the list of stocks");
-//
-//		respond(m_main.stocks());
-//	}
 
 	/** Top-level method; used for admin purposes only, to get the conid */
 	// should be removed after we write an algo to update the spreadsheet w/ the conids
@@ -236,7 +210,7 @@ public class OldStyleTransaction extends MyTransaction {
 		// build the json response   // we could reuse this and just update the prices each time
 		JsonObject whole = new JsonObject();
 
-		for (Object obj : m_main.stocks() ) {
+		for (Object obj : m_main.stocks().stocks() ) {
 			Stock stk = (Stock)obj;
 
 			JsonObject single = new JsonObject();

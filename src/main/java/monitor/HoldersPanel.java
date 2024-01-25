@@ -9,7 +9,6 @@ import org.json.simple.JsonArray;
 
 import common.Util;
 import fireblocks.Erc20;
-import reflection.ModifiableDecimal;
 
 /** Shows the holders for a given token (wallet and balance */
 public class HoldersPanel extends JsonPanel {
@@ -26,13 +25,13 @@ public class HoldersPanel extends JsonPanel {
 
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work
 		Util.wrap( () -> {
-			m_title.setText( token.getName() );
+			m_title.setText( token.name() );
 			
-			HashMap<String, ModifiableDecimal> map = token.getAllBalances();
+			HashMap<String,Double> map = token.getAllBalances();
 
 			JsonArray ar = new JsonArray();
 			map.forEach( (wallet, balance) -> { 
-				if (balance.value() >= .009) {
+				if (balance >= .001) {
 					ar.add( Util.toJson( "wallet", Util.left(wallet, 8), "balance", balance ) );
 				}
 			});

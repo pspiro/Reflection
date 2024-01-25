@@ -20,11 +20,11 @@ public class TestWallet extends MyTestCase {
 	
 	public void testPosQuery() throws Exception {
 		Wallet wallet = new Wallet(Cookie.wallet);
-		assertTrue( wallet.getBalance(m_config.rusdAddr() ) > 0);
-		assertTrue( wallet.getBalance(m_config.busdAddr() ) > 0);
+		assertTrue( wallet.getBalance(m_config.rusd().address() ) > 0);
+		assertTrue( wallet.getBalance(m_config.busd().address() ) > 0);
 		
 		assertEquals( wallet.getBalance(m_config.rusdAddr() ), m_config.rusd().getPosition(Cookie.wallet) );
-		assertEquals( wallet.getBalance(m_config.busdAddr() ), m_config.busd().getPosition(Cookie.wallet) );
+		assertEquals( wallet.getBalance(m_config.busd().address() ), m_config.busd().getPosition(Cookie.wallet) );
 	}
 
 	public void testMyWallet() throws Exception {
@@ -42,7 +42,7 @@ public class TestWallet extends MyTestCase {
 //		assertTrue( tok.getDouble("balance") > 0 );
 
 		tok = ar.getJsonObj(1);
-		assertEquals("USDT", tok.getString("name"));
+		assertEquals("BUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 		assertTrue( tok.getDouble("approvedBalance") > 0 );
 

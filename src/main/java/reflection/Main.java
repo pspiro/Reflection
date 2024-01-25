@@ -16,10 +16,10 @@ import com.ib.client.Execution;
 import com.ib.client.OrderState;
 import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
-import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.ConnectionMgrBase;
 import common.Util;
 import fireblocks.MyServer;
 import http.BaseTransaction;
@@ -61,7 +61,7 @@ public class Main implements ITradeReportHandler {
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
 	
-	JsonArray stocks() { return m_stocks.stocks(); }
+	Stocks stocks() { return m_stocks; }
 
 
 	public static void main(String[] args) {
@@ -178,7 +178,7 @@ public class Main implements ITradeReportHandler {
 
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_orderConnMgr.connectNow();  // ideally we would set a timer to make sure we get the nextId message
+		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
@@ -276,85 +276,24 @@ public class Main implements ITradeReportHandler {
 
 
 	/** Manage the connection from this client to TWS. */
-	class ConnectionMgr implements IConnectionHandler {
-		private String m_host;
-		private int m_port;
-		private int m_clientId;
-		private Timer m_timer;
-		private boolean m_ibConnection;
-		private final ApiController m_controller = new ApiController( this, null, null);
-		boolean ibConnection() { return m_ibConnection; }
+	class ConnectionMgr extends ConnectionMgrBase {
 
 		ConnectionMgr(String host, int port) {
-			m_host = host;
-			m_port = port;
-			m_clientId = rnd.nextInt( Integer.MAX_VALUE) + 1; // use random client id, but not zero
-			
+			super( host, port, rnd.nextInt( Integer.MAX_VALUE) + 1, m_config.reconnectInterval() ); 
+
 			m_controller.handleExecutions( Main.this);
-		}
-
-		public ApiController controller() {
-			return m_controller;
-		}
-
-		synchronized void startTimer() {
-			if (m_timer == null) {
-				m_timer = new Timer();
-				S.out( "creating timer " + m_timer.hashCode() + " (only one)" );
-				m_timer.schedule(new TimerTask() {
-					@Override public void run() {
-						onTimer();
-					}
-				}, 0, m_config.reconnectInterval() );
-			}
-		}
-
-		synchronized void stopTimer() {
-			if (m_timer != null) {
-				m_timer.cancel();
-				m_timer = null;
-			}
-		}
-
-		void onTimer() {
-			try {
-				connectNow();
-				S.out( "  connect() success");
-			}
-			catch( Exception e) {
-				S.out( "connect() failure");
-				e.printStackTrace();
-			}
-		}
-		
-		synchronized void connectNow() throws Exception {
-			S.out( "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
-			if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
-				throw new Exception("Could not connect to TWS");
-			}
-		}
-
-		/** We are connected and have received server version */
-		public boolean isConnected() {
-			return m_controller.isConnected();
 		}
 
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
+			super.onConnected();  // stop the connection timer
 			log( LogType.TWS_CONNECTION, "connected");
-			m_ibConnection = true; // we have to assume it's connected since we don't know for sure
-
-			stopTimer();
 			
 			m_tradingHours.startQuery();
 		}
 
-		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
-			// we really don't care if we get this because we are using random
-			// order id's; it's because sometimes, after a reconnect or if TWS
-			// is just startup up, or if we tried and failed, we don't ever receive
-			// it
 			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
 		}
 
@@ -365,25 +304,8 @@ public class Main implements ITradeReportHandler {
 			}
 		}
 
-		@Override public void accountList(List<String> list) {
-		}
-
-		@Override public void error(Exception e) {
-			e.printStackTrace();
-		}
-
 		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-			switch (errorCode) {
-				case 1100:
-					m_ibConnection = false;
-					break;
-				case 1102:
-					m_ibConnection = true;
-					break;
-				case 10197:
-					S.out( "You can't get market data in your paper account while logged into your production account");
-					break;
-			}
+			super.message( id, errorCode, errorMsg, advancedOrderRejectJson);
 			
 			if (
 					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
@@ -392,20 +314,6 @@ public class Main implements ITradeReportHandler {
 				S.out( "Received API message  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
 			}
 		}
-
-		@Override public void show(String string) {
-			S.out( "Show: " + string);
-		}
-
-		/** Simulate disconnect to test reconnect */
-		public void disconnect() {
-			m_controller.disconnect();
-		}
-
-		public void dump() {
-			m_controller.dump();
-		}
-
 	}
 
 	static String tos(OrderState orderState) {
@@ -445,16 +353,6 @@ public class Main implements ITradeReportHandler {
 				"wallet_public_key", wallet,
 				"data", json);
 		queueSql( conn -> conn.insertJson( "log", log) );
-	}
-
-	static class Pair {
-		String m_key;
-		String m_val;
-
-		Pair( String key, String val) {
-			m_key = key;
-			m_val = val;
-		}
 	}
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
@@ -539,7 +437,7 @@ public class Main implements ITradeReportHandler {
 			});
 		}
 		catch( Exception e) {
-			S.out( "Error fetching prices - " + e.getMessage() ); // need this because the exception doesn't give much info
+			S.err( "Error fetching prices", e); // need this because the exception doesn't give much info
 		}
 	}
 
@@ -610,14 +508,14 @@ public class Main implements ITradeReportHandler {
 								com.run( conn);   // (wrap() doesn't work here)
 							}
 							catch( Exception e) {
-								S.out( "Error while executing DbQueue command - " + e.getMessage() );
+								S.err( "Error while executing DbQueue command", e);
 								e.printStackTrace();  // this would be an error on one specific database operation
 							}
 							com = next();
 						}
 					} 
 					catch (Exception e) {
-						S.out( "Error while connecting to database - " + e.getMessage() );
+						S.err( "Error while connecting to database", e);
 						e.printStackTrace();  // this could be an error connecting to the database; ideally we would put the command, which didn't execute, back in the queue
 					}
 				}

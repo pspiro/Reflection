@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import javax.swing.Box;
 import javax.swing.JPanel;
 
 import common.Util;
@@ -18,12 +19,24 @@ public class MdsPricesPanel extends JsonPanel {
 		m_model.justify("llrrr");
 		
 		JPanel butPanel = new JPanel();
-		butPanel.add( new HtmlButton("Reconnect", act -> reconnect() ) );
-		add( butPanel, BorderLayout.EAST);
+		butPanel.add( new HtmlButton("Disconnect/Reconnect", act -> reconnect() ) );
+		butPanel.add( Box.createHorizontalStrut(20) );
+		butPanel.add( new HtmlButton("Refresh Symbols", act -> refreshMdServer() ) );
+		add( butPanel, BorderLayout.NORTH);
+	}
+	
+	void refreshMdServer() {
+		Util.wrap( () -> {
+			// tell MdServer to re-read symbols list and resubscribe market data
+			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/refresh");
+			refresh();
+			Util.inform(this, resp);
+		});
 	}
 	
 	private void reconnect() {
 		Util.wrap( () -> {
+			// tell MdServer to disconnect/reconnect
 			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/disconnect");
 			Util.inform(this, resp);
 		});

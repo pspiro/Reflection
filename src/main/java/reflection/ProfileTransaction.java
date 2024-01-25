@@ -44,10 +44,10 @@ public class ProfileTransaction extends MyTransaction {
             JsonObject data = parseToObject();
 			
             String wallet = data.getLowerString( "wallet_public_key");
-			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet '%s' is invalid", wallet);
+			require( Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
 
 			String email = data.getString( "email");
-			require( Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email '%s' is invalid for wallet '%s'", email, wallet);
+			require( Util.isValidEmail(email), RefCode.INVALID_REQUEST, "The email address is invalid");
 			
 			String code = Util.uin(5);
 			out( "Emailing verification code '%s' for wallet '%s' to email '%s'", code, wallet, email);

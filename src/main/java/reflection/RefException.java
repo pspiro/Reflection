@@ -6,7 +6,7 @@ import common.Util;
 import tw.util.S;
 
 public class RefException extends Exception {
-	private RefCode m_code;
+	private RefCode m_code;  // part of toString() but not getMessage()
 
 	public RefCode code() { return m_code; }
 
@@ -26,11 +26,18 @@ public class RefException extends Exception {
 	public static JsonObject eToJson(Throwable e) {
 		return eToJson(e, RefCode.UNKNOWN);
 	}
-	
+
+	public static void main(String[] args) {
+		eToJson( new Exception("bad"), RefCode.TOO_SLOW).display();
+	}
+
 	public static JsonObject eToJson(Throwable e, RefCode refCode) {
+		String text = Util.toMsg(e);
+		
 		return Util.toJson(
 				"code", refCode, 
-				"message", e.getMessage() != null ? e.getMessage() : e.toString(),
+				"message", text,
+				"error", Util.toJson("message", text),
 				"statusCode", 400
 			);
 	}

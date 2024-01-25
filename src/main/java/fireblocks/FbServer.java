@@ -158,7 +158,7 @@ public class FbServer {
 			m_lastSuccessfulPut = System.currentTimeMillis();
 		}
 		catch( Exception e) {
-			S.out( "Error putting transactions - " + e.getMessage() );
+			S.err( "Error putting transactions", e);
 		}
 	}
 
@@ -208,7 +208,7 @@ public class FbServer {
 				return Util.getEnum(status(), FireblocksStatus.values() ).pct() == 100;
 			}
 			catch( Exception e) {
-				S.out( e.getMessage() );
+				S.err( "Error", e);
 				return false;
 			}
 		}

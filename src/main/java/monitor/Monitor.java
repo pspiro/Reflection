@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -12,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonObject;
 
@@ -26,6 +28,7 @@ import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
 import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
+import tw.util.UI;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -144,11 +147,7 @@ public class Monitor {
 	
 	/** called when Refresh button is clicked */
 	static void refresh() {
-		try {
-			((MonPanel)m_tabs.current()).refresh();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		((MonPanel)m_tabs.current()).refreshTop();
 	}
 	
 	static class TransPanel extends QueryPanel {
@@ -163,7 +162,7 @@ public class Monitor {
 			switch(tag) {
 			case "wallet_public_key":
 				m_tabs.select( "Wallet");
-				m_walletPanel.filter( val.toString() );
+				m_walletPanel.setWallet( val.toString() );
 				break;
 			case "uid":
 				m_tabs.select( "Log");
@@ -229,7 +228,7 @@ public class Monitor {
 	}
 
 	static class UsersPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,first_name,last_name,email,phone,aadhaar,address,city,country,id,kyc_status,pan_number,persona_response,updated_at";
+		static String names = "created_at,wallet_public_key,first_name,last_name,email,kyc_status,phone,aadhaar,address,city,country,id,pan_number,persona_response";
 		static String sql = "select * from users $where";
 		
 		UsersPanel() {
@@ -262,16 +261,26 @@ public class Monitor {
 		public MonPanel(LayoutManager layout) {
 			super(layout);
 		}
+
+		@Override public void activated() {
+			refreshTop();
+		}
+
+		/** Display hourglass and refresh, catch exceptions */
+		protected final void refreshTop() {
+			UI.watch( m_frame, () -> refresh() );
+		}
 		
 		protected abstract void refresh() throws Exception;
 		
 		@Override public void switchTo() {
 		}
 
-		@Override public void activated() {
-		}
-
 		@Override public void closed() {
+		}
+		
+		protected Window getWindow() {
+			return SwingUtilities.getWindowAncestor(this);
 		}
 	}
 	

@@ -110,7 +110,7 @@ public class LiveOrderTransaction extends MyTransaction {
 				m_walletAddr = liveTrans.walletAddr();
 				olog( LogType.FB_UPDATE, "id", fbId, "status", status, "hash", hash); // this gives us the history of the timing
 				
-				liveTrans.onUpdateFbStatus(status);  // we might not update live order w/ COMPLETED status; that could happen after the method returns
+				liveTrans.onUpdateFbStatus(status, hash);  // we might not update live order w/ COMPLETED status; that could happen after the method returns
 
 				// remove the transaction from allLiveTransactions if it is completed
 				if (status.pct() == 100) {

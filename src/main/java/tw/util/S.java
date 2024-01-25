@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import common.Util;
 import tw.grep.DirProcessor;
 import tw.grep.FileProcessor;
 
@@ -193,15 +194,6 @@ public class S {
 	public static void out( Object str) {
 		System.out.println( String.format( "%s %3s %s", 
 				timeFmt.format( new Date() ), Thread.currentThread().getName(), str) );  
-	}
-
-	/** @deprecated */
-	public static void err( Object str) {
-		System.out.println( str);
-	}
-
-	public static void print( Object str) {
-		System.out.print( str);
 	}
 
 	public static void deleteFile(String pnlFilename) {
@@ -456,8 +448,8 @@ public class S {
 		return "c:\\temp";
 	}
 
-	public static boolean equals(String date, String date2) {
-		return date != null && date.equals( date2);
+	public static boolean equals(String str1, String str2) {
+		return str1 != null && str1.equals( str2);
 	}
 
 	/** This can handle strings formatted with commas and/or dollar signs.
@@ -644,28 +636,6 @@ public class S {
 		return val != Double.MAX_VALUE;
 	}
 
-	public static boolean isZero(double transAmount) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	/** Return true if equal to within .001. */
-	public static boolean equals(double amount, double amount2) {
-		return Math.abs( amount2 - amount) < .001;
-	}
-
-	static long then = 0;
-	public static void time(String string) {
-		long now = System.currentTimeMillis();
-		if (then > 0) {
-			out( "%s (%s)", string, (now - then) );
-		}
-		else {
-			out( string);
-		}
-		then = now;
-	}
-
     /** return true if a file or directory with the specified name exists */
     static public boolean fileExists( String str) {
         return new File( str).exists();
@@ -843,5 +813,8 @@ public class S {
 			}
 		}		
 	}
-	
+
+	public static void err(String str, Exception e) {
+		out( str + " - " + Util.toMsg(e) ); 
+	}
 }

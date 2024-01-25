@@ -37,7 +37,7 @@ public class PricesPanel extends JsonPanel {
 
 		m_model.fireTableDataChanged();
 
-		Util.wrap( () -> refresh() );
+		refreshTop();
 	}
 
 	@Override protected void refresh() throws Exception {

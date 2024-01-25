@@ -1,6 +1,8 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.Desktop;
+import java.net.URI;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,6 +28,9 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_usdc = new JLabel(); 
 	private final JLabel m_approved = new JLabel(); 
 	private final JLabel m_matic = new JLabel(); 
+	private final JLabel m_name = new JLabel(); 
+	private final JLabel m_email = new JLabel(); 
+	private final JLabel m_kyc = new JLabel(); 
 	private final JTextField m_username = new JTextField(8); 
 	private final JTextField m_mintAmt = new JTextField(8); 
 	private final JTextField m_burnAmt = new JTextField(8); 
@@ -35,17 +40,14 @@ public class WalletPanel extends JsonPanel {
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
 
-		m_wallet.addActionListener( e -> { 
-			try {
-				refresh();
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			} 
-		});
+		m_wallet.addActionListener( e -> refreshTop() );
 
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
+		vp.add( "Name", m_name);
+		vp.add( "Email", m_email);
+		vp.add( "KYC", m_kyc);
 		vp.add( "RUSD", m_rusd);
 		vp.add( "USDT", m_usdc);
 		vp.add( "Approved", m_approved);
@@ -53,6 +55,7 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
 		vp.add( "Create user", m_username, new HtmlButton("Create", e -> createUser() ) );
+		vp.add( "View on blockchain", new HtmlButton("Explore", e -> explore() ) );
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
@@ -60,6 +63,12 @@ public class WalletPanel extends JsonPanel {
 
 		add( leftPanel, BorderLayout.WEST);
 		add( transPanel);
+	}
+
+	/** Open wallet in blockchain explorer */
+	private void explore() {
+		String url = "https://polygonscan.com/address/" + m_wallet.getText(); // you must pull from config
+		Util.browse( url);
 	}
 
 	private void createUser() {
@@ -82,6 +91,7 @@ public class WalletPanel extends JsonPanel {
 				String hash = Monitor.m_config.rusd().mintRusd( 
 						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 				
+				m_mintAmt.setText(null);
 				Util.inform(this, hash);
 			}
 		}
@@ -100,6 +110,7 @@ public class WalletPanel extends JsonPanel {
 				String hash = Monitor.m_config.rusd().burnRusd( 
 						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 				
+				m_burnAmt.setText(null);
 				Util.inform(this, hash);
 			}
 		}
@@ -110,17 +121,39 @@ public class WalletPanel extends JsonPanel {
 
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
-		Util.wrap( () -> refresh() );
+		refreshTop();
 	}
 
 	public void refresh() throws Exception {
-		S.out( "Refreshing Wallet panel");
+		String walletAddr = m_wallet.getText().toLowerCase();
+		S.out( "Refreshing Wallet panel with wallet %s", walletAddr);
 
+		S.out( "Clearing values");
 		rows().clear();
-
-		String walletAddr = m_wallet.getText();
+		m_mintAmt.setText(null);
+		m_burnAmt.setText(null);
+		m_rusd.setText(null);
+		m_usdc.setText(null);
+		m_approved.setText(null);
+		m_matic.setText(null);
+		m_name.setText(null);
+		m_email.setText(null);
+		m_kyc.setText(null);
+		transPanel.clear();
 
 		if (Util.isValidAddress(walletAddr)) {
+			S.out( "Updating values");
+
+			// query Users record
+			JsonArray users = Monitor.m_config.sqlQuery( sql -> 
+				sql.queryToJson("select * from users where wallet_public_key = '%s'", walletAddr) );
+			if (users.size() == 1) {
+				JsonObject json = users.get(0);
+				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
+				m_email.setText( json.getString("email"));
+				m_kyc.setText( json.getString("kyc_status"));
+			}
+			
 			MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + walletAddr, obj -> {
 				JsonArray ar = obj.getArray("tokens");
 				Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", walletAddr ); 
@@ -145,20 +178,7 @@ public class WalletPanel extends JsonPanel {
 			transPanel.where.setText( String.format("where wallet_public_key = '%s'", walletAddr) );
 			transPanel.refresh();
 		}
-		else {
-			m_rusd.setText(null);
-			m_usdc.setText(null);
-			m_approved.setText(null);
-			m_matic.setText(null);
-
-			transPanel.clear();
-		}
 
 		m_model.fireTableDataChanged();
-	}
-
-	public void filter(String wallet) {
-		m_wallet.setText(wallet);
-		Util.wrap( () -> refresh() );
 	}
 }

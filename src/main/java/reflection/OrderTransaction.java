@@ -23,7 +23,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
-import fireblocks.Erc20;
+import fireblocks.Erc20.Stablecoin;
 import fireblocks.StockToken;
 import reflection.TradingHours.Session;
 import tw.util.S;
@@ -41,13 +41,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_ibOrderCompleted;
+	private Stablecoin m_stablecoin;  // stablecoin (upper-case) being used to purchase the stock token
+	private String m_email;
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
 	private LiveOrderStatus m_status = LiveOrderStatus.Working;   // move up to base class
 	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
-	
+
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
  	}
@@ -95,8 +97,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
 		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
 		
-		m_map.getEnumParam("currency", Stablecoin.values() ); // confirm that it was sent on the order
-		
+		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
+		String currency = m_map.getRequiredString("currency").toUpperCase();
+		if (currency.equals( m_config.rusd().name() ) ) {
+			m_stablecoin = m_config.rusd();
+		}
+		else if (currency.equals(m_config.busd().name() ) ) {
+			m_stablecoin = m_config.busd();
+		}
+		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
+			
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");
@@ -107,15 +117,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// validate user profile fields
 		JsonObject userRecord = ar.get(0);
-		new Profile(userRecord).validate();
+		Profile profile = new Profile(userRecord);
+		profile.validate();
+		
+		// save email to send alerts later
+		m_email = profile.email(); 
 
 		// validate KYC fields
 		require( 
 				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ||
-				
-				S.isNotNull( userRecord.getString("persona_response")) && 
-				S.isNotNull( userRecord.getString("kyc_status")),
-				
+				S.equals( userRecord.getString("kyc_status"), "VERIFIED"),
 				RefCode.NEED_KYC,
 				"Please verify your identity and then resubmit your order");
 		
@@ -382,7 +393,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
 		}
 		else {
-			onFireblocksSuccess();
+			onFireblocksSuccess(null);
 		}
 	}
 	
@@ -401,27 +412,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// buy
 		if (m_order.isBuy() ) {
-			
-			// buy with RUSD?
-			if (m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.RUSD) {
-				fbId = m_config.rusd().buyStockWithRusd(
-						m_walletAddr, 
-						m_stablecoinAmt,
-						newStockToken(),
-						m_desiredQuantity
-				).id();
-			}
-			
-			// buy with XUSD
-			else {
-				fbId = m_config.rusd().buyStock(
-						m_walletAddr,
-						m_config.busd(),
-						m_stablecoinAmt,
-						newStockToken(), 
-						m_desiredQuantity
-				).id();
-			}
+			fbId = m_config.rusd().buyStock(
+					m_walletAddr,
+					m_stablecoin,
+					m_stablecoinAmt,
+					newStockToken(), 
+					m_desiredQuantity
+			).id();
 		}
 		
 		// sell
@@ -474,9 +471,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
-	public synchronized void onUpdateFbStatus(FireblocksStatus stat) {
+	@Override public synchronized void onUpdateFbStatus(FireblocksStatus stat, String hash) {
 		if (stat == FireblocksStatus.COMPLETED) {
-			onFireblocksSuccess();
+			onFireblocksSuccess(hash);
 		}
 		else if (stat.pct() == 100) {
 			// write to log file (don't throw, informational only)
@@ -523,8 +520,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	/** Called when blockchain goes to COMPLETED;
 	 *  also called during testing if we bypass the FB processing;
-	 *  set up the order so that user will received Filled msg on next update */
-	synchronized void onFireblocksSuccess() {
+	 *  set up the order so that user will received Filled msg on next update
+	 *  @param hash is the blockchain hash, could be null in development */
+	synchronized void onFireblocksSuccess(String hash) {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
@@ -535,6 +533,21 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
 				alert( "ORDER COMPLETED", getCompletedOrderText() );
+				
+				// send email to the user
+				if (Util.isValidEmail(m_email)) {
+					String html = String.format( isBuy() ? buyConf : sellConf,
+							m_desiredQuantity,
+							m_stock.symbol(),
+							m_stablecoinAmt,
+							m_stablecoin.name(),
+							m_stock.getSmartContractId(),
+							m_config.blockchainExplorer() + hash);
+					m_config.sendEmail(m_email, "Order filled on Reflection", html, true);
+				}
+				else {
+					out( "Error: cannot send email confirmation due to invalid email"); // should never happen
+				}
 			}
 		}
 	}
@@ -587,7 +600,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("commission", m_config.commission() ); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
 			obj.put("status", FireblocksStatus.LIVE); // this is now a live order and we are waiting for IB and/or Blockchain
-			obj.put("currency", m_map.getEnumParam("currency", Stablecoin.values() ).toString() );
+			obj.put("currency", m_stablecoin.name() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
 		} 
@@ -601,7 +614,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  This could be called before or after submitting the stock order */
 	private void requireSufficientCrypto() throws Exception {
 		if (m_order.isBuy() ) {
-			double balance = stablecoin().getPosition( m_walletAddr );
+			double balance = m_stablecoin.getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_stablecoinAmt ), 
 					RefCode.INSUFFICIENT_FUNDS,
 					"The stablecoin balance (%s) is less than the total order amount (%s)", 
@@ -618,7 +631,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void requireSufficientApproval() throws Exception {
 		// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
-		if (m_order.isBuy() && m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT) {
+		if (m_order.isBuy() && !m_stablecoin.isRusd() ) {
 			double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
 			require( 
 					Util.isGtEq(approvedAmt, m_stablecoinAmt), 
@@ -626,12 +639,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 		}
 		
-	}
-
-	/** Return RUSD or non-RUSD token */
-	private Erc20 stablecoin() throws Exception {
-		return m_map.getEnumParam("currency", Stablecoin.values() ) == Stablecoin.USDT
-				? Main.m_config.busd() : Main.m_config.rusd();
 	}
 
 	private StockToken newStockToken() throws Exception {
@@ -798,9 +805,47 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						) ) );
 	}
 
-	public boolean isStale() {
-		return false; 
-	}
+	private static final String buyConf = """
+		<html>
+		Your order on Reflection was filled!<p>
+		<p>
+		You bought %s shares of %s stock token for $%s.<p>
+		<p>
+		You paid with %s.<p>
+		<p>
+		We have purchased the associated stock and are holding it in reserve on your behalf.<p>
+		<p>
+		To view the stock token in your crypto wallet:<br>
+		* Click the "Add to Wallet" button on the Trade screen, or<br>
+		* Import this contract address: %s<p>
+		<p>
+		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
+		<p>
+		If you have any questions or comments, feel free to reply to this email.<p>
+		<p>
+		Thank you!<p>
+		<p>
+		-The Reflection Team
+		</html>""";
+
+	private static final String sellConf = """
+		<html>
+		Your order on Reflection was filled!<p>
+		<p>
+		You sold %s shares of %s stock token for $%s.<p>
+		<p>
+		You received %s, the Reflection stablecoin.<p>
+		<p>
+		To view the RUSD in your your crypto wallet, import this contract address: %s<p>
+		<p>
+		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
+		<p>
+		If you have any questions or comments, feel free to reply to this email.<p>
+		<p>
+		Thank you!<p>
+		<p>
+		-The Reflection Team
+		</html>""";
 }
 // look at all the catch blocks, save message or stack trace
 // you have to not log the cookie

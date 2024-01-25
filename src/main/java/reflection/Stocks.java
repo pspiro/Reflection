@@ -16,7 +16,7 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 public class Stocks implements Iterable<Stock> {
 	private static Stock NULL = new Stock();
 	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
-	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
+	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	
 	public void readFromSheet(ConfigBase config) throws Exception {
@@ -29,6 +29,7 @@ public class Stocks implements Iterable<Stock> {
 		m_stocks.clear();
 		m_stockMap.clear();
 		m_hotStocks.clear();
+		m_allAddresses = null;
 		
 		// read master list of symbols and map conid to entry
 		HashMap<Integer,ListEntry> masterList = readMasterSymbols(book);
@@ -124,5 +125,21 @@ public class Stocks implements Iterable<Stock> {
 			}
 		}
 		throw new Exception("Stock not found");
+	}
+
+	/** Used for querying for stock positions */
+	private String[] m_allAddresses;
+	
+	/** Return array of all stock contract addresses */
+	public String[] getAllContractsAddresses() {
+		if (m_allAddresses == null) {
+			m_allAddresses = new String[m_stockMap.size()];
+			
+			int i = 0;
+			for (Stock stock : m_stockMap.values() ) {
+				m_allAddresses[i++] = stock.getSmartContractId();
+			}
+		}
+		return m_allAddresses;
 	}
 }

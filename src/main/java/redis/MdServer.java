@@ -13,6 +13,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.ConnectionMgrBase;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.MyServer;
@@ -38,11 +39,10 @@ public class MdServer {
 
 	public static final String Overnight = "OVERNIGHT"; 
 	public static final String Smart = "SMART"; 
-	static long m_started;  // timestamp that process was started
-
+	       static long m_started;  // timestamp that process was started
 	
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
-	final MdConnectionMgr m_mdConnMgr;
+	        final MdConnectionMgr m_mdConnMgr;
 	private final MdConfig m_config = new MdConfig();
 	private final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
 	private final TradingHours m_tradingHours; 
@@ -86,6 +86,7 @@ public class MdServer {
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction( exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction( exch).onSubscribe() ); 
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction( exch).onDisconnect() ); 
+			server.createContext("/mdserver/refresh", exch -> new MdTransaction( exch).onRefresh() ); 
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction( exch).onGetAllPrices() ); 
 			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch).onGetRefPrices() ); 
 			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() ); 
@@ -99,43 +100,49 @@ public class MdServer {
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet(m_config);
 
-		m_mdConnMgr = new MdConnectionMgr( this, m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
+		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
 		
 		// connect to TWS
-		timer.next("Connecting to TWS");
-		m_mdConnMgr.connectNow(); // we want program to terminate if we can't connect to TWS
+		m_mdConnMgr.startTimer();
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> onShutdown() ) );
 	}
 
 	private void onShutdown() {
 		log("Received shutdown msg from linux kill command");
-		//savePrices();
 	}
 
-	/** Refresh list of stocks and re-request market data. */ 
-	void refreshStockList() throws Exception {   // never called. pas
-		mdController().cancelAllTopMktData();
-		m_stocks.readFromSheet(m_config);
-		requestPrices();
-	}
-
-	class MdConnectionMgr extends ConnectionMgr {
-		MdConnectionMgr( MdServer main, String host, int port, int clientId, long reconnectInterval) {
-			super( main, host, port, clientId, reconnectInterval);
+	class MdConnectionMgr extends ConnectionMgrBase {
+		MdConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
+			super( host, port, clientId, reconnectInterval);
 		}
 		
-		/** Ready to start sending messages. */  // anyone that uses requestid must check for this
+		/** Called when we receive server version. We don't always receive nextValidId. */
+		@Override public void onConnected() {
+			super.onConnected();  // stop the connection time
+			log( "Connected to TWS");
+			m_tradingHours.startQuery();
+		}
+		
+		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
-			super.onRecNextValidId(id);  // we don't get this after a disconnect/reconnect, so in that case you should use onConnected()
+			S.out( "Received next valid id %s ***", id);
 			wrap( () -> requestPrices() );
 		}
 		
-		@Override public void onConnected() {
-			super.onConnected();
-			m_tradingHours.startQuery();
+		@Override public synchronized void onDisconnected() {
+			if (m_timer == null) {
+				log( "Disconnected from TWS");
+				startTimer();
+			}
 		}
+
+		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
+			super.message( id, errorCode, errorMsg, advancedOrderRejectJson);
+			
+			log( "Received from TWS %s %s %s", id, errorCode, errorMsg);
+		}		
 	}
 
 	/** Might need to sync this with other API calls.  */
@@ -229,7 +236,7 @@ public class MdServer {
 		return m_mdConnMgr.controller();
 	}
 
-	public ConnectionMgr mdConnMgr() {
+	public MdConnectionMgr mdConnMgr() {
 		return m_mdConnMgr;
 	}
 
@@ -280,6 +287,17 @@ public class MdServer {
 						"started", m_started
 						);
 				respond( obj);
+			});
+		}
+
+		/** Refresh list of stocks and re-request market data. */ 
+		public void onRefresh() {
+			wrap( () -> {
+				S.out( "Refreshing list of stock tokens from spreadsheet");
+				mdController().cancelAllTopMktData();
+				m_stocks.readFromSheet(m_config);
+				requestPrices();
+				respondOk();
 			});
 		}
 

@@ -1,50 +1,42 @@
 package testcase;
 
-import static testcase.TestErrors.sendData;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import http.MyHttpClient;
-import junit.framework.TestCase;
 import reflection.Config;
 import tw.util.S;
 
-public class TestConfig extends TestCase {
+public class TestConfig extends MyTestCase {
 	//static String host = "34.125.38.193"; //http://reflection.trading";
 	static String host = "localhost"; //http://reflection.trading";
 	
 	public void testConnection() throws Exception {
-		String data = "{ 'msg': 'getconnectionstatus' }"; 
-		JsonObject map = sendData( data);
-		assertEquals( "true", map.getString("orderConnectedToTWS") );
-		assertEquals( "true", map.getString("orderConnectedToBroker") );		
+		JsonObject map = cli().get("/api/status").readJsonObject();
+		assert200();
+		assertEquals( true, map.getBool("IB") );
+		assertEquals( true, map.getBool("TWS") );
 	}
 	
 	public void testRefreshConfig() throws Exception {
-		String data = "{ 'msg': 'refreshconfig' }"; 
-		JsonObject map = sendData( data);
-		assertEquals( "OK", map.getString( "code") );
+		cli().get("/api/?msg=refreshconfig");
+		assert200();
 	}
 
 	public void testBackendConfigs() throws Exception {
-		MyHttpClient cli = new MyHttpClient(host, 8383);
-		JsonArray ar = cli.get("/api/faqs").readJsonArray();
+		JsonArray ar = cli().get("/api/faqs").readJsonArray();
 		S.out( ar.getJsonObj(0) );
 		assertTrue( ar.size() > 3);
 
-		cli = new MyHttpClient(host, 8383);
-		JsonObject obj = cli.get("/api/system-configurations/last").readJsonObject();
+		JsonObject obj = cli().get("/api/system-configurations/last").readJsonObject();
 		S.out( obj.get("min_order_size"));
 		assertTrue( obj.size() > 5);
 		
-		cli = new MyHttpClient(host, 8383);
-		obj = cli.get("/api/configurations").readJsonObject();
+		obj = cli().get("/api/configurations").readJsonObject();
 		S.out( obj);
 		assertTrue( obj.size() > 5);
 		
-		cli = new MyHttpClient(host, 8383);
-		obj = cli.get("/api/configurations?key=whitepaper_text").readJsonObject();
+		obj = cli().get("/api/configurations?key=whitepaper_text").readJsonObject();
 		S.out( obj);
 		assertEquals(1, obj.size() );
 	}

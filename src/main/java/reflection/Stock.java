@@ -49,6 +49,7 @@ public class Stock extends JsonObject {
 		return m_prices; 
 	}
 
+	/** @return contract address */
 	public String getSmartContractId() {
 		return getString("smartcontractid");
 	}
