@@ -271,11 +271,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 				out( "\n%s]", Util.tab(level) );
 			}
 		}
-		else if (objIn instanceof Number) {
-			out( JSONValue.toJSONString(objIn) );
-		}
 		else {
-			out( objIn);
+			out( JSONValue.toJSONString(objIn) );
 		}
 	}
 	

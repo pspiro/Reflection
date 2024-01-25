@@ -91,7 +91,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	}
 
 	
-	@Override public synchronized void onUpdateFbStatus(FireblocksStatus status) {
+	@Override public synchronized void onUpdateFbStatus(FireblocksStatus status, String hash) {
 		if (m_status == LiveStatus.Working) {
 			m_progress = status.pct();
 	

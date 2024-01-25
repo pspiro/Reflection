@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.m_config;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -78,6 +76,7 @@ public class Config extends ConfigBase {
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
 	private String fbStablecoin;
+	private String blockchainExplorer;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -229,9 +228,12 @@ public class Config extends ConfigBase {
 			// update Moralis chain
 			MoralisServer.chain = moralisPlatform;
 		}
+		
+		if (isProduction() ) {
+			this.blockchainExplorer = m_tab.getRequiredString("blockchainExplorer");
+		}
 
-		require( useFireblocks || !m_config.isProduction(), "Must use fireblocks in production");
-		require( !autoFill || !m_config.isProduction(), "No auto-fill in production");
+		require( !autoFill || !isProduction(), "No auto-fill in production");
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
@@ -505,5 +507,9 @@ public class Config extends ConfigBase {
 	
 	public String fbStablecoin() {
 		return fbStablecoin;
+	}
+	
+	public String blockchainExplorer() {
+		return blockchainExplorer;
 	}
 }

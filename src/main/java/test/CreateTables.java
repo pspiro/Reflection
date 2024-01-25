@@ -142,28 +142,25 @@ public class CreateTables  {
 	
 	/** This has never been run and probably doesn't work */
 	void createUsers() throws Exception {
-//		con.dropTable( "users");		
-//		String sql = """
-//			CREATE TABLE users (
-//			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
-//			wallet_public_key varchar(42) UNIQUE check (wallet_public_key = LOWER(wallet_public_key)),
-		                                 // OR PRIMARY, if you want to prevent null wallets
-//			first_name varchar(50),
-//			last_name varchar(50),
-//			email varchar,
-//			phone varchar,
-//			kyc_status varchar,
-//			address varchar,
-//			city varchar,
-//			country varchar,
-//			persona_response varchar,
-//			pan_number varchar(10),
-//			aadhaar varchar(12)
-//		""";		
-
-//		String sql = "create table users ("
-//				// write this
-//				+ ")";
-//		con.execute( sql);
+		con.dropTable( "users");
+		
+		String sql = """
+		CREATE TABLE public.users (
+			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
+			wallet_public_key varchar(42) PRIMARY check (wallet_public_key = LOWER(wallet_public_key)),
+			first_name character varying(50),
+			last_name character varying(50),
+			email character varying,
+			phone character varying,
+			kyc_status character varying,
+			address character varying,
+			city character varying,
+			country character varying,
+			persona_response character varying,
+			pan_number character varying(10),
+			aadhaar character varying(12)
+		);
+		""";
+		con.execute( sql);
 	}
 }

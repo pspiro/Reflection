@@ -355,16 +355,6 @@ public class Main implements ITradeReportHandler {
 		queueSql( conn -> conn.insertJson( "log", log) );
 	}
 
-	static class Pair {
-		String m_key;
-		String m_val;
-
-		Pair( String key, String val) {
-			m_key = key;
-			m_val = val;
-		}
-	}
-
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
 		obj.put( "time", exec.time() );         

@@ -4,6 +4,8 @@ import static reflection.Main.require;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
+
 /** User profile which can be edited by the user. */
 public class Profile extends JsonObject {
 	static final String fields = "wallet_public_key,first_name,last_name,address,email,phone,pan_number,aadhaar";
@@ -53,6 +55,7 @@ public class Profile extends JsonObject {
 		// validate pan and aadhaar
 		require( aadhaar().replaceAll("-", "").matches( "^\\d{12}$"), RefCode.INVALID_USER_PROFILE, "The Aadhaar entered is invalid"); 
 		require( pan().toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$"), RefCode.INVALID_USER_PROFILE, "The PAN entered is invalid");
+		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email entered is invalid");
 
 		// don't allow < or > in user entry fields
 		for (String tag : keySet() ) {

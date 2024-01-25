@@ -178,7 +178,8 @@ public class Util {
 	public static String formatStrWc = ", \"%s\": \"%s\"";
 
 	/** Create the whole Json message, including the time.
-	 * Note that enums are added as object but deserialized as strings
+	 *  Note that enums are added as object but deserialized as strings.
+	 *  Null values are not added.
 	 *  @param strs tag/value pairs */
 	public static JsonObject toJson( Object... strs) {
 		JsonObject obj = new JsonObject();
@@ -189,7 +190,9 @@ public class Util {
 				tag = val;
 			}
 			else {
-				obj.put( tag.toString(), val);
+				if (val != null) {
+					obj.put( tag.toString(), val);
+				}
 				tag = null;
 			}
 		}

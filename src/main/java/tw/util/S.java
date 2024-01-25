@@ -448,8 +448,8 @@ public class S {
 		return "c:\\temp";
 	}
 
-	public static boolean equals(String date, String date2) {
-		return date != null && date.equals( date2);
+	public static boolean equals(String str1, String str2) {
+		return str1 != null && str1.equals( str2);
 	}
 
 	/** This can handle strings formatted with commas and/or dollar signs.
@@ -634,28 +634,6 @@ public class S {
 
 	public static boolean isNotNull(double val) {
 		return val != Double.MAX_VALUE;
-	}
-
-	public static boolean isZero(double transAmount) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	/** Return true if equal to within .001. */
-	public static boolean equals(double amount, double amount2) {
-		return Math.abs( amount2 - amount) < .001;
-	}
-
-	static long then = 0;
-	public static void time(String string) {
-		long now = System.currentTimeMillis();
-		if (then > 0) {
-			out( "%s (%s)", string, (now - then) );
-		}
-		else {
-			out( string);
-		}
-		then = now;
 	}
 
     /** return true if a file or directory with the specified name exists */

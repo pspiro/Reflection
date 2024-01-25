@@ -42,13 +42,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private double m_tds;
 	private boolean m_ibOrderCompleted;
 	private Stablecoin m_stablecoin;  // stablecoin (upper-case) being used to purchase the stock token
+	private String m_email;
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
 	private LiveOrderStatus m_status = LiveOrderStatus.Working;   // move up to base class
 	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
-	
+
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
  	}
@@ -116,15 +117,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// validate user profile fields
 		JsonObject userRecord = ar.get(0);
-		new Profile(userRecord).validate();
+		Profile profile = new Profile(userRecord);
+		profile.validate();
+		
+		// save email to send alerts later
+		m_email = profile.email(); 
 
 		// validate KYC fields
 		require( 
 				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ||
-				
-				S.isNotNull( userRecord.getString("persona_response")) && 
-				S.isNotNull( userRecord.getString("kyc_status")),
-				
+				S.equals( userRecord.getString("kyc_status"), "VERIFIED"),
 				RefCode.NEED_KYC,
 				"Please verify your identity and then resubmit your order");
 		
@@ -391,7 +393,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
 		}
 		else {
-			onFireblocksSuccess();
+			onFireblocksSuccess(null);
 		}
 	}
 	
@@ -469,9 +471,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
-	public synchronized void onUpdateFbStatus(FireblocksStatus stat) {
+	@Override public synchronized void onUpdateFbStatus(FireblocksStatus stat, String hash) {
 		if (stat == FireblocksStatus.COMPLETED) {
-			onFireblocksSuccess();
+			onFireblocksSuccess(hash);
 		}
 		else if (stat.pct() == 100) {
 			// write to log file (don't throw, informational only)
@@ -518,8 +520,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	/** Called when blockchain goes to COMPLETED;
 	 *  also called during testing if we bypass the FB processing;
-	 *  set up the order so that user will received Filled msg on next update */
-	synchronized void onFireblocksSuccess() {
+	 *  set up the order so that user will received Filled msg on next update
+	 *  @param hash is the blockchain hash, could be null in development */
+	synchronized void onFireblocksSuccess(String hash) {
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
@@ -530,6 +533,21 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
 				alert( "ORDER COMPLETED", getCompletedOrderText() );
+				
+				// send email to the user
+				if (Util.isValidEmail(m_email)) {
+					String html = String.format( isBuy() ? buyConf : sellConf,
+							m_desiredQuantity,
+							m_stock.symbol(),
+							m_stablecoinAmt,
+							m_stablecoin.name(),
+							m_stock.getSmartContractId(),
+							m_config.blockchainExplorer() + hash);
+					m_config.sendEmail(m_email, "Order filled on Reflection", html, true);
+				}
+				else {
+					out( "Error: cannot send email confirmation due to invalid email"); // should never happen
+				}
 			}
 		}
 	}
@@ -787,9 +805,47 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						) ) );
 	}
 
-	public boolean isStale() {
-		return false; 
-	}
+	private static final String buyConf = """
+		<html>
+		Your order on Reflection was filled!<p>
+		<p>
+		You bought %s shares of %s stock token for $%s.<p>
+		<p>
+		You paid with %s.<p>
+		<p>
+		We have purchased the associated stock and are holding it in reserve on your behalf.<p>
+		<p>
+		To view the stock token in your crypto wallet:<br>
+		* Click the "Add to Wallet" button on the Trade screen, or<br>
+		* Import this contract address: %s<p>
+		<p>
+		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
+		<p>
+		If you have any questions or comments, feel free to reply to this email.<p>
+		<p>
+		Thank you!<p>
+		<p>
+		-The Reflection Team
+		</html>""";
+
+	private static final String sellConf = """
+		<html>
+		Your order on Reflection was filled!<p>
+		<p>
+		You sold %s shares of %s stock token for $%s.<p>
+		<p>
+		You received %s, the Reflection stablecoin.<p>
+		<p>
+		To view the RUSD in your your crypto wallet, import this contract address: %s<p>
+		<p>
+		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
+		<p>
+		If you have any questions or comments, feel free to reply to this email.<p>
+		<p>
+		Thank you!<p>
+		<p>
+		-The Reflection Team
+		</html>""";
 }
 // look at all the catch blocks, save message or stack trace
 // you have to not log the cookie
