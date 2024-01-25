@@ -41,7 +41,9 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonArray retVal = new JsonArray();
 			
-			Util.forEach( Wallet.reqPositionsMap(m_walletAddr).entrySet(), entry -> {
+			Wallet wallet = new Wallet(m_walletAddr);
+			
+			Util.forEach( wallet.reqPositionsMap(m_main.stocks().getAllContractsAddresses() ).entrySet(), entry -> {
 				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {

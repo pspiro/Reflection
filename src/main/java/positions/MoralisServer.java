@@ -4,13 +4,13 @@ package positions;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Erc20;
 import http.MyClient;
-import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -87,21 +87,26 @@ public class MoralisServer {
 		possible_spam : true,
 		decimals : 18,
 		name : Reflection BUSD,
-		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
-//	public static JsonArray reqPositionsList(String wallet) throws Exception {
-//		throw new Exception("broken"); // was not working reliably as of 1/24/24; see chat w/ Moralis support 
-//		Util.require(chain != null, "Set the Moralis chain");
-//		String url = String.format("%s/%s/erc20?chain=%s",
-//				moralis, wallet, chain);
-//		String ret = querySync(url);
-//		
-//		// we expect an array; if we get an object, there must have been an error
-//		if (JsonObject.isObject(ret) ) {
-//			throw new Exception( "Moralis " + JsonObject.parse(ret).getString("message") );
-//		}
-//
-//		return JsonArray.parse( ret);
-//	}
+		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d
+		@param addresses is the list of token addresses for which we want the positions */
+	public static JsonArray reqPositionsList(String wallet, String[] addresses) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+		
+		String url = String.format("%s/%s/erc20?chain=%s", moralis, wallet, chain);
+		
+		for (int i = 0; i < addresses.length; i++) {
+			url += String.format("&token_addresses[%s]=%s", i, addresses[i]);
+		}
+		
+		String ret = querySync(url);
+		
+		// we expect an array; if we get an object, there must have been an error
+		if (JsonObject.isObject(ret) ) {
+			throw new Exception( "Moralis " + JsonObject.parse(ret).getString("message") );
+		}
+
+		return JsonArray.parse( ret);
+	}
 	
 	/** For ERC-20 token, tells you how much the spender is authorized to spend on behalf of owner.
 	 *  In our case, token is non-RUSD stablecoin, owner is the user, and spender is RUSD */  
@@ -196,8 +201,8 @@ public class MoralisServer {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config.ask();
-		getAllTokenTransfers("0x4470033bd3cbf4f4f6ac4076b1085f819c7d0844", ar -> ar.display() );
+//		Config.ask();
+//		getAllTokenTransfers("0x4470033bd3cbf4f4f6ac4076b1085f819c7d0844", ar -> ar.display() );
 		//getAllWalletTransfers("0xa14749d89e1ad2a4de15ca4463cd903842ffc15d", ar -> ar.display() );
 		
 //		String str = logs(

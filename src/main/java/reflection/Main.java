@@ -61,7 +61,7 @@ public class Main implements ITradeReportHandler {
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
 	
-	JsonArray stocks() { return m_stocks.stocks(); }
+	Stocks stocks() { return m_stocks; }
 
 
 	public static void main(String[] args) {

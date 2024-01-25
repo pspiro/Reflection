@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -43,7 +44,6 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
-import reflection.ModifiableDecimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -659,5 +659,14 @@ public class Util {
 				iter.remove();
 			}
 		}
+	}
+	
+	@SafeVarargs
+	public static <T> T[] toArray( T... ts) {
+		return ts;
+	}
+	
+	public static double toDouble( Double v) {
+		return v == null ? 0 : v;
 	}
 }

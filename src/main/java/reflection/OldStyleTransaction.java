@@ -210,7 +210,7 @@ public class OldStyleTransaction extends MyTransaction {
 		// build the json response   // we could reuse this and just update the prices each time
 		JsonObject whole = new JsonObject();
 
-		for (Object obj : m_main.stocks() ) {
+		for (Object obj : m_main.stocks().stocks() ) {
 			Stock stk = (Stock)obj;
 
 			JsonObject single = new JsonObject();
