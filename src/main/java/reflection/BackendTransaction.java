@@ -300,4 +300,10 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleGetPositionTracker() {
+		wrap( () -> {
+			respond( OrderTransaction.dumpPositionTracker() );
+		});
+	}
+
 }

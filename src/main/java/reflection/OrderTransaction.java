@@ -804,6 +804,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						
 						) ) );
 	}
+	
+	static JsonArray dumpPositionTracker() {
+		return positionTracker.dump();
+	}
 
 	private static final String buyConf = """
 		<html>

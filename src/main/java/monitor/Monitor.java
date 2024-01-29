@@ -115,6 +115,7 @@ public class Monitor {
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
+		m_tabs.addTab( "Pos. Tracker", new PosTrackerPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -323,4 +324,15 @@ public class Monitor {
 		
 	}
 	
+	static class PosTrackerPanel extends JsonPanel {
+		PosTrackerPanel() {
+			super( new BorderLayout(), "conid,desired,actual");
+			add( m_model.createTable() );
+		}
+		
+		@Override protected void refresh() throws Exception {
+			setRows( MyClient.getArray( refApiBaseUrl() + "/api/dumppositiontracker") );
+			m_model.fireTableDataChanged();
+		}
+	}
 }
