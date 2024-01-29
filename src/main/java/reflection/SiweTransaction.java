@@ -265,24 +265,19 @@ public class SiweTransaction extends MyTransaction {
 	
 	/** Return the cookies from the HTTP request header */
 	private ArrayList<String> authCookies() {
-		return SiweTransaction.findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
+		return findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
 	}
 
 	/** Find the cookie header that starts with name. You can have multiple cookies with the same name */
-	public static ArrayList<String> findCookies(Headers headers, String name) {
+	public ArrayList<String> findCookies(Headers headers, String name) {
 		ArrayList<String> list = new ArrayList<>();
 		
-		if (headers != null) {
-			List<String> allCookies = headers.get( "Cookie");  // it seems there is usually only one Cookie header w/ all the different cookies in it separated by ;
-			if (allCookies != null) {
-				for (String cookies : allCookies) {
-					StringTokenizer st = new StringTokenizer(cookies, ";");
-					while (st.hasMoreTokens() ) {
-						String cookie = st.nextToken().trim();
-						if (cookie.startsWith(name) ) {
-							list.add(cookie);
-						}
-					}
+		for (String cookies : getHeaders( "Cookie") ) {  // it seems there is usually only one Cookie header w/ all the different cookies in it separated by ;
+			StringTokenizer st = new StringTokenizer(cookies, ";");
+			while (st.hasMoreTokens() ) {
+				String cookie = st.nextToken().trim();
+				if (cookie.startsWith(name) ) {
+					list.add(cookie);
 				}
 			}
 		}

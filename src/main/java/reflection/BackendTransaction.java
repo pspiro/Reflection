@@ -4,11 +4,15 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.StringTokenizer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
@@ -300,9 +304,28 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Return PositionTracker data to Monitor; used for debugging only */
 	public void handleGetPositionTracker() {
 		wrap( () -> {
 			respond( OrderTransaction.dumpPositionTracker() );
+		});
+	}
+	
+	/** Top-level method handler */
+	public void allowConnection() {
+		wrap( () -> {
+			String country = getHeader("X-Country-Code");
+			String ip = getHeader("X-Real-IP");
+			
+			boolean allow =
+					m_main.isAllowedCountry(country ) ||
+					m_main.isAllowedIP(ip);
+			
+			respond( Util.toJson( 
+					"allow", allow,
+					"country", country,
+					"ip", ip
+					) );
 		});
 	}
 

@@ -85,17 +85,12 @@ public class Monitor {
 		but.addActionListener( e -> refresh() );
 		num.addActionListener( e -> refresh() );
 		
-		JButton but2 = new JButton("Refresh Config");
-		but2.addActionListener( e -> refreshConfig() );
-		
 		JPanel butPanel = new JPanel();
 		butPanel.add(new JLabel(refApiBaseUrl() ) );
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
-		butPanel.add(Box.createHorizontalStrut(15));
-		butPanel.add(but2);
 		
 		num.setText("40");
 
@@ -136,12 +131,6 @@ public class Monitor {
 		});
 	}
 	
-	private static void refreshConfig() {
-		Util.wrap( () -> Util.inform( 
-					m_frame,
-					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
-	}
-
 	static int num() {
 		return (int)S.parseDouble( num.getText() );
 	}

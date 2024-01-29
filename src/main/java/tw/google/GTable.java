@@ -12,7 +12,7 @@ import tw.util.S;
 public class GTable extends HashMap<String,String> {
 	private Tab m_tab;
 	private String m_col1;
-	private String m_col2;
+	private String m_col2;  // can be null, in which case the map functions like a HashSet
 	private boolean m_caseSensitive; // applies to the tags
 	
 	public String tabName() { return m_tab.name(); }
@@ -20,16 +20,19 @@ public class GTable extends HashMap<String,String> {
 	public GTable() throws Exception {
 	}
 
-	/** @param lowerCase if set to true, tags will be converted to lower case 
-	 *         get() could be made to use it as well */
+	/** @param col2 may be null */
 	public GTable( String sheetId, String tabName, String col1, String col2) throws Exception {
 		this( sheetId, tabName, col1, col2, true);
 	}
 	
+	/** @param col2 may be null
+	 *  @param caseSensitive applies to keys */
 	public GTable( String sheetId, String tabName, String col1, String col2, boolean caseSensitive) throws Exception {
 		this( NewSheet.getTab( sheetId, tabName), col1, col2, caseSensitive);
 	}
 	
+	/** @param col2 may be null
+	 *  @param caseSensitive applies to keys */
 	public GTable( Tab tab, String col1, String col2, boolean caseSensitive) throws Exception {
 		m_col1 = col1;
 		m_col2 = col2;
@@ -40,7 +43,7 @@ public class GTable extends HashMap<String,String> {
 		// build map
 		for ( ListEntry row : m_tab.fetchRows() ) {
 			String tag = row.getString( m_col1);
-			String val = row.getString( m_col2);
+			String val = S.isNotNull( m_col2) ? row.getString( m_col2) : "";
 			if (tag != null && val != null) {
 				super.put( m_caseSensitive ? tag : tag.toLowerCase(), val);
 			}

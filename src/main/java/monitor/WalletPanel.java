@@ -178,6 +178,9 @@ public class WalletPanel extends JsonPanel {
 			transPanel.where.setText( String.format("where wallet_public_key = '%s'", walletAddr) );
 			transPanel.refresh();
 		}
+		else if (S.isNotNull(walletAddr)) {
+			Util.inform(this, "Invalid wallet address '%s'", walletAddr);
+		}
 
 		m_model.fireTableDataChanged();
 	}

@@ -3,12 +3,15 @@ package http;
 import static reflection.Main.require;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonObject;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
@@ -224,6 +227,18 @@ public class BaseTransaction {
 		String conidStr = Util.getLastToken(m_uri, "/");
 		require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "the conid is invalid", conidStr);
 		return Integer.parseInt(conidStr);
+	}
+	
+	public List<String> getHeaders(String name) {
+		Headers headers = m_exchange.getRequestHeaders();
+		return headers != null ? headers.get( name) : new ArrayList<String>();
+	}
+	
+	public String getHeader(String name) throws Exception {
+		List<String> headers = getHeaders(name);
+		Util.require( headers != null && headers.size() > 0, "Error: no '%s' header found", name);
+		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
+		return headers.get(0);
 	}
 	
 	
