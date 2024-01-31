@@ -481,7 +481,7 @@ public class Config extends ConfigBase {
 
 	/** RefAPI uses internal url; Monitor and java programs use external url 
 	 * @throws Exception */ 
-	public Config useExteranDbUrl() throws Exception {
+	public Config useExternalDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
 		return this; // for chaining calls

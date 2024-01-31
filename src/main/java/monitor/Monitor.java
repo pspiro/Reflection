@@ -68,7 +68,7 @@ public class Monitor {
 		m_logPanel = new LogPanel();
 		m_walletPanel = new WalletPanel();
 		
-		m_config.useExteranDbUrl();
+		m_config.useExternalDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		S.out( "Using database %s", m_config.postgresUrl() );
 
