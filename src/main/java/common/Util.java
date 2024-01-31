@@ -154,6 +154,7 @@ public class Util {
 	
 	
 	public static void main(String[] args) throws Exception {
+		for (int i = 0; i < 20; i++) S.out( createFakeAddress());
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -661,12 +662,20 @@ public class Util {
 		}
 	}
 	
-	@SafeVarargs
-	public static <T> T[] toArray( T... ts) {
+	/** Convert vararg to array */
+	@SafeVarargs public static <T> T[] toArray( T... ts) {
 		return ts;
 	}
 	
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
 	}
+	
+	public static String createFakeAddress() {
+		StringBuilder sb = new StringBuilder("0x");
+		for (int i = 0; i < 40; i++) {
+			sb.append( String.format( "%x", rnd.nextInt(16) ) );
+		}
+		return sb.toString(); 
+	}		
 }

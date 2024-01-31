@@ -60,7 +60,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 					"There is already an outstanding redemption request for this wallet; we appreciate your patience");
 	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
-			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
+			if (busdPos >= rusdPos && rusdPos <= Main.m_config.maxAutoRedeem() ) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
 				olog( LogType.REDEEM, "amount", rusdPos);
 
 				String fbId = rusd.sellRusd(m_walletAddr, busd, rusdPos).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up

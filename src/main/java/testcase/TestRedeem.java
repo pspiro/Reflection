@@ -25,6 +25,14 @@ public class TestRedeem extends MyTestCase {
 	}
 
 	public void testRedeem() throws Exception {
+		mint(Cookie.wallet, m_config.maxAutoRedeem() + 1);  // the 9 should get truncated and we should end up with .00009 in the wallet
+		waitForBalance(m_config.maxAutoRedeem(), false);
+		
+		// redeem RUSD
+		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+			.display();
+		assert200();
+		
 		// mint some RUSD into the wallet
 		if (Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) == 0) {
 			mint(Cookie.wallet, 1.10009);  // the 9 should get truncated and we should end up with .00009 in the wallet
