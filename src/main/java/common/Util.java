@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -27,6 +26,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -41,6 +41,7 @@ import javax.mail.internet.MimeMessage;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Keys;
 
 import com.ib.client.Decimal;
 
@@ -661,12 +662,34 @@ public class Util {
 		}
 	}
 	
-	@SafeVarargs
-	public static <T> T[] toArray( T... ts) {
+	/** Convert vararg to array */
+	@SafeVarargs public static <T> T[] toArray( T... ts) {
 		return ts;
 	}
 	
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
+	}
+
+	/** return fake EIP-55 address; don't send crypto here, it can never be recovered */
+	public static String createFakeAddress() {
+		StringBuilder sb = new StringBuilder("0x");
+		for (int i = 0; i < 40; i++) {
+			sb.append( String.format( "%x", rnd.nextInt(16) ) );
+		}
+		return Keys.toChecksumAddress( sb.toString() );  // change to EIP-55 address 
+	}
+	
+	/** Use this when you want to create an object and tweak
+	 *  it just a bit all on a single line, e.g.:
+	 *    tweak( new JLabel(text), lab -> lab.set);
+	 *  
+	 *  instead of:
+	 *    JLabel lab = new JLabel( text);
+	 *    lab.setHorizontalAlignment( SwingConstants.CENTER);
+	 */
+	public static <T> T tweak( T t, Consumer<T> consumer) {
+		consumer.accept( t);
+		return t;
 	}
 }

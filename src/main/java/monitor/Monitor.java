@@ -109,7 +109,6 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
-		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
 		m_tabs.addTab( "Pos. Tracker", new PosTrackerPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -238,6 +237,12 @@ public class Monitor {
 			return ret;
 		}
 		
+		// there's one slight problem here; if they haven't opened the Wallet panel yet
+		// it going to activate it, which will refresh it, then refresh it again
+		// with the values passed in
+		
+		// you have to not activate it, but mark it as activated so it doesn't
+		// refresh if they click on it later
 		@Override protected void onDouble(String tag, Object val) {
 			if (S.notNull(tag).equals("wallet_public_key") ) {
 				m_tabs.select("Wallet");
@@ -302,17 +307,8 @@ public class Monitor {
 		}
 	}
 	
-	static class SimTradesPanel extends MonPanel {
-		public SimTradesPanel() {
-			super( new BorderLayout() );
-		}
-
-		@Override protected void refresh() throws Exception {
-			
-		}
-		
-	}
-	
+	/** Shows the position tracker which tracks the aggregated fractional 
+	 *  shares of orders for each stock */  
 	static class PosTrackerPanel extends JsonPanel {
 		PosTrackerPanel() {
 			super( new BorderLayout(), "conid,desired,actual");

@@ -19,7 +19,7 @@ public class RedemptionPanel extends QueryPanel {
 	RedemptionPanel() {
 		super(	"redemptions",
 				"created_at,uid,fireblocks_id,wallet_public_key,blockchain_hash,status,stablecoin,amount,REDEEM NOW",
-				"select * from redemptions order by created_at desc $limit");
+				"select * from redemptions $where order by created_at desc $limit");
 	}
 	
 	@Override protected JsonModel createModel(String allNames) {
@@ -72,10 +72,10 @@ public class RedemptionPanel extends QueryPanel {
 			Busd busd = Monitor.m_config.busd();
 			
 			// already fulfilled?
-			if (!redemption.getString("status").equals("Delayed") ) {
-				Util.inform(RedemptionPanel.this, "Only 'Delayed' status can be redeemed");
-				return;
-			}
+//			if (!redemption.getString("status").equals("Delayed") ) {
+//				Util.inform(RedemptionPanel.this, "Only 'Delayed' status can be redeemed");
+//				return;
+//			}
 		
 			// nothing to redeem?
 			double rusdPos = rusd.getPosition(walletAddr);  // make sure that rounded amt is not slightly more or less

@@ -90,14 +90,17 @@ public class MySqlConnection implements AutoCloseable {
 		}
 	}
 	
+	/** Does not insert null values */
 	public void insertJson( String table, JsonObject json) throws Exception {
 		String[] names = new String[json.size()];
 		Object[] vals = new Object[json.size()];
 
 		int i = 0;
 		for (Object key : json.keySet() ) {
-			names[i] = (String)key;
-			vals[i++] = json.get(key);
+			if (json.get(key) != null) {
+				names[i] = (String)key;
+				vals[i++] = json.get(key);
+			}
 		}
 		insert(table, names, vals);
 	}

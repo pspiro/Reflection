@@ -25,6 +25,7 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_admin1Matic = new JTextField(10);
 	private JTextField m_admin2Matic = new JTextField(10);
 	private JTextField m_ownerMatic = new JTextField(10);
+	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 	HoldersPanel holdersPanel = new HoldersPanel();
 
@@ -42,6 +43,7 @@ public class CryptoPanel extends MonPanel {
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
+		rusdPanel.add( "RefWallet has approved RUSD to spend BUSD", m_approved);
 		
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
@@ -51,6 +53,7 @@ public class CryptoPanel extends MonPanel {
 		
 		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
 		rusdPanel.add( "Admin2 MATIC", m_admin2Matic);
+
 
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		
@@ -122,6 +125,11 @@ public class CryptoPanel extends MonPanel {
 
 		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeTokenBalance();
 		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
+		
+		double approved = Monitor.m_config.busd().getAllowance(
+				Accounts.instance.getAddress("RefWallet"),
+				Monitor.m_config.rusdAddr() );
+		m_approved.setText( "" + approved);
 
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );

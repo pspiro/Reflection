@@ -8,6 +8,7 @@ import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 import org.json.simple.JsonObject;
 
@@ -21,6 +22,7 @@ import tw.util.UI;
 public class QueryPanel extends JsonPanel {
 	final JTextField where = new JTextField(20);
 	final LinkedList<String> m_list = new LinkedList<>();
+	final JPanel topPanel = new JPanel();
 	final String m_table;
 	final String m_sql;
 	
@@ -46,7 +48,6 @@ public class QueryPanel extends JsonPanel {
 			}
 		});
 		
-		JPanel topPanel = new JPanel();
 		topPanel.add( bak);
 		topPanel.add(Box.createHorizontalStrut(5));
 		topPanel.add( new JLabel("Where: "));
@@ -58,6 +59,14 @@ public class QueryPanel extends JsonPanel {
 		
 		add( topPanel, BorderLayout.NORTH);
 		add( m_model.createTable() );
+	}
+	
+	
+	void small(String str) {
+		remove( topPanel);
+		JLabel lab = new JLabel(str);
+		lab.setBorder( new EmptyBorder( 2, 3, 2, 0) );
+		add(lab, BorderLayout.NORTH);
 	}
 	
 	protected JsonModel createModel( String allNames) {
@@ -90,7 +99,7 @@ public class QueryPanel extends JsonPanel {
 	}
 	
 	@Override protected void refresh() throws Exception {
-		S.out( "Refreshing QueryModel");
+		S.out( "Refreshing QueryModel %s table", m_table);
 		m_list.push(where.getText());
 		
 		String whereText = where.getText();
