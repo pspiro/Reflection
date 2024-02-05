@@ -16,14 +16,14 @@ import tw.util.S;
 
 /** Client for all HttpRequests */
 public class MyClient {
-	static final String filename = "http.out";
+	static final String filename = "http.log";
 	
 	static HttpClient client = HttpClient.newBuilder().build();
 
 	private Builder m_builder;
 	
 	private static void write( String line) {
-		try (OStream os = new OStream(filename) ) {
+		try (OStream os = new OStream(filename, true) ) {
 			os.writeln( line);
 		}
 		catch( Exception e) {
