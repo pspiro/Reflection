@@ -2,6 +2,9 @@ package common;
 
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -666,7 +669,20 @@ public class Util {
 		return ts;
 	}
 	
+	/** convert to decimal; accepts null */
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
+	}
+
+	/** Copy obj.toString() to clipboard
+	 * @param obj can be null */
+	public static void copyToClipboard(Object obj) {
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+        		new StringSelection( toString(obj) ), null);
+	}
+	
+	/** @return value if not null, or default if null */
+	public static String valOr( String value, String def) {
+		return S.isNotNull(value) ? value : def;
 	}
 }

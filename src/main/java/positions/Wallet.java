@@ -6,7 +6,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Erc20;
-import reflection.Config;
 import tw.util.S;
 
 /** Get token positions; will only send one query */
@@ -21,15 +20,20 @@ public class Wallet {
 	/** Sends a request every time
 	 *  @param token is token address */
 	public double getBalance(String token) throws Exception {
-		return Util.toDouble( 
-				reqPositionsMap(m_walletAddr, token).get(token.toLowerCase() ) 
-		);
+		return getBalance( reqPositionsMap(m_walletAddr, token), token);
+	}
+
+	/** Look up the value in the map and convert to decimal;
+	 *  Use this one if you want more than one token balance */
+	public static double getBalance(HashMap<String,Double> map, String token) throws Exception {
+		return Util.toDouble( map.get(token.toLowerCase() ) );
 	}
 
 	/** Returns a map of contract address (lower case) -> position (Double).
 	 *  This version retrieves the map from Moralis is is having issues of
 	 *  missing positions as of 1/23/24 
-	 *  I think passing the contracts may fix it */ 
+	 *  I think passing the contracts may fix it.
+	 *  They are claiming it is fixed as of 1/26/24 */ 
 	public HashMap<String,Double> reqPositionsMap(String... contracts) throws Exception {
 		Util.require( contracts.length > 0, "Contract addresses are required");  // needed to to Moralis bug
 		
@@ -81,13 +85,8 @@ public class Wallet {
 		return new Wallet(wallet).getBalance(tokenAddr);
 	}
 	
-	public static void main(String[] args) throws Exception {
-		Config.ask();
-		String wal = "0xa14749d89e1ad2a4de15ca4463cd903842ffc15d"; //Accounts.instance.getAddress("Peter Spiro");
-		//String addr = "0x2703161d6dd37301ced98ff717795e14427a462b"; //Accounts.instance.getAddress("Peter Spiro");
-		String rusd = "0x455759a3f9124bf2576da81fb9ae8e76b27ff2d6";
-
-		HashMap<String, Double> map = new Wallet(wal).reqPositionsMap(rusd);
-		Util.show(map);
+	public double getNativeBalance() throws Exception {
+		return MoralisServer.getNativeBalance(m_walletAddr);
 	}
+	
 }

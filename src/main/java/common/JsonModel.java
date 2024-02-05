@@ -100,9 +100,15 @@ public class JsonModel extends MyTableModel {
 	@Override final public void onDoubleClick(int row, int col) {
 		String tag = m_namesMap.get(col);
 		Object val = getValueAt(row, col);
-		onDouble(tag, val);
+		onDoubleClick(tag, val);
 	}
 
+	@Override final public void onRightClick(MouseEvent e, int row, int col) {
+		String tag = m_namesMap.get(col);
+		Object val = getValueAt(row, col);
+		onRightClick(e, m_ar.get(row), tag, val);
+	}
+	
 	@Override public final void onCtrlClick(MouseEvent e, int row, int col) {
 		String tag = m_namesMap.get(col);
 		Object val = getValueAt(row, col);
@@ -117,23 +123,6 @@ public class JsonModel extends MyTableModel {
 		JMenuItem it = new JMenuItem(text);
 		it.addActionListener(listener);
 		return it;
-	}
-	
-	@Override public final void onRightClick(MouseEvent e, int row, int col) {
-		JPopupMenu m = new JPopupMenu();
-		m.add( menuItem("Copy", ev -> copy(row, col) ) );
-		m.add( menuItem("Delete", ev -> delete(row, col) ) );
-		m.show( e.getComponent(), e.getX(), e.getY() );
-	}
-	
-	private void copy(int row, int col) {
-		Object obj = getValueAt(row, col);
-		if (obj != null) {
-	        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
-	        StringSelection strse1 = new StringSelection(obj.toString());
-	        clip.setContents(strse1, strse1);
-	        S.out( "Copied %s to cliboard", obj);
-		}
 	}
 	
 	protected final String getTooltip(int row, int col) {
@@ -159,7 +148,10 @@ public class JsonModel extends MyTableModel {
 		return null;
 	}
 	
-	protected void onDouble(String tag, Object val) {
+	protected void onDoubleClick(String tag, Object val) {
+	}
+
+	protected void onRightClick(MouseEvent e, JsonObject record, String tag, Object val) {
 	}
 
 	protected void onCtrlClick(JsonObject row, String tag) {

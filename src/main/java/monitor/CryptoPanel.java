@@ -15,6 +15,7 @@ import positions.Wallet;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
+import tw.util.VerticalPanel.Header;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {
@@ -38,20 +39,25 @@ public class CryptoPanel extends MonPanel {
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
+		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
-		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
+		rusdPanel.addHeader( "RUSD");
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
+		rusdPanel.addHeader( "RefWallet");
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
+		rusdPanel.addHeader( "Owner Wallet");
 		rusdPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		rusdPanel.add( "Owner MATIC", m_ownerMatic);
+		rusdPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
+		rusdPanel.addHeader( "Fireblocks");
 		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
 		rusdPanel.add( "Admin2 MATIC", m_admin2Matic);
 
+		rusdPanel.addHeader( "Brokerage (IB)");
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		
 		add(rusdPanel);
@@ -79,6 +85,19 @@ public class CryptoPanel extends MonPanel {
 					Accounts.instance.getId("Owner"),
 					Util.ask("Enter dest wallet address"),
 					Monitor.m_config.fbStablecoin(),
+					Double.parseDouble( Util.ask( "Enter amount")),
+					Util.ask("Enter note")
+			).waitForHash();
+			Util.inform(this, "Done");
+		});
+	}
+
+	private void ownerSendMatic() {
+		Util.wrap( () -> {
+			Fireblocks.transfer( 
+					Accounts.instance.getId("Owner"),
+					Util.ask("Enter dest wallet address"),
+					Fireblocks.platformBase,
 					Double.parseDouble( Util.ask( "Enter amount")),
 					Util.ask("Enter note")
 			).waitForHash();

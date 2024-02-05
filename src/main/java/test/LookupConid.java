@@ -22,7 +22,7 @@ public class LookupConid extends ConnectionAdapter {
 	}
 
 	LookupConid() throws Exception {
-		Config config = Config.readFrom("Dt-config");
+		Config config = Config.ask();
 		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 9383, null);
 	}
 
@@ -31,15 +31,15 @@ public class LookupConid extends ConnectionAdapter {
 	}
 	
 	boolean m_allSent;
-	int m_sent;
+	int m_outstanding;
 	
 	void dec() {
-		m_sent--;
+		m_outstanding--;
 		check();
 	}
 	
 	private synchronized void check() {
-		if (m_allSent && m_sent == 0) {
+		if (m_allSent && m_outstanding == 0) {
 			S.out( "done");
 			m_controller.disconnect();
 		}
@@ -51,22 +51,22 @@ public class LookupConid extends ConnectionAdapter {
 	
 	public void query() {
 		try {
-			Tab tab = NewSheet.getTab( NewSheet.Reflection, "Master-symbols");
+			Tab tab = NewSheet.getTab( NewSheet.Reflection, "Lookup");
 			ListEntry[] rows = tab.fetchRows();
 			for (ListEntry row : rows) {
 				S.sleep(100);
 				
-				String symbol = row.getString("Token Symbol");
-				String tfh = row.getString("24-Hour");
+				String symbol = row.getString("Symbol");
 				int conid = row.getInt("Conid");
 				String primary = row.getString("Primary Exchange");
 				String description = row.getString("Description");
+				String secType = row.getString("SecType");
 				
 				Contract c = new Contract();
 				c.symbol(symbol.replace("-", " "));  // handle BRK-B
 				c.currency("USD");
-				c.exchange("SMART");
-				c.secType("STK");
+				c.exchange(primary);
+				c.secType( Util.valOr( secType, "STK") );
 				
 				m_controller.reqContractDetails(c, list -> {
 					try {
@@ -94,13 +94,8 @@ public class LookupConid extends ConnectionAdapter {
 						
 						// check and set 24H
 						boolean isOvernight = item.validExchanges().indexOf("OVERNIGHT") != -1;						
-						if (S.isNull(tfh) ) {
-							row.setValue( "24-Hour", isOvernight ? "TRUE" : "FALSE");
-							set = true;
-						}
-						else if ( tfh.equals("TRUE") != isOvernight) {
-							S.out( "Overnight hours does not match for %s (%s vs %s)", symbol, tfh, isOvernight);
-						}
+						row.setValue( "24-Hour", isOvernight ? "TRUE" : "FALSE");
+						set = true;
 						
 						// update description if blank
 						if (S.isNull(description) ) {
@@ -118,7 +113,7 @@ public class LookupConid extends ConnectionAdapter {
 					}
 					dec();
 				});
-				m_sent++;
+				m_outstanding++;
 			}
 			m_allSent = true;
 			check();

@@ -9,6 +9,7 @@ import junit.framework.TestCase;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	TestAllow.class,
 //	   TestBackendMsgs.class,
 //	   TestConfig.class,
 //	   TestConfigSheet.class,

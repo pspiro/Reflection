@@ -138,7 +138,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				
 		// check trading hours
 		Session session = m_main.m_tradingHours.insideAnyHours( 
-						m_stock.getBool("is24hour"), 
+						m_stock.is24Hour(), 
 						m_map.get("simtime") );
 		require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
@@ -148,6 +148,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		Contract contract = new Contract();
 		contract.conid( conid);
 		contract.exchange( session.toString().toUpperCase() );
+		
+		// special case: for crypto, set exchange to PAXOS
+		if (m_stock.getType().equals( "Crypto") ) {
+			contract.exchange( "PAXOS");
+		}
 
 		m_order.action( side);
 		m_order.lmtPrice( orderPrice);

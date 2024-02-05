@@ -97,8 +97,8 @@ public class Monitor {
 		m_tabs.addTab( "Home", new EmptyPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
-		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
+		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -109,7 +109,6 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
-		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -299,17 +298,6 @@ public class Monitor {
 			setRows( client.readJsonArray() );
 			m_model.fireTableDataChanged();
 		}
-	}
-	
-	static class SimTradesPanel extends MonPanel {
-		public SimTradesPanel() {
-			super( new BorderLayout() );
-		}
-
-		@Override protected void refresh() throws Exception {
-			
-		}
-		
 	}
 	
 }

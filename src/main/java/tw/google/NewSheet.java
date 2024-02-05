@@ -1,6 +1,7 @@
 package tw.google;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +22,8 @@ import com.google.api.services.sheets.v4.model.ValueRange;
 
 import common.Util;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.grep.DirProcessor;
+import tw.util.IStream;
 import tw.util.MyException;
 import tw.util.OStream;
 import tw.util.S;
@@ -43,6 +46,7 @@ public class NewSheet {
 	public static final String Reflection = "1yxE8i8Qfm0ppLXI_GF0AB4n-p3yL_jqNF8ESIz-OZCA";
 	public static final String Remittance = "16jO882MA5_Lvehh1sEbgjkfVjjtcb7tH4h-GmnRSuYM";
 	public static final String LinkedIn = "1Q_kM-6j_xbhebiJJP_sxWRP6q4gObr-KTGxCB1cgt-k";
+	public static final String Test = "1peR3T4jzEXBitsfpc0RvvnjflWjKM7BaH7OrlTWdxqw";
 	//public static String Remittance = "1Rc4hUFlqjaHE-4DSZs9Q1KLQSa9zWre5P-Dj5x06ZyE"; // test
 	
 	public static void main(String[] args) throws Exception {
@@ -99,6 +103,18 @@ public class NewSheet {
 			for (Sheet sheet : m_spreadsheet.getSheets() ) {
 				new Tab(sheet).save(folder);
 			}
+		}
+
+		public void restore(String folder) throws Exception {
+			DirProcessor p = new DirProcessor("*.*", false, false, true, file -> restoreTab(file) ); 
+			p.process(folder);
+		}
+
+		private void restoreTab(File file) {
+			Util.wrap( () -> {
+				getTab( file.getName().split("\\.")[0] )
+					.restoreFrom( file);
+			});
 		}
 
 		public Tab getTab( String name) throws Exception {
@@ -193,6 +209,15 @@ public class NewSheet {
 
 			String name() { return  m_name; }
 			
+			public void restoreFrom(File file) throws FileNotFoundException {
+				IStream is = new IStream( file.getAbsolutePath() );
+				String str;
+				
+				while ( (str=is.readln()) != null) {
+				}
+				
+			}
+
 			Tab( Sheet sheet) throws Exception {
 				m_sheet = sheet;
 				m_name = sheet.getProperties().getTitle();

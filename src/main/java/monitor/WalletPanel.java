@@ -13,6 +13,8 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Accounts;
+import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.Monitor.TransPanel;
 import positions.Wallet;
@@ -45,17 +47,24 @@ public class WalletPanel extends JsonPanel {
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
+		
+		vp.addHeader( "User details");
 		vp.add( "Name", m_name);
 		vp.add( "Email", m_email);
 		vp.add( "KYC", m_kyc);
+		
+		vp.addHeader( "Crypto");
 		vp.add( "RUSD", m_rusd);
 		vp.add( "USDT", m_usdc);
 		vp.add( "Approved", m_approved);
 		vp.add( "MATIC", m_matic);
+		
+		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
-		vp.add( "Create user", m_username, new HtmlButton("Create", e -> createUser() ) );
-		vp.add( "View on blockchain", new HtmlButton("Explore", e -> explore() ) );
+		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
+		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
+		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
@@ -63,6 +72,21 @@ public class WalletPanel extends JsonPanel {
 
 		add( leftPanel, BorderLayout.WEST);
 		add( transPanel);
+	}
+
+	private void giveMatic() {
+		Util.wrap( () -> {
+			if (Util.confirm( this, 
+					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
+				Fireblocks.transfer(
+						Accounts.instance.getId("Admin1"), 
+						m_wallet.getText(), 
+						Fireblocks.platformBase, 
+						.01, 
+						"give .01 MATIC for free"
+				).waitForHash();
+			}
+		});
 	}
 
 	/** Open wallet in blockchain explorer */
