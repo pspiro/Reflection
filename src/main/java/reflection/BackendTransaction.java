@@ -4,19 +4,14 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.StringTokenizer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import positions.MoralisServer;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
@@ -229,7 +224,7 @@ public class BackendTransaction extends MyTransaction {
 				if (trans.progress() == 100) {
 					rusd.put( "text", trans.text() );  // success or error message
 					rusd.put( "status", trans.status() );  // Completed or Failed 
-					liveRedemptions.remove( trans);
+					liveRedemptions.remove( m_walletAddr.toLowerCase() );
 				}
 				else {
 					rusd.put( "progress", trans.progress() );

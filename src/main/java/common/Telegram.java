@@ -2,7 +2,6 @@ package common;
 
 import java.net.http.HttpResponse;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonObject;
 
 import http.MyClient;

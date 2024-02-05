@@ -3,7 +3,6 @@ package common;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -627,6 +626,7 @@ public class Util {
 	}
 
 	/** Compare two Comparables but allow for one or both to be null */
+	@SuppressWarnings("unchecked")
 	public static int compare(Comparable v1, Comparable v2) {
 		return v1 != null && v2 != null
 				? v1.compareTo(v2)

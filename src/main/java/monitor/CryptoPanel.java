@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 
 import common.Util;
 import fireblocks.Accounts;
@@ -15,7 +14,6 @@ import positions.Wallet;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
-import tw.util.VerticalPanel.Header;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {

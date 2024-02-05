@@ -14,7 +14,6 @@ import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Rusd;
 import fireblocks.Transactions;
-import tw.util.S;
 
 public class RedemptionPanel extends QueryPanel {
 	static DecimalFormat six = new DecimalFormat("#,###.000000");

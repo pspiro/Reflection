@@ -4,14 +4,12 @@ package positions;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Erc20;
 import http.MyClient;
-import reflection.MySqlConnection;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
@@ -22,28 +20,9 @@ public class MoralisServer {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	
-	enum Status { building, waiting, rebuilding, ready, error };
-
-	// this is so fucking weird. it works when run from command prompt, but
-	// when run from eclipse you can't connect from browser using external ip 
-	// http://69.119.189.87  but you can use 192.168.1.11; from dos prompt you
-	// can use either. pas
-	static MySqlConnection m_database = new MySqlConnection();
-
-	
-	// TODO
-	// set a single null at the end if you don't want to re-read everything again at startup
-	// you can query by date; that would be better, then you only need to know the start date
-	// see if you can set up the database to make them all lower case.
-	// test that you can handle events while you are sending out the client requests 
-	// double-check the synchronization
-	// you should periodically query for the current balance and compare to what you have to check for mistakes
-	
 	public static String queryBalances(String contract) throws Exception {
 		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
-//		return JsonObject.parse( querySync( url) );
 		return querySync( url);
-		
 	}
 	
 	public static JsonObject queryTransaction( String transactionHash) throws Exception {

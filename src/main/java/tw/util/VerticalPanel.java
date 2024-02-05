@@ -16,8 +16,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import tw.util.VerticalPanel.Header;
-
 /** A stack of FlowPanels where each row has two columns and the first column has all the same width, i.e.
  *  One     _________
  *  Seven   ______           */
