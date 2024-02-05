@@ -537,7 +537,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER COMPLETED", getCompletedOrderText() );
+				alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
 				
 				// send email to the user
 				if (Util.isValidEmail(m_email)) {
@@ -584,7 +584,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s", m_uid, m_errorText, m_errorCode) );
+				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );
 			}
 		}
 	}	
@@ -808,6 +808,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 //						"price", m_order.lmtPrice() );
 						
 						) ) );
+	}
+	
+	static JsonArray dumpPositionTracker() {
+		return positionTracker.dump();
 	}
 
 	private static final String buyConf = """

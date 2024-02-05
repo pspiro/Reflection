@@ -3,6 +3,7 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Types.Action;
@@ -60,14 +61,14 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 					"There is already an outstanding redemption request for this wallet; we appreciate your patience");
 	
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
-			if (busdPos >= rusdPos) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
+			if (busdPos >= rusdPos && rusdPos <= Main.m_config.maxAutoRedeem() ) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
 				olog( LogType.REDEEM, "amount", rusdPos);
 
 				String fbId = rusd.sellRusd(m_walletAddr, busd, rusdPos).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
-				
-				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 
 				insertRedemption( busd, rusdPos, fbId); // informational only, don't throw an exception
+
+				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 				
 				// this redemption will now be tracked by the live order system
 				liveRedemptions.put( m_walletAddr.toLowerCase(), this);
@@ -118,9 +119,11 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		}
 	}
 	
-	/** no exceptions */
+	/** no exceptions, no delay */
 	private void insertRedemption(Busd busd, double rusdPos, String fbId) {
 		Util.wrap( () -> {
+			S.out( "inserting record into redemption table with status %s", m_status);
+
 			JsonObject obj = new JsonObject();
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
@@ -132,17 +135,19 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				obj.put( "fireblocks_id", fbId);
 			}
 	
-			m_main.queueSql( conn -> conn.insertJson("redemptions", obj) );
+			m_config.sqlCommand( conn -> conn.insertJson("redemptions", obj) );
 		});
 	}
 
-	private void updateRedemption(LiveStatus status) {
-		m_main.queueSql( sql -> sql.execWithParams( 
-				"update redemptions set status = '%s' where uid = '%s'", status, m_uid) );
-		
-		if (!m_map.getBool("testcase")) {
-			alert( "REDEMPTION", status.toString() );
-		}
+	private void updateRedemption(LiveStatus newStatus) {
+		Util.wrap( () -> {
+			m_config.sqlCommand( sql -> sql.execWithParams( 
+					"update redemptions set status = '%s' where uid = '%s'", newStatus, m_uid) );
+			
+			if (!m_map.getBool("testcase")) {
+				alert( "REDEMPTION", newStatus.toString() );
+			}
+		});
 	}
 
 	public synchronized int progress() {
@@ -155,6 +160,12 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 	public LiveStatus status() {
 		return m_status;
+	}
+	
+	/** debug only */
+	@Override public String toString() {
+		return S.format( "status=%s  progress=%s  text=%s",
+				m_status, m_progress, m_text);
 	}
 }
 

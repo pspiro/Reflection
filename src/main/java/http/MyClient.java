@@ -11,17 +11,30 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ExConsumer;
+import tw.util.OStream;
 import tw.util.S;
 
 /** Client for all HttpRequests */
 public class MyClient {
+	static final String filename = "http.out";
+	
 	static HttpClient client = HttpClient.newBuilder().build();
 
 	private Builder m_builder;
-
+	
+	private static void write( String line) {
+		try (OStream os = new OStream(filename) ) {
+			os.writeln( line);
+		}
+		catch( Exception e) {
+			// ignore it
+		}
+	}
+	
 	/** build GET request; call this directly to add headers */
 	public static MyClient create(String url) {
-		S.out( url + " GET");
+		write( url + " GET");
+		
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.GET() );
@@ -29,7 +42,7 @@ public class MyClient {
 		
 	/** build POST request; call this directly to add headers */
 	public static MyClient create(String url, String body) {
-		S.out( url + " POST");
+		write( url + " POST");
 		return new MyClient( HttpRequest.newBuilder()
 				.uri( URI.create(url) )
 				.POST(HttpRequest.BodyPublishers.ofString(body)));

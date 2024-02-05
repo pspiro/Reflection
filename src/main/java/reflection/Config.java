@@ -77,6 +77,7 @@ public class Config extends ConfigBase {
 	private String alertEmail;
 	private String fbStablecoin;
 	private String blockchainExplorer;
+	private double maxAutoRedeem;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -195,6 +196,7 @@ public class Config extends ConfigBase {
 		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
+		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -463,7 +465,11 @@ public class Config extends ConfigBase {
 
 	/** don't throw an exception; it's usually not critical */
 	public void sendEmail(String to, String subject, String text, boolean isHtml) {
-		Util.wrap( () -> Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text, isHtml) );
+		Util.wrap( () -> sendEmailEx( to, subject, text, isHtml) );
+	}
+	
+	public void sendEmailEx(String to, String subject, String text, boolean isHtml) throws Exception {
+		Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text, isHtml);
 	}
 	
 	/** Used by test cases */
@@ -486,7 +492,7 @@ public class Config extends ConfigBase {
 
 	/** RefAPI uses internal url; Monitor and java programs use external url 
 	 * @throws Exception */ 
-	public Config useExteranDbUrl() throws Exception {
+	public Config useExternalDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
 		return this; // for chaining calls
@@ -516,5 +522,9 @@ public class Config extends ConfigBase {
 	
 	public String blockchainExplorer() {
 		return blockchainExplorer;
+	}
+	
+	public double maxAutoRedeem() {
+		return maxAutoRedeem;
 	}
 }

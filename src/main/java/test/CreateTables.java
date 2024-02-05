@@ -16,7 +16,7 @@ public class CreateTables  {
 
 	public static void main(String[] args) {
 		try {
-			con = Config.ask().useExteranDbUrl().createConnection();
+			con = Config.ask().useExternalDbUrl().createConnection();
 			new CreateTables().createRedemptions();
 			
 		} catch (Exception e) {

@@ -181,12 +181,6 @@ public class S {
 		out( str);
 	}
 
-	public static void err( Exception e) {
-		outt( e);
-		out( e);
-		e.printStackTrace();
-	}
-	
 	public static void out() {
 		out("");
 	}

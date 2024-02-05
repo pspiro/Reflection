@@ -308,6 +308,13 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Return PositionTracker data to Monitor; used for debugging only */
+	public void handleGetPositionTracker() {
+		wrap( () -> {
+			respond( OrderTransaction.dumpPositionTracker() );
+		});
+	}
+	
 	/** Top-level method handler */
 	public void allowConnection() {
 		wrap( () -> {

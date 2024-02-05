@@ -22,7 +22,7 @@ public class RedemptionPanel extends QueryPanel {
 	RedemptionPanel() {
 		super(	"redemptions",
 				"created_at,uid,fireblocks_id,wallet_public_key,blockchain_hash,status,stablecoin,amount",
-				"select * from redemptions order by created_at desc $limit");
+				"select * from redemptions $where order by created_at desc $limit");
 	}
 
 	@Override public void adjust(JsonObject obj) {
@@ -79,13 +79,6 @@ public class RedemptionPanel extends QueryPanel {
 			return;
 		}
 
-		if (!Util.confirm(
-				RedemptionPanel.this, 
-				String.format("Are you sure you want to redeem %s RUSD for %s?",
-						six.format(rusdPos), walletAddr) ) ) {
-			return;
-		}
-
 		// insufficient stablecoin in RefWallet?
 		double ourStablePos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
 		if (ourStablePos < rusdPos) {
@@ -96,9 +89,20 @@ public class RedemptionPanel extends QueryPanel {
 			return;
 		}
 
+		// confirm
+		if (!Util.confirm(
+				RedemptionPanel.this, 
+				String.format("Are you sure you want to redeem %s RUSD for %s?",
+						six.format(rusdPos), walletAddr) ) ) {
+			return;
+		}
+
 		// dont tie up the UI thread
 		Util.executeAndWrap( () -> {
 			String hash = rusd.sellRusd(walletAddr, busd, rusdPos)
+			
+			// already fulfilled?
+
 					.waitForHash();
 
 			// update redemptions table in DB and screen

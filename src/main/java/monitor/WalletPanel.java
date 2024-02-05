@@ -1,11 +1,10 @@
 package monitor;
 
 import java.awt.BorderLayout;
-import java.awt.Desktop;
-import java.net.URI;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
 
@@ -19,11 +18,15 @@ import http.MyClient;
 import monitor.Monitor.TransPanel;
 import positions.Wallet;
 import reflection.Stock;
+import tw.util.DualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
+import tw.util.UI;
 import tw.util.VerticalPanel;
 
 public class WalletPanel extends JsonPanel {
+	
+	
 	private static final double minBalance = .0001;
 	private final JTextField m_wallet = new JTextField(32); 
 	private final JLabel m_rusd = new JLabel(); 
@@ -35,9 +38,12 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_kyc = new JLabel(); 
 	private final JTextField m_username = new JTextField(8); 
 	private final JTextField m_mintAmt = new JTextField(8); 
-	private final JTextField m_burnAmt = new JTextField(8); 
+	private final JTextField m_burnAmt = new JTextField(8);
+	private final JTextField m_subject = new JTextField(8);
+	private final JTextArea m_text = new JTextArea(3, 40);
 
 	private final TransPanel transPanel = new TransPanel();
+	private final RedemptionPanel redemPanel = new RedemptionPanel();
 
 	WalletPanel() throws Exception {
 		super( new BorderLayout(), "Symbol,Balance");
@@ -62,16 +68,28 @@ public class WalletPanel extends JsonPanel {
 		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
+
 		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
 		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
+		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> send() ) );
+		vp.add( "Text", m_text);
+		
+		transPanel.small("Transactions");
+		redemPanel.small("Redemptions");
+
+
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
 		leftPanel.add( m_model.createTable() );
-
+		
+		DualPanel rightPanel = new DualPanel();
+		rightPanel.add( "1", transPanel);
+		rightPanel.add( "2", redemPanel);
+		
 		add( leftPanel, BorderLayout.WEST);
-		add( transPanel);
+		add( rightPanel);
 	}
 
 	private void giveMatic() {
@@ -91,7 +109,7 @@ public class WalletPanel extends JsonPanel {
 
 	/** Open wallet in blockchain explorer */
 	private void explore() {
-		String url = "https://polygonscan.com/address/" + m_wallet.getText(); // you must pull from config
+		String url = Monitor.m_config.blockchainExplorer() + m_wallet.getText();
 		Util.browse( url);
 	}
 
@@ -164,6 +182,7 @@ public class WalletPanel extends JsonPanel {
 		m_email.setText(null);
 		m_kyc.setText(null);
 		transPanel.clear();
+		redemPanel.clear();
 
 		if (Util.isValidAddress(walletAddr)) {
 			S.out( "Updating values");
@@ -199,8 +218,12 @@ public class WalletPanel extends JsonPanel {
 				}
 			}
 
-			transPanel.where.setText( String.format("where wallet_public_key = '%s'", walletAddr) );
+			String where = String.format("where wallet_public_key = '%s'", walletAddr);
+			transPanel.where.setText( where);
 			transPanel.refresh();
+			
+			redemPanel.where.setText( where);
+			redemPanel.refresh();
 		}
 		else if (S.isNotNull(walletAddr)) {
 			Util.inform(this, "Invalid wallet address '%s'", walletAddr);
@@ -208,4 +231,19 @@ public class WalletPanel extends JsonPanel {
 
 		m_model.fireTableDataChanged();
 	}
+	
+	private void send() {
+		try {
+			Monitor.m_config.sendEmailEx(
+					m_email.getText(),
+					m_subject.getText(),
+					m_text.getText(),
+					false);
+			UI.flash( "Message sent");
+		} catch (Exception e) {
+			Util.inform( this, e.getMessage() );
+			e.printStackTrace();
+		}
+	}
+
 }

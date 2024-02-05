@@ -2,6 +2,8 @@ package reflection;
 
 import java.util.HashMap;
 
+import org.json.simple.JsonArray;
+
 import common.Util;
 
 public class PositionTracker {
@@ -92,4 +94,12 @@ public class PositionTracker {
 		return (int)Math.floor(qty + Small);
 	}
 
+	public JsonArray dump() {
+		JsonArray ar = new JsonArray();
+		m_map.entrySet().forEach( entry -> ar.add( Util.toJson(
+				"conid", entry.getKey(),
+				"actual", entry.getValue().m_actual,
+				"desired", entry.getValue().m_desired) ) );
+		return ar;
+	}
 }

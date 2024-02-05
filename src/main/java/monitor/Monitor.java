@@ -68,7 +68,7 @@ public class Monitor {
 		m_logPanel = new LogPanel();
 		m_walletPanel = new WalletPanel();
 		
-		m_config.useExteranDbUrl();
+		m_config.useExternalDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		S.out( "Using database %s", m_config.postgresUrl() );
 
@@ -236,6 +236,12 @@ public class Monitor {
 			return ret;
 		}
 		
+		// there's one slight problem here; if they haven't opened the Wallet panel yet
+		// it going to activate it, which will refresh it, then refresh it again
+		// with the values passed in
+		
+		// you have to not activate it, but mark it as activated so it doesn't
+		// refresh if they click on it later
 		@Override protected void onDouble(String tag, Object val) {
 			if (S.notNull(tag).equals("wallet_public_key") ) {
 				m_tabs.select("Wallet");
@@ -299,5 +305,4 @@ public class Monitor {
 			m_model.fireTableDataChanged();
 		}
 	}
-	
 }
