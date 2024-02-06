@@ -552,3 +552,7 @@ public class Main implements ITradeReportHandler {
 // Bugs
 // low: on Sunday night, at least, a what-if order returns all Double.max_value strings to api
 // *probably more efficient to have one timer thread instead of one for each message; fix this when it gets busy
+
+// NOTES:
+// If Transaction.wrap() catches, the message is considered failed
+// If Util.wrap() catches, it prints the error but the message handling continues
