@@ -20,11 +20,6 @@ public class MoralisServer {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	
-	public static String queryBalances(String contract) throws Exception {
-		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
-		return querySync( url);
-	}
-	
 	public static JsonObject queryTransaction( String transactionHash) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/transaction/%s?chain=%s",
@@ -58,6 +53,12 @@ public class MoralisServer {
 				"Moralis error  url=%s  code=%s  body=%s",
 				url, resp.statusCode(), resp.body() );
 		return resp.body();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		//S.out( queryBalances("0x2703161D6DD37301CEd98ff717795E14427a462B") );
+		S.out("---------");
+		S.out( reqPositionsList("0x2703161D6DD37301CEd98ff717795E14427a462B", new String[] {} ) );
 	}
 	
 	/** Fields returned:
@@ -104,19 +105,19 @@ public class MoralisServer {
 				18);
 	}
 
-	/** Seems useless; returns e.g.
-	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
-	public static String getWalletStats(String wallet) throws Exception {
-		String url = String.format( "%s/wallets/%s/stats?chain=%s", moralis, wallet, chain);
-		return querySync( url);
-		
-	}
+//	/** Seems useless; returns e.g.
+//	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
+//	public static String getWalletStats(String wallet) throws Exception {
+//		String url = String.format( "%s/wallets/%s/stats?chain=%s", moralis, wallet, chain);
+//		return querySync( url);
+//		
+//	}
 
 	/** useless e.g. {"transfers":{"total":"0"}} */
-	public static String getErc20Stats(String address) throws Exception {
-		String url = String.format( "%s/erc20/%s/stats?chain=%s", moralis, address, chain);
-		return querySync( url);
-	}
+//	public static String getErc20Stats(String address) throws Exception {
+//		String url = String.format( "%s/erc20/%s/stats?chain=%s", moralis, address, chain);
+//		return querySync( url);
+//	}
 	
 	/** this works for transfer events, which probably catches everything, but not
 	 *  my custom events such as BuyRusd and SellRusd, which don't even appear in
@@ -126,11 +127,10 @@ public class MoralisServer {
 	 * @return
 	 * @throws Exception
 	 */
-	public static String logs(String address, String topic) throws Exception {
-		String url = String.format( "%s/%s/logs?chain=%s&topic0=%s", moralis, address, chain, topic);
-		return querySync(url);
-		
-	}
+//	public static String logs(String address, String topic) throws Exception {
+//		String url = String.format( "%s/%s/logs?chain=%s&topic0=%s", moralis, address, chain, topic);
+//		return querySync(url);
+//	}
 	
 	/** returns one page of transactions for a specific token
 	 *  @address is ERC20 token address */
@@ -169,29 +169,17 @@ public class MoralisServer {
 		}
 	}	
 	
-	/** returns all transactions for a specific token */
+	/** returns all transactions for a specific token;
+	 *  used by Monitor only */
 	public static void getAllTokenTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getTokenTransfers(address, cursor) );  
 	}
 	
-	/** returns all transactions for a specific token */
-	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
-		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
-	}
-	
-	public static void main(String[] args) throws Exception {
-//		Config.ask();
-//		getAllTokenTransfers("0x4470033bd3cbf4f4f6ac4076b1085f819c7d0844", ar -> ar.display() );
-		//getAllWalletTransfers("0xa14749d89e1ad2a4de15ca4463cd903842ffc15d", ar -> ar.display() );
-		
-//		String str = logs(
-//				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",
-//				//"0xf4e116c5af669bd0b672b4498a0a9b172a0029e608d2ab109e51480f6abc8414"
-//				transferTopic
-//				);
-//		JsonObject.parse(str).display();
-	}
-	
+	/** returns all transactions for a specific Wallet;
+	 *  this could be used to see the history of a wallet */
+//	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
+//		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+//	}
 }
 
 // topic0 is full keccak of the event (initial cap)

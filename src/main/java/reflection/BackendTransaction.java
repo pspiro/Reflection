@@ -310,7 +310,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Top-level method handler */
+	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
 	public void allowConnection() {
 		wrap( () -> {
 			String country = getHeader("X-Country-Code");
