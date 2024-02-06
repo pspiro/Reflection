@@ -19,7 +19,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Transactions;
-import http.MyClient;
 import http.MyHttpClient;
 import redis.MyRedis;
 import reflection.Stocks;
@@ -97,8 +96,8 @@ public class Monitor {
 		m_tabs.addTab( "Home", new EmptyPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
-		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
+		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -109,7 +108,6 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
-		m_tabs.addTab( "Pos. Tracker", new PosTrackerPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -303,20 +301,6 @@ public class Monitor {
 			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
 			client.get( "/fbserver/get-all");
 			setRows( client.readJsonArray() );
-			m_model.fireTableDataChanged();
-		}
-	}
-	
-	/** Shows the position tracker which tracks the aggregated fractional 
-	 *  shares of orders for each stock */  
-	static class PosTrackerPanel extends JsonPanel {
-		PosTrackerPanel() {
-			super( new BorderLayout(), "conid,desired,actual");
-			add( m_model.createTable() );
-		}
-		
-		@Override protected void refresh() throws Exception {
-			setRows( MyClient.getArray( refApiBaseUrl() + "/api/dumppositiontracker") );
 			m_model.fireTableDataChanged();
 		}
 	}

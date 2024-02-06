@@ -1,10 +1,7 @@
 package reflection;
 
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;

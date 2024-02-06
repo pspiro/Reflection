@@ -1,7 +1,5 @@
 package tw.util;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -39,8 +37,6 @@ public class DualPanel extends JPanel implements LayoutManager {
 	}
 
 	@Override public void layoutContainer(Container parent) {
-		assertTrue( parent == this, "wrong");
-
 		int height = getSize().height / 2;
 		int width = getSize().width;
 		c1.setLocation( 0, 0);

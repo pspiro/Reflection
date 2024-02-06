@@ -5,7 +5,7 @@ import org.json.simple.JsonObject;
 import http.MyClient;
 
 /** allow connection based on country code and ip address */
-public class testAllow extends MyTestCase {
+public class TestAllow extends MyTestCase {
 	static String ip = "838.838.838.838";
 	
 	public void testMyIp() throws Exception {

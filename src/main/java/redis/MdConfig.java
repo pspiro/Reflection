@@ -13,6 +13,7 @@ public class MdConfig extends ConfigBase {
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private int redisBatchTime; // in ms
 	private int mdsPort;
+	private boolean twsDelayed;
 
 	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
@@ -20,6 +21,7 @@ public class MdConfig extends ConfigBase {
 	public long reconnectInterval() { return reconnectInterval; }
 	public int twsMdClientId() { return twsMdClientId; }
 	public int mdsPort() { return mdsPort; }
+	public boolean twsDelayed() { return twsDelayed; }
 
 	public MdConfig() { 
 	}
@@ -32,7 +34,8 @@ public class MdConfig extends ConfigBase {
 		this.twsMdPort = tab.getRequiredInt( "twsMdPort");
 		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");
 		this.mdsPort = tab.getRequiredInt("mdsPort");
-
+		this.twsDelayed = tab.getBoolean("twsDelayed");
+		
 		this.redisBatchTime = tab.getRequiredInt( "redisBatchTime");
 		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");
 		

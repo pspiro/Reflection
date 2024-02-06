@@ -1,9 +1,7 @@
 package test;
 
 import fireblocks.Accounts;
-import http.MyClient;
 import reflection.Config;
-import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {

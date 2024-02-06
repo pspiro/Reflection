@@ -118,7 +118,12 @@ public class Config extends ConfigBase {
 	//public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
 	public double commission() { return commission; }
-	public String rusdAddr() { return m_rusd.address(); }  // lower case
+	
+	/** @return RUSD address lower case */
+	public String rusdAddr() { 
+		return m_rusd.address(); 
+	}
+	
 	public double minTokenPosition() { return minTokenPosition; }
 	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
 	public TimeInForce tif() { return tif; }
