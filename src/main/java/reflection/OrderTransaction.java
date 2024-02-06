@@ -107,6 +107,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
 			
+		// NOTE: this next code is the same as OrderTransaction
+
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");
@@ -526,7 +528,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
+			
 			jlog( LogType.ORDER_COMPLETED, null);
+			
 			m_main.queueSql( sql -> sql.execWithParams( 
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 
@@ -819,9 +823,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		<p>
 		We have purchased the associated stock and are holding it in reserve on your behalf.<p>
 		<p>
-		To view the stock token in your crypto wallet:<br>
-		* Click the "Add to Wallet" button on the Trade screen, or<br>
-		* Import this contract address: %s<p>
+		To view the stock token in your crypto wallet, click the "Add to Wallet" button on the
+		Trade screen, or import this contract address: %s<p>
 		<p>
 		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
 		<p>
