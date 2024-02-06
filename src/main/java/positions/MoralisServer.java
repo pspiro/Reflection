@@ -4,7 +4,6 @@ package positions;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -19,18 +18,10 @@ import tw.util.S;
 public class MoralisServer {
 	public static String chain;  // or eth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
+	static final String stream = "https://api.moralis-streams.com/streams/evm";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-	
-	enum Status { building, waiting, rebuilding, ready, error };
 
-	// this is so fucking weird. it works when run from command prompt, but
-	// when run from eclipse you can't connect from browser using external ip 
-	// http://69.119.189.87  but you can use 192.168.1.11; from dos prompt you
-	// can use either. pas
-	static MySqlConnection m_database = new MySqlConnection();
-
-	
 	// TODO
 	// set a single null at the end if you don't want to re-read everything again at startup
 	// you can query by date; that would be better, then you only need to know the start date
@@ -50,7 +41,11 @@ public class MoralisServer {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/transaction/%s?chain=%s",
 				moralis, transactionHash, chain);
-		return JsonObject.parse( querySync( url) );
+		return queryObject( url);
+	}
+	
+	public static JsonObject queryObject(String url) throws Exception {
+		return JsonObject.parse( querySync(url) );
 	}
 
 	/** Send the query; if there is an UnknownHostException, try again as it
@@ -69,8 +64,18 @@ public class MoralisServer {
 		return post( url, abi);
 	}
 
+	public static String put(String url, String body) throws Exception {
+		return putOrPost( url, body, true);
+	}
+		
 	public static String post(String url, String body) throws Exception {
-		HttpResponse<String> resp = MyClient.create(url, body)
+		return putOrPost( url, body, false);
+	}
+		
+	public static String putOrPost(String url, String body, boolean put) throws Exception {
+		MyClient client = put ? MyClient.createPut(url, body) : MyClient.create( url, body);
+		
+		HttpResponse<String> resp = client
 				.header("accept", "application/json")
 				.header("content-type", "application/json")
 				.header("X-API-Key", apiKey)
@@ -114,7 +119,7 @@ public class MoralisServer {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/erc20/%s/allowance?chain=%s&owner_address=%s&spender_address=%s",
 				moralis, contract, chain, owner, spender);
-		return JsonObject.parse( querySync(url) );
+		return queryObject( url);
 	}
 	
 	public static double getNativeBalance(String address) throws Exception {
@@ -157,14 +162,14 @@ public class MoralisServer {
 	 *  @address is ERC20 token address */
 	public static JsonObject getTokenTransfers(String address, String cursor) throws Exception {
 		String url = String.format( "%s/erc20/%s/transfers?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
-		return JsonObject.parse( querySync(url) );
+		return queryObject( url);
 	}
 	
 	/** returns one page of transactions for a specific token
 	 *  @address is ERC20 token address */
 	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
 		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
-		return JsonObject.parse( querySync(url) );
+		return queryObject( url);
 	}
 	
 	interface Query {
@@ -198,6 +203,19 @@ public class MoralisServer {
 	/** returns all transactions for a specific token */
 	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+	}
+	
+	/** 
+	 * must include one of
+	 * includeContractLogs, includeNativeTxs, includeInternalTxs 
+	 */
+	private void createStream() {
+//		String url = String.format( "%s/%s/erc20/balances?chain=%s", streams, contract, chain);
+//		querySync(url);
+		
+//    --url 'https://api.moralis-streams.com/streams/evm' \
+//    --header 'accept: application/json' \
+//    --header 'X-API-Key: YOUR_API_KEY' 
 	}
 	
 	public static void main(String[] args) throws Exception {

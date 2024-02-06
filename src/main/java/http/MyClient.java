@@ -47,7 +47,14 @@ public class MyClient {
 				.uri( URI.create(url) )
 				.POST(HttpRequest.BodyPublishers.ofString(body)));
 	}
-	
+
+	/** Create PUT */
+	public static MyClient createPut(String url, String body) {
+		write( url + " PUT");
+		return new MyClient( HttpRequest.newBuilder()
+				.uri( URI.create(url) )
+				.PUT(HttpRequest.BodyPublishers.ofString(body)));
+	}
 
 	MyClient( Builder builder) {
 		m_builder = builder;
