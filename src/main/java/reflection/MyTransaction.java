@@ -71,18 +71,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		require( m_uri.length() < 4000, RefCode.INVALID_REQUEST, "URI is too long");
 
 		if ("GET".equals(m_exchange.getRequestMethod() ) ) {
-			// get right side of ? in URL
-			String[] parts = m_uri.split("\\?");  // already lower case
-			if (parts.length >= 2) {
-				// build map of tag/value, expecting tag=value&tag=value
-				String[] params = parts[1].split( "&");
-				//map.parseJson( )
-				for (String param : params) {
-					String[] pair = param.split( "=");
-					require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
-					m_map.put( pair[0], pair[1]);
-				}
-			}
+			parseUri();
 		}
 
 		else {
@@ -103,7 +92,7 @@ public abstract class MyTransaction extends BaseTransaction {
 			}
 		}
 	}
-	
+
 	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas

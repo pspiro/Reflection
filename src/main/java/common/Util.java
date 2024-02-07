@@ -14,6 +14,7 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -709,4 +710,14 @@ public class Util {
 		consumer.accept( t);
 		return t;
 	}
+
+	/** The point of this one is to let the consumer test and maybe throw an exception */
+	public static <T> T retAndCheck( T t, ExConsumer<T> consumer) throws Exception {
+		consumer.accept( t);
+		return t;
+	}
+	
+//	<T> T[] toArray( ArrayList<T> list) {
+//		return (T[])list.toArray();
+//	}
 }

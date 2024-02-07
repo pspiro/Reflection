@@ -2,6 +2,7 @@ package test;
 
 import java.util.HashMap;
 
+/** Compare map access to member variable access */
 public class TestAccess {
 	HashMap<String,Integer> map = new HashMap<>();
 	int a = 3;

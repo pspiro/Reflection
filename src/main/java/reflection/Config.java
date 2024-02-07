@@ -78,6 +78,7 @@ public class Config extends ConfigBase {
 	private String fbStablecoin;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
+	private int hookServerPort;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -197,6 +198,7 @@ public class Config extends ConfigBase {
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
+		this.hookServerPort = m_tab.getInt("hookServerPort");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -526,5 +528,9 @@ public class Config extends ConfigBase {
 	
 	public double maxAutoRedeem() {
 		return maxAutoRedeem;
+	}
+	
+	public int hookServerPort() {
+		return hookServerPort;
 	}
 }

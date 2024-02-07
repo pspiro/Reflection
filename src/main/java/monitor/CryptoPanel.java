@@ -125,21 +125,21 @@ public class CryptoPanel extends MonPanel {
 		double busd = refWallet.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
-		double nativeBal = refWallet.getNativeTokenBalance();
+		double nativeBal = refWallet.getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
 		Wallet owner = Fireblocks.getWallet("Owner");
-		double ownerMatic = owner.getNativeTokenBalance();
+		double ownerMatic = owner.getNativeBalance();
 		double ownerBusd = owner.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> {
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeTokenBalance();
+		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
-		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeTokenBalance();
+		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
 		
 		double approved = Monitor.m_config.busd().getAllowance(

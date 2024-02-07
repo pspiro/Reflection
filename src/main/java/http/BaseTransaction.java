@@ -240,6 +240,19 @@ public class BaseTransaction {
 		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
 		return headers.get(0);
 	}
-	
-	
+
+	/** Parse URI parameters into m_map */
+	protected void parseUri() throws RefException {
+		// get right side of ? in URL
+		String[] parts = m_uri.split("\\?");  // already lower case
+		if (parts.length >= 2) {
+			// build map of tag/value, expecting tag=value&tag=value
+			String[] params = parts[1].split( "&");
+			for (String param : params) {
+				String[] pair = param.split( "=");
+				require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
+				m_map.put( pair[0], pair[1]);
+			}
+		}
+	}
 }

@@ -35,7 +35,7 @@ public class Wallet {
 	 *  I think passing the contracts may fix it.
 	 *  They are claiming it is fixed as of 1/26/24 */ 
 	public HashMap<String,Double> reqPositionsMap(String... contracts) throws Exception {
-		Util.require( contracts.length > 0, "Contract addresses are required");  // needed to to Moralis bug
+		//Util.require( contracts.length > 0, "Contract addresses are required");  // needed to to Moralis bug
 		
 		HashMap<String,Double> map = new HashMap<>();
 		
@@ -76,10 +76,6 @@ public class Wallet {
 //		return map;
 //	}
 
-	public double getNativeTokenBalance() throws Exception {
-		return MoralisServer.getNativeBalance(m_walletAddr);
-	}
-	
 	/** Sends a new query every time */
 	public static double getBalance(String wallet, String tokenAddr) throws Exception {
 		return new Wallet(wallet).getBalance(tokenAddr);

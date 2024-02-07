@@ -21,18 +21,6 @@ public class MoralisServer {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	
-	public static String queryBalances(String contract) throws Exception {
-		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
-		return querySync( url);
-	}
-	
-	public static JsonObject queryTransaction( String transactionHash) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/transaction/%s?chain=%s",
-				moralis, transactionHash, chain);
-		return queryObject( url);
-	}
-	
 	public static JsonObject queryObject(String url) throws Exception {
 		return JsonObject.parse( querySync(url) );
 	}
@@ -46,11 +34,11 @@ public class MoralisServer {
 				.query().body();
 	}
 
-	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
-				moralis, contractAddress, chain, functionName);
-		return post( url, abi);
+	public static String delete(String url) throws Exception {
+		return MyClient.createDelete(url)
+				.header("accept", "application/json")
+				.header("X-API-Key", apiKey)
+				.query().body();
 	}
 
 	public static String put(String url, String body) throws Exception {
@@ -61,7 +49,7 @@ public class MoralisServer {
 		return putOrPost( url, body, false);
 	}
 		
-	public static String putOrPost(String url, String body, boolean put) throws Exception {
+	private static String putOrPost(String url, String body, boolean put) throws Exception {
 		MyClient client = put ? MyClient.createPut(url, body) : MyClient.create( url, body);
 		
 		HttpResponse<String> resp = client
@@ -73,6 +61,26 @@ public class MoralisServer {
 				"Moralis error  url=%s  code=%s  body=%s",
 				url, resp.statusCode(), resp.body() );
 		return resp.body();
+	}
+
+
+	public static String queryBalances(String contract) throws Exception {
+		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
+		return querySync( url);
+	}
+	
+	public static JsonObject queryTransaction( String transactionHash) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+		String url = String.format( "%s/transaction/%s?chain=%s",
+				moralis, transactionHash, chain);
+		return queryObject( url);
+	}
+	
+	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
+				moralis, contractAddress, chain, functionName);
+		return post( url, abi);
 	}
 	
 	/** Fields returned:
@@ -193,33 +201,6 @@ public class MoralisServer {
 	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
-	
-	/** 
-	 * must include one of
-	 * includeContractLogs, includeNativeTxs, includeInternalTxs 
-	 */
-	private void createStream() {
-//		String url = String.format( "%s/%s/erc20/balances?chain=%s", streams, contract, chain);
-//		querySync(url);
-		
-//    --url 'https://api.moralis-streams.com/streams/evm' \
-//    --header 'accept: application/json' \
-//    --header 'X-API-Key: YOUR_API_KEY' 
-	}
-	
-	public static void main(String[] args) throws Exception {
-//		Config.ask();
-//		getAllTokenTransfers("0x4470033bd3cbf4f4f6ac4076b1085f819c7d0844", ar -> ar.display() );
-		//getAllWalletTransfers("0xa14749d89e1ad2a4de15ca4463cd903842ffc15d", ar -> ar.display() );
-		
-//		String str = logs(
-//				"0x4d5bacafecbd57e28098b5f1be7a40df96f0fa2c",
-//				//"0xf4e116c5af669bd0b672b4498a0a9b172a0029e608d2ab109e51480f6abc8414"
-//				transferTopic
-//				);
-//		JsonObject.parse(str).display();
-	}
-	
 }
 
 // topic0 is full keccak of the event (initial cap)
