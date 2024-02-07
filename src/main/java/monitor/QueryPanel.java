@@ -116,9 +116,11 @@ public class QueryPanel extends JsonPanel {
 		setRows( Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) ) );
 		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
 		
+		UI.flash( "Refreshed");
+
 		m_model.resetSort();  // sort by first column if it is sortable
 		m_model.fireTableDataChanged();
-
+		
 		S.out( "Refreshed query model to %s", rows().size() );
 	}
 	

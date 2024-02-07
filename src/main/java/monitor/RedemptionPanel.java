@@ -14,6 +14,7 @@ import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Rusd;
 import fireblocks.Transactions;
+import tw.util.UI;
 
 public class RedemptionPanel extends QueryPanel {
 	static DecimalFormat six = new DecimalFormat("#,###.000000");
@@ -32,6 +33,7 @@ public class RedemptionPanel extends QueryPanel {
 		JPopupMenu m = new JPopupMenu();
 		m.add( JsonModel.menuItem("Copy", ev -> Util.copyToClipboard(val) ) );
 		m.add( JsonModel.menuItem("Redeem", ev -> redeem( record) ) );
+		m.add( JsonModel.menuItem("Delete", ev -> delete( record) ) );
 		m.show( e.getComponent(), e.getX(), e.getY() );
 	}
 
@@ -53,6 +55,22 @@ public class RedemptionPanel extends QueryPanel {
 			break;
 		default:
 			super.onDouble(tag, val);
+		}
+	}
+
+	private void delete(JsonObject rec) {
+		// confirm
+		if (Util.confirm( RedemptionPanel.this, "Are you sure you want to delete this record?") ) {
+			try {
+				Monitor.m_config.sqlCommand( sql -> sql.delete( "delete from redemptions where uid = '%s'",
+					rec.getString("uid") ) );
+				UI.flash( "Record deleted");
+				refresh();
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				Util.inform( this, "Error - " + e.getMessage() );
+			}
 		}
 	}
 
