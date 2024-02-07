@@ -170,6 +170,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		To view the BUSD in your wallet, import this address:<p>
 		%s<p>
 		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
+		</html>
 		""";
 	
 	/** no exceptions, no delay */
