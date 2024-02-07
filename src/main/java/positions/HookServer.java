@@ -76,9 +76,13 @@ public class HookServer {
 	static class HookWallet {
 		HashMap<String,Double> m_map = new HashMap<>();
 		double nativeTok;
+		double approved;
 		
 		HookWallet( HashMap<String,Double> map) {
 			m_map = map;
+		}
+		
+		public void process(String contract, JsonObject trans) {
 		}
 	}
 	
@@ -175,8 +179,25 @@ public class HookServer {
 			wrap( () -> {
 				JsonObject obj = parseToObject();
 				obj.getArray("erc20Transfers").forEach( trans -> {
-					S.out( "Transferred %s %s", trans.getString("contract"), obj.getBool("confirmed") );
-					S.out( "From: %s to %s", trans.getString("from"), trans.getString("to") );
+					String contract = trans.getString("contract").toLowerCase();
+
+					S.out( "Transferred %s from %s to %s (%s)", 
+							contract, 
+							trans.getString("from"), 
+							trans.getString("to"),
+							obj.getBool("confirmed"));
+
+					
+					if (obj.getBool("confirmed") ) {
+						synchronized( hookMap) {
+							hookMap.remove( contract);
+						}
+					}
+					else {
+						HookWallet hookWallet = hookMap.get( contract);
+						if (hookWallet != null) {
+							hookWallet.process( contract, trans);
+						}
 					S.out();
 				});
 				respondOk();
