@@ -76,10 +76,6 @@ public class Wallet {
 //		return map;
 //	}
 
-	public double getNativeTokenBalance() throws Exception {
-		return MoralisServer.getNativeBalance(m_walletAddr);
-	}
-	
 	/** Sends a new query every time */
 	public static double getBalance(String wallet, String tokenAddr) throws Exception {
 		return new Wallet(wallet).getBalance(tokenAddr);

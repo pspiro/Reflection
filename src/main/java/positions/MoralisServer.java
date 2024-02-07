@@ -201,22 +201,4 @@ public class MoralisServer {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
 	
-	/** 
-	 * must include one of
-	 * includeContractLogs, includeNativeTxs, includeInternalTxs 
-	 */
-	private void createStream() {
-//		String url = String.format( "%s/%s/erc20/balances?chain=%s", streams, contract, chain);
-//		querySync(url);
-		
-//    --url 'https://api.moralis-streams.com/streams/evm' \
-//    --header 'accept: application/json' \
-//    --header 'X-API-Key: YOUR_API_KEY' 
-	}
-	
 }
-
-// topic0 is full keccak of the event (initial cap)
-
-//transferTopic
-//0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
