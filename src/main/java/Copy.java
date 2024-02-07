@@ -46,7 +46,9 @@ public class Copy {
 
 		String myString = """
 			<div style="margin: 0px; padding: 1px; background-color: #8775e6; font-family: Arial, sans-serif; border-radius: 6px;">
-			<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;"><strong>abcd</strong></div>
+			<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
+			<strong>abcd</strong>
+			</div>
 			</div>				
 			""";
 		Transferable stringSelection = new HtmlTrans(myString);
