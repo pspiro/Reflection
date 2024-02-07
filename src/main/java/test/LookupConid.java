@@ -23,7 +23,7 @@ public class LookupConid extends ConnectionAdapter {
 
 	LookupConid() throws Exception {
 		Config config = Config.ask();
-		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 9383, null);
+		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 9284, null);
 	}
 
 	public void onRecNextValidId(int id) {
@@ -58,14 +58,15 @@ public class LookupConid extends ConnectionAdapter {
 				
 				String symbol = row.getString("Symbol");
 				int conid = row.getInt("Conid");
-				String primary = row.getString("Primary Exchange");
-				String description = row.getString("Description");
+				String queryExch = row.getString("Query Exch");
 				String secType = row.getString("SecType");
+				String description = row.getString("Description");
+				String primary = row.getString("Primary Exch");
 				
 				Contract c = new Contract();
 				c.symbol(symbol.replace("-", " "));  // handle BRK-B
 				c.currency("USD");
-				c.exchange(primary);
+				c.exchange(queryExch);
 				c.secType( Util.valOr( secType, "STK") );
 				
 				m_controller.reqContractDetails(c, list -> {
@@ -79,17 +80,20 @@ public class LookupConid extends ConnectionAdapter {
 							row.setValue("Conid", "" + item.conid() );
 							set = true;
 						}
-						else if (conid != item.conid() ) {
-							S.out( "Conid doesn't match for %s (%s vs %s)", symbol, conid, item.conid() );
+						else {
+							Util.require( 
+									conid == item.conid(), 
+									"Conid doesn't match for %s (%s vs %s)", 
+									symbol, conid, item.conid() );
 						}
 						
 						// check and set primary exchange
 						if (S.isNull(primary) ) {
-							row.setValue("Primary Exchange", item.contract().primaryExch() );
+							row.setValue("Primary Exch", item.contract().primaryExch() );
 							set = true;
 						}
-						else if (!primary.equals( item.contract().primaryExch() ) ) {
-							S.out( "Primary exchange doesn't match for %s (%s vs %s)", symbol, primary, item.contract().primaryExch() );
+						else if (!queryExch.equals( item.contract().primaryExch() ) ) {
+							S.out( "Primary exchange doesn't match for %s (%s vs %s)", symbol, queryExch, item.contract().primaryExch() );
 						}
 						
 						// check and set 24H

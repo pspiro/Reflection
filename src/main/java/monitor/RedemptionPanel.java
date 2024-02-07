@@ -96,12 +96,9 @@ public class RedemptionPanel extends QueryPanel {
 			return;
 		}
 
-		// dont tie up the UI thread
+		// don't tie up the UI thread
 		Util.executeAndWrap( () -> {
 			String hash = rusd.sellRusd(walletAddr, busd, rusdPos)
-			
-			// already fulfilled?
-
 					.waitForHash();
 
 			// update redemptions table in DB and screen

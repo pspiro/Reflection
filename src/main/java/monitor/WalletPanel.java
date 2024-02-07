@@ -40,7 +40,7 @@ public class WalletPanel extends JsonPanel {
 	private final JTextField m_mintAmt = new JTextField(8); 
 	private final JTextField m_burnAmt = new JTextField(8);
 	private final JTextField m_subject = new JTextField(8);
-	private final JTextArea m_text = new JTextArea(3, 40);
+	private final JTextArea m_text = Util.tweak( new JTextArea(3, 30), lab -> lab.setWrapStyleWord(true) );
 
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();

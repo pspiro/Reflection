@@ -22,7 +22,7 @@ import javax.swing.border.EmptyBorder;
 public class VerticalPanel extends JPanel {
 	private class RowPanel extends JPanel {
 		RowPanel( Component[] comps) {
-			setLayout( new FlowLayout( FlowLayout.LEFT, 5, 4) );
+			setLayout( new FlowLayout( FlowLayout.LEFT, 5, 2) );
 			for( Component comp : comps) {
 				add( comp);
 			}

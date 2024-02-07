@@ -1,8 +1,8 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
-import javax.swing.Box;
 import javax.swing.JPanel;
 
 import common.Util;
@@ -18,26 +18,19 @@ public class MdsPricesPanel extends JsonPanel {
 		add( m_model.createTable() );
 		m_model.justify("llrrr");
 		
-		JPanel butPanel = new JPanel();
-		butPanel.add( new HtmlButton("Disconnect/Reconnect", act -> reconnect() ) );
-		butPanel.add( Box.createHorizontalStrut(20) );
-		butPanel.add( new HtmlButton("Refresh Symbols", act -> refreshMdServer() ) );
+		JPanel butPanel = new JPanel( new FlowLayout( FlowLayout.CENTER, 15, 8) );
+		butPanel.add( new HtmlButton("Disconnect/Reconnect", act -> send("disconnect") ) );;
+		butPanel.add( new HtmlButton("Refresh Symbols", act -> send("refresh")) );
+		butPanel.add( new HtmlButton("Debug on", act -> send("debug-on") ) );
+		butPanel.add( new HtmlButton("Debug off", act -> send("debug-off") ) );
 		add( butPanel, BorderLayout.NORTH);
 	}
 	
-	void refreshMdServer() {
+
+	private void send( String command) {
 		Util.wrap( () -> {
-			// tell MdServer to re-read symbols list and resubscribe market data
-			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/refresh");
+			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/" + command);
 			refresh();
-			Util.inform(this, resp);
-		});
-	}
-	
-	private void reconnect() {
-		Util.wrap( () -> {
-			// tell MdServer to disconnect/reconnect
-			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/disconnect");
 			Util.inform(this, resp);
 		});
 	}
