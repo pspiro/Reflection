@@ -21,7 +21,7 @@ public class Streams {
 		deleteAll();
 		
 		String id = createStream();
-		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
+//		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
 		setStatus( id, true);
 		
 //		//displayStream();
@@ -36,11 +36,12 @@ public class Streams {
 		S.sleep( 5*60*1000);
 	}
 
-	private static void addAddressToStream(String id, String address) throws Exception {
-		S.out( "Adding address %s to %s", address, id);
+	private static void addAddressToStream(String id, ArrayList<String> list) throws Exception {
+		S.out( "Adding addresses %s to stream %s", list, id);
+		
 	     String resp = MoralisServer.post(
 	    		 String.format( "https://api.moralis-streams.com/streams/evm/%s/address", id), 
-	    		 Util.toJson( "address", address).toString() );
+	    		 Util.toJson( "address", list).toString() );
 	     S.out( resp);
 	}
 	
@@ -60,9 +61,7 @@ public class Streams {
 	/** Create the stream, add all addresses, and activate it */
 	static void createStream(ArrayList<String> contracts) throws Exception {
 		String id = createStream();
-		for (String address : contracts) {
-			addAddressToStream(id, address);
-		}
+		addAddressToStream(id, contracts);
 		setStatus( id, true);
 	}
 
@@ -120,7 +119,7 @@ public class Streams {
          "description" : "Stream 1",
          "getNativeBalances" : [ ],
          "triggers" : [ ],
-         "webhookUrl" : "http://108.6.23.121/webhook",
+         "webhookUrl" : "http://108.6.23.121/hook/webhook",
          "includeContractLogs" : true,
          "includeAllTxLogs" : false,
          "allAddresses" : false,

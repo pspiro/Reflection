@@ -19,7 +19,12 @@ import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
 
+// bug: when we received 2, we updated to 2 instead of add
+// issue: how to tell if the updates are old or new; you don't
+// want to play back old updates
+
 public class HookServer {
+	final static double small = .0001;    // positions less than this will not be reported
 	final Config m_config = new Config();
 	final Stocks stocks = new Stocks();
 	String[] m_array;
@@ -57,38 +62,27 @@ public class HookServer {
 		m_array = list.toArray( new String[list.size()]);
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
-			server.createContext("/hook/webhook", exch -> new Trans(exch).handleWebhook() );
-			server.createContext("/hook/get-stock-positions", exch -> new Trans(exch).handleGetStockPositions() );
-			server.createContext("/hook/get-mywallet", exch -> new Trans(exch).handleGetMyWallet() );
-			server.createContext("/hook/get-all-positions", exch -> new Trans(exch).handleGetAllPositions() );
-			server.createContext("/hook/status", exch -> new Trans(exch).handlesStatus() );
+			server.createContext("/webhook", exch -> new Trans(exch, true).handleWebhook() );
+			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
+//			server.createContext("/hook/get-stock-positions", exch -> new Trans(exch, true).handleGetStockPositions() );
+//			server.createContext("/hook/get-mywallet", exch -> new Trans(exch).handleGetMyWallet() );
+			server.createContext("/hook/get-all-positions", exch -> new Trans(exch, false).handleGetAllPositions() );
+//			server.createContext("/hook/status", exch -> new Trans(exch).handlesStatus() );
+			server.createContext("/hook/dump", exch -> new Trans(exch, false).handleDump() );
 			
 			server.createContext("/hook/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
 			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 			
-			server.createContext("/", exch -> new Trans(exch).respondOk() );
+			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		//Streams.createStream( list);
+		Streams.createStream( list);
 	}
 
-	static class HookWallet {
-		HashMap<String,Double> m_map = new HashMap<>();
-		double nativeTok;
-		double approved;
-		
-		HookWallet( HashMap<String,Double> map) {
-			m_map = map;
-		}
-		
-		public void process(String contract, JsonObject trans) {
-		}
-	}
-	
 	class Trans extends BaseTransaction {
-		public Trans(HttpExchange exchange) {
-			super(exchange, true);
+		public Trans(HttpExchange exchange, boolean debug) {
+			super(exchange, debug);
 		}
 
 		/** Returns wallet lower case */
@@ -98,35 +92,16 @@ public class HookServer {
 			return wallet.toLowerCase();
 		}
 		
-		/*
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			Util.forEach( wallet.reqPositionsMap(m_main.stocks().getAllContractsAddresses() ).entrySet(), entry -> {
-				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
-
-				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
-					JsonObject resp = new JsonObject();
-					resp.put("conId", stock.get("conid") );
-					resp.put("symbol", stock.get("symbol") );
-					resp.put("price", getPrice(stock) );
-					resp.put("quantity", entry.getValue() ); 
-					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
-				}
-			});
-			
-			retVal.sortJson( "symbol", true);
-			respond(retVal);
-
-		 */
 		public void handleGetStockPositions() {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
 				HookWallet wal = hookMap.get( walletAddr);
 				if (wal != null) {
 					JsonArray ar = new JsonArray();
-					wal.m_map.forEach( (address,position) -> ar.add( Util.toJson(
-							"address", address,
-							"position", position) ) );
+					
+//					wal.m_map.forEach( (address,position) -> ar.add( Util.toJson(
+//							"address", address,
+//							"position", position) ) );
 					respond(ar);
 				}
 				else {
@@ -148,25 +123,22 @@ public class HookServer {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
 				
-				HookWallet hookWallet = hookMap.get( walletAddr);
-				if (hookWallet == null) {
-					S.out( "requesting positions for %s", walletAddr);
-					Wallet wallet = new Wallet( walletAddr);
-					HashMap<String, Double> map = wallet.reqPositionsMap(m_array);
-					
-					hookWallet = new HookWallet( map);
-					hookMap.put( walletAddr, hookWallet);
+				HookWallet hookWallet;
+				
+				synchronized( hookMap) {
+					hookWallet = hookMap.get( walletAddr);
+					if (hookWallet == null) {
+						S.out( "Querying all positions for %s", walletAddr);
+	
+						HashMap<String, Double> positions = new Wallet( walletAddr)
+								.reqPositionsMap(m_array);
+						
+						hookWallet = new HookWallet( walletAddr, positions);
+						hookMap.put( walletAddr, hookWallet);
+					}
 				}
 				
-				JsonArray ar = new JsonArray();
-				hookWallet.m_map.forEach( (address,position) -> ar.add( Util.toJson( 
-						"address", address,
-						"position", position) ) );
-
-				JsonObject obj = new JsonObject();
-				obj.put( "native", hookWallet.nativeTok);
-				obj.put( "positions", ar);
-				respond( obj);
+				respond( hookWallet.getAllJson() );
 			});
 		}
 
@@ -178,31 +150,44 @@ public class HookServer {
 		public void handleWebhook() {
 			wrap( () -> {
 				JsonObject obj = parseToObject();
+				S.out( "Received " + obj);
+				
 				obj.getArray("erc20Transfers").forEach( trans -> {
 					String contract = trans.getString("contract").toLowerCase();
+					double amt = trans.getDouble("valueWithDecimals");
+					String from = trans.getString("from").toLowerCase(); 
+					String to = trans.getString("to").toLowerCase();
+					
 
-					S.out( "Transferred %s from %s to %s (%s)", 
+					S.out( "Received hook: %s transferred %s from %s to %s (%s)", 
 							contract, 
-							trans.getString("from"), 
-							trans.getString("to"),
+							amt,
+							from,
+							to,
 							obj.getBool("confirmed"));
 
-					
-					if (obj.getBool("confirmed") ) {
-						synchronized( hookMap) {
-							hookMap.remove( contract);
-						}
-					}
-					else {
-						HookWallet hookWallet = hookMap.get( contract);
-						if (hookWallet != null) {
-							hookWallet.process( contract, trans);
-						}
-					S.out();
+					// "confirmed" is our signal that something changed recently,
+					// it is completely done and we should re-query;
+					// one loophole is if two transactions are entered before the
+					// first one is confirmed
+					boolean confirmed = obj.getBool("confirmed");
+					adjust( from, contract, -amt, confirmed);
+					adjust( to, contract, amt, confirmed);
 				});
 				respondOk();
 			});
 		}
-	}
+		
+		void handleDump() {
+			S.out( "Dumping");
+			S.out( hookMap);
+		}
 
+		private void adjust(String wallet, String contract, double amt, boolean confirmed) {
+			HookWallet hookWallet = hookMap.get( wallet);
+			if (hookWallet != null) {
+				hookWallet.adjust( contract, amt, confirmed);
+			}
+		}
+	}
 }
