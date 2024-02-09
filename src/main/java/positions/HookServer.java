@@ -30,7 +30,7 @@ public class HookServer {
 	String[] m_array;
 
 	/** Map wallet, lower case to HookWal */ 
-	final HashMap<String,HookWallet> hookMap = new HashMap<>();
+	final HashMap<String,HookWallet> m_hookMap = new HashMap<>();
 	
 	public static void main(String[] args) {
 		try {
@@ -65,7 +65,7 @@ public class HookServer {
 			server.createContext("/webhook", exch -> new Trans(exch, true).handleWebhook() );
 			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
 //			server.createContext("/hook/get-stock-positions", exch -> new Trans(exch, true).handleGetStockPositions() );
-//			server.createContext("/hook/get-mywallet", exch -> new Trans(exch).handleGetMyWallet() );
+			server.createContext("/hook/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
 			server.createContext("/hook/get-all-positions", exch -> new Trans(exch, false).handleGetAllPositions() );
 //			server.createContext("/hook/status", exch -> new Trans(exch).handlesStatus() );
 			server.createContext("/hook/dump", exch -> new Trans(exch, false).handleDump() );
@@ -77,7 +77,7 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		Streams.createStream( list);
+		//Streams.createStream( list);
 	}
 
 	class Trans extends BaseTransaction {
@@ -95,7 +95,7 @@ public class HookServer {
 		public void handleGetStockPositions() {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
-				HookWallet wal = hookMap.get( walletAddr);
+				HookWallet wal = m_hookMap.get( walletAddr);
 				if (wal != null) {
 					JsonArray ar = new JsonArray();
 					
@@ -111,9 +111,45 @@ public class HookServer {
 			});
 		}
 
-		public void handleGetMyWallet() {
+		public void handleMyWallet() {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
+				
+				Wallet wallet = new Wallet(walletAddr);
+				HookWallet hookWallet = getHookWallet( walletAddr);
+				
+				JsonObject rusd = new JsonObject();
+				rusd.put( "name", "RUSD");
+				rusd.put( "balance", hookWallet.getBalance( m_config.rusdAddr() ) );
+				rusd.put( "tooltip", m_config.getTooltip(Config.Tooltip.rusdBalance) );
+				rusd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.redeemButton) );
+				
+				// fix a display issue where some users approved a huge size by mistake
+				double approved = Math.min(1000000,m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ));
+				
+				JsonObject busd = new JsonObject();
+				busd.put( "name", m_config.busd().name() );
+				busd.put( "balance", hookWallet.getBalance( m_config.busd().address() ) );
+				busd.put( "tooltip", m_config.getTooltip(Config.Tooltip.busdBalance) );
+				busd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.approveButton) );
+				busd.put( "approvedBalance", approved);
+				busd.put( "stablecoin", true);
+				
+				JsonObject base = new JsonObject();
+				base.put( "name", "MATIC");  // pull from config
+				base.put( "balance", hookWallet.getNativeBalance() );
+				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
+				
+				JsonArray ar = new JsonArray();
+				ar.add(rusd);
+				ar.add(busd);
+				ar.add(base);
+				
+				JsonObject obj = new JsonObject();
+				obj.put( "refresh", m_config.myWalletRefresh() );
+				obj.put( "tokens", ar);
+				respond(obj);
+				
 			});
 		}
 		
@@ -121,24 +157,18 @@ public class HookServer {
 		
 		public void handleGetAllPositions() {
 			wrap( () -> {
-				String walletAddr = getWalletFromUri();
+				respond( getHookWallet( getWalletFromUri() ).getAllJson() );
+			});
+		}
+
+		private HookWallet getHookWallet(String walletAddr) throws Exception {
+			return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {
+				S.out( "Querying all positions for %s", walletAddr);
+
+				HashMap<String, Double> positions = new Wallet( walletAddr)
+						.reqPositionsMap(m_array);
 				
-				HookWallet hookWallet;
-				
-				synchronized( hookMap) {
-					hookWallet = hookMap.get( walletAddr);
-					if (hookWallet == null) {
-						S.out( "Querying all positions for %s", walletAddr);
-	
-						HashMap<String, Double> positions = new Wallet( walletAddr)
-								.reqPositionsMap(m_array);
-						
-						hookWallet = new HookWallet( walletAddr, positions);
-						hookMap.put( walletAddr, hookWallet);
-					}
-				}
-				
-				respond( hookWallet.getAllJson() );
+				return new HookWallet( walletAddr, positions);
 			});
 		}
 
@@ -152,7 +182,7 @@ public class HookServer {
 				JsonObject obj = parseToObject();
 				S.out( "Received " + obj);
 				
-				obj.getArray("erc20Transfers").forEach( trans -> {
+				for (JsonObject trans : obj.getArray("erc20Transfers") ) {
 					String contract = trans.getString("contract").toLowerCase();
 					double amt = trans.getDouble("valueWithDecimals");
 					String from = trans.getString("from").toLowerCase(); 
@@ -173,21 +203,23 @@ public class HookServer {
 					boolean confirmed = obj.getBool("confirmed");
 					adjust( from, contract, -amt, confirmed);
 					adjust( to, contract, amt, confirmed);
-				});
+				};
 				respondOk();
 			});
+		}
+
+		private void adjust(String wallet, String contract, double amt, boolean confirmed) throws Exception {
+			HookWallet hookWallet = m_hookMap.get( wallet);
+			if (hookWallet != null) {
+				hookWallet.adjust( contract, amt, confirmed);
+			}
+			// if no hookWallet found, it means we are not yet tracking the positions
+			// for this wallet, and we would query all positions if a request comes in
 		}
 		
 		void handleDump() {
 			S.out( "Dumping");
-			S.out( hookMap);
-		}
-
-		private void adjust(String wallet, String contract, double amt, boolean confirmed) {
-			HookWallet hookWallet = hookMap.get( wallet);
-			if (hookWallet != null) {
-				hookWallet.adjust( contract, amt, confirmed);
-			}
+			S.out( m_hookMap);
 		}
 	}
 }

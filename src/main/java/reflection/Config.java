@@ -70,7 +70,7 @@ public class Config extends ConfigBase {
 	private String m_emailUsername;
 	private String m_emailPassword;
 	private int threads;
-	private int myWalletRefresh;
+	private int myWalletRefresh;  // "My Wallet" panel refresh interval
 	private double fbLookback;
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
@@ -437,7 +437,7 @@ public class Config extends ConfigBase {
 		return sellSpread;
 	}
 
-	enum Tooltip {
+	public enum Tooltip {
 		rusdBalance,
 		busdBalance,
 		baseBalance,
