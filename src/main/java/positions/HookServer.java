@@ -77,7 +77,7 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		Streams.createStream( Streams.erc20Transfers, list);
+		Streams.createStreamWithAddresses( Streams.erc20Transfers, list);
 	}
 
 	class Trans extends BaseTransaction {

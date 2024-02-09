@@ -1,9 +1,8 @@
 package positions;
 
-import static org.junit.jupiter.api.DynamicTest.stream;
-
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -27,6 +26,8 @@ public class Streams {
 //		createStream(erc20Transfers);
 		
 //		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
+	
+		createNative();
 		
 		displayStreams();
 //
@@ -39,6 +40,12 @@ public class Streams {
 //		System.exit(0);
 		S.sleep( 5*60*1000);
 	}
+	
+	private static void createNative() throws Exception {
+		createStreamWithAddresses(
+				String.format( nativeTrans, "0x5"),
+				Arrays.asList( "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce") );
+	}
 
 	private static void listen() throws IOException {
 		MyServer.listen( 8080, 10, server -> {
@@ -47,7 +54,7 @@ public class Streams {
 		});
 	}
 
-	private static void addAddressToStream(String id, ArrayList<String> list) throws Exception {
+	private static void addAddressToStream(String id, List<String> list) throws Exception {
 		S.out( "Adding addresses %s to stream %s", list, id);
 		
 	     String resp = MoralisServer.post(
@@ -65,7 +72,7 @@ public class Streams {
 	
 	static void displayStreams() throws Exception {
 		S.out( "Existing stream");
-		JsonObject obj = MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=2");
+		JsonObject obj = MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=5");
 		int total = obj.getInt("total");
 		JsonArray ar = obj.getArray("result");
 		
@@ -83,7 +90,7 @@ public class Streams {
 	}
 
 	/** Create the stream, add all addresses, and activate it */
-	static void createStream(String json, ArrayList<String> contracts) throws Exception {
+	static void createStreamWithAddresses(String json, List<String> contracts) throws Exception {
 		String id = createStream(json);
 		addAddressToStream(id, contracts);
 		setStatus( id, true);
@@ -133,6 +140,7 @@ public class Streams {
 	static String erc20Transfers = """
 	{
          "description" : "Monitor ERC20 transfers",
+         "chainIds" : [ "%s" ]
          "getNativeBalances" : [ ],
          "triggers" : [ ],
          "webhookUrl" : "http://108.6.23.121/hook/webhook",
@@ -167,56 +175,27 @@ public class Streams {
                "anonymous" : false,
                "type" : "event"
             }
-         ],
-         
-         "chainIds" : [
-            "0x5"
          ]
 	}
 	""";
 	
 	static String nativeTrans = """
 	{
-         "description" : "Monitor native transactions",
-         "getNativeBalances" : [ ],
-         "triggers" : [ ],
-         "webhookUrl" : "http://108.6.23.121/hook/webhook",
-         "includeContractLogs" : true,
-         "includeAllTxLogs" : false,
-         "allAddresses" : false,
-         "includeInternalTxs" : false,
-         "tag" : "hello",
-         
-         "topic0" : [
-            "Transfer(address,address,uint256)"
-         ],
-         
-         "abi" : [
-            {
-               "inputs" : [
-                  {
-                     "indexed" : true,
-                     "name" : "from",
-                     "type" : "address"
-                  }, {
-                     "indexed" : true,
-                     "name" : "to",
-                     "type" : "address"
-                  }, {
-                     "indexed" : false,
-                     "name" : "value",
-                     "type" : "uint256"
-                  }
-               ],
-               "name" : "Transfer",
-               "anonymous" : false,
-               "type" : "event"
-            }
-         ],
-         
-         "chainIds" : [
-            "0x5"
-         ]
+		"description": "Native transactions goerli",
+		"webhookUrl" : "http://108.6.23.121/hook/webhook",
+		"chainIds": [ "%s" ],
+		"tag": "my native goerli",
+		"demo": false,
+		"topic0": null,
+		"includeNativeTxs": true,
+		"allAddresses": false,
+		"includeContractLogs": false,
+		"includeInternalTxs": false,
+		"includeAllTxLogs": false,
+		"getNativeBalances": [],
+		"triggers": [],
+		"abi": null,
+		"advancedOptions": null
 	}
 	""";
 }
