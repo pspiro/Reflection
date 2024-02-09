@@ -56,7 +56,7 @@ public class HookServer {
 		Streams.deleteAll();  // not sure I need this
 		
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
-		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
+//		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
 		m_array = list.toArray( new String[list.size()]);
@@ -77,7 +77,7 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		Streams.createStream( list);
+		Streams.createStream( Streams.erc20Transfers, list);
 	}
 
 	class Trans extends BaseTransaction {
