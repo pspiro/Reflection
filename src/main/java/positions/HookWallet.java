@@ -6,18 +6,21 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Busd;
 import fireblocks.Erc20;
 import tw.util.S;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case
 	private HashMap<String,Double> m_map = new HashMap<>(); // map contract to token position
-	private double m_nativeTok;
+	private double m_nativeBal;
 	private double m_approved;
 	
-	HookWallet( String walletAddr, HashMap<String,Double> map) {
+	HookWallet( String walletAddr, HashMap<String,Double> map, double approved, double nativeBal) {
 		m_walletAddr = walletAddr;
 		m_map = map;
+		m_approved = approved;
+		m_nativeBal = nativeBal;
 	}
 	
 	// 1. synchronize access to this map
@@ -68,7 +71,7 @@ class HookWallet {
 
 	public JsonObject getAllJson() {
 		JsonObject obj = new JsonObject();
-		obj.put( "native", m_nativeTok);
+		obj.put( "native", m_nativeBal);
 		obj.put( "approved", m_approved);
 		obj.put( "positions", getJsonPositions() );
 		return obj;
@@ -79,6 +82,10 @@ class HookWallet {
 	}
 
 	public double getNativeBalance() {
-		return m_nativeTok;
+		return m_nativeBal;
+	}
+
+	public double getAllowance(Busd busd, String walletAddr, String rusdAddr) throws Exception {
+		return busd.getAllowance(walletAddr, rusdAddr);
 	}
 }

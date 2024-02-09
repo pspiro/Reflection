@@ -66,6 +66,7 @@ public class HookServer {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
 //			server.createContext("/hook/get-stock-positions", exch -> new Trans(exch, true).handleGetStockPositions() );
 			server.createContext("/hook/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
+			server.createContext("/api/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
 			server.createContext("/hook/get-all-positions", exch -> new Trans(exch, false).handleGetAllPositions() );
 //			server.createContext("/hook/status", exch -> new Trans(exch).handlesStatus() );
 			server.createContext("/hook/dump", exch -> new Trans(exch, false).handleDump() );
@@ -77,7 +78,7 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		//Streams.createStream( list);
+		//Streams.createStreamWithAddresses( Streams.erc20Transfers, list);
 	}
 
 	class Trans extends BaseTransaction {
@@ -116,7 +117,7 @@ public class HookServer {
 				String walletAddr = getWalletFromUri();
 				
 				Wallet wallet = new Wallet(walletAddr);
-				HookWallet hookWallet = getHookWallet( walletAddr);
+				HookWallet hookWallet = getOrCreateHookWallet( walletAddr);
 				
 				JsonObject rusd = new JsonObject();
 				rusd.put( "name", "RUSD");
@@ -124,8 +125,10 @@ public class HookServer {
 				rusd.put( "tooltip", m_config.getTooltip(Config.Tooltip.rusdBalance) );
 				rusd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.redeemButton) );
 				
+				double approved = hookWallet.getAllowance(m_config.busd(), walletAddr, m_config.rusdAddr() );
+
 				// fix a display issue where some users approved a huge size by mistake
-				double approved = Math.min(1000000,m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() ));
+				approved = Math.min(1000000, approved);
 				
 				JsonObject busd = new JsonObject();
 				busd.put( "name", m_config.busd().name() );
@@ -136,7 +139,7 @@ public class HookServer {
 				busd.put( "stablecoin", true);
 				
 				JsonObject base = new JsonObject();
-				base.put( "name", "MATIC");  // pull from config
+				base.put( "name", m_config.nativeTok() );
 				base.put( "balance", hookWallet.getNativeBalance() );
 				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
 				
@@ -149,7 +152,6 @@ public class HookServer {
 				obj.put( "refresh", m_config.myWalletRefresh() );
 				obj.put( "tokens", ar);
 				respond(obj);
-				
 			});
 		}
 		
@@ -157,18 +159,23 @@ public class HookServer {
 		
 		public void handleGetAllPositions() {
 			wrap( () -> {
-				respond( getHookWallet( getWalletFromUri() ).getAllJson() );
+				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson() );
 			});
 		}
 
-		private HookWallet getHookWallet(String walletAddr) throws Exception {
+		private HookWallet getOrCreateHookWallet(String walletAddr) throws Exception {
 			return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {
 				S.out( "Querying all positions for %s", walletAddr);
-
 				HashMap<String, Double> positions = new Wallet( walletAddr)
 						.reqPositionsMap(m_array);
 				
-				return new HookWallet( walletAddr, positions);
+				S.out( "Querying approval for %s", walletAddr);
+				double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
+				
+				S.out( "Querying native balance for %s", walletAddr);
+				double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+				
+				return new HookWallet( walletAddr, positions, approved, nativeBal);
 			});
 		}
 
@@ -181,6 +188,9 @@ public class HookServer {
 			wrap( () -> {
 				JsonObject obj = parseToObject();
 				S.out( "Received " + obj);
+				
+				for (JsonObject trans : obj.getArray("approvals") ) {
+				}
 				
 				for (JsonObject trans : obj.getArray("erc20Transfers") ) {
 					String contract = trans.getString("contract").toLowerCase();

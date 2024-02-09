@@ -203,9 +203,9 @@ public class Config extends ConfigBase {
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
+		this.platformBase = m_tab.getRequiredString("platformBase");
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.platformBase = m_tab.getRequiredString("platformBase");
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
@@ -426,7 +426,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform) || "MATIC".equals(platformBase);  
+		return "polygon".equals(moralisPlatform);  
 	}
 	
 	public double buySpread() {
@@ -532,5 +532,10 @@ public class Config extends ConfigBase {
 	
 	public int hookServerPort() {
 		return hookServerPort;
+	}
+
+	/** Pull native token from Fireblocks */
+	public String nativeTok() {
+		return platformBase.split("_")[0];
 	}
 }
