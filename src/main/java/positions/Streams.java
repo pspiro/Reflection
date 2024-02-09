@@ -1,5 +1,7 @@
 package positions;
 
+import static fireblocks.Accounts.instance;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -10,26 +12,33 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import fireblocks.Busd;
 import fireblocks.MyServer;
 import http.BaseTransaction;
+import reflection.Config;
 import tw.util.S;
 
 // Q: does JsonObject translate // back and forth to \/\/?
 // Q my question is, if allAddresses is set to false, how do I specify which contract it listens to?
 
 public class Streams {
+	static String webhookUrl = "http://108.6.23.121/hook/webhook";
+
 	public static void main(String[] args) throws Exception {
 //		listen();
-		//deleteAll();
+//		deleteAll();
+//
+//		createNative();
 
 //		S.out( "Creating stream");
 //		createStream(erc20Transfers);
 		
 //		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
 	
-		createNative();
+		//createNative();
+		testApprovals();
 		
-		displayStreams();
+//		displayStreams();
 //
 ////
 //		deleteStream(id);
@@ -41,15 +50,39 @@ public class Streams {
 		S.sleep( 5*60*1000);
 	}
 	
+	static void testApprovals() throws Exception {
+		String str = String.format( approval, webhookUrl, "0x5");
+		S.out( "string");
+		S.out(str);
+		S.out();
+		S.out("obj");
+		S.out( JsonObject.parse(str) );
+		JsonObject.parse(str).display();
+
+		Config config = Config.ask();
+		createApprovalStream( config.busd().address() );		
+		config.busd().approve( 
+				instance.getId( "RefWallet"), // called by
+				config.rusd().address(), // approving
+				100);
+		
+	}
+	
 	private static void createNative() throws Exception {
 		createStreamWithAddresses(
-				String.format( nativeTrans, "0x5"),
+				String.format( nativeTrans, webhookUrl, "0x5"),
 				Arrays.asList( "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce") );
+	}
+
+	private static void createApprovalStream(String address) throws Exception {
+		createStreamWithAddresses(
+				String.format( approval, webhookUrl, "0x5"),
+				Arrays.asList( address) );
 	}
 
 	private static void listen() throws IOException {
 		MyServer.listen( 8080, 10, server -> {
-			server.createContext("/webhook", exch -> new Trans(exch).handleWebhook() );
+			server.createContext("/hook/webhook", exch -> new Trans(exch).handleWebhook() );
 			server.createContext("/", exch -> new Trans(exch).respondOk() );
 		});
 	}
@@ -77,8 +110,9 @@ public class Streams {
 		JsonArray ar = obj.getArray("result");
 		
 		for (JsonObject stream : ar) {
-			S.out( "Stream " + stream.getString("description") );
-			S.out( stream);
+			stream.display();
+//			S.out( "Stream " + stream.getString("description") );
+//			S.out( stream);
 			displayAddresses( stream.getString("id") );
 		}
 	}
@@ -97,9 +131,11 @@ public class Streams {
 	}
 
 	private static String createStream(String json) throws Exception {
-		//JsonObject json = JsonObject.parse( body);
+		// very weird and annoying--only the "approvals" stream breaks without this!
+		json = JsonObject.parse( json).toString();
+		
 		JsonObject obj = JsonObject.parse(
-				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json) );
+				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json.toString() ) );
 		String id = obj.getString("id");
 		setStatus( id, true);
 		return id;
@@ -139,16 +175,16 @@ public class Streams {
 
 	static String erc20Transfers = """
 	{
-         "description" : "Monitor ERC20 transfers",
+         "description" : "ERC20 transfers",
+         "webhookUrl" : "%s",
          "chainIds" : [ "%s" ]
+         "tag" : "ERC20 trans",
          "getNativeBalances" : [ ],
          "triggers" : [ ],
-         "webhookUrl" : "http://108.6.23.121/hook/webhook",
          "includeContractLogs" : true,
          "includeAllTxLogs" : false,
          "includeInternalTxs" : false,
          "allAddresses" : false,
-         "tag" : "hello",
          
          "topic0" : [
             "Transfer(address,address,uint256)"
@@ -179,23 +215,62 @@ public class Streams {
 	}
 	""";
 	
+	
 	static String nativeTrans = """
 	{
-		"description": "Native transactions goerli",
-		"webhookUrl" : "http://108.6.23.121/hook/webhook",
+		"description": "Native token transfers",
+		"webhookUrl" : "%s",
 		"chainIds": [ "%s" ],
-		"tag": "my native goerli",
+		"tag": "native trans",
 		"demo": false,
-		"topic0": null,
 		"includeNativeTxs": true,
 		"allAddresses": false,
 		"includeContractLogs": false,
 		"includeInternalTxs": false,
-		"includeAllTxLogs": false,
-		"getNativeBalances": [],
-		"triggers": [],
-		"abi": null,
-		"advancedOptions": null
+		"includeAllTxLogs": false
+	}
+	""";
+	
+	static String approval = """
+	{
+		"description" : "Approvals",
+		"webhookUrl" : "%s",
+		"chainIds" : [ "%s" ],
+		"tag" : "approvals",
+		"includeNativeTxs" : false,
+		"includeContractLogs" : true,
+		"includeAllTxLogs" : false,
+		"allAddresses" : false,
+		"includeInternalTxs" : false,
+	
+		"topic0" : [
+			"Approval(address,address,uint256)"
+		],
+	
+		"abi" : [
+			{
+				"inputs" : [
+					{
+						"indexed" : true,
+						"name" : "owner",
+						"type" : "address",
+					},
+					{
+						"indexed" : true,
+						"name" : "spender",
+						"type" : "address"
+					},
+					{
+						"indexed" : false,
+						"name" : "value",
+						"type" : "uint256"
+					}
+				],
+				"name" : "Approval",
+				"anonymous" : false,
+				"type" : "event"
+			}
+		]
 	}
 	""";
 }

@@ -244,7 +244,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 						out( ",\n");
 					}
 
-					out( "%s%s : ", Util.tab( level+1), key);
+					out( "%s\"%s\" : ", Util.tab( level+1), key);
 					display( val, level + 1, false);
 					first = false;
 				}
