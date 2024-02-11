@@ -43,7 +43,7 @@ class HookWallet {
 	public void adjust(String contract, double amt, boolean confirmed) throws Exception {
 		if (!confirmed) {
 			Erc20.inc( m_map, contract, amt);
-			S.out( "Updated %s/%s to %s", m_walletAddr, contract, m_map.get(contract) );
+			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
 			// this should only occur if we missed the unconfirmed event, i.e. if
@@ -53,7 +53,7 @@ class HookWallet {
 			// I don't understand something
 			double bal = new Wallet(m_walletAddr).getBalance( contract);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
-				S.out( "Warning: updated %s/%s to %s", m_walletAddr, contract, bal);
+				S.out( "Warning: updated %s / %s to %s", m_walletAddr, contract, bal);
 				m_map.put( contract, bal);
 			}
 		}

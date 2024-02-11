@@ -176,7 +176,6 @@ public class HookServer {
 				S.out( "  querying native balance", walletAddr);
 				double nativeBal = MoralisServer.getNativeBalance( walletAddr);
 				
-				S.out( "  adding address to native balance stream");
 				Streams.addAddressToStream( nativeStreamId, walletAddr);
 				
 				return new HookWallet( walletAddr, positions, approved, nativeBal);
@@ -212,8 +211,8 @@ public class HookServer {
 				double amt = trans.getDouble("value") / ten18;
 
 				if (amt != 0) {
-					String from = trans.getString("from").toLowerCase(); 
-					String to = trans.getString("to").toLowerCase();
+					String from = trans.getString("fromAddress").toLowerCase(); 
+					String to = trans.getString("toAddress").toLowerCase();
 
 					S.out( "Received hook [%s]: transferred %s native balance from %s to %s (%s)",
 							tag,
