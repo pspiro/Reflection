@@ -733,6 +733,14 @@ public class Util {
 		return t;
 	}
 	
+	public static <T,V> void lookup( HashMap<T,V> map, T tag, ExConsumer<V> consumer) throws Exception {
+		V val = map.get( tag);
+		if (val != null) {
+			consumer.accept(val);
+		}
+	}
+			
+	
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();
 //	}

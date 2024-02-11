@@ -24,10 +24,12 @@ import tw.util.S;
 // want to play back old updates
 
 public class HookServer {
+	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
-	final Config m_config = new Config();
+	final HookServerConfig m_config = new HookServerConfig();
 	final Stocks stocks = new Stocks();
-	String[] m_array;
+	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
+	String nativeStreamId;
 
 	/** Map wallet, lower case to HookWal */ 
 	final HashMap<String,HookWallet> m_hookMap = new HashMap<>();
@@ -55,22 +57,21 @@ public class HookServer {
 		
 		Streams.deleteAll();  // not sure I need this
 		
+		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
 		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
-		m_array = list.toArray( new String[list.size()]);
+		m_allContracts = list.toArray( new String[list.size()]);
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
-			server.createContext("/webhook", exch -> new Trans(exch, true).handleWebhook() );
 			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
-//			server.createContext("/hook/get-stock-positions", exch -> new Trans(exch, true).handleGetStockPositions() );
+			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
+			server.createContext("/hook/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
 			server.createContext("/hook/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
 			server.createContext("/api/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
-			server.createContext("/hook/get-all-positions", exch -> new Trans(exch, false).handleGetAllPositions() );
-//			server.createContext("/hook/status", exch -> new Trans(exch).handlesStatus() );
+
 			server.createContext("/hook/dump", exch -> new Trans(exch, false).handleDump() );
-			
 			server.createContext("/hook/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
 			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
@@ -78,7 +79,9 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		//Streams.createStreamWithAddresses( Streams.erc20Transfers, list);
+		createTransfersStream( m_allContracts);
+		createNativeStream();
+		createApprovalStream();
 	}
 
 	class Trans extends BaseTransaction {
@@ -93,30 +96,27 @@ public class HookServer {
 			return wallet.toLowerCase();
 		}
 		
-		public void handleGetStockPositions() {
+		/** Return all data about the requested wallet; if we don't have the data already,
+		 *  we will request it; for debugging only */
+		public void handleGetWallet() {
 			wrap( () -> {
-				String walletAddr = getWalletFromUri();
-				HookWallet wal = m_hookMap.get( walletAddr);
-				if (wal != null) {
-					JsonArray ar = new JsonArray();
-					
-//					wal.m_map.forEach( (address,position) -> ar.add( Util.toJson(
-//							"address", address,
-//							"position", position) ) );
-					respond(ar);
-				}
-				else {
-					Wallet wallet = new Wallet(walletAddr);
-					HashMap<String, Double> map = wallet.reqPositionsMap(); //m_array);
-				}
+				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson() );
 			});
 		}
 
+		/** Return all wallets that we currently have in the map */
+		public void handleGetAllWallets() {
+			wrap( () -> {
+				JsonArray ar = new JsonArray();
+				Util.forEach( m_hookMap.values(), hookWallet -> ar.add( hookWallet.getAllJson() ) );
+				respond( ar);
+			});
+		}
+		
 		public void handleMyWallet() {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
 				
-				Wallet wallet = new Wallet(walletAddr);
 				HookWallet hookWallet = getOrCreateHookWallet( walletAddr);
 				
 				JsonObject rusd = new JsonObject();
@@ -156,24 +156,28 @@ public class HookServer {
 		}
 		
 		// don't forget about syncing
-		
-		public void handleGetAllPositions() {
-			wrap( () -> {
-				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson() );
-			});
-		}
 
 		private HookWallet getOrCreateHookWallet(String walletAddr) throws Exception {
-			return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {
-				S.out( "Querying all positions for %s", walletAddr);
+			return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {  // call is synced on m_hookMap
+				S.out( "Creating HookWallet for %s", walletAddr);
+				
+				S.out( "  querying all positions");
 				HashMap<String, Double> positions = new Wallet( walletAddr)
-						.reqPositionsMap(m_array);
+						.reqPositionsMap(m_allContracts);
 				
-				S.out( "Querying approval for %s", walletAddr);
+				S.out( "  querying approval", walletAddr);
 				double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
+				S.out( "    contr:%s  wal:%s  spender:%s  amt:%s", 
+						m_config.busd().address(),
+						walletAddr,
+						m_config.rusdAddr(),
+						approved);
 				
-				S.out( "Querying native balance for %s", walletAddr);
+				S.out( "  querying native balance", walletAddr);
 				double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+				
+				S.out( "  adding address to native balance stream");
+				Streams.addAddressToStream( nativeStreamId, walletAddr);
 				
 				return new HookWallet( walletAddr, positions, approved, nativeBal);
 			});
@@ -184,22 +188,72 @@ public class HookServer {
 			});
 		}
 
-		public void handleWebhook() {
+		void handleWebhook() {
 			wrap( () -> {
-				JsonObject obj = parseToObject();
-				S.out( "Received " + obj);
-				
-				for (JsonObject trans : obj.getArray("approvals") ) {
+				if (m_exchange.getRequestBody().available() == 0) {
+					S.out( "  (no data)");
 				}
-				
-				for (JsonObject trans : obj.getArray("erc20Transfers") ) {
-					String contract = trans.getString("contract").toLowerCase();
-					double amt = trans.getDouble("valueWithDecimals");
+				else {
+					handleHookWithData();
+				}
+				respondOk();
+			});
+		}
+		
+		private void handleHookWithData() throws Exception {
+			JsonObject obj = parseToObject();
+			S.out( "Received " + obj);
+			
+			String tag = obj.getString("tag");
+			boolean confirmed = obj.getBool("confirmed");
+			
+			// process native transactions
+			for (JsonObject trans : obj.getArray("txs" ) ) {
+				double amt = trans.getDouble("value") / ten18;
+
+				if (amt != 0) {
 					String from = trans.getString("from").toLowerCase(); 
 					String to = trans.getString("to").toLowerCase();
-					
 
-					S.out( "Received hook: %s transferred %s from %s to %s (%s)", 
+					S.out( "Received hook [%s]: transferred %s native balance from %s to %s (%s)",
+							tag,
+							amt,
+							from,
+							to,
+							obj.getBool("confirmed"));
+
+					adjustNativeBalance( from, -amt, confirmed);
+					adjustNativeBalance( to, amt, confirmed);
+				}
+			}
+			
+			// process approvals
+			for (JsonObject trans : obj.getArray("approvals") ) {
+				String contract = trans.getString("contract");
+				
+				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
+					String owner = trans.getString("owner");
+					String spender = trans.getString("spender");
+					double amt = trans.getDouble("valueWithDecimals");
+
+					S.out( "Received hook [%s]: on %s, %s can spend %s on behalf of %s",
+							contract, spender, amt, owner);
+							
+					Util.lookup( m_hookMap, owner, hookWallet -> hookWallet.approved( amt) );
+				}
+			}
+			
+			// process ERC20 transfers
+			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
+				double amt = trans.getDouble("valueWithDecimals");
+
+				if (amt != 0) {
+					String contract = trans.getString("contract").toLowerCase();
+					String from = trans.getString("from").toLowerCase(); 
+					String to = trans.getString("to").toLowerCase();
+
+					S.out( "Received hook [%s]: %s transferred %s from %s to %s (%s)",
+							tag,
 							contract, 
 							amt,
 							from,
@@ -210,26 +264,51 @@ public class HookServer {
 					// it is completely done and we should re-query;
 					// one loophole is if two transactions are entered before the
 					// first one is confirmed
-					boolean confirmed = obj.getBool("confirmed");
-					adjust( from, contract, -amt, confirmed);
-					adjust( to, contract, amt, confirmed);
-				};
-				respondOk();
-			});
+					adjustTokenBalance( from, contract, -amt, confirmed);
+					adjustTokenBalance( to, contract, amt, confirmed);
+				}
+			};
 		}
 
-		private void adjust(String wallet, String contract, double amt, boolean confirmed) throws Exception {
-			HookWallet hookWallet = m_hookMap.get( wallet);
-			if (hookWallet != null) {
-				hookWallet.adjust( contract, amt, confirmed);
-			}
+		private void adjustTokenBalance(String wallet, String contract, double amt, boolean confirmed) throws Exception {
+			Util.lookup( m_hookMap, wallet, hookWallet -> hookWallet.adjust( contract, amt, confirmed) );
+
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in
 		}
 		
+		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
+			Util.lookup( m_hookMap, wallet, hookWallet -> hookWallet.adjustNative( amt, confirmed) );
+			
+			// if no hookWallet found, it means we are not yet tracking the positions
+			// for this wallet, and we would query all positions if a request comes in
+		}
+
 		void handleDump() {
 			S.out( "Dumping");
 			S.out( m_hookMap);
 		}
+	}
+	
+	void createTransfersStream(String... contracts) throws Exception {
+		S.out( "Creating transfer stream");
+		Streams.createStreamWithAddresses(
+				String.format( Streams.erc20Transfers, m_config.hookServerUrl(), "0x5"),
+				contracts);
+	}
+
+	/** This could be improved so that you always get the current balance back with the web hook */
+	void createNativeStream() throws Exception {
+		S.out( "Creating native stream");
+		nativeStreamId = Streams.createStreamWithAddresses(
+				String.format( Streams.nativeTrans, m_config.hookServerUrl(), "0x5") );
+	}
+
+	/** Listen for approvals on the contract, e.g. USDT */
+	void createApprovalStream() throws Exception {
+		S.out( "Creating approval stream");
+		Streams.createStreamWithAddresses(
+				String.format( Streams.approval, m_config.hookServerUrl(), "0x5"),
+				m_config.busd().address() );
 	}
 }

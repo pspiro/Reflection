@@ -530,12 +530,13 @@ public class Config extends ConfigBase {
 		return maxAutoRedeem;
 	}
 	
-	public int hookServerPort() {
-		return hookServerPort;
-	}
-
 	/** Pull native token from Fireblocks */
 	public String nativeTok() {
 		return platformBase.split("_")[0];
 	}
+	
+	public int hookServerPort() {
+		return hookServerPort;
+	}
+
 }

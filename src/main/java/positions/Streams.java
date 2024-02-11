@@ -1,10 +1,7 @@
 package positions;
 
-import static fireblocks.Accounts.instance;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -21,11 +18,12 @@ import tw.util.S;
 // Q my question is, if allAddresses is set to false, how do I specify which contract it listens to?
 
 public class Streams {
-	static String webhookUrl = "http://108.6.23.121/hook/webhook";
 
 	public static void main(String[] args) throws Exception {
+		Config.ask();
+		
 //		listen();
-//		deleteAll();
+		deleteAll();
 //
 //		createNative();
 
@@ -35,7 +33,6 @@ public class Streams {
 //		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
 	
 		//createNative();
-		testApprovals();
 		
 //		displayStreams();
 //
@@ -49,36 +46,6 @@ public class Streams {
 		S.sleep( 5*60*1000);
 	}
 	
-	static void testApprovals() throws Exception {
-		String str = String.format( approval, webhookUrl, "0x5");
-		S.out( "string");
-		S.out(str);
-		S.out();
-		S.out("obj");
-		S.out( JsonObject.parse(str) );
-		JsonObject.parse(str).display();
-
-		Config config = Config.ask();
-		createApprovalStream( config.busd().address() );		
-		config.busd().approve( 
-				instance.getId( "RefWallet"), // called by
-				config.rusd().address(), // approving
-				100);
-		
-	}
-	
-	private static void createNative() throws Exception {
-		createStreamWithAddresses(
-				String.format( nativeTrans, webhookUrl, "0x5"),
-				Arrays.asList( "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce") );
-	}
-
-	private static void createApprovalStream(String address) throws Exception {
-		createStreamWithAddresses(
-				String.format( approval, webhookUrl, "0x5"),
-				Arrays.asList( address) );
-	}
-
 	private static void listen() throws IOException {
 		MyServer.listen( 8080, 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch).handleWebhook() );
@@ -86,32 +53,32 @@ public class Streams {
 		});
 	}
 
-	private static void addAddressToStream(String id, List<String> list) throws Exception {
-		S.out( "Adding addresses %s to stream %s", list, id);
-		
-	     String resp = MoralisServer.post(
-	    		 String.format( "https://api.moralis-streams.com/streams/evm/%s/address", id), 
-	    		 Util.toJson( "address", list).toString() );
-	     S.out( resp);
+	static void addAddressToStream(String id, String... list) throws Exception {
+		if (list.length > 0) {
+			S.out( "Adding addresses [%s] to stream %s", String.join(", ", list), id);
+			
+		     MoralisServer.post(
+		    		 String.format( "https://api.moralis-streams.com/streams/evm/%s/address", id), 
+		    		 Util.toJson( "address", list).toString() );
+		}
 	}
 	
 	public static void deleteAll() throws Exception {		
 		MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
 			.getArray("result").forEach( stream -> Util.wrap( () ->
 				deleteStream( stream.getString("id") ) ) );
-				//setStatus( stream.getString("id"), false) ) );
 	}
 	
 	static void displayStreams() throws Exception {
-		S.out( "Existing stream");
+		S.out( "Existing streams");
 		JsonObject obj = MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=5");
 		int total = obj.getInt("total");
 		JsonArray ar = obj.getArray("result");
 		
 		for (JsonObject stream : ar) {
-			stream.display();
-//			S.out( "Stream " + stream.getString("description") );
-//			S.out( stream);
+//			stream.display();
+			S.out( "Stream " + stream.getString("description") );
+			S.out( stream);
 			displayAddresses( stream.getString("id") );
 		}
 	}
@@ -122,20 +89,15 @@ public class Streams {
 		S.out( "  " + obj);
 	}
 
-	/** Create the stream, add all addresses, and activate it */
-	static void createStreamWithAddresses(String json, List<String> contracts) throws Exception {
-		String id = createStream(json);
-		addAddressToStream(id, contracts);
-		setStatus( id, true);
-	}
+	/** @return stream id */
+	static String createStreamWithAddresses(String json, String... contracts) throws Exception {
+		json = JsonObject.parse( json).toString();  // very weird and annoying--only the "approvals" stream breaks without this!
 
-	private static String createStream(String json) throws Exception {
-		// very weird and annoying--only the "approvals" stream breaks without this!
-		json = JsonObject.parse( json).toString();
-		
 		JsonObject obj = JsonObject.parse(
 				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json.toString() ) );
 		String id = obj.getString("id");
+
+		addAddressToStream(id, contracts);
 		setStatus( id, true);
 		return id;
 	}
@@ -272,4 +234,5 @@ public class Streams {
 		]
 	}
 	""";
+
 }

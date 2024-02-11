@@ -1,5 +1,7 @@
 package fireblocks;
 
+import static fireblocks.Accounts.instance;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
@@ -243,8 +246,21 @@ public class Erc20 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-//		Config config = Config.readFrom("Prod-config"); //ask();
-//		config.readStocks().getStock("AAPL").getToken().showBalances();
+		Config config = Config.ask();
+
+		config.busd().approve( 
+				instance.getId( "RefWallet"), // called by
+				config.rusd().address(), // approving
+				20).waitForHash();
+		
+		String a = instance.getAddress("RefWallet");
+		S.out( a);
+		double approved = config.busd().getAllowance(
+				a, 
+				config.rusdAddr() );
+		
+		
+		S.out( approved);
 	}
 	
 	public static void inc(HashMap<String, Double> map, String address, double amt) {

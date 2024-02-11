@@ -147,12 +147,19 @@ public class S {
 		}
 		
 		for (int i = 0; i < params.length; i++) {
-			if (params[i] instanceof Double) {
-				params[i] = fmt2( ((Double)params[i]).doubleValue() );
+			Object param = params[i];
+			
+			if (param instanceof Double) {
+				params[i] = fmt2( ((Double)param).doubleValue() );
 			}
-			else if (params[i] instanceof Integer && ((int)params[i]) == Integer.MAX_VALUE) {
+			else if (param instanceof Integer && ((int)param) == Integer.MAX_VALUE) {
 				params[i] = NONE;
 			}
+			// this doesn't work because it interprets the String[] as the Object[]
+//			else if (param.getClass().isArray() && 
+//					param.getClass().getComponentType().equals(String.class) ) {
+//				params[i] = String.format( "[%s]", String.join( ", ", (String[])param) );
+//			}
 		}
 		
 		try {

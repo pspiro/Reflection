@@ -8,6 +8,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Busd;
 import fireblocks.Erc20;
+import reflection.Stocks;
 import tw.util.S;
 
 class HookWallet {
@@ -45,20 +46,34 @@ class HookWallet {
 			S.out( "Updated %s/%s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = new Wallet(m_walletAddr).getBalance( contract);
-			
 			// this should only occur if we missed the unconfirmed event, i.e. if
 			// the HookServer was started after the event came in or if the
 			// event came in after the new position was returned in the position query;
 			// we should see this infrequently; if we see it frequently, it means
 			// I don't understand something
+			double bal = new Wallet(m_walletAddr).getBalance( contract);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
 				S.out( "Warning: updated %s/%s to %s", m_walletAddr, contract, bal);
 				m_map.put( contract, bal);
 			}
 		}
 	}
+	
+	public void adjustNative( double amt, boolean confirmed) throws Exception {
+		if (!confirmed) {
+			m_nativeBal += amt;
+			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
+		}
+		else {
+			double bal = MoralisServer.getNativeBalance(m_walletAddr);
+			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
+				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
+				m_nativeBal = bal;
+			}
+		}
+	}
 
+	/** Return all positions; for debugging */
 	private JsonArray getJsonPositions() {
 		JsonArray ar = new JsonArray();
 		m_map.forEach( (address,position) -> {
@@ -69,11 +84,13 @@ class HookWallet {
 		return ar;
 	}
 
+	/** For debugging */
 	public JsonObject getAllJson() {
 		JsonObject obj = new JsonObject();
 		obj.put( "native", m_nativeBal);
 		obj.put( "approved", m_approved);
 		obj.put( "positions", getJsonPositions() );
+		obj.put( "wallet", m_walletAddr);
 		return obj;
 	}
 
@@ -88,4 +105,9 @@ class HookWallet {
 	public double getAllowance(Busd busd, String walletAddr, String rusdAddr) throws Exception {
 		return busd.getAllowance(walletAddr, rusdAddr);
 	}
+
+	public void approved(double amt) {
+		m_approved = amt;
+	}
+
 }
