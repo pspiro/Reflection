@@ -15,10 +15,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Transactions;
+import http.MyClient;
 import http.MyHttpClient;
 import redis.MyRedis;
 import reflection.Stocks;
@@ -106,6 +108,7 @@ public class Monitor {
 		m_tabs.addTab( "RefAPI Prices", pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
+		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
@@ -296,11 +299,25 @@ public class Monitor {
 			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
 		}
 		
-		@Override
+		@Override  // this is wrong, should use base url
 		public void refresh() throws Exception {
-			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
-			client.get( "/fbserver/get-all");
-			setRows( client.readJsonArray() );
+			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class HookServerPanel extends JsonPanel {
+		HookServerPanel() throws Exception {
+			super( new BorderLayout(), String.format( 
+					"RUSD,%s,%s,Positions", m_config.busd().name(), m_config.nativeTok() ) );
+			
+			add( m_model.createTable() );
+		}
+		
+		@Override protected void refresh() throws Exception {
+			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/hook/get-all-wallets");
+			setRows( ar);
 			m_model.fireTableDataChanged();
 		}
 	}

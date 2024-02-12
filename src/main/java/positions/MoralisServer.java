@@ -21,13 +21,6 @@ public class MoralisServer {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	
-	public static JsonObject queryTransaction( String transactionHash) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/transaction/%s?chain=%s",
-				moralis, transactionHash, chain);
-		return queryObject( url);
-	}
-	
 	public static JsonObject queryObject(String url) throws Exception {
 		return JsonObject.parse( querySync(url) );
 	}
@@ -41,11 +34,11 @@ public class MoralisServer {
 				.query().body();
 	}
 
-	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
-				moralis, contractAddress, chain, functionName);
-		return post( url, abi);
+	public static String delete(String url) throws Exception {
+		return MyClient.createDelete(url)
+				.header("accept", "application/json")
+				.header("X-API-Key", apiKey)
+				.query().body();
 	}
 
 	public static String put(String url, String body) throws Exception {
@@ -56,7 +49,7 @@ public class MoralisServer {
 		return putOrPost( url, body, false);
 	}
 		
-	public static String putOrPost(String url, String body, boolean put) throws Exception {
+	private static String putOrPost(String url, String body, boolean put) throws Exception {
 		MyClient client = put ? MyClient.createPut(url, body) : MyClient.create( url, body);
 		
 		HttpResponse<String> resp = client
@@ -68,6 +61,26 @@ public class MoralisServer {
 				"Moralis error  url=%s  code=%s  body=%s",
 				url, resp.statusCode(), resp.body() );
 		return resp.body();
+	}
+
+
+	public static String queryBalances(String contract) throws Exception {
+		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
+		return querySync( url);
+	}
+	
+	public static JsonObject queryTransaction( String transactionHash) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+		String url = String.format( "%s/transaction/%s?chain=%s",
+				moralis, transactionHash, chain);
+		return queryObject( url);
+	}
+	
+	public static String contractCall( String contractAddress, String functionName, String abi) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+		String url = String.format( "%s/%s/function?chain=%s&function_name=%s",
+				moralis, contractAddress, chain, functionName);
+		return post( url, abi);
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -200,23 +213,4 @@ public class MoralisServer {
 	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
-	
-	/** 
-	 * must include one of
-	 * includeContractLogs, includeNativeTxs, includeInternalTxs 
-	 */
-	private void createStream() {
-//		String url = String.format( "%s/%s/erc20/balances?chain=%s", streams, contract, chain);
-//		querySync(url);
-		
-//    --url 'https://api.moralis-streams.com/streams/evm' \
-//    --header 'accept: application/json' \
-//    --header 'X-API-Key: YOUR_API_KEY' 
-	}
-	
 }
-
-// topic0 is full keccak of the event (initial cap)
-
-//transferTopic
-//0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef

@@ -26,9 +26,9 @@ import static common.Util.hhmmss;
  *  Note that this functionality could be included in the RefAPI but has been broken
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbServer {
-	static TreeMap<String,Trans> m_map = new TreeMap<>(); /** Map fireblock id to transaction */
+	static final TreeMap<String,Trans> m_map = new TreeMap<>(); /** Map fireblock id to transaction */
+	static final Config m_config = new Config();
 	static long m_started;
-	static Config m_config = new Config();
 	static long m_lastSuccessfulFetch;
 	static long m_lastSuccessfulPut;
 	static long m_lastQueryTime;

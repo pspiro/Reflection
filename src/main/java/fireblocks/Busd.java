@@ -25,7 +25,7 @@ public class Busd extends Stablecoin {
 	}
 	
 	/** For testing only, as we cannot deploy the real stablecoin */
-	void deploy(String filename) throws Exception {
+	public void deploy(String filename) throws Exception {
 		S.out( "Deploying %s from owner", name() );
 		
 		m_address = deploy( 

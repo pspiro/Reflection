@@ -15,7 +15,8 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 
 public class Stocks implements Iterable<Stock> {
 	private static Stock NULL = new Stock();
-	private final HashMap<Integer,Stock> m_stockMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
+	private final HashMap<Integer,Stock> m_conidMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
+	private final HashMap<String,Stock> m_tokenAddrMap = new HashMap<String,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	
@@ -27,7 +28,7 @@ public class Stocks implements Iterable<Stock> {
 	public void readFromSheet(Book book, ConfigBase config) throws Exception {
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();
-		m_stockMap.clear();
+		m_conidMap.clear();
 		m_hotStocks.clear();
 		m_allAddresses = null;
 		
@@ -64,7 +65,8 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "tradingView", masterRow.getString("Trading View") );
 
 				m_stocks.add( stock);
-				m_stockMap.put( conid, stock);
+				m_conidMap.put( conid, stock);
+				m_tokenAddrMap.put( address.toLowerCase(), stock);
 
 				if (stock.isHot() ) {
 					m_hotStocks.add( stock);
@@ -90,11 +92,11 @@ public class Stocks implements Iterable<Stock> {
 	}
 	
 	public HashMap<Integer, Stock> stockMap() {
-		return m_stockMap;
+		return m_conidMap;
 	}
 	
 	public Collection<Stock> stockSet() {
-		return m_stockMap.values();
+		return m_conidMap.values();
 	}
 	
 	public JsonArray hotStocks() {
@@ -113,12 +115,12 @@ public class Stocks implements Iterable<Stock> {
 
 	/** Return the stock or NULL stock */
 	public Stock getStock(int conid) {
-		Stock stock = m_stockMap.get(conid);
+		Stock stock = m_conidMap.get(conid);
 		return stock != null ? stock : NULL;
 	}
 
 	/** takes the token symbol from the release-specific tab */ 
-	public Stock getStock(String tokenSymbol) throws Exception {
+	public Stock getStockBySymbol(String tokenSymbol) throws Exception {
 		for (Stock stock : this) {
 			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {
 				return stock;
@@ -127,16 +129,22 @@ public class Stocks implements Iterable<Stock> {
 		throw new Exception("Stock not found");
 	}
 
+	/** Takes the token symbol from the release-specific tab;
+	 *  could return null */ 
+	public Stock getStockByTokenAddr(String address) throws Exception {
+		return m_tokenAddrMap.get( address.toLowerCase() );
+	}
+
 	/** Used for querying for stock positions */
 	private String[] m_allAddresses;
 	
 	/** Return array of all stock contract addresses */
 	public String[] getAllContractsAddresses() {
 		if (m_allAddresses == null) {
-			m_allAddresses = new String[m_stockMap.size()];
+			m_allAddresses = new String[m_conidMap.size()];
 			
 			int i = 0;
-			for (Stock stock : m_stockMap.values() ) {
+			for (Stock stock : m_conidMap.values() ) {
 				m_allAddresses[i++] = stock.getSmartContractId();
 			}
 		}

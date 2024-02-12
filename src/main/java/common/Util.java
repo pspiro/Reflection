@@ -472,7 +472,24 @@ public class Util {
 		return b.toString();
 	}
 
+	/** get or create, no exception */
 	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Supplier<Val> creator) {
+		synchronized(map) {
+			Val val = map.get(tag);
+			if (val == null) {
+				val = creator.get();
+				map.put( tag, val);  // could use putIfAbsent() here
+			}
+			return val;
+		}
+	}
+	
+	public interface ExSupplier<T> {
+	    T get() throws Exception;
+	}
+
+	/** get or create; create can throw an exception */
+	public static <Tag,Val> Val getOrCreateEx(Map<Tag,Val> map, Tag tag, ExSupplier<Val> creator) throws Exception {
 		synchronized(map) {
 			Val val = map.get(tag);
 			if (val == null) {
@@ -709,4 +726,17 @@ public class Util {
 		consumer.accept( t);
 		return t;
 	}
+
+	/** Look up tag in map and process the value in Consumer */
+	public static <T,V> void lookup( Map<T,V> map, T tag, ExConsumer<V> consumer) throws Exception {
+		V val = map.get( tag);
+		if (val != null) {
+			consumer.accept(val);
+		}
+	}
+			
+	
+//	<T> T[] toArray( ArrayList<T> list) {
+//		return (T[])list.toArray();
+//	}
 }
