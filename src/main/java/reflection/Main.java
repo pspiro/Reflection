@@ -140,15 +140,17 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
 			server.createContext("/api/allowConnection", exch -> new BackendTransaction(this, exch).allowConnection() );
 			
-			// get config
+			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
 			server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
-			
-			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
+
+			// dashboard panels
+			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
 			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // for My Reflection panel
+			server.createContext("/api/positions-new", exch -> new BackendTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
@@ -266,15 +268,9 @@ public class Main implements ITradeReportHandler {
 	}
 
 	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
-	public JsonObject getStockByTokAddr(String addr) throws RefException {
+	public Stock getStockByTokAddr(String addr) throws Exception {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
-		
-		for (JsonObject stock : m_stocks.stocks() ) {
-			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
-				return stock;
-			}
-		}
-		return null;
+		return m_stocks.getStockByTokenAddr(addr);
 	}
 
 
@@ -444,6 +440,7 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
+	/** For the watch list */
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		new BackendTransaction(this, exch, false).respond( m_stocks.stocks());
 	}

@@ -10,7 +10,7 @@ public class MintStockToken {
 		String tok = Util.ask("Enter token name");
 		String wallet = Util.ask( "Enter destination wallet:");
 		
-		StockToken st = config.readStocks().getStock(tok).getToken();
+		StockToken st = config.readStocks().getStockBySymbol(tok).getToken();
 		
 		if (Util.confirm( null, String.format("You will mint %s %s for %s", amt, tok, wallet) ) ) {
 			config.rusd().buyStockWithRusd(wallet, 0, st, amt).waitForHash();

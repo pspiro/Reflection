@@ -35,7 +35,7 @@ public class Wallet {
 	 *  I think passing the contracts may fix it.
 	 *  They are claiming it is fixed as of 1/26/24 */ 
 	public HashMap<String,Double> reqPositionsMap(String... contracts) throws Exception {
-		Util.require( contracts.length > 0, "Contract addresses are required");  // needed to to Moralis bug
+		//Util.require( contracts.length > 0, "Contract addresses are required");  // needed to to Moralis bug
 		
 		HashMap<String,Double> map = new HashMap<>();
 		

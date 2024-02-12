@@ -9,6 +9,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -210,6 +211,11 @@ public class JSONValue {
 		
 		if(value instanceof List)
 			return JsonArray.toJSONString((List)value);
+		
+		// this only works with arrays of objects, not arrays of native types like ints
+		if(value.getClass().isArray() ) {
+			return JsonArray.toJSONString( Arrays.asList( (Object[])value) ); 
+		}
 		
 		return value.toString();
 	}

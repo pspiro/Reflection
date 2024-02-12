@@ -70,7 +70,7 @@ public class Config extends ConfigBase {
 	private String m_emailUsername;
 	private String m_emailPassword;
 	private int threads;
-	private int myWalletRefresh;
+	private int myWalletRefresh;  // "My Wallet" panel refresh interval
 	private double fbLookback;
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
@@ -78,6 +78,7 @@ public class Config extends ConfigBase {
 	private String fbStablecoin;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
+	private int hookServerPort;
 	
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -197,13 +198,14 @@ public class Config extends ConfigBase {
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
+		this.hookServerPort = m_tab.getInt("hookServerPort");
 		
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
+		this.platformBase = m_tab.getRequiredString("platformBase");
 		this.useFireblocks = m_tab.getBoolean("useFireblocks");
 		if (useFireblocks) {
-			this.platformBase = m_tab.getRequiredString("platformBase");
 			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
@@ -424,7 +426,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform) || "MATIC".equals(platformBase);  
+		return "polygon".equals(moralisPlatform);  
 	}
 	
 	public double buySpread() {
@@ -435,7 +437,7 @@ public class Config extends ConfigBase {
 		return sellSpread;
 	}
 
-	enum Tooltip {
+	public enum Tooltip {
 		rusdBalance,
 		busdBalance,
 		baseBalance,
@@ -527,4 +529,14 @@ public class Config extends ConfigBase {
 	public double maxAutoRedeem() {
 		return maxAutoRedeem;
 	}
+	
+	/** Pull native token from Fireblocks */
+	public String nativeTok() {
+		return platformBase.split("_")[0];
+	}
+	
+	public int hookServerPort() {
+		return hookServerPort;
+	}
+
 }

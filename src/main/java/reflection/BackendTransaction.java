@@ -12,6 +12,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import http.MyClient;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
@@ -54,6 +55,34 @@ public class BackendTransaction extends MyTransaction {
 					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
 				}
 			});
+			
+			retVal.sortJson( "symbol", true);
+			respond(retVal);
+		});
+	}
+
+	public void handleReqPositionsNew() {
+		wrap( () -> {
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
+
+			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", Main.m_config.hookServerPort(), m_walletAddr.toLowerCase() );
+
+			JsonArray retVal = new JsonArray();
+
+			for (JsonObject pos : MyClient.getJson( url).getArray( "positions") ) {   // returns the following keys: native, approved, positions, wallet
+				double position = pos.getDouble("position");
+				
+				JsonObject stock = m_main.getStockByTokAddr( pos.getString("address") );
+				if (stock != null && position >= m_config.minTokenPosition() ) {
+					JsonObject resp = new JsonObject();
+					resp.put("conId", stock.get("conid") );
+					resp.put("symbol", stock.get("symbol") );
+					resp.put("price", getPrice(stock) );
+					resp.put("quantity", position); 
+					retVal.add(resp);
+				}
+			}
 			
 			retVal.sortJson( "symbol", true);
 			respond(retVal);

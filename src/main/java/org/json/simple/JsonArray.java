@@ -172,5 +172,6 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	public void convertToDouble(String key) {
 		update( key, value -> Double.valueOf( value.toString() ) );
 	}
+
 	
 }

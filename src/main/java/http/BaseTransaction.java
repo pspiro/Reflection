@@ -31,7 +31,6 @@ public class BaseTransaction {
 
 	protected final HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
 	protected final String m_uri;
 	private final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
 	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
@@ -240,6 +239,4 @@ public class BaseTransaction {
 		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
 		return headers.get(0);
 	}
-	
-	
 }

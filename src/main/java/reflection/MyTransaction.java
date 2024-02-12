@@ -34,13 +34,14 @@ public abstract class MyTransaction extends BaseTransaction {
 	static Map<String,RedeemTransaction> liveRedemptions = Collections.synchronizedMap( new HashMap<String,RedeemTransaction>() );  // key is wallet address; just one outstanding Redemption per wallet 
 	static Map<String,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<String,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
-	static double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
+	static final double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
 	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
 	protected static final String Message = "message";
 
 	protected Main m_main;
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
+	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
 
 	// create a config setting for this
 	static final int stale = 5 * Util.MINUTE;
@@ -76,7 +77,6 @@ public abstract class MyTransaction extends BaseTransaction {
 			if (parts.length >= 2) {
 				// build map of tag/value, expecting tag=value&tag=value
 				String[] params = parts[1].split( "&");
-				//map.parseJson( )
 				for (String param : params) {
 					String[] pair = param.split( "=");
 					require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
@@ -103,7 +103,7 @@ public abstract class MyTransaction extends BaseTransaction {
 			}
 		}
 	}
-	
+
 	void setTimer( long ms, ExRunnable runnable) {
 		Timer timer = new Timer();
 		timer.schedule( new TimerTask() {  // this could be improved to have only one Timer and hence one Thread for all the scheduling. pas

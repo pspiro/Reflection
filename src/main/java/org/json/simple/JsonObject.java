@@ -244,7 +244,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 						out( ",\n");
 					}
 
-					out( "%s%s : ", Util.tab( level+1), key);
+					out( "%s\"%s\" : ", Util.tab( level+1), key);
 					display( val, level + 1, false);
 					first = false;
 				}
@@ -347,6 +347,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 	
+	/** You should use forEach( (key,val) ) */
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
 		b.append( "<html><table>\n");

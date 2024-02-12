@@ -2,6 +2,7 @@ package test;
 
 import tw.util.S;
 
+/** Call next(), next(), etc., done() */
 public class MyTimer {
 	long start;
 
@@ -16,18 +17,20 @@ public class MyTimer {
 		S.out(format, params);
 		start = System.currentTimeMillis();
 	}
+	
+	/** Use this for custom "done" messages */
+	public long time() {
+		return System.currentTimeMillis() - start;
+	}
 
+	/** Pass in the name of the item that was completed */
 	public void done(String str) {
 		S.out( "  completed %s in %s ms", str, time() );
 		start = 0;
 	}
 	
-	public long time() {
-		return System.currentTimeMillis() - start;
-	}
-	
 	public void done() {
-		S.out( "  done in %s ms", System.currentTimeMillis() - start );
+		S.out( "  done in %s ms", time() );
 		start = 0;
 	}
 }
