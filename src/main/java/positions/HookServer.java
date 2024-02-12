@@ -297,7 +297,7 @@ public class HookServer {
 
 	void createTransfersStream(String... contracts) throws Exception {
 		String id = Streams.createStreamWithAddresses(
-				String.format( chain(), Streams.erc20Transfers, m_config.hookServerUrl(), chain() ),
+				String.format( Streams.erc20Transfers, chain(), m_config.hookServerUrl(), chain() ),
 				contracts);
 		S.out( "Created transfer stream with id %s", id);
 	}
@@ -305,14 +305,14 @@ public class HookServer {
 	/** This could be improved so that you always get the current balance back with the web hook */
 	void createNativeStream() throws Exception {
 		nativeStreamId = Streams.createStreamWithAddresses(
-				String.format( chain(), Streams.nativeTrans, m_config.hookServerUrl(), chain() ) );
+				String.format( Streams.nativeTrans, chain(), m_config.hookServerUrl(), chain() ) );
 		S.out( "Created native stream with id %s" + nativeStreamId);
 	}
 
 	/** Listen for approvals on the contract, e.g. USDT */
 	void createApprovalStream() throws Exception {
 		String id = Streams.createStreamWithAddresses(
-				String.format( chain(), Streams.approval, m_config.hookServerUrl(), chain() ),
+				String.format( Streams.approval, chain(), m_config.hookServerUrl(), chain() ),
 				m_config.busd().address() );
 		S.out( "Created approval stream with id %s", id);
 	}
