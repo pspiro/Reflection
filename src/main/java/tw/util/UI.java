@@ -62,10 +62,12 @@ public class UI {
     
     static public void centerOnOwner( Window window) {
         Window owner = window.getOwner();
-        if( owner == null) {
-            return;
+        if( owner != null) {
+        	centerOnWindow(window, owner);
         }
-        centerOnWindow(window, owner);
+        else {
+        	centerOnScreen( window);
+        }
     }
     
     static public void centerOnWindow( Window windowToCenter, Window anchorWindow) {

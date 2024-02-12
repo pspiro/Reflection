@@ -347,13 +347,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 	
-	/** You should use forEach( (key,val) ) */
+	/** Don't add \n's because it break JOptionPane in Util.inform */ 
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append( "<html><table>\n");
-		entrySet().forEach( entry -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>\n", 
-				entry.getKey(), 
-				Util.left(Util.toString(entry.getValue()), 100) ) ) );  // trim it too 100 because Cookies are really long
+		b.append( "<html><table>");
+		forEach( (key,value) -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>", 
+				key, 
+				Util.left(Util.toString(value), 100) ) ) );  // trim it too 100 because Cookies are really long
 		b.append( "</table></html>");
 		return b.toString();
 	}

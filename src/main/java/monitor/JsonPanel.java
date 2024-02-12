@@ -67,8 +67,8 @@ public abstract class JsonPanel extends MonPanel {
 			super(allNames);
 		}
 
-		@Override protected Object format(String key, Object value) {
-			return JsonPanel.this.format(key, value);
+		@Override protected Object format(String tag, Object value) {
+			return JsonPanel.this.format(tag, value);
 		}
 		
 		@Override protected void delete(int row, int col) {

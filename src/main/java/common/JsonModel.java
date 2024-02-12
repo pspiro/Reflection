@@ -67,9 +67,9 @@ public class JsonModel extends MyTableModel {
 	}
 	
 	@Override public Object getValueAt(int row, int col) {
-		String key = m_namesMap.get(col);
-		Object val = m_ar.get(row).get(key);
-		return val != null ? format( key, val) : null;
+		String tag = m_namesMap.get(col);
+		Object val = m_ar.get(row).get(tag);
+		return val != null ? format( tag, val) : null;
 	}
 	
 	/** Sort on first column ascending */

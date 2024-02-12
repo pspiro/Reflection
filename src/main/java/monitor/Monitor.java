@@ -306,19 +306,4 @@ public class Monitor {
 			m_model.fireTableDataChanged();
 		}
 	}
-	
-	static class HookServerPanel extends JsonPanel {
-		HookServerPanel() throws Exception {
-			super( new BorderLayout(), String.format( 
-					"RUSD,%s,%s,Positions", m_config.busd().name(), m_config.nativeTok() ) );
-			
-			add( m_model.createTable() );
-		}
-		
-		@Override protected void refresh() throws Exception {
-			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/hook/get-all-wallets");
-			setRows( ar);
-			m_model.fireTableDataChanged();
-		}
-	}
 }
