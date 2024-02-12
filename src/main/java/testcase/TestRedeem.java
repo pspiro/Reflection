@@ -16,12 +16,11 @@ public class TestRedeem extends MyTestCase {
 	
 	static String host = "localhost"; // "34.125.38.193";
 	
-	static Stocks stocks = new Stocks();
 	static String refWallet;
 	
 	static {
 		try {
-			stocks.readFromSheet(m_config);
+			readStocks();
 			refWallet = Accounts.instance.getAddress("RefWallet");
 		} catch (Exception e) {
 			e.printStackTrace();

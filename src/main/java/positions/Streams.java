@@ -1,16 +1,10 @@
 package positions;
 
 
-import java.io.IOException;
-
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import com.sun.net.httpserver.HttpExchange;
-
 import common.Util;
-import fireblocks.MyServer;
-import http.BaseTransaction;
 import reflection.Config;
 import tw.util.S;
 
@@ -23,7 +17,6 @@ public class Streams {
 		Config.ask();
 		
 //		listen();
-		deleteAll();
 //
 //		createNative();
 
@@ -55,12 +48,13 @@ public class Streams {
 		    		 Util.toJson( "address", list).toString() );
 		}
 	}
-	
-	public static void deleteAll() throws Exception {		
-		MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
-			.getArray("result").forEach( stream -> Util.wrap( () ->
-				deleteStream( stream.getString("id") ) ) );
-	}
+
+//	/** This is too dangerour as it deletes all live streams */
+//	public static void deleteAll() throws Exception {		
+//		MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
+//			.getArray("result").forEach( stream -> Util.wrap( () ->
+//				deleteStream( stream.getString("id") ) ) );
+//	}
 	
 	static void displayStreams() throws Exception {
 		S.out( "Existing streams");
@@ -83,7 +77,7 @@ public class Streams {
 	}
 
 	/** @return stream id */
-	static String createStreamWithAddresses(String json, String... contracts) throws Exception {
+	public static String createStreamWithAddresses(String json, String... contracts) throws Exception {
 		json = JsonObject.parse( json).toString();  // very weird and annoying--only the "approvals" stream breaks without this!
 
 		JsonObject obj = JsonObject.parse(
@@ -110,7 +104,7 @@ public class Streams {
 
 	static String erc20Transfers = """
 	{
-         "description" : "ERC20 transfers",
+         "description" : "ERC20 %s",
          "webhookUrl" : "%s",
          "chainIds" : [ "%s" ]
          "tag" : "refl-transfers",
@@ -153,7 +147,7 @@ public class Streams {
 	
 	static String nativeTrans = """
 	{
-		"description": "Native token transfers",
+		"description": "Native token transfers %s",
 		"webhookUrl" : "%s",
 		"chainIds": [ "%s" ],
 		"tag": "refl-native",
@@ -168,7 +162,7 @@ public class Streams {
 	
 	static String approval = """
 	{
-		"description" : "Approvals",
+		"description" : "Approvals %s",
 		"webhookUrl" : "%s",
 		"chainIds" : [ "%s" ],
 		"tag" : "refl-approvals",

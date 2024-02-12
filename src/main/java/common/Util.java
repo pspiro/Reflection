@@ -734,7 +734,23 @@ public class Util {
 			consumer.accept(val);
 		}
 	}
-			
+
+	/** wrap text like this <tag>text</tag> */
+	public static String wrapHtml( String tag, String text) {
+		return String.format( "<%s>%s</%s>", tag, text, tag);
+	}
+
+	/** append <tag><body></tag> where body is supplied by supplier */
+	public static void wrapHtml( StringBuilder sb, String tag, String body) {
+		sb.append( wrapHtml( tag, body.toString() ) );
+	}
+	
+	/** append <tag> and </tag> and let consumer add the body text */
+	public static void appendHtml( StringBuilder sb, String tag, Runnable consumer) {
+		sb.append( String.format( "<%s>", tag) );
+		consumer.run();
+		sb.append( String.format( "</%s>", tag) );
+	}
 	
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();

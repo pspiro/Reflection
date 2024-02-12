@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
@@ -350,13 +351,21 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Don't add \n's because it break JOptionPane in Util.inform */ 
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append( "<html><table>");
-		forEach( (key,value) -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>", 
-				key, 
-				Util.left(Util.toString(value), 100) ) ) );  // trim it too 100 because Cookies are really long
-		b.append( "</table></html>");
-		return b.toString();
+		forEach( (key,value) -> {
+			Util.appendHtml( b, "tr", () -> {
+				Util.wrapHtml( b, "td", key);
+
+				if (value instanceof JsonArray) {
+					Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+				}
+				else {
+					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
+				}
+			});
+		});
+		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
 	}
+
 
 	/** Copy all tags from other to this object; null values are okay but not added */
 	public void copyFrom(JsonObject other, String... tags) {
@@ -379,6 +388,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	@SuppressWarnings("unchecked")
 	public <T> T getEnum( String key, T[] values) throws Exception {
 		return (T)get(key);
+	}
+
+	/** Add all keys to the key set */
+	public void addKeys(HashSet<String> keys) {
+		keySet().forEach( key -> keys.add( key) );
 	}
 }
 /** NOTE: Timestamp objects are stored as

@@ -1,30 +1,24 @@
 package test;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
-import tw.util.S;
+import common.Util;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 	static int i = 0;
 	public static void main(String[] args) throws Exception {
-		Map<String,String> map = new ConcurrentHashMap<>();
+		JsonObject obj1 = Util.toJson( "name", "bob", "age", "33");
+		JsonObject obj2 = Util.toJson( "name", "sam", "age", "4");
+		JsonArray ar = new JsonArray();
+		ar.add( obj1);
+		ar.add( obj2);
 		
-		map.put( "a", "e");
-		map.put( "b", "f");
-		map.put( "c", "g");
-		map.put( "d", "h");
+		JsonObject main = new JsonObject();
+		main.put( "name", "hello");
+		main.put( "list", ar);
 		
-		map.entrySet().forEach( item -> {
-			map.clear();
-
-			String key = item.getKey();
-			String val = item.getValue();
-		
-			S.out( "%s %s", key, val);
-			i++;
-		});
+		Util.inform( null, main.toHtml() );
 	}
 }

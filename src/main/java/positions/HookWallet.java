@@ -8,7 +8,6 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Busd;
 import fireblocks.Erc20;
-import reflection.Stocks;
 import tw.util.S;
 
 class HookWallet {
@@ -74,10 +73,10 @@ class HookWallet {
 	}
 
 	/** Return all positions; for debugging */
-	private JsonArray getJsonPositions() {
+	private JsonArray getJsonPositions(double min) {
 		JsonArray ar = new JsonArray();
 		m_map.forEach( (address,position) -> {
-			if (position >= HookServer.small) {
+			if (position >= min) {
 				ar.add( Util.toJson( "address", address, "position", position) );
 			}
 		});
@@ -85,11 +84,11 @@ class HookWallet {
 	}
 
 	/** For debugging */
-	public JsonObject getAllJson() {
+	public JsonObject getAllJson(double min) {
 		JsonObject obj = new JsonObject();
 		obj.put( "native", m_nativeBal);
 		obj.put( "approved", m_approved);
-		obj.put( "positions", getJsonPositions() );
+		obj.put( "positions", getJsonPositions(min) );
 		obj.put( "wallet", m_walletAddr);
 		return obj;
 	}

@@ -7,6 +7,7 @@ package org.json.simple;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -172,6 +173,47 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	public void convertToDouble(String key) {
 		update( key, value -> Double.valueOf( value.toString() ) );
 	}
+	
+	public String toHtml() {
+		StringBuilder b = new StringBuilder();
+		
+		String[] keys = getKeys().toArray(new String[0] );
+		
+		Util.appendHtml( b, "table", () -> {
+			// add header row
+			Util.appendHtml( b, "tr", () -> {
+				for (String key : keys) {
+					Util.wrapHtml( b, "td", key);
+				}
+			});
+		
+			// add a row for each item in the array
+			forEach( item -> {
+				if (item instanceof JsonObject) {
+					JsonObject obj = (JsonObject)item;
+
+					Util.appendHtml( b, "tr", () -> {
+						for (String key : keys) {
+							Util.wrapHtml( b, "td", obj.getString(key) );
+						}
+					});
+				}
+			});
+		});
+		
+		return b.toString();
+	}
+
+	/** Return all keys of all JsonObjects in this array */
+	private HashSet<String> getKeys() {
+		HashSet<String> keys = new HashSet<>();
+		forEach( item -> {
+			if (item instanceof JsonObject) {
+				((JsonObject)item).addKeys( keys);
+			}
+		});
+		return keys;
+	}	
 
 	
 }
