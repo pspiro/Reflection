@@ -12,7 +12,7 @@ import tw.util.S;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case
-	private HashMap<String,Double> m_map = new HashMap<>(); // map contract to token position
+	private HashMap<String,Double> m_map = new HashMap<>(); // map contract (lower case) to token position
 	private double m_nativeBal;
 	private double m_approved;
 	

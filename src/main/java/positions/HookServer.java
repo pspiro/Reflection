@@ -196,7 +196,7 @@ public class HookServer {
 			}
 			
 			// process approvals
-			for (JsonObject trans : obj.getArray("approvals") ) {
+			for (JsonObject trans : obj.getArray("erc20Approvals") ) {
 				String contract = trans.getString("contract");
 				
 				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
