@@ -82,9 +82,17 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
 		});
 
-		createTransfersStream( m_allContracts);
-		createNativeStream();
-		createApprovalStream();
+		// listen for ERC20 transfers and native transfers 
+		nativeStreamId = Streams.createStreamWithAddresses(
+				String.format( Streams.erc20Transfers, chain(), m_config.hookServerUrl(), chain() ) ); 
+		//,m_allContracts);
+
+		// listen for "approve" transactions
+		Streams.createStreamWithAddresses(
+				String.format( Streams.approval, chain(), m_config.hookServerUrl(), chain() ),
+				m_config.busd().address() );
+		
+		S.out( "**ready**");
 	}
 
 	class Trans extends BaseTransaction {
@@ -295,25 +303,12 @@ public class HookServer {
 		});
 	}
 
-	void createTransfersStream(String... contracts) throws Exception {
-		String id = Streams.createStreamWithAddresses(
-				String.format( Streams.erc20Transfers, chain(), m_config.hookServerUrl(), chain() ),
-				contracts);
-		S.out( "Created transfer stream with id %s", id);
-	}
-
-	/** This could be improved so that you always get the current balance back with the web hook */
-	void createNativeStream() throws Exception {
-		nativeStreamId = Streams.createStreamWithAddresses(
-				String.format( Streams.nativeTrans, chain(), m_config.hookServerUrl(), chain() ) );
-		S.out( "Created native stream with id %s" + nativeStreamId);
-	}
-
-	/** Listen for approvals on the contract, e.g. USDT */
-	void createApprovalStream() throws Exception {
-		String id = Streams.createStreamWithAddresses(
-				String.format( Streams.approval, chain(), m_config.hookServerUrl(), chain() ),
-				m_config.busd().address() );
-		S.out( "Created approval stream with id %s", id);
-	}
 }
+
+/** This could be improved so that you always get the current balance back with the web hook */
+//void createNativeStream() throws Exception {
+//	S.out( "***Creating native stream***");
+//	nativeStreamId = Streams.createStreamWithAddresses(
+//			String.format( Streams.nativeTrans, chain(), m_config.hookServerUrl(), chain() ) );
+//	S.out( "  created native stream with id %s" + nativeStreamId);
+//}

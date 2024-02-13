@@ -33,7 +33,7 @@ public class Streams {
 //		deleteStream(id);
 //
 //		setStreamStatus( id, false);
-//		deleteAll();
+		deleteAll();
 //
 //		System.exit(0);
 		S.sleep( 5*60*1000);
@@ -41,7 +41,7 @@ public class Streams {
 
 	static void addAddressToStream(String id, String... list) throws Exception {
 		if (list.length > 0) {
-			S.out( "Adding addresses [%s] to stream %s", String.join(", ", list), id);
+			S.out( "Stream %s: adding addresses [%s]", id, String.join(", ", list) );
 			
 		     MoralisServer.post(
 		    		 String.format( "https://api.moralis-streams.com/streams/evm/%s/address", id), 
@@ -49,13 +49,7 @@ public class Streams {
 		}
 	}
 
-//	/** This is too dangerour as it deletes all live streams */
-//	public static void deleteAll() throws Exception {		
-//		MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
-//			.getArray("result").forEach( stream -> Util.wrap( () ->
-//				deleteStream( stream.getString("id") ) ) );
-//	}
-	
+	/** Display stream and up to five addresses */
 	static void displayStreams() throws Exception {
 		S.out( "Existing streams");
 		JsonObject obj = MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=5");
@@ -66,19 +60,25 @@ public class Streams {
 //			stream.display();
 			S.out( "Stream " + stream.getString("description") );
 			S.out( stream);
-			displayAddresses( stream.getString("id") );
+			displayAddresses( stream.getString("id"), 5);
 		}
 	}
 
-	private static void displayAddresses(String id) throws Exception {
+	private static void displayAddresses(String id, int max) throws Exception {
 		JsonObject obj = MoralisServer.queryObject( 
-			String.format( "https://api.moralis-streams.com/streams/evm/%s/address?limit=5", id) );
+			String.format( "https://api.moralis-streams.com/streams/evm/%s/address?limit=%s", id, max) );
 		S.out( "  " + obj);
 	}
 
 	/** @return stream id */
-	public static String createStreamWithAddresses(String json, String... contracts) throws Exception {
-		json = JsonObject.parse( json).toString();  // very weird and annoying--only the "approvals" stream breaks without this!
+	public static String createStreamWithAddresses(String stream, String... contracts) throws Exception {
+		JsonObject json = JsonObject.parse( stream);
+		
+		S.out( "Creating stream '%s' on chain %s with URL %s", 
+				json.getString("description"), json.getArray("chainIds").get(0), json.getString("webhookUrl") );
+		S.out( "Full stream: " + json);
+		
+		deleteStreamByName( json.getString("description") );
 
 		JsonObject obj = JsonObject.parse(
 				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json.toString() ) );
@@ -89,6 +89,26 @@ public class Streams {
 		return id;
 	}
 
+	/** Delete string where description equals name 
+	 * @throws Exception */
+	private static void deleteStreamByName(String name) throws Exception {
+		for (JsonObject stream : MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
+				.getArray("result") ) {
+			
+			if (stream.getString("description").equals( name) ) {
+				S.out( "Deleting existing stream '%s'", name);
+				deleteStream( stream.getString("id") );
+			}
+		}
+	}
+
+	/** This is dangerour as it deletes all live streams */
+	public static void deleteAll() throws Exception {		
+		MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
+			.getArray("result").forEach( stream -> Util.wrap( () ->
+				deleteStream( stream.getString("id") ) ) );
+	}
+
 	public static void deleteStream(String id) throws Exception {
 		S.out( "Deleting stream " + id);
 		String url = "https://api.moralis-streams.com/streams/evm/" + id;
@@ -96,73 +116,74 @@ public class Streams {
 	}
 
 	public static void setStatus(String id, boolean active) throws Exception {
-		S.out( "Setting stream %s status to %s", id, active ? "active" : "paused");
+		S.out( "Stream %s: setting status to %s", id, active ? "active" : "paused");
 		String url = String.format( "https://api.moralis-streams.com/streams/evm/%s/status", id);
-		S.out( MoralisServer.post( url, 
-				Util.toJson( "status", active ? "active" : "paused").toString() ) );
+		MoralisServer.post( url, Util.toJson( "status", active ? "active" : "paused").toString() );
 	}
 
 	static String erc20Transfers = """
 	{
-         "description" : "ERC20 %s",
-         "webhookUrl" : "%s",
-         "chainIds" : [ "%s" ]
-         "tag" : "refl-transfers",
-         "getNativeBalances" : [ ],
-         "triggers" : [ ],
-         "includeContractLogs" : true,
-         "includeAllTxLogs" : false,
-         "includeInternalTxs" : false,
-         "allAddresses" : false,
-         
-         "topic0" : [
-            "Transfer(address,address,uint256)"
-         ],
-         
-         "abi" : [
-            {
-               "inputs" : [
-                  {
-                     "indexed" : true,
-                     "name" : "from",
-                     "type" : "address"
-                  }, {
-                     "indexed" : true,
-                     "name" : "to",
-                     "type" : "address"
-                  }, {
-                     "indexed" : false,
-                     "name" : "value",
-                     "type" : "uint256"
-                  }
-               ],
-               "name" : "Transfer",
-               "anonymous" : false,
-               "type" : "event"
-            }
-         ]
-	}
-	""";
-	
-	
-	static String nativeTrans = """
-	{
-		"description": "Native token transfers %s",
+		"description" : "Transfers on chain %s",
 		"webhookUrl" : "%s",
-		"chainIds": [ "%s" ],
-		"tag": "refl-native",
-		"demo": false,
+		"chainIds" : [ "%s" ]
+		"tag" : "refl-transfers",
+		"getNativeBalances" : [ ],
+		"triggers" : [ ],
+		"includeContractLogs" : true,
 		"includeNativeTxs": true,
-		"allAddresses": false,
-		"includeContractLogs": false,
-		"includeInternalTxs": false,
-		"includeAllTxLogs": false
+		"includeAllTxLogs" : false,
+		"includeInternalTxs" : false,
+		"allAddresses" : false,	
+
+		"topic0" : [  "Transfer(address,address,uint256)" ],
+	
+		"abi" : [
+			{
+				"inputs" : [
+			{
+				"indexed" : true,
+				"name" : "from",
+				"type" : "address"
+			},
+			{
+				"indexed" : true,
+				"name" : "to",
+				"type" : "address"
+			},
+			{
+				"indexed" : false,
+				"name" : "value",
+				"type" : "uint256"
+			}
+			],
+			"name" : "Transfer",
+			"anonymous" : false,
+			"type" : "event"
+			}
+		]
 	}
 	""";
+
+	
+	
+//	static String nativeTrans = """
+//	{
+//		"description": "Native token transfers %s",
+//		"webhookUrl" : "%s",
+//		"chainIds": [ "%s" ],
+//		"tag": "refl-native",
+//		"demo": false,
+//		"includeNativeTxs": true,
+//		"allAddresses": false,
+//		"includeContractLogs": false,
+//		"includeInternalTxs": false,
+//		"includeAllTxLogs": false
+//	}
+//	""";
 	
 	static String approval = """
 	{
-		"description" : "Approvals %s",
+		"description" : "Approvals on chain %s",
 		"webhookUrl" : "%s",
 		"chainIds" : [ "%s" ],
 		"tag" : "refl-approvals",
