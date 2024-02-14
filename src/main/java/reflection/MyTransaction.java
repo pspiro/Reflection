@@ -168,8 +168,9 @@ public abstract class MyTransaction extends BaseTransaction {
 	/** Assumes the wallet address is the last token in the URI
 	 *  Read it into the member variable so it is available for log entries */
 	public void getWalletFromUri() throws RefException {
-		m_walletAddr = Util.getLastToken(m_uri, "/");
-		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		String walletAddr = Util.getLastToken(m_uri, "/");
+		require( Util.isValidAddress(walletAddr), RefCode.INVALID_REQUEST, "Wallet address is invalid");
+		m_walletAddr = walletAddr;
 	}
 	
 	/** This method implements the interface method from LiveOrderTransaction in the subclasses */

@@ -5,6 +5,7 @@ import org.json.simple.JsonObject;
 import com.moonstoneid.siwe.SiweMessage;
 
 import common.Util;
+import http.MyClient;
 import http.MyHttpClient;
 import reflection.SiweUtil;
 import tw.util.S;
@@ -15,7 +16,7 @@ public abstract class Cookie extends MyTestCase {
 	//public static String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
 	//public static String wallet = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce";
 	//public static String wallet = "0xb95bf9C71e030FA3D8c0940456972885DB60843F";
-	public static String wallet = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce";
+	public static String wallet   = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce";
 	public static String cookie;  // that's right, the cookie is a string, not an object
 	public static boolean init; // to force initialization
 	
@@ -26,11 +27,22 @@ public abstract class Cookie extends MyTestCase {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public static void setNewFakeAddress(boolean andProfile) throws Exception {
+		setNewWallet( Util.createFakeAddress() );
+		
+		if (andProfile) {
+			JsonObject json = TestProfile.createValidProfile();
+			json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
+			MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		}
+	}
+	
 	public static void setNewWallet(String walletIn) throws Exception {
 		wallet = walletIn;
 		cookie = signIn(walletIn);
 	}
+
 
 	public static String signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);

@@ -46,7 +46,7 @@ public class TestRedeem extends MyTestCase {
 		}
 		
 		// mint an amount of RUSD that should work--high 
-		Cookie.setNewWallet( Util.createFakeAddress() );
+		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 9);
 		waitForBalance(Cookie.wallet, 1, false); // make sure the new balance will register with the RefAPI
 		
@@ -63,37 +63,17 @@ public class TestRedeem extends MyTestCase {
 			.display();
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 
-		S.out( "waiting for redeem");
 		waitForRedeem(Cookie.wallet);
-		
-		S.out( "waiting for near-zero balance");
 		waitForBalance(Cookie.wallet, .0001, true);
 	}
 	
-	public void testInsufficientFunds() throws Exception {
+	public void testExceedMaxAutoRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
 
-		// make sure we have some BUSD in RefWallet
-		double bal = m_config.busd().getPosition(refWallet);
-		if (bal == 0) {
-			m_config.busd().mint( refWallet, 10).waitForCompleted();
-			bal = 10;
-		}
-		
-		// make sure we have good amount of  
-		
-		// fail with INSUFFICIENT_FUNDS due to exceeding maxAutoRedeem value
-		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-			.display();
-		assertEquals( RefCode.INSUFFICIENT_FUNDS, cli.getRefCode() );
-		
+		// create new wallet with more than the allowed amount of RUSD
+		Cookie.setNewFakeAddress(true);
+		m_config.rusd().mintRusd( Cookie.wallet, m_config.maxAutoRedeem() + 1, stocks.getAnyStockToken() );
 
-		// create new wallet and mint RUSD, more than max
-		String userWallet = Util.createFakeAddress(); // error, address does not conform to EIP-55
-		Cookie.setNewWallet(userWallet);
-		mintRusd(userWallet, m_config.maxAutoRedeem() + 1);
-		waitForBalance(userWallet, m_config.maxAutoRedeem(), false);
-		
 		// fail with INSUFFICIENT_FUNDS due to exceeding maxAutoRedeem value
 		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();
@@ -104,25 +84,19 @@ public class TestRedeem extends MyTestCase {
 	 * @throws Exception */
 	private void waitForBalance(String address, double bal, boolean lt) throws Exception {
 		S.out( "waiting for balance %s bal", lt ? "<" : ">");
-		
-		for (int i = 0; i < 90; i++) {
+		waitFor( 90, () -> { 
 			double balance = Wallet.getBalance(address, m_config.rusdAddr() );
-			if (lt && balance < bal || !lt && balance > bal) {
-				return;
-			}
-			S.out( "balance: " + balance);
-			S.sleep(1000);
-		}
-		assertTrue("Never achieved expected balance", false);
+			return (lt && balance < bal || !lt && balance > bal);
+		});
 	}
 
 	public void testCheckBalance() throws Exception {
 		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
 	}
 		
-	
+	/** can't use waitFor() here because we want to stop when there is any non-null status */
 	private void waitForRedeem(String wallet) throws Exception {
-		S.out( "waiting for redeem via liver order system");
+		S.out( "waiting for redeem via live order system");
 		
 		S.sleep(100); // give it time to get into the map
 		while (true) {
