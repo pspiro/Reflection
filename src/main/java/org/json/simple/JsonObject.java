@@ -27,6 +27,8 @@ import tw.util.S;
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
  * 
+ * Note that null values are supported by put(); use putIf() to avoid null values
+ * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
 public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware, Comparable<JsonObject> {
@@ -305,6 +307,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public boolean isComparable(String key) {
 		return get(key) instanceof Comparable;
+	}
+	
+	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()
+	 *  and change put() to not add null values; having null values seems useless
+	 *  and it can break things because the size of the map is not the same
+	 *  if you skip null values */
+	@Override public Object put(String key, Object value) {
+		return super.put(key, value);
 	}
 
 	/** Add the pair if val is not null */

@@ -129,10 +129,9 @@ public class TestOrder extends MyTestCase {
 		// this won't work because you have to 
 		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
 		
-		JsonObject map = postOrderToObj(obj);
+		JsonObject map = postOrderToObj(obj);  // try again w/ autofill off
 		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
-		
 		JsonObject ret = getLiveMessage(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		startsWith( "Bought 10", ret.getString("text") );

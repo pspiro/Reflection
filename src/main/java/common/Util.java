@@ -200,9 +200,7 @@ public class Util {
 				tag = val;
 			}
 			else {
-				if (val != null) {
-					obj.put( tag.toString(), val);
-				}
+				obj.putIf( tag.toString(), val);
 				tag = null;
 			}
 		}
@@ -329,7 +327,7 @@ public class Util {
 		}
 	}
 
-	/** Use this in more places. */
+	/** Use this in more places. */  // try String.join(), dummy!
 	public static String concatenate(char separator, String... values) {
 		StringBuilder builder = new StringBuilder();
 		for (String value : values) {
@@ -543,6 +541,18 @@ public class Util {
         }
 	}
 
+	public interface ExBiConsumer<K,V> {
+	    void accept(K k, V v) throws Exception;
+	}
+			
+	/** My version of forEach that propogates up an exception */ 
+	public static <T,V> void forEach(Map<T,V> map, ExBiConsumer<T,V> consumer) throws Exception {
+        Objects.requireNonNull(consumer);
+		for (Entry<T,V> entry : map.entrySet() ) {
+        	consumer.accept( entry.getKey(), entry.getValue() );
+        }
+	}
+	
 	/** Wait for user to press enter */
 	public static void pause() {
 		try(Scanner s = new Scanner(System.in)) {
@@ -751,7 +761,7 @@ public class Util {
 		consumer.run();
 		sb.append( String.format( "</%s>", tag) );
 	}
-	
+
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();
 //	}

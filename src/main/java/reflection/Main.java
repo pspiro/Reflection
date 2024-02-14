@@ -127,7 +127,7 @@ public class Main implements ITradeReportHandler {
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() ); // remove. pas
+			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() ); // remove after frontend migrates to live-orders. pas
 			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
@@ -356,22 +356,28 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
-		obj.put( "time", exec.time() );         
-		obj.put( "order_id", exec.orderId() );    
-		obj.put( "perm_id", exec.permId() );    
-		obj.put( "side", exec.side() );
-		obj.put( "quantity", exec.shares().toDouble() ); 
-		obj.put( "symbol", contract.symbol() );
-		obj.put( "price", exec.price() );
-		obj.put( "cumfill", exec.cumQty().toDouble() );
-		obj.put( "conid", contract.conid() );
-		obj.put( "exchange", exec.exchange() );
-		obj.put( "avgprice", exec.avgPrice() );
-		obj.put( "orderref", exec.orderRef() ); // this is the uid
-		obj.put( "tradekey", tradeKey);
+		obj.putIf( "time", exec.time() );         
+		obj.putIf( "order_id", exec.orderId() );    
+		obj.putIf( "perm_id", exec.permId() );    
+		obj.putIf( "side", exec.side() );
+		obj.putIf( "quantity", exec.shares().toDouble() ); 
+		obj.putIf( "symbol", contract.symbol() );
+		obj.putIf( "price", exec.price() );
+		obj.putIf( "cumfill", exec.cumQty().toDouble() );
+		obj.putIf( "conid", contract.conid() );
+		obj.putIf( "exchange", exec.exchange() );
+		obj.putIf( "avgprice", exec.avgPrice() );
+		obj.putIf( "orderref", exec.orderRef() ); // this is the uid
+		obj.putIf( "tradekey", tradeKey);
 
 		// insert trade into trades and log tables
-		queueSql( conn -> conn.insertJson( "trades", obj) );
+		//queueSql( conn -> conn.insertJson( "trades", obj) );
+		try {
+			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj);  

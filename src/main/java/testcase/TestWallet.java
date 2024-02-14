@@ -15,7 +15,7 @@ public class TestWallet extends MyTestCase {
 	
 	public void testBadToken() throws Exception {
 		Wallet wallet = new Wallet(Cookie.wallet);
-		assertEquals( 0., wallet.getBalance( "badtoken") );
+		assertEquals( 0., wallet.getBalance( empty) );
 	}
 	
 	public void testPosQuery() throws Exception {

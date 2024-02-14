@@ -406,10 +406,10 @@ public class Config extends ConfigBase {
 	}
 
 	/** Use this one to make a single query */
-	public JsonArray sqlQuery(String sql) throws Exception {
+	public JsonArray sqlQuery(String sql, Object... params) throws Exception {
 		try ( MySqlConnection conn = new MySqlConnection() ) {
 			conn.connect( postgresUrl, postgresUser, postgresPassword);
-			return conn.queryToJson(sql);
+			return conn.queryToJson(sql, params);
 		}
 	}
 

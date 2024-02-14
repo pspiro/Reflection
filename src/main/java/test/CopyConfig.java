@@ -42,7 +42,7 @@ public class CopyConfig {
 			}
 			 
 			c2.connect( dbUrl2, dbUser, dbPassword);
-			c2.insert(tableName, vals);
+			//c2.insert(tableName, vals);
 		}
 	}
 }
