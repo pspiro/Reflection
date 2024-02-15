@@ -80,7 +80,9 @@ public class Rusd extends Stablecoin {
 	 * @return id */
 	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		Util.isValidAddress(userAddr);
-		Util.require( stablecoinAmt > 0, "Cannot buy stock with zero stablecoin");
+		
+		// allow minting stock tokens in dev only
+		Util.require( stablecoinAmt > 0 || Fireblocks.isDev(), "Cannot buy stock with zero stablecoin");
 		
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
@@ -240,5 +242,10 @@ public class Rusd extends Stablecoin {
 	/** RUSD has no mint function, so we sell zero shares of stock */
 	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
 		return buyStockWithRusd( address, amt, anyStockToken, 0);
+	}
+	
+	public RetVal mintStockToken(String address, StockToken stockToken, double amt) throws Exception {
+		return buyStockWithRusd(address, 0, stockToken, amt);
+
 	}
 }

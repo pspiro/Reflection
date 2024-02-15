@@ -429,7 +429,7 @@ public class Main implements ITradeReportHandler {
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		try {
 			MyClient.getArray( m_mdsUrl).forEach( prices -> {
-				Stock stock = m_stocks.getStock( prices.getInt("conid") );
+				Stock stock = m_stocks.getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( new Prices(prices) );
 				

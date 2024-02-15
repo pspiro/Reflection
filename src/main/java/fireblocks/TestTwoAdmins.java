@@ -17,7 +17,7 @@ public class TestTwoAdmins {
 		Rusd rusd = config.rusd();
 		
 		Stocks stocks = config.readStocks();
-		StockToken token = stocks.getStock(265598).getToken();
+		StockToken token = stocks.getStockByConid(265598).getToken();
 		
 		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
 		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
@@ -34,7 +34,7 @@ public class TestTwoAdmins {
 		Rusd rusd = config.rusd();
 		
 		Stocks stocks = config.readStocks();
-		StockToken token = stocks.getStock(265598).getToken();
+		StockToken token = stocks.getStockByConid(265598).getToken();
 
 		
 		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));

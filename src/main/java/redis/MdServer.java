@@ -153,6 +153,7 @@ public class MdServer {
 		m_list.clear();
 
 		if (m_config.twsDelayed() ) {
+			S.out( "Requesting delayed data");
 			mdController().reqMktDataType(MarketDataType.DELAYED);
 		}
 

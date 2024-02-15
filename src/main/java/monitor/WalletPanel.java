@@ -1,6 +1,7 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -73,7 +74,7 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
-		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> send() ) );
+		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
 		vp.add( "Text", m_text);
 		
 		transPanel.small("Transactions");
@@ -187,7 +188,7 @@ public class WalletPanel extends JsonPanel {
 		if (Util.isValidAddress(walletAddr)) {
 			S.out( "Updating values");
 
-			// query Users record
+			// query Users record for north-west panel
 			JsonArray users = Monitor.m_config.sqlQuery( sql -> 
 				sql.queryToJson("select * from users where wallet_public_key = '%s'", walletAddr) );
 			if (users.size() == 1) {
@@ -208,10 +209,12 @@ public class WalletPanel extends JsonPanel {
 			});
 
 			Wallet wallet = new Wallet( walletAddr);
+			HashMap<String, Double> posMap = wallet.reqPositionsMap();
+			
 			for (Stock stock : Monitor.stocks) {
-				JsonObject obj = new JsonObject();
-				double bal = wallet.getBalance( stock.getSmartContractId() );
+				double bal = Util.toDouble( posMap.get( stock.getSmartContractId().toLowerCase() ) );
 				if (bal > minBalance) {
+					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
 					rows().add(obj);
@@ -231,8 +234,9 @@ public class WalletPanel extends JsonPanel {
 
 		m_model.fireTableDataChanged();
 	}
-	
-	private void send() {
+
+	/** Send an email from Josh@reflection */
+	private void sendEmail() {
 		try {
 			Monitor.m_config.sendEmailEx(
 					m_email.getText(),

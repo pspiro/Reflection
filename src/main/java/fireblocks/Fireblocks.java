@@ -424,6 +424,11 @@ public class Fireblocks {
 	public static Wallet getWallet(String account) throws Exception {
 		return Accounts.instance.getWallet(account);
 	}
+
+	/** Return true for goerli network */
+	public static boolean isDev() {
+		return platformBase == null || platformBase.equals( "ETH_TEST3");
+	}
 	
 //	public static void sign() {
 //		String body = """
