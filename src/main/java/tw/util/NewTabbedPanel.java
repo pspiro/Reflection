@@ -103,6 +103,7 @@ public class NewTabbedPanel extends JPanel {
 		m_cardLayout.show( m_cardPanel, title);
 
 		Tab selectedTab = m_map.get( title);
+		m_current = selectedTab.m_comp;
 
 		// select or deselect all buttons
 		for( Tab tab : m_map.values() ) {

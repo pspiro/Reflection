@@ -1,8 +1,9 @@
 package fireblocks;
 
+import static common.Util.rnd;
+
 import java.math.BigInteger;
 import java.net.http.HttpResponse;
-import java.util.Random;
 
 import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
@@ -26,8 +27,6 @@ public class Fireblocks {
 	public static String testBusd = "BUSD_ETH_TEST3_6ZNB";  // Fireblocks asset id
 	public static String testRusd = "RUSD_ETH_TEST3_S89L";
 	
-	static Random rnd = new Random(System.currentTimeMillis());
-
 	static String base = "https://api.fireblocks.io";
 	
 	private static String s_apiKey;
@@ -425,4 +424,27 @@ public class Fireblocks {
 	public static Wallet getWallet(String account) throws Exception {
 		return Accounts.instance.getWallet(account);
 	}
+
+	/** Return true for goerli network */
+	public static boolean isDev() {
+		return platformBase == null || platformBase.equals( "ETH_TEST3");
+	}
+	
+//	public static void sign() {
+//		String body = """
+//				{
+//					"operation": "TRANSFER",
+//					"source": {
+//						"type": "VAULT_ACCOUNT"
+//					},
+//					"destination": {
+//						"type": "VAULT_ACCOUNT"
+//					}
+//				}""";
+//		
+//		Fireblocks fb = new Fireblocks();
+//		fb.endpoint( "/v1/transactions");
+//		fb.body( body);
+//		fb.transact();
+//	}
 }

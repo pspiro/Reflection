@@ -5,10 +5,12 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ExRunnable;
+import common.Util.ExSupplier;
 import fireblocks.Accounts;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
+import reflection.Stocks;
 import tw.util.S;
 
 public class MyTestCase extends TestCase {
@@ -16,12 +18,21 @@ public class MyTestCase extends TestCase {
 
 	static Config m_config;
 	static Accounts accounts = Accounts.instance;
-	
+	static Stocks stocks = new Stocks();  // you must read the stocks before using this
+
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
 			m_config = Config.readFrom("Dt-config");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void readStocks() {
+		try {
+			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -116,5 +127,18 @@ public class MyTestCase extends TestCase {
 		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
 	}
 	
-	static int a = 3;
+
+	/** wait n seconds for supplier to return true, then fail */
+	static void waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
+		for (int i = 0; i < sec; i++) {
+			S.out( i);
+			if (sup.get() ) {
+				S.out( "succeeded in %s seconds", i);
+				return;
+			}
+			S.sleep(1000);
+		}
+		assertTrue( false);
+	}
+
 }

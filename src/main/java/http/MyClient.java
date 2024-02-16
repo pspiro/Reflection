@@ -11,30 +11,55 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ExConsumer;
+import tw.util.OStream;
 import tw.util.S;
 
 /** Client for all HttpRequests */
 public class MyClient {
+	static final String filename = "http.log";
+	
 	static HttpClient client = HttpClient.newBuilder().build();
 
 	private Builder m_builder;
-
+	
+	private static void write( String line) {
+		try ( OStream os = new OStream( filename, true) ) {
+			os.writeln( line);
+		}
+		catch( Exception e) {
+			// ignore it
+		}
+	}
+	
 	/** build GET request; call this directly to add headers */
-	public static MyClient create(String url) {
-		S.out( url + " GET");
-		return new MyClient( HttpRequest.newBuilder()
-				.uri( URI.create(url) )
-				.GET() );
+	public static MyClient create( String url) {
+		write( url + " GET");
+		return new MyClient( reqBuilder( url).GET() );
 	}
 		
 	/** build POST request; call this directly to add headers */
-	public static MyClient create(String url, String body) {
-		S.out( url + " POST");
-		return new MyClient( HttpRequest.newBuilder()
-				.uri( URI.create(url) )
-				.POST(HttpRequest.BodyPublishers.ofString(body)));
+	public static MyClient create( String url, String body) {
+		write( url + " POST");
+		return new MyClient( reqBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
 	}
-	
+
+	/** Create PUT */
+	public static MyClient createPut( String url, String body) {
+		write( url + " PUT");
+		return new MyClient( reqBuilder( url)
+				.PUT( HttpRequest.BodyPublishers.ofString( body)));
+	}
+
+	/** Create DELETE */
+	public static MyClient createDelete( String url) {
+		write( url + " DELETE");
+		return new MyClient( reqBuilder( url).DELETE() );
+	}
+
+	/** Create Builder with URL */
+	private static Builder reqBuilder( String url) {
+		return HttpRequest.newBuilder().uri( URI.create( url) );
+	}
 
 	MyClient( Builder builder) {
 		m_builder = builder;
@@ -50,7 +75,7 @@ public class MyClient {
 		try {
 			HttpRequest request = m_builder.build();
 
-			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			HttpResponse<String> response = client.send( request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
 			if (!niceCode( response.statusCode() ) ) {
@@ -60,20 +85,20 @@ public class MyClient {
 			return response;
 		}
 		catch( Throwable e) {
-			throw ( Util.toException(e) ); // check the type. pas 
+			throw ( Util.toException( e) ); // check the type. pas 
 		}
 	}
 	
 	/** async query; WARNING: the response comes in a daemon thread which will not keep
 	 *  the program alive if there are no other threads */
-	public void query(ExConsumer<HttpResponse<String>> ret) {
+	public void query( ExConsumer<HttpResponse<String>> ret) {
 		HttpRequest request = m_builder.build();
 		
-		HttpClient.newBuilder().build().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-				.thenAccept(response -> { 
+		HttpClient.newBuilder().build().sendAsync( request, HttpResponse.BodyHandlers.ofString())
+				.thenAccept( response -> { 
 						if (niceCode( response.statusCode() ) ) {  // catch 502 and 404 here
 							try {
-								ret.accept(response);
+								ret.accept( response);
 							}
 							catch( Exception e) {
 								S.out( "Error processing url %s", request.uri() );
@@ -85,7 +110,7 @@ public class MyClient {
 							S.out( "Error: received status code %s fetching URL %s", response.statusCode(), request.uri() );
 						}
 				})
-				.exceptionally(ex -> {
+				.exceptionally( ex -> {
 					S.out( "Error: could not get url %s - %s", request.uri(), ex.getMessage() );  // we need this because the stack trace does not indicate where the error occurred
 					// ex.printStackTrace(); this stack trace is useless because it does not contain any of our functions
 					return null;
@@ -100,25 +125,25 @@ public class MyClient {
 	// ----- synchronous helper methods - get ----------------------------
 
 	/** get json object */ 
-	public static JsonObject getJson(String url) throws Exception {
-		return JsonObject.parse( getString(url) );
+	public static JsonObject getJson( String url) throws Exception {
+		return JsonObject.parse( getString( url) );
 	}
 
 	/** get json array */ 
 	public static JsonArray getArray( String url) throws Exception {
-		return JsonArray.parse( getString(url) );
+		return JsonArray.parse( getString( url) );
 	}
 
 	/** get string
 	 *  For 502 errors, the Http client will throw an exception. 
 	 *  For 404, it does not, but we want it to */
 	public static String getString( String url) throws Exception {
-		return getResponse(url).body();
+		return getResponse( url).body();
 	}
 
 	/** get repsonse */
-	public static HttpResponse<String> getResponse(String url) throws Exception {
-		return create(url).query();
+	public static HttpResponse<String> getResponse( String url) throws Exception {
+		return create( url).query();
 	}
 	
 	// ----- synchronous helper methods - post ----------------------------
@@ -131,14 +156,14 @@ public class MyClient {
 	/** post to string 
 	 * @throws Exception */
 	public static String postToString( String url, String body) throws Exception {
-		return postToResponse(url, body).body();
+		return postToResponse( url, body).body();
 	}
 
 	/** post to response 
 	 * @return 
 	 * @throws Exception */
 	public static HttpResponse<String> postToResponse( String url, String body) throws Exception {
-		return create(url, body).query();
+		return create( url, body).query();
 	}
 
 
@@ -150,25 +175,25 @@ public class MyClient {
 	/** get string, async 
 	 *  Note that this will NOT keep the program alive*/
 	public static void getString( String url, ExConsumer<String> ret) {
-		create(url).query( resp -> ret.accept( resp.body() ) );
+		create( url).query( resp -> ret.accept( resp.body() ) );
 	}
 	
 	/** get json object, async 
 	 *  Note that this will NOT keep the program alive*/
 	public static void getJson( String url, ExConsumer<JsonObject> handler) {
-		create(url).query( resp -> handler.accept( JsonObject.parse(resp.body() ) ) );
+		create( url).query( resp -> handler.accept( JsonObject.parse( resp.body() ) ) );
 	}
 
 	/** get json array, async
 	 *  Note that this will NOT keep the program alive */
 	public static void getArray( String url, ExConsumer<JsonArray> handler) {
-		getString(url, body -> handler.accept( JsonArray.parse(body) ) );
+		getString( url, body -> handler.accept( JsonArray.parse( body) ) );
 	}
 
 	/** post to json object, async
 	 *  Note that this will NOT keep the program alive */
 	public static void postToJson( String url, String body, ExConsumer<JsonObject> ret) {
-		create( url, body).query( resp -> ret.accept( JsonObject.parse(resp.body() ) ) );
+		create( url, body).query( resp -> ret.accept( JsonObject.parse( resp.body() ) ) );
 	}
 
 	

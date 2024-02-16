@@ -213,10 +213,6 @@ public class Erc20 {
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
 
-	public void showBalances() throws Exception {
-		new JsonObject( getAllBalances() ).display();
-	}
-
 	/** print out the balances of all wallets holding this token
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {

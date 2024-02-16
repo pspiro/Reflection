@@ -9,20 +9,21 @@ import junit.framework.TestCase;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+//	   TestAllow.class,
 //	   TestBackendMsgs.class,
 //	   TestConfig.class,
 //	   TestConfigSheet.class,
+//	   TestEmail.class,
 //	   TestErrors.class,
 //	   TestFaqs.class,
 //	   TestFireblocks.class,
-//	   TestFbOrders.class, // failed
+	   TestFbOrders.class, // failed
 //	   TestGetCryptoTrans.class,
 //	   TestGetPositions.class,
 //	   TestGtable.class,
 //	   TestHttpClient.class,
-	   TestKyc.class,
+//	   TestKyc.class,
 //	   TestLog.class,
-//	   TestEmail.class,
 //	   TestMktDataServer.class,
 //	   TestOrder.class,
 	   TestOrderNoAutoFill.class,
@@ -30,18 +31,22 @@ import junit.framework.TestCase;
 	   TestPanic.class,
 //	   TestPartialFill.class,  // Important, must pass this!
 //	   TestPositionTracker.class,
-	   TestPrices.class,
+//	   TestPrices.class,
 //	   TestProfile.class,
-	   TestRedeem.class,
+//	   TestRedeem.class,
 //	   TestSignup.class,
-//	   TestSiwe.class,
+	   TestSiwe.class,
 	   TestSplitDates.class,
 //	   TestSmartRusd.class,
-	   TestSmartToken.class,
-	   TestSwap.class,
+//	   TestSmartToken.class,
+//	   TestSql.class,
+	   TestSwap.class, // FAILS!!!!!!!!!!!
 //	   TestStrings.class,
 	   TestUnwindOrder.class,  // not done
 //	   TestWallet.class,
+	   
+	   
+//	   TestHookServer.class, // WARNING: running HookServer will kill the hooks in live system 
 })
 public class TestAll extends TestCase {
 }

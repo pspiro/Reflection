@@ -1,6 +1,9 @@
 package monitor;
 
 import java.awt.LayoutManager;
+import java.awt.event.MouseEvent;
+
+import javax.swing.JPopupMenu;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -52,14 +55,20 @@ public abstract class JsonPanel extends MonPanel {
 	protected void onDouble(String tag, Object val) {
 	}
 
+	protected void onRightClick(MouseEvent e, JsonObject record, String tag, Object val) {
+		JPopupMenu m = new JPopupMenu();
+		m.add( JsonModel.menuItem("Copy", ev -> Util.copyToClipboard(val) ) );
+		m.show( e.getComponent(), e.getX(), e.getY() );
+	}
+
 	/** Pass events to the panel so need only subclass the panel */
 	class JsonPanelModel extends JsonModel {
 		public JsonPanelModel(String allNames) {
 			super(allNames);
 		}
 
-		@Override protected Object format(String key, Object value) {
-			return JsonPanel.this.format(key, value);
+		@Override protected Object format(String tag, Object value) {
+			return JsonPanel.this.format(tag, value);
 		}
 		
 		@Override protected void delete(int row, int col) {
@@ -70,12 +79,16 @@ public abstract class JsonPanel extends MonPanel {
 			JsonPanel.this.onCtrlClick(row, tag);
 		}
 		
-		@Override protected void onDouble(String tag, Object val) {
+		@Override protected void onDoubleClick(String tag, Object val) {
 			JsonPanel.this.onDouble(tag, val);
 		}
 
-		@Override protected String getTooltip(JsonObject row, String tag) {
+		@Override protected final String getTooltip(JsonObject row, String tag) {
 			return JsonPanel.this.getTooltip(row, tag);
+		}
+
+		@Override public final void onRightClick(MouseEvent e, JsonObject record, String tag, Object val) {
+			JsonPanel.this.onRightClick(e, record, tag, val);
 		}
 	}
 }

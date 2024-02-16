@@ -11,6 +11,7 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,6 +26,8 @@ import tw.util.S;
 
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
+ * 
+ * Note that null values are supported by put(); use putIf() to avoid null values
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
@@ -244,7 +247,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 						out( ",\n");
 					}
 
-					out( "%s%s : ", Util.tab( level+1), key);
+					out( "%s\"%s\" : ", Util.tab( level+1), key);
 					display( val, level + 1, false);
 					first = false;
 				}
@@ -305,6 +308,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public boolean isComparable(String key) {
 		return get(key) instanceof Comparable;
 	}
+	
+	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()
+	 *  and change put() to not add null values; having null values seems useless
+	 *  and it can break things because the size of the map is not the same
+	 *  if you skip null values */
+	@Override public Object put(String key, Object value) {
+		return super.put(key, value);
+	}
 
 	/** Add the pair if val is not null */
 	public void putIf(String key, Object val) {
@@ -347,15 +358,24 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 	
+	/** Don't add \n's because it break JOptionPane in Util.inform */ 
 	public String toHtml() {
 		StringBuilder b = new StringBuilder();
-		b.append( "<html><table>\n");
-		entrySet().forEach( entry -> b.append(String.format( "<tr><td>%s</td><td>%s</td></tr>\n", 
-				entry.getKey(), 
-				Util.left(Util.toString(entry.getValue()), 100) ) ) );  // trim it too 100 because Cookies are really long
-		b.append( "</table></html>");
-		return b.toString();
+		forEach( (key,value) -> {
+			Util.appendHtml( b, "tr", () -> {
+				Util.wrapHtml( b, "td", key);
+
+				if (value instanceof JsonArray) {
+					Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+				}
+				else {
+					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
+				}
+			});
+		});
+		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
 	}
+
 
 	/** Copy all tags from other to this object; null values are okay but not added */
 	public void copyFrom(JsonObject other, String... tags) {
@@ -375,8 +395,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		m_doubleFormat = fmt;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getEnum( String key, T[] values) throws Exception {
 		return (T)get(key);
+	}
+
+	/** Add all keys to the key set */
+	public void addKeys(HashSet<String> keys) {
+		keySet().forEach( key -> keys.add( key) );
 	}
 }
 /** NOTE: Timestamp objects are stored as

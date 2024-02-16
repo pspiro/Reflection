@@ -1,10 +1,7 @@
 package reflection;
 
 import java.io.OutputStream;
-import java.util.List;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
@@ -57,6 +54,8 @@ public class Main implements ITradeReportHandler {
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
+	private GTable m_allowedCountries;  // wallet is key, case insensitive
+	private GTable m_allowedIPs;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
@@ -128,7 +127,7 @@ public class Main implements ITradeReportHandler {
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() ); // remove. pas
+			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() ); // remove after frontend migrates to live-orders. pas
 			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
@@ -139,16 +138,19 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/update-profile", exch -> new ProfileTransaction(this, exch).handleUpdateProfile() );
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
+			server.createContext("/api/allowConnection", exch -> new BackendTransaction(this, exch).allowConnection() );
 			
-			// get config
+			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
 			server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
-			
-			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
+
+			// dashboard panels
+			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
 			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // for My Reflection panel
+			server.createContext("/api/positions-new", exch -> new BackendTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
@@ -164,6 +166,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
+			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 
 			// obsolete, remove
@@ -205,6 +208,8 @@ public class Main implements ITradeReportHandler {
 			: null;
 		
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
+		m_allowedCountries = new GTable( book.getTab("Blacklist"), "Allowed Countries", "Allow", false);
+		m_allowedIPs = new GTable( book.getTab("Blacklist"), "Allowed IPs", "Allow", false);
 		
 		m_stocks.readFromSheet(book, m_config);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
@@ -263,15 +268,9 @@ public class Main implements ITradeReportHandler {
 	}
 
 	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
-	public JsonObject getStockByTokAddr(String addr) throws RefException {
+	public Stock getStockByTokAddr(String addr) throws Exception {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
-		
-		for (JsonObject stock : m_stocks.stocks() ) {
-			if ( ((String)stock.get("smartcontractid")).equalsIgnoreCase(addr) ) {
-				return stock;
-			}
-		}
-		return null;
+		return m_stocks.getStockByTokenAddr(addr);
 	}
 
 
@@ -357,22 +356,28 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
-		obj.put( "time", exec.time() );         
-		obj.put( "order_id", exec.orderId() );    
-		obj.put( "perm_id", exec.permId() );    
-		obj.put( "side", exec.side() );
-		obj.put( "quantity", exec.shares().toDouble() ); 
-		obj.put( "symbol", contract.symbol() );
-		obj.put( "price", exec.price() );
-		obj.put( "cumfill", exec.cumQty().toDouble() );
-		obj.put( "conid", contract.conid() );
-		obj.put( "exchange", exec.exchange() );
-		obj.put( "avgprice", exec.avgPrice() );
-		obj.put( "orderref", exec.orderRef() ); // this is the uid
-		obj.put( "tradekey", tradeKey);
+		obj.putIf( "time", exec.time() );         
+		obj.putIf( "order_id", exec.orderId() );    
+		obj.putIf( "perm_id", exec.permId() );    
+		obj.putIf( "side", exec.side() );
+		obj.putIf( "quantity", exec.shares().toDouble() ); 
+		obj.putIf( "symbol", contract.symbol() );
+		obj.putIf( "price", exec.price() );
+		obj.putIf( "cumfill", exec.cumQty().toDouble() );
+		obj.putIf( "conid", contract.conid() );
+		obj.putIf( "exchange", exec.exchange() );
+		obj.putIf( "avgprice", exec.avgPrice() );
+		obj.putIf( "orderref", exec.orderRef() ); // this is the uid
+		obj.putIf( "tradekey", tradeKey);
 
 		// insert trade into trades and log tables
-		queueSql( conn -> conn.insertJson( "trades", obj) );
+		//queueSql( conn -> conn.insertJson( "trades", obj) );
+		try {
+			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj);  
@@ -424,7 +429,7 @@ public class Main implements ITradeReportHandler {
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		try {
 			MyClient.getArray( m_mdsUrl).forEach( prices -> {
-				Stock stock = m_stocks.getStock( prices.getInt("conid") );
+				Stock stock = m_stocks.getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( new Prices(prices) );
 				
@@ -441,6 +446,7 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
+	/** For the watch list */
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		new BackendTransaction(this, exch, false).respond( m_stocks.stocks());
 	}
@@ -529,6 +535,14 @@ public class Main implements ITradeReportHandler {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
+	
+	boolean isAllowedCountry(String country) {
+		return m_allowedCountries.containsKey(country);
+	}
+	
+	boolean isAllowedIP(String ip) {
+		return m_allowedIPs.containsKey(ip);
+	}
 }
 
 //no change
@@ -541,3 +555,7 @@ public class Main implements ITradeReportHandler {
 // Bugs
 // low: on Sunday night, at least, a what-if order returns all Double.max_value strings to api
 // *probably more efficient to have one timer thread instead of one for each message; fix this when it gets busy
+
+// NOTES:
+// If Transaction.wrap() catches, the message is considered failed
+// If Util.wrap() catches, it prints the error but the message handling continues

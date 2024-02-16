@@ -12,7 +12,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import positions.MoralisServer;
+import http.MyClient;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
@@ -61,6 +61,34 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleReqPositionsNew() {
+		wrap( () -> {
+			// read wallet address into m_walletAddr (last token in URI)
+			getWalletFromUri();
+
+			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", Main.m_config.hookServerPort(), m_walletAddr.toLowerCase() );
+
+			JsonArray retVal = new JsonArray();
+
+			for (JsonObject pos : MyClient.getJson( url).getArray( "positions") ) {   // returns the following keys: native, approved, positions, wallet
+				double position = pos.getDouble("position");
+				
+				JsonObject stock = m_main.getStockByTokAddr( pos.getString("address") );
+				if (stock != null && position >= m_config.minTokenPosition() ) {
+					JsonObject resp = new JsonObject();
+					resp.put("conId", stock.get("conid") );
+					resp.put("symbol", stock.get("symbol") );
+					resp.put("price", getPrice(stock) );
+					resp.put("quantity", position); 
+					retVal.add(resp);
+				}
+			}
+			
+			retVal.sortJson( "symbol", true);
+			respond(retVal);
+		});
+	}
+
 	/** Handle a Backend-style event. Conid is last parameter
 	 * 
 	 * @return 
@@ -79,7 +107,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
 			
-			Session session = m_main.m_tradingHours.insideAnyHours( stock.getBool("is24hour"), null);
+			Session session = m_main.m_tradingHours.insideAnyHours( stock.is24Hour(), null);
 			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
@@ -209,9 +237,13 @@ public class BackendTransaction extends MyTransaction {
 
 			Wallet wallet = new Wallet(m_walletAddr);
 			
+			HashMap<String, Double> map = wallet.reqPositionsMap( 
+					m_config.rusdAddr(), 
+					m_config.busd().address() ); 
+			
 			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
-			rusd.put( "balance", wallet.getBalance(m_config.rusdAddr() ) );
+			rusd.put( "balance", Wallet.getBalance(map, m_config.rusdAddr() ) );
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
@@ -221,7 +253,7 @@ public class BackendTransaction extends MyTransaction {
 				if (trans.progress() == 100) {
 					rusd.put( "text", trans.text() );  // success or error message
 					rusd.put( "status", trans.status() );  // Completed or Failed 
-					liveRedemptions.remove( trans);
+					liveRedemptions.remove( m_walletAddr.toLowerCase() );
 				}
 				else {
 					rusd.put( "progress", trans.progress() );
@@ -233,7 +265,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", wallet.getBalance( m_config.busd().address() ) );
+			busd.put( "balance", Wallet.getBalance( map, m_config.busd().address() ) );
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);
@@ -241,7 +273,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", MoralisServer.getNativeBalance(m_walletAddr) );
+			base.put( "balance", wallet.getNativeBalance() );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();
@@ -296,6 +328,31 @@ public class BackendTransaction extends MyTransaction {
 					"IB", m_main.orderConnMgr().ibConnection(),
 					"started", Main.m_started,
 					"built", Util.readResource( Main.class, "version.txt")
+					) );
+		});
+	}
+
+	/** Return PositionTracker data to Monitor; used for debugging only */
+	public void handleGetPositionTracker() {
+		wrap( () -> {
+			respond( OrderTransaction.dumpPositionTracker() );
+		});
+	}
+	
+	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
+	public void allowConnection() {
+		wrap( () -> {
+			String country = getHeader("X-Country-Code");
+			String ip = getHeader("X-Real-IP");
+			
+			boolean allow =
+					m_main.isAllowedCountry(country ) ||
+					m_main.isAllowedIP(ip);
+			
+			respond( Util.toJson( 
+					"allow", allow,
+					"country", country,
+					"ip", ip
 					) );
 		});
 	}

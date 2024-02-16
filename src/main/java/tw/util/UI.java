@@ -22,11 +22,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
+import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 
 import common.Util;
 import common.Util.ExRunnable;
-import monitor.Monitor;
 
 public class UI {
 
@@ -61,10 +62,12 @@ public class UI {
     
     static public void centerOnOwner( Window window) {
         Window owner = window.getOwner();
-        if( owner == null) {
-            return;
+        if( owner != null) {
+        	centerOnWindow(window, owner);
         }
-        centerOnWindow(window, owner);
+        else {
+        	centerOnScreen( window);
+        }
     }
     
     static public void centerOnWindow( Window windowToCenter, Window anchorWindow) {
@@ -150,5 +153,20 @@ public class UI {
 		Hourglass glass = new Hourglass( frame);
 		Util.wrap( () -> runnable.run() );
 		glass.restore();
+	}
+
+	/** Flash a msg on the screen for 2500 ms and make a beep */
+	public static void flash(String text) {
+		JFrame d = new JFrame();
+		d.setUndecorated(true);
+		d.setSize( 300, 80);
+		d.setAlwaysOnTop(true);
+		((JComponent)d.getContentPane()).setBorder( new TitledBorder( "") );
+		UI.centerOnOwner(d);
+		d.add( Util.tweak( new JLabel(text), lab -> lab.setHorizontalAlignment( SwingConstants.CENTER) ) );
+		d.setVisible(true);
+		Util.executeIn(2500, () -> d.setVisible(false) );
+		
+		java.awt.Toolkit.getDefaultToolkit().beep();
 	}
 }

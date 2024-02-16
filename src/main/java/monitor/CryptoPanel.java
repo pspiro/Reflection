@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 
 import common.Util;
 import fireblocks.Accounts;
@@ -25,6 +24,7 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_admin1Matic = new JTextField(10);
 	private JTextField m_admin2Matic = new JTextField(10);
 	private JTextField m_ownerMatic = new JTextField(10);
+	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 	HoldersPanel holdersPanel = new HoldersPanel();
 
@@ -38,20 +38,26 @@ public class CryptoPanel extends MonPanel {
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
+		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
 
 		VerticalPanel rusdPanel = new VerticalPanel();
-		rusdPanel.setBorder( new TitledBorder("RUSD Analysis"));
+		rusdPanel.addHeader( "RUSD");
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
+		rusdPanel.add( "RefWallet has approved RUSD to spend BUSD", m_approved);
 		
+		rusdPanel.addHeader( "RefWallet");
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
+		rusdPanel.addHeader( "Owner Wallet");
 		rusdPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		rusdPanel.add( "Owner MATIC", m_ownerMatic);
+		rusdPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
+		rusdPanel.addHeader( "Fireblocks");
 		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
 		rusdPanel.add( "Admin2 MATIC", m_admin2Matic);
 
+		rusdPanel.addHeader( "Brokerage (IB)");
 		rusdPanel.add( "Cash in brokerage", m_cash);
 		
 		add(rusdPanel);
@@ -86,6 +92,19 @@ public class CryptoPanel extends MonPanel {
 		});
 	}
 
+	private void ownerSendMatic() {
+		Util.wrap( () -> {
+			Fireblocks.transfer( 
+					Accounts.instance.getId("Owner"),
+					Util.ask("Enter dest wallet address"),
+					Fireblocks.platformBase,
+					Double.parseDouble( Util.ask( "Enter amount")),
+					Util.ask("Enter note")
+			).waitForHash();
+			Util.inform(this, "Done");
+		});
+	}
+
 	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
 		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
@@ -106,22 +125,27 @@ public class CryptoPanel extends MonPanel {
 		double busd = refWallet.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
-		double nativeBal = refWallet.getNativeTokenBalance();
+		double nativeBal = refWallet.getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
 		Wallet owner = Fireblocks.getWallet("Owner");
-		double ownerMatic = owner.getNativeTokenBalance();
+		double ownerMatic = owner.getNativeBalance();
 		double ownerBusd = owner.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> {
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeTokenBalance();
+		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
-		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeTokenBalance();
+		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
+		
+		double approved = Monitor.m_config.busd().getAllowance(
+				Accounts.instance.getAddress("RefWallet"),
+				Monitor.m_config.rusdAddr() );
+		m_approved.setText( "" + approved);
 
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );

@@ -70,8 +70,14 @@ public class MySqlConnection implements AutoCloseable {
 	
 	/** Do not do String.format() substitutions on sql. */
 	public int execute( String sql) throws Exception {
-		Util.require( connection != null, "you must connect to the database");
-		return connection.createStatement().executeUpdate(sql);
+		try {
+			Util.require( connection != null, "you must connect to the database");
+			return connection.createStatement().executeUpdate(sql);
+		}
+		catch( Exception e) {
+			S.out( "Database error with sql " + sql);
+			throw e;
+		}
 	}
 	
 	/** Don't call execute because the sql string could have percent signs in it
@@ -88,18 +94,6 @@ public class MySqlConnection implements AutoCloseable {
 		if (updateJson( table, json, where, params) == 0) {
 			insertJson( table, json);
 		}
-	}
-	
-	public void insertJson( String table, JsonObject json) throws Exception {
-		String[] names = new String[json.size()];
-		Object[] vals = new Object[json.size()];
-
-		int i = 0;
-		for (Object key : json.keySet() ) {
-			names[i] = (String)key;
-			vals[i++] = json.get(key);
-		}
-		insert(table, names, vals);
 	}
 	
 	public int execWithParams( String sql, Object...params) throws Exception {
@@ -134,41 +128,28 @@ public class MySqlConnection implements AutoCloseable {
 		return Util.isPrimitive(val.getClass()) || getsQuoted(val);
 	}
 	
-	/** If column names are not given, you can (must) give any number of columns starting with the first.
-	 *  Single-quotes in the values are supported */  
-	public void insert( String table, String[] columnNames, Object... values) throws Exception {
+	/** Inserts null values, with a warning */
+	public void insertJson( String table, JsonObject json) throws Exception {
 		Util.require( connection != null, "you must connect to the database");
 
-		// build values string
+		StringBuilder colStr = new StringBuilder();
 		StringBuilder valStr = new StringBuilder();
-		for (Object val : values) {
-			if (valStr.length() > 0) {
-				valStr.append(',');
-			}
+		
+		Util.forEach( json, (key,val) -> {
 			if (val != null) {
 				Util.require( isSupportedType(val) , "Cannot insert non-primitive type " + val.getClass() );
+
+				if (valStr.length() > 0) {
+					colStr.append(',');
+					valStr.append(',');
+				}
+				colStr.append( key);
 				valStr.append( toSqlValue(val) );
 			}
-			else {
-				valStr.append( "NULL");
-			}
-		}
+		});
 		
-		String sql;
-		
-		if (columnNames != null) {
-			Util.require( columnNames.length == values.length, "mismatched column/values when inserting");
-
-			sql = String.format( "insert into %s (%s) values (%s)", 
-					table,
-					Util.concatenate( ',', columnNames),				
-					valStr);
-		}
-		else {
-			sql = String.format( "insert into %s values (%s)",
-					table,
-					valStr);
-		}
+		String sql = String.format( "insert into %s (%s) values (%s)",
+				table, colStr, valStr);
 		
 		execute(sql);
 	}

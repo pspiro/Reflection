@@ -3,17 +3,19 @@ package http;
 import static reflection.Main.require;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonObject;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import common.Util.ExRunnable;
-import reflection.ParamMap;
 import reflection.RefCode;
 import reflection.RefException;
 import test.MyTimer;
@@ -28,7 +30,6 @@ public class BaseTransaction {
 
 	protected final HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
-	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
 	protected final String m_uri;
 	private final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
 	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
@@ -226,5 +227,15 @@ public class BaseTransaction {
 		return Integer.parseInt(conidStr);
 	}
 	
+	public List<String> getHeaders(String name) {
+		Headers headers = m_exchange.getRequestHeaders();
+		return headers != null ? headers.get( name) : new ArrayList<String>();
+	}
 	
+	public String getHeader(String name) throws Exception {
+		List<String> headers = getHeaders(name);
+		Util.require( headers != null && headers.size() > 0, "Error: no '%s' header found", name);
+		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
+		return headers.get(0);
+	}
 }

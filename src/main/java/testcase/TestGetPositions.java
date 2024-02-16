@@ -10,7 +10,7 @@ import http.MyHttpClient;
 import tw.util.S;
 
 public class TestGetPositions extends MyTestCase {
-	static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
+	static String wallet = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String host = "localhost"; // prod = "34.125.38.193";
 	
 	public static void main(String[] args) {

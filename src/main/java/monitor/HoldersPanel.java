@@ -32,7 +32,7 @@ public class HoldersPanel extends JsonPanel {
 			JsonArray ar = new JsonArray();
 			map.forEach( (wallet, balance) -> { 
 				if (balance >= .001) {
-					ar.add( Util.toJson( "wallet", Util.left(wallet, 8), "balance", balance ) );
+					ar.add( Util.toJson( "wallet", wallet, "balance", balance ) );
 				}
 			});
 			

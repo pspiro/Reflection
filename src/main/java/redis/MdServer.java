@@ -152,7 +152,8 @@ public class MdServer {
 		// clear out any existing prices
 		m_list.clear();
 
-		if (m_config.mode() == Mode.paper) {
+		if (m_config.twsDelayed() ) {
+			S.out( "Requesting delayed data");
 			mdController().reqMktDataType(MarketDataType.DELAYED);
 		}
 
@@ -163,8 +164,8 @@ public class MdServer {
 			DualPrices dual = new DualPrices( stock);
 			m_list.add( dual);
 
-			// request price on SMART
-			contract.exchange( "SMART");
+			// request price on SMART or PAXOS
+			contract.exchange( stock.getMdExchange() );
 			mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 				@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 					MyTickType myTickType = getTickType(tickType);

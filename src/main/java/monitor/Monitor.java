@@ -15,12 +15,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Transactions;
 import http.MyClient;
-import http.MyHttpClient;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -68,7 +68,7 @@ public class Monitor {
 		m_logPanel = new LogPanel();
 		m_walletPanel = new WalletPanel();
 		
-		m_config.useExteranDbUrl();
+		m_config.useExternalDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		S.out( "Using database %s", m_config.postgresUrl() );
 
@@ -85,25 +85,20 @@ public class Monitor {
 		but.addActionListener( e -> refresh() );
 		num.addActionListener( e -> refresh() );
 		
-		JButton but2 = new JButton("Refresh Config");
-		but2.addActionListener( e -> refreshConfig() );
-		
 		JPanel butPanel = new JPanel();
 		butPanel.add(new JLabel(refApiBaseUrl() ) );
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
-		butPanel.add(Box.createHorizontalStrut(15));
-		butPanel.add(but2);
 		
 		num.setText("40");
 
 		m_tabs.addTab( "Home", new EmptyPanel(new BorderLayout()) );
 		m_tabs.addTab( "Status", new StatusPanel() );
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
-		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
+		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -112,9 +107,9 @@ public class Monitor {
 		m_tabs.addTab( "RefAPI Prices", pricesPanel);
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
+		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
-		m_tabs.addTab( "SimTrades", new SimTradesPanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -135,12 +130,6 @@ public class Monitor {
 		});
 	}
 	
-	private static void refreshConfig() {
-		Util.wrap( () -> Util.inform( 
-					m_frame,
-					MyClient.getJson(refApiBaseUrl() + "/api/?msg=refreshconfig").toString() ) );
-	}
-
 	static int num() {
 		return (int)S.parseDouble( num.getText() );
 	}
@@ -248,6 +237,12 @@ public class Monitor {
 			return ret;
 		}
 		
+		// there's one slight problem here; if they haven't opened the Wallet panel yet
+		// it going to activate it, which will refresh it, then refresh it again
+		// with the values passed in
+		
+		// you have to not activate it, but mark it as activated so it doesn't
+		// refresh if they click on it later
 		@Override protected void onDouble(String tag, Object val) {
 			if (S.notNull(tag).equals("wallet_public_key") ) {
 				m_tabs.select("Wallet");
@@ -303,24 +298,11 @@ public class Monitor {
 			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
 		}
 		
-		@Override
+		@Override  // this is wrong, should use base url
 		public void refresh() throws Exception {
-			MyHttpClient client = new MyHttpClient("localhost", m_config.fbServerPort() );
-			client.get( "/fbserver/get-all");
-			setRows( client.readJsonArray() );
+			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			setRows( ar);
 			m_model.fireTableDataChanged();
 		}
 	}
-	
-	static class SimTradesPanel extends MonPanel {
-		public SimTradesPanel() {
-			super( new BorderLayout() );
-		}
-
-		@Override protected void refresh() throws Exception {
-			
-		}
-		
-	}
-	
 }

@@ -14,6 +14,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 
 /** A stack of FlowPanels where each row has two columns and the first column has all the same width, i.e.
  *  One     _________
@@ -157,5 +158,16 @@ public class VerticalPanel extends JPanel {
 		f.setSize( 200, 200);
 		f.setDefaultCloseOperation(( JFrame.EXIT_ON_CLOSE));
 		f.show();
+	}
+	
+	public static class Header extends JLabel {
+		public Header(String text) {
+			super( HtmlButton.underline(text) );
+			setBorder( new EmptyBorder(10, 0, 0, 0) );
+		}
+	}
+
+	public void addHeader(String string) {
+		add( new Header(string) );
 	}
 }

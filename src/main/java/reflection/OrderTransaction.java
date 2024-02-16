@@ -107,6 +107,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
 			
+		// NOTE: this next code is the same as OrderTransaction
+
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");
@@ -138,7 +140,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				
 		// check trading hours
 		Session session = m_main.m_tradingHours.insideAnyHours( 
-						m_stock.getBool("is24hour"), 
+						m_stock.is24Hour(), 
 						m_map.get("simtime") );
 		require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
@@ -148,6 +150,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		Contract contract = new Contract();
 		contract.conid( conid);
 		contract.exchange( session.toString().toUpperCase() );
+		
+		// special case: for crypto, set exchange to PAXOS
+		if (m_stock.getType().equals( "Crypto") ) {
+			contract.exchange( "PAXOS");
+		}
 
 		m_order.action( side);
 		m_order.lmtPrice( orderPrice);
@@ -526,13 +533,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
+			
 			jlog( LogType.ORDER_COMPLETED, null);
+			
 			m_main.queueSql( sql -> sql.execWithParams( 
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER COMPLETED", getCompletedOrderText() );
+				alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
 				
 				// send email to the user
 				if (Util.isValidEmail(m_email)) {
@@ -579,7 +588,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s", m_uid, m_errorText, m_errorCode) );
+				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );
 			}
 		}
 	}	
@@ -804,6 +813,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						
 						) ) );
 	}
+	
+	static JsonArray dumpPositionTracker() {
+		return positionTracker.dump();
+	}
 
 	private static final String buyConf = """
 		<html>
@@ -815,9 +828,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		<p>
 		We have purchased the associated stock and are holding it in reserve on your behalf.<p>
 		<p>
-		To view the stock token in your crypto wallet:<br>
-		* Click the "Add to Wallet" button on the Trade screen, or<br>
-		* Import this contract address: %s<p>
+		To view the stock token in your crypto wallet, click the "Add to Wallet" button on the
+		Trade screen, or import this contract address: %s<p>
 		<p>
 		You can <a href="%s">view the transaction on the blockchain explorer</a><p>
 		<p>

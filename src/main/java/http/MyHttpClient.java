@@ -192,8 +192,8 @@ public class MyHttpClient {
 		TestCase.assertEquals(code, getResponseCode() );
 	}
 
-	public JsonObject postToJson(String string, String data) throws Exception {
-		post(string, data);
+	public JsonObject postToJson(String url, String data) throws Exception {
+		post(url, data);
 		return readJsonObject();
 	}
 }

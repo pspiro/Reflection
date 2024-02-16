@@ -70,5 +70,10 @@ public class Profile extends JsonObject {
 		return str.indexOf('<') == -1 && str.indexOf('>') == -1;
 	}
 
+	/** return true for testing */
+	public boolean skip() {
+		return email().equals("test@test.com");
+	}
+
 }
 //you have to see what they are sending; this check looks backwards

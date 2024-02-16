@@ -59,7 +59,7 @@ public class Stock extends JsonObject {
 		return getString("symbol");
 	}
 
-	/** From specific tab, e.g. AAPL */
+	/** From specific tab, e.g. AAPL.r */
 	public String tokenSmbol() {
 		return getString("tokenSymbol");
 	}
@@ -107,5 +107,14 @@ public class Stock extends JsonObject {
 	
 	public StockToken getToken() throws Exception {
 		return new StockToken(getSmartContractId());
+	}
+
+	public String getType() {
+		return getString("type");
+	}
+
+	/** This is used for mkt data subscription */
+	public String getMdExchange() {
+		return getType().equals("Crypto") ? "PAXOS" : "SMART";
 	}
 }

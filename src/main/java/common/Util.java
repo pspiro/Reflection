@@ -2,6 +2,8 @@ package common;
 
 import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +18,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -27,6 +28,7 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -41,6 +43,7 @@ import javax.mail.internet.MimeMessage;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Keys;
 
 import com.ib.client.Decimal;
 
@@ -197,9 +200,7 @@ public class Util {
 				tag = val;
 			}
 			else {
-				if (val != null) {
-					obj.put( tag.toString(), val);
-				}
+				obj.putIf( tag.toString(), val);
 				tag = null;
 			}
 		}
@@ -326,7 +327,7 @@ public class Util {
 		}
 	}
 
-	/** Use this in more places. */
+	/** Use this in more places. */  // try String.join(), dummy!
 	public static String concatenate(char separator, String... values) {
 		StringBuilder builder = new StringBuilder();
 		for (String value : values) {
@@ -469,7 +470,24 @@ public class Util {
 		return b.toString();
 	}
 
+	/** get or create, no exception */
 	public static <Tag,Val> Val getOrCreate(Map<Tag,Val> map, Tag tag, Supplier<Val> creator) {
+		synchronized(map) {
+			Val val = map.get(tag);
+			if (val == null) {
+				val = creator.get();
+				map.put( tag, val);  // could use putIfAbsent() here
+			}
+			return val;
+		}
+	}
+	
+	public interface ExSupplier<T> {
+	    T get() throws Exception;
+	}
+
+	/** get or create; create can throw an exception */
+	public static <Tag,Val> Val getOrCreateEx(Map<Tag,Val> map, Tag tag, ExSupplier<Val> creator) throws Exception {
 		synchronized(map) {
 			Val val = map.get(tag);
 			if (val == null) {
@@ -523,6 +541,18 @@ public class Util {
         }
 	}
 
+	public interface ExBiConsumer<K,V> {
+	    void accept(K k, V v) throws Exception;
+	}
+			
+	/** My version of forEach that propogates up an exception */ 
+	public static <T,V> void forEach(Map<T,V> map, ExBiConsumer<T,V> consumer) throws Exception {
+        Objects.requireNonNull(consumer);
+		for (Entry<T,V> entry : map.entrySet() ) {
+        	consumer.accept( entry.getKey(), entry.getValue() );
+        }
+	}
+	
 	/** Wait for user to press enter */
 	public static void pause() {
 		try(Scanner s = new Scanner(System.in)) {
@@ -623,6 +653,7 @@ public class Util {
 	}
 
 	/** Compare two Comparables but allow for one or both to be null */
+	@SuppressWarnings("unchecked")
 	public static int compare(Comparable v1, Comparable v2) {
 		return v1 != null && v2 != null
 				? v1.compareTo(v2)
@@ -661,12 +692,77 @@ public class Util {
 		}
 	}
 	
-	@SafeVarargs
-	public static <T> T[] toArray( T... ts) {
+	/** Convert vararg to array */
+	@SafeVarargs public static <T> T[] toArray( T... ts) {
 		return ts;
 	}
 	
+	/** convert to decimal; accepts null */
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
 	}
+
+
+	/** Copy obj.toString() to clipboard
+	 * @param obj can be null */
+	public static void copyToClipboard(Object obj) {
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
+        		new StringSelection( toString(obj) ), null);
+	}
+	
+	/** @return value if not null, or default if null */
+	public static String valOr( String value, String def) {
+		return S.isNotNull(value) ? value : def;
+	}
+	
+	/** return fake EIP-55 address; don't send crypto here, it can never be recovered */
+	public static String createFakeAddress() {
+		StringBuilder sb = new StringBuilder("0x");
+		for (int i = 0; i < 40; i++) {
+			sb.append( String.format( "%x", rnd.nextInt(16) ) );
+		}
+		return Keys.toChecksumAddress( sb.toString() );  // change to EIP-55 address 
+	}
+	
+	/** Use this when you want to create an object and tweak
+	 *  it just a bit all on a single line, e.g.:
+	 *    tweak( new JLabel(text), lab -> lab.set);
+	 *  
+	 *  instead of:
+	 *    JLabel lab = new JLabel( text);
+	 *    lab.setHorizontalAlignment( SwingConstants.CENTER);
+	 */
+	public static <T> T tweak( T t, Consumer<T> consumer) {
+		consumer.accept( t);
+		return t;
+	}
+
+	/** Look up tag in map and process the value in Consumer */
+	public static <T,V> void lookup( Map<T,V> map, T tag, ExConsumer<V> consumer) throws Exception {
+		V val = map.get( tag);
+		if (val != null) {
+			consumer.accept(val);
+		}
+	}
+
+	/** wrap text like this <tag>text</tag> */
+	public static String wrapHtml( String tag, String text) {
+		return String.format( "<%s>%s</%s>", tag, text, tag);
+	}
+
+	/** append <tag><body></tag> where body is supplied by supplier */
+	public static void wrapHtml( StringBuilder sb, String tag, String body) {
+		sb.append( wrapHtml( tag, body.toString() ) );
+	}
+	
+	/** append <tag> and </tag> and let consumer add the body text */
+	public static void appendHtml( StringBuilder sb, String tag, Runnable consumer) {
+		sb.append( String.format( "<%s>", tag) );
+		consumer.run();
+		sb.append( String.format( "</%s>", tag) );
+	}
+
+//	<T> T[] toArray( ArrayList<T> list) {
+//		return (T[])list.toArray();
+//	}
 }
