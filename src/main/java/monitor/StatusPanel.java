@@ -26,6 +26,7 @@ class StatusPanel extends MonPanel {
 	JTextField f13 = new JTextField(14);
 	JTextField f14 = new JTextField(14);
 	JTextField f15 = new JTextField(14);
+	JTextField f16 = new JTextField(14);
 
 	StatusPanel() {
 		super( new BorderLayout() );
@@ -49,6 +50,8 @@ class StatusPanel extends MonPanel {
 		p.add( "Last error", f13);
 		p.add( "Last successful fetch", f14);
 		p.add( "Last successful put", f15);
+		p.addHeader( "HookServer");
+		p.add( "HookServer", f16);
 		
 		add( p);
 	}
@@ -78,5 +81,11 @@ class StatusPanel extends MonPanel {
 			f14.setText( json.getTime( "lastSuccessfulFetch", Util.hhmmss) );
 			f14.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
 		});
+		
+		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/ok", json -> {
+			f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+			//f11.setText( json.getTime("started", Util.yToS) );
+		});
+		
 	}
 }

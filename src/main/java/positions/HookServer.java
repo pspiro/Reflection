@@ -57,7 +57,7 @@ public class HookServer {
 	}
 	
 	void run(String tabName) throws Exception {
-		MyClient.filename = "refapi.http.log";
+		MyClient.filename = "hookserver.http.log";
 		m_config.readFromSpreadsheet(tabName);
 		stocks.readFromSheet( m_config);
 		BaseTransaction.setDebug( true);  // just temporary
