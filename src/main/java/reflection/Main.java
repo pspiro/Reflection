@@ -83,6 +83,7 @@ public class Main implements ITradeReportHandler {
 	public Main(String tabName) throws Exception {
 		m_tabName = tabName;
 		m_started = System.currentTimeMillis();
+		MyClient.filename = "refapi.http.log";
 		
 		MyTimer timer = new MyTimer();
 

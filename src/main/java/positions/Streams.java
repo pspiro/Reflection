@@ -91,7 +91,7 @@ public class Streams {
 
 	/** Delete string where description equals name 
 	 * @throws Exception */
-	private static void deleteStreamByName(String name) throws Exception {
+	public static void deleteStreamByName(String name) throws Exception {
 		for (JsonObject stream : MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
 				.getArray("result") ) {
 			
@@ -121,9 +121,9 @@ public class Streams {
 		MoralisServer.post( url, Util.toJson( "status", active ? "active" : "paused").toString() );
 	}
 
-	static String erc20Transfers = """
+	public static String erc20Transfers = """
 	{
-		"description" : "Transfers on chain %s",
+		"description" : "Transfers-%s",
 		"webhookUrl" : "%s",
 		"chainIds" : [ "%s" ]
 		"tag" : "refl-transfers",
@@ -183,7 +183,7 @@ public class Streams {
 	
 	static String approval = """
 	{
-		"description" : "Approvals on chain %s",
+		"description" : "Approvals-%s",
 		"webhookUrl" : "%s",
 		"chainIds" : [ "%s" ],
 		"tag" : "refl-approvals",

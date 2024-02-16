@@ -9,6 +9,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.BaseTransaction;
+import http.MyClient;
 import http.MyHttpClient;
 import reflection.Config;
 import reflection.FireblocksStatus;
@@ -52,6 +53,7 @@ public class FbServer {
 	
 	public static void run(String tab) throws Exception {
 		m_started = System.currentTimeMillis();
+		MyClient.filename = "fbserver.http.log";
 
 		m_config.readFromSpreadsheet(tab);
 		

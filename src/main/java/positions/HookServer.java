@@ -16,6 +16,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import fireblocks.MyServer;
 import http.BaseTransaction;
+import http.MyClient;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
@@ -29,12 +30,12 @@ import tw.util.S;
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
-	final HookServerConfig m_config = new HookServerConfig();
+	final Config m_config = new Config();
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
 	String nativeStreamId;
 
-	/** Map wallet, lower case to HookWal */ 
+	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
 	String chain() { return m_config.hookServerChain(); }
 	
@@ -56,8 +57,10 @@ public class HookServer {
 	}
 	
 	void run(String tabName) throws Exception {
+		MyClient.filename = "refapi.http.log";
 		m_config.readFromSpreadsheet(tabName);
 		stocks.readFromSheet( m_config);
+		BaseTransaction.setDebug( true);  // just temporary
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
@@ -84,12 +87,19 @@ public class HookServer {
 
 		// listen for ERC20 transfers and native transfers 
 		nativeStreamId = Streams.createStreamWithAddresses(
-				String.format( Streams.erc20Transfers, chain(), m_config.hookServerUrl(), chain() ) ); 
-		//,m_allContracts);
+				String.format( 
+						Streams.erc20Transfers, 
+						m_config.getHookNameSuffix(), 
+						m_config.hookServerUrl(), 
+						chain() ) ); 
 
 		// listen for "approve" transactions
 		Streams.createStreamWithAddresses(
-				String.format( Streams.approval, chain(), m_config.hookServerUrl(), chain() ),
+				String.format( 
+						Streams.approval, 
+						m_config.getHookNameSuffix(), 
+						m_config.hookServerUrl(), 
+						chain() ),
 				m_config.busd().address() );
 		
 		S.out( "**ready**");
@@ -151,7 +161,7 @@ public class HookServer {
 
 				// native token (e.g. MATIC)
 				JsonObject base = new JsonObject();
-				base.put( "name", m_config.nativeTok() );
+				base.put( "name", m_config.nativeTokName() );
 				base.put( "balance", hookWallet.getNativeBalance() );
 				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
 				
@@ -185,7 +195,9 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);
+			if (BaseTransaction.debug() ) {
+				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);  // change this to debug mode only
+			}
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
@@ -196,7 +208,7 @@ public class HookServer {
 					String to = trans.getString("toAddress").toLowerCase();
 
 					S.out( "  %s %s was transferred from %s to %s", 
-							amt, m_config.nativeTok(), from, to);
+							amt, m_config.nativeTokName(), from, to);
 
 					adjustNativeBalance( from, -amt, confirmed);
 					adjustNativeBalance( to, amt, confirmed);
@@ -204,6 +216,7 @@ public class HookServer {
 			}
 			
 			// process approvals
+			// NOTE: we get ALL approvals for USDT--and there are many, like every second
 			for (JsonObject trans : obj.getArray("erc20Approvals") ) {
 				String contract = trans.getString("contract");
 				
@@ -212,10 +225,11 @@ public class HookServer {
 					String spender = trans.getString("spender");
 					double amt = trans.getDouble("valueWithDecimals");
 
-					S.out( "  %s can spend %s %s on behalf of %s",
-							spender, amt, contract, owner);
-							
-					Util.lookup( m_hookMap, owner, hookWallet -> hookWallet.approved( amt) );
+					Util.lookup( m_hookMap, owner, hookWallet -> {
+						S.out( "  %s can spend %s %s on behalf of %s",
+								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
+						hookWallet.approved( amt);	
+					});
 				}
 			}
 			
@@ -295,7 +309,7 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
-			Streams.addAddressToStream( nativeStreamId, walletAddr);
+			Streams.addAddressToStream( nativeStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
 			

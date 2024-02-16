@@ -16,7 +16,7 @@ import tw.util.S;
 
 /** Client for all HttpRequests */
 public class MyClient {
-	static final String filename = "http.log";
+	public static String filename = "http.log";
 	
 	static HttpClient client = HttpClient.newBuilder().build();
 
