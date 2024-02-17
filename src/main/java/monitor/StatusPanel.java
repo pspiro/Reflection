@@ -32,6 +32,7 @@ class StatusPanel extends MonPanel {
 	JTextField f18 = new JTextField(14);
 	JTextField f19 = new JTextField(14);
 	JTextField f20 = new JTextField(14);
+	JTextField f21 = new JTextField(14);
 
 	StatusPanel() {
 		super( new BorderLayout() );
@@ -39,24 +40,25 @@ class StatusPanel extends MonPanel {
 		VerticalPanel p = new VerticalPanel();
 		p.addHeader( "RefAPI");
 		p.add( "RefAPI", f1);
+		p.add( "Started", f4);
 		p.add( "TWS", f2);
 		p.add( "IB", f3);
-		p.add( "Started", f4);
 		p.add( "Built", f4a);
 		p.addHeader( "MdServer");
 		p.add( "MdServer", f5);
+		p.add( "Started", f8);
 		p.add( "TWS", f6);
 		p.add( "IB", f7);
-		p.add( "Started", f8);
 		p.addHeader( "FbServer");
 		p.add( "FbServer", f10);
-		p.add( "Map size", f12);
 		p.add( "Started", f11);
+		p.add( "Map size", f12);
 		p.add( "Last error", f13);
 		p.add( "Last successful fetch", f14);
 		p.add( "Last successful put", f15);
 		p.addHeader( "HookServer");
 		p.add( "HookServer", f16);
+		p.add( "Started", f21);
 		p.add( "Transfer stream", f17, f18);
 		p.add( "Approval stream", f19, f20);
 		
@@ -89,8 +91,9 @@ class StatusPanel extends MonPanel {
 			f15.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
 		});
 		
-		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/ok", json -> {
+		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/status", json -> {
 			f16.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+			f21.setText( json.getTime("started", Util.yToS) );
 			setStreamStatus( f17, f18, "transfer-");
 			setStreamStatus( f19, f20, "approval-");
 		});

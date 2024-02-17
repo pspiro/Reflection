@@ -18,6 +18,7 @@ import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
 import reflection.Config;
+import reflection.Main;
 import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
@@ -27,6 +28,10 @@ import tw.util.S;
 // issue: how to tell if the updates are old or new; you don't
 // want to play back old updates
 
+/** This is the WebHook server that receives updates from Moralis.
+ *  There are three types of updates: token transfers, native token transfers, and approvals
+ *
+ */
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
@@ -34,6 +39,7 @@ public class HookServer {
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
 	String m_transferStreamId;
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
@@ -79,6 +85,7 @@ public class HookServer {
 			server.createContext("/hook/reset-all", exch -> new Trans(exch, false).handleResetAll() );
 
 			server.createContext("/hook/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext("/hook/status", exch -> new Trans(exch, false).handleStatus() ); 
 			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 			
@@ -109,6 +116,12 @@ public class HookServer {
 	class Trans extends BaseTransaction {
 		public Trans(HttpExchange exchange, boolean debug) {
 			super(exchange, debug);
+		}
+
+		public void handleStatus() {
+			wrap( () -> {
+				respond( Util.toJson( code, RefCode.OK, "started", m_started) );
+			});
 		}
 
 		/** Returns wallet lower case */
