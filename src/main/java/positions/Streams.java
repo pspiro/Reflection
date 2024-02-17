@@ -14,31 +14,8 @@ import tw.util.S;
 public class Streams {
 
 	public static void main(String[] args) throws Exception {
-		Config.ask();
-		
-//		listen();
-//
-//		createNative();
-
-//		S.out( "Creating stream");
-//		createStream(erc20Transfers);
-		
-//		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
-	
-		//createNative();
-		
-//		displayStreams();
-//
-////
-//		deleteStream(id);
-//
-//		setStreamStatus( id, false);
-		deleteAll();
-//
-//		System.exit(0);
-		S.sleep( 5*60*1000);
+		displayStreams();
 	}
-
 	static void addAddressToStream(String id, String... list) throws Exception {
 		if (list.length > 0) {
 			S.out( "Stream %s: adding addresses [%s]", id, String.join(", ", list) );
@@ -71,20 +48,23 @@ public class Streams {
 	}
 
 	/** @return stream id */
-	public static String createStreamWithAddresses(String stream, String... contracts) throws Exception {
+	public static String createStream(String stream, String name, String webhookUrl, String chain, String... addresses) throws Exception {
 		JsonObject json = JsonObject.parse( stream);
+		json.put( "description", name);
+		json.put( "tag", name);
+		json.put( "webhookUrl", webhookUrl);
+		json.put( "chainIds", new String[] { chain } );
 		
-		S.out( "Creating stream '%s' on chain %s with URL %s", 
-				json.getString("description"), json.getArray("chainIds").get(0), json.getString("webhookUrl") );
+		S.out( "Creating stream '%s' on chain %s with URL %s", name, chain, webhookUrl);
 		S.out( "Full stream: " + json);
 		
-		deleteStreamByName( json.getString("description") );
+		deleteStreamByName( name);
 
 		JsonObject obj = JsonObject.parse(
 				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json.toString() ) );
 		String id = obj.getString("id");
 
-		addAddressToStream(id, contracts);
+		addAddressToStream(id, addresses);
 		setStatus( id, true);
 		return id;
 	}
@@ -123,10 +103,6 @@ public class Streams {
 
 	public static String erc20Transfers = """
 	{
-		"description" : "Transfers-%s",
-		"webhookUrl" : "%s",
-		"chainIds" : [ "%s" ]
-		"tag" : "refl-transfers",
 		"getNativeBalances" : [ ],
 		"triggers" : [ ],
 		"includeContractLogs" : true,
@@ -183,10 +159,6 @@ public class Streams {
 	
 	static String approval = """
 	{
-		"description" : "Approvals-%s",
-		"webhookUrl" : "%s",
-		"chainIds" : [ "%s" ],
-		"tag" : "refl-approvals",
 		"includeNativeTxs" : false,
 		"includeContractLogs" : true,
 		"includeAllTxLogs" : false,

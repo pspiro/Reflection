@@ -33,7 +33,7 @@ public class HookServer {
 	final Config m_config = new Config();
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
-	String nativeStreamId;
+	String m_transferStreamId;
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
@@ -86,21 +86,22 @@ public class HookServer {
 		});
 
 		// listen for ERC20 transfers and native transfers 
-		nativeStreamId = Streams.createStreamWithAddresses(
-				String.format( 
+		m_transferStreamId = Streams.createStream(
 						Streams.erc20Transfers, 
-						m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain() ) ); 
+						"transfer-" + m_config.getHookNameSuffix(), 
+						m_config.hookServerUrl(),
+						chain() ); 
 
 		// listen for "approve" transactions
-		Streams.createStreamWithAddresses(
-				String.format( 
+		// you could pass BUSD, RUSD, or the user addresses
+		// it would be ideal if there were a way to combine these two streams into one,
+		// then it could just work off the user address, same as the transfer stream
+		Streams.createStream(
 						Streams.approval, 
-						m_config.getHookNameSuffix(), 
+						"approve-" + m_config.getHookNameSuffix(), 
 						m_config.hookServerUrl(), 
-						chain() ),
-				m_config.busd().address() );
+						chain(),
+						m_config.rusd().address() );
 		
 		S.out( "**ready**");
 	}
@@ -309,7 +310,7 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
-			Streams.addAddressToStream( nativeStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
 			
