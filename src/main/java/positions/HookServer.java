@@ -98,7 +98,7 @@ public class HookServer {
 		// then it could just work off the user address, same as the transfer stream
 		Streams.createStream(
 						Streams.approval, 
-						"approve-" + m_config.getHookNameSuffix(), 
+						"approval-" + m_config.getHookNameSuffix(), 
 						m_config.hookServerUrl(), 
 						chain(),
 						m_config.rusd().address() );

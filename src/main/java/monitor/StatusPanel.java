@@ -7,6 +7,7 @@ import javax.swing.JTextField;
 import common.Util;
 import http.MyClient;
 import monitor.Monitor.MonPanel;
+import positions.Streams;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
@@ -27,6 +28,10 @@ class StatusPanel extends MonPanel {
 	JTextField f14 = new JTextField(14);
 	JTextField f15 = new JTextField(14);
 	JTextField f16 = new JTextField(14);
+	JTextField f17 = new JTextField(14);
+	JTextField f18 = new JTextField(14);
+	JTextField f19 = new JTextField(14);
+	JTextField f20 = new JTextField(14);
 
 	StatusPanel() {
 		super( new BorderLayout() );
@@ -52,6 +57,8 @@ class StatusPanel extends MonPanel {
 		p.add( "Last successful put", f15);
 		p.addHeader( "HookServer");
 		p.add( "HookServer", f16);
+		p.add( "Transfer stream", f17, f18);
+		p.add( "Approval stream", f19, f20);
 		
 		add( p);
 	}
@@ -79,13 +86,22 @@ class StatusPanel extends MonPanel {
 			f11.setText( json.getTime("started", Util.yToS) );
 			f12.setText( json.getString("mapSize").toString() );
 			f14.setText( json.getTime( "lastSuccessfulFetch", Util.hhmmss) );
-			f14.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
+			f15.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
 		});
 		
 		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/ok", json -> {
-			f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-			//f11.setText( json.getTime("started", Util.yToS) );
+			f16.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
+			setStreamStatus( f17, f18, "transfer-");
+			setStreamStatus( f19, f20, "approval-");
 		});
 		
+	}
+
+	private void setStreamStatus(JTextField fullName, JTextField status, String prefix) {
+		Util.wrap( () -> {
+			String name = prefix + Monitor.m_config.getHookNameSuffix();
+			fullName.setText( name);
+			status.setText( Streams.getStreamStatus( name) );
+		});
 	}
 }

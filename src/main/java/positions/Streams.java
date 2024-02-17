@@ -196,4 +196,16 @@ public class Streams {
 	}
 	""";
 
+	/** Return the status of the first matching stream */
+	public static String getStreamStatus(String name) throws Exception {
+		for (JsonObject stream : MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
+				.getArray("result") ) {
+			
+			if (stream.getString("description").equals( name) ) {
+				return stream.getString("statusMessage");
+			}
+		}
+		return "Stream not found";
+	}
+
 }
