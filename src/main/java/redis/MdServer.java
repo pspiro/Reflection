@@ -39,7 +39,7 @@ public class MdServer {
 
 	public static final String Overnight = "OVERNIGHT"; 
 	public static final String Smart = "SMART"; 
-	       static long m_started;  // timestamp that process was started
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	        final MdConnectionMgr m_mdConnMgr;
@@ -62,7 +62,6 @@ public class MdServer {
 	}
 
 	private MdServer(String[] args) throws Exception {
-		m_started = System.currentTimeMillis();
 
 		String tabName = args[0];
 		

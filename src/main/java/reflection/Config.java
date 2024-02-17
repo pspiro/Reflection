@@ -79,7 +79,9 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	
+	private String hookServerUrl;
+	private String hookServerChain;
+
 	// Fireblocks
 	protected boolean useFireblocks;
 	private String fireblocksApiKey;
@@ -199,6 +201,8 @@ public class Config extends ConfigBase {
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.hookServerPort = m_tab.getInt("hookServerPort");
+		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
+		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -531,12 +535,25 @@ public class Config extends ConfigBase {
 	}
 	
 	/** Pull native token from Fireblocks */
-	public String nativeTok() {
+	public String nativeTokName() {
 		return platformBase.split("_")[0];
 	}
 	
 	public int hookServerPort() {
 		return hookServerPort;
+	}
+	
+	public String hookServerUrl() {
+		return hookServerUrl;
+	}
+	
+	public String hookServerChain() {
+		return hookServerChain;
+	}
+
+	/** suffix used when creating Moralis WebHook */ 
+	public String getHookNameSuffix() {
+		return String.format( "%s-%s", hookServerChain, hookServerPort);
 	}
 
 }

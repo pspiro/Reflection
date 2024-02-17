@@ -1,3 +1,6 @@
 ./kil HookServer
 sleep 1
-/usr/bin/java -cp target/Reflection-0.0.2-jar-with-dependencies.jar positions.HookServer Prod-config > hookserver.log &
+mkdir log
+mv hookserver.log log
+mv hookserver.http.log log
+/usr/bin/java -cp target/Reflection-0.0.2-jar-with-dependencies.jar positions.HookServer Dev-config > hookserver.log &

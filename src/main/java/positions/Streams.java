@@ -14,31 +14,8 @@ import tw.util.S;
 public class Streams {
 
 	public static void main(String[] args) throws Exception {
-		Config.ask();
-		
-//		listen();
-//
-//		createNative();
-
-//		S.out( "Creating stream");
-//		createStream(erc20Transfers);
-		
-//		addAddressToStream( id, "0x7a248d1186e32a06d125d90abc86a49e89730d74");
-	
-		//createNative();
-		
-//		displayStreams();
-//
-////
-//		deleteStream(id);
-//
-//		setStreamStatus( id, false);
-		deleteAll();
-//
-//		System.exit(0);
-		S.sleep( 5*60*1000);
+		displayStreams();
 	}
-
 	static void addAddressToStream(String id, String... list) throws Exception {
 		if (list.length > 0) {
 			S.out( "Stream %s: adding addresses [%s]", id, String.join(", ", list) );
@@ -71,27 +48,30 @@ public class Streams {
 	}
 
 	/** @return stream id */
-	public static String createStreamWithAddresses(String stream, String... contracts) throws Exception {
+	public static String createStream(String stream, String name, String webhookUrl, String chain, String... addresses) throws Exception {
 		JsonObject json = JsonObject.parse( stream);
+		json.put( "description", name);
+		json.put( "tag", name);
+		json.put( "webhookUrl", webhookUrl);
+		json.put( "chainIds", new String[] { chain } );
 		
-		S.out( "Creating stream '%s' on chain %s with URL %s", 
-				json.getString("description"), json.getArray("chainIds").get(0), json.getString("webhookUrl") );
+		S.out( "Creating stream '%s' on chain %s with URL %s", name, chain, webhookUrl);
 		S.out( "Full stream: " + json);
 		
-		deleteStreamByName( json.getString("description") );
+		deleteStreamByName( name);
 
 		JsonObject obj = JsonObject.parse(
 				MoralisServer.put( "https://api.moralis-streams.com/streams/evm", json.toString() ) );
 		String id = obj.getString("id");
 
-		addAddressToStream(id, contracts);
+		addAddressToStream(id, addresses);
 		setStatus( id, true);
 		return id;
 	}
 
 	/** Delete string where description equals name 
 	 * @throws Exception */
-	private static void deleteStreamByName(String name) throws Exception {
+	public static void deleteStreamByName(String name) throws Exception {
 		for (JsonObject stream : MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
 				.getArray("result") ) {
 			
@@ -121,12 +101,8 @@ public class Streams {
 		MoralisServer.post( url, Util.toJson( "status", active ? "active" : "paused").toString() );
 	}
 
-	static String erc20Transfers = """
+	public static String erc20Transfers = """
 	{
-		"description" : "Transfers on chain %s",
-		"webhookUrl" : "%s",
-		"chainIds" : [ "%s" ]
-		"tag" : "refl-transfers",
 		"getNativeBalances" : [ ],
 		"triggers" : [ ],
 		"includeContractLogs" : true,
@@ -183,10 +159,6 @@ public class Streams {
 	
 	static String approval = """
 	{
-		"description" : "Approvals on chain %s",
-		"webhookUrl" : "%s",
-		"chainIds" : [ "%s" ],
-		"tag" : "refl-approvals",
 		"includeNativeTxs" : false,
 		"includeContractLogs" : true,
 		"includeAllTxLogs" : false,
@@ -223,5 +195,17 @@ public class Streams {
 		]
 	}
 	""";
+
+	/** Return the status of the first matching stream */
+	public static String getStreamStatus(String name) throws Exception {
+		for (JsonObject stream : MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=10")
+				.getArray("result") ) {
+			
+			if (stream.getString("description").equals( name) ) {
+				return stream.getString("statusMessage");
+			}
+		}
+		return "Stream not found";
+	}
 
 }

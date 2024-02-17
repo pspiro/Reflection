@@ -11,7 +11,9 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
+import positions.Streams;
 import tw.util.HtmlButton;
+import tw.util.S;
 import tw.util.UI;
 
 class HookServerPanel extends JsonPanel {
@@ -19,7 +21,7 @@ class HookServerPanel extends JsonPanel {
 	
 	HookServerPanel() throws Exception {
 		super( new BorderLayout(), String.format( 
-				"wallet,native,approved,positions", Monitor.m_config.busd().name(), Monitor.m_config.nativeTok() ) );
+				"wallet,native,approved,positions", Monitor.m_config.busd().name(), Monitor.m_config.nativeTokName() ) );
 		
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
@@ -29,11 +31,28 @@ class HookServerPanel extends JsonPanel {
 		top.add( new HtmlButton( "Query 'My Wallet'", e -> myWallet() ) );
 		top.add( new HtmlButton( "Debug on", e -> debugOn() ) );
 		top.add( new HtmlButton( "Debug off", e -> debugOff() ) );
+		top.add( new HtmlButton( "Delete hooks at Moralis", e -> deleteHooks() ) );
 	
 		add( top, BorderLayout.NORTH);
 		add( m_model.createTable() );
 	}
 	
+	private void deleteHooks() {
+		Util.wrap( () -> {
+			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
+				S.out( "Deleting transfers stream");
+				Streams.deleteStreamByName( String.format( 
+						"Transfers-%s", Monitor.m_config.getHookNameSuffix() ) );
+				
+				S.out( "Deleting approvals stream");
+				Streams.deleteStreamByName( String.format( 
+						"Approvals-%s", Monitor.m_config.getHookNameSuffix() ) );
+				
+				UI.flash( "Done");
+			}
+		});
+	}
+
 	private void resetWallet() {
 		Util.wrap( () -> {
 			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/reset/" + m_wallet.getText() );
