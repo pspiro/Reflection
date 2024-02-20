@@ -27,7 +27,6 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -560,20 +559,6 @@ public class Util {
 		}
 	}
 
-	public static void iff(BooleanSupplier test, Runnable r1, Runnable r2) {
-		if (test.getAsBoolean() )
-			r1.run();
-		else
-			r2.run();
-	}
-	
-	public static void ifEx(BooleanSupplier test, ExRunnable r1, ExRunnable r2) throws Exception {
-		if (test.getAsBoolean() )
-			r1.run();
-		else
-			r2.run();
-	}
-
     /** Send an email using SMTP */
 	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
 		Properties props = new Properties();
@@ -673,6 +658,7 @@ public class Util {
 	}
 
 	public static void browse(String url) {
+		S.out( "Browsing " + url);
 		wrap( () -> Desktop.getDesktop().browse(new URI(url) ) );
 	}
 
@@ -724,9 +710,14 @@ public class Util {
 		return Keys.toChecksumAddress( sb.toString() );  // change to EIP-55 address 
 	}
 	
-	/** Use this when you want to create an object and tweak
-	 *  it just a bit all on a single line, e.g.:
-	 *    tweak( new JLabel(text), lab -> lab.set);
+	/** Use this when you want to create an object or retrieve a value and
+	 *  then take some action and/or return use the return value only if the
+	 *  value is not null
+	 *
+	 *  e.g.
+	 *  tweak( new JLabel(text), lab -> lab.set);
+	 *  
+	 *  doAnd( map.lookup(key), val -> process(val) );
 	 *  
 	 *  instead of:
 	 *    JLabel lab = new JLabel( text);
@@ -737,11 +728,18 @@ public class Util {
 		return t;
 	}
 
-	/** Look up tag in map and process the value in Consumer */
-	public static <T,V> void lookup( Map<T,V> map, T tag, ExConsumer<V> consumer) throws Exception {
-		V val = map.get( tag);
-		if (val != null) {
-			consumer.accept(val);
+	/** Retrieve a value and process and return it if not null */ 
+	public static <T> T lookup( T t, ExConsumer<T> consumer) throws Exception {
+		if (t != null) {
+			consumer.accept( t);
+		}
+		return t;
+	}
+
+	/** Execute block if object is not null */
+	public static <T> void iff( T obj, Consumer<T> consumer) {
+		if (obj != null) {
+			consumer.accept( obj);
 		}
 	}
 

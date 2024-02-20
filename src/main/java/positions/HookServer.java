@@ -225,7 +225,7 @@ public class HookServer {
 					String spender = trans.getString("spender");
 					double amt = trans.getDouble("valueWithDecimals");
 
-					Util.lookup( m_hookMap, owner, hookWallet -> {
+					Util.lookup( m_hookMap.get(owner), hookWallet -> {
 						S.out( "  %s can spend %s %s on behalf of %s",
 								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
 						hookWallet.approved( amt);	
@@ -279,14 +279,14 @@ public class HookServer {
 		}
 
 		private void adjustTokenBalance(String wallet, String contract, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap, wallet, hookWallet -> hookWallet.adjustERC20( contract, amt, confirmed) );
+			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustERC20( contract, amt, confirmed) );
 
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in
 		}
 		
 		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap, wallet, hookWallet -> hookWallet.adjustNative( amt, confirmed) );
+			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
 			
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in

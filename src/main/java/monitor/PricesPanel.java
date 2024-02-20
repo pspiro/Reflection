@@ -1,7 +1,11 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.event.MouseEvent;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import org.json.simple.JsonObject;
 
@@ -10,14 +14,19 @@ import common.Util;
 import http.MyClient;
 import tw.util.S;
 
-/** RefAPI prices panel */
+/** RefAPI prices panel. This panel reads the spreadsheet directly */
 public class PricesPanel extends JsonPanel {
 	final static String AlphaKey = "EKD9A4ZUSQPEPFXK";  // alphavantage API key
 	final static String AlphaUrl = "https://www.alphavantage.co";
 
 	PricesPanel() {
 		super( new BorderLayout(), "symbol,conid,bid,ask,last,time");
+		
+		JPanel southPanel = new JPanel( new FlowLayout( FlowLayout.LEFT, 50, 20) );
+		southPanel.add( new JLabel( "NOTE: you would have to reload the Monitor to see changes to the spreadsheet reflected here") );
+		
 		add( m_model.createTable() );
+		add( southPanel, BorderLayout.SOUTH);
 		m_model.justify("llrrr");
 	}
 	

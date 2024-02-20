@@ -2,6 +2,8 @@ package monitor;
 
 import java.awt.Color;
 import java.text.SimpleDateFormat;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.Box;
 import javax.swing.JLabel;
@@ -17,10 +19,12 @@ import http.MyClient;
 public class SouthPanel extends JPanel {
 	static SimpleDateFormat fmt = Util.hhmmss;
 
-	JTextField m_refApi = new JTextField(10);
-	JTextField m_fbServer = new JTextField(10);
-	JTextField m_mdServer = new JTextField(10);
-	JTextField m_hookServer = new JTextField(10);
+	private final Timer m_timer = new Timer();
+
+	private final JTextField m_refApi = new JTextField(10);
+	private final JTextField m_fbServer = new JTextField(10);
+	private final JTextField m_mdServer = new JTextField(10);
+	private final JTextField m_hookServer = new JTextField(10);
 
 	SouthPanel() {
 		add( new JLabel("Ref API:"));
@@ -36,10 +40,15 @@ public class SouthPanel extends JPanel {
 		add( m_hookServer);
 		add( Box.createHorizontalStrut(10));
 		
-		Util.executeEvery(100, 30000, () -> update() ); 
+		m_timer.schedule( new TimerTask() {
+			@Override public void run() {
+				update();
+			}
+		}, 100, 30000);
 	}
 
-	private void update() {
+	/** Called by the timer task */
+	public void update() {
 		try {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
@@ -50,6 +59,10 @@ public class SouthPanel extends JPanel {
 			e.printStackTrace();
 			m_refApi.setText( "ERROR - NO CONNECTION");
 		}
+	}
+
+	public void stop() {
+		m_timer.cancel();
 	}
 
 	private void test(String url, JTextField field) {
@@ -67,4 +80,5 @@ public class SouthPanel extends JPanel {
 			}
 		});
 	}
+	
 }

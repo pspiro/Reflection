@@ -163,7 +163,9 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Return transactions for a specific user or for all users;
-	 *  populates the two panels on the Dashboard */
+	 *  populates the two panels on the Dashboard. We put this in the queue
+	 *  to release the query thread quickly and because this query
+	 *  is not so time-dependent */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();

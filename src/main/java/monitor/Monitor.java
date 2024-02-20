@@ -19,6 +19,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Transactions;
 import http.MyClient;
 import redis.MyRedis;
@@ -45,6 +46,7 @@ public class Monitor {
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
 	static WalletPanel m_walletPanel;
+	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
 	
@@ -59,6 +61,8 @@ public class Monitor {
 	}
 	
 	private static void start() throws Exception {
+		Util.iff( m_southPanel, pan -> pan.stop() );
+		
 		// read config
 		m_config = MonitorConfig.ask();
 		
@@ -67,6 +71,7 @@ public class Monitor {
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
 		m_walletPanel = new WalletPanel();
+		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
@@ -113,7 +118,7 @@ public class Monitor {
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
-		m_frame.add( new SouthPanel(), BorderLayout.SOUTH);
+		m_frame.add( m_southPanel, BorderLayout.SOUTH);
 		
 		m_frame.setTitle( String.format( 
 				"Reflection System Monitor - %s - %s", 
@@ -259,6 +264,17 @@ public class Monitor {
 
 		@Override public void activated() {
 			refreshTop();
+		}
+
+		/** Display the message in a popup */
+		public void wrap(ExRunnable runner) {
+			try {
+				UI.watch( Monitor.m_frame, runner);
+			}
+			catch (Throwable e) {
+				e.printStackTrace();
+				Util.inform( this, e.getMessage() );
+			}
 		}
 
 		/** Display hourglass and refresh, catch exceptions */

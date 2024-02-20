@@ -12,6 +12,9 @@ import fireblocks.StockToken;
 import http.MyClient;
 import tw.util.S;
 
+/** Note that we read the list directly from the spreadsheet,
+ *  so changes are not picked up real-time
+ */
 public class TokensPanel extends JsonPanel {
 	private HashMap<Integer,JsonObject> m_map = new HashMap<>(); // map conid to record, key is Integer 
 	private HoldersPanel m_holdersPanel = new HoldersPanel();
