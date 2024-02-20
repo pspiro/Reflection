@@ -394,12 +394,11 @@ public class Main implements ITradeReportHandler {
 					"commission", rpt.commission(), 
 					"tradeKey", tradeKey) );
 
-			Object[] vals = {
-					tradeKey,
-					rpt.commission(),
-			};
+			JsonObject obj = Util.toJson( 
+					"tradekey", tradeKey,
+					"comm_paid", rpt.commission() );
 
-			queueSql( conn -> conn.insert( "commissions", vals) );
+			queueSql( conn -> conn.insertJson( "commissions", obj) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

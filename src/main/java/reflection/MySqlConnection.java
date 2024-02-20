@@ -80,13 +80,6 @@ public class MySqlConnection implements AutoCloseable {
 		}
 	}
 	
-	/** Don't call execute because the sql string could have percent signs in it
-	 *  This version will break if table columns are changed
-	 *  (e.g. FAQ table. */
-	public void insert( String table, Object... values) throws Exception {
-		insert( table, null, values);
-	}
-	
 	/** Try update first, if it failes, do an insert
 	 *  Do not include the word 'where' in the where clause
 	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON */
