@@ -43,7 +43,7 @@ public class Main implements ITradeReportHandler {
 	static final Config m_config = new RefApiConfig();
 
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
-	static long m_started; // timestamp that app was started
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 
 	// member vars
 	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
@@ -82,7 +82,6 @@ public class Main implements ITradeReportHandler {
 
 	public Main(String tabName) throws Exception {
 		m_tabName = tabName;
-		m_started = System.currentTimeMillis();
 		MyClient.filename = "refapi.http.log";
 		
 		MyTimer timer = new MyTimer();
@@ -395,12 +394,11 @@ public class Main implements ITradeReportHandler {
 					"commission", rpt.commission(), 
 					"tradeKey", tradeKey) );
 
-			Object[] vals = {
-					tradeKey,
-					rpt.commission(),
-			};
+			JsonObject obj = Util.toJson( 
+					"tradekey", tradeKey,
+					"comm_paid", rpt.commission() );
 
-			queueSql( conn -> conn.insert( "commissions", vals) );
+			queueSql( conn -> conn.insertJson( "commissions", obj) );
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

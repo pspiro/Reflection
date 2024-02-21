@@ -23,3 +23,6 @@ sudo systemctl restart fbserver
 sleep 2
 echo restarting refapi
 sudo systemctl restart refapi
+sleep 2
+echo restarting hookserver
+./restartHookServer

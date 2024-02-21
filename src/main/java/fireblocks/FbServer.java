@@ -29,7 +29,7 @@ import static common.Util.hhmmss;
 public class FbServer {
 	static final TreeMap<String,Trans> m_map = new TreeMap<>(); /** Map fireblock id to transaction */
 	static final Config m_config = new Config();
-	static long m_started;
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static long m_lastSuccessfulFetch;
 	static long m_lastSuccessfulPut;
 	static long m_lastQueryTime;
@@ -52,7 +52,6 @@ public class FbServer {
 	}
 	
 	public static void run(String tab) throws Exception {
-		m_started = System.currentTimeMillis();
 		MyClient.filename = "fbserver.http.log";
 
 		m_config.readFromSpreadsheet(tab);

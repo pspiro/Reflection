@@ -18,6 +18,7 @@ import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
 import reflection.Config;
+import reflection.Main;
 import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
@@ -27,13 +28,18 @@ import tw.util.S;
 // issue: how to tell if the updates are old or new; you don't
 // want to play back old updates
 
+/** This is the WebHook server that receives updates from Moralis.
+ *  There are three types of updates: token transfers, native token transfers, and approvals
+ *
+ */
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
 	final Config m_config = new Config();
 	final Stocks stocks = new Stocks();
-	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
-	String nativeStreamId;
+	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
+	String m_transferStreamId;
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
@@ -79,6 +85,7 @@ public class HookServer {
 			server.createContext("/hook/reset-all", exch -> new Trans(exch, false).handleResetAll() );
 
 			server.createContext("/hook/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext("/hook/status", exch -> new Trans(exch, false).handleStatus() ); 
 			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 			
@@ -86,21 +93,22 @@ public class HookServer {
 		});
 
 		// listen for ERC20 transfers and native transfers 
-		nativeStreamId = Streams.createStreamWithAddresses(
-				String.format( 
+		m_transferStreamId = Streams.createStream(
 						Streams.erc20Transfers, 
-						m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain() ) ); 
+						"transfer-" + m_config.getHookNameSuffix(), 
+						m_config.hookServerUrl(),
+						chain() ); 
 
 		// listen for "approve" transactions
-		Streams.createStreamWithAddresses(
-				String.format( 
+		// you could pass BUSD, RUSD, or the user addresses
+		// it would be ideal if there were a way to combine these two streams into one,
+		// then it could just work off the user address, same as the transfer stream
+		Streams.createStream(
 						Streams.approval, 
-						m_config.getHookNameSuffix(), 
+						"approval-" + m_config.getHookNameSuffix(), 
 						m_config.hookServerUrl(), 
-						chain() ),
-				m_config.busd().address() );
+						chain(),
+						m_config.rusd().address() );
 		
 		S.out( "**ready**");
 	}
@@ -108,6 +116,12 @@ public class HookServer {
 	class Trans extends BaseTransaction {
 		public Trans(HttpExchange exchange, boolean debug) {
 			super(exchange, debug);
+		}
+
+		public void handleStatus() {
+			wrap( () -> {
+				respond( Util.toJson( code, RefCode.OK, "started", m_started) );
+			});
 		}
 
 		/** Returns wallet lower case */
@@ -309,7 +323,7 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
-			Streams.addAddressToStream( nativeStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
 			
