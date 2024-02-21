@@ -551,7 +551,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 							m_stablecoinAmt,
 							m_stablecoin.name(),
 							m_stock.getSmartContractId(),
-							m_config.blockchainExplorer() + hash);
+							m_config.blockchainTx(hash) );
 					m_config.sendEmail(m_email, "Order filled on Reflection", html, true);
 				}
 				else {
