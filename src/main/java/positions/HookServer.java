@@ -37,7 +37,7 @@ public class HookServer {
 	final static double small = .0001;    // positions less than this will not be reported
 	final Config m_config = new Config();
 	final Stocks stocks = new Stocks();
-	String[] m_allContracts;  // query positions and list to ERC20 transfers to all of these
+	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 

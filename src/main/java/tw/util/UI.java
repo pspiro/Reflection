@@ -165,7 +165,7 @@ public class UI {
 		UI.centerOnOwner(d);
 		d.add( Util.tweak( new JLabel(text), lab -> lab.setHorizontalAlignment( SwingConstants.CENTER) ) );
 		d.setVisible(true);
-		Util.executeIn(2500, () -> d.setVisible(false) );
+		Util.executeIn(1000, () -> d.setVisible(false) );
 		
 		java.awt.Toolkit.getDefaultToolkit().beep();
 	}
