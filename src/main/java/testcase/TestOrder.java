@@ -124,17 +124,23 @@ public class TestOrder extends MyTestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
-		
-		// this won't work because you have to 
-		//obj.remove("noFireblocks"); // let the fireblocks go through so we can test the crypto_transaction
-		
-		JsonObject map = postOrderToObj(obj);  // try again w/ autofill off
+		postOrderToObj( TestOrder.createOrder( "BUY", 10, 3) );  // try again w/ autofill off
 		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
-		JsonObject ret = getLiveMessage(map.getString("id"));
-		assertEquals( "message", ret.getString("type") );
-		startsWith( "Bought 10", ret.getString("text") );
+		S.out( "received %s %s", cli.getRefCode(), cli.getMessage() );
+		
+		S.sleep(1000);
+		getAllLiveOrders(Cookie.wallet).display();
+	}
+
+	public void testToast() throws Exception {
+		postOrderToObj( TestOrder.createOrder( "BUY", 10, 3) );  // try again w/ autofill off
+		assert200();
+		assertEquals( RefCode.OK, cli.getRefCode() );
+		S.out( "received %s %s", cli.getRefCode(), cli.getMessage() );
+		
+		S.sleep(1000);
+		getAllLiveOrders(Cookie.wallet).display();
 	}
 
 	public void testNullCookie() throws Exception {

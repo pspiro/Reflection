@@ -5,6 +5,7 @@ import java.awt.LayoutManager;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashSet;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -114,7 +115,8 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
-		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
+		m_tabs.addTab( "Query", new AnyQueryPanel() );
+		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -254,6 +256,34 @@ public class Monitor {
 				m_walletPanel.setWallet(val.toString());
 			}
 		}
+		
+	}
+
+	static class AnyQueryPanel extends QueryPanel {
+		
+		AnyQueryPanel() {
+			super( "", "", "");
+		}
+		
+		@Override protected void refresh() throws Exception {
+			String query = where.getText().trim()
+					.replaceAll( "'wallet'", "'wallet_public_key'");
+			
+			JsonArray rows = Monitor.m_config.sqlQuery( query);
+			HashSet<String> keys = rows.getKeys();
+			String[] names = keys.toArray( new String[0]);
+			String str = String.join( ",", names);
+			m_model.setNames( str);
+			m_model.fireTableStructureChanged();
+
+			setRows( rows);
+			
+			m_model.resetSort();  // sort by first column if it is sortable
+			m_model.fireTableDataChanged();
+			
+			S.out( "Refreshed query model to %s", rows().size() );
+		}
+		
 		
 	}
 
