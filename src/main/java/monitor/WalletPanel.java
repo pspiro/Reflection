@@ -13,6 +13,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
@@ -24,12 +25,13 @@ import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.UI;
 import tw.util.VerticalPanel;
+import util.LogType;
 
 public class WalletPanel extends JsonPanel {
 	
 	
 	private static final double minBalance = .0001;
-	private final JTextField m_wallet = new JTextField(32); 
+	private final JTextField m_wallet = new JTextField(27); 
 	private final JLabel m_rusd = new JLabel(); 
 	private final JLabel m_usdc = new JLabel(); 
 	private final JLabel m_approved = new JLabel(); 
@@ -54,6 +56,7 @@ public class WalletPanel extends JsonPanel {
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
+		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		
 		vp.addHeader( "User details");
 		vp.add( "Name", m_name);
@@ -71,7 +74,6 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
 
 		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
-		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
@@ -79,7 +81,6 @@ public class WalletPanel extends JsonPanel {
 		
 		transPanel.small("Transactions");
 		redemPanel.small("Redemptions");
-
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
@@ -91,75 +92,6 @@ public class WalletPanel extends JsonPanel {
 		
 		add( leftPanel, BorderLayout.WEST);
 		add( rightPanel);
-	}
-
-	private void giveMatic() {
-		Util.wrap( () -> {
-			if (Util.confirm( this, 
-					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
-				Fireblocks.transfer(
-						Accounts.instance.getId("Admin1"), 
-						m_wallet.getText(), 
-						Fireblocks.platformBase, 
-						.01, 
-						"give .01 MATIC for free"
-				).waitForHash();
-			}
-		});
-	}
-
-	/** Open wallet in blockchain explorer */
-	private void explore() {
-		String url = Monitor.m_config.blockchainExplorer() + m_wallet.getText();
-		Util.browse( url);
-	}
-
-	private void createUser() {
-		Util.wrap( () -> {
-			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "users",
-					Util.toJson( 
-							"wallet_public_key", m_wallet.getText().toLowerCase(),
-							"first_name", m_username.getText() ) ) );
-			Util.inform( this, "Done");
-		});
-	}
-
-	private void mint() {
-		try {
-			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
-			
-			double amt = Double.parseDouble( m_mintAmt.getText() );
-			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
-			
-				String hash = Monitor.m_config.rusd().mintRusd( 
-						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
-				
-				m_mintAmt.setText(null);
-				Util.inform(this, hash);
-			}
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void burn() {
-		try {
-			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
-
-			double amt = Double.parseDouble( m_burnAmt.getText() );
-			if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
-			
-				String hash = Monitor.m_config.rusd().burnRusd( 
-						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
-				
-				m_burnAmt.setText(null);
-				Util.inform(this, hash);
-			}
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	public void setWallet(String addr) {
@@ -234,20 +166,104 @@ public class WalletPanel extends JsonPanel {
 
 		m_model.fireTableDataChanged();
 	}
+	
+	private void giveMatic() {
+		if (Util.confirm( this, 
+					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
+			wrap( () -> {
+				Fireblocks.transfer(
+						Accounts.instance.getId("Admin1"), 
+						m_wallet.getText(), 
+						Fireblocks.platformBase, 
+						.01, 
+						"give .01 MATIC for free"
+				).waitForHash();
+			});
+		}
+	}
+
+	/** Open wallet in blockchain explorer */
+	private void explore() {
+		Util.browse( Monitor.m_config.blockchainAddress( m_wallet.getText() ) );
+	}
+
+	private void createUser() {
+		wrap( () -> {
+			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "users",
+					Util.toJson( 
+							"wallet_public_key", m_wallet.getText().toLowerCase(),
+							"first_name", m_username.getText() ) ) );
+			UI.flash("Done");
+		});
+	}
+
+	private void mint() {
+		double amt = Double.parseDouble( m_mintAmt.getText() );
+
+		if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+			wrap( () -> {
+				Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+
+				String hash = Monitor.m_config.rusd().mintRusd( 
+						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+				
+				Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+						"type", LogType.MINT,
+						"wallet_public_key", m_wallet.getText().toLowerCase(),
+						"data", Util.toJson( "amt", amt) ) ) );
+
+				UI.flash(hash);
+
+				m_mintAmt.setText(null);
+			});
+		}
+	}
+
+	private void burn() {
+		double amt = Double.parseDouble( m_burnAmt.getText() );
+			
+		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
+			wrap( () -> {
+					Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+			
+				String hash = Monitor.m_config.rusd().burnRusd( 
+						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+				
+				Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+						"type", LogType.BURN,
+						"wallet_public_key", m_wallet.getText().toLowerCase(),
+						"data", Util.toJson( "amt", amt) ) ) );
+				
+				UI.flash(hash);
+
+				m_burnAmt.setText(null);
+			});
+		}
+	}
+
 
 	/** Send an email from Josh@reflection */
 	private void sendEmail() {
-		try {
+		wrap( () -> {
+			JsonObject data = Util.toJson( 
+					"subject", m_subject.getText(), 
+					"text", m_text.getText() );
+			
 			Monitor.m_config.sendEmailEx(
 					m_email.getText(),
 					m_subject.getText(),
 					m_text.getText(),
 					false);
+			
+			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+					"type", LogType.EMAIL,
+					"wallet_public_key", m_wallet.getText().toLowerCase(),
+					"data", data) ) );
+			
 			UI.flash( "Message sent");
-		} catch (Exception e) {
-			Util.inform( this, e.getMessage() );
-			e.printStackTrace();
-		}
-	}
 
+			m_subject.setText(null);
+			m_text.setText(null);			
+		});
+	}
 }

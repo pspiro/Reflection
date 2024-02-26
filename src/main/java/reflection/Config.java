@@ -243,7 +243,7 @@ public class Config extends ConfigBase {
 		}
 		
 		if (isProduction() ) {
-			this.blockchainExplorer = m_tab.getRequiredString("blockchainExplorer");
+			this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 		}
 
 		require( !autoFill || !isProduction(), "No auto-fill in production");
@@ -526,10 +526,6 @@ public class Config extends ConfigBase {
 		return fbStablecoin;
 	}
 	
-	public String blockchainExplorer() {
-		return blockchainExplorer;
-	}
-	
 	public double maxAutoRedeem() {
 		return maxAutoRedeem;
 	}
@@ -556,4 +552,11 @@ public class Config extends ConfigBase {
 		return String.format( "%s-%s", hookServerChain, hookServerPort);
 	}
 
+	public String blockchainTx(String hash) {
+		return String.format( "%s/tx/%s", blockchainExplorer, hash);
+	}
+
+	public String blockchainAddress(String address) {
+		return String.format( "%s/address/%s", blockchainExplorer, address);
+	}
 }

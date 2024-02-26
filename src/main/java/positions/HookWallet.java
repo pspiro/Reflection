@@ -72,7 +72,7 @@ class HookWallet {
 		}
 	}
 
-	/** Return all positions; for debugging */
+	/** Return all positions; used for My Reflection panel */
 	private JsonArray getJsonPositions(double min) {
 		JsonArray ar = new JsonArray();
 		m_map.forEach( (address,position) -> {
