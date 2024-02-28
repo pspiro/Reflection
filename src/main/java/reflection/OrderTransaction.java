@@ -545,13 +545,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				
 				// send email to the user
 				if (Util.isValidEmail(m_email)) {
-					String html = String.format( isBuy() ? buyConf : sellConf,
+					String html = S.format( isBuy() ? buyConf : sellConf,
 							m_desiredQuantity,
 							m_stock.symbol(),
 							m_stablecoinAmt,
 							m_stablecoin.name(),
 							m_stock.getSmartContractId(),
-							m_config.blockchainTx(hash) );
+							m_config.blockchainTx( hash) );
 					m_config.sendEmail(m_email, "Order filled on Reflection", html, true);
 				}
 				else {
