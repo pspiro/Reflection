@@ -68,11 +68,6 @@ public class MyTestCase extends TestCase {
 				.readJsonObject();
 	}
 	
-	JsonObject getLiveMessage2(String id) throws Exception {
-		JsonArray msgs = getCompletedLiveOrders();
-		return msgs != null ? msgs.find( "id", id) : null;
-	}
-	
 	JsonObject getLiveMessage(String id) throws Exception {
 		// wait a tic for the order to fill, even autoFill orders take a few ms
 		S.sleep(1000);
@@ -85,6 +80,11 @@ public class MyTestCase extends TestCase {
 			}
 		}
 		throw new Exception("No live order found with id " + id);
+	}
+	
+	JsonObject getLiveMessage2(String id) throws Exception {
+		JsonArray msgs = getCompletedLiveOrders();
+		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	
 	JsonArray getCompletedLiveOrders() throws Exception {

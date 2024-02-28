@@ -49,6 +49,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private LiveOrderStatus m_status = LiveOrderStatus.Working;   // move up to base class
 	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
+	private String m_message; // a message that will be displayed to user for a live (not completed) order
 
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -187,7 +188,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		Prices prices = m_main.getStock(conid).prices();
 		prices.checkOrderPrice( m_order, orderPrice, m_config);
 		
-		respond( code, RefCode.OK, "id", m_uid);
+		respond( code, RefCode.OK, "id", m_uid); // Frontend will display a message which is hard-coded in Frontend
 		
 		// now it is up to the live order system to report success or failure
 		// we cannot use wrap() anymore, only shrinkWrap()
@@ -376,11 +377,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// partial fills
 		if (m_filledShares < m_order.roundedQty() ) {
+			
+			m_message = "Your order was partially filled and is now being processed on the blockchain";  // display toast to user
+
 			double ratio = m_filledShares / Math.min(m_order.roundedQty(), m_desiredQuantity);  // by using the smaller of the two, we will give the user a slightly higher percentage fill for a better user experience
 			olog( LogType.PARTIAL_FILL, "desiredQty", m_desiredQuantity, "filledQty", m_filledShares, "ratio", ratio);
 
 			// reject and unwind if we filled less than half; this is debatable 
-			require( ratio >= m_config.minPartialFillPct(), RefCode.PARTIAL_FILL, "Order failed due to partial fill");
+			// require( ratio >= m_config.minPartialFillPct(), RefCode.PARTIAL_FILL, "Order failed due to partial fill");
 			
 			m_stablecoinAmt *= ratio;
 			m_desiredQuantity *= ratio;
@@ -389,6 +393,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			updateAfterPartialFill(ratio);
 		}
 		else {
+			m_message = "Your order was filled and is now being processed on the blockchain";  // display toast to user
 			olog( LogType.ORDER_FILLED, "filledShares", m_filledShares, "simulated", simulated);
 		}
 		
@@ -780,6 +785,23 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			order.put( "errorCode", m_errorCode.toString() );
 		}
 		return order;
+	}
+	
+	/** Return a message to the Frontend to be displayed to the user in a toast.
+	 *  It is picked up by the live order system and then cleared so as not to
+	 *  be displayed twice. Only the most recent message will be displayed. */
+	public synchronized JsonObject getMessage() {
+		try {
+			return m_message != null 
+					? Util.toJson( 
+						"id", uid(),
+						"type", "message",
+						"text", m_message)
+					: null;
+		}
+		finally {
+			m_message = null;
+		}
 	}
 	
 	private String getWorkingOrderText() {

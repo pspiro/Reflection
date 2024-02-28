@@ -129,18 +129,25 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		S.out( "received %s %s", cli.getRefCode(), cli.getMessage() );
 		
-		S.sleep(1000);
-		getAllLiveOrders(Cookie.wallet).display();
+		S.sleep(50);  // give it time to complete processing after ok is sent back 
+		JsonObject ret = getLiveMessage2( cli.getUId() );
+		assertEquals( "message", ret.getString("type") );
+		assertEquals( "Filled", ret.getString( "status") );
+		startsWith( "Bought 10", ret.getString("text") );
 	}
 
+	/** When the IB order is filled, we get a message back saying
+	 *  the order is being processed on the blockchain */
 	public void testToast() throws Exception {
-		postOrderToObj( TestOrder.createOrder( "BUY", 10, 3) );  // try again w/ autofill off
+		JsonObject ord = TestOrder.createOrder( "BUY", 1, 3);
+		ord.remove( "noFireblocks");
+		postOrderToObj( ord );  // try again w/ autofill off
 		assert200();
-		assertEquals( RefCode.OK, cli.getRefCode() );
-		S.out( "received %s %s", cli.getRefCode(), cli.getMessage() );
 		
-		S.sleep(1000);
-		getAllLiveOrders(Cookie.wallet).display();
+		S.sleep(50);
+		JsonObject ret = getLiveMessage2( cli.getUId() );
+		assertEquals( "message", ret.getString("type") );
+		startsWith( "Your order was filled", ret.getString("text") );
 	}
 
 	public void testNullCookie() throws Exception {
@@ -164,8 +171,10 @@ public class TestOrder extends MyTestCase {
 		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
 
-		JsonObject ret = getLiveMessage(map.getString("id"));
+		S.sleep(50);  // give it time to complete processing after ok is sent back 
+		JsonObject ret = getLiveMessage2(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
+		assertEquals( "Filled", ret.getString( "status") );
 		startsWith( "Sold 10", ret.getString("text") );
 	}
 

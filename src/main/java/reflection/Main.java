@@ -370,14 +370,16 @@ public class Main implements ITradeReportHandler {
 		obj.putIf( "orderref", exec.orderRef() ); // this is the uid
 		obj.putIf( "tradekey", tradeKey);
 
-		// insert trade into trades and log tables
-		//queueSql( conn -> conn.insertJson( "trades", obj) );
-		try {
-			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// insert trade into trades and log tables; it's not urgent, this
+		// table is never read, we can delay it
+		queueSql( conn -> conn.insertJson( "trades", obj) );
+		
+//		try {
+//			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj);  

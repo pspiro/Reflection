@@ -712,8 +712,7 @@ public class Util {
 	}
 	
 	/** Use this when you want to create an object or retrieve a value and
-	 *  then take some action and/or return use the return value only if the
-	 *  value is not null
+	 *  then take some action on a single line
 	 *
 	 *  e.g.
 	 *  tweak( new JLabel(text), lab -> lab.set);
@@ -737,7 +736,7 @@ public class Util {
 		return t;
 	}
 
-	/** Execute block if object is not null and not empty string */
+	/** "if not null"; execute block if object is not null and not empty string */
 	public static <T> void iff( T obj, Consumer<T> consumer) {
 		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);

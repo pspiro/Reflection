@@ -67,7 +67,7 @@ public class LiveOrderTransaction extends MyTransaction {
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
 						
-						Util.tweak( liveOrder.getMessage(), msg -> messages.add( msg) );
+						Util.iff( liveOrder.getMessage(), msg -> messages.add( msg) );
 					}
 					else {
 						
