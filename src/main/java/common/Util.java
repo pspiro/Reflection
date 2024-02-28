@@ -360,8 +360,9 @@ public class Util {
 		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
-	public static void reqValidAddress(String str) throws Exception {
+	public static String reqValidAddress(String str) throws Exception {
 		require( isValidAddress(str), "Invalid address: %s", str);
+		return str;
 	}
 	
 	public static String getLastToken(String str, String sep) {
@@ -736,9 +737,9 @@ public class Util {
 		return t;
 	}
 
-	/** Execute block if object is not null */
+	/** Execute block if object is not null and not empty string */
 	public static <T> void iff( T obj, Consumer<T> consumer) {
-		if (obj != null) {
+		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}
 	}
