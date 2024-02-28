@@ -10,6 +10,7 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import reflection.OrderTransaction.LiveOrderStatus;
 import tw.util.S;
 import util.LogType;
@@ -49,7 +50,7 @@ public class LiveOrderTransaction extends MyTransaction {
 	
 	/** Return live orders to Frontend for a single wallet; 
 	 *  the list is displayed in the Working Orders panel */
-	public void handleLiveOrders() {
+	public void handleGetLiveOrders() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
@@ -65,6 +66,8 @@ public class LiveOrderTransaction extends MyTransaction {
 					
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
+						
+						Util.tweak( liveOrder.getMessage(), msg -> messages.add( msg) );
 					}
 					else {
 						

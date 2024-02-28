@@ -15,11 +15,15 @@ import tw.util.MyTableModel;
 public class JsonModel extends MyTableModel {
 	final protected HashMap<Integer,String> m_namesMap = new HashMap<>(); // map index to name
 	protected JsonArray m_ar = new JsonArray();  // can get replaced
-	protected final String[] m_colNames;
+	protected String[] m_colNames;
 	private String m_justify = "";
 	int lastSortedCol = -1;
 
 	public JsonModel(String allNames) {
+		setNames( allNames);
+	}
+	
+	public void setNames( String allNames) {
 		m_colNames = allNames.split(",");
 		
 		for (int i = 0; i < m_colNames.length; i++) {

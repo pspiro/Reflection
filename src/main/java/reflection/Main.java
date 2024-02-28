@@ -127,8 +127,8 @@ public class Main implements ITradeReportHandler {
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
-			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() ); // remove after frontend migrates to live-orders. pas
-			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleLiveOrders() );
+			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() ); // remove after frontend migrates to live-orders. pas
+			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
 			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );
@@ -158,7 +158,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
 			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
 			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
-			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );
+			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
@@ -516,6 +516,10 @@ public class Main implements ITradeReportHandler {
 								S.err( "Error while executing DbQueue command", e);
 								e.printStackTrace();  // this would be an error on one specific database operation
 							}
+							catch( Throwable e) { // you would come here for e.g. StackOverflowError
+								S.out( "Bad error while executing DbQueue command");
+								e.printStackTrace();  // this would be an error on one specific database operation
+							}
 							com = next();
 						}
 					} 
@@ -525,8 +529,9 @@ public class Main implements ITradeReportHandler {
 					}
 				}
 			}
-			catch( InterruptedException e) {
+			catch( Throwable e) {  // if it comes here, fix the actual culprit
 				S.out( "Fatal error: DbQueue thread was interrupted");
+				e.printStackTrace();
 			}
 		}
 		
