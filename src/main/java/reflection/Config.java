@@ -411,16 +411,14 @@ public class Config extends ConfigBase {
 
 	/** Use this one to make a single query */
 	public JsonArray sqlQuery(String sql, Object... params) throws Exception {
-		try ( MySqlConnection conn = new MySqlConnection() ) {
-			conn.connect( postgresUrl, postgresUser, postgresPassword);
+		try ( MySqlConnection conn = createConnection() ) {
 			return conn.queryToJson(sql, params);
 		}
 	}
 
-	/** Use this one to make multiple queries with a single connection */
+	/** @deprecated use one of the others */
 	public JsonArray sqlQuery(SqlQuery query) throws Exception {
-		try ( MySqlConnection conn = new MySqlConnection() ) {
-			conn.connect( postgresUrl, postgresUser, postgresPassword);
+		try ( MySqlConnection conn = createConnection() ) {
 			return query.run(conn);
 		}
 	}

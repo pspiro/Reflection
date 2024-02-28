@@ -61,6 +61,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** You'll see exceptions here when the HookServer is restarting */
 	public void handleReqPositionsNew() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -114,7 +115,8 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Backend-style msg; conid is last parameter */  // when is this used? pas
+	/** Conid is last parameter of URI 
+	 *  Called by Frontend */
 	public void handleGetPrice() {
 		wrap( () -> {
 			returnPrice( getConidFromUri(), false);

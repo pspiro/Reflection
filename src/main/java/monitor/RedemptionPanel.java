@@ -21,8 +21,14 @@ public class RedemptionPanel extends QueryPanel {
 
 	RedemptionPanel() {
 		super(	"redemptions",
-				"created_at,uid,fireblocks_id,wallet_public_key,blockchain_hash,status,stablecoin,amount",
-				"select * from redemptions $where order by created_at desc $limit");
+				"created_at,wallet_public_key,first_name,last_name,status,amount",
+				"""
+select redemptions.created_at,redemptions.wallet_public_key,first_name,last_name,status,amount
+from redemptions
+left join users using (wallet_public_key)
+$where
+order by created_at desc
+$limit""");
 	}
 
 	@Override public void adjust(JsonObject obj) {
