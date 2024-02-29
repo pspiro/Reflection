@@ -115,6 +115,7 @@ public class Monitor {
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
+		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -315,6 +316,20 @@ public class Monitor {
 		
 		@Override protected Object format(String key, Object value) {
 			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
+		}
+		
+		@Override  // this is wrong, should use base url
+		public void refresh() throws Exception {
+			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class HotStocksPanel extends JsonPanel {
+		HotStocksPanel() {
+			super( new BorderLayout(), "smartcontractid,startDate,endDate,convertsToAmt,convertsToAddress,allow,tokenSymbol,isHot,symbol,description,type,exchange,is24hour,tradingView");
+			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
 		}
 		
 		@Override  // this is wrong, should use base url
