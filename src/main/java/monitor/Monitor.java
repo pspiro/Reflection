@@ -5,6 +5,7 @@ import java.awt.LayoutManager;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashSet;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -20,7 +21,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.Transactions;
 import http.MyClient;
 import redis.MyRedis;
 import reflection.Stocks;
@@ -114,7 +114,8 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
-		m_tabs.addTab( "Coinstore", new CoinstorePanel() );
+		m_tabs.addTab( "Query", new AnyQueryPanel() );
+		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
 		m_frame.add( m_tabs);
@@ -142,36 +143,6 @@ public class Monitor {
 	/** called when Refresh button is clicked */
 	static void refresh() {
 		((MonPanel)m_tabs.current()).refreshTop();
-	}
-	
-	static class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,order_id,perm_id,fireblocks_id,blockchain_hash,commission,currency,cumfill,side,avgprice,exchange,time";
-		static String sql = "select * from transactions $where order by created_at desc $limit";  // you must order by desc to get the latest entries
-		
-		TransPanel() {
-			super( "transactions", names, sql);
-		}
-		
-		@Override protected void onDouble(String tag, Object val) {
-			switch(tag) {
-			case "wallet_public_key":
-				m_tabs.select( "Wallet");
-				m_walletPanel.setWallet( val.toString() );
-				break;
-			case "uid":
-				m_tabs.select( "Log");
-				m_logPanel.filterByUid(val.toString());
-				break;
-			case "fireblocks_id":
-				Util.wrap( () -> Transactions.getTransaction(val.toString()).display() );
-				break;
-			case "blockchain_hash":
-				// show in explorer
-				break;
-				default:
-					super.onDouble(tag, val);
-			}
-		}
 	}
 	
 	static class LogPanel extends QueryPanel {
@@ -254,6 +225,38 @@ public class Monitor {
 				m_walletPanel.setWallet(val.toString());
 			}
 		}
+		
+	}
+
+	static class AnyQueryPanel extends QueryPanel {
+		
+		AnyQueryPanel() {
+			super( "", "", "");
+		}
+		
+		@Override protected void refresh() throws Exception {
+			wrap( () -> {
+				String query = where.getText().trim()
+						.replaceAll( "'wallet'", "'wallet_public_key'");
+				
+				if (S.isNotNull( query) ) {
+					JsonArray rows = Monitor.m_config.sqlQuery( query);
+					HashSet<String> keys = rows.getKeys();
+					String[] names = keys.toArray( new String[0]);
+					String str = String.join( ",", names);
+					m_model.setNames( str);
+					m_model.fireTableStructureChanged();
+		
+					setRows( rows);
+					
+					m_model.resetSort();  // sort by first column if it is sortable
+					m_model.fireTableDataChanged();
+					
+					S.out( "***Refreshed query model to %s", rows().size() );
+				}
+			});
+		}
+		
 		
 	}
 

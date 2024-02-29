@@ -360,8 +360,9 @@ public class Util {
 		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
-	public static void reqValidAddress(String str) throws Exception {
+	public static String reqValidAddress(String str) throws Exception {
 		require( isValidAddress(str), "Invalid address: %s", str);
+		return str;
 	}
 	
 	public static String getLastToken(String str, String sep) {
@@ -711,8 +712,7 @@ public class Util {
 	}
 	
 	/** Use this when you want to create an object or retrieve a value and
-	 *  then take some action and/or return use the return value only if the
-	 *  value is not null
+	 *  then take some action on a single line
 	 *
 	 *  e.g.
 	 *  tweak( new JLabel(text), lab -> lab.set);
@@ -736,9 +736,9 @@ public class Util {
 		return t;
 	}
 
-	/** Execute block if object is not null */
+	/** "if not null"; execute block if object is not null and not empty string */
 	public static <T> void iff( T obj, Consumer<T> consumer) {
-		if (obj != null) {
+		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}
 	}

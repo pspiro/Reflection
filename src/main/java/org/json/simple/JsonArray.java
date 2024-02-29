@@ -205,7 +205,7 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	}
 
 	/** Return all keys of all JsonObjects in this array */
-	private HashSet<String> getKeys() {
+	public HashSet<String> getKeys() {
 		HashSet<String> keys = new HashSet<>();
 		forEach( item -> {
 			if (item instanceof JsonObject) {

@@ -188,6 +188,10 @@ public class MyHttpClient {
 		return S.isNull( code) ? null : Util.getEnum( code, RefCode.values() );
 	}
 
+	public String getUId() throws Exception {
+		return readJsonObject().getString("id");
+	}
+
 	public void assertResponseCode(int code) throws Exception {
 		TestCase.assertEquals(code, getResponseCode() );
 	}

@@ -13,17 +13,16 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
-import monitor.Monitor.TransPanel;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.DualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.UI;
+import tw.util.UI.MyTextArea;
 import tw.util.VerticalPanel;
 import util.LogType;
 
@@ -43,7 +42,7 @@ public class WalletPanel extends JsonPanel {
 	private final JTextField m_mintAmt = new JTextField(8); 
 	private final JTextField m_burnAmt = new JTextField(8);
 	private final JTextField m_subject = new JTextField(8);
-	private final JTextArea m_text = Util.tweak( new JTextArea(3, 30), lab -> lab.setWrapStyleWord(true) );
+	private final JTextArea m_emailText = new MyTextArea(3, 30);
 
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
@@ -77,7 +76,7 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
-		vp.add( "Text", m_text);
+		vp.add( "Text", m_emailText);
 		
 		transPanel.small("Transactions");
 		redemPanel.small("Redemptions");
@@ -247,12 +246,12 @@ public class WalletPanel extends JsonPanel {
 		wrap( () -> {
 			JsonObject data = Util.toJson( 
 					"subject", m_subject.getText(), 
-					"text", m_text.getText() );
+					"text", m_emailText.getText() );
 			
 			Monitor.m_config.sendEmailEx(
 					m_email.getText(),
 					m_subject.getText(),
-					m_text.getText(),
+					m_emailText.getText(),
 					false);
 			
 			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
@@ -263,7 +262,7 @@ public class WalletPanel extends JsonPanel {
 			UI.flash( "Message sent");
 
 			m_subject.setText(null);
-			m_text.setText(null);			
+			m_emailText.setText(null);			
 		});
 	}
 }

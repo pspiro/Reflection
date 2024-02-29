@@ -62,6 +62,13 @@ public class MySqlConnection implements AutoCloseable {
 		return ar;
 	}
 	
+	/** Pass full sql query; don't forget single-quotes around string search params;
+	 *  can return null */
+	public JsonObject querySingleRecord( String sql, Object... params) throws Exception {
+		JsonArray ar = queryToJson( sql, params);
+		return ar.size() > 0 ? ar.get(0) : null;
+	}
+	
 	public ResultSet query(String sql, Object... params) throws Exception {
 		Util.require( connection != null, "you must connect to the database");
 		String fullSql = params.length == 0 ? sql : String.format( sql, params);

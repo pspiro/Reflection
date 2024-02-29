@@ -40,15 +40,15 @@ class StatusPanel extends MonPanel {
 		VerticalPanel p = new VerticalPanel();
 		p.addHeader( "RefAPI");
 		p.add( "RefAPI", f1);
-		p.add( "Started", f4);
 		p.add( "TWS", f2);
 		p.add( "IB", f3);
+		p.add( "Started", f4);
 		p.add( "Built", f4a);
 		p.addHeader( "MdServer");
 		p.add( "MdServer", f5);
-		p.add( "Started", f8);
 		p.add( "TWS", f6);
 		p.add( "IB", f7);
+		p.add( "Started", f8);
 		p.addHeader( "FbServer");
 		p.add( "FbServer", f10);
 		p.add( "Started", f11);

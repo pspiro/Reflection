@@ -19,6 +19,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.RootPaneContainer;
@@ -170,5 +171,13 @@ public class UI {
 		Util.executeIn(1000, () -> d.setVisible(false) );
 		
 		java.awt.Toolkit.getDefaultToolkit().beep();
+	}
+	
+	public static class MyTextArea extends JTextArea {
+		public MyTextArea( int rows, int cols) {
+			super( rows, cols);
+			setWrapStyleWord(true);
+			setLineWrap(true);			
+		}
 	}
 }

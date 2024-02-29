@@ -11,6 +11,8 @@ import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.Monitor.MonPanel;
 import positions.Wallet;
+import tw.google.GTable;
+import tw.google.NewSheet;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
@@ -32,7 +34,7 @@ public class CryptoPanel extends MonPanel {
 		super( new BorderLayout() );
 		
 		HtmlButton button = new HtmlButton( "Show Wallets", ev -> {
-			Util.wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
+			wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
 		});
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
@@ -66,7 +68,7 @@ public class CryptoPanel extends MonPanel {
 	
 	/** Send from Owner to RefWallet */
 	private void sendToRefWallet() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			Fireblocks.transfer( 
 					Accounts.instance.getId("Owner"),
 					Accounts.instance.getAddress("RefWallet"),
@@ -80,10 +82,15 @@ public class CryptoPanel extends MonPanel {
 
 	/** Send from Owner to somewhere else */
 	private void ownerSendBusd() {
-		Util.wrap( () -> {
+		wrap( () -> {
+			String name = Util.ask( "Enter name");
+			
+			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
+			String address = Util.reqValidAddress( tab.get( name) );
+			
 			Fireblocks.transfer( 
 					Accounts.instance.getId("Owner"),
-					Util.ask("Enter dest wallet address"),
+					address,
 					Monitor.m_config.fbStablecoin(),
 					Double.parseDouble( Util.ask( "Enter amount")),
 					Util.ask("Enter note")
@@ -93,7 +100,7 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	private void ownerSendMatic() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			Fireblocks.transfer( 
 					Accounts.instance.getId("Owner"),
 					Util.ask("Enter dest wallet address"),
@@ -108,7 +115,7 @@ public class CryptoPanel extends MonPanel {
 	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
 		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
-			Util.wrap( () -> {
+			wrap( () -> {
 				int from = Accounts.instance.getId("RefWallet");
 				String to = Accounts.instance.getAddress("Owner");
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
