@@ -28,7 +28,7 @@ $limit""";  // you must order by desc to get the latest entries
 				Monitor.m_logPanel.filterByUid(val.toString());
 				break;
 			case "fireblocks_id":
-				Util.wrap( () -> Transactions.getTransaction(val.toString()).display() );
+				wrap( () -> Transactions.getTransaction(val.toString()).display() );
 				break;
 			case "blockchain_hash":
 				// show in explorer

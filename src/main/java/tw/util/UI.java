@@ -149,11 +149,16 @@ public class UI {
 		}
 	}
 	
-	/** Display hourglass and catch exceptions */
-	public static void watch( JFrame frame, ExRunnable runnable) {
+	/** Display hourglass and propogate exceptions 
+	 * @throws Exception */
+	public static void watch( JFrame frame, ExRunnable runnable) throws Exception {
 		Hourglass glass = new Hourglass( frame);
-		Util.wrap( () -> runnable.run() );
-		glass.restore();
+		try {
+			runnable.run();
+		}
+		finally {
+			glass.restore();
+		}
 	}
 
 	/** Flash a msg on the screen for 2500 ms and make a beep */
