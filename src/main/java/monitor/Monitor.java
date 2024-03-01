@@ -163,7 +163,7 @@ public class Monitor {
 				m_logPanel.filterByUid(val.toString());
 				break;
 			case "fireblocks_id":
-				Util.wrap( () -> Transactions.getTransaction(val.toString()).display() );
+				wrap( () -> Transactions.getTransaction(val.toString()).display() );
 				break;
 			case "blockchain_hash":
 				// show in explorer
@@ -184,7 +184,7 @@ public class Monitor {
 			
 		void filterByUid( String uid) {
 			where.setText( String.format( "where uid = '%s'", uid) );
-			Util.wrap( () -> refresh() );
+			wrap( () -> refresh() );
 		}
 		
 		@Override protected String getTooltip(JsonObject row, String tag) {
@@ -266,10 +266,15 @@ public class Monitor {
 			refreshTop();
 		}
 
+		/** Display hourglass and refresh, catch and display exceptions */
+		protected final void refreshTop() {
+			wrap( () -> UI.watch( m_frame, () -> refresh() ) );
+		}
+		
 		/** Display the message in a popup */
 		public void wrap(ExRunnable runner) {
 			try {
-				UI.watch( Monitor.m_frame, runner);
+				UI.watch( Monitor.m_frame, runner); // display hourglass and catch exceptions
 			}
 			catch (Throwable e) {
 				e.printStackTrace();
@@ -277,11 +282,6 @@ public class Monitor {
 			}
 		}
 
-		/** Display hourglass and refresh, catch exceptions */
-		protected final void refreshTop() {
-			UI.watch( m_frame, () -> refresh() );
-		}
-		
 		protected abstract void refresh() throws Exception;
 		
 		@Override public void switchTo() {
