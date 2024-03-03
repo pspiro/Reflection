@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.postgresql.util.PGobject;
 import org.postgresql.util.PSQLException;
 
 import common.Util;
@@ -55,13 +56,21 @@ public class MySqlConnection implements AutoCloseable {
 		while (res.next() ) {
 			JsonObject obj = new JsonObject();
 			for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
-				obj.put( res.getMetaData().getColumnLabel(i), res.getObject(i) );
+				obj.put( res.getMetaData().getColumnLabel(i), getJsonObj( res.getObject(i) ) );
 			}
 			ar.add(obj);
 		}
 		return ar;
 	}
 	
+	/** Convert Postgres object to json object 
+	 * @throws Exception */
+	private Object getJsonObj(Object obj) throws Exception {
+		return obj instanceof PGobject && ((PGobject)obj).getType().equals("jsonb")
+				? JsonObject.parse( obj.toString() )
+				: obj;
+	}
+
 	/** Pass full sql query; don't forget single-quotes around string search params;
 	 *  can return null */
 	public JsonObject querySingleRecord( String sql, Object... params) throws Exception {

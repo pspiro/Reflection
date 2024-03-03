@@ -6,6 +6,8 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Accounts;
+import monitor.Monitor;
+import monitor.WalletPanel;
 import positions.Wallet;
 import reflection.RefCode;
 import tw.util.S;
@@ -34,6 +36,43 @@ public class TestRedeem extends MyTestCase {
 				.waitForStatus("COMPLETED");
 	}
 	
+	public void testLocked() throws Exception {
+		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
+		
+		// make sure we have some BUSD in RefWallet
+		if (m_config.busd().getPosition(refWallet) < 10) {
+			m_config.busd().mint( refWallet, 20).waitForCompleted();
+		}
+		
+		// mint some RUSD to new wallet 
+		Cookie.setNewFakeAddress( true);
+		mintRusd(Cookie.wallet, 5);
+		waitForBalance(Cookie.wallet, 4, false); // make sure the new balance will register with the RefAPI
+		
+		// lock it and redeem; should fail
+		lock( 5, System.currentTimeMillis() + Util.DAY);
+		redeem();
+		assertEquals( RefCode.RUSD_LOCKED, cli.getRefCode() );
+		
+		// lock part of it; it should redeem only part
+		lock( 3, System.currentTimeMillis() + Util.DAY);
+		redeem();
+		assert200();
+		startsWith( "RUSD was partially redeemed", cli.getMessage() );
+
+		// lock it all, but in the past; should succeed
+		lock( 5, System.currentTimeMillis() - 10);
+		redeem();
+		assert200();  // fails here: 14:04:28.513 main REDEMPTION_PENDING - There is already an outstanding redemption request for this wallet; we appreciate your patience
+
+	}
+	
+	private void lock(int amt, long lockUntil) throws Exception {
+		String wallet = Cookie.wallet.toLowerCase();
+		JsonObject obj = WalletPanel.createLockObject( wallet, amt, lockUntil);
+		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
+	}
+
 	public void testRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
 
@@ -51,21 +90,24 @@ public class TestRedeem extends MyTestCase {
 		
 		// redeem RUSD, pass
 		S.out( "sending redemption request");
-		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-			.display();
+		redeem();
 		assert200();
 
 		// second one should fail w/ REDEMPTION_PENDING
 		S.sleep(200);
 		S.out( "sending dup redemption request");
-		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-			.display();
+		redeem();
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 
 		waitForRedeem(Cookie.wallet);
 		waitForBalance(Cookie.wallet, .0001, true);
 	}
 	
+	private void redeem() throws Exception {
+		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+			.display();
+	}
+
 	public void testExceedMaxAutoRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
 
@@ -79,7 +121,7 @@ public class TestRedeem extends MyTestCase {
 		assertEquals( RefCode.INSUFFICIENT_FUNDS, cli.getRefCode() );
 	}
 	
-	/** Wait up to 10 sec for Moralis to catch up 
+	/** Wait up to 10 sec for Moralis to catch up   // better just to ask hookServer or RefAPI
 	 * @throws Exception */
 	private void waitForBalance(String address, double bal, boolean lt) throws Exception {
 		S.out( "waiting for balance %s bal", lt ? "<" : ">");
@@ -115,7 +157,6 @@ public class TestRedeem extends MyTestCase {
 		// invalid address (wrong length)
 		cli().addHeader("Cookie", Cookie.cookie)
 			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
-		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
 		
@@ -123,7 +164,6 @@ public class TestRedeem extends MyTestCase {
 		String wallet = ("0xaaa" + Cookie.wallet).substring(0, 42);
 		cli().addHeader("Cookie", Cookie.cookie)
 			.get("/api/redemptions/redeem/" + wallet);
-		S.out( "failAddress: " + cli.getMessage() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}

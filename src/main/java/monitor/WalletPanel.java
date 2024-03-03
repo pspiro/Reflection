@@ -23,6 +23,7 @@ import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.UI;
 import tw.util.UI.MyTextArea;
+import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
 
@@ -38,9 +39,14 @@ public class WalletPanel extends JsonPanel {
 	private final JLabel m_name = new JLabel(); 
 	private final JLabel m_email = new JLabel(); 
 	private final JLabel m_kyc = new JLabel(); 
+	private final JLabel m_pan = new JLabel(); 
+	private final JLabel m_aadhaar = new JLabel(); 
+	private final JLabel m_locked = new JLabel(); 
 	private final JTextField m_username = new JTextField(8); 
-	private final JTextField m_mintAmt = new JTextField(8); 
-	private final JTextField m_burnAmt = new JTextField(8);
+	private final UpperField m_mintAmt = new UpperField(8); 
+	private final UpperField m_burnAmt = new UpperField(8);
+	private final UpperField m_awardAmt = new UpperField(8); 
+	private final UpperField m_lockFor = new UpperField(8); 
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
 
@@ -61,16 +67,25 @@ public class WalletPanel extends JsonPanel {
 		vp.add( "Name", m_name);
 		vp.add( "Email", m_email);
 		vp.add( "KYC", m_kyc);
+		vp.add( "PAN", m_pan);
+		vp.add( "Aadhaar", m_aadhaar);
 		
 		vp.addHeader( "Crypto");
 		vp.add( "RUSD", m_rusd);
 		vp.add( "USDT", m_usdc);
 		vp.add( "Approved", m_approved);
 		vp.add( "MATIC", m_matic);
+		vp.add( "Locked", m_locked);
 		
 		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
 		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
+		vp.add( "Award", 
+				m_awardAmt, 
+				new JLabel( "RUSD for "),
+				m_lockFor,
+				new JLabel( "days"),
+				new HtmlButton("Go", e -> award() ) ); 
 
 		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
@@ -93,6 +108,31 @@ public class WalletPanel extends JsonPanel {
 		add( rightPanel);
 	}
 
+	private void award() {
+		wrap( () -> {
+			long lockUntil = System.currentTimeMillis() + m_lockFor.getInt() * Util.DAY;
+			
+			double amt = m_awardAmt.getDouble();
+			String wallet = m_wallet.getText().toLowerCase();
+			
+			if ( amt > 0 && Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+	
+				mint( amt);
+				JsonObject obj = createLockObject( wallet, amt, lockUntil);
+				Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
+
+				Util.inform( this, "Done");
+			}
+		});
+	}
+	
+	/** Used by TestCase as well as Monitor */
+	public static JsonObject createLockObject( String wallet, double amt, long lockUntil) throws Exception {
+		return Util.toJson( 
+				"wallet_public_key", wallet, 
+				"locked", Util.toJson( "amount", amt, "lockedUntil", lockUntil) );
+	}
+	
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
 		refreshTop();
@@ -113,6 +153,9 @@ public class WalletPanel extends JsonPanel {
 		m_name.setText(null);
 		m_email.setText(null);
 		m_kyc.setText(null);
+		m_pan.setText(null);
+		m_aadhaar.setText(null);
+		m_locked.setText(null);
 		transPanel.clear();
 		redemPanel.clear();
 
@@ -120,13 +163,22 @@ public class WalletPanel extends JsonPanel {
 			S.out( "Updating values");
 
 			// query Users record for north-west panel
-			JsonArray users = Monitor.m_config.sqlQuery( sql -> 
-				sql.queryToJson("select * from users where wallet_public_key = '%s'", walletAddr) );
+			JsonArray users = Monitor.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", walletAddr);
 			if (users.size() == 1) {
 				JsonObject json = users.get(0);
 				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
 				m_email.setText( json.getString("email"));
 				m_kyc.setText( json.getString("kyc_status"));
+				m_pan.setText( Util.isValidPan(json.getString("kyc_status") ) ? "VALID" : null); 
+				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
+				
+				JsonObject obj = json.getObject("locked");
+				if (obj != null) {
+					m_locked.setText( String.format( 
+							"%s locked until %s", 
+							obj.getDouble( "amount"), 
+							obj.getTime( "lockedUntil", Util.yToS) ) );
+				}
 			}
 			
 			MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + walletAddr, obj -> {
@@ -197,29 +249,32 @@ public class WalletPanel extends JsonPanel {
 	}
 
 	private void mint() {
-		double amt = Double.parseDouble( m_mintAmt.getText() );
+		wrap( () -> {
+			double amt = m_mintAmt.getDouble();
+			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+				mint( amt);
+			}
+		});
+	}
+	
+	private void mint(double amt) throws Exception {
+			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 
-		if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
-			wrap( () -> {
-				Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+			String hash = Monitor.m_config.rusd().mintRusd( 
+					m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+			
+			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+					"type", LogType.MINT,
+					"wallet_public_key", m_wallet.getText().toLowerCase(),
+					"data", Util.toJson( "amt", amt) ) ) );
 
-				String hash = Monitor.m_config.rusd().mintRusd( 
-						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
-				
-				Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
-						"type", LogType.MINT,
-						"wallet_public_key", m_wallet.getText().toLowerCase(),
-						"data", Util.toJson( "amt", amt) ) ) );
+			UI.flash(hash);
 
-				UI.flash(hash);
-
-				m_mintAmt.setText(null);
-			});
-		}
+			m_mintAmt.setText(null);
 	}
 
 	private void burn() {
-		double amt = Double.parseDouble( m_burnAmt.getText() );
+		double amt = m_burnAmt.getDouble();
 			
 		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
 			wrap( () -> {
