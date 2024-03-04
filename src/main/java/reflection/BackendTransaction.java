@@ -361,4 +361,20 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Return IP address and country code passed from nginx; you could change it to
+	 *  return all headers. */
+	public void handleMyIp() {
+		wrap( () -> {
+			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();
+			
+			S.out( headers.get( "X-Country-Code") );
+			S.out( headers.get( "X-Real-IP") );
+			
+			respond( 
+					"X-Country-Code", headers.get( "X-Country-Code"),
+					"X-Real-IP", headers.get( "X-Real-IP") );
+					
+		});
+	}
+
 }
