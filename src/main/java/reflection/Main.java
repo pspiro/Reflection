@@ -167,6 +167,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
 			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
+			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 
 			// obsolete, remove

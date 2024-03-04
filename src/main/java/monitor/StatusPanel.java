@@ -101,7 +101,7 @@ class StatusPanel extends MonPanel {
 	}
 
 	private void setStreamStatus(JTextField fullName, JTextField status, String prefix) {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String name = prefix + Monitor.m_config.getHookNameSuffix();
 			fullName.setText( name);
 			status.setText( Streams.getStreamStatus( name) );

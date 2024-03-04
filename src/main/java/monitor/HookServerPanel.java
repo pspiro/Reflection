@@ -38,7 +38,7 @@ class HookServerPanel extends JsonPanel {
 	}
 	
 	private void deleteHooks() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
 				S.out( "Deleting transfers stream");
 				Streams.deleteStreamByName( String.format( 
@@ -54,42 +54,42 @@ class HookServerPanel extends JsonPanel {
 	}
 
 	private void resetWallet() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/reset/" + m_wallet.getText() );
 			UI.flash( str);
 		});
 	}
 
 	private void resetAllWallets() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/resetall");
 			UI.flash( str);
 		});
 	}
 
 	private void getWallet() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			JsonObject json = MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/get-wallet/" + m_wallet.getText() );
 			Util.inform( this, json.toHtml() );
 		});
 	}
 
 	private void myWallet() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			JsonObject json = MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/mywallet/" + m_wallet.getText() );
 			Util.inform( this, json.toHtml() );
 		});
 	}
 
 	private void debugOn() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/debug-on");
 			UI.flash( str);
 		});
 	}
 
 	private void debugOff() {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/debug-off");
 			UI.flash( str);
 		});

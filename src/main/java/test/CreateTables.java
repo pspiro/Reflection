@@ -67,7 +67,7 @@ public class CreateTables  {
 		con.execute(sql);
 	}
 	
-	/** Note that first six are/must be same as redemptions table */
+	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createTransactions() throws Exception {
 		con.dropTable("transactions");
 		
@@ -99,7 +99,7 @@ public class CreateTables  {
 		con.execute( sql);
 	}
 
-	/** Note that first six are/must be same as transactions table */
+	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createRedemptions() throws Exception {
 		con.dropTable("redemptions");
 		
@@ -144,6 +144,8 @@ public class CreateTables  {
 	void createUsers() throws Exception {
 		con.dropTable( "users");
 		
+		// locked_until is in mssec since epoch
+		
 		String sql = """
 		CREATE TABLE public.users (
 			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
@@ -158,9 +160,12 @@ public class CreateTables  {
 			country character varying,
 			persona_response character varying,
 			pan_number character varying(10),
-			aadhaar character varying(12)
+			aadhaar character varying(12),
+			locked jsonb,
 		);
 		""";
 		con.execute( sql);
 	}
 }
+
+// dev=> alter table users add column locked jsonb;

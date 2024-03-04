@@ -53,6 +53,8 @@ import tw.util.S;
 public class Util {
 	public static final int MINUTE = 60 * 1000;
 	public static final int HOUR = 60 * MINUTE;
+	public static final int DAY = HOUR * 24;
+	
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
@@ -758,6 +760,15 @@ public class Util {
 		sb.append( String.format( "<%s>", tag) );
 		consumer.run();
 		sb.append( String.format( "</%s>", tag) );
+	}
+
+	/** 12 digits */
+	public static boolean isValidAadhaar(String aadhaar) {
+		return aadhaar.replaceAll("-", "").matches( "^\\d{12}$");
+	}
+
+	public static boolean isValidPan(String pan) {
+		return pan.toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$");
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {
