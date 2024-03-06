@@ -77,6 +77,7 @@ public class HookServer {
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
 			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
+			server.createContext("/hook/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );
 			server.createContext("/hook/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
 			server.createContext("/hook/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
 			server.createContext("/api/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
@@ -92,22 +93,22 @@ public class HookServer {
 		});
 
 		// listen for ERC20 transfers and native transfers 
-		m_transferStreamId = Streams.createStream(
-						Streams.erc20Transfers, 
-						"transfer-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(),
-						chain() ); 
+//		m_transferStreamId = Streams.createStream(
+//						Streams.erc20Transfers, 
+//						"transfer-" + m_config.getHookNameSuffix(), 
+//						m_config.hookServerUrl(),
+//						chain() ); 
 
 		// listen for "approve" transactions
 		// you could pass BUSD, RUSD, or the user addresses
 		// it would be ideal if there were a way to combine these two streams into one,
 		// then it could just work off the user address, same as the transfer stream
-		Streams.createStream(
-						Streams.approval, 
-						"approval-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain(),
-						m_config.rusd().address() );
+//!!!!!!!!!!!!!!!//		Streams.createStream(
+//						Streams.approval, 
+//						"approval-" + m_config.getHookNameSuffix(), 
+//						m_config.hookServerUrl(), 
+//						chain(),
+//						m_config.rusd().address() );
 		
 		S.out( "**ready**");
 	}
@@ -135,6 +136,12 @@ public class HookServer {
 		public void handleGetWallet() {
 			wrap( () -> {
 				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson( m_config.minTokenPosition() ) );
+			});
+		}
+
+		public void handleGetWalletMap() {
+			wrap( () -> {
+				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJsonMap( m_config.minTokenPosition() ) );
 			});
 		}
 
@@ -322,7 +329,7 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
-			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+//!!!!!!!!!!			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
 			

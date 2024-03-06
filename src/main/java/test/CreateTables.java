@@ -62,6 +62,7 @@ public class CreateTables  {
 			    + "uid varchar(8),"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 			    + "data jsonb"  // see TestLog for how to read this back into a JsonObject
+				+ "ref_code"
 
 				+ ")";
 		con.execute(sql);
@@ -95,6 +96,7 @@ public class CreateTables  {
 				+ "ip_address varchar(32),"   // big enough to store v6 IP format
 				+ "city varchar(32),"
 				+ "country varchar(32)"
+				+ "ref_code varchar(32)"
 				+ ")";
 		con.execute( sql);
 	}

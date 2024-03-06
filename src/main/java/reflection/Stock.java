@@ -59,6 +59,11 @@ public class Stock extends JsonObject {
 		return getString("symbol");
 	}
 
+	/** From master tab */
+	public String description() {
+		return getString("description");
+	}
+
 	/** From specific tab, e.g. AAPL.r */
 	public String tokenSmbol() {
 		return getString("tokenSymbol");

@@ -20,8 +20,11 @@ class HookServerPanel extends JsonPanel {
 	private JTextField m_wallet = new JTextField(30);
 	
 	HookServerPanel() throws Exception {
-		super( new BorderLayout(), String.format( 
-				"wallet,native,approved,positions", Monitor.m_config.busd().name(), Monitor.m_config.nativeTokName() ) );
+		super( new BorderLayout(), "wallet,native,approved,positions"); 
+//				String.format( 
+//				"wallet,native,approved,positions", 
+//				Monitor.m_config.busd().name(), 
+//				Monitor.m_config.nativeTokName() ) );
 		
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
