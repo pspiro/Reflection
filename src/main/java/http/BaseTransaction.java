@@ -32,7 +32,7 @@ public class BaseTransaction {
 	protected boolean m_responded;  // only respond once per transaction
 	protected final String m_uri;
 	private final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
-	protected String m_uid;  // unique for each msg; for live order messages, get switched to the uid of the order
+	protected String m_uid;  // unique for each msg; for live order messages, gets switched to the uid of the order
 
 	public BaseTransaction(HttpExchange exchange, boolean debug) {
 		m_exchange = exchange;

@@ -146,37 +146,6 @@ public class Monitor {
 		((MonPanel)m_tabs.current()).refreshTop();
 	}
 	
-	static class LogPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,uid,type,data"; 
-		static String sql = "select * from log $where order by created_at desc $limit";  // you must order by desc to get the latest entries
-
-		LogPanel() {
-			super( "log", names, sql);
-		}
-			
-		void filterByUid( String uid) {
-			where.setText( String.format( "where uid = '%s'", uid) );
-			Util.wrap( () -> refresh() );
-		}
-		
-		@Override protected String getTooltip(JsonObject row, String tag) {
-			try {
-				if (tag.equals("data") ) {
-					String val = row.getString(tag);
-					if ( S.isNotNull(val) ) {
-						JsonObject obj = JsonObject.parse(val);
-						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
-						return obj.toHtml();
-					}
-				}
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-	}
-
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
 		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,token_price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";

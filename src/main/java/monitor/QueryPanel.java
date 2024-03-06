@@ -82,15 +82,17 @@ public class QueryPanel extends JsonPanel {
 	
 	@Override protected void onCtrlClick(JsonObject row, String tag) {
 		String val = Util.ask( "Enter new value for %s field", tag);
-
-		UI.watch( Monitor.m_frame, () -> {
-			Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
-					m_table, 
-					Util.toJson( tag, val), 
-					"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
-					row.getString("wallet_public_key") ) );
-			refresh();
-		});
+		
+		if (val != null) {
+			UI.watch( Monitor.m_frame, () -> {
+				Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+						m_table, 
+						Util.toJson( tag, val), 
+						"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
+						row.getString("wallet_public_key") ) );
+				refresh();
+			});
+		}
 	}
 
 	@Override protected void onDouble(String tag, Object val) {
@@ -110,10 +112,10 @@ public class QueryPanel extends JsonPanel {
 		
 		String str = m_sql
 				.replaceAll( "\\$limit", "limit " + Monitor.num() )
-				.replaceAll( "'wallet'", "'wallet_public_key'" + Monitor.num() )
-				.replaceAll( "\\$where", whereText );
+				.replaceAll( "\\$where", whereText )
+				.replaceAll( "wallet ", "wallet_public_key " + Monitor.num() );
 		
-		setRows( Monitor.m_config.sqlQuery( conn -> conn.queryToJson(str) ) );
+		setRows( Monitor.m_config.sqlQuery( str) );
 		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
 		
 		UI.flash( "Refreshed");

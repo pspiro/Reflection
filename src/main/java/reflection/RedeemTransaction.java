@@ -87,7 +87,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 				insertRedemption( busd, m_quantity, fbId); // informational only, don't throw an exception
 
-				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
+				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consistent with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 				
 				// this redemption will now be tracked by the live order system
 				liveRedemptions.put( m_walletAddr.toLowerCase(), this);
@@ -176,7 +176,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	/** no exceptions, no delay */
 	private void insertRedemption(Busd busd, double rusdPos, String fbId) {
 		Util.wrap( () -> {
-			S.out( "inserting record into redemption table with status %s", m_status);
+			out( "inserting record into redemption table with status %s", m_status);
 
 			JsonObject obj = new JsonObject();
 			obj.put( "uid", m_uid);
