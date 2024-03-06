@@ -2,15 +2,20 @@ package test;
 
 import org.json.simple.JsonObject;
 
-import tw.util.S;
+import common.Util;
+import reflection.Config;
+
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 	static int i = 0;
 	public static void main(String[] args) throws Exception {
-		JsonObject obj1 = new JsonObject();
-		obj1.put( "name", null);
-		obj1.display();
-		S.out( "%s", obj1.get("name") );
+		Config config = Config.ask();
+		
+		JsonObject obj = Util.toJson( 
+				"tradekey", "mytradekey",
+				"comm_paid", 1.2);
+
+		config.sqlCommand( conn -> conn.insertJson( "commissions", obj) );
 	}
 }

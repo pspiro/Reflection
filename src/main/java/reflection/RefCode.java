@@ -33,5 +33,6 @@ public enum RefCode {
 	TRADING_HALTED, // trading is halted as per the allowTrading config setting
 	UNKNOWN,			// should never happen
 	UPDATE_PROFILE, 
-	VALIDATION_FAILED,
+	VALIDATION_FAILED, 
+	RUSD_LOCKED, OVER_REDEMPTION_LIMIT, // RUSD is locked because they won it in a contest
 }

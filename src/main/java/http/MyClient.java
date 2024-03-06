@@ -18,7 +18,7 @@ import tw.util.S;
 public class MyClient {
 	public static String filename = "http.log";
 	
-	static HttpClient client = HttpClient.newBuilder().build();
+	static HttpClient client = HttpClient.newHttpClient();
 
 	private Builder m_builder;
 	
@@ -94,7 +94,7 @@ public class MyClient {
 	public void query( ExConsumer<HttpResponse<String>> ret) {
 		HttpRequest request = m_builder.build();
 		
-		HttpClient.newBuilder().build().sendAsync( request, HttpResponse.BodyHandlers.ofString())
+		client.sendAsync( request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept( response -> { 
 						if (niceCode( response.statusCode() ) ) {  // catch 502 and 404 here
 							try {

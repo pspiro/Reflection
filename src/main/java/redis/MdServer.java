@@ -87,7 +87,7 @@ public class MdServer {
 			server.createContext("/mdserver/disconnect", exch -> new MdTransaction( exch).onDisconnect() ); 
 			server.createContext("/mdserver/refresh", exch -> new MdTransaction( exch).onRefresh() ); 
 			server.createContext("/mdserver/get-prices", exch -> new MdTransaction( exch).onGetAllPrices() ); 
-			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch).onGetRefPrices() ); 
+			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch, false).onGetRefPrices() ); 
 			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() ); 
 
 			// generic messages

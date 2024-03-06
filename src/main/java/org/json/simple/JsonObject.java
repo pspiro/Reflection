@@ -317,7 +317,9 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return super.put(key, value);
 	}
 
-	/** Add the pair if val is not null */
+	/** Add the pair if val is not null
+	 * 
+	 *  WARNING: to be just like put(), you would have to remove() the element if val is null */
 	public void putIf(String key, Object val) {
 		if (val != null) {
 			put(key, val);

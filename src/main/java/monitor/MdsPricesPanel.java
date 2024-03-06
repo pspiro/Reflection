@@ -28,7 +28,7 @@ public class MdsPricesPanel extends JsonPanel {
 	
 
 	private void send( String command) {
-		Util.wrap( () -> {
+		wrap( () -> {
 			String resp = MyClient.getString(Monitor.m_config.mdBaseUrl() + "/mdserver/" + command);
 			refresh();
 			Util.inform(this, resp);

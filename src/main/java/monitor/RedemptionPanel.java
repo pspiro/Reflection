@@ -54,7 +54,7 @@ $limit""");
 			Monitor.m_logPanel.filterByUid(val.toString());
 			break;
 		case "fireblocks_id":
-			Util.wrap( () -> Transactions.getTransaction(val.toString()).display() );
+			wrap( () -> Transactions.getTransaction(val.toString()).display() );
 			break;
 		case "blockchain_hash":
 			// show in explorer
@@ -81,7 +81,7 @@ $limit""");
 	}
 
 	private void redeem(JsonObject redemption) {
-		Util.wrap( () -> redeem_(redemption) );
+		wrap( () -> redeem_(redemption) );
 	}
 
 	private void redeem_(JsonObject redemption) throws Exception {

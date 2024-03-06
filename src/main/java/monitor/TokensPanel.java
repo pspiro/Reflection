@@ -65,7 +65,7 @@ public class TokensPanel extends JsonPanel {
 		// we won't query for the blockchain position
 		Util.execute( () -> {
 			Monitor.stocks.forEach( stock -> {
-				Util.wrap( () -> {
+				wrap( () -> {
 					double supply = stock.queryTotalSupply();
 					S.out( "Total supply for %s is %s", stock.getString("symbol"), supply);
 					stock.put("tokens", supply);

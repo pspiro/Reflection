@@ -62,12 +62,17 @@ public class LookupConid extends ConnectionAdapter {
 				String secType = row.getString("SecType");
 				String description = row.getString("Description");
 				String primary = row.getString("Primary Exch");
+				String tradingHours = row.getString("Trading hours");
 				
 				Contract c = new Contract();
 				c.symbol(symbol.replace("-", " "));  // handle BRK-B
 				c.currency("USD");
 				c.exchange(queryExch);
 				c.secType( Util.valOr( secType, "STK") );
+				
+				// or do this to get overnight hours--only works with conid!
+//				c.conid( conid);
+//				c.exchange( "OVERNIGHT");
 				
 				m_controller.reqContractDetails(c, list -> {
 					try {
@@ -105,6 +110,10 @@ public class LookupConid extends ConnectionAdapter {
 						if (S.isNull(description) ) {
 							row.setValue("Description", item.longName() );
 							set = true;
+						}
+						
+						if (S.isNull(tradingHours) ) {
+							row.setValue("Trading hours", item.tradingHours() );
 						}
 
 						// update row

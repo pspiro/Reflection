@@ -32,19 +32,19 @@ public class QueryPanel extends JsonPanel {
 		m_sql = sql;
 		
 		where.addActionListener( e -> {
-			Util.wrap( () -> refresh() );
+			wrap( () -> refresh() );
 		});
 		
 		HtmlButton clr = new HtmlButton( "Clear", e -> {
 			where.setText("");
-			Util.wrap( () -> refresh() );
+			wrap( () -> refresh() );
 		});
 		
 		HtmlButton bak = new HtmlButton( "Back", e -> {
 			if (m_list.size() >= 2) {
 				m_list.pop();
 				where.setText(m_list.pop());
-				Util.wrap( () -> refresh() );
+				wrap( () -> refresh() );
 			}
 		});
 		
@@ -84,20 +84,22 @@ public class QueryPanel extends JsonPanel {
 		String val = Util.ask( "Enter new value for %s field", tag);
 		
 		if (val != null) {
-			UI.watch( Monitor.m_frame, () -> {
-				Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
-						m_table, 
-						Util.toJson( tag, val), 
-						"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
-						row.getString("wallet_public_key") ) );
-				refresh();
+			wrap( () -> {
+				UI.watch( Monitor.m_frame, () -> {
+					Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+							m_table, 
+							Util.toJson( tag, val), 
+							"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
+							row.getString("wallet_public_key") ) );
+					refresh();
+				});
 			});
 		}
 	}
 
 	@Override protected void onDouble(String tag, Object val) {
 		where.setText( String.format( "where %s = '%s'", tag, val) );
-		Util.wrap( () -> refresh() );
+		wrap( () -> refresh() );
 	}
 	
 	@Override protected void refresh() throws Exception {

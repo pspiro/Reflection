@@ -438,8 +438,10 @@ public class ApiController implements EWrapper {
 	}
 
 	/** Warning: the callback is called TWICE if the contract is not found  (search for "@*&")
-	 * 
-	 *  It's a bug 
+	 *  It's a bug
+	 *   
+	 *  Warning: I THINK what I am seeing is that if you query on a directed exchange by symbol,
+	 *  it still returns SMART; you must query by conid+exchange to get the directed exchange
 	 *  
 	 *  */
 	public void reqContractDetails( Contract contract, final IContractDetailsHandler processor) {

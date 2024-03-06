@@ -18,9 +18,15 @@ import util.LogType;
 
 public class RedeemTransaction extends MyTransaction implements LiveTransaction {
 	enum LiveStatus {
-		Working, Delayed, Completed, Failed
+		Working,  // redemption was submitted and is being processed on the blockchain 
+		Delayed,  // redemption is delayed due to lack of funds in the wallet
+		Locked,   // RUSD is locked
+		Completed, 
+		Failed
 	}
 
+	private static String WorkingStatuses = "'Working','Delayed','Locked'"; // used for SQL query; you can only have one of these at a time per wallet
+	
 	private LiveStatus m_status = LiveStatus.Working;   // move up to base class
 	private int m_progress = 5;  // only relevant if status is working; range is 0-100
 	private String m_text;  // text returned to Frontend
@@ -69,34 +75,44 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// save email to send alerts later
 			m_email = profile.email(); 
 
-			// note there is some delay after a completed transaction before it is reflected 
-			// in the wallet position that would cause this test to pass or fail erroneously
+			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here 
 			m_quantity = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
 			require( m_quantity > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
 			
-			// check for previous unfilled request (either Delayed or Submitted) 
-			require( Main.m_config.sqlQuery( conn -> conn.queryToJson( "select * from redemptions where wallet_public_key = '%s' and (status = 'Delayed' or status = 'Working')", m_walletAddr.toLowerCase()) ).isEmpty(), 
+			// confirm no Working redemptions
+			require( Main.m_config.sqlQuery( 
+					"select status from redemptions where wallet_public_key = '%s' and status = 'Working'", 
+					m_walletAddr.toLowerCase() ).isEmpty(),
 					RefCode.REDEMPTION_PENDING, 
 					"There is already an outstanding redemption request for this wallet; we appreciate your patience");
-	
-			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
-			if (busdPos >= m_quantity && m_quantity <= Main.m_config.maxAutoRedeem() ) {  // we don't have to worry about decimals here, it shouldn't come down to the last penny
-				olog( LogType.REDEEM, "amount", m_quantity);
-
-				String fbId = rusd.sellRusd(m_walletAddr, busd, m_quantity).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
-
-				insertRedemption( busd, m_quantity, fbId); // informational only, don't throw an exception
-
-				respond( code, RefCode.OK, "id", m_uid);  // we return the uid here to be consistent with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
+			
+			// check if RUSD is locked, meaning they were awarded RUSD and need to wait until 
+			// a certain date until redeeming
+			String msg = null; // null msg will not get passed to Frontend 
+			JsonObject locked = userRecord.getObject( "locked");
+			if (locked != null && locked.getLong( "lockedUntil") > System.currentTimeMillis() ) {
+				// decrement the quantity to redeem by the amount locked
+				m_quantity -= locked.getDouble( "amount");
 				
-				// this redemption will now be tracked by the live order system
-				liveRedemptions.put( m_walletAddr.toLowerCase(), this);
-				allLiveTransactions.put( fbId, this);
+				require( m_quantity > .001,
+						RefCode.RUSD_LOCKED, 
+						"The RUSD in your wallet was granted as an award and may not be redeemed until %s",
+						Util.yToS.format( locked.getLong( "lockedUntil") ) );
+				
+				msg = "RUSD was partially redeemed; some was locked"; 
 			}
-			else {
+
+			// over limit? this should be improved to be a limit per 24 hours because they
+			// will just transfer some RUSD out and try again. pas
+			require( m_quantity <= Main.m_config.maxAutoRedeem(),
+					RefCode.OVER_REDEMPTION_LIMIT,
+					"Your redemption request is higher than the limit");
+			
+			// insufficient BUSD in RefWallet?
+			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
+			if (m_quantity > busdPos) {
 				// write unfilled report to DB
-				m_status = LiveStatus.Delayed; // stays in this state until the redemption is manually sent by operator
-				insertRedemption( busd, m_quantity, null);
+				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
@@ -107,6 +123,19 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				// report error back to user
 				throw new RefException( RefCode.INSUFFICIENT_FUNDS, "Your redemption request is being processed; we appreciate your patience");
 			}
+
+			// redeem it  try/catch here?
+			String fbId = rusd.sellRusd(m_walletAddr, busd, m_quantity).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+
+			olog( LogType.REDEEM, "amount", m_quantity);
+
+			insertRedemption( busd, m_quantity, fbId, LiveStatus.Working); // informational only, don't throw an exception
+
+			respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
+				
+			// redemption is working on the blockchain and will now be tracked by the live order system
+			liveRedemptions.put( m_walletAddr.toLowerCase(), this);
+			allLiveTransactions.put( fbId, this);
 		});
 	}
 
@@ -174,22 +203,25 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		""";
 	
 	/** no exceptions, no delay */
-	private void insertRedemption(Busd busd, double rusdPos, String fbId) {
+	private void insertRedemption(Busd busd, double rusdPos, String fbId, LiveStatus status) {
 		Util.wrap( () -> {
-			out( "inserting record into redemption table with status %s", m_status);
+			S.out( "inserting or updating record into redemption table with status %s", m_status);
 
 			JsonObject obj = new JsonObject();
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			obj.put( "stablecoin", busd.name() );
 			obj.put( "amount", rusdPos);
-			obj.put( "status", m_status);
-			
-			if (S.isNotNull(fbId) ) {
-				obj.put( "fireblocks_id", fbId);
-			}
-	
-			m_config.sqlCommand( conn -> conn.insertJson("redemptions", obj) );
+			obj.put( "status", status);
+			obj.putIf( "fireblocks_id", fbId);
+
+			// only allow one "working" redemption at a time
+			m_config.sqlCommand( conn -> conn.insertOrUpdate(
+					"redemptions", 
+					obj,
+					"wallet_public_key = '%s' and status in (%s)",
+					m_walletAddr.toLowerCase(),
+					WorkingStatuses) );
 		});
 	}
 
