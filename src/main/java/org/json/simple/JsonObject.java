@@ -397,9 +397,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		m_doubleFormat = fmt;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public <T> T getEnum( String key, T[] values) throws Exception {
-		return (T)get(key);
+	/** Will convert a string to enum; may return null */
+	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
+		Object val = get(key);
+		return val == null 
+			? null 
+			: Util.getEnum(val.toString(), values);
 	}
 
 	/** Add all keys to the key set */

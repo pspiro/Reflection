@@ -6,14 +6,16 @@ import common.Util;
 import tw.util.S;
 
 class LogPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,name,uid,type,data"; 
+	static String names = "created_at,wallet_public_key,name,uid,type,code,data"; 
 	static String sql = """
 		select 
 			log.created_at,
 			log.wallet_public_key,
 			first_name || ' ' || last_name as name,
 			log.uid,
-			type,data
+			type,
+			data->>'code' as code,
+			data
 		from log
 		left join users using (wallet_public_key)
 		$where 
