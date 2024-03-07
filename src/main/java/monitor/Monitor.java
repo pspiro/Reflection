@@ -2,7 +2,6 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashSet;
@@ -14,21 +13,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonArray;
 
 import common.Util;
-import common.Util.ExRunnable;
 import http.MyClient;
+import monitor.wallet.WalletPanelBase;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
-import tw.util.UI;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -44,7 +40,7 @@ public class Monitor {
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
-	static WalletPanel m_walletPanel;
+	static WalletPanelBase m_walletPanel;
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
@@ -69,7 +65,7 @@ public class Monitor {
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-		m_walletPanel = new WalletPanel();
+		m_walletPanel = new WalletPanelBase();
 		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();
@@ -193,44 +189,6 @@ public class Monitor {
 		
 	}
 
-	static abstract class MonPanel extends JPanel implements INewTab {
-		public MonPanel(LayoutManager layout) {
-			super(layout);
-		}
-
-		@Override public void activated() {
-			refreshTop();
-		}
-
-		/** Display hourglass and refresh, catch and display exceptions */
-		protected final void refreshTop() {
-			wrap( () -> UI.watch( m_frame, () -> refresh() ) );
-		}
-		
-		/** Display the message in a popup */
-		public void wrap(ExRunnable runner) {
-			try {
-				UI.watch( Monitor.m_frame, runner); // display hourglass and catch exceptions
-			}
-			catch (Throwable e) {
-				e.printStackTrace();
-				Util.inform( this, e.getMessage() );
-			}
-		}
-
-		protected abstract void refresh() throws Exception;
-		
-		@Override public void switchTo() {
-		}
-
-		@Override public void closed() {
-		}
-		
-		protected Window getWindow() {
-			return SwingUtilities.getWindowAncestor(this);
-		}
-	}
-	
 	static class EmptyPanel extends MonPanel {
 		EmptyPanel(LayoutManager layout) {
 			super(layout);
