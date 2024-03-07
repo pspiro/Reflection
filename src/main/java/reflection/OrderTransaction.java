@@ -464,14 +464,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void updateAfterPartialFill(double ratio) {
 		try {
+			out( "Updating transaction after partial fill with ratio %s", ratio);
+			
 			JsonObject obj = new JsonObject();
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("commission", m_config.commission() * ratio); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
-			
-			S.out("***");
-			obj.display();
-		
 			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "uid = '%s'", m_uid) );
 		} 
 		catch (Exception e) {

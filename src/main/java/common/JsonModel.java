@@ -27,7 +27,7 @@ public class JsonModel extends MyTableModel {
 		m_colNames = allNames.split(",");
 		
 		for (int i = 0; i < m_colNames.length; i++) {
-			m_namesMap.put( i, m_colNames[i]);
+			m_namesMap.put( i, m_colNames[i].split("=")[0]);  // if the col name has an equal sign, just take the first part
 		}
 	}
 

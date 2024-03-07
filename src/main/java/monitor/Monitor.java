@@ -111,6 +111,7 @@ public class Monitor {
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
+		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -141,37 +142,6 @@ public class Monitor {
 		((MonPanel)m_tabs.current()).refreshTop();
 	}
 	
-	static class LogPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,uid,type,ref_code,data"; 
-		static String sql = "select *, data->>'code' as ref_code from log $where order by created_at desc $limit";  // you must order by desc to get the latest entries
-
-		LogPanel() {
-			super( "log", names, sql);
-		}
-			
-		void filterByUid( String uid) {
-			where.setText( String.format( "where uid = '%s'", uid) );
-			wrap( () -> refresh() );
-		}
-		
-		@Override protected String getTooltip(JsonObject row, String tag) {
-			try {
-				if (tag.equals("data") ) {
-					String val = row.getString(tag);
-					if ( S.isNotNull(val) ) {
-						JsonObject obj = JsonObject.parse(val);
-						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
-						return obj.toHtml();
-					}
-				}
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-	}
-
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
 		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,token_price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
@@ -237,6 +207,20 @@ public class Monitor {
 		
 		@Override protected Object format(String key, Object value) {
 			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
+		}
+		
+		@Override  // this is wrong, should use base url
+		public void refresh() throws Exception {
+			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class HotStocksPanel extends JsonPanel {
+		HotStocksPanel() {
+			super( new BorderLayout(), "smartcontractid,startDate,endDate,convertsToAmt,convertsToAddress,allow,tokenSymbol,isHot,symbol,description,type,exchange,is24hour,tradingView");
+			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
 		}
 		
 		@Override  // this is wrong, should use base url
