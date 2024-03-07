@@ -4,6 +4,8 @@
  */
 package org.json.simple;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -410,6 +412,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Add all keys to the key set */
 	public void addKeys(HashSet<String> keys) {
 		keySet().forEach( key -> keys.add( key) );
+	}
+	
+	public static JsonObject readFromFile(String filename) throws Exception {
+		return parse( new FileInputStream( filename) );
 	}
 }
 /** NOTE: Timestamp objects are stored as

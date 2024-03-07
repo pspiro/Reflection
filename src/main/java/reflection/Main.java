@@ -107,6 +107,10 @@ public class Main implements ITradeReportHandler {
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
+		
+		// add new fields
+		m_config.sqlCommand( sql -> {
+		});
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
@@ -175,6 +179,10 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
+
+			// trading screen
+			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
+			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
