@@ -630,14 +630,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		if (m_order.isBuy() ) {
 			double balance = m_stablecoin.getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_stablecoinAmt ), 
-					RefCode.INSUFFICIENT_FUNDS,
+					RefCode.INSUFFICIENT_STABLECOIN,
 					"The stablecoin balance (%s) is less than the total order amount (%s)", 
 					balance, m_stablecoinAmt );
 		}
 		else {
 			double balance = newStockToken().getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_desiredQuantity), 
-					RefCode.INSUFFICIENT_FUNDS,
+					RefCode.INSUFFICIENT_STOCK_TOKEN,
 					"The stock token balance (%s) is less than the order quantity (%s)", 
 					balance, m_desiredQuantity);
 		}

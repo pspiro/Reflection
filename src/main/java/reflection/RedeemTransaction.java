@@ -77,7 +77,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here 
 			m_quantity = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
-			require( m_quantity > .004, RefCode.INSUFFICIENT_FUNDS, "No RUSD in user wallet to redeem");
+			require( m_quantity > .004, RefCode.NO_RUSD_TO_REDEEM, "No RUSD in user wallet to redeem");
 			
 			// confirm no Working redemptions
 			require( Main.m_config.sqlQuery( 
@@ -121,7 +121,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
 				
 				// report error back to user
-				throw new RefException( RefCode.INSUFFICIENT_FUNDS, "Your redemption request is being processed; we appreciate your patience");
+				throw new RefException( RefCode.DELAYED_REDEMPTION, "Your redemption request is being processed; we appreciate your patience");
 			}
 
 			// redeem it  try/catch here?

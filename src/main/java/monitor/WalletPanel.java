@@ -12,14 +12,17 @@ import javax.swing.border.TitledBorder;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.JsonModel;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
+import monitor.wallet.WalletPanelBase;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.DualPanel;
 import tw.util.HtmlButton;
+import tw.util.NewTabbedPanel;
 import tw.util.S;
 import tw.util.UI;
 import tw.util.UI.MyTextArea;
@@ -27,10 +30,9 @@ import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
 
-public class WalletPanel extends JsonPanel {
-	
-	
+public class WalletPanel extends MonPanel {  // you can safely make this a MonPanel if desired
 	private static final double minBalance = .0001;
+	
 	private final JTextField m_wallet = new JTextField(27); 
 	private final JLabel m_rusd = new JLabel(); 
 	private final JLabel m_usdc = new JLabel(); 
@@ -49,14 +51,16 @@ public class WalletPanel extends JsonPanel {
 	private final UpperField m_lockFor = new UpperField(8); 
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
-
+	private final JsonModel posModel = new JsonModel("Symbol,Balance");
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
+	private final WalletPanelBase m_parent;
 
-	WalletPanel() throws Exception {
-		super( new BorderLayout(), "Symbol,Balance");
+	public WalletPanel(WalletPanelBase parent) {
+		super( new BorderLayout() );
+		m_parent = parent;
 
-		m_wallet.addActionListener( e -> refreshTop() );
+		m_wallet.addActionListener( e -> m_parent.refreshTop() );
 
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
@@ -98,7 +102,7 @@ public class WalletPanel extends JsonPanel {
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
-		leftPanel.add( m_model.createTable() );
+		leftPanel.add( posModel.createTable() );
 		
 		DualPanel rightPanel = new DualPanel();
 		rightPanel.add( "1", transPanel);
@@ -108,8 +112,12 @@ public class WalletPanel extends JsonPanel {
 		add( rightPanel);
 	}
 
+	public String getWallet() {
+		return m_wallet.getText();
+	}
+	
 	private void award() {
-		wrap( () -> {
+		m_parent.wrap( () -> {
 			long lockUntil = System.currentTimeMillis() + m_lockFor.getInt() * Util.DAY;
 			
 			double amt = m_awardAmt.getDouble();
@@ -135,7 +143,7 @@ public class WalletPanel extends JsonPanel {
 	
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
-		refreshTop();
+		m_parent.refreshTop();
 	}
 
 	public void refresh() throws Exception {
@@ -143,7 +151,7 @@ public class WalletPanel extends JsonPanel {
 		S.out( "Refreshing Wallet panel with wallet %s", walletAddr);
 
 		S.out( "Clearing values");
-		rows().clear();
+		posModel.ar().clear();
 		m_mintAmt.setText(null);
 		m_burnAmt.setText(null);
 		m_rusd.setText(null);
@@ -169,7 +177,7 @@ public class WalletPanel extends JsonPanel {
 				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
 				m_email.setText( json.getString("email"));
 				m_kyc.setText( json.getString("kyc_status"));
-				m_pan.setText( Util.isValidPan(json.getString("kyc_status") ) ? "VALID" : null); 
+				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
 				
 				JsonObject obj = json.getObject("locked");
@@ -200,7 +208,7 @@ public class WalletPanel extends JsonPanel {
 					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
-					rows().add(obj);
+					posModel.ar().add(obj);
 				}
 			}
 
@@ -215,7 +223,7 @@ public class WalletPanel extends JsonPanel {
 			Util.inform(this, "Invalid wallet address '%s'", walletAddr);
 		}
 
-		m_model.fireTableDataChanged();
+		posModel.fireTableDataChanged();
 	}
 	
 	private void giveMatic() {

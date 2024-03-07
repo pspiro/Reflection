@@ -34,6 +34,8 @@ public class TestRedeem extends MyTestCase {
 		m_config.rusd()
 				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
 				.waitForStatus("COMPLETED");
+		
+		waitForBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 	}
 	
 	public void testLocked() throws Exception {
@@ -41,13 +43,12 @@ public class TestRedeem extends MyTestCase {
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.busd().mint( refWallet, 20).waitForCompleted();
+			m_config.busd().mint( refWallet, 2000).waitForCompleted();
 		}
 		
 		// mint some RUSD to new wallet 
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 5);
-		waitForBalance(Cookie.wallet, 4, false); // make sure the new balance will register with the RefAPI
 		
 		// lock it and redeem; should fail
 		lock( 5, System.currentTimeMillis() + Util.DAY);
@@ -59,12 +60,15 @@ public class TestRedeem extends MyTestCase {
 		redeem();
 		assert200();
 		startsWith( "RUSD was partially redeemed", cli.getMessage() );
-
+	}
+	
+	public void testLockedInPast() throws Exception {
 		// lock it all, but in the past; should succeed
+		Cookie.setNewFakeAddress( true);
+		mintRusd(Cookie.wallet, 5);
 		lock( 5, System.currentTimeMillis() - 10);
 		redeem();
-		assert200();  // fails here: 14:04:28.513 main REDEMPTION_PENDING - There is already an outstanding redemption request for this wallet; we appreciate your patience
-
+		assert200();
 	}
 	
 	private void lock(int amt, long lockUntil) throws Exception {
@@ -77,16 +81,13 @@ public class TestRedeem extends MyTestCase {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
 
 		// make sure we have some BUSD in RefWallet
-		double bal = m_config.busd().getPosition(refWallet);
-		if (bal < 10) {
-			m_config.busd().mint( refWallet, 10).waitForCompleted();
-			bal = 10;
+		if (m_config.busd().getPosition(refWallet) < 10) {
+			m_config.busd().mint( refWallet, 2000).waitForCompleted();
 		}
 		
 		// mint an amount of RUSD that should work--high 
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 9);
-		waitForBalance(Cookie.wallet, 1, false); // make sure the new balance will register with the RefAPI
 		
 		// redeem RUSD, pass
 		S.out( "sending redemption request");
@@ -113,17 +114,17 @@ public class TestRedeem extends MyTestCase {
 
 		// create new wallet with more than the allowed amount of RUSD
 		Cookie.setNewFakeAddress(true);
-		m_config.rusd().mintRusd( Cookie.wallet, m_config.maxAutoRedeem() + 1, stocks.getAnyStockToken() );
+		mintRusd( Cookie.wallet, m_config.maxAutoRedeem() + 1);
 
 		// fail with INSUFFICIENT_FUNDS due to exceeding maxAutoRedeem value
 		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();
-		assertEquals( RefCode.INSUFFICIENT_FUNDS, cli.getRefCode() );
+		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
 	}
 	
 	/** Wait up to 10 sec for Moralis to catch up   // better just to ask hookServer or RefAPI
 	 * @throws Exception */
-	private void waitForBalance(String address, double bal, boolean lt) throws Exception {
+	private static void waitForBalance(String address, double bal, boolean lt) throws Exception {
 		S.out( "waiting for balance %s bal", lt ? "<" : ">");
 		waitFor( 90, () -> { 
 			double balance = Wallet.getBalance(address, m_config.rusdAddr() );

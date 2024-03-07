@@ -691,6 +691,11 @@ public class Util {
 		return v == null ? 0 : v;
 	}
 
+	/** handles null object and empty string */
+	public static double toDouble( Object v) {
+		return v == null || S.isNull( v.toString() ) ? 0 : Double.parseDouble( v.toString() );
+	}
+
 
 	/** Copy obj.toString() to clipboard
 	 * @param obj can be null */
