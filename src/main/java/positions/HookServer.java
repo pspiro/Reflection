@@ -103,12 +103,12 @@ public class HookServer {
 		// you could pass BUSD, RUSD, or the user addresses
 		// it would be ideal if there were a way to combine these two streams into one,
 		// then it could just work off the user address, same as the transfer stream
-//!!!!!!!!!!!!!!!//		Streams.createStream(
-//						Streams.approval, 
-//						"approval-" + m_config.getHookNameSuffix(), 
-//						m_config.hookServerUrl(), 
-//						chain(),
-//						m_config.rusd().address() );
+		Streams.createStream(
+						Streams.approval, 
+						"approval-" + m_config.getHookNameSuffix(), 
+						m_config.hookServerUrl(), 
+						chain(),
+						m_config.rusd().address() );
 		
 		S.out( "**ready**");
 	}
