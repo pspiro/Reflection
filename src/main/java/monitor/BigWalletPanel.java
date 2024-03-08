@@ -51,6 +51,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final UpperField m_burnAmt = new UpperField(8);
 	private final UpperField m_awardAmt = new UpperField(8); 
 	private final UpperField m_lockFor = new UpperField(8); 
+	private final UpperField m_requiredTrades = new UpperField(8);
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
 	private final JsonModel posModel = new JsonModel("Symbol,Balance");
@@ -90,7 +91,9 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_awardAmt, 
 				new JLabel( "RUSD for "),
 				m_lockFor,
-				new JLabel( "days"),
+				new JLabel( "days and require"),
+				m_requiredTrades,
+				new JLabel( "trades"),
 				new HtmlButton("Go", e -> award() ) ); 
 
 		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
@@ -122,14 +125,13 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private void award() {
 		m_parent.wrap( () -> {
 			long lockUntil = System.currentTimeMillis() + m_lockFor.getInt() * Util.DAY;
-			
 			double amt = m_awardAmt.getDouble();
 			String wallet = m_wallet.getText().toLowerCase();
 			
 			if ( amt > 0 && Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
 	
 				mint( amt);
-				JsonObject obj = createLockObject( wallet, amt, lockUntil);
+				JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
 				Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 
 				Util.inform( this, "Done");
@@ -138,10 +140,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 	
 	/** Used by TestCase as well as Monitor */
-	public static JsonObject createLockObject( String wallet, double amt, long lockUntil) throws Exception {
+	public static JsonObject createLockObject( String wallet, double amt, long lockUntil, int requiredTrades) throws Exception {
 		return Util.toJson( 
 				"wallet_public_key", wallet, 
-				"locked", Util.toJson( "amount", amt, "lockedUntil", lockUntil) );
+				"locked", Util.toJson( "amount", amt, "lockedUntil", lockUntil, "requiredTrades", requiredTrades) );
 	}
 	
 	public void setWallet(String addr) {

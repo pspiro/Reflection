@@ -46,16 +46,24 @@ public class TestRedeem extends MyTestCase {
 		}
 		
 		// mint some RUSD to new wallet 
-		Cookie.setNewFakeAddress( true);
-		mintRusd(Cookie.wallet, 5);
+//		Cookie.setNewFakeAddress( true);
+//		mintRusd(Cookie.wallet, 5);
+		Cookie.setWalletAddr("0xb162d6738d6e95fd39017411432525a6171ce3d3");
 		
-		// lock it and redeem; should fail
-		lock( 5, System.currentTimeMillis() + Util.DAY);
+		// lock it by time and redeem; should fail
+		lock( 5, System.currentTimeMillis() + Util.DAY, 0);
 		redeem();
 		assertEquals( RefCode.RUSD_LOCKED, cli.getRefCode() );
+		S.out( cli.getMessage() );
+		
+		// lock it by required transactions; should fail
+		lock( 5, System.currentTimeMillis() - Util.DAY, 2);
+		redeem();
+		assertEquals( RefCode.RUSD_LOCKED, cli.getRefCode() );
+		S.out( cli.getMessage() );
 		
 		// lock part of it; it should redeem only part
-		lock( 3, System.currentTimeMillis() + Util.DAY);
+		lock( 3, System.currentTimeMillis() + Util.DAY, 0);
 		redeem();
 		assert200();
 		startsWith( "RUSD was partially redeemed", cli.getMessage() );
@@ -65,15 +73,15 @@ public class TestRedeem extends MyTestCase {
 		// lock it all, but in the past; should succeed
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 5);
-		lock( 5, System.currentTimeMillis() - 10);
+		lock( 5, System.currentTimeMillis() - 10, 0);
 		redeem();
 		assert200();
 	}
 	
-	private void lock(int amt, long lockUntil) throws Exception {
+	private void lock(int amt, long lockUntil, int requiredTrades) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject obj = BigWalletPanel.createLockObject( wallet, amt, lockUntil);
-		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
+		JsonObject lockObj = BigWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
+		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
 	public void testRedeem() throws Exception {

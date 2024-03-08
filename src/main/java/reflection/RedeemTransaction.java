@@ -89,17 +89,28 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// check if RUSD is locked, meaning they were awarded RUSD and need to wait until 
 			// a certain date until redeeming
 			String msg = null; // null msg will not get passed to Frontend 
-			JsonObject locked = userRecord.getObject( "locked");
-			if (locked != null && locked.getLong( "lockedUntil") > System.currentTimeMillis() ) {
-				// decrement the quantity to redeem by the amount locked
-				m_quantity -= locked.getDouble( "amount");
-				
-				require( m_quantity > .001,
-						RefCode.RUSD_LOCKED, 
-						"The RUSD in your wallet was granted as an award and may not be redeemed until %s",
-						Util.yToS.format( locked.getLong( "lockedUntil") ) );
-				
-				msg = "RUSD was partially redeemed; some was locked"; 
+			JsonObject locked = userRecord.getObject( "locked");  // locked fields are: amount, lockedUntil, requiredTrades
+
+			if (locked != null) {
+				double remainingDays = Math.max(0., (locked.getLong( "lockedUntil") - System.currentTimeMillis() ) / (double)Util.DAY);
+				int remainingTrades = Math.max(0, locked.getInt( "requiredTrades") - numTrades() );
+
+				// still locked?
+				if (remainingDays > 0 || remainingTrades > 0) {
+					// decrement the quantity to redeem by the amount locked
+					m_quantity -= locked.getDouble( "amount");
+	
+					// nothing left?
+					require( m_quantity > .001,
+							RefCode.RUSD_LOCKED,
+							"You must complete %s more trades and/or wait %s more days before redeeming your %s",
+							remainingTrades,
+							remainingDays,
+							Main.m_config.rusd().name() );
+					
+					msg = "RUSD was partially redeemed; some was locked";
+					olog( LogType.PARTIAL_LOCK, locked); 
+				}
 			}
 
 			// over limit? this should be improved to be a limit per 24 hours because they
@@ -139,7 +150,14 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		});
 	}
 
-	
+	/** return the number of completed trades */
+	private int numTrades() throws Exception {
+		JsonArray ar = Main.m_config.sqlQuery(
+				"select count(uid) from transactions where status = 'COMPLETED' and wallet_public_key = '%s'",
+				m_walletAddr.toLowerCase());
+		return ar.size() == 0 ? 0 : ar.get(0).getInt("count");
+	}
+
 	@Override public synchronized void onUpdateFbStatus(FireblocksStatus status, String hash) {
 		if (m_status == LiveStatus.Working) {
 			m_progress = status.pct();

@@ -1,6 +1,7 @@
 package testcase;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Keys;
 
 import com.moonstoneid.siwe.SiweMessage;
 
@@ -29,7 +30,7 @@ public abstract class Cookie extends MyTestCase {
 	}
 	
 	public static void setNewFakeAddress(boolean andProfile) throws Exception {
-		setNewWallet( Util.createFakeAddress() );
+		setWalletAddr( Util.createFakeAddress() );
 		
 		if (andProfile) {
 			JsonObject json = TestProfile.createValidProfile();
@@ -38,9 +39,9 @@ public abstract class Cookie extends MyTestCase {
 		}
 	}
 	
-	public static void setNewWallet(String walletIn) throws Exception {
-		wallet = walletIn;
-		cookie = signIn(walletIn);
+	public static void setWalletAddr(String walletIn) throws Exception {
+		wallet = Keys.toChecksumAddress( walletIn);
+		cookie = signIn(wallet);
 	}
 
 
