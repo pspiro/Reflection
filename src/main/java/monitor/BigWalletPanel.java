@@ -14,15 +14,16 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
-import monitor.wallet.WalletPanelBase;
+import monitor.wallet.BlockSummaryPanel;
+import monitor.wallet.WalletPanel;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.DualPanel;
 import tw.util.HtmlButton;
-import tw.util.NewTabbedPanel;
 import tw.util.S;
 import tw.util.UI;
 import tw.util.UI.MyTextArea;
@@ -30,9 +31,10 @@ import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
 
-public class WalletPanel extends MonPanel {  // you can safely make this a MonPanel if desired
+public class BigWalletPanel extends JPanel {  // you can safely make this a MonPanel if desired
 	private static final double minBalance = .0001;
 	
+	private final WalletPanel m_parent;
 	private final JTextField m_wallet = new JTextField(27); 
 	private final JLabel m_rusd = new JLabel(); 
 	private final JLabel m_usdc = new JLabel(); 
@@ -54,9 +56,9 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 	private final JsonModel posModel = new JsonModel("Symbol,Balance");
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
-	private final WalletPanelBase m_parent;
+	private final BlockSummaryPanel blockPanel = new BlockSummaryPanel();
 
-	public WalletPanel(WalletPanelBase parent) {
+	public BigWalletPanel(WalletPanel parent) {
 		super( new BorderLayout() );
 		m_parent = parent;
 
@@ -107,6 +109,7 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 		DualPanel rightPanel = new DualPanel();
 		rightPanel.add( "1", transPanel);
 		rightPanel.add( "2", redemPanel);
+		rightPanel.add( "3", blockPanel);
 		
 		add( leftPanel, BorderLayout.WEST);
 		add( rightPanel);
@@ -146,7 +149,7 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 		m_parent.refreshTop();
 	}
 
-	public void refresh() throws Exception {
+	public void refresh(JsonArray blockRows) throws Exception {
 		String walletAddr = m_wallet.getText().toLowerCase();
 		S.out( "Refreshing Wallet panel with wallet %s", walletAddr);
 
@@ -166,6 +169,7 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 		m_locked.setText(null);
 		transPanel.clear();
 		redemPanel.clear();
+		blockPanel.clear();
 
 		if (Util.isValidAddress(walletAddr)) {
 			S.out( "Updating values");
@@ -212,12 +216,17 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 				}
 			}
 
+			// refresh transactions panel
 			String where = String.format("where wallet_public_key = '%s'", walletAddr);
 			transPanel.where.setText( where);
 			transPanel.refresh();
 			
+			// refresh redemptions panel
 			redemPanel.where.setText( where);
 			redemPanel.refresh();
+			
+			// refresh block summary panel
+			blockPanel.refresh( walletAddr, blockRows);
 		}
 		else if (S.isNotNull(walletAddr)) {
 			Util.inform(this, "Invalid wallet address '%s'", walletAddr);
@@ -303,7 +312,6 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 		}
 	}
 
-
 	/** Send an email from Josh@reflection */
 	private void sendEmail() {
 		wrap( () -> {
@@ -327,5 +335,15 @@ public class WalletPanel extends MonPanel {  // you can safely make this a MonPa
 			m_subject.setText(null);
 			m_emailText.setText(null);			
 		});
+	}
+
+	public void wrap(ExRunnable runner) {
+		try {
+			UI.watch( Monitor.m_frame, runner); // display hourglass and catch exceptions
+		}
+		catch (Throwable e) {
+			e.printStackTrace();
+			Util.inform( this, e.getMessage() );
+		}
 	}
 }

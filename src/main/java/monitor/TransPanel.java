@@ -1,6 +1,5 @@
 package monitor;
 
-import common.Util;
 import fireblocks.Transactions;
 
 class TransPanel extends QueryPanel {

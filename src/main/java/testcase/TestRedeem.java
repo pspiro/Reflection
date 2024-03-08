@@ -6,8 +6,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Accounts;
-import monitor.Monitor;
-import monitor.WalletPanel;
+import monitor.BigWalletPanel;
 import positions.Wallet;
 import reflection.RefCode;
 import tw.util.S;
@@ -73,7 +72,7 @@ public class TestRedeem extends MyTestCase {
 	
 	private void lock(int amt, long lockUntil) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject obj = WalletPanel.createLockObject( wallet, amt, lockUntil);
+		JsonObject obj = BigWalletPanel.createLockObject( wallet, amt, lockUntil);
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 	}
 

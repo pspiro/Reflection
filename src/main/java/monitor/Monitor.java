@@ -15,11 +15,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import org.json.simple.JsonArray;
-import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import monitor.wallet.WalletPanelBase;
+import monitor.wallet.WalletPanel;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
@@ -41,7 +40,7 @@ public class Monitor {
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
-	static WalletPanelBase m_walletPanel;
+	static WalletPanel m_walletPanel;
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
@@ -66,7 +65,7 @@ public class Monitor {
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-		m_walletPanel = new WalletPanelBase();
+		m_walletPanel = new WalletPanel();
 		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();
