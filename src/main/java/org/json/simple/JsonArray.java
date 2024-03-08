@@ -4,7 +4,10 @@
  */
 package org.json.simple;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -119,6 +122,10 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return (JsonArray)new JSONParser().parse( text);
 	}
 
+	public static JsonArray parse(InputStream is) throws Exception {
+		return (JsonArray)new JSONParser().parse( new InputStreamReader(is) );  // parseMsg() won't work here because it assumes all values are strings
+	}	
+	
 	public static boolean isArray(String ret) {
 		return ret != null && ret.trim().startsWith("[");
 	}
@@ -215,5 +222,7 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return keys;
 	}	
 
-	
+	public static JsonArray readFromFile(String filename) throws Exception {
+		return parse( new FileInputStream( filename) );
+	}	
 }

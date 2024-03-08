@@ -373,7 +373,55 @@ public class BackendTransaction extends MyTransaction {
 			respond( 
 					"X-Country-Code", headers.get( "X-Country-Code"),
 					"X-Real-IP", headers.get( "X-Real-IP") );
-					
+		});
+	}
+	
+	public void handleTradingStatic() {
+		wrap( () -> {
+			Stock stock = m_main.getStock( getConidFromUri() );
+			
+			JsonObject resp = new JsonObject();
+			resp.copyFrom( stock, "smartContractid", "symbol", "tokenSymbol", "description", "conid", "tradingView");
+			
+			respond( resp);
+		});
+	}
+
+	/** we need both wallet AND conid here */
+	public void handleTradingDynamic() {
+		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /
+			String[] ar = m_uri.split("/");
+			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
+			
+			m_walletAddr = ar[3].toLowerCase();
+			Util.reqValidAddress(m_walletAddr);
+			
+			int conid = Integer.parseInt( ar[4]);
+			
+			Stock stock = m_main.getStock( conid);
+			
+			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
+					Main.m_config.hookServerPort(), 
+					m_walletAddr.toLowerCase() );
+
+			// query for wallet positions (map style)
+			JsonObject json = MyClient.getJson( url);
+			JsonObject positions = json.getObject( "positions"); // you could improve this and create a special query just for this
+			
+			Prices prices = stock.prices();
+			// require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
+			// Q what to do if there are no prices
+
+			respond(			
+				"exchangeStatus", "open",
+				"exchangeTime", "n/a",
+				"stockTokenBalance", positions.getDouble( stock.getSmartContractId() ), 
+				"rusdBalance", positions.getDouble( m_config.rusdAddr() ),
+				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
+				"nonRusdApprovedAmt", json.getDouble( "approved"),
+				"bidPrice", prices.anyBid(),
+				"askPrice", prices.anyAsk()
+				);
 		});
 	}
 

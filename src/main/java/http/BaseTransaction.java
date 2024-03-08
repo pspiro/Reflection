@@ -159,18 +159,18 @@ public class BaseTransaction {
 					elog( LogType.ERROR_2, e);
 				}
 			}
-			postWrap();
+			postWrap( e.code() );
 		}
 		catch( Throwable e) {
 			e.printStackTrace();
 			elog( LogType.ERROR_3, e);
 			respondFull(RefException.eToJson(e, RefCode.UNKNOWN), 400, null);
-			postWrap();
+			postWrap(null);
 		}
 	}
 	
 	/** Overridden in subclass. Called only if there is an exception. */
-	protected void postWrap() {
+	protected void postWrap(Enum error) {
 	}
 
 	/** We need this version because some strings have % characters in them */ 
