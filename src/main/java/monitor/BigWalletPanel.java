@@ -12,10 +12,14 @@ import javax.swing.border.TitledBorder;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.JsonModel;
 import common.Util;
+import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
+import monitor.wallet.BlockSummaryPanel;
+import monitor.wallet.WalletPanel;
 import positions.Wallet;
 import reflection.Stock;
 import tw.util.DualPanel;
@@ -27,10 +31,10 @@ import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
 
-public class WalletPanel extends JsonPanel {
-	
-	
+public class BigWalletPanel extends JPanel {  // you can safely make this a MonPanel if desired
 	private static final double minBalance = .0001;
+	
+	private final WalletPanel m_parent;
 	private final JTextField m_wallet = new JTextField(27); 
 	private final JLabel m_rusd = new JLabel(); 
 	private final JLabel m_usdc = new JLabel(); 
@@ -47,16 +51,19 @@ public class WalletPanel extends JsonPanel {
 	private final UpperField m_burnAmt = new UpperField(8);
 	private final UpperField m_awardAmt = new UpperField(8); 
 	private final UpperField m_lockFor = new UpperField(8); 
+	private final UpperField m_requiredTrades = new UpperField(8);
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
-
+	private final JsonModel posModel = new JsonModel("Symbol,Balance");
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
+	private final BlockSummaryPanel blockPanel = new BlockSummaryPanel();
 
-	WalletPanel() throws Exception {
-		super( new BorderLayout(), "Symbol,Balance");
+	public BigWalletPanel(WalletPanel parent) {
+		super( new BorderLayout() );
+		m_parent = parent;
 
-		m_wallet.addActionListener( e -> refreshTop() );
+		m_wallet.addActionListener( e -> m_parent.refreshTop() );
 
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
@@ -84,7 +91,9 @@ public class WalletPanel extends JsonPanel {
 				m_awardAmt, 
 				new JLabel( "RUSD for "),
 				m_lockFor,
-				new JLabel( "days"),
+				new JLabel( "days and require"),
+				m_requiredTrades,
+				new JLabel( "trades"),
 				new HtmlButton("Go", e -> award() ) ); 
 
 		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
@@ -98,27 +107,31 @@ public class WalletPanel extends JsonPanel {
 
 		JPanel leftPanel = new JPanel(new BorderLayout() );
 		leftPanel.add( vp, BorderLayout.NORTH);
-		leftPanel.add( m_model.createTable() );
+		leftPanel.add( posModel.createTable() );
 		
 		DualPanel rightPanel = new DualPanel();
 		rightPanel.add( "1", transPanel);
 		rightPanel.add( "2", redemPanel);
+		rightPanel.add( "3", blockPanel);
 		
 		add( leftPanel, BorderLayout.WEST);
 		add( rightPanel);
 	}
 
+	public String getWallet() {
+		return m_wallet.getText();
+	}
+	
 	private void award() {
-		wrap( () -> {
+		m_parent.wrap( () -> {
 			long lockUntil = System.currentTimeMillis() + m_lockFor.getInt() * Util.DAY;
-			
 			double amt = m_awardAmt.getDouble();
 			String wallet = m_wallet.getText().toLowerCase();
 			
 			if ( amt > 0 && Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
 	
 				mint( amt);
-				JsonObject obj = createLockObject( wallet, amt, lockUntil);
+				JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
 				Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 
 				Util.inform( this, "Done");
@@ -127,23 +140,23 @@ public class WalletPanel extends JsonPanel {
 	}
 	
 	/** Used by TestCase as well as Monitor */
-	public static JsonObject createLockObject( String wallet, double amt, long lockUntil) throws Exception {
+	public static JsonObject createLockObject( String wallet, double amt, long lockUntil, int requiredTrades) throws Exception {
 		return Util.toJson( 
 				"wallet_public_key", wallet, 
-				"locked", Util.toJson( "amount", amt, "lockedUntil", lockUntil) );
+				"locked", Util.toJson( "amount", amt, "lockedUntil", lockUntil, "requiredTrades", requiredTrades) );
 	}
 	
 	public void setWallet(String addr) {
 		m_wallet.setText(addr);
-		refreshTop();
+		m_parent.refreshTop();
 	}
 
-	public void refresh() throws Exception {
+	public void refresh(JsonArray blockRows) throws Exception {
 		String walletAddr = m_wallet.getText().toLowerCase();
 		S.out( "Refreshing Wallet panel with wallet %s", walletAddr);
 
 		S.out( "Clearing values");
-		rows().clear();
+		posModel.ar().clear();
 		m_mintAmt.setText(null);
 		m_burnAmt.setText(null);
 		m_rusd.setText(null);
@@ -158,6 +171,7 @@ public class WalletPanel extends JsonPanel {
 		m_locked.setText(null);
 		transPanel.clear();
 		redemPanel.clear();
+		blockPanel.clear();
 
 		if (Util.isValidAddress(walletAddr)) {
 			S.out( "Updating values");
@@ -169,7 +183,7 @@ public class WalletPanel extends JsonPanel {
 				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
 				m_email.setText( json.getString("email"));
 				m_kyc.setText( json.getString("kyc_status"));
-				m_pan.setText( Util.isValidPan(json.getString("kyc_status") ) ? "VALID" : null); 
+				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
 				
 				JsonObject obj = json.getObject("locked");
@@ -200,22 +214,27 @@ public class WalletPanel extends JsonPanel {
 					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
-					rows().add(obj);
+					posModel.ar().add(obj);
 				}
 			}
 
+			// refresh transactions panel
 			String where = String.format("where wallet_public_key = '%s'", walletAddr);
 			transPanel.where.setText( where);
 			transPanel.refresh();
 			
+			// refresh redemptions panel
 			redemPanel.where.setText( where);
 			redemPanel.refresh();
+			
+			// refresh block summary panel
+			blockPanel.refresh( walletAddr, blockRows);
 		}
 		else if (S.isNotNull(walletAddr)) {
 			Util.inform(this, "Invalid wallet address '%s'", walletAddr);
 		}
 
-		m_model.fireTableDataChanged();
+		posModel.fireTableDataChanged();
 	}
 	
 	private void giveMatic() {
@@ -295,7 +314,6 @@ public class WalletPanel extends JsonPanel {
 		}
 	}
 
-
 	/** Send an email from Josh@reflection */
 	private void sendEmail() {
 		wrap( () -> {
@@ -319,5 +337,15 @@ public class WalletPanel extends JsonPanel {
 			m_subject.setText(null);
 			m_emailText.setText(null);			
 		});
+	}
+
+	public void wrap(ExRunnable runner) {
+		try {
+			UI.watch( Monitor.m_frame, runner); // display hourglass and catch exceptions
+		}
+		catch (Throwable e) {
+			e.printStackTrace();
+			Util.inform( this, e.getMessage() );
+		}
 	}
 }

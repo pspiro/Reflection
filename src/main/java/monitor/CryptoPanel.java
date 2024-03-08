@@ -9,7 +9,6 @@ import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
-import monitor.Monitor.MonPanel;
 import positions.Wallet;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -28,6 +27,7 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_ownerMatic = new JTextField(10);
 	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
+	private JTextField m_netLiq = new JTextField(10);
 	HoldersPanel holdersPanel = new HoldersPanel();
 
 	CryptoPanel() {
@@ -61,6 +61,7 @@ public class CryptoPanel extends MonPanel {
 
 		rusdPanel.addHeader( "Brokerage (IB)");
 		rusdPanel.add( "Cash in brokerage", m_cash);
+		rusdPanel.add( "Net liq in brokerage", m_netLiq);
 		
 		add(rusdPanel);
 		add(holdersPanel, BorderLayout.EAST);
@@ -158,8 +159,13 @@ public class CryptoPanel extends MonPanel {
 		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {
-			double val = obj.getDouble("TotalCashValue");
-			SwingUtilities.invokeLater( () -> m_cash.setText( S.fmt2(val) ) );
+			double cashBal = obj.getDouble("TotalCashValue");
+			double netLiq = obj.getDouble("TotalNetLiq");
+			obj.display();
+			SwingUtilities.invokeLater( () -> {
+				m_cash.setText( S.fmt2(cashBal) );
+				m_netLiq.setText( S.fmt2(netLiq) );
+			});
 		});
 	}
 }

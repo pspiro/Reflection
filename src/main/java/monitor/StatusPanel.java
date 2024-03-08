@@ -6,7 +6,6 @@ import javax.swing.JTextField;
 
 import common.Util;
 import http.MyClient;
-import monitor.Monitor.MonPanel;
 import positions.Streams;
 import tw.util.S;
 import tw.util.VerticalPanel;

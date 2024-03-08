@@ -169,7 +169,7 @@ public class Rusd extends Stablecoin {
 		
 		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
 
-		S.out( "Account %s user %s selling %s RUSD for BUSD",
+		S.out( "Account %s user %s redeeming %s RUSD for BUSD",
 				adminAcctId, userAddr, amt);
 		
 		return Fireblocks.call2( 

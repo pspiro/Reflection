@@ -65,6 +65,8 @@ public class MoralisServer {
 
 
 	public static String queryBalances(String contract) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
+
 		String url = String.format( "%s/%s/erc20/balances?chain=%s", moralis, contract, chain);
 		return querySync( url);
 	}
@@ -163,6 +165,7 @@ public class MoralisServer {
 	/** returns one page of transactions for a specific token
 	 *  @address is ERC20 token address */
 	public static JsonObject getTokenTransfers(String address, String cursor) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/erc20/%s/transfers?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
 		return queryObject( url);
 	}
@@ -170,6 +173,7 @@ public class MoralisServer {
 	/** returns one page of transactions for a specific token
 	 *  @address is ERC20 token address */
 	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
+		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
 		return queryObject( url);
 	}

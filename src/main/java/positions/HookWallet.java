@@ -83,12 +83,32 @@ class HookWallet {
 		return ar;
 	}
 
+	private JsonObject getJsonPositionsMap(double min) {
+		JsonObject map = new JsonObject();
+		m_map.forEach( (address,position) -> {
+			if (position >= min) {
+				map.put( address, position);
+			}
+		});
+		return map;
+	}
+
 	/** For debugging */
 	public JsonObject getAllJson(double min) {
 		JsonObject obj = new JsonObject();
 		obj.put( "native", m_nativeBal);
 		obj.put( "approved", m_approved);
 		obj.put( "positions", getJsonPositions(min) );
+		obj.put( "wallet", m_walletAddr);
+		return obj;
+	}
+
+	/** For debugging */
+	public JsonObject getAllJsonMap(double min) {
+		JsonObject obj = new JsonObject();
+		obj.put( "native", m_nativeBal);
+		obj.put( "approved", m_approved);
+		obj.put( "positions", getJsonPositionsMap(min) );
 		obj.put( "wallet", m_walletAddr);
 		return obj;
 	}

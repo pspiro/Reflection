@@ -2,7 +2,6 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.HashSet;
@@ -14,22 +13,18 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonArray;
-import org.json.simple.JsonObject;
 
 import common.Util;
-import common.Util.ExRunnable;
 import http.MyClient;
+import monitor.wallet.WalletPanel;
 import redis.MyRedis;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
-import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
-import tw.util.UI;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -105,8 +100,8 @@ public class Monitor {
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
-		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
+		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Tokens", new TokensPanel() );
 		m_tabs.addTab( "MDServer Prices", new MdsPricesPanel() );
 		m_tabs.addTab( "RefAPI Prices", pricesPanel);
@@ -115,6 +110,7 @@ public class Monitor {
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
+		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -145,37 +141,6 @@ public class Monitor {
 		((MonPanel)m_tabs.current()).refreshTop();
 	}
 	
-	static class LogPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,uid,type,data"; 
-		static String sql = "select * from log $where order by created_at desc $limit";  // you must order by desc to get the latest entries
-
-		LogPanel() {
-			super( "log", names, sql);
-		}
-			
-		void filterByUid( String uid) {
-			where.setText( String.format( "where uid = '%s'", uid) );
-			wrap( () -> refresh() );
-		}
-		
-		@Override protected String getTooltip(JsonObject row, String tag) {
-			try {
-				if (tag.equals("data") ) {
-					String val = row.getString(tag);
-					if ( S.isNotNull(val) ) {
-						JsonObject obj = JsonObject.parse(val);
-						obj.update( "filter", cookie -> Util.left(cookie.toString(), 40) ); // shorten the cookie or it pollutes the view
-						return obj.toHtml();
-					}
-				}
-			}
-			catch( Exception e) {
-				e.printStackTrace();
-			}
-			return null;
-		}
-	}
-
 	// add the commission here as well
 	private static JComponent createTradesPanel() {
 		String names = "created_at,time,wallet_public_key,orderref,side,quantity,symbol,conid,price,token_price,cumfill,tradekey,perm_id,order_id,exchange,avgprice";
@@ -224,44 +189,6 @@ public class Monitor {
 		
 	}
 
-	static abstract class MonPanel extends JPanel implements INewTab {
-		public MonPanel(LayoutManager layout) {
-			super(layout);
-		}
-
-		@Override public void activated() {
-			refreshTop();
-		}
-
-		/** Display hourglass and refresh, catch and display exceptions */
-		protected final void refreshTop() {
-			wrap( () -> UI.watch( m_frame, () -> refresh() ) );
-		}
-		
-		/** Display the message in a popup */
-		public void wrap(ExRunnable runner) {
-			try {
-				UI.watch( Monitor.m_frame, runner); // display hourglass and catch exceptions
-			}
-			catch (Throwable e) {
-				e.printStackTrace();
-				Util.inform( this, e.getMessage() );
-			}
-		}
-
-		protected abstract void refresh() throws Exception;
-		
-		@Override public void switchTo() {
-		}
-
-		@Override public void closed() {
-		}
-		
-		protected Window getWindow() {
-			return SwingUtilities.getWindowAncestor(this);
-		}
-	}
-	
 	static class EmptyPanel extends MonPanel {
 		EmptyPanel(LayoutManager layout) {
 			super(layout);
@@ -279,6 +206,20 @@ public class Monitor {
 		
 		@Override protected Object format(String key, Object value) {
 			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
+		}
+		
+		@Override  // this is wrong, should use base url
+		public void refresh() throws Exception {
+			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class HotStocksPanel extends JsonPanel {
+		HotStocksPanel() {
+			super( new BorderLayout(), "smartcontractid,startDate,endDate,convertsToAmt,convertsToAddress,allow,tokenSymbol,isHot,symbol,description,type,exchange,is24hour,tradingView");
+			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
 		}
 		
 		@Override  // this is wrong, should use base url

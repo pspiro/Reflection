@@ -1,12 +1,26 @@
 package monitor;
 
-import common.Util;
 import fireblocks.Transactions;
 
 class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,first_name,last_name,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,commission,currency";
+		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,conid,symbol,price,tds,rounded_quantity,commission,currency";
 		static String sql = """
-select transactions.created_at,transactions.wallet_public_key,first_name,last_name,uid,status,action,quantity,conid,symbol,price,tds,rounded_quantity,commission,currency 
+select 
+	transactions.created_at,
+	transactions.wallet_public_key,
+	first_name || ' ' || last_name as name,
+	uid,
+	status,
+	ref_code,
+	action,
+	quantity,
+	conid,
+	symbol,
+	price,
+	tds,
+	rounded_quantity,
+	commission,
+	currency 
 from transactions
 left join users using (wallet_public_key)
 $where 

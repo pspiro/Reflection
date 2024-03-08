@@ -4,6 +4,8 @@
  */
 package org.json.simple;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -328,7 +330,9 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 
 	/** Update the value for one specific key;
-	 *  the value passed to the callback will never be null */
+	 *  the value passed to the callback will never be null
+	 *  
+	 *  WARNING: if updater returns null, the present value will be maintained */
 	public void update(String key, Function<Object,Object> updater) {
 		Object obj = get(key);
 		if (obj != null ) {
@@ -397,14 +401,21 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		m_doubleFormat = fmt;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public <T> T getEnum( String key, T[] values) throws Exception {
-		return (T)get(key);
+	/** Will convert a string to enum; may return null */
+	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
+		Object val = get(key);
+		return val == null 
+			? null 
+			: Util.getEnum(val.toString(), values);
 	}
 
 	/** Add all keys to the key set */
 	public void addKeys(HashSet<String> keys) {
 		keySet().forEach( key -> keys.add( key) );
+	}
+	
+	public static JsonObject readFromFile(String filename) throws Exception {
+		return parse( new FileInputStream( filename) );
 	}
 }
 /** NOTE: Timestamp objects are stored as

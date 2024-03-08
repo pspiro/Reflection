@@ -10,16 +10,13 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
-import monitor.Monitor.MonPanel;
 import tw.util.S;
 
 /** Panel with a table that contains rows of Json objects; each column header is a key 
  *  in the Json table */
 public abstract class JsonPanel extends MonPanel {
-	final JsonModel m_model;
+	final protected JsonModel m_model;
 	
-	protected abstract void refresh() throws Exception;
-
 	public JsonPanel(LayoutManager layout, String allNames) {
 		super(layout);
 		m_model = createModel(allNames);

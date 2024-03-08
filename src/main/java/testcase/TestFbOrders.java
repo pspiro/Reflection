@@ -46,7 +46,7 @@ public class TestFbOrders extends MyTestCase {
 	 *  insufficient crypto or insufficient approved amount */
 	public void testInsufficientFundsBuy() throws Exception {
 		S.out( "-----testInsufficientFundsBuy");
-		Cookie.setNewWallet(bobAddr);
+		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting insuf. funds");
 		
 		cli().get("/api/mywallet/" + bobAddr);
@@ -77,7 +77,7 @@ public class TestFbOrders extends MyTestCase {
 	 *  if we see this happening in real life  */
 	public void testNonApproval() throws Exception {
 		S.out( "-----testNonApproval");
-		Cookie.setNewWallet(bobAddr);
+		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting non-approval");
 
 		// mint BUSD for user Bob
@@ -117,7 +117,7 @@ public class TestFbOrders extends MyTestCase {
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		S.out( "-----testFillWithFb");
-		Cookie.setNewWallet(bobAddr);
+		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting amounts");
 
 		// make sure we have a valid user profile  (updates profile for Cookie.wallet

@@ -12,7 +12,6 @@ import org.json.simple.JsonObject;
 
 import coinstore.Coinstore;
 import common.Util;
-import monitor.Monitor.MonPanel;
 import tw.util.S;
 
 class CoinstorePanel extends MonPanel {

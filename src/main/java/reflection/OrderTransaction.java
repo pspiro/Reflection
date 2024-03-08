@@ -464,14 +464,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void updateAfterPartialFill(double ratio) {
 		try {
+			out( "Updating transaction after partial fill with ratio %s", ratio);
+			
 			JsonObject obj = new JsonObject();
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("commission", m_config.commission() * ratio); // not so good, we should get it from the order. pas
 			obj.put("tds", m_tds);
-			
-			S.out("***");
-			obj.display();
-		
 			m_main.queueSql( conn -> conn.updateJson("transactions", obj, "uid = '%s'", m_uid) );
 		} 
 		catch (Exception e) {
@@ -575,15 +573,18 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			// create log entry and update transactions table
 			olog( LogType.ORDER_FAILED, Message, errorText, "code", errorCode);
 			
-			// update order with final status and any fields that were not available when
-			// record was inserted
-			m_main.queueSql( sql -> sql.execWithParams(	""" 
-					update transactions
-					set status = '%s', order_id=%s, perm_id=%s 
-					where uid = '%s'
-					""",
-					FireblocksStatus.FAILED, m_order.orderId(), m_order.permId(), m_uid) );
-		
+			JsonObject trans = Util.toJson(
+					"status", FireblocksStatus.FAILED,
+					"order_id", m_order.orderId(),
+					"perm_id", m_order.permId(),
+					"ref_code", errorCode);
+					
+			m_main.queueSql( sql -> sql.updateJson(
+					"transactions",
+					trans,
+					"uid = '%s'",
+					m_uid) );
+			
 			// unwind PositionTracker and IB order first and foremost
 			unwindOrder();
 	
@@ -630,14 +631,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		if (m_order.isBuy() ) {
 			double balance = m_stablecoin.getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_stablecoinAmt ), 
-					RefCode.INSUFFICIENT_FUNDS,
+					RefCode.INSUFFICIENT_STABLECOIN,
 					"The stablecoin balance (%s) is less than the total order amount (%s)", 
 					balance, m_stablecoinAmt );
 		}
 		else {
 			double balance = newStockToken().getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_desiredQuantity), 
-					RefCode.INSUFFICIENT_FUNDS,
+					RefCode.INSUFFICIENT_STOCK_TOKEN,
 					"The stock token balance (%s) is less than the order quantity (%s)", 
 					balance, m_desiredQuantity);
 		}
@@ -820,13 +821,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	
 	/** If we come here, it mean the order failed before it went to the LIVE state,
 	 *  so no entry was made in the transactions table. Insert a placeholder into
-	 *  the transactions table so we have a record of the order. */
-	@Override protected void postWrap() {
+	 *  the transactions table so we have a record of the order.
+	 *  @param refCode could be null */
+	@Override protected void postWrap(Enum refCode) {
 		m_main.queueSql( conn -> conn.insertJson("transactions", 
 				Util.toJson( 
 						"uid", m_uid,
 						"wallet_public_key", m_walletAddr,
-						"status", FireblocksStatus.DENIED
+						"status", FireblocksStatus.DENIED,
+						"ref_code", refCode
 //						"action", m_order.action() ); // enums gets quotes upon insert
 //						"quantity", m_order.totalQty());
 //						"symbol", m_stock.getSymbol() );
