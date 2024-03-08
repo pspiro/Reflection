@@ -160,7 +160,7 @@ public class CryptoPanel extends MonPanel {
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {
 			double cashBal = obj.getDouble("TotalCashValue");
-			double netLiq = obj.getDouble("TotalNetLiq");
+			double netLiq = obj.getDouble("NetLiquidation");
 			obj.display();
 			SwingUtilities.invokeLater( () -> {
 				m_cash.setText( S.fmt2(cashBal) );
