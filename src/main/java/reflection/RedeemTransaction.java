@@ -93,7 +93,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			if (locked != null) {
 				double remainingDays = Math.max(0., (locked.getLong( "lockedUntil") - System.currentTimeMillis() ) / (double)Util.DAY);
-				int remainingTrades = Math.max(0, locked.getInt( "requiredTrades") - numTrades() );
+				int remainingTrades = Math.max(0, locked.getInt( "requiredTrades") - numTrades() );  // NOTE numTrades() takes a long time to execute even in dev
 
 				// still locked?
 				if (remainingDays > 0 || remainingTrades > 0) {

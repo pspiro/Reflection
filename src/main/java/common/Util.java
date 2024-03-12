@@ -715,7 +715,7 @@ public class Util {
 		for (int i = 0; i < 40; i++) {
 			sb.append( String.format( "%x", rnd.nextInt(16) ) );
 		}
-		return Keys.toChecksumAddress( sb.toString() );  // change to EIP-55 address 
+		return sb.toString();  // change to EIP-55 address 
 	}
 	
 	/** Use this when you want to create an object or retrieve a value and
@@ -774,6 +774,12 @@ public class Util {
 
 	public static boolean isValidPan(String pan) {
 		return pan.toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$");
+	}
+	
+	public static SimpleDateFormat getDateFormatter( String format, TimeZone zone) {
+		SimpleDateFormat fmt = new SimpleDateFormat( format);
+		fmt.setTimeZone( zone);
+		return fmt;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

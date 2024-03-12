@@ -184,19 +184,16 @@ public class MySqlConnection implements AutoCloseable {
 		}
 	}
 
-	/** @param sql is the complete query including the delete from */
-	public void delete(String sql, Object... params) throws Exception {
-		try {
-			query( sql, params);
-		} 
-		catch (Exception e) {
-			if (e.getMessage() != null && e.getMessage().equals("No results were returned by the query.") ) {
-				S.out( "Warning: no rows deleted");
-			}
-			else {
-				throw e;
-			}
+	/** @param sql is the complete query including the delete from 
+	 *  @return the number of rows deleted */
+	public int delete(String sql, Object... params) throws Exception {
+		Util.require( connection != null, "you must connect to the database");
+		String fullSql = params.length == 0 ? sql : String.format( sql, params);
+		int num = connection.createStatement().executeUpdate(fullSql);
+		if (num == 0) {
+			S.out( "Warning: no rows deleted");
 		}
+		return num;
 	}
 	
 	public interface SqlCommand { // rename to command

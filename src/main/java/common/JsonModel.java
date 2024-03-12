@@ -4,7 +4,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.table.TableCellRenderer;
 
 import org.json.simple.JsonArray;
@@ -103,9 +105,14 @@ public class JsonModel extends MyTableModel {
 	}
 
 	@Override final public void onRightClick(MouseEvent e, int row, int col) {
+		JsonObject record = m_ar.get(row);
 		String tag = m_namesMap.get(col);
-		Object val = getValueAt(row, col);
-		onRightClick(e, m_ar.get(row), tag, val);
+		Object val = record.get( tag);  // pass unformatted 
+
+		JPopupMenu m = new JPopupMenu();
+		m.add( JsonModel.menuItem("Copy", ev -> Util.copyToClipboard(val) ) );
+		buildMenu( m, record, tag, val);
+		m.show( e.getComponent(), e.getX(), e.getY() );
 	}
 	
 	@Override public final void onCtrlClick(MouseEvent e, int row, int col) {
@@ -139,10 +146,6 @@ public class JsonModel extends MyTableModel {
 		return value;
 	}
 	
-	/** Delete the row based on the first column which must be type string */ 
-	protected void delete(int row, int col) {  // move this down
-	}
-
 	protected String getTooltip(JsonObject row, String tab) {
 		return null;
 	}
@@ -150,7 +153,7 @@ public class JsonModel extends MyTableModel {
 	protected void onDoubleClick(String tag, Object val) {
 	}
 
-	protected void onRightClick(MouseEvent e, JsonObject record, String tag, Object val) {
+	protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
 	}
 
 	protected void onCtrlClick(JsonObject row, String tag) {

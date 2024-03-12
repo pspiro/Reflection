@@ -4,7 +4,7 @@
  */
 package org.json.simple;
 
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 import org.json.simple.parser.JSONParser;
 
 import common.Util;
+import tw.util.OStream;
 import tw.util.S;
 
 
@@ -222,7 +223,31 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return keys;
 	}	
 
-	public static JsonArray readFromFile(String filename) throws Exception {
-		return parse( new FileInputStream( filename) );
-	}	
+	public void writeToCsv(String filename, char sep, String keysString) throws FileNotFoundException {
+		String[] keys = keysString.split( ",");  // you could use getKeys() to get all
+
+		try( OStream os = new OStream(filename) ) {
+			
+			// write header row
+			for (String key : keys) {
+				os.write( key.toString() + sep);
+			}
+			os.writeln();
+			
+			// write data rows
+			forEach( obj -> {
+				for (String key : keys) {
+					String str = String.format(	"\"%s\"%s", 
+							obj.getString( key)
+								.replaceAll( "\\\"", "'")
+								.replaceAll( "\\t", " ")
+								.replaceAll( "\\n", " "),
+							sep);
+					os.write( str);
+				}
+				os.writeln();
+			});
+			
+		}	
+	}
 }

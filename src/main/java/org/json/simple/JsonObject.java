@@ -304,7 +304,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 
 	public Comparable getComparable(String key) {
-		return (Comparable)get(key);
+		Object o = get(key);
+		return o == null ? null : o instanceof Comparable ? (Comparable)o : o.toString();
 	}
 
 	public boolean isComparable(String key) {
