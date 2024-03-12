@@ -545,7 +545,7 @@ public class NewSheet {
 					return getHeaderRow();
 				}
 
-				/** Return date in yyyy-mm-dd format. */ 
+				/** Return date in yyyy-mm-dd format EST. */ 
 				public String getDate(String tag) throws Exception {
 					return S.formatDate( getString( tag) );
 				}

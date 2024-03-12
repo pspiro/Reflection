@@ -8,6 +8,9 @@ import tw.util.S;
 /** Create trades and commissions tables
  * 
  *  NOTE: According to chart, varchar is as-efficient as varchar(#)
+ *  NOTE: if you don't set the timezone here for the created_at, it uses
+ *  some other inconsistent timezone; data is always returned in the time
+ *  zone that was used when setting the value
  */
 public class CreateTables  {
 	static MySqlConnection con;
@@ -31,9 +34,8 @@ public class CreateTables  {
 	}
 	
 	void createCommTable() throws Exception {
-		con.dropTable("commissions");
-		
 		String sql = "create table commissions ("
+			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "tradekey varchar(32),"
 				+ "comm_paid double precision"  // ties in with tradekey from trade
 				+ ")";
@@ -41,10 +43,8 @@ public class CreateTables  {
 	}
 	
 	void createSignupTable() throws Exception {
-		con.dropTable("signup");
-		
 		String sql = "create table signup ("
-			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "name varchar(60),"
 				+ "email varchar(60),"
@@ -54,10 +54,8 @@ public class CreateTables  {
 	}
 
 	void createLogTable() throws Exception {
-		con.dropTable("log");
-		
 		String sql = "create table log ("
-			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "type varchar(32),"
 			    + "uid varchar(8),"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
@@ -69,12 +67,8 @@ public class CreateTables  {
 	
 	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createTransactions() throws Exception {
-		con.dropTable("transactions");
-		
-		String sql =""
-				+ "create table transactions ("
-				
-				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+		String sql ="create table transactions ("
+				+ "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "uid varchar(8) primary key," 
 				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
@@ -102,12 +96,8 @@ public class CreateTables  {
 
 	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createRedemptions() throws Exception {
-		con.dropTable("redemptions");
-		
-		String sql =""
-				+ "create table redemptions ("
-				
-				+ "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+		String sql ="create table redemptions ("
+				+ "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "uid varchar(8) primary key," 
 				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
@@ -120,10 +110,8 @@ public class CreateTables  {
 	}
 	
 	void createTrades() throws Exception {
-		con.dropTable( "trades");
-		
 		String sql = "create table trades ("  // you could add uid here, but you would have to create a map of orderid or permid to uid or OrderTransaction
-			    + "created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),"
+			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "tradekey varchar(32),"  // tie the trade to the commission report
 				+ "order_id int,"
 				+ "perm_id int check (perm_id <> 0),"  // can't be zero because then we can't tie it to the crypto_transaction
@@ -143,13 +131,9 @@ public class CreateTables  {
 	
 	/** This has never been run and probably doesn't work */
 	void createUsers() throws Exception {
-		con.dropTable( "users");
-		
-		// locked_until is in mssec since epoch
-		
 		String sql = """
 		CREATE TABLE public.users (
-			created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP(6),
+			created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
 			wallet_public_key varchar(42) PRIMARY check (wallet_public_key = LOWER(wallet_public_key)),
 			first_name character varying(50),
 			last_name character varying(50),
