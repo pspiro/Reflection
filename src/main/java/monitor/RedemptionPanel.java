@@ -1,7 +1,6 @@
 package monitor;
 
 
-import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 
 import javax.swing.JPopupMenu;
@@ -30,17 +29,14 @@ $where
 order by created_at desc
 $limit""");
 	}
-
+	
 	@Override public void adjust(JsonObject obj) {
 		obj.update( "created_at", val -> Util.left( val.toString(), 19) );
 	}
 
-	@Override protected void onRightClick(MouseEvent e, JsonObject record, String tag, Object val) {
-		JPopupMenu m = new JPopupMenu();
-		m.add( JsonModel.menuItem("Copy", ev -> Util.copyToClipboard(val) ) );
+	@Override protected void buildMenu(JPopupMenu m, JsonObject record, String tag, Object val) {
 		m.add( JsonModel.menuItem("Redeem", ev -> redeem( record) ) );
 		m.add( JsonModel.menuItem("Delete", ev -> delete( record) ) );
-		m.show( e.getComponent(), e.getX(), e.getY() );
 	}
 
 	@Override protected void onDouble(String tag, Object val) {
@@ -64,7 +60,7 @@ $limit""");
 		}
 	}
 
-	private void delete(JsonObject rec) {
+	void delete(JsonObject rec) {
 		// confirm
 		if (Util.confirm( RedemptionPanel.this, "Are you sure you want to delete this record?") ) {
 			try {

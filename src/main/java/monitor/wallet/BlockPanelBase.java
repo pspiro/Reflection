@@ -10,7 +10,7 @@ import common.Util;
 import fireblocks.Accounts;
 
 public class BlockPanelBase extends JPanel {
-	static final String Me = "Me";
+	static final String Me = "***";
 	static final String toAddress = "to_address";
 	static final String fromAddress = "from_address";
 	static final String valueDecimal = "value_decimal";

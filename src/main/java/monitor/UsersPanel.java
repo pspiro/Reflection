@@ -1,8 +1,13 @@
 package monitor;
 
+import javax.swing.JPopupMenu;
+
 import org.json.simple.JsonObject;
 
+import common.JsonModel;
+import common.Util;
 import tw.util.S;
+import tw.util.UI;
 
 class UsersPanel extends QueryPanel {
 	static String names = "created_at,wallet_public_key,first_name,last_name,locked_until,email,kyc_status,phone,aadhaar,address,city,country,id,pan_number,persona_response";
@@ -37,5 +42,29 @@ class UsersPanel extends QueryPanel {
 			Monitor.m_walletPanel.setWallet(val.toString());
 		}
 	}
+
+	@Override protected void buildMenu(JPopupMenu m, JsonObject record, String tag, Object val) {
+		m.add( JsonModel.menuItem("Delete", ev -> delete( record) ) );
+	}
 	
+	void delete(JsonObject rec) {
+		// confirm
+		if (Util.confirm( this, "Are you sure you want to delete this record?") ) {
+			try {
+				Monitor.m_config.sqlCommand( sql -> {
+					if (sql.delete( "delete from users where wallet_public_key = '%s'",
+							rec.getString("wallet_public_key").toLowerCase() ) > 0) {
+						
+						UI.flash( "Record deleted");
+						m_model.ar().remove( rec);
+						m_model.fireTableDataChanged();
+					}
+				});
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				Util.inform( this, "Error - " + e.getMessage() );
+			}
+		}
+	}
 }
