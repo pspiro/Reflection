@@ -5,7 +5,6 @@
 package org.json.simple;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -305,7 +304,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public Comparable getComparable(String key) {
 		Object val = get(key);
-		return val == null ? "" : (Comparable)val;  // you could check for instanceof 
+		return val == null ? "" : val instanceof Comparable ? (Comparable)val : val.toString();
 	}
 
 	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()

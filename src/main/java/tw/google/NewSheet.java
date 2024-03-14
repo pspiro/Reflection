@@ -504,6 +504,7 @@ public class NewSheet {
 					Tab.this.insert( this);
 				}
 	
+				/** never null */
 				public String getString( String tag) throws MyException {
 					int i = getIndex( tag);
 					return i > m_row.size() - 1 ? "" : m_row.get( i).toString();
@@ -544,7 +545,7 @@ public class NewSheet {
 					return getHeaderRow();
 				}
 
-				/** Return date in yyyy-mm-dd format. */ 
+				/** Return date in yyyy-mm-dd format EST. */ 
 				public String getDate(String tag) throws Exception {
 					return S.formatDate( getString( tag) );
 				}
@@ -558,6 +559,11 @@ public class NewSheet {
 				public int getInt(String tag) throws Exception {
 					String val = getString( tag);
 					return S.isNotNull( val) ? Integer.valueOf( val) : 0; 
+				}
+
+				public long getLong(String tag) throws Exception {
+					String val = getString( tag);
+					return S.isNotNull( val) ? Long.valueOf( val) : 0; 
 				}
 
 				public boolean getBool(String tag) throws MyException {

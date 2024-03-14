@@ -189,10 +189,13 @@ public class MoralisServer {
 		String cursor = "";
 		
 		while (true) {
+			// get the next batch
 			JsonObject full = producer.produce(cursor);
 			
+			// let the client process the batch
 			consumer.accept( full.getArray("result") );
 			
+			// check if there is another batch
 			cursor = full.getString( "cursor");
 			if (S.isNull(cursor) ) {
 				break;

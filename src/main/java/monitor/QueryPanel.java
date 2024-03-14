@@ -135,17 +135,6 @@ public class QueryPanel extends JsonPanel {
 		QueryModel( String allNames) {
 			super( allNames);
 		}
-		
-		/** Delete the row based on the first column which must be type string */ 
-		@Override protected void delete(int row, int col) {
-			try {
-				Monitor.m_config.sqlCommand( sql -> 
-					sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
-				fireTableDataChanged();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
-		}
 	}
 
 	public void adjust(JsonObject obj) {
@@ -160,4 +149,14 @@ public class QueryPanel extends JsonPanel {
 		m_model.fireTableDataChanged();
 	}
 
+	/** Delete the row based on the first column which must be type string */ 
+//	@Override protected void delete(int row, int col) {
+//		try {
+//			Monitor.m_config.sqlCommand( sql -> 
+//				sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
+//			fireTableDataChanged();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} 
+//	}
 }

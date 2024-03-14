@@ -59,14 +59,16 @@ public class Util {
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
 	public static Random rnd = new Random();
-	public static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyyMMdd");
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
-	//static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  12 hr clock, useless 
 	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 hr clock
-	//private static final SimpleDateFormat hhmmEST = new SimpleDateFormat( "kk:mm:ss");  // what is this?
-    //static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
-	//SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy-MM-dd");
+	// there are more formats in S class
 
+	static {
+		TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
+		hhmmss.setTimeZone( zone);
+		yToS.setTimeZone( zone);
+	}		
+		
 	/** Use this to return values from asynchronous methods */
 	public static class ObjectHolder<T> {
 		public T val;
@@ -715,7 +717,7 @@ public class Util {
 		for (int i = 0; i < 40; i++) {
 			sb.append( String.format( "%x", rnd.nextInt(16) ) );
 		}
-		return Keys.toChecksumAddress( sb.toString() );  // change to EIP-55 address 
+		return sb.toString();  // change to EIP-55 address 
 	}
 	
 	/** Use this when you want to create an object or retrieve a value and
@@ -774,6 +776,12 @@ public class Util {
 
 	public static boolean isValidPan(String pan) {
 		return pan.toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$");
+	}
+	
+	public static SimpleDateFormat getDateFormatter( String format, TimeZone zone) {
+		SimpleDateFormat fmt = new SimpleDateFormat( format);
+		fmt.setTimeZone( zone);
+		return fmt;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

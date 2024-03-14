@@ -66,7 +66,7 @@ public class Main implements ITradeReportHandler {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("RefAPI");
-			S.out( "Starting RefAPI");
+			S.out( "Starting RefAPI - log times are NY time");
 			
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
@@ -115,9 +115,6 @@ public class Main implements ITradeReportHandler {
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
-		
-		// write the date every hour
-		Util.executeEvery( Util.HOUR, Util.HOUR, () -> S.out( "today is %s", Util.yyyymmdd.format( System.currentTimeMillis() ) ) );
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {

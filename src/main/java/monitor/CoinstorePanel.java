@@ -137,7 +137,7 @@ class CoinstorePanel extends MonPanel {
 						
 						S.out( "THERE WAS A NEW TRADE: " + trade);
 						rows().add(trade);
-						Monitor.m_config.sendEmail("peteraspiro@gmail.com", "COINSTORE TRADE", trade.toString(), false);
+						Monitor.m_config.sendEmail("peteraspiro@gmail.com", "COINSTORE TRADE", trade.toString());
 
 						ids.add(trade.getString(tag));
 					}
