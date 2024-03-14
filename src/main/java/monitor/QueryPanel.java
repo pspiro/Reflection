@@ -81,20 +81,22 @@ public class QueryPanel extends JsonPanel {
 	}
 	
 	@Override protected void onCtrlClick(JsonObject row, String tag) {
-		String val = Util.ask( "Enter new value for %s field", tag);
+		S.out( "disabled, can't blindly use wallet key");
 		
-		if (val != null) {
-			wrap( () -> {
-				UI.watch( Monitor.m_frame, () -> {
-					Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
-							m_table, 
-							Util.toJson( tag, val), 
-							"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
-							row.getString("wallet_public_key") ) );
-					refresh();
-				});
-			});
-		}
+//		String val = Util.ask( "Enter new value for %s field", tag);
+//		
+//		if (val != null) {
+//			wrap( () -> {
+//				UI.watch( Monitor.m_frame, () -> {
+//					Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+//							m_table, 
+//							Util.toJson( tag, val), 
+//							"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
+//							row.getString("wallet_public_key") ) );
+//					refresh();
+//				});
+//			});
+//		}
 	}
 
 	@Override protected void onDouble(String tag, Object val) {

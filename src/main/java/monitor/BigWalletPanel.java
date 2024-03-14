@@ -124,14 +124,23 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	
 	private void award() {
 		m_parent.wrap( () -> {
-			long lockUntil = System.currentTimeMillis() + m_lockFor.getInt() * Util.DAY;
+			long lockUntil = System.currentTimeMillis() + m_lockFor.getLong() * Util.DAY;
 			double amt = m_awardAmt.getDouble();
 			String wallet = m_wallet.getText().toLowerCase();
 			
-			if ( amt > 0 && Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+			// mint and lock?
+			if ( amt > 0) {
+				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+					mint( amt);
+					JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
+					Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 	
-				mint( amt);
-				JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
+					Util.inform( this, "Done");
+				}
+			}
+			// mint nothing and lock all of it
+			else if (Util.confirm(this, "Lock all of this user's RUSD?") ) {
+				JsonObject obj = createLockObject( wallet, 1000000, lockUntil, m_requiredTrades.getInt() );
 				Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 
 				Util.inform( this, "Done");
