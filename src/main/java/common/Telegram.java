@@ -2,8 +2,6 @@ package common;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 

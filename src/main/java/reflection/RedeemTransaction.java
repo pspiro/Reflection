@@ -188,7 +188,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 									m_config.busd().name(),
 									m_config.busd().address(),
 									m_config.blockchainTx(hash) );
-							m_config.sendEmail( m_email, "RUSD has been redeemed on Reflection", html, true);
+							m_config.sendEmail( m_email, "RUSD has been redeemed on Reflection", html);
 						}
 					});
 				}

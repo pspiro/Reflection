@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
@@ -64,7 +65,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		m_parent = parent;
 
 		m_wallet.addActionListener( e -> m_parent.refreshTop() );
-
+		
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
@@ -72,7 +73,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		vp.addHeader( "User details");
 		vp.add( "Name", m_name);
-		vp.add( "Email", m_email);
+		vp.add( "Email", new JScrollPane( m_email, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
 		vp.add( "KYC", m_kyc);
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
@@ -321,11 +322,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 					"subject", m_subject.getText(), 
 					"text", m_emailText.getText() );
 			
-			Monitor.m_config.sendEmailEx(
+			Monitor.m_config.sendEmail(
 					m_email.getText(),
 					m_subject.getText(),
-					m_emailText.getText(),
-					false);
+					m_emailText.getText() );
 			
 			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.EMAIL,

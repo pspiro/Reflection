@@ -42,7 +42,7 @@ public class TestConfig extends MyTestCase {
 	}
 	
 	public void testSendEmail() throws Exception {
-		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def", false);		
+		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
 	}
 	
 	

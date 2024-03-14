@@ -57,8 +57,7 @@ public class ProfileTransaction extends MyTransaction {
 			Main.m_config.sendEmail(
 					email,
 					"Reflection Verification Code",
-					"Your Reflection Verification code is: " + code,
-					false);
+					"Your Reflection Verification code is: " + code);
 			
 			respondOk();
 		});

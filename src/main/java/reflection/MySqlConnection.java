@@ -84,7 +84,20 @@ public class MySqlConnection implements AutoCloseable {
 		return connection.createStatement().executeQuery(fullSql);
 	}
 	
-	/** Do not do String.format() substitutions on sql. */
+
+	/** @param sql is the complete query including the delete from 
+	 *  @return the number of rows deleted */
+	public int delete(String sql, Object... params) throws Exception {
+		int num = execWithParams( sql, params);
+		if (num == 0) {
+			S.out( "Warning: no rows deleted");
+		}
+		return num;
+	}
+	
+	/** This can be used for insert, update, or delete
+	 * 
+	 *  Do not do String.format() substitutions on sql. */
 	public int execute( String sql) throws Exception {
 		try {
 			Util.require( connection != null, "you must connect to the database");
@@ -105,6 +118,7 @@ public class MySqlConnection implements AutoCloseable {
 		}
 	}
 	
+	/** This can be used for insert, update, or delete */
 	public int execWithParams( String sql, Object...params) throws Exception {
 		return execute( String.format( sql, params) );
 	}
@@ -182,18 +196,6 @@ public class MySqlConnection implements AutoCloseable {
 				throw e;
 			}
 		}
-	}
-
-	/** @param sql is the complete query including the delete from 
-	 *  @return the number of rows deleted */
-	public int delete(String sql, Object... params) throws Exception {
-		Util.require( connection != null, "you must connect to the database");
-		String fullSql = params.length == 0 ? sql : String.format( sql, params);
-		int num = connection.createStatement().executeUpdate(fullSql);
-		if (num == 0) {
-			S.out( "Warning: no rows deleted");
-		}
-		return num;
 	}
 	
 	public interface SqlCommand { // rename to command
