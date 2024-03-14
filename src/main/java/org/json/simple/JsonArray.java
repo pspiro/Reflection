@@ -150,11 +150,6 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return null;
 	}
 
-	/** All values must be of the same type */
-	public boolean isSortable(String tag) {
-		return size() > 1 && get(0).isComparable(tag);
-	}
-		
 	public void sortJson(String tag, boolean forward) {
 		sort( (a, b) -> {
 			Comparable v1 = a.getComparable(tag);

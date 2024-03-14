@@ -99,7 +99,11 @@ public class FbServer {
 
 			// fetch transactions
 			JsonArray ar = Transactions.getSince( start);
-			S.out( "Queried back %s seconds from %s", (now - start) / 1000, hhmmss.format(start) );
+			
+			if (BaseTransaction.debug() ) {
+				S.out( "Queried back %s seconds from %s", (now - start) / 1000, hhmmss.format(start) );
+			}
+			
 			m_lastSuccessfulFetch = now;
 
 			// debug
@@ -118,6 +122,11 @@ public class FbServer {
 				if (old == null || !trans.status().equals(old.status() ) ) {
 					m_map.put(trans.id(), trans);
 					S.out( "Updated %s  %s  %s", trans.id(), trans.status(), hhmmss.format(trans.createdAt() ) );
+					
+					// if it failed, print out the whole thing for debugging
+					if ("FAILED".equals( trans.status() ) ) {
+						S.out( trans); 
+					}
 				}
 			}
 		}

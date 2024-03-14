@@ -10,7 +10,7 @@ public class ImportTelegram {
 	static JsonModel m_model = new JsonModel("date,from,text");
 	
 	public static void main(String[] args) throws Exception {
-		JsonArray ar = JsonArray.readFromFile( "c:/temp/result.json");
+		JsonArray ar = JsonArray.readFromFile( "C:\\Users\\peter\\Downloads\\Telegram Desktop\\ChatExport_2024-03-07\\result.json");
 		
 		m_model.setRows( ar);
 		
