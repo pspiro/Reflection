@@ -127,7 +127,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
-						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
+						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  wallet=%s  requested=%s  have=%s  need=%s",
 						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos) );
 				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
 				

@@ -43,21 +43,6 @@ public abstract class MyTransaction extends BaseTransaction {
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
 	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
 
-	// create a config setting for this
-	static final int stale = 5 * Util.MINUTE;
-	
-	public static void clearMaps() {
-//		liveOrders.values().forEach( walletOrders -> {
-//			synchronized( walletOrders) {
-//				for (Iterator<OrderTransaction> iter = walletOrders.iterator(); iter.hasNext(); ) {
-//					if (iter.next().isStale() ) {
-//						iter.remove();
-//					}
-//				}
-//			}
-//		});
-	}
-
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, true);
 	}

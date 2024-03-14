@@ -78,18 +78,13 @@ public class JsonModel extends MyTableModel {
 	
 	/** Sort on first column ascending */
 	public void resetSort() {
-		if (m_colNames.length > 0 && m_ar.isSortable(m_colNames[0])) {
-			m_ar.sortJson( m_colNames[0], true); 
-			lastSortedCol = 0;
-		}
-		else {
-			lastSortedCol = -1;
-		}
+		m_ar.sortJson( m_colNames[0], true); 
+		lastSortedCol = 0;
 	}
 
 	/** Sort when column is clicked */
 	@Override public final void onHeaderClicked(int col) {
-		if (col < m_colNames.length && m_ar.isSortable(m_colNames[col])) {
+		if (col < m_colNames.length) { // && m_ar.isSortable(m_colNames[col])) {
 			m_ar.sortJson( m_colNames[col], col != lastSortedCol);
 			lastSortedCol = col == lastSortedCol ? -1 : col;
 			fireTableDataChanged();

@@ -6,7 +6,6 @@ import tw.google.NewSheet;
 
 public class MdConfig extends ConfigBase {
 	// program parameters
-	private Mode mode = Mode.paper;  // paper or production
 	private String twsMdHost;  // TWS is listening on this host
 	private int twsMdPort;  // TWS is listening on this port
 	private int twsMdClientId;
@@ -15,7 +14,6 @@ public class MdConfig extends ConfigBase {
 	private int mdsPort;
 	private boolean twsDelayed;
 
-	public Mode mode() { return mode; }
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
 	public long reconnectInterval() { return reconnectInterval; }
@@ -29,7 +27,6 @@ public class MdConfig extends ConfigBase {
 	public void readFromSpreadsheet(String tabName) throws Exception {
 		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 
-		this.mode = Util.getEnum( tab.get( "paperMode"), Mode.values() );
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");
 		this.twsMdPort = tab.getRequiredInt( "twsMdPort");
 		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");
