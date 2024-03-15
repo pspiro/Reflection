@@ -171,10 +171,13 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 
+			// landing page
+			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
+
 			// obsolete, remove
 			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() ); // obsolete, remove this
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
-			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 
 			// trading screen

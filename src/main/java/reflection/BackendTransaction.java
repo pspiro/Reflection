@@ -316,6 +316,12 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleContact() {  // obsolete
+		wrap( () -> {
+			redirect("https://reflection.trading/signup ");
+		});
+	}
+
 //	public void handleSignup() {  // obsolete
 //		wrap( () -> {
 //			JsonObject signup = parseToObject();

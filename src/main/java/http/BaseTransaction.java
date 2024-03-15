@@ -116,9 +116,28 @@ public class BaseTransaction {
 		m_responded = true;
 		return true;
 	}
-	
-	protected boolean redirect( String url) {
-		return respondWithPlainText( url, 301);
+
+	/** Used from the signup page */
+	protected synchronized boolean redirect( String url) {
+		if (m_responded) {
+			return false;
+		}
+		
+		// need this? pas
+		try {
+			m_exchange.getResponseHeaders().add( "Location", url);
+			m_exchange.sendResponseHeaders( 301, 0);
+			
+			if (m_timer != null) {
+				out( "  responded in %s ms", m_timer.time() );
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			elog( LogType.RESPOND_ERR, e);
+		}
+		m_responded = true;
+		return true;
 	}
 	
 	protected boolean respondWithPlainText( String data) {
