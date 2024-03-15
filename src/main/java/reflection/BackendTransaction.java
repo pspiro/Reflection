@@ -309,7 +309,7 @@ public class BackendTransaction extends MyTransaction {
 			S.out( m_map.obj() );
 
 			// redirect client to home page
-			redirect("https://reflection.trading");
+			redirect( m_config.baseUrl() );
 
 			// add entry to signup table
 			JsonObject obj = new JsonObject();
@@ -323,7 +323,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			
 			// redirect client back to signup page
-			redirect("https://reflection.trading/signup");
+			redirect(m_config.baseUrl() + "/signup");
 
 			String text = String.format( "name: %s<br>email: %s<br>%s",
 					m_map.getString("name"), m_map.getString("email"), m_map.getString("msg") );

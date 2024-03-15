@@ -45,12 +45,9 @@ public class CreateTables  {
 	void createSignupTable() throws Exception {
 		String sql = "create table signup ("
 			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
-				+ "name varchar(60),"  // obsolete
 				+ "first varchar(60),"
 				+ "last varchar(60),"
 				+ "email varchar(60),"
-				+ "phone varchar(20)"
 				+ ")";
 		con.execute(sql);
 	}
