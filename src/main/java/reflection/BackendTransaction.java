@@ -305,17 +305,30 @@ public class BackendTransaction extends MyTransaction {
 	
 	public void handleSignup() {  // obsolete
 		wrap( () -> {
-			JsonObject signup = parseToObject();
-			out( "Received signup " + signup);
-			signup.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
-			require( S.isNotNull( signup.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
-			require( S.isNotNull( signup.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
-			// don't validate wallet, we don't care
+			parseMsg();
+			S.out( m_map.obj() );
 			
-			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
-			respondOk();
+			JsonObject obj = new JsonObject();
+			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
+			
+			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
+			respondWithPlainText("https://reflection.trading");
 		});
 	}
+
+//	public void handleSignup() {  // obsolete
+//		wrap( () -> {
+//			JsonObject signup = parseToObject();
+//			out( "Received signup " + signup);
+//			signup.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
+//			require( S.isNotNull( signup.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
+//			require( S.isNotNull( signup.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
+//			// don't validate wallet, we don't care
+//			
+//			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
+//			respondOk();
+//		});
+//	}
 
 	public void handleLog() {
 		wrap( () -> {

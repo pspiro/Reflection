@@ -117,7 +117,15 @@ public class BaseTransaction {
 		return true;
 	}
 	
-	protected synchronized boolean respondWithPlainText( String data) {
+	protected boolean redirect( String url) {
+		return respondWithPlainText( url, 301);
+	}
+	
+	protected boolean respondWithPlainText( String data) {
+		return respondWithPlainText( data, 200);
+	}
+	
+	protected synchronized boolean respondWithPlainText( String data, int code) {
 		if (m_responded) {
 			return false;
 		}
@@ -125,7 +133,7 @@ public class BaseTransaction {
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
-			m_exchange.sendResponseHeaders( 200, data.length() );
+			m_exchange.sendResponseHeaders( code, data.length() );
 			outputStream.write(data.getBytes());
 			
 			if (m_timer != null) {
