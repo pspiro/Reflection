@@ -303,22 +303,32 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	public void handleSignup() {  // obsolete
+	public void handleSignup() {
 		wrap( () -> {
 			parseMsg();
 			S.out( m_map.obj() );
-			
+
+			// redirect client to home page
+			redirect("https://reflection.trading");
+
+			// add entry to signup table
 			JsonObject obj = new JsonObject();
 			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
-			
-			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
-			redirect("https://reflection.trading");
+			m_main.queueSql( sql -> sql.insertJson("signup", obj) );
 		});
 	}
 
 	public void handleContact() {  // obsolete
 		wrap( () -> {
-			redirect("https://reflection.trading/signup ");
+			parseMsg();
+			
+			// redirect client back to signup page
+			redirect("https://reflection.trading/signup");
+
+			String text = String.format( "name: %s<br>email: %s<br>%s",
+					m_map.getString("name"), m_map.getString("email"), m_map.getString("msg") );
+			
+			m_config.sendEmail("info@reflection.trading", "MESSAGE FROM USER", text); 
 		});
 	}
 
