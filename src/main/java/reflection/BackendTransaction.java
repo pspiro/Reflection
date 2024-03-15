@@ -312,7 +312,7 @@ public class BackendTransaction extends MyTransaction {
 			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
 			
 			m_config.sqlCommand( conn -> conn.insertJson("signup", obj) );
-			respondWithPlainText("https://reflection.trading");
+			redirect("https://reflection.trading");
 		});
 	}
 
