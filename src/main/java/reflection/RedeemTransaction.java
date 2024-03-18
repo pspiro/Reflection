@@ -13,6 +13,7 @@ import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Busd;
 import fireblocks.Rusd;
+import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
 import util.LogType;
 
@@ -226,6 +227,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			S.out( "inserting or updating record into redemption table with status %s", m_status);
 
 			JsonObject obj = new JsonObject();
+			obj.put( "created_at", new MySqlDate() );  // we want created_at to be updated on updates
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			obj.put( "stablecoin", busd.name() );
