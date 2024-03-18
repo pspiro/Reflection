@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
@@ -142,7 +143,7 @@ public class MySqlConnection implements AutoCloseable {
 	/** These types are supported and get quoted.
 	 *  See also JSONValue.getsQuoted */
 	private static boolean getsQuoted(Object val) {
-		return val instanceof String || val instanceof JSONAware || val instanceof Enum;
+		return val instanceof String || val instanceof JSONAware || val instanceof Enum || val instanceof Date;
 	}
 	
 	/** Return true for all supported types;
@@ -208,5 +209,20 @@ public class MySqlConnection implements AutoCloseable {
 
 	@Override public void close() throws Exception {
 		connection.close();
+	}
+	
+	/** For inserts and updates; always enters the time in NY timezone. This is not so great
+	 *  as there will be ambiguity around daylight savings time changes */
+	public static class MySqlDate extends Date {
+		public MySqlDate( long time) {
+			super( time);
+		}
+		
+		public MySqlDate() {
+		}
+		
+		@Override public String toString() {
+			return Util.yToS.format( this);
+		}
 	}
 }

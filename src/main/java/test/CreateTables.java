@@ -20,8 +20,7 @@ public class CreateTables  {
 	public static void main(String[] args) {
 		try {
 			con = Config.ask().useExternalDbUrl().createConnection();
-			new CreateTables().createRedemptions();
-			
+			new CreateTables().createSignupTable();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -47,7 +46,7 @@ public class CreateTables  {
 			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "first varchar(60),"
 				+ "last varchar(60),"
-				+ "email varchar(60),"
+				+ "email varchar(60)"
 				+ ")";
 		con.execute(sql);
 	}
