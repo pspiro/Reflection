@@ -555,7 +555,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 							m_stablecoin.name(),
 							m_stock.getSmartContractId(),
 							m_config.blockchainTx( hash) );
-					m_config.sendEmail(m_email, "Order filled on Reflection", html, true);
+					m_config.sendEmail(m_email, "Order filled on Reflection", html);
 				}
 				else {
 					out( "Error: cannot send email confirmation due to invalid email"); // should never happen

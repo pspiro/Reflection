@@ -116,8 +116,35 @@ public class BaseTransaction {
 		m_responded = true;
 		return true;
 	}
+
+	/** Used from the signup page */
+	protected synchronized boolean redirect( String url) {
+		if (m_responded) {
+			return false;
+		}
+		
+		// need this? pas
+		try {
+			m_exchange.getResponseHeaders().add( "Location", url);
+			m_exchange.sendResponseHeaders( 301, 0);
+			
+			if (m_timer != null) {
+				out( "  responded in %s ms", m_timer.time() );
+			}
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			elog( LogType.RESPOND_ERR, e);
+		}
+		m_responded = true;
+		return true;
+	}
 	
-	protected synchronized boolean respondWithPlainText( String data) {
+	protected boolean respondWithPlainText( String data) {
+		return respondWithPlainText( data, 200);
+	}
+	
+	protected synchronized boolean respondWithPlainText( String data, int code) {
 		if (m_responded) {
 			return false;
 		}
@@ -125,7 +152,7 @@ public class BaseTransaction {
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
 			m_exchange.getResponseHeaders().add( "Content-Type", "text/html");
-			m_exchange.sendResponseHeaders( 200, data.length() );
+			m_exchange.sendResponseHeaders( code, data.length() );
 			outputStream.write(data.getBytes());
 			
 			if (m_timer != null) {

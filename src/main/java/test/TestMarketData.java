@@ -9,6 +9,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.ib.controller.ConnectionAdapter;
 
+import redis.MdConfig;
 import redis.MdServer;
 import reflection.Config;
 import reflection.Stocks;
@@ -25,8 +26,10 @@ public class TestMarketData extends ConnectionAdapter {
 	}
 
 	TestMarketData() throws Exception {
-		//Config config = Config.readFrom("Dt-config");
-		m_controller.connect("localhost", 7393, 7373, "");
+		MdConfig config = new MdConfig();
+		config.readFromSpreadsheet("Dt-config");
+		
+		m_controller.connect(config.twsMdHost(), config.twsMdPort(), 7373, "");
 	}
 
 	@Override public void onConnected() {
@@ -38,7 +41,23 @@ public class TestMarketData extends ConnectionAdapter {
 	}
 	
 	void _onConnected() throws Exception {
-		Stocks stocks = Config.ask().readStocks();
+		Contract c = new Contract();
+		c.symbol("INDL");
+		
+		c.currency("USD");
+		c.exchange(MdServer.Smart);
+		c.secType("STK");
+
+		m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s %s Smart", c.symbol(), tickType, price);
+			}
+		});
+	}
+
+	void reqAll() throws Exception {
+		Config config = Config.ask();
+		Stocks stocks = config.readStocks();
 		
 		for( reflection.Stock stock : stocks) {
 			Contract c = new Contract();

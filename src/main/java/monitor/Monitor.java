@@ -18,6 +18,7 @@ import org.json.simple.JsonArray;
 
 import common.Util;
 import http.MyClient;
+import monitor.UsersPanel.PersonaPanel;
 import monitor.wallet.WalletPanel;
 import redis.MyRedis;
 import reflection.Stocks;
@@ -99,6 +100,7 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
+		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Trades", createTradesPanel() );

@@ -66,7 +66,7 @@ public class Main implements ITradeReportHandler {
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("RefAPI");
-			S.out( "Starting RefAPI");
+			S.out( "Starting RefAPI - log times are NY time");
 			
 			if (args.length == 0) {
 				throw new Exception( "You must specify a config tab name");
@@ -115,9 +115,6 @@ public class Main implements ITradeReportHandler {
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
-		
-		// write the date every hour
-		Util.executeEvery( Util.HOUR, Util.HOUR, () -> S.out( "today is %s", Util.yyyymmdd.format( System.currentTimeMillis() ) ) );
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
@@ -174,10 +171,13 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 
+			// landing page
+			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
+
 			// obsolete, remove
 			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() ); // obsolete, remove this
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
-			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 
 			// trading screen

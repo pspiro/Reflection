@@ -81,6 +81,7 @@ public class Config extends ConfigBase {
 	private int hookServerPort;
 	private String hookServerUrl;
 	private String hookServerChain;
+	private String baseUrl; // used by Monitor program and RefAPI
 
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -203,7 +204,8 @@ public class Config extends ConfigBase {
 		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
 		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
-		
+		this.baseUrl = m_tab.get("baseUrl");
+
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
@@ -468,12 +470,16 @@ public class Config extends ConfigBase {
 	}
 
 	/** don't throw an exception; it's usually not critical */
-	public void sendEmail(String to, String subject, String text, boolean isHtml) {
-		Util.wrap( () -> sendEmailEx( to, subject, text, isHtml) );
-	}
-	
-	public void sendEmailEx(String to, String subject, String text, boolean isHtml) throws Exception {
-		Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, text, isHtml);
+	public void sendEmail(String to, String subject, String text) {
+		Util.wrap( () -> {
+			String emailFmt = """ 
+				<div style="margin: 0px; padding: 1px; background-color: #D3CAEE; font-family: Arial, sans-serif; border-radius: 6px;">
+				<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
+				%s
+				</div></div> """;
+			String html = String.format( emailFmt, text);
+			Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, html, true);
+		});
 	}
 	
 	/** Used by test cases */
@@ -556,5 +562,9 @@ public class Config extends ConfigBase {
 
 	public String blockchainAddress(String address) {
 		return String.format( "%s/address/%s", blockchainExplorer, address);
+	}
+
+	public String baseUrl() {
+		return baseUrl;
 	}
 }

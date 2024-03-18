@@ -57,6 +57,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		m_model.fireTableDataChanged();
 	}
 
+	/** single transaction */
 	private void tryIt(JsonObject trans) {
 		JsonObject obj = new JsonObject();
 		obj.put("time", trans.getString( timestamp)) ;
@@ -86,6 +87,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		m_model.ar().add( obj);
 	}
 
+	/** Pair of transactions */
 	private boolean tryIt(JsonObject trans1, JsonObject trans2) throws Exception {
 		JsonObject obj = new JsonObject();
 		obj.put("time", trans1.getString( timestamp)) ;

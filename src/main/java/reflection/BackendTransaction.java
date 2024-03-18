@@ -303,19 +303,48 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	public void handleSignup() {  // obsolete
+	public void handleSignup() {
 		wrap( () -> {
-			JsonObject signup = parseToObject();
-			out( "Received signup " + signup);
-			signup.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
-			require( S.isNotNull( signup.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
-			require( S.isNotNull( signup.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
-			// don't validate wallet, we don't care
-			
-			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
-			respondOk();
+			parseMsg();
+			S.out( m_map.obj() );
+
+			// redirect client to home page
+			redirect( m_config.baseUrl() );
+
+			// add entry to signup table
+			JsonObject obj = new JsonObject();
+			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
+			m_main.queueSql( sql -> sql.insertJson("signup", obj) );
 		});
 	}
+
+	public void handleContact() {  // obsolete
+		wrap( () -> {
+			parseMsg();
+			
+			// redirect client back to signup page
+			redirect(m_config.baseUrl() + "/signup");
+
+			String text = String.format( "name: %s<br>email: %s<br>%s",
+					m_map.getString("name"), m_map.getString("email"), m_map.getString("msg") );
+			
+			m_config.sendEmail("info@reflection.trading", "MESSAGE FROM USER", text); 
+		});
+	}
+
+//	public void handleSignup() {  // obsolete
+//		wrap( () -> {
+//			JsonObject signup = parseToObject();
+//			out( "Received signup " + signup);
+//			signup.update( "wallet_public_key", val -> val.toString().toLowerCase().trim() );
+//			require( S.isNotNull( signup.getString("name") ), RefCode.INVALID_REQUEST, "Please enter your name"); 
+//			require( S.isNotNull( signup.getString("email") ), RefCode.INVALID_REQUEST, "Please enter your email address");
+//			// don't validate wallet, we don't care
+//			
+//			m_config.sqlCommand( conn -> conn.insertJson("signup", signup) );  // bypass the DbQueue so we would see the DB error
+//			respondOk();
+//		});
+//	}
 
 	public void handleLog() {
 		wrap( () -> {

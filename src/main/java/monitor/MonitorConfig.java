@@ -7,14 +7,9 @@ import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
 public class MonitorConfig extends Config {
-	private String baseUrl;
 	private String mdBaseUrl;
 	private String fbBaseUrl;
 	private String hookBaseUrl;
-
-	public String baseUrl() {
-		return baseUrl;
-	}
 
 	public String hookBaseUrl() {
 		return hookBaseUrl;
@@ -31,7 +26,6 @@ public class MonitorConfig extends Config {
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		super.readFromSpreadsheet(tab);
 		
-		this.baseUrl = m_tab.get("baseUrl");  // used only by Monitor program
 		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
 		this.fbBaseUrl = m_tab.get("fbBaseUrl");  // used only by Monitor program
 		this.hookBaseUrl = m_tab.get("hookBaseUrl");  // used only by Monitor program

@@ -81,20 +81,22 @@ public class QueryPanel extends JsonPanel {
 	}
 	
 	@Override protected void onCtrlClick(JsonObject row, String tag) {
-		String val = Util.ask( "Enter new value for %s field", tag);
+		S.out( "disabled, can't blindly use wallet key");
 		
-		if (val != null) {
-			wrap( () -> {
-				UI.watch( Monitor.m_frame, () -> {
-					Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
-							m_table, 
-							Util.toJson( tag, val), 
-							"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
-							row.getString("wallet_public_key") ) );
-					refresh();
-				});
-			});
-		}
+//		String val = Util.ask( "Enter new value for %s field", tag);
+//		
+//		if (val != null) {
+//			wrap( () -> {
+//				UI.watch( Monitor.m_frame, () -> {
+//					Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+//							m_table, 
+//							Util.toJson( tag, val), 
+//							"wallet_public_key = '%s'",  // this should be passed in constructor. pas 
+//							row.getString("wallet_public_key") ) );
+//					refresh();
+//				});
+//			});
+//		}
 	}
 
 	@Override protected void onDouble(String tag, Object val) {
@@ -133,17 +135,6 @@ public class QueryPanel extends JsonPanel {
 		QueryModel( String allNames) {
 			super( allNames);
 		}
-		
-		/** Delete the row based on the first column which must be type string */ 
-		@Override protected void delete(int row, int col) {
-			try {
-				Monitor.m_config.sqlCommand( sql -> 
-					sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
-				fireTableDataChanged();
-			} catch (Exception e) {
-				e.printStackTrace();
-			} 
-		}
 	}
 
 	public void adjust(JsonObject obj) {
@@ -158,4 +149,14 @@ public class QueryPanel extends JsonPanel {
 		m_model.fireTableDataChanged();
 	}
 
+	/** Delete the row based on the first column which must be type string */ 
+//	@Override protected void delete(int row, int col) {
+//		try {
+//			Monitor.m_config.sqlCommand( sql -> 
+//				sql.delete( "delete from %s where %s = '%s'", m_table, m_namesMap.get(0), getValueAt(row, col) ) );
+//			fireTableDataChanged();
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		} 
+//	}
 }

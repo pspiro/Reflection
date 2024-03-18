@@ -29,6 +29,7 @@ import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import common.Util;
@@ -51,16 +52,15 @@ public class S {
 	public static final Random RND = new Random( System.currentTimeMillis() );
 	private static final String NONE = "<none>";
 	public static long DAY = 1000*60*60*24;
-//	public static String TODAY = dateAsStr( System.currentTimeMillis() );
-//	public static String YESTERDAY = dateAsStr( System.currentTimeMillis() - DAY);
-	//private static String m_tempDir;
 	private static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy/MM/dd");
-	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "HH:mm:ss.SSS");
-//	static Format m_doubleFormatter = FMT2; // used by format() function 
-//
-//	public static setDoubleFormatter( Format fmt) {
-//		m_doubleFormatter = fmt;
-//	}
+	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "HH:mm:ss.SSS.dd");  // used for S.out() only
+
+	static {
+		// display time and date in NY time
+		TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
+		yyyymmdd.setTimeZone( zone);
+		timeFmt.setTimeZone( zone);
+	}
 	
 	/** Return a random number. When called repeatedly, numbers in 
 	 *  the list will have a mean of zero and a stddev as specified. */
@@ -87,29 +87,6 @@ public class S {
 				? "" 
 				: String.format( "%s/%s/%s", date.substring( 0, 4), date.substring( 4, 6), date.substring( 6) );
 	}
-	
-	/** @return yyyy/mm/dd */
-	public static String today() {
-		return yyyymmdd.format( new Date() );
-	}
-	
-	/** Return YYYYMMDD. */
-//	public static String excelDateAsStr( long time) {
-//		Calendar cal = GregorianCalendar.getInstance();
-//		cal.setTimeInMillis( time);
-//		return cal.get( Calendar.YEAR) + "-" + pad( cal.get( Calendar.MONTH) + 1) + "-" + pad( cal.get( Calendar.DAY_OF_MONTH) );
-//	}
-	
-	/** @param date is YYYYMMDD */
-//	public static long getTimeInMillis( String date) {
-//		String year = date.substring( 0, 4);
-//		String month = date.substring( 4, 6);
-//		String day = date.substring( 6, 8);
-//		
-//		Calendar cal = GregorianCalendar.getInstance();
-//		cal.set( Integer.parseInt( year), Integer.parseInt( month) - 1, Integer.parseInt( day) );
-//		return cal.getTimeInMillis();
-//	}		
 	
 	public static int dayOfYear( long time) {
 		Calendar cal = GregorianCalendar.getInstance();
@@ -335,22 +312,6 @@ public class S {
 		}
 		return Math.max( v1, v2);
 	}
-	
-	// see Util for executeIn()
-//	public static void exec( final int ms, final Runnable runnable) {
-//		if( m_timer == null) {
-//			m_timer = new Timer();
-//		}
-//		m_timer.schedule( new TimerTask() {
-//			public void run() {
-//				runnable.run();
-//			}
-//		}, ms);
-//	}
-
-//	public static String dateTimeAsStr(long date) {
-//		return excelDateAsStr( date) + " " + timeAsStr( date);
-//	}
 	
 	public static void clearDir( String dirname) {
 		File dir = new File( dirname);
