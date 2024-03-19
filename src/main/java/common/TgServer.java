@@ -37,9 +37,9 @@ public class TgServer {
 		String today = Util.getDateFormatter( "E", zone).format( new Date() );
 		String now = Util.getDateFormatter( "HH:mm", zone).format( new Date() );
 
-		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, "Telegram").fetchRows() ) {
+		for (ListEntry row : NewSheet.getTab( NewSheet.Telegram, "Telegram").fetchRows() ) {
 			String day = Util.left( row.getString("Day"), 3);
-			String time = row.getString("Time");
+			String time = adjust( row.getString("Time") );
 			long sent = row.getLong("Sent");
 			
 			long interval = System.currentTimeMillis() - sent;
@@ -52,6 +52,11 @@ public class TgServer {
 		}
 	}
 	
+	/** return HH:MM */
+	private static String adjust(String time) {
+		return time.length() < 5 ? "0" + time : time;
+	}
+
 	static void send( String message) throws Exception {
 		S.out( "Posting message " + message);
 		

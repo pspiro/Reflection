@@ -47,6 +47,8 @@ public class NewSheet {
 	public static final String Remittance = "16jO882MA5_Lvehh1sEbgjkfVjjtcb7tH4h-GmnRSuYM";
 	public static final String LinkedIn = "1Q_kM-6j_xbhebiJJP_sxWRP6q4gObr-KTGxCB1cgt-k";
 	public static final String Test = "1peR3T4jzEXBitsfpc0RvvnjflWjKM7BaH7OrlTWdxqw";
+	public static final String Telegram = "1yXzDqFLvEoXD1cCNpPAZNm_H1BCSUv263uLf-Z8dZLw";
+	
 	//public static String Remittance = "1Rc4hUFlqjaHE-4DSZs9Q1KLQSa9zWre5P-Dj5x06ZyE"; // test
 	
 	public static void main(String[] args) throws Exception {
