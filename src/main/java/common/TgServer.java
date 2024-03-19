@@ -19,7 +19,7 @@ import tw.util.S;
  *  
  *
  */
-public class Telegram {
+public class TgServer {
 	static TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
 	
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
