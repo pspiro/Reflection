@@ -78,9 +78,7 @@ public class Config extends ConfigBase {
 	private String fbStablecoin;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
-	private int hookServerPort;
-	private String hookServerUrl;
-	private String hookServerChain;
+	private String hookBaseUrl2;  // used by RefAPI
 
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -200,9 +198,7 @@ public class Config extends ConfigBase {
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
-		this.hookServerPort = m_tab.getInt("hookServerPort");
-		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
-		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
+		this.hookBaseUrl2 = m_tab.getRequiredString("hookBaseUrl2");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -537,28 +533,15 @@ public class Config extends ConfigBase {
 		return platformBase.split("_")[0];
 	}
 	
-	public int hookServerPort() {
-		return hookServerPort;
-	}
-	
-	public String hookServerUrl() {
-		return hookServerUrl;
-	}
-	
-	public String hookServerChain() {
-		return hookServerChain;
-	}
-
-	/** suffix used when creating Moralis WebHook */ 
-	public String getHookNameSuffix() {
-		return String.format( "%s-%s", hookServerChain, hookServerPort);
-	}
-
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
 
 	public String blockchainAddress(String address) {
 		return String.format( "%s/address/%s", blockchainExplorer, address);
+	}
+	
+	public String hookBaseUrl2() {
+		return hookBaseUrl2;
 	}
 }

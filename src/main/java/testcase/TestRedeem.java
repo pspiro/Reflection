@@ -34,7 +34,7 @@ public class TestRedeem extends MyTestCase {
 				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
 				.waitForStatus("COMPLETED");
 		
-		waitForBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
+		waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 	}
 	
 	public void testLocked() throws Exception {
@@ -108,7 +108,7 @@ public class TestRedeem extends MyTestCase {
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 
 		waitForRedeem(Cookie.wallet);
-		waitForBalance(Cookie.wallet, .0001, true);
+		waitForRusdBalance(Cookie.wallet, .0001, true);
 	}
 	
 	private void redeem() throws Exception {
@@ -129,16 +129,6 @@ public class TestRedeem extends MyTestCase {
 		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
 	}
 	
-	/** Wait up to 10 sec for Moralis to catch up   // better just to ask hookServer or RefAPI
-	 * @throws Exception */
-	private static void waitForBalance(String address, double bal, boolean lt) throws Exception {
-		S.out( "waiting for balance %s bal", lt ? "<" : ">");
-		waitFor( 90, () -> { 
-			double balance = Wallet.getBalance(address, m_config.rusdAddr() );
-			return (lt && balance < bal || !lt && balance > bal);
-		});
-	}
-
 	public void testCheckBalance() throws Exception {
 		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
 	}

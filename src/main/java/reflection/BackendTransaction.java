@@ -67,7 +67,8 @@ public class BackendTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", Main.m_config.hookServerPort(), m_walletAddr.toLowerCase() );
+			String url = String.format( "%s/hook/get-wallet/%s", 
+					m_config.hookBaseUrl2(), m_walletAddr.toLowerCase() );
 
 			JsonArray retVal = new JsonArray();
 
@@ -400,8 +401,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			Stock stock = m_main.getStock( conid);
 			
-			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
-					Main.m_config.hookServerPort(), 
+			String url = String.format( "%s/hook/get-wallet-map/%s", 
+					Main.m_config.hookBaseUrl2(), 
 					m_walletAddr.toLowerCase() );
 
 			// query for wallet positions (map style)
@@ -423,6 +424,10 @@ public class BackendTransaction extends MyTransaction {
 				"askPrice", prices.anyAsk()
 				);
 		});
+	}
+
+	public void handleUserTokenMgr() {
+		wrap( () -> respond( UserTokenMgr.getJson() ) );
 	}
 
 }

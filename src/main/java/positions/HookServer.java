@@ -34,7 +34,7 @@ import tw.util.S;
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
-	final Config m_config = new Config();
+	final HookConfig m_config = new HookConfig();
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
@@ -120,7 +120,7 @@ public class HookServer {
 
 		public void handleStatus() {
 			wrap( () -> {
-				respond( Util.toJson( code, RefCode.OK, "started", m_started) );
+				respond( Util.toJson( code, RefCode.OK, "started", m_started, "suffix", m_config.getHookNameSuffix() ) );
 			});
 		}
 
@@ -132,13 +132,17 @@ public class HookServer {
 		}
 		
 		/** Return all data about the requested wallet; if we don't have the data already,
-		 *  we will request it; called by RefAPI to get positions for My Reflection panel on Dashboard */
+		 *  we will request it; called by RefAPI to get positions for My Reflection panel on Dashboard 
+		 *  tags are: native, approved, positions, wallet
+		 *  positions is an array with fields address, position */ 
 		public void handleGetWallet() {
 			wrap( () -> {
 				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson( m_config.minTokenPosition() ) );
 			});
 		}
 
+		/** tags are: native, approved, positions, wallet 
+		 *  positions is an object key address, position */ 
 		public void handleGetWalletMap() {
 			wrap( () -> {
 				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJsonMap( m_config.minTokenPosition() ) );

@@ -45,7 +45,7 @@ public class TestAppr {
 						Streams.approval, 
 						"test", 
 						"http://108.6.23.121/hook/webhook", 
-						m_config.hookServerChain(),
+						"0x5",
 						Accounts.instance.getAddress("Owner") );
 				//m_config.rusd().address() );
 

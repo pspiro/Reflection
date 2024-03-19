@@ -162,6 +162,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
+			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() );
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status

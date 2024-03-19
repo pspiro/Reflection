@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Rusd;
 import http.MyHttpClient;
 import reflection.Main;
 import reflection.Prices;
@@ -109,7 +110,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals("DENIED", ar.get(0).getString("status"));
 	}
 
-	/** Test that order failes if the siwe session has timed out */
+	/** Test that order fails if the siwe session has timed out */
 	public void testSessionTimeout() throws Exception {
 		Cookie.init = true;  // force signin
 		
