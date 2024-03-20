@@ -19,6 +19,7 @@ fi
 echo retarting tgserver
 sudo systemctl restart tgserver
 sleep 2
+echo restarting hookserver
 sudo systemctl restart hookserver
 sleep 2
 echo restarting mdserver
