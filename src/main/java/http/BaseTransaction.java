@@ -265,4 +265,9 @@ public class BaseTransaction {
 		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
 		return headers.get(0);
 	}
+
+	public String getFirstHeader(String name) throws Exception {
+		List<String> headers = getHeaders(name);
+		return headers != null && headers.size() > 0 ? headers.get(0) : "";
+	}
 }

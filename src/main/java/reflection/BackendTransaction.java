@@ -313,7 +313,8 @@ public class BackendTransaction extends MyTransaction {
 
 			// add entry to signup table
 			JsonObject obj = new JsonObject();
-			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
+			obj.copyFrom( m_map.obj(),  "first", "last", "email");
+			obj.put( "referer", getFirstHeader( "referer") );
 			m_main.queueSql( sql -> sql.insertJson("signup", obj) );
 		});
 	}

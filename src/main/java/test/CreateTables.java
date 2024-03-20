@@ -46,7 +46,8 @@ public class CreateTables  {
 			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
 				+ "first varchar(60),"
 				+ "last varchar(60),"
-				+ "email varchar(60)"
+				+ "email varchar(60),"
+				+ "referer varchar"
 				+ ")";
 		con.execute(sql);
 	}
