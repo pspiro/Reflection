@@ -306,16 +306,21 @@ public class BackendTransaction extends MyTransaction {
 	public void handleSignup() {
 		wrap( () -> {
 			parseMsg();
-			S.out( m_map.obj() );
+			out( m_map.obj() );
 
-			// redirect client to home page
 			redirect( m_config.baseUrl() );
-
-			// add entry to signup table
-			JsonObject obj = new JsonObject();
-			obj.copyFrom( m_map.obj(),  "first", "last", "email");
-			obj.put( "referer", getFirstHeader( "referer") );
-			m_main.queueSql( sql -> sql.insertJson("signup", obj) );
+			
+			if (Util.isValidEmail( m_map.obj().getString("email") ) ) {
+				// add entry to signup table
+				JsonObject obj = new JsonObject();
+				obj.copyFrom( m_map.obj(),  "first", "last", "email");
+				obj.put( "referer", getFirstHeader( "referer") );
+				obj.put( "country", Util.left( getFirstHeader( "X-Country-Code"), 2) );
+				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+			
+				out( "Adding to signup table: " + obj.toString() );
+				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
+			}
 		});
 	}
 

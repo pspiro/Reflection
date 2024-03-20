@@ -47,7 +47,9 @@ public class CreateTables  {
 				+ "first varchar(60),"
 				+ "last varchar(60),"
 				+ "email varchar(60),"
-				+ "referer varchar"
+				+ "referer varchar,"
+				+ "country varchar(2),"
+				+ "ip varchar(15),"
 				+ ")";
 		con.execute(sql);
 	}

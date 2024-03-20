@@ -126,7 +126,7 @@ public class BaseTransaction {
 		// need this? pas
 		try {
 			m_exchange.getResponseHeaders().add( "Location", url);
-			m_exchange.sendResponseHeaders( 301, 0);
+			m_exchange.sendResponseHeaders( 301, 0);  // 302 might be better
 			
 			if (m_timer != null) {
 				out( "  responded in %s ms", m_timer.time() );
