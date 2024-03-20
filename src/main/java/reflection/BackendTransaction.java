@@ -310,10 +310,13 @@ public class BackendTransaction extends MyTransaction {
 
 			redirect( m_config.baseUrl() );
 			
-			if (Util.isValidEmail( m_map.obj().getString("email") ) ) {
+			String email = m_map.obj().getString("email").replace("%40", "@");
+			
+			if (Util.isValidEmail( email) ) {
 				// add entry to signup table
 				JsonObject obj = new JsonObject();
-				obj.copyFrom( m_map.obj(),  "first", "last", "email");
+				obj.copyFrom( m_map.obj(), "first", "last");
+				obj.put( "email", email);
 				obj.put( "referer", getFirstHeader( "referer") );
 				obj.put( "country", Util.left( getFirstHeader( "X-Country-Code"), 2) );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
