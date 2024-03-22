@@ -19,6 +19,7 @@ public enum RefCode {
 	NO_PRICES,			// returned by getPrice(), getAllPrices(), order(), checkOrder() 
 	NO_RUSD_TO_REDEEM, 
 	NO_STOCKS,
+	NO_SUCH_REQUEST,  
 	NO_SUCH_STOCK,		// for admin msg only  
 	OK,					// success; for order, completely filled
 	ORDER_TOO_LARGE,	// dollar amt is too high as per config settings

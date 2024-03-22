@@ -454,4 +454,9 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** used by Monitor */
+	public void handleUserTokenMgr() {
+		wrap( () -> respond( UserTokenMgr.getJson() ) );
+	}
+
 }

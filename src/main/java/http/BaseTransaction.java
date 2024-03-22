@@ -265,4 +265,9 @@ public class BaseTransaction {
 		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
 		return headers.get(0);
 	}
+
+	/** called if there is no matching URI */
+	public void respondNotFound() {
+		respondFull( Util.toJson( code, RefCode.NO_SUCH_REQUEST), 400, null);
+	}
 }

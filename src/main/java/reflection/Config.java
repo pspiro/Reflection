@@ -82,6 +82,7 @@ public class Config extends ConfigBase {
 	private String hookServerUrl;
 	private String hookServerChain;
 	private String baseUrl; // used by Monitor program and RefAPI
+	private String hookNameSuffix;
 
 	// Fireblocks
 	protected boolean useFireblocks;
@@ -204,6 +205,7 @@ public class Config extends ConfigBase {
 		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
 		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
+		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 
 		Alerts.setEmail( this.alertEmail);
@@ -241,7 +243,7 @@ public class Config extends ConfigBase {
 			Accounts.instance.setAdmins( fbAdmins);
 			
 			// update Moralis chain
-			MoralisServer.chain = moralisPlatform;
+			MoralisServer.setChain( moralisPlatform);
 		}
 		
 		if (isProduction() ) {
@@ -358,7 +360,7 @@ public class Config extends ConfigBase {
 	
 	/** Update spreadsheet */
 	public void setBusdAddress(String address) {
-		m_tab.put( "busdAddress", address);
+		m_tab.put( "busdAddr", address);
 	}
 
 	static class RefApiConfig extends Config {
@@ -551,11 +553,6 @@ public class Config extends ConfigBase {
 		return hookServerChain;
 	}
 
-	/** suffix used when creating Moralis WebHook */ 
-	public String getHookNameSuffix() {
-		return String.format( "%s-%s", hookServerChain, hookServerPort);
-	}
-
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
@@ -566,5 +563,9 @@ public class Config extends ConfigBase {
 
 	public String baseUrl() {
 		return baseUrl;
+	}
+	
+	public String getHookNameSuffix() {
+		return hookNameSuffix;
 	}
 }

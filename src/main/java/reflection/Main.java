@@ -88,7 +88,7 @@ public class Main implements ITradeReportHandler {
 
 		// read config settings from google sheet; this must go first since other items depend on it
 		timer.next("Reading from google spreadsheet %s", tabName, NewSheet.Reflection);
-		readSpreadsheet();
+		readSpreadsheet(true);
 		timer.done();
 		
 		// must come after reading config and before writing to log
@@ -162,6 +162,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
+			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() );
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
@@ -170,6 +171,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
+			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );
 
 			// landing page
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
@@ -200,7 +202,7 @@ public class Main implements ITradeReportHandler {
 		log( LogType.SHUTDOWN, null);
 	}
 
-	void readSpreadsheet() throws Exception {
+	void readSpreadsheet(boolean readStocks) throws Exception {
 		Book book = NewSheet.getBook(NewSheet.Reflection);
 		
 		// read RefAPI config
@@ -219,9 +221,11 @@ public class Main implements ITradeReportHandler {
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		m_allowedCountries = new GTable( book.getTab("Blacklist"), "Allowed Countries", "Allow", false);
 		m_allowedIPs = new GTable( book.getTab("Blacklist"), "Allowed IPs", "Allow", false);
-		
-		m_stocks.readFromSheet(book, m_config);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
+
+		if (readStocks) {
+			m_stocks.readFromSheet(book, m_config);
+		}
 	}
 
 	private String readType1Config(Book book) throws Exception {
