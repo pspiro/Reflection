@@ -111,6 +111,7 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
+		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );

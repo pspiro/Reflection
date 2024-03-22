@@ -27,7 +27,7 @@ public class Fireblocks {
 	public static String testBusd = "BUSD_ETH_TEST3_6ZNB";  // Fireblocks asset id
 	public static String testRusd = "RUSD_ETH_TEST3_S89L";
 	
-	static String base = "https://api.fireblocks.io";
+	static String baseUrl = "https://api.fireblocks.io";
 	
 	private static String s_apiKey;
 	private static String s_privateKey;
@@ -92,7 +92,7 @@ public class Fireblocks {
 				Encrypt.encode( header), Encrypt.encode( payload), signed)
 				.replace( "/", "_").replace( "+", "-");
 		
-		String url = base + endpoint;
+		String url = baseUrl + endpoint;
 		MyClient client = S.isNotNull(body) 
 				? MyClient.create( url, body)
 				: MyClient.create( url);

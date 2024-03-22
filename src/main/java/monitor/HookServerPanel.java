@@ -28,7 +28,7 @@ class HookServerPanel extends JsonPanel {
 		top.add( new HtmlButton( "Reset wallet", e -> resetWallet() ) );
 		top.add( new HtmlButton( "Reset all wallets", e -> resetAllWallets() ) );
 		top.add( new HtmlButton( "Get wallet", e -> getWallet() ) );
-		top.add( new HtmlButton( "Query 'My Wallet'", e -> myWallet() ) );
+		top.add( new HtmlButton( "JsonObject json = query 'My Wallet'", e -> myWallet() ) );
 		top.add( new HtmlButton( "Debug on", e -> debugOn() ) );
 		top.add( new HtmlButton( "Debug off", e -> debugOff() ) );
 		top.add( new HtmlButton( "Delete hooks at Moralis", e -> deleteHooks() ) );
@@ -40,13 +40,15 @@ class HookServerPanel extends JsonPanel {
 	private void deleteHooks() {
 		wrap( () -> {
 			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
+				String suffix = getSuffix();  
+						
 				S.out( "Deleting transfers stream");
 				Streams.deleteStreamByName( String.format( 
-						"Transfers-%s", Monitor.m_config.getHookNameSuffix() ) );
+						"Transfers-%s", suffix) );
 				
 				S.out( "Deleting approvals stream");
 				Streams.deleteStreamByName( String.format( 
-						"Approvals-%s", Monitor.m_config.getHookNameSuffix() ) );
+						"Approvals-%s", suffix) );
 				
 				UI.flash( "Done");
 			}
@@ -55,43 +57,43 @@ class HookServerPanel extends JsonPanel {
 
 	private void resetWallet() {
 		wrap( () -> {
-			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/reset/" + m_wallet.getText() );
-			UI.flash( str);
+			JsonObject json = query( "/hook/reset/" + m_wallet.getText() );
+			UI.flash( json.toString() );
 		});
 	}
 
 	private void resetAllWallets() {
 		wrap( () -> {
-			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/resetall");
-			UI.flash( str);
+			JsonObject json = query( "/hook/resetall");
+			UI.flash( json.toString() );
 		});
 	}
 
 	private void getWallet() {
 		wrap( () -> {
-			JsonObject json = MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/get-wallet/" + m_wallet.getText() );
+			JsonObject json = query( "/hook/get-wallet/" + m_wallet.getText() );
 			Util.inform( this, json.toHtml() );
 		});
 	}
 
 	private void myWallet() {
 		wrap( () -> {
-			JsonObject json = MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/mywallet/" + m_wallet.getText() );
+			JsonObject json = query( "/hook/mywallet/" + m_wallet.getText() );
 			Util.inform( this, json.toHtml() );
 		});
 	}
 
 	private void debugOn() {
 		wrap( () -> {
-			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/debug-on");
-			UI.flash( str);
+			JsonObject json = query( "/hook/debug-on");
+			UI.flash( json.toString() );
 		});
 	}
 
 	private void debugOff() {
 		wrap( () -> {
-			String str = MyClient.getString( Monitor.m_config.hookBaseUrl() + "/hook/debug-off");
-			UI.flash( str);
+			JsonObject json = query( "/hook/debug-off");
+			UI.flash( json.toString() );
 		});
 	}
 
@@ -106,5 +108,13 @@ class HookServerPanel extends JsonPanel {
 		JsonArray ar = MyClient.getArray(Monitor.m_config.hookBaseUrl() + "/hook/get-all-wallets");
 		setRows( ar);
 		m_model.fireTableDataChanged();
+	}
+
+	static String getSuffix() throws Exception {
+		return query( "/hook/status").getString("suffix");
+	}
+
+	static JsonObject query( String uri) throws Exception {
+		return MyClient.getJson( Monitor.m_config.hookBaseUrl() + uri);
 	}
 }

@@ -22,20 +22,14 @@ public class OldStyleTransaction extends MyTransaction {
 		disconnect,
 		dump,
 		getAllPrices,
-		//getAllStocks,
 		getTradingHours(),
 		getDescription,
 		getPositions,
 		getPrice,
 		getCashBal,
-		//pullBackendConfig,
-		//pullFaq,
-		//pushBackendConfig,
-		//pushFaq,
 		refreshConfig,
 		terminate,
 		testAlert,
-		//wallet,
 		;
 	}
 
@@ -150,7 +144,7 @@ public class OldStyleTransaction extends MyTransaction {
 	/** Top-level message handler, refresh all config and stock tokens */
 	void refreshConfig() throws Exception {
 		out( "Refreshing config and FAQs from google sheet");
-		m_main.readSpreadsheet();
+		m_main.readSpreadsheet( m_map.getBool("refreshstocks") );  // just read config settings unless "readstocks=true" is passed
 		respondOk();
 	}
 

@@ -15,7 +15,7 @@ import tw.util.S;
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick */
 public class MoralisServer {
-	public static String chain;  // or eth
+	private static String chain;  // or eth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String stream = "https://api.moralis-streams.com/streams/evm";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
@@ -219,5 +219,9 @@ public class MoralisServer {
 	/** returns all transactions for a specific token */
 	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+	}
+
+	public static void setChain(String chainIn) {
+		chain = chainIn;
 	}
 }

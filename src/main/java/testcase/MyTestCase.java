@@ -7,8 +7,10 @@ import common.Util;
 import common.Util.ExRunnable;
 import common.Util.ExSupplier;
 import fireblocks.Accounts;
+import http.MyClient;
 import http.MyHttpClient;
 import junit.framework.TestCase;
+import positions.Wallet;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
@@ -126,7 +128,23 @@ public class MyTestCase extends TestCase {
 	public static void assertStartsWith(String expected, Object actual) {
 		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
 	}
-	
+
+	/** Wait for HookServer to catch up Exception */
+	protected static void waitForRusdBalance(String walletAddr, double bal, boolean lt) throws Exception {
+		waitForBalance( walletAddr, m_config.rusdAddr(), bal, lt);
+	}
+
+	/** Wait for HookServer to catch up Exception */
+	protected static void waitForBalance(String walletAddr, String tokenAddr, double refPrice, boolean lt) throws Exception {
+		waitFor( 90, () -> {
+			
+			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
+					.getObject( "positions")
+					.getDouble( tokenAddr.toLowerCase() );
+			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", refPrice);
+			return (lt && balance < refPrice + .01 || !lt && balance > refPrice - .01);
+		});
+	}
 
 	/** wait n seconds for supplier to return true, then fail */
 	static void waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
@@ -140,5 +158,4 @@ public class MyTestCase extends TestCase {
 		}
 		assertTrue( false);
 	}
-
 }

@@ -42,7 +42,6 @@ import javax.mail.internet.MimeMessage;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
-import org.web3j.crypto.Keys;
 
 import com.ib.client.Decimal;
 

@@ -7,7 +7,7 @@ import tw.util.S;
 
 public class MintRusd {
 	public static void main(String[] args) throws Exception {
-		Config config = Config.readFrom("Prod-config");
+		Config config = Config.readFrom("Dev-config");
 		String wallet = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 		double amt = 1;
 		

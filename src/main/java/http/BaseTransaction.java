@@ -266,6 +266,11 @@ public class BaseTransaction {
 		return headers.get(0);
 	}
 
+	/** called if there is no matching URI */
+	public void respondNotFound() {
+		respondFull( Util.toJson( code, RefCode.NO_SUCH_REQUEST), 400, null);
+	}
+	
 	public String getFirstHeader(String name) throws Exception {
 		List<String> headers = getHeaders(name);
 		return headers != null && headers.size() > 0 ? headers.get(0) : "";
