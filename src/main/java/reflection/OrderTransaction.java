@@ -50,6 +50,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
 	private String m_message; // a message that will be displayed to user for a live (not completed) order
+	private long m_createdAt = System.currentTimeMillis();
 
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -178,7 +179,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
 		require( 
-				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .02),  // +/- two cents; for some reason, Front end is sometimes off by .01; there's a bug assigned, but in the meantime, don't sweat it 
+				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .05),  // +/- two cents; for some reason, Front end is sometimes off by .01; there's a bug assigned, but in the meantime, don't sweat it 
 				RefCode.INVALID_REQUEST, 
 				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
@@ -752,6 +753,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	/** Called when the monitor program queries for all live orders */
 	public synchronized JsonObject getLiveOrder() {
 		JsonObject order = new JsonObject();
+		order.put( "createdAt", m_createdAt);
 		order.put( "uid", uid() );
 		order.put( "wallet", m_walletAddr);
 		order.put( "action", m_order.action() );

@@ -73,6 +73,9 @@ public class ProfileTransaction extends MyTransaction {
 			profile.trim(); // trim spaces since this data was entered by the user
 			profile.validate();
 			
+			// add the country code; this is not part of the user-entered profile but could come in handy
+			profile.put( "country", getCountryCode() );
+			
 			String walletKey = m_walletAddr.toLowerCase();
 			
 			// if email has changed, they must submit a valid verification code from the validateEmail() message

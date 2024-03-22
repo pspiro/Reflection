@@ -30,7 +30,8 @@ public class BackendTransaction extends MyTransaction {
 	}
 	
 	/** Used by the My Reflection (portfolio) section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions */
+	 *  We're returning the token positions from the blockchain, not IB positions;
+	 *  This is obsolete and should be removed, and replaced with handleReqPositionsNew() */
 	public void handleReqPositions() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -318,7 +319,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.copyFrom( m_map.obj(), "first", "last");
 				obj.put( "email", email);
 				obj.put( "referer", getFirstHeader( "referer") );
-				obj.put( "country", Util.left( getFirstHeader( "X-Country-Code"), 2) );
+				obj.put( "country", getCountryCode() );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
 			
 				out( "Adding to signup table: " + obj.toString() );
@@ -384,7 +385,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
 	public void allowConnection() {
 		wrap( () -> {
-			String country = getHeader("X-Country-Code");
+			String country = getCountryCode();
 			String ip = getHeader("X-Real-IP");
 			
 			boolean allow =
@@ -400,7 +401,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Return IP address and country code passed from nginx; you could change it to
-	 *  return all headers. */
+	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
 		wrap( () -> {
 			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();

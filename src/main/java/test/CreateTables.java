@@ -148,6 +148,7 @@ public class CreateTables  {
 			pan_number character varying(10),
 			aadhaar character varying(12),
 			locked jsonb,
+			ip varchar(15)
 		);
 		""";
 		con.execute( sql);

@@ -162,4 +162,8 @@ public abstract class MyTransaction extends BaseTransaction {
 	public String walletAddr() {
 		return m_walletAddr;
 	}
+	
+	protected String getCountryCode() throws Exception {
+		return Util.left( getFirstHeader( "X-Country-Code"), 2);
+	}
 }

@@ -226,7 +226,7 @@ public class Monitor {
 		
 		@Override  // this is wrong, should use base url
 		public void refresh() throws Exception {
-			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/api/hot-stocks");
 			setRows( ar);
 			m_model.fireTableDataChanged();
 		}
