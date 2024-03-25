@@ -16,7 +16,7 @@ fi
 
 # must restart all servers or you can get classnotfound errors
 
-echo retarting tgserver
+echo restarting tgserver
 sudo systemctl restart tgserver
 sleep 2
 echo restarting hookserver
