@@ -66,37 +66,25 @@ public class FbServer {
 			server.createContext("/fbserver/ok", exch -> new BaseTransaction(exch, false).respondOk() );
 			server.createContext("/fbserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) );
 			server.createContext("/fbserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
-			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() ); 
+			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );
 		});
-<<<<<<< HEAD
 
-		while( true) {
-			S.sleep( m_config.fbPollIingInterval() );
-
-			queryFireblocks();
-
-			updateRefApi();
-
-			prune();  // only delete sent final items at the beginning of the map up to the first on that is not
-=======
-		
 		// I saw a case where this stopped working but the program kept running;
 		// it called prune() and the thread hung
 		try {
 			while( true) {
 				S.sleep( m_config.fbPollIingInterval() );
-				
+
 				queryFireblocks();
-				
+
 				updateRefApi();
-				
+
 				prune();  // only delete sent final items at the beginning of the map up to the first on that is not
 			}
 		}
-		catch( Throwable e) {			
+		catch( Throwable e) {
 			e.printStackTrace();
 			S.out( "fatal error, program should die");
->>>>>>> master
 		}
 	}
 
@@ -121,7 +109,7 @@ public class FbServer {
 
 			// fetch transactions
 			JsonArray ar = Transactions.getSince( start);
-			
+
 			m_lastSuccessfulFetch = now;
 
 			if (BaseTransaction.debug() ) {
@@ -138,10 +126,10 @@ public class FbServer {
 				if (old == null || !trans.status().equals(old.status() ) ) {
 					m_map.put(trans.id(), trans);
 					S.out( "Updated %s  %s  %s", trans.id(), trans.status(), hhmmss.format(trans.createdAt() ) );
-					
+
 					// if it failed, print out the whole thing for debugging
 					if ("FAILED".equals( trans.status() ) ) {
-						S.out( trans); 
+						S.out( trans);
 					}
 				}
 			}
@@ -195,7 +183,7 @@ public class FbServer {
 			// sort the transactions by "createdAt"
 			ArrayList<Trans> recs = new ArrayList<>(m_map.values());
 			recs.sort( (o1, o2) -> comp( o1.createdAt(), o2.createdAt() ) );
-	
+
 			for (Trans trans : recs) {
 				if (trans.isFinal() && trans.sent() ) {
 					m_map.remove( trans.id() );
