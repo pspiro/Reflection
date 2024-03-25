@@ -20,8 +20,7 @@ public class CreateTables  {
 	public static void main(String[] args) {
 		try {
 			con = Config.ask().useExternalDbUrl().createConnection();
-			new CreateTables().createRedemptions();
-			
+			new CreateTables().createSignupTable();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -48,6 +47,9 @@ public class CreateTables  {
 				+ "first varchar(60),"
 				+ "last varchar(60),"
 				+ "email varchar(60),"
+				+ "referer varchar,"
+				+ "country varchar(2),"
+				+ "ip varchar(15),"
 				+ ")";
 		con.execute(sql);
 	}
@@ -146,6 +148,7 @@ public class CreateTables  {
 			pan_number character varying(10),
 			aadhaar character varying(12),
 			locked jsonb,
+			ip varchar(15)
 		);
 		""";
 		con.execute( sql);

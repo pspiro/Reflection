@@ -179,16 +179,21 @@ class DualPrices {
 		};
 	}
 
+	/** Update stockPrices with last price for the correct session */
 	public void update(JsonObject stockPrices, Session session) {
-		getPrices(session).update(stockPrices); 
-		
-		// if all sessions are closed, or we are in overnight and there
-		// is no last there, use last from smart
-		if (session == Session.None ||
-			session == Session.Overnight && m_overnight.last() <= 0) {
-			
-			stockPrices.put( "last", smart().last() );
-		}
+		// no we just always use smart
+		getPrices(Session.Smart).update(stockPrices);
+
+		// we used to take the prices from the correct session depending on what time it is
+//		getPrices(session).update(stockPrices); 
+//		
+//		// if all sessions are closed, or we are in overnight and there
+//		// is no last there, use last from smart
+//		if (session == Session.None ||
+//			session == Session.Overnight && m_overnight.last() <= 0) {
+//			
+//			stockPrices.put( "last", smart().last() );
+//		}
 	}
 
 	public int conid() {

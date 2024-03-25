@@ -40,6 +40,7 @@ import junit.framework.TestCase;
 //	   TestSmartRusd.class,
 //	   TestSmartToken.class,
 //	   TestSql.class,
+	   TestUserTokMgr.class,
 	   TestSwap.class, // FAILS!!!!!!!!!!!
 //	   TestStrings.class,
 	   TestUnwindOrder.class,  // not done

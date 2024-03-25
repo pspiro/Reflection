@@ -1,5 +1,7 @@
 package fireblocks;
 
+import static common.Util.hhmmss;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -14,7 +16,6 @@ import http.MyHttpClient;
 import reflection.Config;
 import reflection.FireblocksStatus;
 import tw.util.S;
-import static common.Util.hhmmss;
 
 /** Fireblocks polling server
  *
@@ -65,7 +66,9 @@ public class FbServer {
 			server.createContext("/fbserver/ok", exch -> new BaseTransaction(exch, false).respondOk() );
 			server.createContext("/fbserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) );
 			server.createContext("/fbserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
+			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() ); 
 		});
+<<<<<<< HEAD
 
 		while( true) {
 			S.sleep( m_config.fbPollIingInterval() );
@@ -75,6 +78,25 @@ public class FbServer {
 			updateRefApi();
 
 			prune();  // only delete sent final items at the beginning of the map up to the first on that is not
+=======
+		
+		// I saw a case where this stopped working but the program kept running;
+		// it called prune() and the thread hung
+		try {
+			while( true) {
+				S.sleep( m_config.fbPollIingInterval() );
+				
+				queryFireblocks();
+				
+				updateRefApi();
+				
+				prune();  // only delete sent final items at the beginning of the map up to the first on that is not
+			}
+		}
+		catch( Throwable e) {			
+			e.printStackTrace();
+			S.out( "fatal error, program should die");
+>>>>>>> master
 		}
 	}
 
@@ -100,16 +122,10 @@ public class FbServer {
 			// fetch transactions
 			JsonArray ar = Transactions.getSince( start);
 			
-			if (BaseTransaction.debug() ) {
-				S.out( "Queried back %s seconds from %s", (now - start) / 1000, hhmmss.format(start) );
-			}
-			
 			m_lastSuccessfulFetch = now;
 
-			// debug
-			if (BaseTransaction.debug()) {
-				S.out();
-				S.out( "Transactions");
+			if (BaseTransaction.debug() ) {
+				S.out( "Queried back %s seconds from %s", (now - start) / 1000, hhmmss.format(start) );
 				S.out(ar);
 				S.out();
 			}
@@ -175,18 +191,23 @@ public class FbServer {
 	/** Remove transactions at the beginning of the list that are final and sent to RefAPI
 	 *  up to the first one that is not */
 	private static void prune() {
-		// sort the transactions by "createdAt"
-		ArrayList<Trans> recs = new ArrayList<>(m_map.values());
-		recs.sort( (o1, o2) -> comp( o1.createdAt(), o2.createdAt() ) );
-
-		for (Trans trans : recs) {
-			if (trans.isFinal() && trans.sent() ) {
-				m_map.remove( trans.id() );
-				S.out( "Pruned %s %s new size %s", trans.id(), trans.status(), m_map.size() );
+		try {
+			// sort the transactions by "createdAt"
+			ArrayList<Trans> recs = new ArrayList<>(m_map.values());
+			recs.sort( (o1, o2) -> comp( o1.createdAt(), o2.createdAt() ) );
+	
+			for (Trans trans : recs) {
+				if (trans.isFinal() && trans.sent() ) {
+					m_map.remove( trans.id() );
+					S.out( "Pruned %s %s new size %s", trans.id(), trans.status(), m_map.size() );
+				}
+				else {
+					break;
+				}
 			}
-			else {
-				break;
-			}
+		}
+		catch( Exception e) {
+			S.err( "Error pruning", e);
 		}
 	}
 

@@ -45,13 +45,13 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			// this should only occur if we missed the unconfirmed event, i.e. if
-			// the HookServer was started after the event came in or if the
-			// event came in after the new position was returned in the position query;
-			// we should see this infrequently; if we see it frequently, it means
-			// I don't understand something
 			double bal = new Wallet(m_walletAddr).getBalance( contract);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
+				// this should only occur if we missed the unconfirmed event, i.e. if
+				// the HookServer was started after the event came in or if the
+				// event came in after the new position was returned in the position query;
+				// we should see this infrequently; if we see it frequently, it means
+				// I don't understand something
 				S.out( "Warning: updated %s / %s to %s", m_walletAddr, contract, bal);
 				m_map.put( contract, bal);
 			}
@@ -103,7 +103,7 @@ class HookWallet {
 		return obj;
 	}
 
-	/** For debugging */
+	/** Used by RefAPI to check balances before an order */ 
 	public JsonObject getAllJsonMap(double min) {
 		JsonObject obj = new JsonObject();
 		obj.put( "native", m_nativeBal);

@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import fireblocks.Rusd;
 import http.MyHttpClient;
 import reflection.Main;
 import reflection.Prices;
@@ -24,6 +25,11 @@ public class TestOrder extends MyTestCase {
 			S.out( "TestOrder: Current AMZN price is %s", curPrice);
 			Util.require( curPrice > 0, "Zero price");
 		//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
+			
+//			readStocks();
+//			m_config.rusd().mintRusd( Cookie.wallet, 5000, stocks.getAnyStockToken() )
+//				.waitForCompleted();
+//			waitForRusdBalance(Cookie.wallet, 5000, false);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -109,7 +115,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals("DENIED", ar.get(0).getString("status"));
 	}
 
-	/** Test that order failes if the siwe session has timed out */
+	/** Test that order fails if the siwe session has timed out */
 	public void testSessionTimeout() throws Exception {
 		Cookie.init = true;  // force signin
 		
@@ -163,19 +169,19 @@ public class TestOrder extends MyTestCase {
 	
 	// fill order sell order
 	public void testFillSell() throws Exception {
-		JsonObject obj = createOrder( "sell", 10, -3);
+		JsonObject obj = createOrder( "sell", 1, -3);
 		JsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
 		S.out( "fillSell %s %s", code, text);
-		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
+		assert200();
 
 		S.sleep(50);  // give it time to complete processing after ok is sent back 
 		JsonObject ret = getLiveMessage2(map.getString("id"));
 		assertEquals( "message", ret.getString("type") );
 		assertEquals( "Filled", ret.getString( "status") );
-		startsWith( "Sold 10", ret.getString("text") );
+		startsWith( "Sold 1", ret.getString("text") );
 	}
 
 	// user must have passed KYC for this to pass
@@ -192,6 +198,7 @@ public class TestOrder extends MyTestCase {
 
 		// succeed buy
 		map = placeOrder( "buy", m_config.minOrderSize() + .1, curPrice * 1.1);
+		assertEquals( RefCode.OK, cli.getRefCode() );
 		assert200();
 
 		// succeed sell
@@ -250,7 +257,7 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testZeroShares()  throws Exception {
-		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }"); 
+		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", false); 
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -269,23 +276,32 @@ public class TestOrder extends MyTestCase {
 //		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
 //	}
 	
+	/** no Fireblocks */
 	static JsonObject createOrder(String side, double qty, double offset) throws Exception {
-		return createOrder2( side, qty, curPrice + offset);
+		return createOrder2( side, qty, curPrice + offset, false);
+	}
+
+	/** no Fireblocks */
+	static JsonObject createOrder2(String side, double qty, double price) throws Exception {
+		return createOrder2( side, qty, price, false);
 	}
 	
-	static JsonObject createOrder2(String side, double qty, double price) throws Exception {
+	static JsonObject createOrder2(String side, double qty, double price, boolean fireblocks) throws Exception {
 		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, price);
-		return createOrder3(json);
+		return createOrder3(json, fireblocks);
 	}
 	
-	static JsonObject createOrder3(String json) throws Exception {
+	static JsonObject createOrder3(String json, boolean fireblocks) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.easyJson(json) );
 		obj.put("cookie", Cookie.cookie);
-		obj.put("currency", m_config.busd().name() );
+		obj.put("currency", m_config.rusd().name() );
 		obj.put("wallet_public_key", Cookie.wallet);
-		obj.put("noFireblocks", true);
 		obj.put("testcase", true);
+
+		if (!fireblocks) {
+			obj.put("noFireblocks", true);
+		}
 		
 		double price = obj.getDouble("tokenPrice");
 		double qty = obj.getDouble("quantity");
@@ -293,7 +309,7 @@ public class TestOrder extends MyTestCase {
 		boolean buy = obj.getString("action").equalsIgnoreCase("BUY");
 		
 		double tds = buy
-				? amt * .01
+				? 0
 				: (amt - m_config.commission() ) * .01;
 		obj.put("tds", tds);
 		

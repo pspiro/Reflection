@@ -23,13 +23,13 @@ import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
 
-// bug: when we received 2, we updated to 2 instead of add
-// issue: how to tell if the updates are old or new; you don't
-// want to play back old updates
 
-/** This is the WebHook server that receives updates from Moralis.
- *  There are three types of updates: token transfers, native token transfers, and approvals
- *
+/** HookServer tracks the balances for all contract, including both stock
+ *  tokens and stablecoins. First we query for the current balance, then
+ *  we listen for updates from Moralis via a WebHook server. 
+
+ *  There are three types of updates from Moralis: token transfers, native 
+ *  token transfers, and approvals
  */
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
@@ -89,7 +89,7 @@ public class HookServer {
 			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 			
-			server.createContext("/", exch -> new Trans(exch, false).respondOk() );
+			server.createContext("/", exch -> new Trans(exch, false).respondOk() ); // respond 200 here, I don't want to spook the Moralis client
 		});
 
 		// listen for ERC20 transfers and native transfers 
@@ -120,7 +120,7 @@ public class HookServer {
 
 		public void handleStatus() {
 			wrap( () -> {
-				respond( Util.toJson( code, RefCode.OK, "started", m_started) );
+				respond( Util.toJson( code, RefCode.OK, "started", m_started, "suffix", m_config.getHookNameSuffix() ) );
 			});
 		}
 
@@ -132,13 +132,17 @@ public class HookServer {
 		}
 		
 		/** Return all data about the requested wallet; if we don't have the data already,
-		 *  we will request it; called by RefAPI to get positions for My Reflection panel on Dashboard */
+		 *  we will request it; called by RefAPI to get positions for My Reflection panel on Dashboard 
+		 *  tags are: native, approved, positions, wallet
+		 *  positions is an array with fields address, position */ 
 		public void handleGetWallet() {
 			wrap( () -> {
 				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson( m_config.minTokenPosition() ) );
 			});
 		}
 
+		/** tags are: native, approved, positions, wallet 
+		 *  positions is an object key address, position */ 
 		public void handleGetWalletMap() {
 			wrap( () -> {
 				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJsonMap( m_config.minTokenPosition() ) );

@@ -25,7 +25,9 @@ import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Erc20.Stablecoin;
 import fireblocks.StockToken;
+import http.MyClient;
 import reflection.TradingHours.Session;
+import reflection.UserTokenMgr.UserToken;
 import tw.util.S;
 import util.LogType;
 
@@ -50,6 +52,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private int m_progress = 5;  // only relevant if status is working
 	private RefCode m_errorCode; // set if live order fails
 	private String m_message; // a message that will be displayed to user for a live (not completed) order
+	private long m_createdAt = System.currentTimeMillis();
+	private double m_sourceTokenQty; // if set, it means that we added our source token quantity to the UserTokenMgr, and we must subtract it out when the order is completed
 
 	public OrderTransaction(Main main, HttpExchange exch) {
 		super(main, exch);
@@ -178,7 +182,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			? preCommAmt + m_config.commission() + m_tds
 			: preCommAmt - m_config.commission() - m_tds;
 		require( 
-				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .02),  // +/- two cents; for some reason, Front end is sometimes off by .01; there's a bug assigned, but in the meantime, don't sweat it 
+				Util.isEq(myStablecoinAmt, m_stablecoinAmt, .05),  // +/- two cents; for some reason, Front end is sometimes off by .01; there's a bug assigned, but in the meantime, don't sweat it 
 				RefCode.INVALID_REQUEST, 
 				"The total order amount of %s does not match the calculated amount of %s", m_stablecoinAmt, myStablecoinAmt);
 		
@@ -187,6 +191,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// explain why there are no prices which should never happen otherwise
 		Prices prices = m_main.getStock(conid).prices();
 		prices.checkOrderPrice( m_order, orderPrice, m_config);
+		
+		// check that user has sufficient crypto to buy or sell
+		// must come after m_stablecoin is set
+		requireSufficientCrypto( true);
 		
 		respond( code, RefCode.OK, "id", m_uid); // Frontend will display a message which is hard-coded in Frontend
 		
@@ -390,6 +398,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_desiredQuantity *= ratio;
 			m_tds *= ratio;
 			
+			// we could update the UserTokenMgr here if desired; it would be more accurate
+			
 			updateAfterPartialFill(ratio);
 		}
 		else {
@@ -405,6 +415,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
 		}
 		else {
+			removeFromUserTokenMgr();
 			onFireblocksSuccess(null);
 		}
 	}
@@ -415,6 +426,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private void startFireblocks(double filledShares) throws Exception {
 		// for testing
 		if (m_map.getBool("fail") ) {
+			S.sleep(15000);
 			throw new Exception("Blockchain transaction failed intentially during testing"); 
 		}
 
@@ -482,6 +494,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
 	@Override public synchronized void onUpdateFbStatus(FireblocksStatus stat, String hash) {
+		// remove this order from UserTokenMgr once it completes or hits the CONFIRMING state
+		// it's not perfect as the change in balance of the source token due to this order
+		// might not have updated yet, but it should be shortly hereafter
+		if (stat == FireblocksStatus.CONFIRMING || stat.pct() == 100) {
+			removeFromUserTokenMgr();
+		}
+		
 		if (stat == FireblocksStatus.COMPLETED) {
 			onFireblocksSuccess(hash);
 		}
@@ -503,7 +522,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				// the blockchain transaction has failed; try to determine why
 
 				// confirm that the user has enough stablecoin or stock token in their wallet
-				requireSufficientCrypto();
+				requireSufficientCrypto(false);
 				
 				// confirm that user approved purchase with USDC 
 				requireSufficientApproval();
@@ -567,6 +586,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	/** Called when an error occurs after the order is submitted to IB, whether it filled or not;
 	 *  could come from IB, Fireblocks, or any other exception */ 
 	synchronized void onFail(String errorText, RefCode errorCode) {
+		// subtract out this order from the UserTokenMgr if necessary
+		removeFromUserTokenMgr();
+		
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Failed;
 			
@@ -627,21 +649,53 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	/** Confirm that the user has enough stablecoin or stock token in their wallet.
 	 *  This could be called before or after submitting the stock order */
-	private void requireSufficientCrypto() throws Exception {
+	private void requireSufficientCrypto(boolean before) throws Exception {
+
+		// get the position; if not available, let the order proceed; if the blockchain order fails, so be it
+		JsonObject positionsMap;  // keys are native, approved, positions, wallet (addr)
+
+		try {
+			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s",
+					m_config.hookServerPort(), m_walletAddr );
+			positionsMap = MyClient.getJson( url).getObject( "positions");
+			Util.require( positionsMap != null, "Null positions map returned from hook server for wallet %s", m_walletAddr);
+		}
+		catch( Exception e) {
+			out( "Error getting positions map; the hookserver may be down - " + e);
+			alert( "HOOK SERVER NOT RESPONDING", e.toString() );
+			return;
+		}
+		
+		String sourceTokenAddr = getSourceTokenAddress();
+		double balance = positionsMap.getDouble( sourceTokenAddr.toLowerCase() );   // current balance of source token
+
+		if (before) {
+			UserToken userToken = UserTokenMgr.getUserToken( m_walletAddr, sourceTokenAddr);
+	
+			double needed = m_order.isBuy() ? m_stablecoinAmt : m_desiredQuantity;  // neeeded qty of source token 
+			out( "Checking balance prior to order:  balance=%s  offset=%s  net=%s  needed=%s", 
+					balance, userToken.offset(), balance - userToken.offset(), needed);
+	
+			balance -= userToken.increment( needed);
+			m_sourceTokenQty = needed;
+		}
+
 		if (m_order.isBuy() ) {
-			double balance = m_stablecoin.getPosition( m_walletAddr );
-			require( Util.isGtEq(balance, m_stablecoinAmt ), 
+			require( Util.isGtEq(balance, m_stablecoinAmt), 
 					RefCode.INSUFFICIENT_STABLECOIN,
 					"The stablecoin balance (%s) is less than the total order amount (%s)", 
 					balance, m_stablecoinAmt );
 		}
 		else {
-			double balance = newStockToken().getPosition( m_walletAddr );
 			require( Util.isGtEq(balance, m_desiredQuantity), 
 					RefCode.INSUFFICIENT_STOCK_TOKEN,
 					"The stock token balance (%s) is less than the order quantity (%s)", 
 					balance, m_desiredQuantity);
 		}
+	}
+	
+	private String getSourceTokenAddress() {
+		return m_order.isBuy() ? m_stablecoin.address() : m_stock.getSmartContractId();
 	}
 
 	private void requireSufficientApproval() throws Exception {
@@ -752,6 +806,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	/** Called when the monitor program queries for all live orders */
 	public synchronized JsonObject getLiveOrder() {
 		JsonObject order = new JsonObject();
+		order.put( "createdAt", m_createdAt);
 		order.put( "uid", uid() );
 		order.put( "wallet", m_walletAddr);
 		order.put( "action", m_order.action() );
@@ -824,6 +879,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  the transactions table so we have a record of the order.
 	 *  @param refCode could be null */
 	@Override protected void postWrap(Enum refCode) {
+		removeFromUserTokenMgr();
+		
 		m_main.queueSql( conn -> conn.insertJson("transactions", 
 				Util.toJson( 
 						"uid", m_uid,
@@ -838,7 +895,17 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						
 						) ) );
 	}
-	
+
+	/** This must get called when an order is completed, no matter how it completes, if
+	 *  the order was added to the UserTokenMgr. It may/will be called multiple times, it's fine */
+	private synchronized void removeFromUserTokenMgr() {
+		if (m_sourceTokenQty > 0) {
+			out( "Removing order from userTokenMgr %s %s %s", m_walletAddr, getSourceTokenAddress(), m_sourceTokenQty);
+			UserTokenMgr.getUserToken( m_walletAddr, getSourceTokenAddress() ).decrement(m_sourceTokenQty);
+			m_sourceTokenQty = 0;
+		}
+	}
+
 	static JsonArray dumpPositionTracker() {
 		return positionTracker.dump();
 	}

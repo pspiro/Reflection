@@ -91,9 +91,10 @@ public class MdServer {
 			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() ); 
 
 			// generic messages
-			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // called every few seconds by Monitor
 			server.createContext("/mdserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
 			server.createContext("/mdserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
+			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() ); 
 		});
 		
 		timer.next( "Reading stock list from google sheet");

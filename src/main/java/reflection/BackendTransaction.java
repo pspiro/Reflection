@@ -30,7 +30,8 @@ public class BackendTransaction extends MyTransaction {
 	}
 	
 	/** Used by the My Reflection (portfolio) section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions */
+	 *  We're returning the token positions from the blockchain, not IB positions;
+	 *  This is obsolete and should be removed, and replaced with handleReqPositionsNew() */
 	public void handleReqPositions() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -306,15 +307,24 @@ public class BackendTransaction extends MyTransaction {
 	public void handleSignup() {
 		wrap( () -> {
 			parseMsg();
-			S.out( m_map.obj() );
+			out( m_map.obj() );
 
-			// redirect client to home page
 			redirect( m_config.baseUrl() );
-
-			// add entry to signup table
-			JsonObject obj = new JsonObject();
-			obj.copyFrom( m_map.obj(),  "first", "last", "email");  
-			m_main.queueSql( sql -> sql.insertJson("signup", obj) );
+			
+			String email = m_map.obj().getString("email").replace("%40", "@");
+			
+			if (Util.isValidEmail( email) ) {
+				// add entry to signup table
+				JsonObject obj = new JsonObject();
+				obj.copyFrom( m_map.obj(), "first", "last");
+				obj.put( "email", email);
+				obj.put( "referer", getFirstHeader( "referer") );
+				obj.put( "country", getCountryCode() );
+				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+			
+				out( "Adding to signup table: " + obj.toString() );
+				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
+			}
 		});
 	}
 
@@ -375,7 +385,7 @@ public class BackendTransaction extends MyTransaction {
 	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
 	public void allowConnection() {
 		wrap( () -> {
-			String country = getHeader("X-Country-Code");
+			String country = getCountryCode();
 			String ip = getHeader("X-Real-IP");
 			
 			boolean allow =
@@ -391,7 +401,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Return IP address and country code passed from nginx; you could change it to
-	 *  return all headers. */
+	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
 		wrap( () -> {
 			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();
@@ -452,6 +462,11 @@ public class BackendTransaction extends MyTransaction {
 				"askPrice", prices.anyAsk()
 				);
 		});
+	}
+
+	/** used by Monitor */
+	public void handleUserTokenMgr() {
+		wrap( () -> respond( UserTokenMgr.getJson() ) );
 	}
 
 }

@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -45,10 +46,10 @@ public class CryptoPanel extends MonPanel {
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.addHeader( "RUSD");
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
-		rusdPanel.add( "RefWallet has approved RUSD to spend BUSD", m_approved);
 		
 		rusdPanel.addHeader( "RefWallet");
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
+		rusdPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
 		rusdPanel.addHeader( "Owner Wallet");

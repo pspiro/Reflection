@@ -111,6 +111,7 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "FbServer", new FbServerPanel() );
+		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
@@ -226,7 +227,7 @@ public class Monitor {
 		
 		@Override  // this is wrong, should use base url
 		public void refresh() throws Exception {
-			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
+			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/api/hot-stocks");
 			setRows( ar);
 			m_model.fireTableDataChanged();
 		}

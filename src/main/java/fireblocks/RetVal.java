@@ -1,5 +1,7 @@
 package fireblocks;
 
+import reflection.Config;
+
 public class RetVal {
 	private String m_id;
 
@@ -17,12 +19,18 @@ public class RetVal {
 	}
 	
 	/** This blocks for up to 2 min */
-	public void waitForCompleted() throws Exception {
-		waitForStatus("COMPLETED");
+	public RetVal waitForCompleted() throws Exception {
+		return waitForStatus("COMPLETED");
 	}
 	
 	/** This blocks for up to 2 min */
-	public void waitForStatus(String status) throws Exception {
+	public RetVal waitForStatus(String status) throws Exception {
 		Fireblocks.waitForStatus(m_id, status);
+		return this;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config.ask();
+		new RetVal( "98115961-d3cf-48dd-9686-2b31e0aabac3").waitForCompleted();
 	}
 }
