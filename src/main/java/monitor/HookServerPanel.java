@@ -40,7 +40,7 @@ class HookServerPanel extends JsonPanel {
 	private void deleteHooks() {
 		wrap( () -> {
 			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
-				String suffix = getSuffix();  
+				String suffix = Monitor.m_config.getHookNameSuffix();  
 						
 				S.out( "Deleting transfers stream");
 				Streams.deleteStreamByName( String.format( 
@@ -98,20 +98,18 @@ class HookServerPanel extends JsonPanel {
 	}
 
 	@Override protected Object format(String tag, Object value) {
-		if (tag.equals("positions") ) {
-			return ((JsonArray)value).size();
-		}
-		return value;
+		return switch (tag) {
+			case "positions" -> ((JsonArray)value).size();
+			case "native" -> S.fmt2( (double)value);
+			case "approved" -> S.fmt2( (double)value);
+			default -> value;
+		};
 	}
 	
 	@Override protected void refresh() throws Exception {
 		JsonArray ar = MyClient.getArray(Monitor.m_config.hookBaseUrl() + "/hook/get-all-wallets");
 		setRows( ar);
 		m_model.fireTableDataChanged();
-	}
-
-	static String getSuffix() throws Exception {
-		return query( "/hook/status").getString("suffix");
 	}
 
 	static JsonObject query( String uri) throws Exception {
