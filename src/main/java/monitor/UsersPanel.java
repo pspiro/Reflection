@@ -19,6 +19,11 @@ class UsersPanel extends QueryPanel {
 		super( "users", names, sql);
 	}
 	
+	@Override public void adjust(JsonObject obj) {
+		obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
+		obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
+	}
+	
 	@Override protected String getTooltip(JsonObject row, String tag) {
 		String ret = null;
 
@@ -86,6 +91,9 @@ class UsersPanel extends QueryPanel {
 		}
 		
 		@Override public void adjust(JsonObject obj) {
+			obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
+			obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
+			
 			Util.wrap( () -> {
 				String persona = obj.getString( "persona_response");
 				if (JsonObject.isObject( persona) ) {

@@ -783,6 +783,10 @@ public class Util {
 		return fmt;
 	}
 
+	public static String initialCap(String name) {
+		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
+	}
+
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();
 //	}

@@ -469,4 +469,20 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> respond( UserTokenMgr.getJson() ) );
 	}
 
+	public void handleOnramp() {
+		wrap( () -> {
+			JsonObject obj = parseToObject();
+
+			m_walletAddr = obj.getString("wallet_public_key");
+			Util.reqValidAddress( m_walletAddr);
+			
+			String transId = obj.getString("transactionId");
+			require( S.isNotNull( transId), RefCode.INVALID_REQUEST, "Null transaction id");
+			
+			Util.executeIn(3000, () -> respond( 
+					code, RefCode.OK, 
+					Message, "Your transaction was successful and the crypto should appear in your wallet shortly") );
+		});
+	}
+
 }
