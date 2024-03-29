@@ -154,7 +154,7 @@ public class CryptoPanel extends MonPanel {
 		double approved = Monitor.m_config.busd().getAllowance(
 				Accounts.instance.getAddress("RefWallet"),
 				Monitor.m_config.rusdAddr() );
-		m_approved.setText( "" + approved);
+		m_approved.setText( S.fmt2( approved) );
 
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
 		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );

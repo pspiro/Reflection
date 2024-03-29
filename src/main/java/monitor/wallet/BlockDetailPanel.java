@@ -13,7 +13,7 @@ import tw.util.S;
 /** Panel to display all blockchain transactions for the tokens we care about */
 public class BlockDetailPanel extends BlockPanelBase {
 	
-	private HashMap<String,String> commonMap = new HashMap<>();
+	private HashMap<String,String> commonMap = new HashMap<>(); // map wallet address (lower case) to wallet name
 	
 	private JsonModel m_model = new JsonModel("block_timestamp,from_address,to_address,value_decimal,token_symbol,transaction_hash");
 	

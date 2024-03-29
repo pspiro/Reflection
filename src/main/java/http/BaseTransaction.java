@@ -228,7 +228,9 @@ public class BaseTransaction {
 	
 	/** Parse a POST message and return JsonObject */
 	protected JsonObject parseToObject() throws Exception {
-		return JsonObject.parse( m_exchange.getRequestBody() );
+		JsonObject ret = JsonObject.parse( m_exchange.getRequestBody() );
+		if (m_debug) out( ret);
+		return ret;
 	}
 
 	public static void setDebug(boolean b) {

@@ -212,7 +212,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
 				m_usdc.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
 				m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
-				m_matic.setText("" + ar.get(2).getDouble("balance"));			
+				m_matic.setText( S.fmt4( ar.get(2).getDouble("balance")) );			
 			});
 
 			Wallet wallet = new Wallet( walletAddr);

@@ -126,6 +126,11 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 			server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
 
+			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
+			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
+			server.createContext("/api/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
+			server.createContext("/api/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() ); // remove after frontend migrates to live-orders. pas
@@ -133,6 +138,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
 			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );
+			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 
 			// get/update profile
 			server.createContext("/api/get-profile", exch -> new ProfileTransaction(this, exch).handleGetProfile() );
@@ -224,6 +230,7 @@ public class Main implements ITradeReportHandler {
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
 		if (readStocks) {
+			S.out( "refreshing stocks");
 			m_stocks.readFromSheet(book, m_config);
 		}
 	}
