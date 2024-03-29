@@ -1,9 +1,11 @@
 package monitor;
 
+import org.json.simple.JsonObject;
+
 import fireblocks.Transactions;
 
 class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,conid,symbol,price,tds,rounded_quantity,commission,currency";
+		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,amount,conid,symbol,price,tds,rounded_quantity,commission,currency";
 		static String sql = """
 select 
 	transactions.created_at,
@@ -29,6 +31,13 @@ $limit""";  // you must order by desc to get the latest entries
 		
 		TransPanel() {
 			super( "transactions", names, sql);
+		}
+		
+		@Override public void adjust(JsonObject obj) {
+			double v = obj.getDouble( "quantity") * obj.getDouble("price");
+			if (v != 0) {
+				obj.put( "amount", v);
+			}
 		}
 		
 		@Override protected void onDouble(String tag, Object val) {

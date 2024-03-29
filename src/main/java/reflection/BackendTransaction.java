@@ -214,6 +214,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "invalid wallet address");
 
 			validateCookie("register");
 			

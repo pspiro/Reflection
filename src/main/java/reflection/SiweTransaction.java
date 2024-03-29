@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.StringTokenizer;
 
+import org.json.simple.STable;
 import org.json.simple.JsonObject;
 
 import com.moonstoneid.siwe.SiweMessage;
@@ -22,33 +23,32 @@ import tw.util.S;
 import util.LogType;
 
 public class SiweTransaction extends MyTransaction {
-	private static final HashSet<String> validNonces = new HashSet<>();
-	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map wallet address to Session   
-					// it would be better to store this in the Redis; give it a key so you can see or wipe out all 
+	private static final HashSet<String> validNonces = new HashSet<>(); // not serialized
+	private static final STable<Session> sessionMap = new STable<Session>("siwe.dat", 5000);  // map wallet address to Session   
 	
-	static class Session {
+	static class Session extends JsonObject {
 		private String m_nonce;
 		private long m_lastTime;
 		
 		public Session(String nonce) {
-			m_nonce = nonce;
-			m_lastTime = System.currentTimeMillis();
+			put( "nonce", nonce);
+			put( "time", System.currentTimeMillis() );
 		}
 
 		public String nonce() {
-			return m_nonce;
+			return getString( "nonce");
 		}
 		
 		public long lastTime() {
-			return m_lastTime;
+			return getLong( "time");
 		}
 
 		public void update() {
-			m_lastTime = System.currentTimeMillis();
+			put( "time", System.currentTimeMillis() );
 		}
 		
 		@Override public String toString() {
-			return m_nonce;
+			return nonce();
 		}
 	}
 	
