@@ -6,6 +6,7 @@ import static reflection.Main.require;
 import java.text.ParseException;
 import java.util.HashMap;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -311,14 +312,15 @@ public class BackendTransaction extends MyTransaction {
 
 			redirect( m_config.baseUrl() );
 			
-			String email = m_map.obj().getString("email").replace("%40", "@");
-			
+			String email = m_map.getUnescapedString("email");
+			String referer = m_map.getUnescapedString("referer");  
+					
 			if (Util.isValidEmail( email) ) {
 				// add entry to signup table
 				JsonObject obj = new JsonObject();
 				obj.copyFrom( m_map.obj(), "first", "last");
 				obj.put( "email", email);
-				obj.put( "referer", getFirstHeader( "referer") );
+				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
 			

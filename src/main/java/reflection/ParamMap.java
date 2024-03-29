@@ -1,5 +1,6 @@
 package reflection;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -116,5 +117,9 @@ public class ParamMap {
 
 	@Override public String toString() {
 		return m_obj.toString();
+	}
+	
+	public String getUnescapedString(String tag) {
+		return StringEscapeUtils.unescapeHtml4( getString( tag) );
 	}
 }
