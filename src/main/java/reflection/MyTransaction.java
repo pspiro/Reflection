@@ -64,8 +64,9 @@ public abstract class MyTransaction extends BaseTransaction {
 				String[] params = parts[1].split( "&");
 				for (String param : params) {
 					String[] pair = param.split( "=");
-					require( pair.length == 2, RefCode.INVALID_REQUEST, "Tag/value format is incorrect");
-					m_map.put( pair[0], pair[1]);
+					if (pair.length >= 2) {
+						m_map.put( pair[0], pair[1]);
+					}
 				}
 			}
 		}
