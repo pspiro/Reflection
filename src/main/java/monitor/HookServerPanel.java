@@ -54,7 +54,14 @@ class HookServerPanel extends JsonPanel {
 			}
 		});
 	}
-
+	
+	@Override protected void onDouble(String tag, Object val) {
+		if (tag.equals( "wallet") ) {
+			m_wallet.setText( val.toString() );
+			getWallet();
+		}
+	}
+	
 	private void resetWallet() {
 		wrap( () -> {
 			JsonObject json = query( "/hook/reset/" + m_wallet.getText() );
@@ -100,8 +107,8 @@ class HookServerPanel extends JsonPanel {
 	@Override protected Object format(String tag, Object value) {
 		return switch (tag) {
 			case "positions" -> ((JsonArray)value).size();
-			case "native" -> S.fmt2( (double)value);
-			case "approved" -> S.fmt2( (double)value);
+			case "native" -> S.fmt( "" + value);
+			case "approved" -> S.fmt( "" + value);
 			default -> value;
 		};
 	}

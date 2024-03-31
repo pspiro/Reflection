@@ -29,7 +29,10 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 	private JTextField m_netLiq = new JTextField(10);
+	private JTextField m_ownerAddress = new JTextField(20);
+	private JTextField m_refAddress = new JTextField(20);
 	HoldersPanel holdersPanel = new HoldersPanel();
+	
 
 	CryptoPanel() {
 		super( new BorderLayout() );
@@ -48,11 +51,13 @@ public class CryptoPanel extends MonPanel {
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
 		rusdPanel.addHeader( "RefWallet");
+		rusdPanel.add( "Address", m_refAddress);
 		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
 		rusdPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
 		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
 		rusdPanel.addHeader( "Owner Wallet");
+		rusdPanel.add( "Address", m_ownerAddress);
 		rusdPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
 		rusdPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
@@ -130,6 +135,7 @@ public class CryptoPanel extends MonPanel {
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
 		Wallet refWallet = Fireblocks.getWallet("RefWallet");
+		m_refAddress.setText( refWallet.walletAddr() );
 
 		double busd = refWallet.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
@@ -141,6 +147,7 @@ public class CryptoPanel extends MonPanel {
 		double ownerMatic = owner.getNativeBalance();
 		double ownerBusd = owner.getBalance(Monitor.m_config.busd().address());
 		SwingUtilities.invokeLater( () -> {
+			m_ownerAddress.setText( owner.walletAddr() );
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});

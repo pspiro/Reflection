@@ -16,6 +16,10 @@ public class Wallet {
 		Util.reqValidAddress(address);
 		m_walletAddr = address;
 	}
+	
+	public String walletAddr() {
+		return m_walletAddr;
+	}
 
 	/** Sends a request every time
 	 *  @param token is token address */

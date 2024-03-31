@@ -35,7 +35,6 @@ import tw.util.S;
 public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware, Comparable<JsonObject> {
 	
 	private static final long serialVersionUID = -503443796854799292L;
-	private DecimalFormat m_doubleFormat; 
 	
 	
 	public JsonObject() {
@@ -391,10 +390,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Increment the key by val; stored value must be a Double */
 	public void increment(String key, double val) {
 		put( key, getDouble(key) + val);
-	}
-	
-	public void doubleFormat( DecimalFormat fmt) {
-		m_doubleFormat = fmt;
 	}
 	
 	/** Will convert a string to enum; may return null */
