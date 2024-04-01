@@ -14,7 +14,8 @@ import common.Util.ExConsumer;
 import tw.util.OStream;
 import tw.util.S;
 
-/** Client for all HttpRequests */
+/** Client for all HttpRequests
+ *  Call MyClient.create() then header() to add headers  */
 public class MyClient {
 	public static String filename = "http.log";
 	

@@ -40,6 +40,10 @@ public class UserTokenMgr {
 		}
 	}
 	
+	/** Map walletAddr+tokenAddr to UserToken
+	 *  Don't serialize this; if RefAPI is restarted, worst case is user tries
+	 *  to double-spend and the blockchain transaction fails. If we restore wrong
+	 *  data from the file, it will stay wrong forever. */
 	private static HashMap<String,UserToken> m_map = new HashMap<>();
 	
 	public static UserToken getUserToken(String wallet, String tokenAddr) {

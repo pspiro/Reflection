@@ -6,6 +6,9 @@ import org.json.simple.JsonArray;
 
 import common.Util;
 
+/** Track the fractional shares of each contract. Ultimately we should populate
+ *  this with the current value at startup, but that would entail querying for
+ *  the outstanding blockchain position for each stock */
 public class PositionTracker {
 	private HashMap<Integer,Pos> m_map = new HashMap<>();
 	
