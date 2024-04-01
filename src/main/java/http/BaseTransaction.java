@@ -255,17 +255,18 @@ public class BaseTransaction {
 		require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "the conid is invalid", conidStr);
 		return Integer.parseInt(conidStr);
 	}
-	
+
+	/** returns list, never null, could be empty */
 	public List<String> getHeaders(String name) {
 		Headers headers = m_exchange.getRequestHeaders();
-		return headers != null ? headers.get( name) : new ArrayList<String>();
+		List<String> ret = headers != null ? headers.get( name) : null;
+		return ret != null ? ret : new ArrayList<String>();
 	}
 	
+	/** Returns header value or empty string */
 	public String getHeader(String name) throws Exception {
 		List<String> headers = getHeaders(name);
-		Util.require( headers != null && headers.size() > 0, "Error: no '%s' header found", name);
-		Util.require( headers.size() == 1, "Error: multiple '%s' headers found", name);
-		return headers.get(0);
+		return headers.size() > 0 ? headers.get(0) : "";
 	}
 
 	/** called if there is no matching URI */
