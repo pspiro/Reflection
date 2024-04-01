@@ -10,6 +10,7 @@ import org.json.simple.JsonObject;
 import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.error.SiweException;
 
+import common.Util;
 import reflection.RefCode;
 import reflection.SiweUtil;
 import tw.util.S;
@@ -271,6 +272,24 @@ public class TestSiwe extends MyTestCase {
 		meSiweMsg = meResponseMsg.getObject("message");
 		assertEquals( TestSiwe.myWalletAddress, meSiweMsg.getString("address") );
 		assertEquals( nonce, meSiweMsg.getString("nonce"));
+	}
+	
+	/** This is to test that the cookie and nonce can survive a RefAPI restart */
+	public void testRestartRefAPI() throws Exception {
+		Cookie.setNewFakeAddress(false);
+		
+		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
+		assert200();
+
+		S.out( "Restart RefAPI");
+		Util.pause();
+
+		// missing cookie
+		cli().get( "/api/get-profile/" + Cookie.wallet);
+		assertEquals( 400, cli.getResponseCode() );
+
+		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
+		assert200();
 	}
 	
 	public void testFailCookie() throws Exception {

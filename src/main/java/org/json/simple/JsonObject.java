@@ -5,11 +5,11 @@
 package org.json.simple;
 
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -408,6 +408,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static JsonObject readFromFile(String filename) throws Exception {
 		return parse( new FileInputStream( filename) );
 	}
+	
+	public void writeToFile(String filename) throws IOException {
+		try (FileWriter writer = new FileWriter( filename) ) {
+			writeJSONString( writer);
+		}
+	}
+
 }
 /** NOTE: Timestamp objects are stored as
  *  

@@ -6,7 +6,6 @@ import static reflection.Main.require;
 import java.text.ParseException;
 import java.util.HashMap;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -391,8 +390,8 @@ public class BackendTransaction extends MyTransaction {
 			String ip = getHeader("X-Real-IP");
 			
 			boolean allow =
-					m_main.isAllowedCountry(country ) ||
-					m_main.isAllowedIP(ip);
+					S.isNotNull( country) && m_main.isAllowedCountry(country ) ||
+					S.isNotNull( ip) && m_main.isAllowedIP(ip);
 			
 			respond( Util.toJson( 
 					"allow", allow,
