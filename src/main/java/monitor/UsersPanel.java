@@ -1,7 +1,5 @@
 package monitor;
 
-import java.awt.event.MouseEvent;
-
 import javax.swing.JPopupMenu;
 
 import org.json.simple.JsonObject;

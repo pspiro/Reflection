@@ -2,7 +2,6 @@ package testcase;
 
 import static testcase.TestOrder.curPrice;
 
-import fireblocks.Rusd;
 import reflection.RefCode;
 import tw.util.S;
 

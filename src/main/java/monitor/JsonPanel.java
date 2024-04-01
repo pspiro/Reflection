@@ -1,7 +1,6 @@
 package monitor;
 
 import java.awt.LayoutManager;
-import java.awt.event.MouseEvent;
 
 import javax.swing.JPopupMenu;
 
