@@ -54,7 +54,7 @@ public class Wallet {
 					decimals = 18;
 				}
 				
-				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, 18) );
+				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, decimals) );
 			}
 		}
 		
