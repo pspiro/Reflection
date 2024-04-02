@@ -46,8 +46,15 @@ public class Wallet {
 		for (JsonObject token : MoralisServer.reqPositionsList(m_walletAddr, contracts) ) {
 			String addr = token.getString("token_address");			
 			String balance = token.getString("balance");
+			
 			if (S.isNotNull(addr) && S.isNotNull(balance) ) {
-				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, token.getInt("decimals") ) );
+				int decimals = token.getInt("decimals");
+				if (decimals == 0) {
+					S.out( "Error: Moralis query failed to return number of decimals for %s; defaulting to 18", addr);
+					decimals = 18;
+				}
+				
+				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, 18) );
 			}
 		}
 		

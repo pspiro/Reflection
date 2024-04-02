@@ -100,6 +100,7 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
+		m_tabs.addTab( "Singups", new SignupPanel() );
 		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -230,6 +231,17 @@ public class Monitor {
 			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/api/hot-stocks");
 			setRows( ar);
 			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class SignupPanel extends QueryPanel {
+
+		SignupPanel() {
+			super( 	"signup", 
+					"created_at,first,last,email,referer",
+					String.format( 
+							"select * from signup where created_at >= '%s' order by created_at", 
+							Util.yToS.format( System.currentTimeMillis() - 7 * Util.DAY) ) );
 		}
 	}
 }

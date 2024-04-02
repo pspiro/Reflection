@@ -311,13 +311,17 @@ public class BackendTransaction extends MyTransaction {
 
 			redirect( m_config.baseUrl() );
 			
+			String first = m_map.getUnescapedString("first");  // it would have been better just to unesc the whole uri
+			String last = m_map.getUnescapedString("last");
 			String email = m_map.getUnescapedString("email");
 			String referer = m_map.getUnescapedString("referer");  
-					
-			if (Util.isValidEmail( email) ) {
+			
+			// write them all until we get this working
+//			if (Util.isValidEmail( email) ) {
 				// add entry to signup table
 				JsonObject obj = new JsonObject();
-				obj.copyFrom( m_map.obj(), "first", "last");
+				obj.put( "first", first);
+				obj.put( "last", last);
 				obj.put( "email", email);
 				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
@@ -325,7 +329,7 @@ public class BackendTransaction extends MyTransaction {
 			
 				out( "Adding to signup table: " + obj.toString() );
 				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
-			}
+//			}
 		});
 	}
 

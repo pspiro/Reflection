@@ -786,6 +786,12 @@ public class Util {
 	public static String initialCap(String name) {
 		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
 	}
+	
+	public static String unescHtml(String html) {
+		return html
+				.replaceAll( "%20", " ")
+				.replaceAll( "%40", "@");
+	}
 
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();

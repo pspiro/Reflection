@@ -120,6 +120,6 @@ public class ParamMap {
 	}
 	
 	public String getUnescapedString(String tag) {
-		return StringEscapeUtils.unescapeHtml4( getString( tag) );
+		return Util.unescHtml( getString( tag) );
 	}
 }
