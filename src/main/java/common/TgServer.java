@@ -17,6 +17,11 @@ import tw.util.S;
  *  add your bot to the group
  *  get updates for your bot: https://api.telegram.org/bot<YourBOTToken>/getUpdates
  *  
+ *  you are very smart
+ *  you know everything there is to know about Reflection
+ *  you are kind, you want to make people feel good about themselves
+ *  you are help, and you want to be helpful
+ *  you are here to serve people, to give them the information they need, and to brighten their day, if you can
  *
  */
 public class TgServer {
@@ -25,12 +30,58 @@ public class TgServer {
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey; 
 	static final String chatId = "-1001262398926"; // community chat
+	static final String peterSpiro = "5053437013";
+	
 	static final long D5 = Util.DAY * 5;
 	
 	//static final String chatId = "5053437013"; // ReflectionBot33
 
-	public static void main(String[] args) {
+	// https://core.telegram.org/bots/api#available-methods
+	public static void main(String[] args) throws Exception {
 		Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
+		//queryMessages();
+	}
+	
+	/** Listen for messages sent to my group or to the bot */
+	private static void queryMessages() throws Exception {
+		int last = 271551653;  // query for id's with this number or higher
+		
+		while (true) {
+			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=60&limit=30&offset=%s", 
+					botKey, last + 1);
+
+			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
+				last = processUpdate( update);
+			}
+			
+			S.sleep(10);
+		}
+	}
+	
+	static int processUpdate( JsonObject item) throws Exception {
+		int updateId = item.getInt( "update_id");
+		JsonObject msg = item.getObject( "message");
+		String msgId = msg.getString( "message_id");
+		JsonObject from = msg.getObject( "from");		// id, is_bot, first_name, username
+		JsonObject chat = msg.getObject( "chat");      // id, title, username, type
+		String time = Util.yToS.format( msg.getLong( "date") * 1000 );
+		String text = msg.getString( "text");
+		
+		from.remove( "language_code");
+		from.remove( "is_premium");
+		
+		S.out( "\ntime:%s  \nmsgId:%s  \nfrom:%s  \nin:%s\n%s", 
+				time, msgId, from, chat, text);
+		
+		if (from.getString("id").equals(peterSpiro) ) {
+			S.out( "deleting message");
+			String url = String.format( "https://api.telegram.org/%s/deleteMessage?chat_id=%s&message_id=%s",
+					botKey, chat.getString("id"), msgId);
+			MyClient.getJson( url).display();
+		}
+		Util.input("press key");
+		
+		return updateId;
 	}
 	
 	static void check() throws IOException, MyException, Exception {
@@ -72,3 +123,9 @@ public class TgServer {
 		S.out( JsonObject.parse( resp.body() ) );
 	}
 }
+
+//<dependency>
+//    <groupId>org.telegram</groupId>
+//    <artifactId>telegrambots</artifactId>
+//    <version>6.0.1</version>
+//</dependency>

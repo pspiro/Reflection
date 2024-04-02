@@ -4,7 +4,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.MyClient;
 import test.Cookie;
 import tw.util.S;
 

@@ -5,11 +5,11 @@
 package org.json.simple;
 
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +35,6 @@ import tw.util.S;
 public class JsonObject extends HashMap<String,Object> implements JSONAware, JSONStreamAware, Comparable<JsonObject> {
 	
 	private static final long serialVersionUID = -503443796854799292L;
-	private DecimalFormat m_doubleFormat; 
 	
 	
 	public JsonObject() {
@@ -393,10 +392,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		put( key, getDouble(key) + val);
 	}
 	
-	public void doubleFormat( DecimalFormat fmt) {
-		m_doubleFormat = fmt;
-	}
-	
 	/** Will convert a string to enum; may return null */
 	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
 		Object val = get(key);
@@ -413,6 +408,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static JsonObject readFromFile(String filename) throws Exception {
 		return parse( new FileInputStream( filename) );
 	}
+	
+	public void writeToFile(String filename) throws IOException {
+		try (FileWriter writer = new FileWriter( filename) ) {
+			writeJSONString( writer);
+		}
+	}
+
 }
 /** NOTE: Timestamp objects are stored as
  *  
