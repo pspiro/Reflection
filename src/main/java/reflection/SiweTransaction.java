@@ -11,10 +11,10 @@ import java.util.HashSet;
 import java.util.StringTokenizer;
 
 import org.json.simple.JsonObject;
+import org.json.simple.STable;
 
 import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.util.Utils;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
@@ -22,14 +22,17 @@ import tw.util.S;
 import util.LogType;
 
 public class SiweTransaction extends MyTransaction {
-	private static final HashSet<String> validNonces = new HashSet<>();
-	static final HashMap<String,Session> sessionMap = new HashMap<>();  // map wallet address to Session   
-					// it would be better to store this in the Redis; give it a key so you can see or wipe out all 
+	private static final HashSet<String> validNonces = new HashSet<>(); // not serialized
+	private static final STable<Session> sessionMap = new STable<Session>("siwe.dat", 5000, Session.class);  // map wallet address to Session
 	
-	static class Session {
+	public static class Session implements STable.Ser {
 		private String m_nonce;
 		private long m_lastTime;
 		
+		/** Needed for deserialization */
+		public Session() {
+		}
+
 		public Session(String nonce) {
 			m_nonce = nonce;
 			m_lastTime = System.currentTimeMillis();
@@ -49,6 +52,15 @@ public class SiweTransaction extends MyTransaction {
 		
 		@Override public String toString() {
 			return m_nonce;
+		}
+		
+		public JsonObject getJson() {
+			return Util.toJson( "nonce", m_nonce, "time", m_lastTime);
+		}
+		
+		public void setJson( JsonObject obj) {
+			m_nonce = obj.getString( "nonce");
+			m_lastTime = obj.getLong( "time");
 		}
 	}
 	
@@ -264,11 +276,11 @@ public class SiweTransaction extends MyTransaction {
 	
 	/** Return the cookies from the HTTP request header */
 	private ArrayList<String> authCookies() {
-		return findCookies( m_exchange.getRequestHeaders(), "__Host_authToken");
+		return findCookies( "__Host_authToken");
 	}
 
 	/** Find the cookie header that starts with name. You can have multiple cookies with the same name */
-	public ArrayList<String> findCookies(Headers headers, String name) {
+	public ArrayList<String> findCookies(String name) {
 		ArrayList<String> list = new ArrayList<>();
 		
 		for (String cookies : getHeaders( "Cookie") ) {  // it seems there is usually only one Cookie header w/ all the different cookies in it separated by ;
