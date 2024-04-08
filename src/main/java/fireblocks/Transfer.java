@@ -3,9 +3,6 @@ package fireblocks;
 import reflection.Config;
 
 public class Transfer {
-	static String op = "POST"; 
-	static String endpoint = "/v1/transactions"; // /v1/vault/accounts_paged";
-	static String myDestWallet = null;
 	
 	public static void main( String[] ar) throws Exception {
 		Config.ask();

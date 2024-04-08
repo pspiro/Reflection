@@ -53,8 +53,8 @@ public class Profile extends JsonObject {
 		}
 
 		// validate pan and aadhaar
-		require( Util.isValidAadhaar( aadhaar() ), RefCode.INVALID_USER_PROFILE, "The Aadhaar entered is invalid"); 
-		require( Util.isValidPan( pan() ), RefCode.INVALID_USER_PROFILE, "The PAN entered is invalid");
+//		require( Util.isValidAadhaar( aadhaar() ), RefCode.INVALID_USER_PROFILE, "The Aadhaar entered is invalid"); 
+//		require( Util.isValidPan( pan() ), RefCode.INVALID_USER_PROFILE, "The PAN entered is invalid");
 		require( Util.isValidEmail( email() ), RefCode.INVALID_USER_PROFILE, "The email entered is invalid");
 
 		// don't allow < or > in user entry fields

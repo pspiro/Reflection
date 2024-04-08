@@ -25,10 +25,10 @@ class HookServerPanel extends JsonPanel {
 		
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
+		top.add( new HtmlButton( "Get wallet", e -> getWallet() ) );
+		top.add( new HtmlButton( "'MyWallet' query", e -> myWallet() ) );
 		top.add( new HtmlButton( "Reset wallet", e -> resetWallet() ) );
 		top.add( new HtmlButton( "Reset all wallets", e -> resetAllWallets() ) );
-		top.add( new HtmlButton( "Get wallet", e -> getWallet() ) );
-		top.add( new HtmlButton( "JsonObject json = query 'My Wallet'", e -> myWallet() ) );
 		top.add( new HtmlButton( "Debug on", e -> debugOn() ) );
 		top.add( new HtmlButton( "Debug off", e -> debugOff() ) );
 		top.add( new HtmlButton( "Delete hooks at Moralis", e -> deleteHooks() ) );

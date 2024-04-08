@@ -249,10 +249,6 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		Util.wrap( () -> {
 			m_config.sqlCommand( sql -> sql.execWithParams( 
 					"update redemptions set status = '%s' where uid = '%s'", newStatus, m_uid) );
-			
-			if (!m_map.getBool("testcase")) {
-				alert( "REDEMPTION", newStatus.toString() );
-			}
 		});
 	}
 

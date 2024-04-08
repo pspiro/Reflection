@@ -15,7 +15,7 @@ import tw.util.S;
 public class Onramp {
 	static String apiKey = "WrvBzqWp1QSgXijTi94qJX2YknOv2Y";
 	static String secretKey = "a9j1JxuRmJPJ8kVpdBd8WNJ3u8J260Ls";
-	static String appId = "9504102";  // used by Frontend only
+	static String appId = "950410";  // used by Frontend only
 
 	private static JsonObject tokenMap = new JsonObject();
 	
