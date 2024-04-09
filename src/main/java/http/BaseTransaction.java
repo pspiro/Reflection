@@ -72,7 +72,8 @@ public class BaseTransaction {
 	}
 
 	/** Respond with json
-	 * @param responseCode is 200 or 400 */
+	 * @param responseCode is 200 or 400
+	 * @param headers may be null */
 	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
 		if (m_responded) {
 			return false;

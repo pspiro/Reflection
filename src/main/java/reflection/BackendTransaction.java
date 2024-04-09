@@ -13,6 +13,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import http.MyClient;
+import onramp.Onramp;
 import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
@@ -477,17 +478,42 @@ public class BackendTransaction extends MyTransaction {
 	public void handleOnramp() {
 		wrap( () -> {
 			JsonObject obj = parseToObject();
+			out( obj);
 
 			m_walletAddr = obj.getString("wallet_public_key");
 			Util.reqValidAddress( m_walletAddr);
 			
-			String transId = obj.getString("transactionId");
-			require( S.isNotNull( transId), RefCode.INVALID_REQUEST, "Null transaction id");
+			int orderId = obj.getInt("orderId");
+			require( orderId != 0, RefCode.INVALID_REQUEST, "Missing order id");
 			
-			Util.executeIn(3000, () -> respond( 
-					code, RefCode.OK, 
-					Message, "Your transaction was successful and the crypto should appear in your wallet shortly") );
+			// don't tie up the http thread
+			Util.execute( () -> {
+				wrap( () -> {
+					int status = Onramp.waitForOrderStatus( orderId, 45); // wait up to 45 sec for order status
+					
+					if (status == 4 || status == 15) { // success
+						respond( code, RefCode.OK, Message, 
+								"Your transaction was successful and the crypto should appear in your wallet shortly");
+					}
+					else if (status < -101) {  // failed invalid order id
+						failOnramp( "On-ramping failed: the order id was invalid"); // should never happen
+					}
+					else if (status < -3) {  // failed KYC
+						failOnramp( "On-ramping failed: the names on the bank account and KYC do not match");
+					}
+					else if (status == -2) { // user aborted
+						failOnramp( "On-ramping failed: user aborted the transaction");
+					}
+					else { // timed out
+						failOnramp( String.format( "The transaction made it to status %s but then timed out. It may still complete. Please check your wallet and/or bank account in a little while.", status) );
+					}
+				});
+			});
 		});
+	}
+
+	private void failOnramp(String message) throws RefException {
+		throw new RefException( RefCode.ONRAMP_FAILED, message); 
 	}
 
 }
