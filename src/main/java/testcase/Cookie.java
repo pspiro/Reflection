@@ -20,6 +20,7 @@ public abstract class Cookie extends MyTestCase {
 	public static String wallet   = "0x96531A61313FB1bEF87833F38A9b2Ebaa6EA57ce";
 	public static String cookie;  // that's right, the cookie is a string, not an object
 	public static boolean init; // to force initialization
+	public static String prodWallet = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	
 	static {
 		try {

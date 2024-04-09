@@ -41,7 +41,7 @@ import junit.framework.TestCase;
 //	   TestSmartToken.class,
 //	   TestSql.class,
 	   TestUserTokMgr.class,
-	   TestSwap.class, // FAILS!!!!!!!!!!!
+	   TestSwap.class,
 //	   TestStrings.class,
 	   TestUnwindOrder.class,  // not done
 //	   TestWallet.class,

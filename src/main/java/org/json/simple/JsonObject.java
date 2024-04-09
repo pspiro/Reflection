@@ -301,11 +301,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return obj;
 	}
 
-	public Comparable getComparable(String key) {
-		Object val = get(key);
-		return val == null ? "" : val instanceof Comparable ? (Comparable)val : val.toString();
-	}
-
 	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()
 	 *  and change put() to not add null values; having null values seems useless
 	 *  and it can break things because the size of the map is not the same

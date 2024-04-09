@@ -179,7 +179,12 @@ class DualPrices {
 		};
 	}
 
-	/** Update stockPrices with last price for the correct session */
+	/** Update stockPrices with last price for the correct session
+	 * 
+	 *  NOTE it seems that in the paper system, smart prices do not
+	 *  get updated during the overnight session, so if you want
+	 *  prices during overnight session in live system, you will
+	 *  have to keep the overnight prices and start using them again */
 	public void update(JsonObject stockPrices, Session session) {
 		// no we just always use smart
 		getPrices(Session.Smart).update(stockPrices);

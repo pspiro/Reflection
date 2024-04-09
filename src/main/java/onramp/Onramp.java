@@ -1,7 +1,5 @@
 package onramp;
 
-import java.util.HashMap;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 

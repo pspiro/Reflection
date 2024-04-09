@@ -498,6 +498,10 @@ public class Config extends ConfigBase {
 		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
 	}
 	
+	public static Config ask(String prefix) throws Exception {
+		return readFrom( prefix + "-config");
+	}
+	
 	public String getTabName() {
 		return m_tab.tabName();
 	}

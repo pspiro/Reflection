@@ -22,16 +22,16 @@ public class ImportTelegram {
 		ar.forEach( obj -> obj.update( "text", textObj -> extract(textObj) ) ); 
 		ar.forEach( obj -> obj.update( "date", text -> text.toString().replace( 'T', ' ') ) ); 
 		
-		JsonArray ar2 = new JsonArray();
-
-		HashSet<String> set = new HashSet<>();
-		ar.forEach( rec -> {
-			if (set.add( rec.getString("text") ) ) {
-				ar2.add( rec);
-			}
-		});
+//		JsonArray ar2 = new JsonArray();
+//
+//		HashSet<String> set = new HashSet<>();
+//		ar.forEach( rec -> {
+//			if (set.add( rec.getString("text") ) ) {
+//				ar2.add( rec);
+//			}
+//		});
 				
-		m_model.setRows( ar2);
+		m_model.setRows( ar);
 		
 		JFrame f = new JFrame();
 		f.add( m_model.createTable() );
@@ -52,7 +52,7 @@ public class ImportTelegram {
 //		   "text_entities": [
 
 		
-		ar2.writeToCsv( "c:\\temp\\ama.csv", ',', "from,text");
+		ar.writeToCsv( "c:\\temp\\ama.csv", ',', "from,text");
 		S.out( "done");
 	}
 	

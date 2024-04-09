@@ -7,6 +7,7 @@ import org.json.simple.JsonArray;
 import common.JsonModel;
 import common.Util;
 import fireblocks.Accounts;
+import monitor.Monitor;
 import positions.MoralisServer;
 import tw.util.S;
 
@@ -15,7 +16,19 @@ public class BlockDetailPanel extends BlockPanelBase {
 	
 	private HashMap<String,String> commonMap = new HashMap<>(); // map wallet address (lower case) to wallet name
 	
-	private JsonModel m_model = new JsonModel("block_timestamp,from_address,to_address,value_decimal,token_symbol,transaction_hash");
+	private JsonModel m_model = new Model();
+	
+	class Model extends JsonModel {
+		Model() {
+			super( "block_timestamp,from_address,to_address,value_decimal,token_symbol,transaction_hash");
+		}
+		
+		@Override protected void onDoubleClick(String tag, Object val) {
+			if (tag.equals( "transaction_hash") ) {
+				Util.browse( Monitor.m_config.blockchainTx( val.toString() ) );
+			}				
+		}
+	}
 	
 	public BlockDetailPanel() {
 		
