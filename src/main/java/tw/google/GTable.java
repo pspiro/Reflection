@@ -53,6 +53,10 @@ public class GTable extends HashMap<String,String> {
 	@Override public String get(Object key) {
 		return super.get( m_caseSensitive ? key : ((String)key).toLowerCase() );
 	}
+	
+	@Override public boolean containsKey(Object key) {
+		return super.containsKey( m_caseSensitive ? key : ((String)key).toLowerCase() );
+	}
 
 	public String getNN(Object key) {
 		return S.notNull(get(key));  
@@ -109,6 +113,10 @@ public class GTable extends HashMap<String,String> {
 		}
 	}
 	
+	/** Put to the map but not the spreadsheet */
+	public String putLocal(String tag, String newVal) {
+		return super.put( tag, newVal);
+	}
 	
 	// update map and sheet
 	@Override public String put(String tag, String newVal) {
