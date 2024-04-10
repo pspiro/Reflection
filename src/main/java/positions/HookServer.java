@@ -30,6 +30,8 @@ import tw.util.S;
 
  *  There are three types of updates from Moralis: token transfers, native 
  *  token transfers, and approvals
+ *  
+ *  You can use grok to create a tcp/ip tunnel to receive the webhook messages 
  */
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);

@@ -204,6 +204,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return (JsonObject)get(key);
 	}
 	
+	/** Never return null, return empty JsonObject  */
+	public JsonObject getObjectNN(String key) throws Exception {
+		JsonObject obj = getObject( key);
+		return obj != null ? obj : new JsonObject();
+	}
+	
 	/** Returns zero for null value. */
 	public long getLong(String key) {
 		String str = getString( key);

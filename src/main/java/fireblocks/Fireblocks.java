@@ -429,6 +429,14 @@ public class Fireblocks {
 	public static boolean isDev() {
 		return platformBase == null || platformBase.startsWith( "ETH_TEST");
 	}
+
+	/** Use this to create wallet for native token when using a new testnet 
+	 * @throws Exception */
+	public static RetVal createWallet(int accountId, String assetId) throws Exception {
+		Fireblocks fb = new Fireblocks();
+		fb.endpoint( String.format( "/v1/vault/accounts/%s/%s", accountId, assetId) );
+		return fb.transactToRetVal();
+	}
 	
 //	public static void sign() {
 //		String body = """

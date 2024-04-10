@@ -56,9 +56,11 @@ public class BlockDetailPanel extends BlockPanelBase {
 				m_model.ar().addAll( ar);
 				ar.print();
 			});
+
+			// sometimes the decimals and value_decimal are null so it show as zero size
 			
 			// filter and update rows
-			m_model.ar().filter( obj -> obj.getDouble(valueDecimal) != 0 && weCare( obj) );  // remove rows with value zero
+			m_model.ar().filter( obj -> obj.getDouble("value") != 0 && weCare( obj) );  // remove rows with value zero
 			m_model.ar().update( timestamp, val -> val.toString().replace( "T", "  ").replace( "Z", "") );
 			m_model.ar().update( valueDecimal, val -> S.fmt2( Util.toDouble( val) ) );
 			m_model.ar().update( fromAddress, val -> val.equals( nullAddr) ? "Mint" : val);
