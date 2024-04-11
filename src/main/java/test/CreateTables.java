@@ -50,6 +50,7 @@ public class CreateTables  {
 				+ "referer varchar,"
 				+ "country varchar(2),"
 				+ "ip varchar(15),"
+				+ "utm_source varchar(200)"
 				+ ")";
 		con.execute(sql);
 	}

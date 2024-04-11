@@ -316,6 +316,7 @@ public class BackendTransaction extends MyTransaction {
 			String last = m_map.getUnescapedString("last");
 			String email = m_map.getUnescapedString("email");
 			String referer = m_map.getUnescapedString("referer");  
+			String utmSource = m_map.getUnescapedString("utm_source");  
 			
 			// write them all until we get this working
 //			if (Util.isValidEmail( email) ) {
@@ -327,6 +328,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+				obj.put( "utm_source", utmSource);
 			
 				out( "Adding to signup table: " + obj.toString() );
 				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
