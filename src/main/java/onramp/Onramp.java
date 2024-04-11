@@ -1,7 +1,5 @@
 package onramp;
 
-import java.util.HashMap;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -9,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import fireblocks.Encrypt;
+import http.ClientException;
 import http.MyClient;
 import tw.util.S;
 
@@ -20,7 +19,8 @@ public class Onramp {
 	private static JsonObject tokenMap = new JsonObject();
 	
 	/*	
-	 *  ORDER STATUS CODES 
+	 *  ORDER STATUS CODES
+-101  our own code for invalid order id 
 -4  amount mismatch  The sent amount does not match the required amount.  
 -3  bank and kyc name mismatch  The names on the bank account and KYC do not match.  
 -2  transaction abandoned  The user has abandoned the transaction.  
@@ -40,11 +40,11 @@ public class Onramp {
 //		queryHistory();
 //		queryLimits().display();
 //		coinLimits(1).display();
-		buildMap();
-
-		JsonObject prices = getPrices();
-		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
-			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
+//		buildMap();
+//
+//		JsonObject prices = getPrices();
+//		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
+//			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
 	}
 
 	public static void buildMap() throws Exception {
@@ -98,7 +98,38 @@ public class Onramp {
 		query( url, query).display();
 	}
 
-	public static void queryOrderId(int orderId) throws Exception {
+	public static boolean isFinal(int status) {
+		return status < 0 || status == 4 || status == 15;
+	}
+
+	/** Wait up to n seconds for order status. If there's an exception,
+	 *  keep waiting */
+	public static int waitForOrderStatus(int orderId, int sec) {
+		int status = Onramp.queryOrderStatus( orderId);
+		for (int i = 0; i < sec && !Onramp.isFinal( status); i++) {
+			S.sleep(1000);
+			status = Onramp.queryOrderStatus( orderId);
+		}
+		return status;
+	}
+
+	public static int queryOrderStatus(int orderId) {
+		try {
+			return queryOrder( orderId).getObjectNN( "data").getInt( "orderStatus");
+		}
+		catch( ClientException e) {
+			S.out( "Onramp error for order id %s - %s", orderId, e.getMessage() );
+			
+			return "Invalid orderId".equals( e.responseJson().getString("error") ) // no need to keep trying in this case
+				? -101 : 0;
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	public static JsonObject queryOrder(int orderId) throws Exception {
 		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/orderStatus";
 
 		JsonObject query = Util.toJson( 
@@ -106,7 +137,7 @@ public class Onramp {
 				"type", 1);
 
 		S.out( "querying for order id %s", orderId);
-		query( url, query).display();
+		return query( url, query);
 	}
 
 	private static JsonObject query( String url, JsonObject query) throws Exception {

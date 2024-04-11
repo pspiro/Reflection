@@ -151,11 +151,25 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void sortJson(String tag, boolean forward) {
 		sort( (a, b) -> {
-			Comparable v1 = a.getComparable(tag);
-			Comparable v2 = b.getComparable(tag);
-			return forward ? Util.compare( v1, v2) : Util.compare( v2, v1);
+			Object obj1 = a.get( tag);
+			Object obj2 = b.get( tag);
+			
+			int ret;
+			
+			if (obj1.getClass().equals( obj2.getClass() ) && obj1 instanceof Comparable) {
+				ret = ((Comparable)obj1).compareTo( obj2);
+			}
+			else if (obj1 instanceof Number && obj2 instanceof Number) {
+				ret = Double.valueOf( obj1.toString() ).compareTo( Double.valueOf( obj2.toString() ) );
+			}
+			else {
+				ret = obj1.toString().compareTo( obj2.toString() );
+			}
+			
+			return forward ? ret : -ret;
 		});
 	}
 	

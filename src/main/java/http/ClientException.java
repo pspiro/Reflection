@@ -2,6 +2,8 @@ package http;
 
 import java.net.URI;
 
+import org.json.simple.JsonObject;
+
 import common.Util;
 
 public class ClientException extends Exception {
@@ -27,5 +29,19 @@ public class ClientException extends Exception {
 
 	public int statusCode() {
 		return m_statusCode;
+	}
+	
+	public String responseText() {
+		return m_responseText;
+	}
+
+	/** @return never null */
+	public JsonObject responseJson() {
+		try { 
+			return JsonObject.parse( m_responseText);
+		}
+		catch( Exception e) {
+			return new JsonObject();  // eat it
+		}
 	}
 }

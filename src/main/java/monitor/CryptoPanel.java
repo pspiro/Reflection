@@ -19,6 +19,8 @@ import tw.util.VerticalPanel;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {
+	final int addrSize = 28;
+	
 	private JTextField m_rusdOutstanding = new JTextField(10);
 	private JTextField m_refWalletBusd = new JTextField(10);
 	private JTextField m_ownerBusd = new JTextField(10);
@@ -29,8 +31,9 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
 	private JTextField m_netLiq = new JTextField(10);
-	private JTextField m_ownerAddress = new JTextField(20);
-	private JTextField m_refAddress = new JTextField(20);
+	private JTextField m_ownerAddress = new JTextField(addrSize);
+	private JTextField m_refAddress = new JTextField(addrSize);
+	private JTextField m_rusdAddress = new JTextField(addrSize);
 	HoldersPanel holdersPanel = new HoldersPanel();
 	
 
@@ -41,6 +44,8 @@ public class CryptoPanel extends MonPanel {
 			wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
 		});
 
+		m_rusdAddress.setText( Monitor.m_config.rusdAddr() );
+
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
@@ -48,6 +53,7 @@ public class CryptoPanel extends MonPanel {
 
 		VerticalPanel rusdPanel = new VerticalPanel();
 		rusdPanel.addHeader( "RUSD");
+		rusdPanel.add( "Address", m_rusdAddress);
 		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
 		rusdPanel.addHeader( "RefWallet");
@@ -164,7 +170,7 @@ public class CryptoPanel extends MonPanel {
 		m_approved.setText( S.fmt2( approved) );
 
 		double rusd = Monitor.m_config.rusd().queryTotalSupply();
-		SwingUtilities.invokeLater( () -> m_rusdOutstanding.setText( S.fmt2(rusd) ) );
+		m_rusdOutstanding.setText( S.fmt2(rusd) );
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {
 			double cashBal = obj.getDouble("TotalCashValue");

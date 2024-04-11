@@ -92,10 +92,13 @@ public class MyHttpClient {
 			m_data = sb.toString();
 			return;
 		}
+		
+		// bail out on redirect; needed for /api/signup message
+		if (m_responseCode == 301 || m_responseCode == 302) {
+			return;
+		}
 
-		// this is technically wrong; chunked code has length
-		// parameters in it, but this will work if there are
-		// no empty lines
+		// I wouldn't trust this, it can hang 
 		if ("chunked".equals( m_respHeaders.get( "transfer-encoding") ) ) {
 			StringBuilder sb= new StringBuilder();
 			while (S.isNotNull( (str=br.readLine()))) {

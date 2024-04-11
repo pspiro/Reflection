@@ -427,7 +427,7 @@ public class Fireblocks {
 
 	/** Return true for goerli network */
 	public static boolean isDev() {
-		return platformBase == null || platformBase.equals( "ETH_TEST3");
+		return platformBase == null || platformBase.startsWith( "ETH_TEST");
 	}
 
 	/** Use this to create wallet for native token when using a new testnet 

@@ -37,7 +37,7 @@ public class Monitor {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
 
-	static MonitorConfig m_config;
+	public static MonitorConfig m_config;
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;

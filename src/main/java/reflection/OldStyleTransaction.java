@@ -15,6 +15,9 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import tw.google.GTable;
+import tw.google.NewSheet;
+import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
 public class OldStyleTransaction extends MyTransaction {
@@ -30,6 +33,7 @@ public class OldStyleTransaction extends MyTransaction {
 		refreshConfig,
 		terminate,
 		testAlert,
+		checkForSignups
 		;
 	}
 
@@ -85,7 +89,31 @@ public class OldStyleTransaction extends MyTransaction {
 			case getCashBal:
 				onCashBal();
 				break;
+			case checkForSignups:
+				onCheckForSignups();
+				break;
 		}
+	}
+
+	private void onCheckForSignups() throws Exception {
+		Tab tab = NewSheet.getTab( NewSheet.Prefinery, "Sign-ups from Pete");
+		
+		GTable emails = new GTable( tab, "email", null, false);
+		
+		tab.startTransaction();
+		int numAdded = 0;
+		
+		for (JsonObject signup : Main.m_config.sqlQuery("select * from signup") ) {
+			if (!emails.containsKey( signup.getString("email"))) {
+				tab.insert( signup);
+				emails.putLocal( signup.getString("email"), "");
+				numAdded++;
+			}
+		}
+		
+		tab.commit();
+		
+		respond( code, RefCode.OK, "added", numAdded);
 	}
 
 	private void getTradingHours() {

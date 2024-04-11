@@ -47,7 +47,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final JLabel m_pan = new JLabel(); 
 	private final JLabel m_aadhaar = new JLabel(); 
 	private final JLabel m_locked = new JLabel(); 
-	private final JTextField m_username = new JTextField(8); 
+	private final JTextField m_firstName = new JTextField(8); 
 	private final UpperField m_mintAmt = new UpperField(8); 
 	private final UpperField m_burnAmt = new UpperField(8);
 	private final UpperField m_awardAmt = new UpperField(8); 
@@ -97,7 +97,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				new JLabel( "trades"),
 				new HtmlButton("Go", e -> award() ) ); 
 
-		vp.add( "Create", m_username, new HtmlButton("Create new user", e -> createUser() ) );
+		vp.add( "First name", m_firstName, new HtmlButton("Create new user", e -> createUser() ) );
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
@@ -272,7 +272,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "users",
 					Util.toJson( 
 							"wallet_public_key", m_wallet.getText().toLowerCase(),
-							"first_name", m_username.getText() ) ) );
+							"first_name", m_firstName.getText() ) ) );
 			UI.flash("Done");
 		});
 	}

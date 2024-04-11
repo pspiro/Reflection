@@ -53,7 +53,7 @@ public class S {
 	private static final String NONE = "<none>";
 	public static long DAY = 1000*60*60*24;
 	private static SimpleDateFormat yyyymmdd = new SimpleDateFormat( "yyyy/MM/dd");
-	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "HH:mm:ss.SSS.dd");  // used for S.out() only
+	public static SimpleDateFormat timeFmt = new SimpleDateFormat( "HH:mm:ss.SSS.dd");  // used for S.out() only
 
 	static {
 		// display time and date in NY time

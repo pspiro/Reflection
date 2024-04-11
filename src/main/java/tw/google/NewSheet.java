@@ -48,7 +48,7 @@ public class NewSheet {
 	public static final String LinkedIn = "1Q_kM-6j_xbhebiJJP_sxWRP6q4gObr-KTGxCB1cgt-k";
 	public static final String Test = "1peR3T4jzEXBitsfpc0RvvnjflWjKM7BaH7OrlTWdxqw";
 	public static final String Telegram = "1yXzDqFLvEoXD1cCNpPAZNm_H1BCSUv263uLf-Z8dZLw";
-	
+	public static final String Prefinery = "1__wfPZ3YStUSFb1IcSHQcany_dqUqpvWNRcWLliJMzM";
 	//public static String Remittance = "1Rc4hUFlqjaHE-4DSZs9Q1KLQSa9zWre5P-Dj5x06ZyE"; // test
 	
 	public static void main(String[] args) throws Exception {
@@ -386,6 +386,15 @@ public class NewSheet {
 				Book.this.insert( m_name, rows);
 			}
 			
+			/** Insert row or add to list if we are within a transaction. 
+			 * @throws Exception */
+			public void insert(JsonObject signup) throws Exception {
+				ListEntry entry = new ListEntry();
+				Util.forEach( signup, (tag,val) -> entry.setValue( tag, val.toString() ) );
+				insert( entry);
+			}
+
+			
 			/** Insert row or add to list if we are within a transaction. */
 			public void insert(ListEntry entry) throws IOException, Exception {
 				if (m_insEntries != null) {
@@ -578,7 +587,6 @@ public class NewSheet {
 					return S.isNotNull(val) ? Double.valueOf(val) : 0.0;
 				}
 			}
-
 		}
 
 

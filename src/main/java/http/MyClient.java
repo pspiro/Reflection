@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
+import java.util.Date;
 import java.net.http.HttpResponse;
 
 import org.json.simple.JsonArray;
@@ -25,7 +26,7 @@ public class MyClient {
 	
 	private static void write( String line) {
 		try ( OStream os = new OStream( filename, true) ) {
-			os.writeln( line);
+			os.writeln( S.timeFmt.format( new Date() ) + " " + line);
 		}
 		catch( Exception e) {
 			// ignore it
@@ -140,6 +141,11 @@ public class MyClient {
 	 *  For 404, it does not, but we want it to */
 	public static String getString( String url) throws Exception {
 		return getResponse( url).body();
+	}
+
+	/** print out the query results */
+	public static void out( String url) throws Exception {
+		S.out( getString( url) );
 	}
 
 	/** get repsonse */

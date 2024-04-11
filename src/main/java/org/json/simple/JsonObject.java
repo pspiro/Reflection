@@ -204,6 +204,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return (JsonObject)get(key);
 	}
 	
+	/** Never return null, return empty JsonObject  */
+	public JsonObject getObjectNN(String key) throws Exception {
+		JsonObject obj = getObject( key);
+		return obj != null ? obj : new JsonObject();
+	}
+	
 	/** Returns zero for null value. */
 	public long getLong(String key) {
 		String str = getString( key);
@@ -299,11 +305,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		JsonObject obj = getObject(key);
 		Util.require(obj != null, "The required key is missing from the json object: " + key);
 		return obj;
-	}
-
-	public Comparable getComparable(String key) {
-		Object val = get(key);
-		return val == null ? "" : val instanceof Comparable ? (Comparable)val : val.toString();
 	}
 
 	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()
