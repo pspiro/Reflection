@@ -328,7 +328,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
-				obj.put( "utm_source", utmSource);
+				obj.put( "utm_source", "null".equals(utmSource) ? "" : utmSource);  // frontend could pass 'null'
 			
 				out( "Adding to signup table: " + obj.toString() );
 				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
