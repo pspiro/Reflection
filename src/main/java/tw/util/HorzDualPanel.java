@@ -7,14 +7,14 @@ import java.awt.LayoutManager;
 
 import javax.swing.JPanel;
 
-/** Split into two or three panels stacked vertically */
-public class DualPanel extends JPanel implements LayoutManager {
+/** Split into two or three panels stacked horizontally */
+public class HorzDualPanel extends JPanel implements LayoutManager {
 	private final Dimension pref = new Dimension(1, 1);
 	private Component c1;
 	private Component c2;
 	private Component c3;
 
-	public DualPanel() {
+	public HorzDualPanel() {
 		setLayout( this);
 	}
 
@@ -42,17 +42,17 @@ public class DualPanel extends JPanel implements LayoutManager {
 	}
 
 	@Override public void layoutContainer(Container parent) {
-		int width = getSize().width;
-		int height = getSize().height / (c3 != null ? 3 : 2);
+		int width = getSize().width / (c3 != null ? 3 : 2);
+		int height = getSize().height;
 
 		c1.setLocation( 0, 0);
 		c1.setSize( width, height);
 		
-		c2.setLocation( 0, height);
+		c2.setLocation( width, 0);
 		c2.setSize( width, height);
 		
 		if (c3 != null) {
-			c3.setLocation( 0, height * 2);
+			c3.setLocation( width * 2, 0);
 			c3.setSize( width, height);
 		}
 	}

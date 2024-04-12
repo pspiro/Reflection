@@ -49,6 +49,8 @@ public class Wallet {
 			
 			if (S.isNotNull(addr) && S.isNotNull(balance) ) {
 				int decimals = token.getInt("decimals");
+				
+				// this was a bug that they fixed so should not happen anymore
 				if (decimals == 0) {
 					S.out( "Error: Moralis query failed to return number of decimals for %s; defaulting to 18", addr);
 					decimals = 18;
