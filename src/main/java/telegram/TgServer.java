@@ -1,4 +1,4 @@
-package common;
+package telegram;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
@@ -7,6 +7,7 @@ import java.util.TimeZone;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyClient;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -38,16 +39,20 @@ public class TgServer {
 
 	// https://core.telegram.org/bots/api#available-methods
 	public static void main(String[] args) throws Exception {
-		Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
+		//Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
 		//queryMessages();
+		
+		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 
+				botKey, chatId, peterSpiro);
+		MyClient.getJson(url).display();
 	}
 	
 	/** Listen for messages sent to my group or to the bot */
 	private static void queryMessages() throws Exception {
-		int last = 271551653;  // query for id's with this number or higher
+		int last = 271551453;  // query for id's with this number or higher
 		
 		while (true) {
-			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=60&limit=30&offset=%s", 
+			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
 					botKey, last + 1);
 
 			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
