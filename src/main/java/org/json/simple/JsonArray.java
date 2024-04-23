@@ -159,7 +159,16 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			
 			int ret;
 			
-			if (obj1.getClass().equals( obj2.getClass() ) && obj1 instanceof Comparable) {
+			if (obj1 == null && obj2 == null) {
+				ret = 0;
+			}
+			else if (obj1 == null) {  // sort nulls to the end
+				ret = 1;
+			}
+			else if (obj2 == null) {
+				ret = -1;
+			}
+			else if (obj1.getClass().equals( obj2.getClass() ) && obj1 instanceof Comparable) {
 				ret = ((Comparable)obj1).compareTo( obj2);
 			}
 			else if (obj1 instanceof Number && obj2 instanceof Number) {

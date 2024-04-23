@@ -390,7 +390,7 @@ public class NewSheet {
 			 * @throws Exception */
 			public void insert(JsonObject signup) throws Exception {
 				ListEntry entry = new ListEntry();
-				Util.forEach( signup, (tag,val) -> entry.setValue( tag, val.toString() ) );
+				Util.forEach( signup, (tag,val) -> entry.setValue( tag, common.Util.toString(val) ) );
 				insert( entry);
 			}
 

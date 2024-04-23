@@ -13,6 +13,7 @@ import http.MyClient;
 import positions.Wallet;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
@@ -51,32 +52,35 @@ public class CryptoPanel extends MonPanel {
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
 
-		VerticalPanel rusdPanel = new VerticalPanel();
-		rusdPanel.addHeader( "RUSD");
-		rusdPanel.add( "Address", m_rusdAddress);
-		rusdPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
+		VerticalPanel leftPanel = new VerticalPanel();
+		leftPanel.addHeader( "RUSD");
+		leftPanel.add( "Address", m_rusdAddress);
+		leftPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
-		rusdPanel.addHeader( "RefWallet");
-		rusdPanel.add( "Address", m_refAddress);
-		rusdPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
-		rusdPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
-		rusdPanel.add( "RefWallet MATIC", m_refWalletMatic);
+		leftPanel.addHeader( "RefWallet");
+		leftPanel.add( "Address", m_refAddress);
+		leftPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
+		leftPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
+		leftPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
-		rusdPanel.addHeader( "Owner Wallet");
-		rusdPanel.add( "Address", m_ownerAddress);
-		rusdPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		rusdPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
+		leftPanel.addHeader( "Owner Wallet");
+		leftPanel.add( "Address", m_ownerAddress);
+		leftPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
+		leftPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
-		rusdPanel.addHeader( "Fireblocks");
-		rusdPanel.add( "Admin1 MATIC", m_admin1Matic);
-		rusdPanel.add( "Admin2 MATIC", m_admin2Matic);
+		leftPanel.addHeader( "Fireblocks");
+		leftPanel.add( "Admin1 MATIC", m_admin1Matic);
+		leftPanel.add( "Admin2 MATIC", m_admin2Matic);
 
-		rusdPanel.addHeader( "Brokerage (IB)");
-		rusdPanel.add( "Cash in brokerage", m_cash);
-		rusdPanel.add( "Net liq in brokerage", m_netLiq);
+		leftPanel.addHeader( "Brokerage (IB)");
+		leftPanel.add( "Cash in brokerage", m_cash);
+		leftPanel.add( "Net liq in brokerage", m_netLiq);
 		
-		add(rusdPanel);
-		add(holdersPanel, BorderLayout.EAST);
+		HorzDualPanel dualPanel = new HorzDualPanel();
+		dualPanel.add( leftPanel, "1");
+		dualPanel.add( holdersPanel, "2");
+		
+		add(dualPanel);
 	}
 	
 	/** Send from Owner to RefWallet */

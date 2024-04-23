@@ -77,7 +77,7 @@ public class HookServer {
 		m_allContracts = list.toArray( new String[list.size()]);
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
-			server.createContext("/hook/webhook", exch -> new Trans(exch, true).handleWebhook() );
+			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
 			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
 			server.createContext("/hook/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );
 			server.createContext("/hook/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
@@ -335,6 +335,7 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
 			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
