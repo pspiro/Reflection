@@ -238,10 +238,14 @@ public class Monitor {
 
 		SignupPanel() {
 			super( 	"signup", 
-					"created_at,first,last,email,referer",
+					"created_at,email,first,last,country,referer,ip,utm_source",
 					String.format( 
 							"select * from signup where created_at >= '%s' order by created_at", 
 							Util.yToS.format( System.currentTimeMillis() - 7 * Util.DAY) ) );
+		}
+		
+		@Override protected Object format(String key, Object value) {
+			return key.equals("referer") ? Util.unescHtml(value.toString()) : value;
 		}
 	}
 }
