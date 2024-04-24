@@ -524,7 +524,7 @@ public class BackendTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("checkIdentity");
 			
-			JsonArray ar = Main.m_config.sqlQuery(code, "select persona_response from users where wallet_public_key = '%s'",
+			JsonArray ar = Main.m_config.sqlQuery("select persona_response from users where wallet_public_key = '%s'",
 					m_walletAddr.toLowerCase() );
 			
 			boolean verified = ar.size() == 1 && ar.get( 0).getString( "persona_response").equals( "VERIFIED");
