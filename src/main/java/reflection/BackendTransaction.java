@@ -518,4 +518,21 @@ public class BackendTransaction extends MyTransaction {
 		throw new RefException( RefCode.ONRAMP_FAILED, message); 
 	}
 
+	public void checkIdentity() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("checkIdentity");
+			
+			JsonArray ar = Main.m_config.sqlQuery(code, "select persona_response from users where wallet_public_key = '%s'",
+					m_walletAddr.toLowerCase() );
+			
+			boolean verified = ar.size() == 1 && ar.get( 0).getString( "persona_response").equals( "VERIFIED");
+			
+			respond( Util.toJson(
+					"verified", verified,
+					"message", verified ? "You identity has already been confirmed" : "Please confirm your identiy") );
+		});
+	}
+
 }

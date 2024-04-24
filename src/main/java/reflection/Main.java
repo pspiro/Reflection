@@ -146,6 +146,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
 			server.createContext("/api/allowConnection", exch -> new BackendTransaction(this, exch).allowConnection() );
+			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
 			
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
