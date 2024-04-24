@@ -531,7 +531,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			respond( Util.toJson(
 					"verified", verified,
-					"message", verified ? "You identity has already been confirmed" : "Please confirm your identiy") );
+					"message", verified ? "Your identity has already been confirmed" : "Please confirm your identiy") );
 		});
 	}
 
