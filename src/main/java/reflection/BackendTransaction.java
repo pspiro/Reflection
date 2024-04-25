@@ -494,6 +494,7 @@ public class BackendTransaction extends MyTransaction {
 					int status = Onramp.waitForOrderStatus( orderId, 45); // wait up to 45 sec for order status
 					
 					if (status == 4 || status == 15) { // success
+						alert( "OnRamp succeeded", m_walletAddr);
 						respond( code, RefCode.OK, Message, 
 								"Your transaction was successful and the crypto should appear in your wallet shortly");
 					}
@@ -515,6 +516,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	private void failOnramp(String message) throws RefException {
+		alert( "OnRamp failed", m_walletAddr + " " + message);
 		throw new RefException( RefCode.ONRAMP_FAILED, message); 
 	}
 

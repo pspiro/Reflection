@@ -11,6 +11,7 @@ import fireblocks.Accounts;
 
 public class BlockPanelBase extends JPanel {
 	static final String Me = "***";
+	static final String RefWallet = "RefWallet";
 	static final String toAddress = "to_address";
 	static final String fromAddress = "from_address";
 	static final String valueDecimal = "value_decimal";
@@ -33,8 +34,16 @@ public class BlockPanelBase extends JPanel {
 		return trans.getString( fromAddress).equals( Me);
 	}
 
+	protected boolean isToMe(JsonObject trans) {
+		return trans.getString( toAddress).equals( Me);
+	}
+
+	protected boolean isFromRefWallet(JsonObject trans) {
+		return trans.getString( fromAddress).equalsIgnoreCase( RefWallet);
+	}
+
 	protected boolean isToRefWallet(JsonObject trans) {
-		return trans.getString( toAddress).equalsIgnoreCase( refWallet);
+		return trans.getString( toAddress).equalsIgnoreCase( RefWallet);
 	}
 
 	protected boolean isRusd(JsonObject obj) {
@@ -56,4 +65,5 @@ public class BlockPanelBase extends JPanel {
 	protected boolean isBurn(JsonObject obj) {
 		return obj.getString( toAddress).equals( "Burn");
 	}
+
 }
