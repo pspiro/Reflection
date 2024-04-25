@@ -790,9 +790,14 @@ public class Util {
 	public static String unescHtml(String html) {
 		return html
 				.replaceAll( "%20", " ")
+				.replaceAll( "%22", "\"")
+				.replaceAll( "%2[cC]", ",")
+				.replaceAll( "%2[fF]", "/")
+				.replaceAll( "%3[aA]", ":")
 				.replaceAll( "%40", "@")
-				.replaceAll( "%3a", ":")
-				.replaceAll( "%2f", "/");
+				.replaceAll( "%7[bB]", "{")
+				.replaceAll( "%7[dD]", "}")
+				;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {
