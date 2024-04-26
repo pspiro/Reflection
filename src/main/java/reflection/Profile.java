@@ -8,7 +8,7 @@ import common.Util;
 
 /** User profile which can be edited by the user. */
 public class Profile extends JsonObject {
-	static final String fields = "wallet_public_key,first_name,last_name,address,email,phone,pan_number,aadhaar";
+	static final String fields = "wallet_public_key,first_name,last_name,address_1,address_2,city,state,zip,country,telegram,email,phone,pan_number,aadhaar";
 	
 	public Profile(JsonObject source) {
 		copyFrom(source, fields.split(",") );

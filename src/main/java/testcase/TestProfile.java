@@ -92,13 +92,44 @@ public class TestProfile extends MyTestCase {
 		cli().post("/api/update-profile", json.toString() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
+	
+	public void testBigProfile() throws Exception {
+		JsonObject json = createBigProfile();
+		cli().post("/api/validate-email", json.toString() );
+		assert200();
 
+		// test correct code
+		String code = Util.input("Enter code:");
+		json.put("email_confirmation", code);
+		cli().postToJson("/api/update-profile", json.toString() );
+		
+		JsonObject json2 = new JsonObject();
+		json2.put( "cookie", Cookie.cookie);
+				
+		JsonObject ret = cli().postToJson("/api/get-profile/" + Cookie.wallet, json2.toString() );
+		ret.display();
+
+		assert200();
+	}		
+
+	static JsonObject createBigProfile() {
+		JsonObject json = createValidProfile();
+		json.put( "address_1", "nautiluss");
+		json.put( "address_1", "lanee");
+		json.put( "city", "mamaroneck");
+		json.put( "state", "ny");
+		json.put( "zip", "10543");
+		json.put( "country", "usa");
+		json.put( "telegram", "@peterspiro");
+		return json;
+	}
+	
 	static JsonObject createValidProfile() {
 		JsonObject json = new JsonObject();
 		json.put( "wallet_public_key", Cookie.wallet.toLowerCase());
 		json.put( "cookie", Cookie.cookie);
-		json.put( "first_name", "jack");
-		json.put( "last_name", "sprat");
+		json.put( "first_name", "jammy");
+		json.put( "last_name", "sprate");
 		json.put( "email", email);
 		json.put( "phone", "9149399393");
 		json.put( "pan_number", "XXXXX9393Y");

@@ -26,9 +26,13 @@ public class ProfileTransaction extends MyTransaction {
 			out( "GET PROFILE COOKIE " + m_map.get("cookie") );
 			validateCookie("getprofile");
 
-			JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
-					"select first_name, last_name, address, email, phone, pan_number, aadhaar from users where wallet_public_key = '%s'", 
-					m_walletAddr.toLowerCase() ) );
+			JsonArray ar = m_config.sqlQuery( 
+					"select first_name, last_name, address_1, address_2, "
+					+ "city, state, zip, country, telegram, email, "
+					+ "phone, pan_number, aadhaar "
+					+ "from users where wallet_public_key = '%s'",
+					
+					m_walletAddr.toLowerCase() );
 				
 			JsonObject obj = ar.size() == 0 
 					? new JsonObject() 
@@ -74,7 +78,7 @@ public class ProfileTransaction extends MyTransaction {
 			profile.validate();
 			
 			// add the country code; this is not part of the user-entered profile but could come in handy
-			profile.put( "country", getCountryCode() );
+			profile.put( "geo_code", getCountryCode() );
 			
 			String walletKey = m_walletAddr.toLowerCase();
 			
