@@ -28,9 +28,7 @@ import tw.util.S;
 public class TgServer {
 	static TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
 	
-	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
-	static final String part1 = "https://api.telegram.org/" + botKey; 
-	static final String chatId = "-1001262398926"; // community chat
+	static final String ReflectionCommunity = "-1001262398926"; // community chat
 	static final String peterSpiro = "5053437013";
 	
 	static final long D5 = Util.DAY * 5;
@@ -39,12 +37,6 @@ public class TgServer {
 
 	// https://core.telegram.org/bots/api#available-methods
 	public static void main(String[] args) throws Exception {
-		//Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
-		//queryMessages();
-		
-		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 
-				botKey, chatId, peterSpiro);
-		MyClient.getJson(url).display();
 	}
 	
 	/** Listen for messages sent to my group or to the bot */
@@ -53,7 +45,7 @@ public class TgServer {
 		
 		while (true) {
 			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
-					botKey, last + 1);
+					Telegram.botKey, last + 1);
 
 			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
 				last = processUpdate( update);
@@ -80,9 +72,7 @@ public class TgServer {
 		
 		if (from.getString("id").equals(peterSpiro) ) {
 			S.out( "deleting message");
-			String url = String.format( "https://api.telegram.org/%s/deleteMessage?chat_id=%s&message_id=%s",
-					botKey, chat.getString("id"), msgId);
-			MyClient.getJson( url).display();
+			Telegram.deleteMessage( chat.getString("id"), msgId);
 		}
 		Util.input("press key");
 		
@@ -115,17 +105,7 @@ public class TgServer {
 
 	static void send( String message) throws Exception {
 		S.out( "Posting message " + message);
-		
-		JsonObject params = Util.toJson( 
-				"chat_id", chatId,
-				"text", message);
-		S.out( params);
-
-		HttpResponse<String> resp = MyClient.create(part1 + "/sendmessage", params.toString() )
-				.header( "Content-Type", "application/json")
-				.query();
-
-		S.out( JsonObject.parse( resp.body() ) );
+		S.out( Telegram.send( ReflectionCommunity, message) );
 	}
 }
 

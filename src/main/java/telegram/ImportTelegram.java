@@ -1,6 +1,4 @@
-package test;
-
-import java.util.HashSet;
+package telegram;
 
 import javax.swing.JFrame;
 
