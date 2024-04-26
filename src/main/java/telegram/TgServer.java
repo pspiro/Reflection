@@ -30,7 +30,7 @@ public class TgServer {
 	
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey; 
-	static final String chatId = "-1001262398926"; // community chat
+	static final String communityChatId = "-1001262398926"; // community chat
 	static final String peterSpiro = "5053437013";
 	
 	static final long D5 = Util.DAY * 5;
@@ -39,12 +39,12 @@ public class TgServer {
 
 	// https://core.telegram.org/bots/api#available-methods
 	public static void main(String[] args) throws Exception {
-		//Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
+		Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
 		//queryMessages();
 		
-		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 
-				botKey, chatId, peterSpiro);
-		MyClient.getJson(url).display();
+//		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 
+//				botKey, communityChatId, peterSpiro);
+//		MyClient.getJson(url).display();
 	}
 	
 	/** Listen for messages sent to my group or to the bot */
@@ -114,6 +114,10 @@ public class TgServer {
 	}
 
 	static void send( String message) throws Exception {
+		send( message, communityChatId);
+	}
+	
+	static void send( String message, String chatId) throws Exception {
 		S.out( "Posting message " + message);
 		
 		JsonObject params = Util.toJson( 
@@ -134,3 +138,4 @@ public class TgServer {
 //    <artifactId>telegrambots</artifactId>
 //    <version>6.0.1</version>
 //</dependency>
+	
