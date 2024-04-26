@@ -42,6 +42,10 @@ public class ExtractNames {
 
 
 	private static void send(String name, String id) throws Exception {
+		if (id.startsWith( "user") ) {
+			id = id.substring(4);
+		}
+		
 		Telegram.send( id, String.format( text, name) )
 			.display();
 	}

@@ -1,6 +1,8 @@
 package test;
 
-import tw.util.S;
+import static fireblocks.Accounts.instance;
+
+import reflection.Config;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -8,6 +10,11 @@ public class TestPostgres {
 	
 	
 	public static void main(String[] args) throws Exception {
-		S.out( "lkjsdf%40gmail.com".replaceAll( "%40", "@") );
+		Config config = Config.ask( "Prod");
+		
+		config.rusd().deploy( 
+				"c:/work/smart-contracts/build/contracts/rusd.json",
+				instance.getAddress( "RefWallet"),
+				instance.getAddress( "Admin1")	);
 	}
 }
