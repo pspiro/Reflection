@@ -10,7 +10,7 @@ import tw.util.S;
 import tw.util.UI;
 
 class UsersPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,first_name,last_name,locked_until,email,kyc_status,phone,aadhaar,address,city,country,id,pan_number,persona_response";
+	static String names = "created_at,wallet_public_key,first_name,last_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,address,city,country,id,persona_response";
 	static String sql = "select * from users $where";
 	
 	UsersPanel() {
