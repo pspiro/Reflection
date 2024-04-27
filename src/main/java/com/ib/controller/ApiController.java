@@ -214,11 +214,6 @@ public class ApiController implements EWrapper {
 			handler.onRecOrderError( errorCode, errorMsg);  // once from here @*&   (fixed)
 		}
 
-        IOrderCancelHandler orderCancelHandler = m_orderCancelHandlers.get( id);
-        if (orderCancelHandler != null) {
-            orderCancelHandler.handle( errorCode, errorMsg);
-        }
-
 		for (ILiveOrderHandler liveHandler : m_liveOrderHandlers) {
 			liveHandler.handle( id, errorCode, errorMsg);
 		}
@@ -942,7 +937,6 @@ public class ApiController implements EWrapper {
 
     public interface IOrderCancelHandler {
         void orderStatus(String orderStatus);
-        void handle(int errorCode, String errorMsg);
     }
 
 	/** This method must be synchronized because we cannot allow orders to get placed out of order

@@ -1,5 +1,7 @@
 package monitor;
 
+import java.awt.event.ActionListener;
+
 import javax.swing.JPopupMenu;
 
 import org.json.simple.JsonObject;
@@ -56,9 +58,27 @@ class UsersPanel extends QueryPanel {
 				Monitor.m_walletPanel.setWallet( wallet);
 			}
 		}));
+		m.add( JsonModel.menuItem("Verify",  ev -> verify( rec) ) );
 		m.add( JsonModel.menuItem("Delete", ev -> delete( rec) ) );
 	}
 	
+	private ActionListener verify(JsonObject rec) {
+		if (Util.confirm( this, "Are you sure you want to verify this user?") ) {
+			try {
+				Monitor.m_config.sqlCommand( sql -> sql.updateJson( 
+					"users",  
+					Util.toJson( "kyc_status", "VERIFIED"),
+					"wallet_public_key = '%s'", 
+					rec.getString("wallet_public_key").toLowerCase() ) );
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				Util.inform( this, "Error - " + e.getMessage() );
+			}
+		}
+		return null;
+	}
+
 	void delete(JsonObject rec) {
 		// confirm
 		if (Util.confirm( this, "Are you sure you want to delete this record?") ) {

@@ -358,7 +358,7 @@ public class Order {
     public boolean isOmsContainer()                 { return m_isOmsContainer; }
     public boolean discretionaryUpToLimitPrice()    { return m_discretionaryUpToLimitPrice; }
     public String autoCancelDate()                  { return m_autoCancelDate; }
-    public Decimal filledQuantity()                 { return m_filledQuantity; }
+    public double filledQuantity()                  { return m_filledQuantity; }
     public int refFuturesConId()                    { return m_refFuturesConId; }
     public boolean autoCancelParent()               { return m_autoCancelParent; }
     public String shareholder()                     { return m_shareholder; }
