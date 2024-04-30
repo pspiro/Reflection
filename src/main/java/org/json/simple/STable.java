@@ -35,7 +35,6 @@ public class STable<T> extends HashMap<String,T> {
 		Util.executeEvery(m_period, m_period, () -> check() );
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override public T put(String key, T value) {
 		try {
 			return (T)super.put(key, value);
@@ -45,7 +44,6 @@ public class STable<T> extends HashMap<String,T> {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override public T remove(Object key) {
 		try {
 			return (T)super.remove(key);
@@ -89,7 +87,6 @@ public class STable<T> extends HashMap<String,T> {
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override public T get(Object key) {
 		return (T)super.get(key);
 	}

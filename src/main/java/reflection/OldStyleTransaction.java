@@ -104,9 +104,12 @@ public class OldStyleTransaction extends MyTransaction {
 		int numAdded = 0;
 		
 		for (JsonObject signup : Main.m_config.sqlQuery("select * from signup") ) {
-			if (!emails.containsKey( signup.getString("email"))) {
+			
+			String email = signup.getString("email").toLowerCase();
+
+			if (S.isNotNull( email) && !emails.containsKey( email) ) {
 				tab.insert( signup);
-				emails.putLocal( signup.getString("email"), "");
+				emails.putLocal( email, "");
 				numAdded++;
 			}
 		}

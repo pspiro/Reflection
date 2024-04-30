@@ -139,6 +139,19 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			return true;
 		}
 		
+		if (isBurn( trans1) && isRusd( trans1) && 
+			isUsdt( trans2) && isFromRefWallet( trans2) && isToMe( trans2) ) {
+			obj.put("action", "Redeem" );
+			obj.put("qty", trans1.getString( valueDecimal) );
+			obj.put("token", trans1.getString( tokenSymbol) );
+			obj.put("amount", trans2.getString( valueDecimal) );
+			obj.put("stablecoin", trans2.getString( tokenSymbol) );
+
+			m_model.ar().add( obj);
+
+			return true;
+		}			
+		
 		return false;
 	}
 

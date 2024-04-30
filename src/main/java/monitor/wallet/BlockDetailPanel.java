@@ -38,7 +38,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 		add( m_model.createTable() );
 		
 		Util.wrap( () -> {
-			commonMap.put( refWallet, "RefWallet");
+			commonMap.put( refWallet, RefWallet);
 			commonMap.put( Accounts.instance.getAddress("Admin1").toLowerCase(), "Admin1");
 			commonMap.put( Accounts.instance.getAddress("Admin2").toLowerCase(), "Admin2");
 			commonMap.put( Accounts.instance.getAddress("Owner").toLowerCase(), "Owner");
