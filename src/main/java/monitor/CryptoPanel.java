@@ -11,6 +11,7 @@ import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
 import positions.Wallet;
+import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.HorzDualPanel;
@@ -105,14 +106,17 @@ public class CryptoPanel extends MonPanel {
 			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
 			String address = Util.reqValidAddress( tab.get( name) );
 			
-			Fireblocks.transfer( 
+			String hash = Fireblocks.transfer( 
 					Accounts.instance.getId("Owner"),
 					address,
 					Monitor.m_config.fbStablecoin(),
 					Double.parseDouble( Util.ask( "Enter amount")),
 					Util.ask("Enter note")
 			).waitForHash();
-			Util.inform(this, "Done");
+			
+			//Util.browse( Monitor.m_config.blockchainTx( hash) );
+			Util.copyToClipboard( Monitor.m_config.blockchainTx( hash) );
+			Util.inform(this, "Done, hash is copied to clipboard");
 		});
 	}
 
