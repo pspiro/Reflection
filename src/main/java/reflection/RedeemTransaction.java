@@ -114,15 +114,9 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				}
 			}
 
-			// over limit? this should be improved to be a limit per 24 hours because they
-			// will just transfer some RUSD out and try again. pas
-			require( m_quantity <= Main.m_config.maxAutoRedeem(),
-					RefCode.OVER_REDEMPTION_LIMIT,
-					"Your redemption request is higher than the limit");
-			
 			// insufficient BUSD in RefWallet?
 			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
-			if (m_quantity > busdPos) {
+			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() ) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
 				
@@ -130,7 +124,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  wallet=%s  requested=%s  have=%s  need=%s",
 						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos) );
-				alert( "MOVE FUNDS NOW TO REDEEM RUSD", str);
+				alert( "USER SUBMITTED RUSD REDEMPTION REQUEST", str);
 				
 				// report error back to user
 				throw new RefException( RefCode.DELAYED_REDEMPTION, "Your redemption request is being processed; we appreciate your patience");
