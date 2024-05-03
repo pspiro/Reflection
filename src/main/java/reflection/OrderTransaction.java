@@ -131,8 +131,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// validate KYC fields
 		require( 
-				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() ) ||
-				S.equals( userRecord.getString("kyc_status"), "VERIFIED"),
+				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() )
+				&& getCountryCode().equals( "IN")
+				
+				|| S.equals( userRecord.getString("kyc_status"), "VERIFIED"),
+				
 				RefCode.NEED_KYC,
 				"Please verify your identity and then resubmit your order");
 		
