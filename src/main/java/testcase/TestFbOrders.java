@@ -3,13 +3,13 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import fireblocks.Busd;
-import fireblocks.Rusd;
-import fireblocks.StockToken;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
+import web3.Busd;
+import web3.Rusd;
+import web3.StockToken;
 
 public class TestFbOrders extends MyTestCase {
 	// test all possible orders and a success of buy w/ BUSD, buy w/ RUSD, and sell
@@ -89,7 +89,6 @@ public class TestFbOrders extends MyTestCase {
 		// approve too little
 		S.out( "**approving .49");
 		busd.approve(
-				accounts.getId( "Bob"),
 				rusd.address(),
 				.49).waitForCompleted();
 		
@@ -127,14 +126,12 @@ public class TestFbOrders extends MyTestCase {
 		// mint BUSD for user Bob
 		S.out( "**minting 20000");
 		busd.mint(
-				accounts.getId( "Admin1"),
 				bobAddr,
 				2000).waitForCompleted();
 		
 		// user to approve buying with BUSD; you must wait for this
 		S.out( "**approving 20000");
 		busd.approve(
-				accounts.getId( "Bob"),
 				rusd.address(),
 				2000).waitForCompleted();
 

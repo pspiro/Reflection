@@ -5,7 +5,7 @@ import java.util.Objects;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.StockToken;
+import web3.StockToken;
 
 /** Represents the static stock as downloaded from the google sheets
  * 

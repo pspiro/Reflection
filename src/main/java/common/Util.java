@@ -800,6 +800,11 @@ public class Util {
 				;
 	}
 
+	public static boolean isValidKey(String adminKey) {
+		return true; // write this. pas
+		
+	}
+
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();
 //	}

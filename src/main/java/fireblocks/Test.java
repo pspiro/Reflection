@@ -4,6 +4,9 @@ import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
+import web3.Busd;
+import web3.Rusd;
+import web3.StockToken;
 
 /** Tests all RUSD, BUSD and StockToken features */
 public class Test {
@@ -40,7 +43,6 @@ public class Test {
 		
 		// user to approve buying with BUSD; you must wait for this
 		busd.approve(
-				accounts.getId( "Bob"),
 				rusd.address(),
 				1).waitForHash();
 		

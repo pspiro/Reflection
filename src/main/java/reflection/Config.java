@@ -10,12 +10,15 @@ import com.ib.client.Types.TimeInForce;
 import common.Alerts;
 import common.Util;
 import fireblocks.Accounts;
-import fireblocks.Busd;
+import fireblocks.FbBusd;
+import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
-import fireblocks.Rusd;
 import junit.framework.TestCase;
 import positions.MoralisServer;
 import redis.ConfigBase;
+import refblocks.RbBusdCore;
+import refblocks.RbRusdCore;
+import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import tw.google.GTable;
@@ -25,11 +28,15 @@ import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
 import tw.util.S;
+import web3.Busd;
+import web3.Busd.IBusd;
+import web3.Rusd;
+import web3.Rusd.IRusd;
 
 public class Config extends ConfigBase {
-	
-	protected GTable m_tab;
 
+	protected GTable m_tab;
+	
 	// user experience parameters
 	private double minOrderSize;  // in dollars
 	private double maxOrderSize; // max buy amt in dollars
@@ -44,7 +51,6 @@ public class Config extends ConfigBase {
 	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
-	//private String refApiHost; // not currently used; everyone listens on 0.0.0.0
 	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
@@ -85,7 +91,11 @@ public class Config extends ConfigBase {
 	private String hookNameSuffix;
 
 	// Fireblocks
-	protected boolean useFireblocks;
+	private String admin1Addr;
+//	private String admin1Key;
+	private String ownerKey;
+	private String refWalletAddr;
+
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
 	private String moralisPlatform;  // lower case
@@ -99,8 +109,6 @@ public class Config extends ConfigBase {
 	public Allow allowTrading() { return allowTrading; }
 	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
-	
-	public boolean useFireblocks() { return useFireblocks; }
 	
 	public boolean autoFill() { return autoFill; }
 
@@ -212,24 +220,28 @@ public class Config extends ConfigBase {
 		
 		// Fireblocks
 		this.platformBase = m_tab.getRequiredString("platformBase");
-		this.useFireblocks = m_tab.getBoolean("useFireblocks");
-		if (useFireblocks) {
-			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
+		
+		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
+		
+		IRusd rusdCore;
+		IBusd busdCore;
+		
+		if (web3Type == Web3Type.Fireblocks) {
+			rusdCore = new FbRusd(
+					m_tab.getRequiredString("rusdAddr").toLowerCase(),
+					m_tab.getRequiredInt("rusdDecimals") );
+
+			busdCore = new FbBusd(
+					m_tab.getRequiredString("busdAddr").toLowerCase(),
+					m_tab.getRequiredInt("busdDecimals"),
+					m_tab.getRequiredString("busdName") );
+			
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
 			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
 			this.fbStablecoin = m_tab.get("fbStablecoin");
-			
-			m_busd = new Busd( 
-					m_tab.getRequiredString("busdAddr").toLowerCase(),
-					m_tab.getRequiredInt("busdDecimals"),
-					m_tab.getRequiredString ("busdName") );
-
-			m_rusd = new Rusd(
-					m_tab.getRequiredString("rusdAddr").toLowerCase(),
-					m_tab.getRequiredInt("rusdDecimals") );
 			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
@@ -241,11 +253,40 @@ public class Config extends ConfigBase {
 			// update Fireblocks static keys and admins
 			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase);
 			Accounts.instance.setAdmins( fbAdmins);
-			
-			// update Moralis chain
-			MoralisServer.setChain( moralisPlatform);
 		}
-		
+		else {
+			admin1Addr = m_tab.getRequiredString("admin1Addr");
+			refWalletAddr = m_tab.getRequiredString("refWalletAddr");
+			ownerKey = m_tab.getRequiredString("ownerKey");
+			
+			rusdCore = new RbRusdCore(
+					m_tab.getRequiredString("rusdAddr").toLowerCase(),
+					m_tab.getRequiredInt("rusdDecimals") );
+
+			busdCore = new RbBusdCore(
+					m_tab.getRequiredString("busdAddr").toLowerCase(),
+					m_tab.getRequiredInt("busdDecimals"),
+					m_tab.getRequiredString("busdName") );
+			
+			Refblocks.setChainId( m_tab.getRequiredInt( "chainId") );
+		}
+
+		m_rusd = new web3.Rusd(
+				m_tab.getRequiredString("rusdAddr").toLowerCase(),
+				m_tab.getRequiredInt("rusdDecimals"),
+				m_tab.getRequiredString( "admin1Key"),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				rusdCore);
+
+		m_busd = new Busd( 
+				m_tab.getRequiredString("busdAddr").toLowerCase(),
+				m_tab.getRequiredInt("busdDecimals"),
+				m_tab.getRequiredString ("busdName"),
+				busdCore);
+
+		// update Moralis chain
+		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
+		MoralisServer.setChain( moralisPlatform);
+
 		if (isProduction() ) {
 			this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 		}
@@ -367,16 +408,10 @@ public class Config extends ConfigBase {
 		
 		public void readFromSpreadsheet(String tabName) throws Exception {
 			super.readFromSpreadsheet(tabName);
-			
-			if (useFireblocks) {
-				require(S.isNotNull( this.rusdAddr()), "rusdAddr");
-			}
 		}
 	}
 	
 	public void testApiKeys() {
-		TestCase.assertTrue( useFireblocks);
-		
 		TestCase.assertEquals( "bbce654d-08da-2216-5b20-bed4deaad1be", fireblocksApiKey);
 		
 		TestCase.assertEquals( 
@@ -571,5 +606,17 @@ public class Config extends ConfigBase {
 	
 	public String getHookNameSuffix() {
 		return hookNameSuffix;
+	}
+	
+	public String admin1Addr() {
+		return admin1Addr;
+	}
+
+	public String refWalletAddr() {
+		return refWalletAddr;
+	}
+	
+	public String ownerKey() {
+		return ownerKey;
 	}
 }

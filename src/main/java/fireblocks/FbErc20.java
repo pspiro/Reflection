@@ -2,7 +2,6 @@ package fireblocks;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
 
 import org.json.simple.JsonObject;
 
@@ -13,8 +12,9 @@ import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
 import tw.util.S;
+import web3.MyCoreBase;
 
-public class Erc20 {
+public class FbErc20 extends MyCoreBase {
 	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;
 										  // for stock tokens, this might not be enough
 	static final String approveKeccak = "095ea7b3";
@@ -22,33 +22,14 @@ public class Erc20 {
 	static final String burnKeccak = "9dc29fac";
 	static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
-	protected String m_address;
-	protected int m_decimals;
-	private String m_name;
-	
-	public Erc20( String address, int decimals, String name) throws Exception {
+	public FbErc20( String address, int decimals, String name) throws Exception {
+		super( address, decimals, name);
+		
 		Util.require( 
 				S.isNull(address) || 
 				address.equalsIgnoreCase("deploy") || 
 				Util.isValidAddress(address), "Invalid Erc20 address");
-		
-		m_address = address;
-		m_decimals = decimals;
-		m_name = name;
 	}
-	
-	public String address() {
-		return m_address;
-	}
-	
-	public int decimals() {
-		return m_decimals;
-	}
-	
-	public String name() {
-		return m_name;
-	}
-	
 	
 	/** Approve some wallet to spend on behalf of another
 	 *  NOTE: you must wait for the response */
@@ -62,26 +43,10 @@ public class Erc20 {
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
 		return Fireblocks.call2( accountId, m_address, 
-				Rusd.approveKeccak, paramTypes, params, "Stablecoin approve");
+				FbRusd.approveKeccak, paramTypes, params, "Stablecoin approve");
 		
 	}
 
-	/** Return amt rounded to four decimals * 10^power */
-	static final BigDecimal ten = new BigDecimal(10);
-
-	static BigInteger timesPower(double amt, int power) {
-		return new BigDecimal( S.fmt4( amt) )
-				.multiply( ten.pow( power) )
-				.toBigInteger();
-	}
-
-	/** Returns hex string
-	 *  @param amt is rounded to four decimals; this is fine as long as the frontend is 
-	 *  rounding to <= 4 decimals */
-	public BigInteger toBlockchain(double amt) throws RefException {
-		return timesPower( amt, m_decimals); 
-	}
-	
 	/** Takes decimal string */
 	public double fromBlockchain(String amt) {
 		return fromBlockchain( amt, m_decimals);
@@ -213,21 +178,6 @@ public class Erc20 {
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
 
-	/** print out the balances of all wallets holding this token
-	 * @return map wallet address -> token balance */
-	public HashMap<String,Double> getAllBalances() throws Exception {
-		HashMap<String,Double> map = new HashMap<>();
-
-		// get all transactions in batches and build the map
-		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
-				inc( map, obj.getString("from_address"), -value);
-				inc( map, obj.getString("to_address"), value);
-		} ) );
-		
-		return map;
-	}
-	
 	public void showAllTransactions() throws Exception {
 			MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
 				S.out( "%8s %s %s %s", 
@@ -237,27 +187,5 @@ public class Erc20 {
 						obj.getString("transaction_hash") );
 		} ) );
 	}
-	
-	public static void main(String[] args) throws Exception {
-//		Config config = Config.readFrom("Prod-config"); //ask();
-//		config.readStocks().getStock("AAPL").getToken().showBalances();
-	}
-	
-	public static void inc(HashMap<String, Double> map, String address, double amt) {
-		Double v = map.get(address);
-		map.put( address, v == null ? amt : v + amt);
-	}
-	
-	
-	public static class Stablecoin extends Erc20 {
-		public Stablecoin(String address, int decimals, String name) throws Exception {
-			super( address, decimals, name);
-		}
 
-		public final boolean isRusd() {
-			return this instanceof Rusd;
-		}
-	}
-
-	
 }

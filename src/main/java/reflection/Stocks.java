@@ -7,11 +7,11 @@ import java.util.Iterator;
 import org.json.simple.JsonArray;
 
 import common.Util;
-import fireblocks.StockToken;
 import redis.ConfigBase;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import web3.StockToken;
 
 public class Stocks implements Iterable<Stock> {
 	private static Stock NULL = new Stock();
@@ -26,6 +26,7 @@ public class Stocks implements Iterable<Stock> {
 
 	/** Use this version for better performance when reading multiple tabs from same sheet */
 	public void readFromSheet(Book book, ConfigBase config) throws Exception {
+		
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();
 		m_conidMap.clear();

@@ -23,13 +23,13 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
-import fireblocks.Erc20.Stablecoin;
-import fireblocks.StockToken;
 import http.MyClient;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import tw.util.S;
 import util.LogType;
+import web3.Stablecoin;
+import web3.StockToken;
 
 public class OrderTransaction extends MyTransaction implements IOrderHandler, LiveTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
@@ -119,7 +119,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		validateCookie("order");
 
 		// get record from Users table
-		JsonObject userRecord = queryUserRec();
+		JsonObject userRecord = null; //!!!!!!!!!queryUserRec();
 		require( userRecord != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your order");
 
 		// validate user profile fields
@@ -773,7 +773,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 
 	private boolean fireblocks() throws RefException {
-		return m_config.isProduction() || m_config.useFireblocks() && !m_map.getBool("noFireblocks");
+		return m_config.isProduction() || !m_map.getBool("noFireblocks");
 	}
 
 	private Vector<OrderTransaction> walletLiveOrders() {

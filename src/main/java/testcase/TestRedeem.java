@@ -174,7 +174,6 @@ public class TestRedeem extends MyTestCase {
 
 	public void test() throws Exception {
 		m_config.busd().approve( 
-				instance.getId( "RefWallet"), // called by
 				m_config.rusdAddr(), // approving
 				1000000000); // $1B
 	}

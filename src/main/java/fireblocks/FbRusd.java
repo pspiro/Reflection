@@ -1,84 +1,29 @@
 package fireblocks;
 
 import common.Util;
-import fireblocks.Erc20.Stablecoin;
 import tw.util.S;
+import web3.Busd;
+import web3.Rusd.IRusd;
+import web3.Stablecoin;
+import web3.StockToken;
 
-public class Rusd extends Stablecoin {
-	
-	// BUSD on binance and ethereum has 18 decimals
-	// USDP on ethereum has 18 decimals
-	// USDC and USDT on ethereum have 6 decimals
-	// RUSD must match the number of decimals of the non-RUSD stablecoin because
-	//   buyRusd and sellRusd takes only one number
-	// stock tokens have 18 decimals
-	
-	
-	// keccaks
+public class FbRusd extends FbErc20 implements IRusd {
 	static final String buyRusdKeccak = "8a854e17";
 	static final String sellRusdKeccak = "5690cc4f"; 
 	static final String buyStockKeccak = "58e78a85";
 	static final String sellStockKeccak = "5948f1f0";
-	public static final String addOrRemoveKeccak = "89fa2c03";
+	static final String addOrRemoveKeccak = "89fa2c03";
 	static final String swapKeccak = "62835413";
 
-	// deploy RUSD from owner wallet
-	// deploy QQQ from owner wallet
-	
-	static String myWallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";
-	
-	//you have to approve THE CONTRACT that will be calling the methods on busd or rusd
-	
-//	String rusdAddr = "0x31ed1e80db8a6e82b2f73c4cb37a1390fe7793a7"; // deploy( "c:/work/bytecode/rusd.bytecode");
-//	String ibmAddr = "0xfdaf3b9c6665fe47eb701abea7429d0c1b5d30a1"; // StockToken.deploy( "c:/work/bytecode/stocktoken.bytecode", "IBM", "IBM", rusdAddr);
-	
-	/** NOTE: rusdDecimals must match the number of decimals from the source
-	 *  code; the value here is not passed into the smart contract constructor 
-	 * @throws Exception */
-	public Rusd( String rusdAddr, int rusdDecimals) throws Exception {
-		super( rusdAddr, rusdDecimals, "RUSD");
-		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
+	public FbRusd(String address, int decimals) throws Exception {
+		super( address, decimals, "RUSD");
 	}
-	
-	/** Deploy RUSD
-	 *  @return deployed address */
-	public void deploy(String filename, String refWallet, String adminAddr) throws Exception {
-		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
-		String[] paramTypes = { "address", "address" };
-		Object[] params = { refWallet, adminAddr };
-		
-		m_address = deploy( 
-				filename, 
-				Accounts.instance.getId( "Owner"), 
-				paramTypes, 
-				params, 
-				"Deploy RUSD"
-		);
-	}
-	
-	
-	
 
-	/** Buying stock with either BUSD OR RUSD; need to test it both ways.
-	 * 
-	 *  IMPORTANT, READ THIS FOR FOR TROUBLE-SHOOTING
-	 *  
-	 *  Whichever one your are buying with, you must have enough in User wallet
-	 *  and you must be approved (if buying with BUSD)
-	 *  and you must have enough base coin in the refWallet */
-	public RetVal buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return buyStock( 
-				userAddr,
-				this,
-				stablecoinAmt,
-				stockToken,
-				stockTokenAmt
-		);
-	}
-	
-	/** Buy with either RUSD or BUSD; can also be used to burn RUSD
+	/** Buy with either RUSD or FBusd; can also be used to burn RUSD
 	 * @return id */
-	public RetVal buyStock(String userAddr, Erc20 stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	@Override public RetVal buyStock(String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt,
+			StockToken stockToken, double stockTokenAmt) throws Exception {
+		
 		Util.isValidAddress(userAddr);
 		
 		// allow minting stock tokens in dev only
@@ -103,12 +48,16 @@ public class Rusd extends Stablecoin {
 		return call( adminAcctId, buyStockKeccak, paramTypes, params, stockTokenAmt == 0 ? "RUSD burn" : "RUSD buy stock");
 	}
 	
-	/** Sell stock with either BUSD OR RUSD; need to try it both ways.
+	/** Sell stock with either FBusd OR RUSD; need to try it both ways.
 	 *  Whichever one your are buying with, you must have enough in User wallet
-	 *  and you must be approved (if buying with BUSD)
+	 *  and you must be approved (if buying with FBusd)
 	 *  
 	 *  Also used to mint RUSD */
-	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+	@Override public RetVal sellStockForRusd(String adminKey, String userAddr, double rusdAmt, StockToken stockToken,
+			double stockTokenAmt) throws Exception {
+
+		Util.isValidAddress(userAddr);
+
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 
 		Object[] params = { 
@@ -130,7 +79,37 @@ public class Rusd extends Stablecoin {
 		
 		return call( adminAcctId, sellStockKeccak, paramTypes, params, stockTokenAmt == 0 ? "RUSD mint" : "RUSD sell stock");
 	}
-	
+
+	/** Burn RUSD from user wallet and transfer FBusd from RefWallet to user wallet
+	 *  Since we only pass one amount, RUSD must have same number of decimals as FBusd */
+	@Override public RetVal sellRusd(String adminKey, String userAddr, Busd busd, 
+			double amt) throws Exception {
+		
+		Util.isValidAddress(userAddr);
+
+		String[] paramTypes = { "address", "address", "uint256", "uint256" };
+
+		Object[] params = { 
+				userAddr, 
+				busd.address(),
+				busd.toBlockchain(amt),
+				toBlockchain(amt)
+		};
+		
+		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);
+
+		S.out( "Account %s user %s redeeming %s RUSD for FBusd",
+				adminAcctId, userAddr, amt);
+		
+		return Fireblocks.call2( 
+				adminAcctId, 
+				m_address, 
+				sellRusdKeccak, 
+				paramTypes, 
+				params, 
+				"RUSD sell RUSD");
+	}
+
 	/** Not used yet, for testing only */
 	RetVal buyRusd(String userAddr, Busd busd, double amt) throws Exception {
 		String[] paramTypes = { "address", "address", "uint256", "uint256" };
@@ -143,7 +122,7 @@ public class Rusd extends Stablecoin {
 
 		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
 
-		S.out( "Account %s user %s buying %s RUSD with BUSD", adminAcctId, userAddr, amt);
+		S.out( "Account %s user %s buying %s RUSD with FBusd", adminAcctId, userAddr, amt);
 
 		return Fireblocks.call2( 
 				adminAcctId, 
@@ -155,31 +134,6 @@ public class Rusd extends Stablecoin {
 		);
 	}
 
-	/** Burn RUSD from user wallet and transfer BUSD from RefWallet to user wallet
-	 *  Since we only pass one amount, RUSD must have same number of decimals as BUSD */
-	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
-		String[] paramTypes = { "address", "address", "uint256", "uint256" };
-
-		Object[] params = { 
-				userAddr, 
-				busd.address(),
-				busd.toBlockchain(amt),
-				toBlockchain(amt)
-		};
-		
-		int adminAcctId = Accounts.instance.getAdminAccountId(userAddr);		
-
-		S.out( "Account %s user %s redeeming %s RUSD for BUSD",
-				adminAcctId, userAddr, amt);
-		
-		return Fireblocks.call2( 
-				adminAcctId, 
-				m_address, 
-				sellRusdKeccak, 
-				paramTypes, 
-				params, 
-				"RUSD sell RUSD");
-	}
 
 	/** There is a RUSD.buyRusd method but it is for the future, currently never called. 
 	 * @return */
@@ -226,7 +180,6 @@ public class Rusd extends Stablecoin {
 				paramTypes,
 				params,
 				"RUSD swap");
-				
 	}
 
 //	/** RUSD has no mint function, so we sell zero shares of stock */
@@ -236,16 +189,29 @@ public class Rusd extends Stablecoin {
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
 	public RetVal mintRusd(String address, double amt, StockToken anyStockToken) throws Exception {
-		return sellStockForRusd( address, amt, anyStockToken, 0);
+		return sellStockForRusd( null, address, amt, anyStockToken, 0.);
 	}
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
-	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
-		return buyStockWithRusd( address, amt, anyStockToken, 0);
-	}
+//	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
+//		return buyStockWithRusd( null, address, amt, anyStockToken, 0);
+//	}
 	
-	public RetVal mintStockToken(String address, StockToken stockToken, double amt) throws Exception {
-		return buyStockWithRusd(address, 0, stockToken, amt);
-
+	/** Deploy RUSD
+	 *  @return deployed address */
+	public static String deploy(String filename, String refWallet, String adminAddr) throws Exception {
+		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
+		String[] paramTypes = { "address", "address" };
+		Object[] params = { refWallet, adminAddr };
+		
+		return deploy( 
+				filename, 
+				Accounts.instance.getId( "Owner"), 
+				paramTypes, 
+				params, 
+				"Deploy RUSD"
+		);
 	}
 }
+
+// we are storing address, dec, name redundantly with Rusd and Busd. pas

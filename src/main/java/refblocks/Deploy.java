@@ -1,6 +1,5 @@
-package fireblocks;
+package refblocks;
 
-import static fireblocks.Accounts.instance;
 
 import common.Util;
 import redis.ConfigBase.Web3Type;
@@ -20,7 +19,7 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = Config.ask();
-		Util.require(config.web3Type() == Web3Type.Fireblocks, "Turn on Fireblocks");
+		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Fireblocks");
 		
 		Rusd rusd = config.rusd();
 		Busd busd = config.busd();
@@ -29,8 +28,9 @@ public class Deploy {
 
 		// deploy BUSD? (for testing only)
 		if ("deploy".equals( busd.address() ) ) {
-			busd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
-			config.setBusdAddress( busd.address() );  // update spreadsheet with deployed address
+			String address = RbBusdCore.deploy( config.ownerKey() );
+			config.setBusdAddress( address);  // update spreadsheet with deployed address
+			busd = config.busd();
 		}
 		else {
 			Util.require( Util.isValidAddress( busd.address() ), "BUSD must be valid or set to 'deploy'");
@@ -38,11 +38,9 @@ public class Deploy {
 		
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusd.address() ) ) {
-			rusd.deploy( 
-					"c:/work/smart-contracts/build/contracts/rusd.json",
-					instance.getAddress( "RefWallet"),
-					instance.getAddress( "Admin1")	);
-			config.setRusdAddress( rusd.address() );  // update spreadsheet with deployed address
+			String address = RbRusdCore.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
+			config.setRusdAddress( address);  // update spreadsheet with deployed address
+			rusd = config.rusd();
 
 			// let RefWallet approve RUSD to transfer BUSD
 			busd.approve( 
@@ -50,9 +48,9 @@ public class Deploy {
 					1000000000); // $1B
 
 			// add a second admin
-			rusd.addOrRemoveAdmin(
-					instance.getAddress( "Admin2"), 
-					true);
+//			rusd.addOrRemoveAdmin(
+//					instance.getAddress( "Admin2"), 
+//					true);
 		}
 		else {
 			Util.require( Util.isValidAddress( rusd.address() ), "RUSD must be valid or set to 'deploy'");
@@ -62,8 +60,8 @@ public class Deploy {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
 			if (row.getString( "Token Address").equalsIgnoreCase("deploy") ) {
 				// deploy stock token
-				String address = FbStockToken.deploy( 
-						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
+				String address = RbStockTokenCore.deploy(
+						config.ownerKey(),
 						row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
 						row.getString( "Token Symbol"),
 						rusd.address()

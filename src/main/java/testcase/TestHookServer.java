@@ -6,9 +6,9 @@ import org.json.simple.JsonObject;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
-import fireblocks.StockToken;
 import http.MyClient;
 import tw.util.S;
+import web3.StockToken;
 
 /** This test should be done in Dev or Prod only */
 public class TestHookServer extends MyTestCase {
@@ -92,7 +92,7 @@ public class TestHookServer extends MyTestCase {
 		int n = Util.rnd.nextInt( 10000) + 1;
 
 		// let Owner approve RUSD to spend BUSD
-		m_config.busd().approve(Accounts.instance.getId("Owner"), m_config.rusdAddr(), n)
+		m_config.busd().approve( m_config.rusdAddr(), n)
 				.waitForHash();
 
 		// wait for it to be reflected in wallet

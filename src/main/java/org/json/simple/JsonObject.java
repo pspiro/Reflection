@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -220,6 +221,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public int getInt( String key) {
 		String str = getString( key);
 		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
+	}
+
+	public BigInteger getBigInt(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? new BigInteger( str) : BigInteger.ZERO;
 	}
 
 	public double getDouble(String key) {

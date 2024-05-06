@@ -9,9 +9,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Erc20;
 import reflection.MySqlConnection;
 import tw.util.S;
+import web3.Erc20;
 
 /** Shows the holders for a given token (wallet and balance */
 public class HoldersPanel extends JsonPanel {

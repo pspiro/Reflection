@@ -8,7 +8,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Erc20;
+import fireblocks.FbErc20;
 import http.MyClient;
 import tw.util.S;
 
@@ -130,7 +130,7 @@ public class MoralisServer {
 	public static double getNativeBalance(String address) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
-		return Erc20.fromBlockchain(
+		return FbErc20.fromBlockchain(
 				JsonObject.parse( querySync(url) ).getString("balance"),
 				18);
 	}
