@@ -95,4 +95,18 @@ public class RbRusd extends Erc20 implements IRusd {
 		return null;
 	}
 
+	@Override public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
+		Util.isValidKey(ownerKey);
+		Util.isValidAddress(address);
+		
+		TransactionReceipt rec = loadRusd( ownerKey).addOrRemoveAdmin(
+				address,
+				add
+				).send();
+
+		Refblocks.showReceipt( rec);
+		
+		return null;
+	}
+
 }

@@ -12,6 +12,8 @@ import org.web3j.tx.gas.StaticEIP1559GasProvider;
 import org.web3j.utils.Numeric;
 
 import common.Util;
+import fireblocks.Fireblocks;
+import fireblocks.RetVal;
 import http.MyClient;
 import reflection.Config;
 import tw.util.S;
@@ -76,18 +78,45 @@ public class Refblocks {
 		
 		return fees;
 	}
+	
+	public static class RbRetVal extends RetVal {
+		private TransactionReceipt m_receipt;
 
-	public static void showReceipt(TransactionReceipt trans) {
-		BigInteger gasPrice = decodeQuantity( trans.getEffectiveGasPrice() );
-		String str = String.format(
-				"hash=%s  gasUsed=%s  gasPrice=%s  totalCost=%s matic",
-				trans.getTransactionHash(),
-				trans.getGasUsed(),
+		RbRetVal( TransactionReceipt receipt) {
+			super( null);
+			m_receipt = receipt;
+		}
+		
+		public String waitForHash() throws Exception {
+			return m_receipt.getTransactionHash();
+		}
+		
+		/** This blocks for up to 2 min */
+		public RetVal waitForCompleted() throws Exception {
+			return this;
+		}
+
+		/** This blocks for up to 2 min */
+		public RetVal waitForStatus(String status) throws Exception {
+			throw new Exception();
+		}
+		
+		@Override
+		public String toString() {
+			return Refblocks.toString( m_receipt);
+		}
+	}
+
+	public static String toString(TransactionReceipt receipt) {
+		BigInteger gasPrice = decodeQuantity( receipt.getEffectiveGasPrice() );
+		return String.format(
+				"hash=%s  gasUsed=%s  gasPrice=%s  totalCost=%s matic  reason=%s",
+				receipt.getTransactionHash(),
+				receipt.getGasUsed(),
 				gasPrice,
-				Erc20.fromBlockchain( trans.getGasUsed().multiply( gasPrice).toString(), 18)
+				Erc20.fromBlockchain( receipt.getGasUsed().multiply( gasPrice).toString(), 18),
+				receipt.getRevertReason()
 				);
-		System.out.println( str);
-		System.out.println();
 	}
 	
 	/** Can take hex or decimal */
@@ -120,6 +149,10 @@ public class Refblocks {
 				fees.priorityFee(),
 				BigInteger.valueOf(units)
 				);
+	}
+
+	public static void showReceipt(TransactionReceipt rec) {
+		S.out( toString( rec) );
 	}
 }
 // there is a bug here in Contract.executeTransaction()

@@ -162,14 +162,14 @@ public class FbRusd extends FbErc20 implements IRusd {
 //    uint256 _amount
 
 
-	public RetVal addOrRemoveAdmin(String adminAddr, boolean add) throws Exception {
+	public RetVal addOrRemoveAdmin(String owner, String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		Object[] params = { adminAddr, add ? 1 : 0 };
 		
 		S.out( "Owner adding or removing admin %s (%s)", adminAddr, add);
 		
 		return call(
-				Accounts.instance.getId( "Owner"),
+				Accounts.instance.getId( owner),
 				addOrRemoveKeccak, 
 				paramTypes, 
 				params, 
