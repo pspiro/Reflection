@@ -6,6 +6,8 @@ import org.json.simple.JsonObject;
 
 import tw.util.OStream;
 
+/** This program writes the abi and bytecode from the compiled json file to
+ *  files that can be read by the web3j generate solidity commands below */
 public class WriteAbi {
 	public static void main(String[] args) throws IOException, Exception {
 		String filename = "c:/work/smart-contracts/build/contracts/busd.json";

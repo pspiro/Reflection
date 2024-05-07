@@ -3,8 +3,8 @@ package web3;
 import common.Util;
 import fireblocks.RetVal;
 
-/** Created by Config which knows which type of core to pass in 
- *  and what params are needed in Web3Params */
+/** The Rusd class used by clients. Created by Config which knows which 
+ *  type of core to pass in */
 public class Rusd extends Stablecoin {
 	private IRusd m_core;
 	private String m_adminKey;
@@ -14,30 +14,25 @@ public class Rusd extends Stablecoin {
 		m_adminKey = adminKey;
 		m_core = core;
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
-	}
-	
-//	public String deploy(String filename, String refWallet, String adminAddr) throws Exception {
-//		return m_core.deploy( filename, refWallet, adminAddr);
-//	}
-
-	// not used, remove
-	public Rusd(String string, int i) throws Exception {
-		super( null, 0, null);
-		// TODO Auto-generated constructor stub
+		Util.require( core != null, "null core");
 	}
 
+	/** methods to change the smart contract are passed to the core */
 	public RetVal buyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		return m_core.buyStock( m_adminKey, userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
 	}
 
+	/** methods to change the smart contract are passed to the core */
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		return m_core.sellStockForRusd( m_adminKey, userAddr, rusdAmt, stockToken, stockTokenAmt);
 	}
 
+	/** methods to change the smart contract are passed to the core */
 	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
 		return m_core.sellRusd( m_adminKey, userAddr, busd, amt);
 	}
 
+	// read methods are implemented here
 
 	/** Buying stock with either FBusd OR RUSD; need to test it both ways.
 	 * 
@@ -75,15 +70,6 @@ public class Rusd extends Stablecoin {
 		RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellRusd( String adminKey, String userAddr, Busd Busd, double amt) throws Exception;
-	}
-
-	public void deploy(String string, String address, String address2) {
-		//n/a
-	}
-
-	public void addOrRemoveAdmin(String address, boolean add) {
-		// na
-		
 	}
 
 }

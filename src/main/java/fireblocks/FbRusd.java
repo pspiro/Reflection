@@ -18,6 +18,22 @@ public class FbRusd extends FbErc20 implements IRusd {
 	public FbRusd(String address, int decimals) throws Exception {
 		super( address, decimals, "RUSD");
 	}
+	
+	/** Deploy RUSD
+	 *  @return deployed address */
+	public static String deploy(String filename, String refWallet, String adminAddr) throws Exception {
+		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
+		String[] paramTypes = { "address", "address" };
+		Object[] params = { refWallet, adminAddr };
+		
+		return deploy( 
+				filename, 
+				Accounts.instance.getId( "Owner"), 
+				paramTypes, 
+				params, 
+				"Deploy RUSD"
+		);
+	}
 
 	/** Buy with either RUSD or FBusd; can also be used to burn RUSD
 	 * @return id */
@@ -196,22 +212,6 @@ public class FbRusd extends FbErc20 implements IRusd {
 //	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
 //		return buyStockWithRusd( null, address, amt, anyStockToken, 0);
 //	}
-	
-	/** Deploy RUSD
-	 *  @return deployed address */
-	public static String deploy(String filename, String refWallet, String adminAddr) throws Exception {
-		S.out( "Deploying RUSD from owner with refWallet %s and admin %s", refWallet, adminAddr);
-		String[] paramTypes = { "address", "address" };
-		Object[] params = { refWallet, adminAddr };
-		
-		return deploy( 
-				filename, 
-				Accounts.instance.getId( "Owner"), 
-				paramTypes, 
-				params, 
-				"Deploy RUSD"
-		);
-	}
 }
 
 // we are storing address, dec, name redundantly with Rusd and Busd. pas

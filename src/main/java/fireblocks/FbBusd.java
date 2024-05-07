@@ -9,15 +9,9 @@ public class FbBusd extends FbErc20 implements IBusd {
 		super( address, decimals, name);
 	}
 	
-	/** This can be called by anybody, the BUSD does not have an owner.
-	 *  For testing only; cannot be called in production */
-	public RetVal mint(String address, double amt) throws Exception {
-		return super.mint( Accounts.instance.getId( "Owner"), address, amt);
-	}
-	
 	/** For testing only, as we cannot deploy the real stablecoin */
-	public String deploy(String filename) throws Exception {
-		S.out( "Deploying %s from owner", name() );
+	public static String deploy(String filename) throws Exception {
+		S.out( "Deploying BUSD from owner" );
 		
 		return deploy( 
 				filename, 
@@ -28,8 +22,14 @@ public class FbBusd extends FbErc20 implements IBusd {
 		);
 	}
 
-	@Override public RetVal approve(String spenderAddr, double amt) throws Exception {
-		return null;
+	@Override public RetVal approve(String callerKey, String spenderAddr, double amt) throws Exception {
+		return super.approve( Accounts.instance.getId( callerKey), spenderAddr, amt);
 	}
-
+	
+	/** This can be called by anybody, the BUSD does not have an owner.
+	 *  For testing only; cannot be called in production 
+	 *  @param callerKey is ignored */
+	public RetVal mint( String callerKey, String address, double amt) throws Exception {
+		return super.mint( Accounts.instance.getId( callerKey), address, amt);
+	}
 }

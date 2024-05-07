@@ -1,26 +1,23 @@
 package fireblocks;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
-import positions.Wallet;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
 import tw.util.S;
-import web3.MyCoreBase;
+import web3.Erc20;
 
-public class FbErc20 extends MyCoreBase {
+public class FbErc20 extends Erc20 {
 	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;
 										  // for stock tokens, this might not be enough
 	static final String approveKeccak = "095ea7b3";
 	static final String mintKeccak = "40c10f19";
 	static final String burnKeccak = "9dc29fac";
-	static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 
 	public FbErc20( String address, int decimals, String name) throws Exception {
 		super( address, decimals, name);
@@ -58,33 +55,19 @@ public class FbErc20 extends MyCoreBase {
 				: 0.0;
 	}
 	
-	public static double fromBlockchainHex(String amt, int power) {
-		return new BigDecimal( new BigInteger(amt,16) )
-				.divide( ten.pow(power) )
-				.doubleValue(); 
-	}
-	
 	/** Sends a query to Moralis */
-	public double getAllowance(String wallet, String spender) throws Exception {
-		Util.reqValidAddress(wallet);
-		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
-	}
+//	public double getAllowance(String wallet, String spender) throws Exception {
+//		Util.reqValidAddress(wallet);
+//		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
+//	}
+//
+//	/** Returns the number of this token held by wallet; sends a query to Moralis
+//	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
+//	public double getPosition(String walletAddr) throws Exception {
+//		Util.reqValidAddress(walletAddr);
+//		return new Wallet(walletAddr).getBalance(m_address); 
+//	}
 
-	/** Returns the number of this token held by wallet; sends a query to Moralis
-	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
-	public double getPosition(String walletAddr) throws Exception {
-		Util.reqValidAddress(walletAddr);
-		return new Wallet(walletAddr).getBalance(m_address); 
-	}
-
-	/** note w/ moralis you can also get the token balance by wallet */
-	public double queryTotalSupply() throws Exception {
-		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
-		Util.require( supply != null, "Moralis total supply returned null for " + m_address);
-		return fromBlockchain(
-				supply.replaceAll("\"", ""), // strip quotes
-				m_decimals);
-	}
 
 	/** The wallet associated w/ ownerAcctId becomes the owner of the deployed contract.
 	 *  The parameters passed here are the passed to the constructor of the smart contract
@@ -176,16 +159,6 @@ public class FbErc20 extends MyCoreBase {
 		};
 		
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
-	}
-
-	public void showAllTransactions() throws Exception {
-			MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				S.out( "%8s %s %s %s", 
-						obj.getString("value_decimal"), 
-						Util.left( obj.getString("from_address"), 8),
-						Util.left( obj.getString("to_address"), 8),
-						obj.getString("transaction_hash") );
-		} ) );
 	}
 
 }

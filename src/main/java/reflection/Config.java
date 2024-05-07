@@ -13,11 +13,12 @@ import fireblocks.Accounts;
 import fireblocks.FbBusd;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
+import fireblocks.RetVal;
 import junit.framework.TestCase;
 import positions.MoralisServer;
 import redis.ConfigBase;
-import refblocks.RbBusdCore;
-import refblocks.RbRusdCore;
+import refblocks.RbBusd;
+import refblocks.RbRusd;
 import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
@@ -93,8 +94,9 @@ public class Config extends ConfigBase {
 	// Fireblocks
 	private String admin1Addr;
 //	private String admin1Key;
-	private String ownerKey;
+	private String ownerKey;  // for Fireblocks, this is "Owner"
 	private String refWalletAddr;
+	private String refWalletKey;
 
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
@@ -215,6 +217,9 @@ public class Config extends ConfigBase {
 		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
+		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
+		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
+		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 
 		Alerts.setEmail( this.alertEmail);
 		
@@ -256,14 +261,12 @@ public class Config extends ConfigBase {
 		}
 		else {
 			admin1Addr = m_tab.getRequiredString("admin1Addr");
-			refWalletAddr = m_tab.getRequiredString("refWalletAddr");
-			ownerKey = m_tab.getRequiredString("ownerKey");
 			
-			rusdCore = new RbRusdCore(
+			rusdCore = new RbRusd(
 					m_tab.getRequiredString("rusdAddr").toLowerCase(),
 					m_tab.getRequiredInt("rusdDecimals") );
 
-			busdCore = new RbBusdCore(
+			busdCore = new RbBusd(
 					m_tab.getRequiredString("busdAddr").toLowerCase(),
 					m_tab.getRequiredInt("busdDecimals"),
 					m_tab.getRequiredString("busdName") );
@@ -616,7 +619,15 @@ public class Config extends ConfigBase {
 		return refWalletAddr;
 	}
 	
-	public String ownerKey() {
+	public String refWalletKey() {
+		return refWalletKey;
+	}
+	
+	public String ownerKey() {  // private key or "Owner"
 		return ownerKey;
+	}
+
+	public RetVal mintBusd(String wallet, double amt) throws Exception {
+		return busd().mint( ownerKey(), wallet, 2000);
 	}
 }

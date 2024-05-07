@@ -25,6 +25,7 @@ import com.moonstoneid.siwe.SiweMessage;
 import common.Util;
 import reflection.SiweUtil;
 import tw.util.S;
+import web3.Erc20;
 
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
@@ -420,6 +421,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		try (FileWriter writer = new FileWriter( filename) ) {
 			writeJSONString( writer);
 		}
+	}
+
+	public BigInteger getBlockchain(String key, int decimals) {
+		return Erc20.toBlockchain( getDouble( key), decimals);
 	}
 
 }

@@ -11,21 +11,6 @@ public class FbStockToken extends FbErc20 {
 		super( address, stockTokenDecimals, "StockToken");
 	}
 	
-	public RetVal setRusdAddress(String rusdAddr) throws Exception {
-		Util.reqValidAddress( rusdAddr);
-		String[] paramTypes = { "address" };
-		Object[] params = { rusdAddr };
-		
-		S.out( "Setting RUSD address to %s for stock token %s", rusdAddr, m_address);
-
-		return call( 
-				Accounts.instance.getId( "Owner"), 
-				setRusdKeccak, 
-				paramTypes, 
-				params, 
-				"StockToken setRusdAddress");		
-	}
-	
 	public static String deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
 		Util.require( S.isNotNull( name), "Null name" );
 		Util.require( S.isNotNull( symbol), "Null symbol" );
@@ -48,5 +33,20 @@ public class FbStockToken extends FbErc20 {
 				params, 
 				"deploy stock token " + symbol
 		);
+	}
+	
+	public RetVal setRusdAddress(String rusdAddr) throws Exception {
+		Util.reqValidAddress( rusdAddr);
+		String[] paramTypes = { "address" };
+		Object[] params = { rusdAddr };
+		
+		S.out( "Setting RUSD address to %s for stock token %s", rusdAddr, m_address);
+
+		return call( 
+				Accounts.instance.getId( "Owner"), 
+				setRusdKeccak, 
+				paramTypes, 
+				params, 
+				"StockToken setRusdAddress");		
 	}
 }

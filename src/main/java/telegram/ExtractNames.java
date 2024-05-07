@@ -2,10 +2,6 @@ package telegram;
 
 import java.util.HashSet;
 
-import org.json.simple.JsonObject;
-
-import tw.util.S;
-
 public class ExtractNames {
 	static String text = """
 			Hello, %s, this is Radar from Reflection, the stock token trading platform, writing to you on behalf of the Reflection team. 

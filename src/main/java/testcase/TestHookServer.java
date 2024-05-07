@@ -92,7 +92,7 @@ public class TestHookServer extends MyTestCase {
 		int n = Util.rnd.nextInt( 10000) + 1;
 
 		// let Owner approve RUSD to spend BUSD
-		m_config.busd().approve( m_config.rusdAddr(), n)
+		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
 				.waitForHash();
 
 		// wait for it to be reflected in wallet

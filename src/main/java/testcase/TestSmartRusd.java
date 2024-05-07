@@ -1,9 +1,5 @@
 package testcase;
 
-import static fireblocks.Accounts.instance;
-
-import web3.Rusd;
-
 /** Test smart contracts */
 public class TestSmartRusd extends MyTestCase {
 	public void testAORA() throws Exception {
@@ -22,14 +18,14 @@ public class TestSmartRusd extends MyTestCase {
 	}
 	
 	public void testAdmin() throws Exception {
-		// deploy ST and RUSD
-
-		instance.setAdmins("Admin1");
-		
-		String admin = instance.getAddress( "Admin1");
-		
-		Rusd rusd = new Rusd("", 6);
-		rusd.deploy("c:/work/smart-contracts/build/contracts/rusd.json", dead, admin); 
+//		// deploy ST and RUSD
+//
+//		instance.setAdmins("Admin1");
+//		
+//		String admin = instance.getAddress( "Admin1");
+//		
+//		Rusd rusd = new Rusd("", 6);
+//		rusd.deploy("c:/work/smart-contracts/build/contracts/rusd.json", dead, admin); 
 //		StockToken st = StockToken.deploy(
 //				"AAA",
 //				"AAA",

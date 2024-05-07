@@ -1,7 +1,6 @@
 package telegram;
 
 import java.io.IOException;
-import java.net.http.HttpResponse;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -48,20 +47,20 @@ public class TgServer {
 	}
 	
 	/** Listen for messages sent to my group or to the bot */
-	private static void queryMessages() throws Exception {
-		int last = 271551453;  // query for id's with this number or higher
-		
-		while (true) {
-			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
-					Telegram.botKey, last + 1);
-
-			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
-				last = processUpdate( update);
-			}
-			
-			S.sleep(10);
-		}
-	}
+//	private static void queryMessages() throws Exception {
+//		int last = 271551453;  // query for id's with this number or higher
+//		
+//		while (true) {
+//			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
+//					Telegram.botKey, last + 1);
+//
+//			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
+//				last = processUpdate( update);
+//			}
+//			
+//			S.sleep(10);
+//		}
+//	}
 	
 	static int processUpdate( JsonObject item) throws Exception {
 		int updateId = item.getInt( "update_id");

@@ -11,7 +11,6 @@ import fireblocks.Accounts;
 import fireblocks.Fireblocks;
 import http.MyClient;
 import positions.Wallet;
-import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.HorzDualPanel;
@@ -148,7 +147,7 @@ public class CryptoPanel extends MonPanel {
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
-		Wallet refWallet = Fireblocks.getWallet("RefWallet");
+		Wallet refWallet = new Wallet( Monitor.m_config.refWalletAddr() );
 		m_refAddress.setText( refWallet.walletAddr() );
 
 		double busd = refWallet.getBalance(Monitor.m_config.busd().address());

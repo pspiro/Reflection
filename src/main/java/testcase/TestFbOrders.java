@@ -83,12 +83,13 @@ public class TestFbOrders extends MyTestCase {
 		// mint BUSD for user Bob
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		busd.mint( bobAddr, 2000)  // I don't think this is necessary but I saw it fail without this
+		m_config.mintBusd( bobAddr, 2000)  // I don't think this is necessary but I saw it fail without this
 			.waitForHash();
 		
 		// approve too little
 		S.out( "**approving .49");
 		busd.approve(
+				"bob",
 				rusd.address(),
 				.49).waitForCompleted();
 		
@@ -125,15 +126,13 @@ public class TestFbOrders extends MyTestCase {
 		
 		// mint BUSD for user Bob
 		S.out( "**minting 20000");
-		busd.mint(
-				bobAddr,
-				2000).waitForCompleted();
+		m_config.mintBusd( bobAddr, 2000).waitForCompleted();
 		
 		// user to approve buying with BUSD; you must wait for this
-		S.out( "**approving 20000");
-		busd.approve(
-				rusd.address(),
-				2000).waitForCompleted();
+//		S.out( "**approving 20000");
+//		busd.approve(
+//				rusd.address(),
+//				2000).waitForCompleted();
 
 		showAmounts("updated amounts");
 
