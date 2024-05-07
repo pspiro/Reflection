@@ -1,6 +1,5 @@
 package refblocks;
 
-import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import common.Util;

@@ -75,7 +75,5 @@ public class Deploy {
 			}
 		}
 		
-		//Test.run(config, busd, rusd);
 	}
-// test build	
 }

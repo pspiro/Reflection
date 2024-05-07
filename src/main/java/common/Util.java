@@ -159,6 +159,8 @@ public class Util {
 	
 	
 	public static void main(String[] args) throws Exception {
+		S.out( toHex( 3) );
+		S.out( toHex( 10) );
 	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
@@ -803,6 +805,10 @@ public class Util {
 	public static boolean isValidKey(String adminKey) {
 		return true; // write this. pas
 		
+	}
+	
+	public static String toHex( int val) {
+		return "0x" + Long.toHexString( val);
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

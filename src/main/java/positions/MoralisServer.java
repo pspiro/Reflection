@@ -63,7 +63,6 @@ public class MoralisServer {
 		return resp.body();
 	}
 
-
 	public static String queryBalances(String contract) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 

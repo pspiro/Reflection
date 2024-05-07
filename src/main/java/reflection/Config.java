@@ -87,9 +87,9 @@ public class Config extends ConfigBase {
 	private double maxAutoRedeem;
 	private int hookServerPort;
 	private String hookServerUrl;
-	private String hookServerChain;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
+	private int chainId;
 
 	// Fireblocks
 	private String admin1Addr;
@@ -214,13 +214,13 @@ public class Config extends ConfigBase {
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
-		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
 		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
 		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
-
+		this.chainId = m_tab.getRequiredInt( "chainId");
+		
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
@@ -271,7 +271,9 @@ public class Config extends ConfigBase {
 					m_tab.getRequiredInt("busdDecimals"),
 					m_tab.getRequiredString("busdName") );
 			
-			Refblocks.setChainId( m_tab.getRequiredInt( "chainId") );
+			Refblocks.setChainId( 
+					chainId,
+					m_tab.getRequiredString( "rpcUrl") );
 		}
 
 		m_rusd = new web3.Rusd(
@@ -591,10 +593,6 @@ public class Config extends ConfigBase {
 		return hookServerUrl;
 	}
 	
-	public String hookServerChain() {
-		return hookServerChain;
-	}
-
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
@@ -629,5 +627,9 @@ public class Config extends ConfigBase {
 
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( ownerKey(), wallet, 2000);
+	}
+	
+	public int chainId() {
+		return chainId;
 	}
 }

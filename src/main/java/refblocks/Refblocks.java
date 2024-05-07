@@ -6,8 +6,6 @@ import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.exceptions.JsonRpcError;
-import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.gas.StaticEIP1559GasProvider;
@@ -15,6 +13,8 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
+import tw.util.S;
 import web3.Erc20;
 
 /** Support code for Web3j library */
@@ -24,6 +24,21 @@ public class Refblocks {
 	static final long deployGas = 2000000;
 	static Web3j web3j;
 	static long chainId;  // set from Config
+	static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
+	private static String polygonRpcUrl = "https://polygon-rpc.com/";
+
+	public static void main( String[] args) throws Exception {
+		//setChainId( 137, polygonRpcUrl);
+		
+		S.out( RbBusd.deploy( Config.ask( "Dt").ownerKey() ) );
+
+//		Busd busd = Busd.deploy( 
+//				web3j,
+//				getTm("cd11a9b7eb7140da458eba6dad1bcc206d41a1c3c677068e2593370165446f3d"),
+//				getGp(2000000)
+//				).send();
+				
+	}
 	
 	public static void setChainId( long id, String rpcUrl) {
 		chainId = id;
@@ -49,7 +64,7 @@ public class Refblocks {
 		Fees fees = new Fees();
 		
 		try {
-			JsonObject json = MyClient.getJson( "https://api.polygonscan.com/api?module=gastracker&action=gasoracle")
+			JsonObject json = MyClient.getJson( gasUrl)
 					.getObject( "result");
 			fees.baseFee = json.getBlockchain( "suggestBaseFee", 9); // convert base fee from gwei to wei
 			fees.priorityFee = json.getBlockchain( "FastGasPrice", 9);  // it's very unclear if this is returning the priority fee or the total fee, but it doesn't matter because the base fee is so low 

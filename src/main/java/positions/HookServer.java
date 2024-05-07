@@ -44,7 +44,7 @@ public class HookServer {
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
-	String chain() { return m_config.hookServerChain(); }
+	String chain() { return Util.toHex( m_config.chainId() ); }
 	
 	public static void main(String[] args) {
 		try {

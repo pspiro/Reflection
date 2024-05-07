@@ -5,7 +5,6 @@ import static common.Util.rnd;
 import java.math.BigInteger;
 import java.net.http.HttpResponse;
 
-import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -112,18 +111,6 @@ public class Fireblocks {
 		return response.body();
 	}
 	
-	static void process(Response resp) throws Exception {
-		String body = resp.getResponseBody();
-		S.out( body);
-		
-		if (body.startsWith( "{") ) {
-			JsonObject.parse(body).display();
-		}
-		else if (body.startsWith( "[")) {
-			JsonArray.parse(body).display();
-		}
-	}
-
 	/** Call a Fireblocks GET endpoint, return json object */
 	public static JsonObject fetchObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();

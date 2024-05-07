@@ -17,7 +17,7 @@ public class Deploy {
 	// deploy RUSD and all stock tokens
 	public static void main(String[] args) throws Exception {
 		Config config = Config.ask("Dt");
-		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Fireblocks");
+		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");
 		
 		String rusdAddress = config.rusd().address();
 		String busdAddress = config.busd().address();
@@ -27,6 +27,7 @@ public class Deploy {
 		// deploy BUSD? (for testing only)
 		if ("deploy".equals( busdAddress) ) {
 			busdAddress = RbBusd.deploy( config.ownerKey() );
+			S.out( "deployed busd to " + busdAddress);
 			config.setBusdAddress( busdAddress);  // update spreadsheet with deployed address
 		}
 		else {
@@ -36,6 +37,7 @@ public class Deploy {
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusdAddress) ) {
 			rusdAddress = RbRusd.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
+			S.out( "deployed rusd to " + rusdAddress);
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
 
 			// let RefWallet approve RUSD to transfer BUSD
@@ -63,6 +65,7 @@ public class Deploy {
 				);
 				
 				// update row on Symbols tab with new stock token address
+				S.out( "deployed stock token to " + address);
 				row.setValue( "Token Address", address);
 				row.update();
 			}
