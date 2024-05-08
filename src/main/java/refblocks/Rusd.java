@@ -829,4 +829,8 @@ public class Rusd extends Contract {
 
         public BigInteger value;
     }
+    
+    public TransactionManager getTm() {
+    	return this.transactionManager;
+    }
 }

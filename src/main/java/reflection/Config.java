@@ -286,6 +286,7 @@ public class Config extends ConfigBase {
 				m_tab.getRequiredString("busdAddr").toLowerCase(),
 				m_tab.getRequiredInt("busdDecimals"),
 				m_tab.getRequiredString ("busdName"),
+				m_tab.getRequiredString( "admin1Key"),
 				busdCore);
 
 		// update Moralis chain
@@ -626,7 +627,7 @@ public class Config extends ConfigBase {
 	}
 
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
-		return busd().mint( ownerKey(), wallet, 2000);
+		return busd().mint( wallet, 2000);
 	}
 	
 	public int chainId() {

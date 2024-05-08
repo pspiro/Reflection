@@ -15,6 +15,8 @@ public class Deploy {
 	// one is not done yet
 	
 	// deploy RUSD and all stock tokens
+	
+	// NOTE you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
 		Config config = Config.ask("Dt");
 		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");

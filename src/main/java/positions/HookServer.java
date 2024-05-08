@@ -139,7 +139,8 @@ public class HookServer {
 		 *  positions is an array with fields address, position */ 
 		public void handleGetWallet() {
 			wrap( () -> {
-				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson( m_config.minTokenPosition() ) );
+				respond( getOrCreateHookWallet( getWalletFromUri() )
+						.getAllJson( m_config.minTokenPosition() ) );
 			});
 		}
 
@@ -147,7 +148,8 @@ public class HookServer {
 		 *  positions is an object key address, position */ 
 		public void handleGetWalletMap() {
 			wrap( () -> {
-				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJsonMap( m_config.minTokenPosition() ) );
+				respond( getOrCreateHookWallet( getWalletFromUri() )
+						.getAllJsonMap( m_config.minTokenPosition() ) );
 			});
 		}
 

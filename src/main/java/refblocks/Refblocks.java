@@ -1,18 +1,22 @@
 package refblocks;
 
+import java.io.IOException;
 import java.math.BigInteger;
 
 import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.StaticEIP1559GasProvider;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
 import org.web3j.utils.Numeric;
 
 import common.Util;
-import fireblocks.Fireblocks;
 import fireblocks.RetVal;
 import http.MyClient;
 import reflection.Config;
@@ -81,13 +85,26 @@ public class Refblocks {
 	
 	public static class RbRetVal extends RetVal {
 		private TransactionReceipt m_receipt;
+		private DelayedTrp m_trp;
 
+		/** If we already have the receipt */
 		RbRetVal( TransactionReceipt receipt) {
 			super( null);
 			m_receipt = receipt;
 		}
 		
+		/** If we need to wait for the receipt */
+		public RbRetVal(DelayedTrp trp) {
+			super( null);
+			m_trp = trp;
+		}
+
+		/** Wait for receipt or return it hash if we already have it */
 		public String waitForHash() throws Exception {
+			if (m_trp != null) {
+				m_receipt = m_trp.reallyWait();
+				S.out( this);
+			}
 			return m_receipt.getTransactionHash();
 		}
 		
@@ -101,9 +118,8 @@ public class Refblocks {
 			throw new Exception();
 		}
 		
-		@Override
-		public String toString() {
-			return Refblocks.toString( m_receipt);
+		@Override public String toString() {
+			return m_receipt != null ? Refblocks.toString( m_receipt) : "";
 		}
 	}
 
@@ -128,15 +144,89 @@ public class Refblocks {
 			return BigInteger.ZERO;
 		}
 	}
+	
+	static class DelayedTrp extends PollingTransactionReceiptProcessor {
+	    private String m_transactionHash;
+	    
+	    DelayedTrp( Web3j web3j) {
+	    	super( web3j, 5000, 40);
+	    }
+
+	    /** return immediately with an empty receipt */
+		@Override public TransactionReceipt waitForTransactionReceipt(String transactionHash)
+	            throws IOException, TransactionException {
+			
+			m_transactionHash = transactionHash;
+			return new EmptyReceipt( transactionHash);
+	    }
+
+		/** wait for the receipt */
+	    public TransactionReceipt reallyWait()
+	            throws IOException, TransactionException {
+
+	        return super.waitForTransactionReceipt(m_transactionHash);
+	    }
+	}
+	
+	static class EmptyReceipt extends TransactionReceipt {
+		EmptyReceipt( String hash) {
+			setTransactionHash( hash);
+		}
+	}
+
+	interface Func {
+		RemoteFunctionCall<TransactionReceipt> call( TransactionManager tm) throws Exception;
+	}
+	
+	static RbRetVal exec( String callerKey, Func function) throws Exception {
+		try {
+			DelayedTrp trp = new DelayedTrp( web3j);
+
+			RawTransactionManager tm = new RawTransactionManager(
+					web3j,
+					Credentials.create( callerKey ), // how to do this elegantly
+					chainId,
+					trp);
+			
+			TransactionReceipt receipt = function.call( tm).send();  // returns empty receipt
+			Util.require( receipt instanceof EmptyReceipt, "should be EmptyReceipt");
+
+			return new RbRetVal( trp);
+		}
+		catch( Exception e) {
+			S.out( "Error for caller %s: %s", callerKey, e.getMessage() );
+			throw e;
+		}
+	}
+	
+	static RetVal oldexec(String callerKey, RemoteFunctionCall<TransactionReceipt> func) throws Exception {
+		try {
+			TransactionReceipt rec = func.send();
+
+			Refblocks.showReceipt( rec);
+			
+			return new RbRetVal( rec);
+		}
+		catch( Exception e) {
+			S.out( "Error for caller %s: %s", callerKey, e.getMessage() );
+			throw e;
+		}
+	}
 
 	/** Get the transaction manager which knows the chainId and the private key of the caller */
 	public static RawTransactionManager getTm(String privateKey) throws Exception {
 		Util.require( chainId != 0, "set chainId");
 		
+//		return new RawTransactionManager(
+//				web3j,
+//				Credentials.create( privateKey ),
+//				chainId );
+		
 		return new RawTransactionManager(
 				web3j,
 				Credentials.create( privateKey ),
-				chainId);
+				chainId,
+				new DelayedTrp( web3j) );
 	}
 
 	/** Get the gas provider which knows the base fee, priority fee, and total fee */
@@ -155,6 +245,8 @@ public class Refblocks {
 		S.out( toString( rec) );
 	}
 }
+// use this one for instant callback QueuingTransactionReceiptProcessor where you pass in a callback
+// start with TransactionManager.execute()
 // there is a bug here in Contract.executeTransaction()
 //} catch (JsonRpcError error) {
 //    throw new TransactionException(error.getData().toString());
@@ -162,3 +254,8 @@ public class Refblocks {
 // error.getData() is null so toString() fails and you don't get to see the real error
 // need to fix or override
 // you get get address from private key using Credentials
+// TransactionReceiptProcessor is involved
+// uses PollingTransactionReceiptProcessor, use a custom ctor
+// QueuingTransactionReceiptProcessor this one returns asap and then queries in the background 
+// it polls only every 15 sec; that's too slow  JsonRpc2_0Web3j.DEFAULT_BLOCK_TIME = 15 * 1000;
+// consider FastRawTransactionManager to have multiple trans per block, I assume per caller

@@ -27,7 +27,7 @@ public class FbBusd extends FbErc20 implements IBusd {
 	}
 	
 	/** This can be called by anybody, the BUSD does not have an owner.
-	 *  For testing only; cannot be called in production 
+	 *  For testing only; cannot be called in production; must have gas 
 	 *  @param callerKey is ignored */
 	public RetVal mint( String callerKey, String address, double amt) throws Exception {
 		return super.mint( Accounts.instance.getId( callerKey), address, amt);

@@ -1,7 +1,5 @@
 package refblocks;
 
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
-
 import common.Util;
 import fireblocks.RetVal;
 import web3.Busd.IBusd;
@@ -22,7 +20,7 @@ public class RbBusd extends Erc20 implements IBusd {
 	}
 
 	/** load generated Busd that we can use to call smart contract methods that write to the blockchain */
-	public Busd loadBusd(String privateKey) throws Exception {
+	public Busd load(String privateKey) throws Exception {
 		return Busd.load( 
 				address(), 
 				Refblocks.web3j, 
@@ -34,30 +32,19 @@ public class RbBusd extends Erc20 implements IBusd {
 	/** For testing only 
 	 * @throws Exception */
 	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
-		Util.isValidKey(approverKey);
-		Util.isValidAddress(spenderAddr);
+		Util.reqValidKey(approverKey);
+		Util.reqValidAddress(spenderAddr);
 		
-		TransactionReceipt rec = loadBusd( approverKey)
-				.approve( spenderAddr, toBlockchain( amt) )
-				.send();
-		
-		Refblocks.showReceipt( rec);
-
-
-		return null;
+		return Refblocks.oldexec( approverKey, load( approverKey)
+				.approve( spenderAddr, toBlockchain( amt) ) );
 	}
-
+		
+	/** For testing only; anyone can call this but they must have some gas */
 	@Override public RetVal mint( String callerKey, String address, double amount) throws Exception {
-		Util.isValidKey(callerKey);
-		Util.isValidAddress(address);
+		Util.reqValidKey(callerKey);
+		Util.reqValidAddress(address);
 
-		TransactionReceipt rec = loadBusd( callerKey)
-				.mint( address, toBlockchain( amount) )
-				.send();
-		
-		Refblocks.showReceipt( rec);
-		
-		return null;
+		return Refblocks.oldexec( callerKey, load( callerKey)
+				.mint( address, toBlockchain( amount) ) );
 	}
-
 }

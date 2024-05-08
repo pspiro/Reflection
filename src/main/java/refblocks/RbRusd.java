@@ -1,9 +1,15 @@
 package refblocks;
 
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
 
 import common.Util;
 import fireblocks.RetVal;
+import refblocks.Refblocks.DelayedTrp;
+import refblocks.Refblocks.RbRetVal;
+import tw.util.S;
 import web3.Busd;
 import web3.Erc20;
 import web3.Rusd.IRusd;
@@ -30,83 +36,64 @@ public class RbRusd extends Erc20 implements IRusd {
 	}
 
 	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain */
-	public Rusd loadRusd(String privateKey) throws Exception {
+	public Rusd load(TransactionManager tm) throws Exception {
 		return Rusd.load( 
 				address(), 
 				Refblocks.web3j, 
-				Refblocks.getTm( privateKey ), 
-				Refblocks.getGp( 1000000)
+				tm, 
+				Refblocks.getGp( 1000000)  // this is good for everything except deployment
 				);
 	}
 
 	@Override public RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken,
 			double stockTokenAmt) throws Exception {
 		
-		Util.isValidKey(adminKey);
-		Util.isValidAddress(userAddr);
-
-		TransactionReceipt rec = loadRusd( adminKey).buyStock( 
+		Util.reqValidKey(adminKey);
+		Util.reqValidAddress(userAddr);
+		
+		return Refblocks.exec( adminKey, tm -> load( tm).buyStock(
 				userAddr, 
 				stablecoin.address(), 
 				stockToken.address(), 
 				stablecoin.toBlockchain( stablecoinAmt), 
 				stockToken.toBlockchain( stockTokenAmt)
-				).send();  // this is going to block which is not what we want
-		
-		Refblocks.showReceipt( rec);
-		
-		return null;
+				) );
 	}
 
 	@Override public RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt)
 			throws Exception {
 
-		Util.isValidKey(adminKey);
-		Util.isValidAddress(userAddr);
+		Util.reqValidKey(adminKey);
+		Util.reqValidAddress(userAddr);
 
-		TransactionReceipt rec = loadRusd( adminKey).sellStock(
+		return Refblocks.exec( adminKey, tm -> load( tm).sellStock( 
 				userAddr,
 				address(), 
 				stockToken.address(), 
 				toBlockchain( rusdAmt), 
 				stockToken.toBlockchain( stockTokenAmt)
-				).send();
-		
-		Refblocks.showReceipt( rec);
-		
-		return null;
+				) );
 	}
 
 	@Override public RetVal sellRusd( String adminKey, String userAddr, Busd busd, double amt) 
 			throws Exception {
 		
-		Util.isValidKey(adminKey);
-		Util.isValidAddress(userAddr);
+		Util.reqValidKey(adminKey);
+		Util.reqValidAddress(userAddr);
 
-		TransactionReceipt rec = loadRusd( adminKey).sellRusd(
+		return Refblocks.exec( adminKey, tm -> load( tm).sellRusd(
 				userAddr,
 				busd.address(),
 				busd.toBlockchain( amt),
 				toBlockchain( amt)
-				).send();
-
-		Refblocks.showReceipt( rec);
-		
-		return null;
+				) );
 	}
 
 	@Override public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
-		Util.isValidKey(ownerKey);
-		Util.isValidAddress(address);
+		Util.reqValidKey(ownerKey);
+		Util.reqValidAddress(address);
 		
-		TransactionReceipt rec = loadRusd( ownerKey).addOrRemoveAdmin(
-				address,
-				add
-				).send();
-
-		Refblocks.showReceipt( rec);
-		
-		return null;
+		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( address, add) );
 	}
 
 }

@@ -802,9 +802,14 @@ public class Util {
 				;
 	}
 
-	public static boolean isValidKey(String adminKey) {
-		return true; // write this. pas
-		
+	/** Return true if it is a valid private key. This only checks length; you could
+	 *  check for valid characters as well */
+	public static boolean isValidKey(String privateKey) {
+		return privateKey != null && privateKey.length() == 64;
+	}
+
+	public static void reqValidKey(String privateKey) throws Exception {
+		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
 	}
 	
 	public static String toHex( int val) {

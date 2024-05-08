@@ -203,6 +203,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 
 	public JsonObject getObject(String key) throws Exception {
+		Object obj = get(key);
+		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
 		return (JsonObject)get(key);
 	}
 	

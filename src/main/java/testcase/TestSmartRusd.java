@@ -2,6 +2,7 @@ package testcase;
 
 import common.Util;
 import positions.Wallet;
+import refblocks.RbBusd;
 import tw.util.S;
 import web3.StockToken;
 
@@ -9,15 +10,21 @@ import web3.StockToken;
 public class TestSmartRusd extends MyTestCase {
 	static String someKey = "bdc76b290316a836a01af129884bdf9a1977b81ae5a7a0f1d8b5ded4d9dcee4d";
 	
+	static {
+		readStocks();
+	}
+	
 	public void testAddOrRemovePass() throws Exception {
+		S.out( "adding admin");
 		m_config.rusd().addOrRemoveAdmin(
 				m_config.ownerKey(),
 				Util.createFakeAddress(),
-				true);
+				true).waitForHash();
 	}
 
 	public void testAddOrRemoveFail() throws Exception {
 		try {
+			S.out( "adding admin");
 			m_config.rusd().addOrRemoveAdmin(
 					someKey,
 					Util.createFakeAddress(),
@@ -25,39 +32,52 @@ public class TestSmartRusd extends MyTestCase {
 			assertTrue( false);  // should not come here
 		}
 		catch( Exception e) {
-			// expected
-			S.out( e.getMessage() );
+			S.out( e.getMessage() ); // expected
 		}
 	}
+	
+	public void testshowapp() throws Exception {
+		S.out( "approving");
+		new RbBusd( m_config.busd().address(), m_config.busd().decimals(), m_config.busd().name() )
+			.approve( m_config.refWalletKey(), m_config.rusdAddr(), 1000000000); // $1B
 
+		S.out( "checking");
+		S.out( m_config.busd().getAllowance( 
+				m_config.refWalletAddr(), m_config.rusdAddr() ) );
+	}
 
 	public void testAdmin() throws Exception {
 		String user = Util.createFakeAddress();
 		
 		// mint 100 rusd
+		S.out( "minting rusd");
 		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
 				.waitForHash();
 		
 		// buy stock
-		StockToken tok = stocks.getAnyStockToken();
-		m_config.rusd().buyStockWithRusd( user, 20, tok, 10)
+		S.out( "buying stock");
+		StockToken stock = stocks.getAnyStockToken();
+		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
 				.waitForHash();
 		
 		// sell stock
-		m_config.rusd().sellStockForRusd( user, 10, tok, 5)
+		S.out( "selling stock");
+		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
 				.waitForHash();
 		
-		// mint rusd into refwallet
-		m_config.busd().mint( user, m_config.refWalletAddr(), 90)
+		// mint busd into refwallet so user can redeem (anyone can call this, must have matic)
+		S.out( "minting busd");
+		m_config.busd().mint( m_config.refWalletAddr(), 80)
 				.waitForHash();
 
-		// redeem rusd
-		m_config.rusd().sellRusd( user, m_config.busd(), 80)
+		// user has 90 redeem 80, left with 10
+		S.out( "redeeming rusd");
+		m_config.rusd().sellRusd( user, m_config.busd(), 80)  // failed insuf. allowance
 				.waitForHash();
 		
 		Wallet wallet = new Wallet( user);
-		assertEquals( 5, wallet.getBalance( tok.address() ) );
-		assertEquals( 10, wallet.getBalance( m_config.rusd().address() ) );
+		assertEquals( 5.0, wallet.getBalance( stock.address() ) );
+		assertEquals( 10.0, wallet.getBalance( m_config.rusd().address() ) );
 	}
 		
 		// remove admin
