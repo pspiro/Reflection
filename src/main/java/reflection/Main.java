@@ -54,8 +54,6 @@ public class Main implements ITradeReportHandler {
 	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
-	private GTable m_allowedCountries;  // wallet is key, case insensitive
-	private GTable m_allowedIPs;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
@@ -145,7 +143,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/update-profile", exch -> new ProfileTransaction(this, exch).handleUpdateProfile() );
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
-			server.createContext("/api/allowConnection", exch -> new BackendTransaction(this, exch).allowConnection() );
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
 			
 			// get/set config
@@ -226,8 +223,6 @@ public class Main implements ITradeReportHandler {
 			: null;
 		
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
-		m_allowedCountries = new GTable( book.getTab("Blacklist"), "Allowed Countries", "Allow", false);
-		m_allowedIPs = new GTable( book.getTab("Blacklist"), "Allowed IPs", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
 		if (readStocks) {
@@ -563,13 +558,6 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 	
-	boolean isAllowedCountry(String country) {
-		return m_allowedCountries.containsKey(country);
-	}
-	
-	boolean isAllowedIP(String ip) {
-		return m_allowedIPs.containsKey(ip);
-	}
 }
 
 //no change
