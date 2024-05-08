@@ -5,26 +5,26 @@ import fireblocks.RetVal;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;
-	
-	public Busd(String address, int decimals, String name, IBusd core) throws Exception {
+	private String m_adminKey; // private key or "Admin1" for FB
+
+	public Busd(String address, int decimals, String name, String adminKey, IBusd core) throws Exception {
 		super( address, decimals, name);
+
 		Util.require( core != null, "null core");
+		
+		m_adminKey = adminKey;
 		m_core = core;
 	}
 
-	public RetVal mint( String callerKey, String address, double amount) throws Exception {
-		return m_core.mint( callerKey, address, amount);
+	/** For testing only; anyone can call this but they must have some gas */
+	public RetVal mint( String address, double amount) throws Exception {
+		return m_core.mint( m_adminKey, address, amount);
 	}
-//
-//	// you need to pass the approver id or name for FB;
-//	// what do you need for Web3 impl?
+
 	public RetVal approve(String caller, String spenderAddr, double amt) throws Exception {
 		return m_core.approve( caller, spenderAddr, amt);
 	}
 
-//	double getAllowance(String wallet, String rusdAddr) throws Exception {
-//	}
-	
 	public interface IBusd {
 		RetVal approve( String callerKey, String spenderAddr, double amt) throws Exception;
 		RetVal mint( String callerKey, String address, double amount) throws Exception;
