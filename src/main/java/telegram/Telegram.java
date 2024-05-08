@@ -13,6 +13,7 @@ public class Telegram {
 	static final String part1 = "https://api.telegram.org/" + botKey; 
 
 	static JsonObject send( String chatId, String message) throws Exception {
+		S.out( "Sending to " + chatId);
 		S.out( "Posting message " + message);
 		
 		JsonObject params = Util.toJson( 
