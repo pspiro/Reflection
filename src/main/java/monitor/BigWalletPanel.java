@@ -87,7 +87,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
+		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 		vp.add( "Award", 
 				m_awardAmt, 
 				new JLabel( "RUSD for "),
@@ -303,8 +303,17 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 
 	private void burn() {
-		double amt = m_burnAmt.getDouble();
-			
+		burn( m_burnAmt.getDouble() );
+	}
+	
+	private void burnAllRusd() {
+		wrap( () -> { 
+			double amt = new Wallet( m_wallet.getText() ).getBalance( Monitor.m_config.rusdAddr() );
+			burn( amt);
+		});
+	}
+
+	private void burn(double amt) {
 		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
 			wrap( () -> {
 					Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
