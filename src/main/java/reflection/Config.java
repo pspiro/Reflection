@@ -11,6 +11,7 @@ import common.Alerts;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.FbBusd;
+import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
 import fireblocks.RetVal;
@@ -18,6 +19,7 @@ import junit.framework.TestCase;
 import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
+import refblocks.RbMatic;
 import refblocks.RbRusd;
 import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
@@ -31,6 +33,7 @@ import tw.google.Secret;
 import tw.util.S;
 import web3.Busd;
 import web3.Busd.IBusd;
+import web3.Matic;
 import web3.Rusd;
 import web3.Rusd.IRusd;
 
@@ -628,6 +631,10 @@ public class Config extends ConfigBase {
 
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( wallet, 2000);
+	}
+	
+	public Matic matic() {
+		return web3Type == Web3Type.Fireblocks ? new FbMatic() : new RbMatic();
 	}
 	
 	public int chainId() {

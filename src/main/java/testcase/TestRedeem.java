@@ -30,7 +30,7 @@ public class TestRedeem extends MyTestCase {
 
 		m_config.rusd()
 				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
-				.waitForStatus("COMPLETED");
+				.waitForCompleted();
 		
 		waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 	}

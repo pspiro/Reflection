@@ -7,7 +7,6 @@ import java.util.TimeZone;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.MyClient;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;

@@ -1,7 +1,10 @@
 package refblocks;
 
+import org.web3j.tx.TransactionManager;
+
 import common.Util;
 import fireblocks.RetVal;
+import tw.util.S;
 import web3.Busd.IBusd;
 import web3.Erc20;
 
@@ -11,6 +14,8 @@ public class RbBusd extends Erc20 implements IBusd {
 		super( address, decimals, name);
 	}
 	
+	/** note that the number of decimals is set in the .sol file
+	 *  before the Busd file is generaged */
 	public static String deploy(String ownerKey) throws Exception {
 		return Busd.deploy( 
 				Refblocks.web3j,
@@ -20,12 +25,12 @@ public class RbBusd extends Erc20 implements IBusd {
 	}
 
 	/** load generated Busd that we can use to call smart contract methods that write to the blockchain */
-	public Busd load(String privateKey) throws Exception {
+	public Busd load(TransactionManager tm, int gas) throws Exception {
 		return Busd.load( 
 				address(), 
 				Refblocks.web3j, 
-				Refblocks.getTm( privateKey ), 
-				Refblocks.getGp( 1000000)
+				tm, 
+				Refblocks.getGp( gas)
 				);
 	}
 
@@ -35,16 +40,22 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidKey(approverKey);
 		Util.reqValidAddress(spenderAddr);
 		
-		return Refblocks.oldexec( approverKey, load( approverKey)
+		S.out( "%s approving %s to spend %s BUSD", 
+				Refblocks.getPublicKey(approverKey), spenderAddr, amt);
+		
+		return Refblocks.exec( approverKey, tm -> load( tm, 100000)
 				.approve( spenderAddr, toBlockchain( amt) ) );
 	}
 		
 	/** For testing only; anyone can call this but they must have some gas */
-	@Override public RetVal mint( String callerKey, String address, double amount) throws Exception {
+	@Override public RetVal mint( String callerKey, String address, double amt) throws Exception {
 		Util.reqValidKey(callerKey);
 		Util.reqValidAddress(address);
 
-		return Refblocks.oldexec( callerKey, load( callerKey)
-				.mint( address, toBlockchain( amount) ) );
+		S.out( "%s minting %s %s", 
+				Refblocks.getPublicKey(callerKey), amt, address);
+
+		return Refblocks.exec( callerKey, tm -> load( tm, 100000)
+				.mint( address, toBlockchain( amt) ) );
 	}
 }

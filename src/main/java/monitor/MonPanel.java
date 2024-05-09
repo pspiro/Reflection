@@ -8,8 +8,8 @@ import javax.swing.SwingUtilities;
 
 import common.Util;
 import common.Util.ExRunnable;
-import tw.util.UI;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.UI;
 
 public abstract class MonPanel extends JPanel implements INewTab {
 	public MonPanel(LayoutManager layout) {

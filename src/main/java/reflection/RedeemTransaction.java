@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import fireblocks.Accounts;
+import fireblocks.RetVal;
 import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
 import util.LogType;
@@ -131,17 +132,17 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// redeem it  try/catch here?
-			String fbId = rusd.sellRusd(m_walletAddr, busd, m_quantity).id();  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+			RetVal retVal = rusd.sellRusd(m_walletAddr, busd, m_quantity);  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 			olog( LogType.REDEEM, "amount", m_quantity);
 
-			insertRedemption( busd, m_quantity, fbId, LiveStatus.Working); // informational only, don't throw an exception
+			insertRedemption( busd, m_quantity, "", LiveStatus.Working); // informational only, don't throw an exception
 
 			respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 				
 			// redemption is working on the blockchain and will now be tracked by the live order system
 			liveRedemptions.put( m_walletAddr.toLowerCase(), this);
-			allLiveTransactions.put( fbId, this);
+			allLiveTransactions.put( retVal, this);
 		});
 	}
 

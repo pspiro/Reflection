@@ -84,12 +84,6 @@ public class MoralisServer {
 		return post( url, abi);
 	}
 	
-	public static void main(String[] args) throws Exception {
-		//S.out( queryBalances("0x2703161D6DD37301CEd98ff717795E14427a462B") );
-		S.out("---------");
-		S.out( reqPositionsList("0x2703161D6DD37301CEd98ff717795E14427a462B", new String[] {} ) );
-	}
-	
 	/** Fields returned:
  		symbol : BUSD,
 		balance : 4722366482869645213697,
@@ -223,4 +217,28 @@ public class MoralisServer {
 	public static void setChain(String chainIn) {
 		chain = chainIn;
 	}
+	
+	public static void main(String[] args) throws Exception {
+		getGasPrice();
+	}
+	
+	static void getGasPrice() throws Exception {
+		String url = String.format( "https://site1.moralis-nodes.com/polygon/%s/",
+				apiKey);
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_gasPrice"
+			}""";
+		
+		S.out( url);
+		
+		MyClient.create( url, body)
+			.header( "accept", "application/json")
+			.header( "content-type", "application/json")
+			.queryToJson().display();
+		
+	}
+			
 }

@@ -2,8 +2,8 @@ package monitor.wallet;
 
 import java.awt.BorderLayout;
 
-import monitor.MonPanel;
 import monitor.BigWalletPanel;
+import monitor.MonPanel;
 import tw.util.NewTabbedPanel;
 
 public class WalletPanel extends MonPanel {

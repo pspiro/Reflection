@@ -247,16 +247,11 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
-	/** Returns FB id */
-	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
-		return call2(fromAcct, addr, callData, paramTypes, params, note).id();
-	}
-	
 	/** @param addr is the address of the contract for which you are calling a method OR 0x0 when deploying a contract 
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data
 	 *  @return RetVal so caller can either get ID or wait for blockchain hash */
-	public static RetVal call2(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	public static FbRetVal call2(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
 		
 		String bodyTemplate = 
@@ -322,12 +317,12 @@ public class Fireblocks {
 		return fb.transactToRetVal();
 	}
 	
-	private RetVal transactToRetVal() throws Exception {
+	private FbRetVal transactToRetVal() throws Exception {
 		JsonObject obj = transactToObj();
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.transact  msg=%s  code=%s",
 				str, obj.getString("code") );
-		return new RetVal( obj.getString("id") );
+		return new FbRetVal( obj.getString("id") );
 	}
 	
 	public static String toJson( String format, Object... params) {
@@ -423,6 +418,11 @@ public class Fireblocks {
 		Fireblocks fb = new Fireblocks();
 		fb.endpoint( String.format( "/v1/vault/accounts/%s/%s", accountId, assetId) );
 		return fb.transactToRetVal();
+	}
+
+	public static void transfer(String from, String to, double amt) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 //	public static void sign() {

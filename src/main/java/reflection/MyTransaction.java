@@ -20,6 +20,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
+import fireblocks.RetVal;
 import http.BaseTransaction;
 import tw.util.S;
 import util.LogType;
@@ -32,7 +33,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	
 	static Map<String,Vector<OrderTransaction>> liveOrders = Collections.synchronizedMap( new HashMap<String,Vector<OrderTransaction>>() );  // key is wallet address; used Vector because it is synchronized and we will be adding/removing to the list from different threads; write access to the map should be synchronized 
 	static Map<String,RedeemTransaction> liveRedemptions = Collections.synchronizedMap( new HashMap<String,RedeemTransaction>() );  // key is wallet address; just one outstanding Redemption per wallet 
-	static Map<String,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<String,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
+	static Map<RetVal,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<RetVal,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static final double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
 	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";

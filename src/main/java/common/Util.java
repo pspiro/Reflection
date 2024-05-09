@@ -721,6 +721,14 @@ public class Util {
 		return sb.toString();  // change to EIP-55 address 
 	}
 	
+	public static String createPrivateKey() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 64; i++) {
+			sb.append( String.format( "%x", rnd.nextInt(16) ) );
+		}
+		return sb.toString();  // change to EIP-55 address 
+	}
+	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
 	 *

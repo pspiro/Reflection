@@ -23,6 +23,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
+import fireblocks.RetVal;
 import http.MyClient;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
@@ -435,41 +436,41 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		out( "Starting Fireblocks protocol");
 
-		String fbId;
+		RetVal retval;
 
 		// buy
 		if (m_order.isBuy() ) {
-			fbId = m_config.rusd().buyStock(
+			retval = m_config.rusd().buyStock(
 					m_walletAddr,
 					m_stablecoin,
 					m_stablecoinAmt,
 					newStockToken(), 
 					m_desiredQuantity
-			).id();
+			);
 		}
 		
 		// sell
 		else {
-			fbId = m_config.rusd().sellStockForRusd(
+			retval = m_config.rusd().sellStockForRusd(
 					m_walletAddr,
 					m_stablecoinAmt,
 					newStockToken(),
 					m_desiredQuantity
-			).id();
+			);
 		}
 		
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		allLiveTransactions.put(fbId, this);
+		allLiveTransactions.put(retval, this);
 
 		// update transaction table with fireblocks id
 		m_main.queueSql( conn -> conn.execute( 
 				String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-					fbId, m_uid) ) );
+					retval, m_uid) ) );
 		
 		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-				"id", fbId, 
+				"id", retval, 
 				"currency", m_map.getParam("currency"),
 				"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
 		

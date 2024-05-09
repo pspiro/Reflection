@@ -27,6 +27,7 @@ public class Deploy {
 		S.out( "Deploying system");
 
 		// deploy BUSD? (for testing only)
+		// note that the number of decimals is set in the .sol file before the Busd file is generaged */
 		if ("deploy".equals( busdAddress) ) {
 			busdAddress = RbBusd.deploy( config.ownerKey() );
 			S.out( "deployed busd to " + busdAddress);

@@ -82,17 +82,9 @@ public class FbErc20 extends Erc20 {
 		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
 //		String bytecode = new IStream(filename).readln();
 		
-		String id = Fireblocks.call( ownerAcctId, "0x0", bytecode, paramTypes, params, note);
-		
-		// if there's an error, you got message and code
-		
-		//{"message":"Source is invalid","code":1427}		
-		
-		// it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
-		S.out( "  fireblocks id is %s", id);
-
 		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.waitForHash( id, 60, 1000);
+		String txHash = Fireblocks.call2( ownerAcctId, "0x0", bytecode, paramTypes, params, note)
+				.waitForHash();
 		S.out( "  blockchain transaction hash is %s", txHash);
 
 		S.out( "  waiting for deployed address");

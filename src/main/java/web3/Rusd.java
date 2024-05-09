@@ -36,7 +36,7 @@ public class Rusd extends Stablecoin {
 		return m_core.addOrRemoveAdmin( ownerKey, address, add);
 	}
 
-	// read methods are implemented here
+	// real methods are implemented here
 
 	/** Buying stock with either FBusd OR RUSD; need to test it both ways.
 	 * 

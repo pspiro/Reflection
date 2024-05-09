@@ -1,19 +1,24 @@
 package refblocks;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.TransactionManager;
+import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.StaticEIP1559GasProvider;
+import org.web3j.tx.response.EmptyTransactionReceipt;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
+import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import common.Util;
@@ -34,9 +39,10 @@ public class Refblocks {
 	private static String polygonRpcUrl = "https://polygon-rpc.com/";
 
 	public static void main( String[] args) throws Exception {
-		//setChainId( 137, polygonRpcUrl);
-		
-		S.out( RbBusd.deploy( Config.ask( "Dt").ownerKey() ) );
+		Config c = Config.ask( "Dt");
+		S.out( "transferring");
+		String hash = transfer( c.ownerKey(), Util.createFakeAddress(), .005);
+		S.out( hash);	
 
 //		Busd busd = Busd.deploy( 
 //				web3j,
@@ -70,12 +76,18 @@ public class Refblocks {
 		Fees fees = new Fees();
 		
 		try {
+			S.sleep( 200);  // don't break pacing of max 5 req per second; how do they know it's me???
 			JsonObject json = MyClient.getJson( gasUrl)
 					.getObject( "result");
 			fees.baseFee = json.getBlockchain( "suggestBaseFee", 9); // convert base fee from gwei to wei
 			fees.priorityFee = json.getBlockchain( "FastGasPrice", 9);  // it's very unclear if this is returning the priority fee or the total fee, but it doesn't matter because the base fee is so low 
 		} catch (Exception e) {
-			e.printStackTrace();
+			if (e.getMessage().contains("Max rate limit reached") ) {
+				S.out( "Error: Max rate limit exceeded for getFees(); using default values");
+			}
+			else {
+				e.printStackTrace();
+			}
 			fees.baseFee = defaultBaseFee;
 			fees.priorityFee = defaultPriorityFee;
 		}
@@ -83,54 +95,17 @@ public class Refblocks {
 		return fees;
 	}
 	
-	public static class RbRetVal extends RetVal {
-		private TransactionReceipt m_receipt;
-		private DelayedTrp m_trp;
-
-		/** If we already have the receipt */
-		RbRetVal( TransactionReceipt receipt) {
-			super( null);
-			m_receipt = receipt;
-		}
-		
-		/** If we need to wait for the receipt */
-		public RbRetVal(DelayedTrp trp) {
-			super( null);
-			m_trp = trp;
-		}
-
-		/** Wait for receipt or return it hash if we already have it */
-		public String waitForHash() throws Exception {
-			if (m_trp != null) {
-				m_receipt = m_trp.reallyWait();
-				S.out( this);
-			}
-			return m_receipt.getTransactionHash();
-		}
-		
-		/** This blocks for up to 2 min */
-		public RetVal waitForCompleted() throws Exception {
-			return this;
-		}
-
-		/** This blocks for up to 2 min */
-		public RetVal waitForStatus(String status) throws Exception {
-			throw new Exception();
-		}
-		
-		@Override public String toString() {
-			return m_receipt != null ? Refblocks.toString( m_receipt) : "";
-		}
-	}
-
 	public static String toString(TransactionReceipt receipt) {
+		BigInteger gasUsed = decodeQuantity( receipt.getGasUsedRaw() );
 		BigInteger gasPrice = decodeQuantity( receipt.getEffectiveGasPrice() );
+		
 		return String.format(
-				"hash=%s  gasUsed=%s  gasPrice=%s  totalCost=%s matic  reason=%s",
+				"statusOK=%s  hash=%s  gasUsed=%s  gasPrice=%s  totalCost=%s matic  reason=%s",
+				receipt.isStatusOK(),
 				receipt.getTransactionHash(),
-				receipt.getGasUsed(),
+				gasUsed,
 				gasPrice,
-				Erc20.fromBlockchain( receipt.getGasUsed().multiply( gasPrice).toString(), 18),
+				Erc20.fromBlockchain( gasUsed.multiply( gasPrice).toString(), 18),
 				receipt.getRevertReason()
 				);
 	}
@@ -157,7 +132,7 @@ public class Refblocks {
 	            throws IOException, TransactionException {
 			
 			m_transactionHash = transactionHash;
-			return new EmptyReceipt( transactionHash);
+			return new EmptyTransactionReceipt( transactionHash);
 	    }
 
 		/** wait for the receipt */
@@ -168,16 +143,12 @@ public class Refblocks {
 	    }
 	}
 	
-	static class EmptyReceipt extends TransactionReceipt {
-		EmptyReceipt( String hash) {
-			setTransactionHash( hash);
-		}
-	}
-
 	interface Func {
 		RemoteFunctionCall<TransactionReceipt> call( TransactionManager tm) throws Exception;
 	}
 	
+	/** If we use DelayedTrp, the call returns immediately; you then call
+	 *  RetVal.wait(). Otherwise, the call blocks until we have the trans receipt */
 	static RbRetVal exec( String callerKey, Func function) throws Exception {
 		try {
 			DelayedTrp trp = new DelayedTrp( web3j);
@@ -189,7 +160,7 @@ public class Refblocks {
 					trp);
 			
 			TransactionReceipt receipt = function.call( tm).send();  // returns empty receipt
-			Util.require( receipt instanceof EmptyReceipt, "should be EmptyReceipt");
+			//Util.require( receipt instanceof EmptyReceipt, "should be EmptyReceipt");
 
 			return new RbRetVal( trp);
 		}
@@ -217,16 +188,16 @@ public class Refblocks {
 	public static RawTransactionManager getTm(String privateKey) throws Exception {
 		Util.require( chainId != 0, "set chainId");
 		
-//		return new RawTransactionManager(
-//				web3j,
-//				Credentials.create( privateKey ),
-//				chainId );
-		
 		return new RawTransactionManager(
 				web3j,
 				Credentials.create( privateKey ),
-				chainId,
-				new DelayedTrp( web3j) );
+				chainId );
+		
+//		return new RawTransactionManager(
+//				web3j,
+//				Credentials.create( privateKey ),
+//				chainId,
+//				new DelayedTrp( web3j) );
 	}
 
 	/** Get the gas provider which knows the base fee, priority fee, and total fee */
@@ -244,13 +215,35 @@ public class Refblocks {
 	public static void showReceipt(TransactionReceipt rec) {
 		S.out( toString( rec) );
 	}
+
+	/** getAddress() might be better */
+	public static String getPublicKey(String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
+	
+	/** Transfer native token */
+	public static String transfer(String privateKey, String to, double amt) throws Exception {
+		Credentials cred = Credentials.create( privateKey);
+
+		S.out( "Transferring %s matic from %s to %s",
+				amt, cred.getAddress(), to); 
+
+		TransactionReceipt receipt = Transfer.sendFundsEIP1559(
+		        web3j, 
+		        cred,
+		        to,
+		        BigDecimal.valueOf( amt),
+		        Convert.Unit.ETHER,
+		        BigInteger.valueOf( 40000),
+		        getFees().priorityFee(),
+		        getFees().priorityFee()
+				).send();
+
+		S.out( "transferred hash " + receipt.getTransactionHash() );
+		return receipt.getTransactionHash();
+	}
 }
-// use this one for instant callback QueuingTransactionReceiptProcessor where you pass in a callback
-// start with TransactionManager.execute()
-// there is a bug here in Contract.executeTransaction()
-//} catch (JsonRpcError error) {
-//    throw new TransactionException(error.getData().toString());
-//}
+
 // error.getData() is null so toString() fails and you don't get to see the real error
 // need to fix or override
 // you get get address from private key using Credentials

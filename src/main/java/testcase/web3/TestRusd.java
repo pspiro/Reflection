@@ -1,13 +1,14 @@
-package testcase;
+package testcase.web3;
 
 import common.Util;
+import fireblocks.RetVal;
 import positions.Wallet;
-import refblocks.RbBusd;
+import testcase.MyTestCase;
 import tw.util.S;
 import web3.StockToken;
 
 /** Test smart contracts */
-public class TestSmartRusd extends MyTestCase {
+public class TestRusd extends MyTestCase {
 	static String someKey = "bdc76b290316a836a01af129884bdf9a1977b81ae5a7a0f1d8b5ded4d9dcee4d";
 	
 	static {
@@ -15,7 +16,7 @@ public class TestSmartRusd extends MyTestCase {
 	}
 	
 	public void testAddOrRemovePass() throws Exception {
-		S.out( "adding admin");
+		S.out( "adding admin to pass");
 		m_config.rusd().addOrRemoveAdmin(
 				m_config.ownerKey(),
 				Util.createFakeAddress(),
@@ -24,11 +25,12 @@ public class TestSmartRusd extends MyTestCase {
 
 	public void testAddOrRemoveFail() throws Exception {
 		try {
-			S.out( "adding admin");
-			m_config.rusd().addOrRemoveAdmin(
+			S.out( "adding admin to fail");
+			RetVal ret = m_config.rusd().addOrRemoveAdmin(
 					someKey,
 					Util.createFakeAddress(),
 					true);
+			ret.waitForHash();
 			assertTrue( false);  // should not come here
 		}
 		catch( Exception e) {
@@ -36,16 +38,6 @@ public class TestSmartRusd extends MyTestCase {
 		}
 	}
 	
-	public void testshowapp() throws Exception {
-		S.out( "approving");
-		new RbBusd( m_config.busd().address(), m_config.busd().decimals(), m_config.busd().name() )
-			.approve( m_config.refWalletKey(), m_config.rusdAddr(), 1000000000); // $1B
-
-		S.out( "checking");
-		S.out( m_config.busd().getAllowance( 
-				m_config.refWalletAddr(), m_config.rusdAddr() ) );
-	}
-
 	public void testAdmin() throws Exception {
 		String user = Util.createFakeAddress();
 		
