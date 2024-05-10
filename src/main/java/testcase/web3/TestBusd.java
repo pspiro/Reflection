@@ -24,7 +24,7 @@ public class TestBusd extends MyTestCase {
 	/** this is failing due to insufficient gas but it shouldn't be more */
 	public void testApprove() throws Exception {
 		String callerKey = Util.createPrivateKey();
-		String caller = Refblocks.getPublicKey( callerKey);
+		String caller = Refblocks.getAddress( callerKey);
 		m_config.matic().send( m_config.ownerKey(), caller, .005);  // why so high!!!???
 
 		String spender = Util.createFakeAddress();

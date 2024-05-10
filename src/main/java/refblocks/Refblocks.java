@@ -199,7 +199,7 @@ public class Refblocks {
 	}
 
 	/** getAddress() might be better */
-	public static String getPublicKey(String privateKey) {
+	public static String getAddress(String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
 	}
 	

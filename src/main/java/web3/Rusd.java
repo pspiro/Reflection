@@ -6,7 +6,7 @@ import common.Util;
  *  type of core to pass in */
 public class Rusd extends Stablecoin {
 	private IRusd m_core;
-	private String m_adminKey;
+	private String m_adminKey; // for Fireblocks, this is the name; for Refblocks, this is private key
 	
 	public Rusd( String rusdAddr, int rusdDecimals, String adminKey, IRusd core) throws Exception {
 		super( rusdAddr, rusdDecimals, "RUSD");
