@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import common.Util;
-import reflection.Config;
 import tw.util.S;
 
 /** Implements the contract methods that are writable, and deploy() */

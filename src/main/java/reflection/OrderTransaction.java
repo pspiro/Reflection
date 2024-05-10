@@ -24,6 +24,7 @@ import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import http.MyClient;
+import redis.ConfigBase.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import tw.util.S;
@@ -459,20 +460,42 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			);
 		}
 		
+		out( "Submitted blockchain order with id/hash=%s", retval.id() );
+		
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		allLiveTransactions.put(retval, this);
+		allLiveTransactions.put(retval.id(), this);
 
-		// update transaction table with fireblocks id
-		m_main.queueSql( conn -> conn.execute( 
-				String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-					retval, m_uid) ) );
+		// FIREBLOCKS: update transaction table with fireblocks id
+		// order will be updated with status via live order system
+		if (m_config.web3Type() == Web3Type.Fireblocks) {
+			m_main.queueSql( conn -> conn.execute( 
+					String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
+						retval.id(), m_uid) ) );
 		
-		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-				"id", retval, 
-				"currency", m_map.getParam("currency"),
-				"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
+			olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
+					"id", retval.id(), 
+					"currency", m_map.getParam("currency"),
+					"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
+		}
+		
+		// REFBLOCKS: wait for the transaction receipt (with polling)
+		// note this does not query for the real error message text if it fails;
+		// we could add that later if desired
+		else {
+			try {
+				out( "waiting for blockchain hash");
+				String hash = retval.waitForHash();
+				out( "blockchain transaction completed");
+				onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
+			}
+			catch( Exception e) {
+				out( "blockchain transaction failed " + e.getMessage() );
+				e.printStackTrace();
+				onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
+			}
+		}
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()
@@ -493,7 +516,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 	}
 
-	/** Called when we receive an update from the Fireblocks server.
+	/** Called when we receive an update from the Fireblocks server OR now
+	 *  when we receive the receipt for the Refblocks transaction.
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */

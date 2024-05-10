@@ -9,25 +9,37 @@ import tw.util.S;
 import web3.RetVal;
 
 public class RbRetVal extends RetVal {
-	private TransactionReceipt m_receipt;
 	private DelayedTrp m_trp;
+	private TransactionReceipt m_receipt;
 
-	/** If we already have the receipt */
+	/** If we already have the real receipt */
 	RbRetVal( TransactionReceipt receipt) {
 		m_receipt = receipt;
 	}
 	
-	/** If we need to wait for the receipt */
-	public RbRetVal(DelayedTrp trp) {
+	/** If we need to wait for the receipt; we have just a EmptyTransactionReceipt most likely 
+	 * @param receipt */
+	public RbRetVal(DelayedTrp trp, TransactionReceipt receipt) {
 		m_trp = trp;
+		m_receipt = receipt;
+	}
+	
+	/** Return transaction hash; we should have this even if we only have the temporary receipt. */
+	public String id() {
+		return m_receipt != null ? m_receipt.getTransactionHash() : "";
 	}
 
 	/** Wait for receipt or return it hash if we already have it */
 	public String waitForHash() throws Exception {
 		if (m_trp != null) {
-			m_receipt = m_trp.reallyWait();
-			S.out( "Received receipt: " + this);
-			checkReceipt( m_receipt);
+	    	S.out( "waiting for transaction receipt for %s, polling every %s ms",
+	    			id(), Refblocks.PollingInterval);
+			
+	    	m_receipt = m_trp.reallyWait();
+			
+	    	S.out( "Received transaction receipt: " + Refblocks.toString( m_receipt) );
+			
+	    	checkReceipt( m_receipt);
 		}
 		return m_receipt.getTransactionHash();
 	}
@@ -35,10 +47,6 @@ public class RbRetVal extends RetVal {
 	/** This blocks for up to 2 min */
 	public void waitForCompleted() throws Exception {
 		waitForHash();
-	}
-
-	@Override public String toString() {
-		return m_receipt != null ? Refblocks.toString( m_receipt) : "";
 	}
 
 	/** this code was copied from Contract.executeTransaction() 

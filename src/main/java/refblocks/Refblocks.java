@@ -30,6 +30,7 @@ public class Refblocks {
 	static final BigInteger defaultBaseFee = BigInteger.valueOf(1_000_000_000L);  // used only if we can't fetch it
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
 	static final long deployGas = 2000000;
+	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	static Web3j web3j;
 	static long chainId;  // set from Config
 	static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
@@ -79,7 +80,9 @@ public class Refblocks {
 		return fees;
 	}
 	
-	public static String toString(TransactionReceipt receipt) {
+	public static String toString(TransactionReceipt receipt) throws Exception {
+		Util.require( receipt != null, "null receipt");
+
 		BigInteger gasUsed = decodeQuantity( receipt.getGasUsedRaw() );
 		BigInteger gasPrice = decodeQuantity( receipt.getEffectiveGasPrice() );
 		
@@ -111,7 +114,7 @@ public class Refblocks {
 	    private String m_transactionHash;
 	    
 	    DelayedTrp( Web3j web3j) {
-	    	super( web3j, 5000, 40);
+	    	super( web3j, PollingInterval, 40);
 	    }
 
 	    /** return immediately with an empty receipt */
@@ -150,7 +153,7 @@ public class Refblocks {
 			TransactionReceipt receipt = function.call( tm).send();  // returns empty receipt
 			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
 
-			return new RbRetVal( trp);
+			return new RbRetVal( trp, receipt);
 		}
 		catch( Exception e) {
 			S.out( "Error for caller %s: %s", callerKey, e.getMessage() );

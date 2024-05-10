@@ -142,7 +142,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				
 			// redemption is working on the blockchain and will now be tracked by the live order system
 			liveRedemptions.put( m_walletAddr.toLowerCase(), this);
-			allLiveTransactions.put( retVal, this);
+			allLiveTransactions.put( retVal.id(), this);
 		});
 	}
 
