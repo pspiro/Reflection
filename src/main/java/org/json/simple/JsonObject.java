@@ -214,10 +214,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return obj != null ? obj : new JsonObject();
 	}
 	
-	/** Returns zero for null value. */
+	/** Returns zero for null value Can handle hex calues starting with 0x. */
 	public long getLong(String key) {
 		String str = getString( key);
-		return S.isNotNull( str) ? Long.parseLong( str) : 0;
+		return S.isNotNull( str) 
+				? str.startsWith( "0x")
+						? Long.parseLong( str.substring( 2), 16)
+						: Long.parseLong( str)
+				: 0;
 	}
 
 	/** Returns zero for null value. */
@@ -428,7 +432,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public BigInteger getBlockchain(String key, int decimals) {
 		return Erc20.toBlockchain( getDouble( key), decimals);
 	}
-
 }
 /** NOTE: Timestamp objects are stored as
  *  

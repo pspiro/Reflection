@@ -1,10 +1,10 @@
 package testcase.web3;
 
 import common.Util;
-import fireblocks.RetVal;
 import positions.Wallet;
 import testcase.MyTestCase;
 import tw.util.S;
+import web3.RetVal;
 import web3.StockToken;
 
 /** Test smart contracts */

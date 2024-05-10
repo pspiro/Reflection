@@ -1,6 +1,7 @@
 package fireblocks;
 
 import tw.util.S;
+import web3.RetVal;
 import web3.Busd.IBusd;
 
 /** This class represents any non-RUSD stablecoin */ 
@@ -22,6 +23,7 @@ public class FbBusd extends FbErc20 implements IBusd {
 		);
 	}
 
+	/** @param callerKey is the name of the Fireblocks wallet */
 	@Override public RetVal approve(String callerKey, String spenderAddr, double amt) throws Exception {
 		return super.approve( Accounts.instance.getId( callerKey), spenderAddr, amt);
 	}

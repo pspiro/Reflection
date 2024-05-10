@@ -1,8 +1,6 @@
 package web3;
 
 import common.Util;
-import fireblocks.RetVal;
-import tw.util.S;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;
@@ -22,6 +20,7 @@ public class Busd extends Stablecoin {
 		return m_core.mint( m_adminKey, address, amount);
 	}
 
+	/** For testing only; currently only Frontend calls approve in production */ 
 	public RetVal approve(String caller, String spenderAddr, double amt) throws Exception {
 		return m_core.approve( caller, spenderAddr, amt);
 	}

@@ -9,7 +9,7 @@ import positions.MoralisServer;
 import positions.Wallet;
 import tw.util.S;
 
-/** rusd, etc should inherit from this, or Erc20 should inherit from this */
+/** Base class for the generic tokens AND ALSO the platform-specific tokens */
 public class Erc20 {
 	protected static final BigDecimal ten = new BigDecimal(10);
 	private static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
@@ -65,7 +65,7 @@ public class Erc20 {
 		return new Wallet(walletAddr).getBalance(m_address); 
 	}
 
-	/** print out the balances of all wallets holding this token
+	/** return the balances of all wallets holding this token
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();

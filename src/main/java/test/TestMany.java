@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.MintRusd;
 import http.MyClient;
 import reflection.Config;
 import tw.util.S;
@@ -102,7 +101,7 @@ public class TestMany {
 		// create config and pass in
 		
 		for (String wallet : addrs) {
-			MintRusd.mint( wallet, r.nextInt(5000, 100000), null); 
+			TestTwoAdmins.mint( wallet, r.nextInt(5000, 100000), null); 
 			//config.busd().mint(addr, r.nextInt(5000, 100000) );  // if you use BUSD, you have to approve it first
 			S.out( "minted");
 			//createUserProfile(wallet.toLowerCase(), config);

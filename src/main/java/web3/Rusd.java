@@ -1,7 +1,6 @@
 package web3;
 
 import common.Util;
-import fireblocks.RetVal;
 
 /** The Rusd class used by clients. Created by Config which knows which 
  *  type of core to pass in */
@@ -11,10 +10,12 @@ public class Rusd extends Stablecoin {
 	
 	public Rusd( String rusdAddr, int rusdDecimals, String adminKey, IRusd core) throws Exception {
 		super( rusdAddr, rusdDecimals, "RUSD");
-		m_adminKey = adminKey;
-		m_core = core;
+		
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
 		Util.require( core != null, "null core");
+
+		m_adminKey = adminKey;
+		m_core = core;
 	}
 
 	/** methods to change the smart contract are passed to the core */
@@ -70,7 +71,6 @@ public class Rusd extends Stablecoin {
 	}
 
 	public interface IRusd {
-		//String deploy(String filename, String refWallet, String adminAddr) throws Exception;
 		RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellRusd( String adminKey, String userAddr, Busd Busd, double amt) throws Exception;

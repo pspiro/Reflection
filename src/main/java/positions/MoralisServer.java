@@ -20,6 +20,7 @@ public class MoralisServer {
 	static final String stream = "https://api.moralis-streams.com/streams/evm";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+	static final String nodeUrl = "https://site1.moralis-nodes.com/polygon/2bb51f2a71be4dc591aca7222977a1c9";
 	
 	public static JsonObject queryObject(String url) throws Exception {
 		return JsonObject.parse( querySync(url) );
@@ -219,12 +220,11 @@ public class MoralisServer {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		getGasPrice();
+		S.out( getGasPrice() );
 	}
 	
-	static void getGasPrice() throws Exception {
-		String url = String.format( "https://site1.moralis-nodes.com/polygon/%s/",
-				apiKey);
+	/** This works but it only returns the total fee; we need base fee and priority fee. */
+	static double getGasPrice() throws Exception {
 		String body = """
 			{
 			"jsonrpc": "2.0",
@@ -232,12 +232,13 @@ public class MoralisServer {
 			"method": "eth_gasPrice"
 			}""";
 		
-		S.out( url);
+		S.out( nodeUrl);
 		
-		MyClient.create( url, body)
+		return MyClient.create( nodeUrl, body)
 			.header( "accept", "application/json")
 			.header( "content-type", "application/json")
-			.queryToJson().display();
+			.queryToJson()
+			.getLong( "result");
 		
 	}
 			

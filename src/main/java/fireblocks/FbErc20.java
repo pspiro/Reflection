@@ -11,6 +11,7 @@ import reflection.RefException;
 import tw.util.IStream;
 import tw.util.S;
 import web3.Erc20;
+import web3.RetVal;
 
 public class FbErc20 extends Erc20 {
 	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;

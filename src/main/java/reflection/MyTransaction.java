@@ -20,10 +20,10 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.RetVal;
 import http.BaseTransaction;
 import tw.util.S;
 import util.LogType;
+import web3.RetVal;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {

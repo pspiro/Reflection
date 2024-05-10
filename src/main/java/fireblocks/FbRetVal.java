@@ -1,5 +1,7 @@
 package fireblocks;
 
+import web3.RetVal;
+
 public class FbRetVal extends RetVal {
 	private String m_id;
 
@@ -19,10 +21,5 @@ public class FbRetVal extends RetVal {
 	/** This blocks for up to 2 min */
 	@Override public void waitForCompleted() throws Exception {
 		Fireblocks.waitForStatus(m_id, "COMPLETED");  // throw an exception if not completed. pas
-	}
-	
-	/** This blocks for up to 2 min */
-	@Override public void waitForStatus(String status) throws Exception {
-		Fireblocks.waitForStatus(m_id, status);
 	}
 }

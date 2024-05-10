@@ -1,4 +1,4 @@
-package fireblocks;
+package web3;
 
 import tw.util.S;
 
@@ -8,8 +8,6 @@ public abstract class RetVal {
 
 	public abstract void waitForCompleted() throws Exception;
 
-	public abstract void waitForStatus(String string) throws Exception;
-	
 	public void displayHash() throws Exception {
 		S.out( waitForHash() );
 	}

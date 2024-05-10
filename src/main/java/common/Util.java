@@ -820,7 +820,7 @@ public class Util {
 		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
 	}
 	
-	public static String toHex( int val) {
+	public static String toHex( long val) {
 		return "0x" + Long.toHexString( val);
 	}
 

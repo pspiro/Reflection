@@ -4,9 +4,9 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tx.response.EmptyTransactionReceipt;
 
-import fireblocks.RetVal;
 import refblocks.Refblocks.DelayedTrp;
 import tw.util.S;
+import web3.RetVal;
 
 public class RbRetVal extends RetVal {
 	private TransactionReceipt m_receipt;
@@ -34,14 +34,9 @@ public class RbRetVal extends RetVal {
 	
 	/** This blocks for up to 2 min */
 	public void waitForCompleted() throws Exception {
-		throw new Exception();
+		waitForHash();
 	}
 
-	/** This blocks for up to 2 min */
-	public void waitForStatus(String status) throws Exception {
-		throw new Exception();
-	}
-	
 	@Override public String toString() {
 		return m_receipt != null ? Refblocks.toString( m_receipt) : "";
 	}

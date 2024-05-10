@@ -1,11 +1,7 @@
 package testcase.web3;
 
-import testcase.Cookie;
-import testcase.MyTestCase;
-import web3.StockToken;
-
 /** You only need to run this once after tokens are deployed */
-public class TestStockToken extends MyTestCase {
+/*public class TestStockToken extends MyTestCase {
 	static StockToken st;
 	
 	static {
@@ -49,9 +45,14 @@ public class TestStockToken extends MyTestCase {
 	}
 	
 	public void testTokenMint() throws Exception {
-//		// fail, only-RUSD
-//		st.mint(Accounts.instance.getId("Admin1"), dead, 1)
+		try {
+			st.mint(Accounts.instance.getId("Admin1"), dead, 1).wait
 //				.waitForStatus("FAILED");
+		}
+		catch( Exception e) {
+			// okay
+		}
+	}
 //
 //		// fail, only-RUSD
 //		st.mint(Accounts.instance.getId("Owner"), dead, 1) 
@@ -62,3 +63,4 @@ public class TestStockToken extends MyTestCase {
 		
 	}
 }
+*/

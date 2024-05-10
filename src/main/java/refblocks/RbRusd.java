@@ -3,9 +3,9 @@ package refblocks;
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
-import fireblocks.RetVal;
 import web3.Busd;
 import web3.Erc20;
+import web3.RetVal;
 import web3.Rusd.IRusd;
 import web3.Stablecoin;
 import web3.StockToken;
@@ -23,7 +23,7 @@ public class RbRusd extends Erc20 implements IRusd {
 	public static String deploy( String ownerKey, String refWallet, String admin1) throws Exception {
 		return Rusd.deploy( 
 				Refblocks.web3j,
-				Refblocks.getTm( ownerKey),
+				Refblocks.getWaitingTm( ownerKey),
 				Refblocks.getGp( Refblocks.deployGas),
 				refWallet, admin1
 				).send().getContractAddress();
@@ -87,7 +87,9 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(address);
 		
-		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( address, add) );
+		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( 
+				address, 
+				add) );
 	}
 
 }

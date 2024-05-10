@@ -3,10 +3,10 @@ package refblocks;
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
-import fireblocks.RetVal;
 import tw.util.S;
 import web3.Busd.IBusd;
 import web3.Erc20;
+import web3.RetVal;
 
 /** Implements the Busd contract methods that are writable, and deploy() */
 public class RbBusd extends Erc20 implements IBusd {
@@ -19,7 +19,7 @@ public class RbBusd extends Erc20 implements IBusd {
 	public static String deploy(String ownerKey) throws Exception {
 		return Busd.deploy( 
 				Refblocks.web3j,
-				Refblocks.getTm( ownerKey),
+				Refblocks.getWaitingTm( ownerKey),
 				Refblocks.getGp( Refblocks.deployGas)
 				).send().getContractAddress();
 	}

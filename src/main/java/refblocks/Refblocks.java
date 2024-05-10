@@ -8,7 +8,6 @@ import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -22,9 +21,7 @@ import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import common.Util;
-import fireblocks.RetVal;
 import http.MyClient;
-import reflection.Config;
 import tw.util.S;
 import web3.Erc20;
 
@@ -38,20 +35,7 @@ public class Refblocks {
 	static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
 	private static String polygonRpcUrl = "https://polygon-rpc.com/";
 
-	public static void main( String[] args) throws Exception {
-		Config c = Config.ask( "Dt");
-		S.out( "transferring");
-		String hash = transfer( c.ownerKey(), Util.createFakeAddress(), .005);
-		S.out( hash);	
-
-//		Busd busd = Busd.deploy( 
-//				web3j,
-//				getTm("cd11a9b7eb7140da458eba6dad1bcc206d41a1c3c677068e2593370165446f3d"),
-//				getGp(2000000)
-//				).send();
-				
-	}
-	
+	/** Called when Config is read */
 	public static void setChainId( long id, String rpcUrl) {
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
@@ -120,6 +104,9 @@ public class Refblocks {
 		}
 	}
 	
+	/** This transaction processor returns immediately; user should then call
+	 *  reallyWait() to wait for the transaction receipt. That could be done
+	 *  by RbRetVal. */
 	static class DelayedTrp extends PollingTransactionReceiptProcessor {
 	    private String m_transactionHash;
 	    
@@ -143,6 +130,7 @@ public class Refblocks {
 	    }
 	}
 	
+	/** Used with the exec() function below */
 	interface Func {
 		RemoteFunctionCall<TransactionReceipt> call( TransactionManager tm) throws Exception;
 	}
@@ -160,7 +148,7 @@ public class Refblocks {
 					trp);
 			
 			TransactionReceipt receipt = function.call( tm).send();  // returns empty receipt
-			//Util.require( receipt instanceof EmptyReceipt, "should be EmptyReceipt");
+			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
 
 			return new RbRetVal( trp);
 		}
@@ -170,37 +158,32 @@ public class Refblocks {
 		}
 	}
 	
-	static RetVal oldexec(String callerKey, RemoteFunctionCall<TransactionReceipt> func) throws Exception {
-		try {
-			TransactionReceipt rec = func.send();
-
-			Refblocks.showReceipt( rec);
-			
-			return new RbRetVal( rec);
-		}
-		catch( Exception e) {
-			S.out( "Error for caller %s: %s", callerKey, e.getMessage() );
-			throw e;
-		}
+	/** This transaction manager returns ASAP; caller then calls 
+	 *  DelayedTrp.reallyWait() to wait for the transaction receipt;
+	 *  used by exec(). */
+	public static RawTransactionManager getInstantTm(String privateKey) throws Exception {
+		Util.require( chainId != 0, "set chainId");
+		
+		return new RawTransactionManager(
+				web3j,
+				Credentials.create( privateKey ),
+				chainId,
+				new DelayedTrp( web3j) );
 	}
 
-	/** Get the transaction manager which knows the chainId and the private key of the caller */
-	public static RawTransactionManager getTm(String privateKey) throws Exception {
+	/** This transaction manager waits for the transaction receipt. If there is an
+	 *  error, it queries for the real error text from the contract.
+	 *  Used by deploy(). */
+	public static RawTransactionManager getWaitingTm(String privateKey) throws Exception {
 		Util.require( chainId != 0, "set chainId");
 		
 		return new RawTransactionManager(
 				web3j,
 				Credentials.create( privateKey ),
 				chainId );
-		
-//		return new RawTransactionManager(
-//				web3j,
-//				Credentials.create( privateKey ),
-//				chainId,
-//				new DelayedTrp( web3j) );
 	}
-
-	/** Get the gas provider which knows the base fee, priority fee, and total fee */
+	
+	/** Get the EIP1559 gas provider which knows the base fee, priority fee, and total fee */
 	public static StaticEIP1559GasProvider getGp( long units) {
 		Fees fees = getFees();
 		
@@ -210,10 +193,6 @@ public class Refblocks {
 				fees.priorityFee(),
 				BigInteger.valueOf(units)
 				);
-	}
-
-	public static void showReceipt(TransactionReceipt rec) {
-		S.out( toString( rec) );
 	}
 
 	/** getAddress() might be better */

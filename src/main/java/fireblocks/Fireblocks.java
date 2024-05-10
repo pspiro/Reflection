@@ -15,6 +15,7 @@ import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
+import web3.RetVal;
 
 /** This shit works. You pass in everthing ahead of time, then call transact() */
 public class Fireblocks {
