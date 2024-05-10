@@ -449,7 +449,7 @@ public class BackendTransaction extends MyTransaction {
 				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
 				"nonRusdApprovedAmt", json.getDouble( "approved"),
 				"bidPrice", prices.anyBid() * (1. - m_config.sellSpread() ),
-				"askPrice", prices.anyAsk() * 1. + m_config.buySpread()
+				"askPrice", prices.anyAsk() * (1. + m_config.buySpread() )
 				);
 		});
 	}
