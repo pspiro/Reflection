@@ -41,7 +41,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidAddress(spenderAddr);
 		
 		S.out( "%s approving %s to spend %s BUSD", 
-				Refblocks.getAddress(approverKey), spenderAddr, amt);
+				Refblocks.getAddressPk(approverKey), spenderAddr, amt);
 		
 		return Refblocks.exec( approverKey, tm -> load( tm, 100000)
 				.approve( spenderAddr, toBlockchain( amt) ) );
@@ -53,7 +53,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidAddress(address);
 
 		S.out( "%s minting %s %s", 
-				Refblocks.getAddress(callerKey), amt, address);
+				Refblocks.getAddressPk(callerKey), amt, address);
 
 		return Refblocks.exec( callerKey, tm -> load( tm, 100000)
 				.mint( address, toBlockchain( amt) ) );

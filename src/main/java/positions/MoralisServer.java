@@ -243,3 +243,4 @@ public class MoralisServer {
 	}
 			
 }
+// for getapproved or allocated use Erc20.getAllowance()

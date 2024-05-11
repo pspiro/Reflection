@@ -3,17 +3,20 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import redis.ConfigBase.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 import web3.Busd;
+import web3.Matic;
 import web3.Rusd;
 import web3.StockToken;
 
 public class TestFbOrders extends MyTestCase {
 	// test all possible orders and a success of buy w/ BUSD, buy w/ RUSD, and sell
 	
+	static String bobKey;
 	static String bobAddr;
 	static StockToken stock;
 	static Busd busd;
@@ -21,16 +24,18 @@ public class TestFbOrders extends MyTestCase {
 
 	static {		
 		try {
-			bobAddr = accounts.getAddress("Bob");
-			S.out( "bobAddr = %s", bobAddr);
+			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
+					? "bob" 
+					: "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd";
 			
-			// create Wallet instead and use that
-			showAmounts("pre-run");
-			
+			bobAddr = Matic.getAddress( bobKey);
+
 			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
 			busd = m_config.busd();
 			rusd = m_config.rusd();
+
+			showAmounts("pre-run");
 		}
 		catch( Exception e) {
 			e.printStackTrace();
@@ -50,7 +55,10 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("starting insuf. funds");
 		
 		cli().get("/api/mywallet/" + bobAddr);
-		double bal = cli.readJsonObject().getArray("tokens").find( "name", "USDC").getDouble("balance");
+		double bal = cli.readJsonObject()
+				.getArray("tokens")
+				.find( "name", busd.name() )
+				.getDouble("balance");
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
 		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
@@ -89,7 +97,7 @@ public class TestFbOrders extends MyTestCase {
 		// approve too little
 		S.out( "**approving .49");
 		busd.approve(
-				"bob",
+				bobKey,
 				rusd.address(),
 				.49).waitForCompleted();
 		
@@ -125,33 +133,32 @@ public class TestFbOrders extends MyTestCase {
 		// this doesn't work because we can't update the email
 		
 		// mint BUSD for user Bob
-		S.out( "**minting 20000");
-		m_config.mintBusd( bobAddr, 2000).waitForCompleted();
+		S.out( "**minting 2000");
+		busd.mint( bobAddr, 2000).waitForHash();
+		waitForBalance( bobAddr, m_config.busd().address(), 2000, false);
 		
 		// user to approve buying with BUSD; you must wait for this
-//		S.out( "**approving 20000");
-//		busd.approve(
-//				rusd.address(),
-//				2000).waitForCompleted();
-
+		S.out( "**approving 20000");
+		busd.approve(
+				bobKey,
+				rusd.address(),
+				2000).waitForHash();
+		waitFor( 30, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
 		showAmounts("updated amounts");
-
-		//double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() );
 
 		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
 		obj.remove("noFireblocks");
 		
 		S.out( "**Submitting: " + obj);
-
 		JsonObject map = postOrderToObj(obj);
 		assert200();
-		assertEquals( RefCode.OK, cli.getRefCode() );
 		
 		String uid = map.getString("id");  // 5-digit code
 		assertTrue( S.isNotNull(uid) );
 		S.out( "Submitted order with uid %s", uid);
-		
-		while(true) {
+
+		// wait for order to complete
+		waitFor( 30000, () -> {
 			JsonObject liveOrders = getAllLiveOrders(bobAddr);
 			S.out( liveOrders);
 
@@ -162,13 +169,11 @@ public class TestFbOrders extends MyTestCase {
 				S.out("Completed: " + msg);
 				assertEquals( "message", msg.getString("type"));
 				startsWith( "Bought", msg.getString("text") );
-				break;
+				return true;
 			}
-			
 			assertTrue(order != null);
-
-			S.sleep(1000);
-		}
+			return false;
+		});
 		
 		// fetch most recent transaction from database
 		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(

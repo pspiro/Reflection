@@ -86,7 +86,7 @@ public class TestBackendMsgs extends MyTestCase {
 	public void testOnramp() throws Exception {
 		cli().postToJson( "http://localhost:8383/api/onramp", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"transactionId", "abc").toString() ).display();
+				"orderId", 333).toString() ).display();
 		assert200();
 	}
 }

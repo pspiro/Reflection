@@ -21,6 +21,7 @@ import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import common.Util;
+import fireblocks.Accounts;
 import http.MyClient;
 import tw.util.S;
 import web3.Erc20;
@@ -198,8 +199,9 @@ public class Refblocks {
 				);
 	}
 
-	/** getAddress() might be better */
-	public static String getAddress(String privateKey) {
+	/** @param privateKey must be a wallet private key;
+	 *  if it could be a Fireblocks key, use Matic.getAddress() */
+	protected static String getAddressPk(String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
 	}
 	

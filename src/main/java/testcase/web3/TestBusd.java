@@ -2,9 +2,9 @@ package testcase.web3;
 
 import common.Util;
 import positions.Wallet;
-import refblocks.Refblocks;
 import testcase.MyTestCase;
 import tw.util.S;
+import web3.Matic;
 
 public class TestBusd extends MyTestCase {
 	public void testMint() throws Exception {
@@ -24,7 +24,7 @@ public class TestBusd extends MyTestCase {
 	/** this is failing due to insufficient gas but it shouldn't be more */
 	public void testApprove() throws Exception {
 		String callerKey = Util.createPrivateKey();
-		String caller = Refblocks.getAddress( callerKey);
+		String caller = Matic.getAddress( callerKey);
 		m_config.matic().send( m_config.ownerKey(), caller, .005);  // why so high!!!???
 
 		String spender = Util.createFakeAddress();

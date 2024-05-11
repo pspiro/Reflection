@@ -21,8 +21,8 @@ public class Busd extends Stablecoin {
 	}
 
 	/** For testing only; currently only Frontend calls approve in production */ 
-	public RetVal approve(String caller, String spenderAddr, double amt) throws Exception {
-		return m_core.approve( caller, spenderAddr, amt);
+	public RetVal approve(String callerKey, String spenderAddr, double amt) throws Exception {
+		return m_core.approve( callerKey, spenderAddr, amt);
 	}
 
 	public interface IBusd {
