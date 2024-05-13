@@ -106,11 +106,17 @@ public class CryptoPanel extends MonPanel {
 			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
 			String address = Util.reqValidAddress( tab.get( name) );
 			
+			double amt = Double.parseDouble( Util.ask( "Enter amount"));
+			if (amt > 300 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+				Util.inform( this, "The password was invalid");
+				return;
+			}
+			
 			String hash = Fireblocks.transfer( 
 					Accounts.instance.getId("Owner"),
 					address,
 					Monitor.m_config.fbStablecoin(),
-					Double.parseDouble( Util.ask( "Enter amount")),
+					amt,
 					Util.ask("Enter note")
 			).waitForHash();
 			
