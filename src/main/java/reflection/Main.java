@@ -231,6 +231,9 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
+	/** as of 5/10/24 Frontend no longer needs buy_spread and sell_spread; the spreads
+	 *  are now incorporated into the prices we send on the dynamic trading page query;
+	 *  these tags can/should be removed after frontend is promoted to prod */ 
 	private String readType1Config(Book book) throws Exception {
 		JsonObject obj = new JsonObject();
 		for (String key : "min_order_size,max_order_size,non_kyc_max_order_size,price_refresh_interval,commission,buy_spread,sell_spread".split(",") ) {
