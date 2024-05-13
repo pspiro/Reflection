@@ -9,11 +9,10 @@ import common.Util;
 import positions.MoralisServer;
 
 class Fees {
-		private BigInteger baseFee;
-		BigInteger priorityFee;  // use the highest base fee; not sure if this includes the base fee already or not
+		static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
 		
-		Fees() {
-		}
+		private BigInteger baseFee;
+		private BigInteger priorityFee;
 		
 		Fees( double base, double priority) {
 			baseFee = BigInteger.valueOf( (long)base);
@@ -37,11 +36,11 @@ class Fees {
 			JsonObject json = MoralisServer.getFeeHistory(5).getObject( "result");
 			
 			// get base fee of last/pending block
-			long baseFee = Util.getLong( json.getList( "baseFeePerGas").get( 0).toString() );
+			long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
 
 			// take average of median priority fee over last 5 blocks 
 			long sum = 0;
-			ArrayList<ArrayList> reward = json.getListArray( "reward");
+			ArrayList<ArrayList> reward = json.<ArrayList>getArrayOf( "reward");
 			for ( ArrayList ar : reward) {
 				sum += Util.getLong( ar.get(0).toString() );
 			}

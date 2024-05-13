@@ -203,14 +203,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new JsonArray(); 
 	}
 
-	public ArrayList getList(String key) {
-		ArrayList array = (ArrayList)get(key);
-		return array != null ? array : new ArrayList(); 
-	}
-
-	public ArrayList<ArrayList> getListArray(String key) {
-		ArrayList<ArrayList> array = (ArrayList<ArrayList>)get(key);
-		return array != null ? array : new ArrayList<ArrayList>(); 
+	/** Call it like this: json.<String>getAnyArray( key) */
+	@SuppressWarnings("unchecked")
+	public <T> ArrayList<T> getArrayOf(String key) {
+		ArrayList<T> array = (ArrayList<T>)get(key);
+		return array != null ? array : new ArrayList<T>(); 
 	}
 
 	public JsonObject getObject(String key) throws Exception {

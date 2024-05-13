@@ -36,7 +36,6 @@ public class Refblocks {
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	static Web3j web3j;
 	static long chainId;  // set from Config
-	static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
 	private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
 
