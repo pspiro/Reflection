@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -202,6 +203,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new JsonArray(); 
 	}
 
+	public ArrayList getList(String key) {
+		ArrayList array = (ArrayList)get(key);
+		return array != null ? array : new ArrayList(); 
+	}
+
+	public ArrayList<ArrayList> getListArray(String key) {
+		ArrayList<ArrayList> array = (ArrayList<ArrayList>)get(key);
+		return array != null ? array : new ArrayList<ArrayList>(); 
+	}
+
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
 		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
@@ -216,12 +227,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	
 	/** Returns zero for null value Can handle hex calues starting with 0x. */
 	public long getLong(String key) {
-		String str = getString( key);
-		return S.isNotNull( str) 
-				? str.startsWith( "0x")
-						? Long.parseLong( str.substring( 2), 16)
-						: Long.parseLong( str)
-				: 0;
+		return Util.getLong( getString( key) );
 	}
 
 	/** Returns zero for null value. */

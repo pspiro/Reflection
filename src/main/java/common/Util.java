@@ -824,6 +824,14 @@ public class Util {
 		return "0x" + Long.toHexString( val);
 	}
 
+	public static long getLong(String str) {
+		return S.isNotNull( str) 
+				? str.startsWith( "0x")
+						? Long.parseLong( str.substring( 2), 16)
+								: Long.parseLong( str)
+				: 0;
+	}
+
 //	<T> T[] toArray( ArrayList<T> list) {
 //		return (T[])list.toArray();
 //	}

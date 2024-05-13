@@ -219,12 +219,15 @@ public class MoralisServer {
 		chain = chainIn;
 	}
 	
-	public static void main(String[] args) throws Exception {
-		S.out( getGasPrice() );
-	}
+	static JsonObject nodeQuery(String body) throws Exception {
+		return MyClient.create( nodeUrl, body)
+				.header( "accept", "application/json")
+				.header( "content-type", "application/json")
+				.queryToJson();
+	}		
 	
 	/** This works but it only returns the total fee; we need base fee and priority fee. */
-	static double getGasPrice() throws Exception {
+	static long getGasPrice() throws Exception {
 		String body = """
 			{
 			"jsonrpc": "2.0",
@@ -234,13 +237,56 @@ public class MoralisServer {
 		
 		S.out( nodeUrl);
 		
-		return MyClient.create( nodeUrl, body)
-			.header( "accept", "application/json")
-			.header( "content-type", "application/json")
-			.queryToJson()
-			.getLong( "result");
-		
+		return nodeQuery( body).getLong( "result");
 	}
-			
+	
+	public static long getBlockNumber() throws Exception {
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_blockNumber"
+			}""";
+		return nodeQuery( body).getLong( "result");
+	}
+
+	public static JsonObject getFeeHistory(int blocks) throws Exception {
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_feeHistory",
+			"params": [
+				"%s",
+				"latest",
+				[ 50 ]
+			]
+			}""", blocks); 
+		return nodeQuery( body);
+	}
+	
+	public static JsonObject getLatestBlock() throws Exception {
+		// the boolean says if it gets the "full" block or not
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getBlockByNumber",
+			"params": [	"latest", false ]
+			}""";
+		return nodeQuery( body);
+	}
+	
+	/** Always returns 30 gwei for Polygon */
+	public static JsonObject maxPriorityFee() throws Exception {
+		// the boolean says if it gets the "full" block or not
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_maxPriorityFeePerGas"
+			}""";
+		return nodeQuery( body);
+	}
 }
 // for getapproved or allocated use Erc20.getAllowance()

@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 
-import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -26,7 +25,6 @@ import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import common.Util;
-import http.MyClient;
 import tw.util.S;
 import web3.Erc20;
 
@@ -48,43 +46,7 @@ public class Refblocks {
 		web3j = Web3j.build( new HttpService( rpcUrl) );
 	}
 
-	static class Fees {
-		private BigInteger baseFee;
-		private BigInteger priorityFee;  // use the highest base fee; not sure if this includes the base fee already or not
-		
-		public BigInteger totalFee() {
-			return baseFee.add( priorityFee);
-		}
-
-		public BigInteger priorityFee() {
-			return priorityFee;
-		}
-	}
-
-	
 	/** returns same fees that are displayed here: https://polygonscan.com/gastracker */
-	static Fees getFees() {
-		Fees fees = new Fees();
-		
-		try {
-			S.sleep( 200);  // don't break pacing of max 5 req per second; how do they know it's me???
-			JsonObject json = MyClient.getJson( gasUrl)
-					.getObject( "result");
-			fees.baseFee = json.getBlockchain( "suggestBaseFee", 9); // convert base fee from gwei to wei
-			fees.priorityFee = json.getBlockchain( "FastGasPrice", 9);  // it's very unclear if this is returning the priority fee or the total fee, but it doesn't matter because the base fee is so low 
-		} catch (Exception e) {
-			if (e.getMessage().contains("Max rate limit reached") ) {
-				S.out( "Error: Max rate limit exceeded for getFees(); using default values");
-			}
-			else {
-				e.printStackTrace();
-			}
-			fees.baseFee = defaultBaseFee;
-			fees.priorityFee = defaultPriorityFee;
-		}
-		
-		return fees;
-	}
 	
 	public static String toString(TransactionReceipt receipt) throws Exception {
 		Util.require( receipt != null, "null receipt");
@@ -199,9 +161,10 @@ public class Refblocks {
 				chainId );
 	}
 	
-	/** Get the EIP1559 gas provider which knows the base fee, priority fee, and total fee */
-	public static StaticEIP1559GasProvider getGp( long units) {
-		Fees fees = getFees();
+	/** Get the EIP1559 gas provider which knows the base fee, priority fee, and total fee 
+	 * @throws Exception */
+	public static StaticEIP1559GasProvider getGp( long units) throws Exception {
+		Fees fees = Fees.fetch();
 		
 		return new StaticEIP1559GasProvider( // fails with this
 				chainId,
@@ -232,7 +195,7 @@ public class Refblocks {
 	        BigDecimal weiValue = Convert.toWei(amt, Convert.Unit.ETHER);
             Util.require( Numeric.isIntegerValue(weiValue), "Non decimal Wei value provided");
 
-    		Fees fees = getFees();
+    		Fees fees = Fees.fetch();
 
     		return sendEIP1559(
 	                chainId,
