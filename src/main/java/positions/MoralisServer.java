@@ -8,9 +8,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.FbErc20;
 import http.MyClient;
 import tw.util.S;
+import web3.Erc20;
 
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick */
@@ -124,7 +124,7 @@ public class MoralisServer {
 	public static double getNativeBalance(String address) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
-		return FbErc20.fromBlockchain(
+		return Erc20.fromBlockchain(
 				JsonObject.parse( querySync(url) ).getString("balance"),
 				18);
 	}

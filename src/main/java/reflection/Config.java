@@ -14,7 +14,6 @@ import fireblocks.FbBusd;
 import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
-import junit.framework.TestCase;
 import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
@@ -38,6 +37,8 @@ import web3.Rusd;
 import web3.Rusd.IRusd;
 
 public class Config extends ConfigBase {
+
+	public enum Web3Type { Fireblocks, Refblocks };
 
 	protected GTable m_tab;
 	
@@ -64,7 +65,6 @@ public class Config extends ConfigBase {
 	private String postgresExtUrl;  // external URL, used by Monitor
 	private String postgresUser;
 	private String postgresPassword;
-	private String symbolsTab;  // tab name where symbols are stored
 	private String backendConfigTab;
 	private double commission;
 	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
@@ -95,9 +95,11 @@ public class Config extends ConfigBase {
 	private int chainId;
 
 	// Fireblocks
+	private Web3Type web3Type;
 	private String admin1Addr;
 //	private String admin1Key;
 	private String ownerKey;  // for Fireblocks, this is "Owner"
+	private String ownerAddr;
 	private String refWalletAddr;
 	private String refWalletKey;
 
@@ -222,13 +224,13 @@ public class Config extends ConfigBase {
 		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
 		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
 		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
 		this.platformBase = m_tab.getRequiredString("platformBase");
-		
 		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
 		
 		IRusd rusdCore;
@@ -382,10 +384,6 @@ public class Config extends ConfigBase {
 		}
 	}
 	
-	public String symbolsTab() {
-		return symbolsTab;
-	}
-
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
 	public Rusd rusd() throws Exception {
@@ -620,6 +618,10 @@ public class Config extends ConfigBase {
 		return ownerKey;
 	}
 
+	public String ownerAddr() {
+		return ownerAddr;
+	}
+	
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( wallet, amt);
 	}
@@ -630,5 +632,9 @@ public class Config extends ConfigBase {
 	
 	public int chainId() {
 		return chainId;
+	}
+
+	public Web3Type web3Type() {
+		return web3Type;
 	}
 }

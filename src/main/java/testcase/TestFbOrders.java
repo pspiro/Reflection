@@ -3,13 +3,12 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import redis.ConfigBase.Web3Type;
+import reflection.Config.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 import web3.Busd;
-import web3.Matic;
 import web3.Rusd;
 import web3.StockToken;
 
@@ -28,7 +27,7 @@ public class TestFbOrders extends MyTestCase {
 					? "bob" 
 					: "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd";
 			
-			bobAddr = Matic.getAddress( bobKey);
+			m_config.matic().getAddress( bobKey);
 
 			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );

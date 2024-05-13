@@ -1,7 +1,5 @@
 package fireblocks;
 
-import java.math.BigDecimal;
-
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -45,17 +43,6 @@ public class FbErc20 extends Erc20 {
 		
 	}
 
-	/** Takes decimal string */
-	public double fromBlockchain(String amt) {
-		return fromBlockchain( amt, m_decimals);
-	}
-	
-	public static double fromBlockchain(String amt, int power) {
-		return S.isNotNull(amt)
-				? new BigDecimal(amt).divide( ten.pow(power) ).doubleValue()
-				: 0.0;
-	}
-	
 	/** Sends a query to Moralis */
 //	public double getAllowance(String wallet, String spender) throws Exception {
 //		Util.reqValidAddress(wallet);
@@ -153,5 +140,4 @@ public class FbErc20 extends Erc20 {
 		
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
 	}
-
 }

@@ -58,4 +58,15 @@ public class RbBusd extends Erc20 implements IBusd {
 		return Refblocks.exec( callerKey, tm -> load( tm, 100000)
 				.mint( address, toBlockchain( amt) ) );
 	}
+
+	@Override public RetVal transfer(String fromKey, String toAddr, double amt) throws Exception {
+		Util.reqValidKey(fromKey);
+		Util.reqValidAddress(toAddr);
+		
+		S.out( "transferring %s %s from %s to %s",
+				amt, m_name, Refblocks.getAddressPk( fromKey), toAddr);
+
+		return Refblocks.exec( fromKey, tm -> load( tm, 40000)
+			.transfer( toAddr, toBlockchain( amt) ) );
+	}
 }

@@ -24,9 +24,14 @@ public class Busd extends Stablecoin {
 	public RetVal approve(String callerKey, String spenderAddr, double amt) throws Exception {
 		return m_core.approve( callerKey, spenderAddr, amt);
 	}
+	
+	public RetVal transfer(String fromKey, String toAddr, double amt) throws Exception {
+		return m_core.transfer( fromKey, toAddr, amt);
+	}
 
 	public interface IBusd {
-		RetVal approve( String callerKey, String spenderAddr, double amt) throws Exception;
 		RetVal mint( String callerKey, String address, double amount) throws Exception;
+		RetVal approve( String callerKey, String spenderAddr, double amt) throws Exception;
+		RetVal transfer(String fromKey, String toAddr, double amt) throws Exception;
 	}
 }

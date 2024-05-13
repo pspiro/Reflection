@@ -2,19 +2,15 @@ package refblocks;
 
 
 import common.Util;
-import redis.ConfigBase.Web3Type;
 import reflection.Config;
+import reflection.Config.Web3Type;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
 public class Deploy {
-	// it seems that you have to wait or call w/ the same Admin
-	// if you need the first transaction to finish because
-	// Fireblocks checks and thinks it will fail if the first
-	// one is not done yet
 	
-	// deploy RUSD and all stock tokens
+	// deploy RUSD, fake BUSD (for test system), and all stock tokens
 	
 	// NOTE you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
@@ -43,7 +39,9 @@ public class Deploy {
 			S.out( "deployed rusd to " + rusdAddress);
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
 
-			// let RefWallet approve RUSD to transfer BUSD
+			// let RefWallet approve RUSD to transfer BUSD; RefWallet needs gas for this
+			//config.matic().transfer( config.ownerKey(), config.refWalletAddr(), .005);
+			
 			new RbBusd( busdAddress, config.busd().decimals(), config.busd().name() )
 				.approve( config.refWalletKey(), rusdAddress, 1000000000); // $1B
 

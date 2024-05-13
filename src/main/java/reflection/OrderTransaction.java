@@ -24,7 +24,7 @@ import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import http.MyClient;
-import redis.ConfigBase.Web3Type;
+import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import tw.util.S;

@@ -3,8 +3,8 @@ package fireblocks;
 import static fireblocks.Accounts.instance;
 
 import common.Util;
-import redis.ConfigBase.Web3Type;
 import reflection.Config;
+import reflection.Config.Web3Type;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;

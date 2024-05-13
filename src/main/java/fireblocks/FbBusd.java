@@ -1,8 +1,8 @@
 package fireblocks;
 
 import tw.util.S;
-import web3.RetVal;
 import web3.Busd.IBusd;
+import web3.RetVal;
 
 /** This class represents any non-RUSD stablecoin */ 
 public class FbBusd extends FbErc20 implements IBusd {
@@ -33,5 +33,15 @@ public class FbBusd extends FbErc20 implements IBusd {
 	 *  @param callerKey is ignored */
 	public RetVal mint( String callerKey, String address, double amt) throws Exception {
 		return super.mint( Accounts.instance.getId( callerKey), address, amt);
+	}
+	
+	public RetVal transfer( String callerKey, String address, double amount) throws Exception {
+		throw new Exception( "you need the Fireblocks name of the token");
+//		return Fireblocks.transfer(
+//				Accounts.instance.getId( callerKey), 
+//				address, 
+//				"???",
+//				amount, 
+//				"transfer BUSD");
 	}
 }

@@ -9,8 +9,6 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
-import fireblocks.Accounts;
-import fireblocks.Transactions;
 import tw.util.UI;
 import web3.Busd;
 import web3.Rusd;
@@ -49,11 +47,8 @@ $limit""");
 			Monitor.m_tabs.select( "Log");
 			Monitor.m_logPanel.filterByUid(val.toString());
 			break;
-		case "fireblocks_id":
-			wrap( () -> Transactions.getTransaction(val.toString()).display() );
-			break;
 		case "blockchain_hash":
-			// show in explorer
+			Util.browse( config().blockchainTx( val.toString() ) );
 			break;
 		default:
 			super.onDouble(tag, val);
@@ -99,7 +94,7 @@ $limit""");
 		}
 
 		// insufficient stablecoin in RefWallet?
-		double ourStablePos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
+		double ourStablePos = busd.getPosition( Monitor.m_config.refWalletAddr() );
 		if (ourStablePos < rusdPos) {
 			String str = String.format( 
 					"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",

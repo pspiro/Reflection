@@ -7,8 +7,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import common.Util;
-import fireblocks.Accounts;
-import fireblocks.Fireblocks;
 import http.MyClient;
 import positions.Wallet;
 import tw.google.GTable;
@@ -42,10 +40,10 @@ public class CryptoPanel extends MonPanel {
 		super( new BorderLayout() );
 		
 		HtmlButton button = new HtmlButton( "Show Wallets", ev -> {
-			wrap( () -> holdersPanel.refresh( Monitor.m_config.rusd() ) );
+			wrap( () -> holdersPanel.refresh( config().rusd() ) );
 		});
 
-		m_rusdAddress.setText( Monitor.m_config.rusdAddr() );
+		m_rusdAddress.setText( config().rusdAddr() );
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
@@ -68,7 +66,7 @@ public class CryptoPanel extends MonPanel {
 		leftPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
 		leftPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
-		leftPanel.addHeader( "Fireblocks");
+		leftPanel.addHeader( "Admin Accounts");
 		leftPanel.add( "Admin1 MATIC", m_admin1Matic);
 		leftPanel.add( "Admin2 MATIC", m_admin2Matic);
 
@@ -86,13 +84,11 @@ public class CryptoPanel extends MonPanel {
 	/** Send from Owner to RefWallet */
 	private void sendToRefWallet() {
 		wrap( () -> {
-			Fireblocks.transfer( 
-					Accounts.instance.getId("Owner"),
-					Accounts.instance.getAddress("RefWallet"),
-					Monitor.m_config.fbStablecoin(),
-					Double.parseDouble( Util.ask( "Enter amount")),
-					"Move USDT from Owner to RefWallet"
-			).waitForHash();
+			config().busd().transfer( 
+					config().ownerKey(),
+					config().refWalletAddr(),
+					Double.parseDouble( Util.ask( "Enter amount"))
+					).waitForHash();
 			Util.inform(this, "Done");
 		});
 	}
@@ -105,29 +101,25 @@ public class CryptoPanel extends MonPanel {
 			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
 			String address = Util.reqValidAddress( tab.get( name) );
 			
-			String hash = Fireblocks.transfer( 
-					Accounts.instance.getId("Owner"),
+			String hash = config().busd().transfer( 
+					config().ownerKey(),
 					address,
-					Monitor.m_config.fbStablecoin(),
-					Double.parseDouble( Util.ask( "Enter amount")),
-					Util.ask("Enter note")
-			).waitForHash();
+					Double.parseDouble( Util.ask( "Enter amount"))
+					).waitForHash();
 			
-			//Util.browse( Monitor.m_config.blockchainTx( hash) );
-			Util.copyToClipboard( Monitor.m_config.blockchainTx( hash) );
+			//Util.browse( config().blockchainTx( hash) );
+			Util.copyToClipboard( config().blockchainTx( hash) );
 			Util.inform(this, "Done, hash is copied to clipboard");
 		});
 	}
 
 	private void ownerSendMatic() {
 		wrap( () -> {
-			Fireblocks.transfer( 
-					Accounts.instance.getId("Owner"),
+			config().matic().transfer( 
+					config().ownerKey(),
 					Util.ask("Enter dest wallet address"),
-					Fireblocks.platformBase,
-					Double.parseDouble( Util.ask( "Enter amount")),
-					Util.ask("Enter note")
-			).waitForHash();
+					Double.parseDouble( Util.ask( "Enter amount"))
+					);
 			Util.inform(this, "Done");
 		});
 	}
@@ -136,47 +128,48 @@ public class CryptoPanel extends MonPanel {
 	private void emptyRefWallet() {
 		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
 			wrap( () -> {
-				int from = Accounts.instance.getId("RefWallet");
-				String to = Accounts.instance.getAddress("Owner");
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
-				String note = "Move all USDT from RefWallet to Owner";;
-				Fireblocks.transfer(from, to, "USDT_POLYGON", amt, note).waitForHash();
+
+				config().busd().transfer(
+						config().refWalletKey(),
+						config().ownerAddr(),
+						amt);
 			});
 		}		
 	}
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
-		Wallet refWallet = new Wallet( Monitor.m_config.refWalletAddr() );
+		Wallet refWallet = new Wallet( config().refWalletAddr() );
 		m_refAddress.setText( refWallet.walletAddr() );
 
-		double busd = refWallet.getBalance(Monitor.m_config.busd().address());
+		double busd = config().busd().getPosition( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
 		double nativeBal = refWallet.getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
-		Wallet owner = Fireblocks.getWallet("Owner");
+		Wallet owner = new Wallet( config().ownerAddr() );
 		double ownerMatic = owner.getNativeBalance();
-		double ownerBusd = owner.getBalance(Monitor.m_config.busd().address());
+		double ownerBusd = config().busd().getPosition( config().ownerAddr() );
 		SwingUtilities.invokeLater( () -> {
 			m_ownerAddress.setText( owner.walletAddr() );
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = Fireblocks.getWallet("Admin1").getNativeBalance();
+		double admin1Bal = new Wallet( config().admin1Addr() ).getNativeBalance();
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
-		double admin2Bal = Fireblocks.getWallet("Admin2").getNativeBalance();
-		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
+//		double admin2Bal = new Wallet( config().admin2Addr()").getNativeBalance();
+//		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
 		
-		double approved = Monitor.m_config.busd().getAllowance(
-				Accounts.instance.getAddress("RefWallet"),
-				Monitor.m_config.rusdAddr() );
+		double approved = config().busd().getAllowance(
+				config().refWalletAddr(),
+				config().rusdAddr() );
 		m_approved.setText( S.fmt2( approved) );
 
-		double rusd = Monitor.m_config.rusd().queryTotalSupply();
+		double rusd = config().rusd().queryTotalSupply();
 		m_rusdOutstanding.setText( S.fmt2(rusd) );
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {

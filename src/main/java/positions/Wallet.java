@@ -5,8 +5,8 @@ import java.util.HashMap;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.FbErc20;
 import tw.util.S;
+import web3.Erc20;
 
 /** Get token positions; will only send one query */
 public class Wallet {
@@ -22,6 +22,7 @@ public class Wallet {
 	}
 
 	/** Sends a request every time
+	 *  @deprecated use Erc20.getPosition() instead
 	 *  @param token is token address */
 	public double getBalance(String token) throws Exception {
 		return getBalance( reqPositionsMap(m_walletAddr, token), token);
@@ -56,7 +57,7 @@ public class Wallet {
 					decimals = 18;
 				}
 				
-				map.put( addr.toLowerCase(), FbErc20.fromBlockchain(balance, decimals) );
+				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, decimals) );
 			}
 		}
 		

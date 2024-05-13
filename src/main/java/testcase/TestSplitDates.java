@@ -22,8 +22,7 @@ public class TestSplitDates extends MyTestCase {
 //	3206042
 	
 	private JsonObject createOrder(String side, double qty, double offset, int conid) throws Exception {
-		double price = m_config.newRedis().singleQuery( 
-				jedis -> Double.valueOf( jedis.hget("" + conid, "bid") ) );
+		double price = 100;  // where to get this? pas
 		S.out( "price is %s", price);
 
 		JsonObject obj = TestOrder.createOrder2(side, qty, price * 1.05);

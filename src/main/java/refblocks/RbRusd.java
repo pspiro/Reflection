@@ -29,7 +29,8 @@ public class RbRusd extends Erc20 implements IRusd {
 				).send().getContractAddress();
 	}
 
-	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain */
+	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain
+	 *  note that we no longer need to have tm passed in because we can get it from Refblocks */
 	public Rusd load(TransactionManager tm) throws Exception {
 		return Rusd.load( 
 				address(), 

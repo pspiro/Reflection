@@ -10,7 +10,6 @@ import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import fireblocks.Accounts;
 import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
 import util.LogType;
@@ -116,7 +115,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// insufficient BUSD in RefWallet?
-			double busdPos = busd.getPosition( Accounts.instance.getAddress("RefWallet") );
+			double busdPos = busd.getPosition( m_config.refWalletAddr() );
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() ) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator

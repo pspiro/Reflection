@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Accounts;
 import monitor.BigWalletPanel;
 import positions.Wallet;
 import reflection.RefCode;
@@ -19,7 +18,7 @@ public class TestRedeem extends MyTestCase {
 	static {
 		try {
 			readStocks();
-			refWallet = Accounts.instance.getAddress("RefWallet");
+			refWallet = m_config.refWalletAddr();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
