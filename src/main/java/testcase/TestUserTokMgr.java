@@ -27,15 +27,15 @@ public class TestUserTokMgr extends MyTestCase {
 		waitForRusdBalance(Cookie.wallet, amt, false);
 
 		// first order - should pass
-		postOrderToObj( TestOrder.createOrder2( "BUY", 1, buyPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "BUY", 1, buyPrice, true, "RUSD") );
 		assert200();
 
 		// second order - should pass
-		postOrderToObj( TestOrder.createOrder2( "BUY", 1, buyPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "BUY", 1, buyPrice, true, "RUSD") );
 		assert200();
 		
 		// third order - should fail
-		postOrderToObj( TestOrder.createOrder2( "BUY", 1, buyPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "BUY", 1, buyPrice, true, "RUSD") );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
 
@@ -44,15 +44,15 @@ public class TestUserTokMgr extends MyTestCase {
 
 		// first order - should pass
 		double sellPrice = curPrice * .9;
-		postOrderToObj( TestOrder.createOrder2( "SELL", 1, sellPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, true, "RUSD") );
 		assert200();
 
 		// second order - should pass
-		postOrderToObj( TestOrder.createOrder2( "SELL", 1, sellPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, true, "RUSD") );
 		assert200();
 		
 		// third order - should fail
-		postOrderToObj( TestOrder.createOrder2( "SELL", 1, sellPrice, true) );
+		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, true, "RUSD") );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INSUFFICIENT_STOCK_TOKEN, cli.getRefCode() );
 		

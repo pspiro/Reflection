@@ -256,7 +256,7 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testZeroShares()  throws Exception {
-		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", false); 
+		JsonObject obj = createOrder4("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", false, "RUSD"); 
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -277,24 +277,24 @@ public class TestOrder extends MyTestCase {
 	
 	/** no Fireblocks */
 	static JsonObject createOrder(String side, double qty, double offset) throws Exception {
-		return createOrder2( side, qty, curPrice + offset, false);
+		return createOrder3( side, qty, curPrice + offset, false, "RUSD");
 	}
 
 	/** no Fireblocks */
 	static JsonObject createOrder2(String side, double qty, double price) throws Exception {
-		return createOrder2( side, qty, price, false);
+		return createOrder3( side, qty, price, false, "RUSD");
 	}
 	
-	static JsonObject createOrder2(String side, double qty, double price, boolean fireblocks) throws Exception {
+	static JsonObject createOrder3(String side, double qty, double price, boolean fireblocks, String currency) throws Exception {
 		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, price);
-		return createOrder3(json, fireblocks);
+		return createOrder4(json, fireblocks, currency);
 	}
 	
-	static JsonObject createOrder3(String json, boolean fireblocks) throws Exception {
+	static JsonObject createOrder4(String json, boolean fireblocks, String currency) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.easyJson(json) );
 		obj.put("cookie", Cookie.cookie);
-		obj.put("currency", m_config.rusd().name() );
+		obj.put("currency", currency);
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("testcase", true);
 
