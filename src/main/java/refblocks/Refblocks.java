@@ -82,7 +82,7 @@ public class Refblocks {
 	 *  from a single thread sequentially */
 	static class DelayedTrp extends PollingTransactionReceiptProcessor {
 	    DelayedTrp( Web3j web3j) {
-	    	super( web3j, PollingInterval, 40);
+	    	super( web3j, PollingInterval, 12); // one minute
 	    }
 
 	    /** return immediately with an empty receipt */
@@ -164,7 +164,10 @@ public class Refblocks {
 	 * @throws Exception */
 	public static StaticEIP1559GasProvider getGp( long units) throws Exception {
 		Fees fees = Fees.fetch();
-		
+
+		S.out( "total gas price: %s gwei", 
+				fees.totalFee().divide( BigInteger.valueOf( 1000000000) ) );
+
 		return new StaticEIP1559GasProvider( // fails with this
 				chainId,
 				fees.totalFee(),
@@ -202,7 +205,11 @@ public class Refblocks {
 	                "",
 	                weiValue.toBigIntegerExact(),
 	                BigInteger.valueOf( 40000),  // higher than needed, you can reduce it if desired
+<<<<<<< HEAD
 	                fees.priorityFee(),
+=======
+	                fees.priorityFee() ,
+>>>>>>> 9cf1ed354856532d8ff168e43a2ba7f8c9a0654e
 	                fees.totalFee() );
 	    }
 	}
@@ -210,6 +217,11 @@ public class Refblocks {
 	/** taken from Transfer.sendFundsEIP1559() 
 	 * @throws Exception */
 	static RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
+		S.out( "transferring %s matic from %s to %s",
+				amt,
+				Refblocks.getAddressPk(senderKey),
+				toAddr);
+		
 		TransactionReceipt receipt = new MyTransfer( getFasterTm(senderKey) )
 				.send( toAddr, BigDecimal.valueOf( amt) );
 		

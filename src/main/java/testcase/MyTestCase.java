@@ -134,14 +134,14 @@ public class MyTestCase extends TestCase {
 	}
 
 	/** Wait for HookServer to catch up Exception */
-	protected static void waitForBalance(String walletAddr, String tokenAddr, double refPrice, boolean lt) throws Exception {
+	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
 		waitFor( 30, () -> {
 			
 			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
 					.getObject( "positions")
 					.getDouble( tokenAddr.toLowerCase() );
-			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", refPrice);
-			return (lt && balance < refPrice + .01 || !lt && balance > refPrice - .01);
+			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", bal);
+			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});
 	}
 

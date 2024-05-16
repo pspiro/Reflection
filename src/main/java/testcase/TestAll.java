@@ -4,12 +4,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
+import testcase.web3.TestBusd;
+import testcase.web3.TestRusd;
 
 // NOTE: static variables are shared across tests
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 //	TestBackendMsgs.class,
+//	TestBusd.class,
 //	TestCheckIdentity.class,
 //	TestConfig.class,
 //	TestErrors.class,
@@ -35,6 +38,7 @@ import junit.framework.TestCase;
 	TestPrices.class,
 	TestProfile.class,
 	TestRedeem.class,
+	TestRusd.class,
 	TestSignup.class,
 	TestSiwe.class,
 	TestSplitDates.class,

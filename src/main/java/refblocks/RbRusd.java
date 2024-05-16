@@ -3,6 +3,7 @@ package refblocks;
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
+import tw.util.S;
 import web3.Busd;
 import web3.Erc20;
 import web3.RetVal;
@@ -46,6 +47,13 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 		
+		S.out( "%s buying %s %s for %s %s", 
+				Refblocks.getAddressPk( adminKey),
+				stockTokenAmt,
+				stockToken.name(),
+				stablecoinAmt,
+				stablecoin.name() );
+		
 		return Refblocks.exec( adminKey, tm -> load( tm).buyStock(
 				userAddr, 
 				stablecoin.address(), 
@@ -60,6 +68,12 @@ public class RbRusd extends Erc20 implements IRusd {
 
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
+
+		S.out( "%s sell %s %s for %s RUSD",
+				Refblocks.getAddressPk( adminKey),
+				stockTokenAmt,
+				stockToken.name(),
+				rusdAmt);
 
 		return Refblocks.exec( adminKey, tm -> load( tm).sellStock( 
 				userAddr,
@@ -76,6 +90,12 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
+		S.out( "%s redeeming %s RUSD for %s %s",
+				Refblocks.getAddressPk( adminKey),
+				amt,
+				amt,
+				busd.name() );
+
 		return Refblocks.exec( adminKey, tm -> load( tm).sellRusd(
 				userAddr,
 				busd.address(),
@@ -87,7 +107,12 @@ public class RbRusd extends Erc20 implements IRusd {
 	@Override public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(address);
-		
+
+		S.out( "%s %s admin %s",
+				Refblocks.getAddressPk( ownerKey),
+				add ? "adding" : "removing",
+				address);
+				
 		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( 
 				address, 
 				add) );

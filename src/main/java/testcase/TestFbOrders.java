@@ -3,6 +3,7 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import reflection.Config.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
@@ -25,9 +26,8 @@ public class TestFbOrders extends MyTestCase {
 		try {
 			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
 					? "bob" 
-					: "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd";
-			
-			m_config.matic().getAddress( bobKey);
+					: Util.createPrivateKey();
+			bobAddr = m_config.matic().getAddress( bobKey);
 
 			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
@@ -53,6 +53,7 @@ public class TestFbOrders extends MyTestCase {
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting insuf. funds");
 		
+		// get current BUSD balance
 		cli().get("/api/mywallet/" + bobAddr);
 		double bal = cli.readJsonObject()
 				.getArray("tokens")
@@ -60,40 +61,39 @@ public class TestFbOrders extends MyTestCase {
 				.getDouble("balance");
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
+		// buy more
 		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
 		obj.remove("noFireblocks");
-		
-		JsonObject map = postOrderToObj(obj);
-		assert200();
-		assertEquals( RefCode.OK, cli.getRefCode() );
-		
-		while(true) {
-			JsonObject ret = getLiveMessage2(map.getString("id"));
-			if (ret != null) {
-				S.out(ret);
-				assertEquals( "error", ret.getString("type"));
-				startsWith( "The stablecoin balance", ret.getString("text") );
-				break;
-			}
-			S.sleep(1000);
-		}
+		postOrderToObj(obj);
+		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
+
+//		// wait for final order code
+//		waitFor( 60, () -> {
+//			JsonObject ret = getLiveMessage2(id);
+//			if (ret != null) {
+//				assertEquals( "error", ret.getString("type"));
+//				startsWith( "The stablecoin balance", ret.getString("text") );
+//				return true;
+//			}
+//			return false;
+//		});
 	}
 
 	/** This test will fail. To get it to pass, update LiveOrder.updateFrom() to check for 
 	 *  insufficient crypto or insufficient approved amount. It's only worthwhile
 	 *  if we see this happening in real life  */
-	public void testNonApproval() throws Exception {
+	public void testInsufficientAllowance() throws Exception {
 		S.out( "-----testNonApproval");
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting non-approval");
 
 		// mint BUSD for user Bob
-		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		m_config.mintBusd( bobAddr, 2000)  // I don't think this is necessary but I saw it fail without this
+		m_config.mintBusd( bobAddr, 2000)
 			.waitForHash();
+		waitForBalance(bobAddr, busd.address(), 2000, false);
 		
-		// approve too little
+		// let bob approve BUSD spending by RUSD
 		S.out( "**approving .49");
 		busd.approve(
 				bobKey,
@@ -102,30 +102,39 @@ public class TestFbOrders extends MyTestCase {
 		
 		showAmounts("updated amounts");
 		
-		JsonObject obj = TestOrder.createOrder( "BUY", .1, 3);
-		obj.remove("noFireblocks");
-		
-		JsonObject map = postOrderToObj(obj);
+		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, true, busd.name() ) ).getString("id");
 		assert200();
-		assertEquals( RefCode.OK, cli.getRefCode() );
 		
-		while(true) {
-			JsonObject ret = getLiveMessage2(map.getString("id"));
+		// use this if we change the logic in RefAPI to check allowance before sending 
+		// the transaction; that would be preferable as long as it works
+		//assertEquals( RefCode.INSUFFICIENT_ALLOWANCE, cli.getRefCode() );
+
+		// note we will get back some messages and then the error
+		waitFor( 30, () -> {
+			JsonObject ret = getLiveMessage2(id);
 			if (ret != null) {
-				S.out(ret);
-				assertEquals( "error", ret.getString("type"));
-				startsWith( "The approved amount", ret.getString("text") );
-				break;
+				ret.display();
+				if (ret.getString("type").equals("error") ) {
+					startsWith( "The approved amount", ret.getString("text") );
+					return true;
+				}
 			}
-			S.sleep(1000);
-		}
+			return false;
+		});
 	}
 
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
+		// give bob some gas
+		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
+				.waitForHash();
+
 		S.out( "-----testFillWithFb");
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting amounts");
+		
+		// give bob a valid user profile
+		
 
 		// make sure we have a valid user profile  (updates profile for Cookie.wallet
 		//cli().post("/api/update-profile", TestProfile.createValidProfile().toString() );
@@ -140,18 +149,19 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "**approving 20000");
 		busd.approve(
 				bobKey,
-				rusd.address(),
-				2000).waitForHash();
+				rusd.address(),      // I saw this hang forever
+				2000
+				).waitForHash();
 		waitFor( 30, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
 		showAmounts("updated amounts");
 
-		JsonObject obj = TestOrder.createOrder( "BUY", 1, 3);
-		obj.remove("noFireblocks");
-		
+		// submit order
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, true, busd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
 		assert200();
-		
+
+		// show uid
 		String uid = map.getString("id");  // 5-digit code
 		assertTrue( S.isNotNull(uid) );
 		S.out( "Submitted order with uid %s", uid);
@@ -199,3 +209,7 @@ public class TestFbOrders extends MyTestCase {
 		assertTrue( i > 0);
 	}
 }
+
+// you must catch nonce error and reset nonce
+// you must update Monitor to never use admin1, only Reflection can have access to that
+// two apps cannot use the same account
