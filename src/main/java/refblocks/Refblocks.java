@@ -202,7 +202,7 @@ public class Refblocks {
 	                "",
 	                weiValue.toBigIntegerExact(),
 	                BigInteger.valueOf( 40000),  // higher than needed, you can reduce it if desired
-	                fees.priorityFee,
+	                fees.priorityFee(),
 	                fees.totalFee() );
 	    }
 	}

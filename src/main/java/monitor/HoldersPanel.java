@@ -26,6 +26,13 @@ public class HoldersPanel extends JsonPanel {
 	@Override protected void refresh() throws Exception {
 	}
 
+	@Override protected void onDouble(String tag, Object val) {
+		if (S.notNull(tag).equals("wallet") ) {
+			Monitor.m_tabs.select("Wallet");
+			Monitor.m_walletPanel.setWallet(val.toString());
+		}
+	}
+	
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work
 		wrap( () -> {
 			m_title.setText( token.name() );

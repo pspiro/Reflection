@@ -72,7 +72,7 @@ public class Encrypt {
 	public static String encode( String in) {
 		return encode( in.getBytes() );
 	}
-	static String encode( byte[] ar) {
+	public static String encode( byte[] ar) {
 		return strip( Base64.getEncoder().encodeToString(ar) );	
 	}
 	static byte[] decode( String str) {
