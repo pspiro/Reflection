@@ -33,6 +33,7 @@ public class HoldersPanel extends JsonPanel {
 		}
 	}
 	
+	double total;
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work
 		wrap( () -> {
 			m_title.setText( token.name() );
@@ -40,20 +41,25 @@ public class HoldersPanel extends JsonPanel {
 			HashMap<String,Double> map = token.getAllBalances();
 
 			JsonArray ar = new JsonArray();
+			
+			total = 0;
 
 			Monitor.m_config.sqlCommand( sql -> {  // make all username queries from a single database connection
 				Util.forEach( map, (wallet, balance) -> { 
-					if (balance >= .001) {
+					if (balance >= .009) {
 						ar.add( Util.toJson( 
 								"wallet", wallet,
 								"name", getUsersName(sql, wallet),
 								"balance", balance ) );
+						total += balance;
 					}
 				});
 			});
 			
 			setRows( ar);
 			m_model.fireTableDataChanged();
+			
+			m_title.setText( S.format( "%s  Total: %s", token.name(), total) ); 
 		});
 	}
 

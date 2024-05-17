@@ -3,12 +3,15 @@ package fireblocks;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
@@ -217,12 +220,15 @@ public class Erc20 {
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
+		HashSet<String> transHashes = new HashSet<>();  // don't add the same transaction twice
 
 		// get all transactions in batches and build the map
 		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
-				inc( map, obj.getString("from_address"), -value);
-				inc( map, obj.getString("to_address"), value);
+				if (transHashes.add( obj.getString( "transaction_hash"))) {  // we can receive dup transactions from Moralis
+					double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
+					inc( map, obj.getString("from_address"), -value);
+					inc( map, obj.getString("to_address"), value);
+				}
 		} ) );
 		
 		return map;
@@ -239,8 +245,18 @@ public class Erc20 {
 	}
 	
 	public static void main(String[] args) throws Exception {
-//		Config config = Config.readFrom("Prod-config"); //ask();
-//		config.readStocks().getStock("AAPL").getToken().showBalances();
+		JsonArray all = new JsonArray();
+		Config config = Config.ask( "prod");
+		MoralisServer.getAllTokenTransfers(config.rusdAddr(), ar -> ar.forEach( obj -> {
+				if (
+						obj.getString("from_address").startsWith( "0x81953109f204eca2dc7cdfdf9e7e577e4334b964") ||
+						obj.getString("to_address").startsWith( "0x81953109f204eca2dc7cdfdf9e7e577e4334b964") ) {
+					all.add( obj);
+				}
+		}));
+		all.writeToCsv("c:/temp/file.csv", ',');
+
+		//S.out( "%s", config.rusd().getPosition("0x81953109f204eca2dc7cdfdf9e7e577e4334b964") );
 	}
 	
 	public static void inc(HashMap<String, Double> map, String address, double amt) {

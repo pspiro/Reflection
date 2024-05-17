@@ -245,9 +245,15 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return list;
 	}	
 
+	public void writeToCsv(String filename, char sep) throws FileNotFoundException {
+		writeToCsv( filename, sep, getKeys().toArray( new String[0]) );
+	}
+	
 	public void writeToCsv(String filename, char sep, String keysString) throws FileNotFoundException {
-		String[] keys = keysString.split( ",");  // you could use getKeys() to get all
-
+		writeToCsv( filename, sep, keysString.split(",") );
+	}
+	
+	private void writeToCsv(String filename, char sep, String[] keys) throws FileNotFoundException {
 		try( OStream os = new OStream(filename) ) {
 			
 			// write header row
