@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -15,6 +14,7 @@ import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
+import tw.util.OStream;
 import tw.util.S;
 
 public class Erc20 {
@@ -242,21 +242,6 @@ public class Erc20 {
 						Util.left( obj.getString("to_address"), 8),
 						obj.getString("transaction_hash") );
 		} ) );
-	}
-	
-	public static void main(String[] args) throws Exception {
-		JsonArray all = new JsonArray();
-		Config config = Config.ask( "prod");
-		MoralisServer.getAllTokenTransfers(config.rusdAddr(), ar -> ar.forEach( obj -> {
-				if (
-						obj.getString("from_address").startsWith( "0x81953109f204eca2dc7cdfdf9e7e577e4334b964") ||
-						obj.getString("to_address").startsWith( "0x81953109f204eca2dc7cdfdf9e7e577e4334b964") ) {
-					all.add( obj);
-				}
-		}));
-		all.writeToCsv("c:/temp/file.csv", ',');
-
-		//S.out( "%s", config.rusd().getPosition("0x81953109f204eca2dc7cdfdf9e7e577e4334b964") );
 	}
 	
 	public static void inc(HashMap<String, Double> map, String address, double amt) {
