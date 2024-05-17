@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.LayoutManager;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
 
 import javax.swing.Box;
@@ -100,7 +101,7 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
-		m_tabs.addTab( "Singups", new SignupPanel() );
+		m_tabs.addTab( "Signups", new SignupPanel() );
 		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -174,8 +175,7 @@ public class Monitor {
 				
 				if (S.isNotNull( query) ) {
 					JsonArray rows = Monitor.m_config.sqlQuery( query);
-					HashSet<String> keys = rows.getKeys();
-					String[] names = keys.toArray( new String[0]);
+					String[] names = rows.getKeys().toArray( new String[0]);
 					String str = String.join( ",", names);
 					m_model.setNames( str);
 					m_model.fireTableStructureChanged();

@@ -86,7 +86,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
+		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 		vp.add( "Award", 
 				m_awardAmt, 
 				new JLabel( "RUSD for "),
@@ -131,6 +131,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			// mint and lock?
 			if ( amt > 0) {
 				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+					if (amt > 500 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+						Util.inform( this, "The password was invalid");
+						return;
+					}
+					
 					mint( amt);
 					JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
 					config().sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
@@ -277,6 +282,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		wrap( () -> {
 			double amt = m_mintAmt.getDouble();
 			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+				if (amt > 100 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+					Util.inform( this, "The password was invalid");
+					return;
+				}
+				
 				mint( amt);
 			}
 		});
@@ -299,8 +309,17 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 
 	private void burn() {
-		double amt = m_burnAmt.getDouble();
-			
+		burn( m_burnAmt.getDouble() );
+	}
+	
+	private void burnAllRusd() {
+		wrap( () -> { 
+			double amt = new Wallet( m_wallet.getText() ).getBalance( Monitor.m_config.rusdAddr() );
+			burn( amt);
+		});
+	}
+
+	private void burn(double amt) {
 		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
 			wrap( () -> {
 					Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
