@@ -21,7 +21,7 @@ https://docs.evmos.org/develop/api/ethereum-json-rpc  all here
 
  *  */
 public class MoralisServer {
-	private static String chain;  // or eth
+	private static String chain;  // this is chain name e.g. polygon
 	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String stream = "https://api.moralis-streams.com/streams/evm";

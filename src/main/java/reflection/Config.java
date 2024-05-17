@@ -182,7 +182,7 @@ public class Config extends ConfigBase {
 	public static String getTabName(String[] args) throws Exception {
 		String prefix = args.length > 0 
 				? args[0] 
-				: Util.readResource( Main.class, "config.txt");
+				: Util.readResource( Config.class, "config.txt");
 		return prefix + "-config";
 	}
 	

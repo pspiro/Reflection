@@ -131,7 +131,7 @@ public class TestFbOrders extends MyTestCase {
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// give bob some gas
-		m_config.matic().transfer( "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd", bobAddr, .1)
+		m_config.matic().transfer( "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd", bobAddr, .05)
 				.waitForHash();
 
 		// set wallet
@@ -183,7 +183,13 @@ public class TestFbOrders extends MyTestCase {
 			JsonObject msg = liveOrders.getArray("messages").find("id", uid);
 			JsonObject order = liveOrders.getArray("orders").find("id", uid);
 			
-			if (msg != null) {
+			// order is still working
+			if (order != null) {
+				if (msg != null) {
+					S.out( msg);
+				}
+			}
+			else if (msg != null) {
 				S.out("Completed: " + msg);
 				assertEquals( "message", msg.getString("type"));
 				startsWith( "Bought", msg.getString("text") );
@@ -194,8 +200,7 @@ public class TestFbOrders extends MyTestCase {
 		});
 		
 		// fetch most recent transaction from database
-		JsonArray ar = m_config.sqlQuery( conn -> conn.queryToJson(
-				"select * from transactions order by created_at desc limit 1") );
+		JsonArray ar = m_config.sqlQuery( "select * from transactions order by created_at desc limit 1");
 		assertTrue( ar.size() > 0);
 		
 		JsonObject rec = ar.get(0);
