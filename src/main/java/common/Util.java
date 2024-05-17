@@ -49,6 +49,7 @@ import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
 
+/** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class Util {
 	public static final int MINUTE = 60 * 1000;
 	public static final int HOUR = 60 * MINUTE;

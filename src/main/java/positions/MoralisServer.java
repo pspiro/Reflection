@@ -6,22 +6,28 @@ import java.util.function.Consumer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
 import tw.util.S;
 import web3.Erc20;
 
 /** This app keeps the positions of all wallets in memory for fast access.
- *  This is not really useful because the queries from Moralis are really quick */
+ *  This is not really useful because the queries from Moralis are really quick 
+https://ethereum.github.io/execution-apis/api-documentation/
+https://docs.evmos.org/develop/api/ethereum-json-rpc  all here
+
+ *  */
 public class MoralisServer {
 	private static String chain;  // or eth
+	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String stream = "https://api.moralis-streams.com/streams/evm";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final String transferTopic = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-	static final String nodeUrl = "https://site1.moralis-nodes.com/polygon/2bb51f2a71be4dc591aca7222977a1c9";
-	
+		
 	public static JsonObject queryObject(String url) throws Exception {
 		return JsonObject.parse( querySync(url) );
 	}
@@ -215,12 +221,15 @@ public class MoralisServer {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
 
-	public static void setChain(String chainIn) {
+	public static void setChain(String chainIn, String rpcUrlIn) {
 		chain = chainIn;
+		rpcUrl = rpcUrlIn;
 	}
 	
 	static JsonObject nodeQuery(String body) throws Exception {
-		return MyClient.create( nodeUrl, body)
+		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
+		
+		return MyClient.create( rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
 				.queryToJson();
@@ -235,7 +244,7 @@ public class MoralisServer {
 			"method": "eth_gasPrice"
 			}""";
 		
-		S.out( nodeUrl);
+		S.out( rpcUrl);
 		
 		return nodeQuery( body).getLong( "result");
 	}
@@ -250,7 +259,7 @@ public class MoralisServer {
 		return nodeQuery( body).getLong( "result");
 	}
 
-	public static JsonObject getFeeHistory(int blocks) throws Exception {
+	public static JsonObject getFeeHistory(int blocks, int pct) throws Exception {
 		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
@@ -259,9 +268,9 @@ public class MoralisServer {
 			"params": [
 				"%s",
 				"latest",
-				[ 50 ]
+				[ %s ]
 			]
-			}""", blocks); 
+			}""", blocks, pct); 
 		return nodeQuery( body);
 	}
 	
@@ -288,5 +297,34 @@ public class MoralisServer {
 			}""";
 		return nodeQuery( body);
 	}
+	
+	public static JsonObject getQueuedTrans( String from) throws Exception {
+		String body = """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "txpool_content"
+				}""";
+		return nodeQuery( body);  // result -> pending and result -> queued
+	}
+    
+	
+	public static void main(String[] args) throws Exception {
+		Config c = Config.ask( "Dt2");
+		JsonObject result = getQueuedTrans("").getObject("result");
+
+		S.out( "Pending");
+		show( result.getObject( "pending"), c.ownerAddr() );
+		
+		S.out( "");
+		S.out( "Queued");
+		show( result.getObject( "queued"), c.ownerAddr() );
+	}
+	// I think the issue is that you have pending trans that will never get picked up
+	// and they are blocking next trans; they have to be removed
+	static void show( JsonObject obj, String addr) throws Exception {
+		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
+	}
+		
 }
 // for getapproved or allocated use Erc20.getAllowance()

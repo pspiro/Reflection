@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
+import reflection.Config;
 import tw.util.S;
 
 class Fees {
@@ -20,12 +21,16 @@ class Fees {
 		priorityFee = BigInteger.valueOf( (long)priority);
 	}
 
-	public BigInteger totalFee() {
-		return baseFee.add( priorityFee);
+	public BigInteger baseFee() {
+		return baseFee;
 	}
 
 	public BigInteger priorityFee() {
 		return priorityFee;
+	}
+
+	public BigInteger totalFee() {
+		return baseFee.add( priorityFee);
 	}
 
 	@Override public String toString() {
@@ -34,7 +39,7 @@ class Fees {
 	}
 
 	public static Fees fetch() throws Exception {
-		JsonObject json = MoralisServer.getFeeHistory(5).getObject( "result");
+		JsonObject json = MoralisServer.getFeeHistory(5, 80).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -72,4 +77,12 @@ class Fees {
 	//			
 	//			return fees;
 	//		}
+	
+	public static void main(String[] args) throws Exception {
+		Config.ask( "Dt2");
+		for (int i = 0; i < 5; i++) {
+			S.out( fetch() );
+			S.sleep( 1000);
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package reflection;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -96,7 +97,7 @@ public class Config extends ConfigBase {
 
 	// Fireblocks
 	private Web3Type web3Type;
-	private String admin1Addr;
+	private String admin1Addr;  // used for deployment and Monitor
 //	private String admin1Key;
 	private String ownerKey;  // for Fireblocks, this is "Owner"
 	private String ownerAddr;
@@ -149,6 +150,22 @@ public class Config extends ConfigBase {
 	public TimeInForce tif() { return tif; }
 	public String fbAdmins() { return fbAdmins; }
 	
+	/** try first from args and then from config.txt file in resources folder */
+	public static Config read( String[] args) throws Exception {
+		return readFrom( getTabName( args) );
+	}
+
+	/** takes the prefix */
+	public static Config ask(String prefix) throws Exception {
+		return readFrom( prefix + "-config");
+	}
+
+	/** asks for prefix */
+	public static Config ask() throws Exception {
+		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
+	}
+
+	/** takes full tab name */
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
@@ -156,6 +173,19 @@ public class Config extends ConfigBase {
 		return config;
 	}
 
+	/** takes tab name from config.txt file */
+	public static Config read() throws Exception {
+		return readFrom( Util.readResource( Main.class, "config.txt") + "-config" );
+	}
+
+	/** get tab name from args or config.txt file */
+	public static String getTabName(String[] args) throws Exception {
+		String prefix = args.length > 0 
+				? args[0] 
+				: Util.readResource( Main.class, "config.txt");
+		return prefix + "-config";
+	}
+	
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}
@@ -221,10 +251,11 @@ public class Config extends ConfigBase {
 		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
+		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
 		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
 		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
-		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
+		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		
 		Alerts.setEmail( this.alertEmail);
@@ -265,8 +296,6 @@ public class Config extends ConfigBase {
 			Accounts.instance.setAdmins( fbAdmins);
 		}
 		else {
-			admin1Addr = m_tab.getRequiredString("admin1Addr");
-			
 			rusdCore = new RbRusd(
 					m_tab.getRequiredString("rusdAddr").toLowerCase(),
 					m_tab.getRequiredInt("rusdDecimals") );
@@ -296,7 +325,7 @@ public class Config extends ConfigBase {
 
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-		MoralisServer.setChain( moralisPlatform);
+		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
 
 		if (isProduction() ) {
 			this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
@@ -411,6 +440,7 @@ public class Config extends ConfigBase {
 		m_tab.put( "busdAddr", address);
 	}
 
+	/** You could move refapi specific things into here if desired */
 	static class RefApiConfig extends Config {
 		
 		public void readFromSpreadsheet(String tabName) throws Exception {
@@ -527,14 +557,6 @@ public class Config extends ConfigBase {
 		m_tab.put(key, val);
 	}
 
-	public static Config ask() throws Exception {
-		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
-	}
-	
-	public static Config ask(String prefix) throws Exception {
-		return readFrom( prefix + "-config");
-	}
-	
 	public String getTabName() {
 		return m_tab.tabName();
 	}

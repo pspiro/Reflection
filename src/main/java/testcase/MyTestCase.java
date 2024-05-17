@@ -25,10 +25,14 @@ public class MyTestCase extends TestCase {
 	
 	static {
 		try {
-			m_config = Config.readFrom("Dt-config");
+			m_config = Config.read();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) {
+		S.out( "lkj");
 	}
 	
 	public static void readStocks() {
@@ -135,7 +139,7 @@ public class MyTestCase extends TestCase {
 
 	/** Wait for HookServer to catch up Exception */
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
-		waitFor( 30, () -> {
+		waitFor( 120, () -> {
 			
 			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
 					.getObject( "positions")

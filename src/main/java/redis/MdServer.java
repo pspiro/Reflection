@@ -20,6 +20,7 @@ import http.BaseTransaction;
 import http.MyServer;
 import redis.DualPrices.Prices;
 import redis.clients.jedis.exceptions.JedisConnectionException;
+import reflection.Config;
 import reflection.Main;
 import reflection.Stock;
 import reflection.Stocks;
@@ -52,7 +53,6 @@ public class MdServer {
 		try {
 			Thread.currentThread().setName("MDS");
 			S.out( "Starting MktDataServer");
-			Util.require( args.length > 0, "Usage: MktDataServer <config_tab>");
 			new MdServer(args);
 		}
 		catch (Exception e) {
@@ -62,9 +62,6 @@ public class MdServer {
 	}
 
 	private MdServer(String[] args) throws Exception {
-
-		String tabName = args[0];
-		
 		// create log file folder and open log file
 		log( Util.readResource( Main.class, "version.txt") );  // print build date/time
 
@@ -76,8 +73,8 @@ public class MdServer {
 		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet 
-		timer.next("Reading %s tab from google spreadsheet %s", tabName, NewSheet.Reflection);
-		m_config.readFromSpreadsheet(tabName);
+		timer.next("Reading configuration");
+		m_config.readFromSpreadsheet( Config.getTabName( args) );
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.mdsPort(), 10, server -> {

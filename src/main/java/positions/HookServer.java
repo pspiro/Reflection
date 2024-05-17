@@ -36,7 +36,7 @@ import tw.util.S;
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
-	final Config m_config = new Config();
+	final Config m_config;
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
@@ -51,11 +51,7 @@ public class HookServer {
 			Thread.currentThread().setName("Hook");
 			S.out( "Starting HookServer");
 			
-			if (args.length == 0) {
-				throw new Exception( "You must specify a config tab name");
-			}
-
-			new HookServer().run(args[0]);
+			new HookServer(args).run();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -63,9 +59,12 @@ public class HookServer {
 		}
 	}
 	
-	void run(String tabName) throws Exception {
+	HookServer(String[] args) throws Exception {
+		m_config = Config.read( args);
+	}
+	
+	void run() throws Exception {
 		MyClient.filename = "hookserver.http.log";
-		m_config.readFromSpreadsheet(tabName);
 		stocks.readFromSheet( m_config);
 		BaseTransaction.setDebug( true);  // just temporary
 		

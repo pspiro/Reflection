@@ -213,13 +213,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
 		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
-		return (JsonObject)get(key);
+		return (JsonObject)obj;
 	}
 	
-	/** Never return null, return empty JsonObject  */
+	/** Never return null, return empty JsonObject  */ // this doesn't work, remove it
 	public JsonObject getObjectNN(String key) throws Exception {
-		JsonObject obj = getObject( key);
-		return obj != null ? obj : new JsonObject();
+		Object obj = get(key);
+		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
+		return obj != null ? (JsonObject)obj : new JsonObject();
 	}
 	
 	/** Returns zero for null value Can handle hex calues starting with 0x. */

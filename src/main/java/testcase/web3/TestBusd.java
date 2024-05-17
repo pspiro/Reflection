@@ -22,12 +22,18 @@ public class TestBusd extends MyTestCase {
 	}
 	
 	public void testMint() throws Exception {
-		S.out( "minting 200 BUSD into %s", bobAddr);
-		m_config.busd().mint( bobAddr, 200).displayHash();
-
-		S.out( m_config.busd().getPosition( bobAddr) );
-		waitForBalance( bobAddr, m_config.busd().address(), 200, false);
-		S.out( m_config.busd().getPosition( bobAddr) );
+		try {
+			S.out( "minting 200 BUSD into %s", bobAddr);
+			m_config.busd().mint( bobAddr, 200).displayHash();
+	
+			S.out( m_config.busd().getPosition( bobAddr) );
+			waitForBalance( bobAddr, m_config.busd().address(), 200, false);
+			S.out( m_config.busd().getPosition( bobAddr) );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
 	}		
 
 	/** this is failing due to insufficient gas but it shouldn't be more */

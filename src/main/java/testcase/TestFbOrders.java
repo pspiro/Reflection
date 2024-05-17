@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.MyClient;
 import reflection.Config.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
@@ -28,6 +29,9 @@ public class TestFbOrders extends MyTestCase {
 					? "bob" 
 					: Util.createPrivateKey();
 			bobAddr = m_config.matic().getAddress( bobKey);
+
+			S.out( "bobAddr = %s", bobAddr);
+			S.out( "bobKey = %s", bobKey);
 
 			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
 			stock = new StockToken( tab.get( "GOOG") );
@@ -83,6 +87,7 @@ public class TestFbOrders extends MyTestCase {
 	 *  insufficient crypto or insufficient approved amount. It's only worthwhile
 	 *  if we see this happening in real life  */
 	public void testInsufficientAllowance() throws Exception {
+		// set wallet
 		S.out( "-----testNonApproval");
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting non-approval");
@@ -126,33 +131,37 @@ public class TestFbOrders extends MyTestCase {
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// give bob some gas
-		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
+		m_config.matic().transfer( "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd", bobAddr, .1)
 				.waitForHash();
 
+		// set wallet
 		S.out( "-----testFillWithFb");
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting amounts");
 		
 		// give bob a valid user profile
+		JsonObject json = TestProfile.createValidProfile();
+		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
+		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
 		
+		// let it pass KYC
+		m_config.sqlCommand( sql -> sql.execWithParams( 
+				"update users set kyc_status = 'VERIFIED' where wallet_public_key = '%s'",  
+				bobAddr));
 
-		// make sure we have a valid user profile  (updates profile for Cookie.wallet
-		//cli().post("/api/update-profile", TestProfile.createValidProfile().toString() );
-		// this doesn't work because we can't update the email
-		
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
 		busd.mint( bobAddr, 2000).waitForHash();
 		waitForBalance( bobAddr, m_config.busd().address(), 2000, false);
 		
-		// user to approve buying with BUSD; you must wait for this
+		// let bob approve buying with BUSD; you must wait for this
 		S.out( "**approving 20000");
 		busd.approve(
 				bobKey,
 				rusd.address(),      // I saw this hang forever
 				2000
 				).waitForHash();
-		waitFor( 30, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
+		waitFor( 120, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
 		showAmounts("updated amounts");
 
 		// submit order
@@ -167,7 +176,7 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "Submitted order with uid %s", uid);
 
 		// wait for order to complete
-		waitFor( 30000, () -> {
+		waitFor( 120, () -> {
 			JsonObject liveOrders = getAllLiveOrders(bobAddr);
 			S.out( liveOrders);
 
@@ -213,3 +222,4 @@ public class TestFbOrders extends MyTestCase {
 // you must catch nonce error and reset nonce
 // you must update Monitor to never use admin1, only Reflection can have access to that
 // two apps cannot use the same account
+// you need synchronization on using admin1 from RefAPI

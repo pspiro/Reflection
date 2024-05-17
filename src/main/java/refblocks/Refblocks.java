@@ -30,6 +30,7 @@ import web3.Erc20;
 
 /** Support code for Web3j library */
 public class Refblocks {
+	static BigInteger billion = BigInteger.valueOf( 1000000000);
 	static final BigInteger defaultBaseFee = BigInteger.valueOf(1_000_000_000L);  // used only if we can't fetch it
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
 	static final long deployGas = 2000000;
@@ -82,7 +83,7 @@ public class Refblocks {
 	 *  from a single thread sequentially */
 	static class DelayedTrp extends PollingTransactionReceiptProcessor {
 	    DelayedTrp( Web3j web3j) {
-	    	super( web3j, PollingInterval, 12); // one minute
+	    	super( web3j, PollingInterval, 24); // two minutes
 	    }
 
 	    /** return immediately with an empty receipt */
@@ -126,14 +127,38 @@ public class Refblocks {
 			throw e;
 		}
 	}
+	
+	/** If a transaction is submitted with too low, gas, it can get stuck and remain
+	 *  in pending state indefinitely. To cancel it, you submit a new transaction
+	 *  with same nonce and sufficient gas. You must consider if you want the subsequent
+	 *  transactions to go through or not and either cancel them first or not
+	 * @param address
+	 * @throws Exception 
+	 */
+	static void cancelStuckTransaction(String address) throws Exception {
+		// start by showing all nonces and figuring out which one or ones
+		// need to be canceled
+		showAllNonces(address);
+		
+		// get the nonce to cancel
+		// create a RawTransactionManager that will create a transaction what that nonce
+	}
 
-	/** for debugging */
-	private static void showNonce(String callerKey) throws Exception {
-		EthGetTransactionCount count = web3j.ethGetTransactionCount(
-				Credentials.create( callerKey).getAddress(),
-				DefaultBlockParameterName.PENDING
-				).send();
-        S.out( "Nonce is " + count.getTransactionCount() );
+	/** for debugging 
+	 * @param pending */
+	static void showAllNonces(String address) throws Exception {
+		Refblocks.showNonce( address, DefaultBlockParameterName.ACCEPTED);
+		Refblocks.showNonce( address, DefaultBlockParameterName.EARLIEST);
+		Refblocks.showNonce( address, DefaultBlockParameterName.FINALIZED);
+		Refblocks.showNonce( address, DefaultBlockParameterName.LATEST);
+		Refblocks.showNonce( address, DefaultBlockParameterName.PENDING);
+		Refblocks.showNonce( address, DefaultBlockParameterName.SAFE);
+	}
+	
+	static void showNonce(String address, DefaultBlockParameterName type) throws Exception {
+		EthGetTransactionCount count = web3j.ethGetTransactionCount( address, type)
+				.send();
+        S.out( "%s nonce is %s", type, count.getTransactionCount() );
 	}
 	
 	/** note that we could use a singleton DelayedTrp if desired; there is no state */
@@ -166,7 +191,7 @@ public class Refblocks {
 		Fees fees = Fees.fetch();
 
 		S.out( "total gas price: %s gwei", 
-				fees.totalFee().divide( BigInteger.valueOf( 1000000000) ) );
+				fees.totalFee().divide( billion) );
 
 		return new StaticEIP1559GasProvider( // fails with this
 				chainId,
@@ -198,6 +223,11 @@ public class Refblocks {
             Util.require( Numeric.isIntegerValue(weiValue), "Non decimal Wei value provided");
 
     		Fees fees = Fees.fetch();
+
+    		S.out( "baseGas=%s  priority=%s  maxCost=%s",  
+    				fees.baseFee().divide( billion),
+    				fees.priorityFee().divide( billion),
+    				fees.totalFee().doubleValue() / Math.pow( 10, 18) );
 
     		return sendEIP1559(
 	                chainId,
@@ -236,7 +266,7 @@ public class Refblocks {
 
 		public FasterTm(Web3j web3j, Credentials credentials, TransactionReceiptProcessor trp) {
 			super(web3j, credentials, chainId, trp);
-			m_key = credentials.getAddress().substring( 0, 5);
+			m_key = credentials.getAddress().substring( 0, 6);
 		}
 
 		@Override protected synchronized BigInteger getNonce() throws IOException {
