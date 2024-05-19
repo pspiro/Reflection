@@ -66,7 +66,7 @@ class Fees {
 	}
 
 	public void showFees(BigInteger gasUnits) {
-		S.out( "  baseGas=%s gwi  priority=%s gwi  maxCost=$%s",  
+		S.out( "  baseGas=%s gw  priority=%s gw  maxCost=$%s",  
 				baseFee.doubleValue() / billion,
 				priorityFee.doubleValue() / billion,
 				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
