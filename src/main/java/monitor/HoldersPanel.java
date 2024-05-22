@@ -43,7 +43,7 @@ public class HoldersPanel extends JsonPanel {
 
 			Monitor.m_config.sqlCommand( sql -> {  // make all username queries from a single database connection
 				Util.forEach( map, (wallet, balance) -> { 
-					if (balance >= .001) {
+					if (balance >= .0001) {
 						ar.add( Util.toJson( 
 								"wallet", wallet,
 								"name", getUsersName(sql, wallet),

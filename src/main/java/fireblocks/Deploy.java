@@ -50,9 +50,10 @@ public class Deploy {
 						1000000000); // $1B
 
 			// add a second admin
-//			rusd.addOrRemoveAdmin(
-//					instance.getAddress( "Admin2"), 
-//					true);
+			new FbRusd(rusdAddress, 6).addOrRemoveAdmin(
+					config.ownerKey(),
+					instance.getAddress( "Admin2"), 
+					true);
 		}
 		else {
 			Util.require( Util.isValidAddress( rusdAddress), "RUSD must be valid or set to 'deploy'");
