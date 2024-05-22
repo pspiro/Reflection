@@ -390,24 +390,6 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
-	public void allowConnection() {
-		wrap( () -> {
-			String country = getCountryCode();
-			String ip = getHeader("X-Real-IP");
-			
-			boolean allow =
-					S.isNotNull( country) && m_main.isAllowedCountry(country ) ||
-					S.isNotNull( ip) && m_main.isAllowedIP(ip);
-			
-			respond( Util.toJson( 
-					"allow", allow,
-					"country", country,
-					"ip", ip
-					) );
-		});
-	}
-
 	/** Return IP address and country code passed from nginx; you could change it to
 	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
@@ -466,8 +448,8 @@ public class BackendTransaction extends MyTransaction {
 				"rusdBalance", positions.getDouble( m_config.rusdAddr() ),
 				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
 				"nonRusdApprovedAmt", json.getDouble( "approved"),
-				"bidPrice", prices.anyBid(),
-				"askPrice", prices.anyAsk()
+				"bidPrice", prices.anyBid() * (1. - m_config.sellSpread() ),
+				"askPrice", prices.anyAsk() * (1. + m_config.buySpread() )
 				);
 		});
 	}

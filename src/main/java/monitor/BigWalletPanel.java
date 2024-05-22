@@ -132,6 +132,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			// mint and lock?
 			if ( amt > 0) {
 				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+					if (amt > 500 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+						Util.inform( this, "The password was invalid");
+						return;
+					}
+					
 					mint( amt);
 					JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
 					Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
@@ -281,6 +286,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		wrap( () -> {
 			double amt = m_mintAmt.getDouble();
 			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+				if (amt > 100 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+					Util.inform( this, "The password was invalid");
+					return;
+				}
+				
 				mint( amt);
 			}
 		});
