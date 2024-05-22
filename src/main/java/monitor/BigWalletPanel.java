@@ -72,8 +72,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		
 		vp.addHeader( "User details");
-		vp.add( "Name", m_name);
-		vp.add( "Email", new JScrollPane( m_email, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
+		vp.add( "Name", m_name); 
+		vp.add( "Email", m_email);
 		vp.add( "KYC", m_kyc);
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
@@ -101,7 +101,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
-		vp.add( "Text", m_emailText);
+		vp.add( "Text", new JScrollPane( m_emailText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
 		
 		transPanel.small("Transactions");
 		redemPanel.small("Redemptions");

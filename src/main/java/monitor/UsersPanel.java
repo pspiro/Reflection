@@ -10,7 +10,7 @@ import tw.util.S;
 import tw.util.UI;
 
 class UsersPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,first_name,last_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,address,city,country,id,persona_response";
+	static String names = "created_at,wallet_public_key,first_name,last_name,persona_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,persona_id,address,city,country,id,persona_response";
 	static String sql = "select * from users $where";
 	
 	UsersPanel() {
@@ -20,6 +20,15 @@ class UsersPanel extends QueryPanel {
 	@Override public void adjust(JsonObject obj) {
 		obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
 		obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
+		
+		Util.wrap( () -> {
+			String persona = obj.getString( "persona_response");
+			if (JsonObject.isObject( persona) ) {
+				JsonObject fields = JsonObject.parse( persona).getObject("fields");
+				obj.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
+				obj.put( "persona_id", getVal( fields, "identification-number"));
+			}
+		});
 	}
 	
 	@Override protected String getTooltip(JsonObject row, String tag) {

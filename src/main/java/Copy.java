@@ -44,12 +44,15 @@ public class Copy {
 	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
+		// margin is on the outside, horz only
+		// padding is on the inside, vert and horz.		
 		String myString = """
-			<div style="margin: 0px; padding: 1px; background-color: #D3CAEE; font-family: Arial, sans-serif; border-radius: 6px;">
-			<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
+			<div style="margin: 0px; padding: 6px; background-color: #d3caee; font-family: Arial, sans-serif; border-radius: 6px;">
+			<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
 			<strong>abcd</strong>
 			</div>
-			</div>				
+			<p><a href="https://t.me/ReflectionTrading">Join our Telegram</a></p>
+			</div>
 			""";
 		Transferable stringSelection = new HtmlTrans(myString);
 		clipboard.setContents(stringSelection, null);
