@@ -26,7 +26,7 @@ public class TestFbOrders extends MyTestCase {
 	static {		
 		try {
 			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
-					? "bob" 
+					? "Bob" 
 					: Util.createPrivateKey();
 			bobAddr = m_config.matic().getAddress( bobKey);
 
@@ -96,7 +96,7 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "**minting 2000");
 		m_config.mintBusd( bobAddr, 2000)
 			.waitForHash();
-		waitForBalance(bobAddr, busd.address(), 2000, false);
+		waitForBalance(bobAddr, busd.address(), 2000, false); // not return json
 		
 		// let bob approve BUSD spending by RUSD
 		S.out( "**approving .49");
@@ -131,7 +131,7 @@ public class TestFbOrders extends MyTestCase {
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// give bob some gas
-		m_config.matic().transfer( "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd", bobAddr, .05)
+		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .05)
 				.waitForHash();
 
 		// set wallet

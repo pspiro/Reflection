@@ -43,38 +43,42 @@ public class TestRusd extends MyTestCase {
 		
 		String user = Util.createFakeAddress();
 		
+		// for Refblocks, you don't need the waitForHash or waitForCompleted or anything
+		// for Fireblocks, you have to wait
+		
 		// mint 100 rusd
 		S.out( "***minting rusd");
 		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
-				; //.waitForHash();
+				.waitForCompleted();
 		
 		// buy stock
 		StockToken stock = stocks.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				; // .waitForHash();
+		.waitForCompleted();
 		
 		// sell stock
 		S.out( "***selling stock");  // failing with same nonce
 		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
-				; //.waitForHash();
+				.waitForCompleted();
 		
-		// mint busd into refwallet so user can redeem (anyone can call this, must have matic)
+		// mint busd into refwallet so user can redeem (anyone can call this, 
+		// must have matic)
 		S.out( "***minting busd");
 		m_config.busd().mint( m_config.refWalletAddr(), 80)
-				; //.waitForHash();
+				.waitForCompleted(); // this one we need to wait for
 
 		// user has 90 redeem 80, left with 10
 		S.out( "***redeeming rusd");
 		m_config.rusd().sellRusd( user, m_config.busd(), 80)  
-				.waitForHash();       // ---->>>>>> // failed insuf. allowance !!!!!!!!!
+				.waitForHash(); // if fails, check for insuf. allowance
 		
 		t.next("***checkpoint");
 		
-		Wallet wallet = new Wallet( user);
-		S.out( "balance is %s", wallet.getBalance( stock.address() ) );
-		assertEquals( 5.0, wallet.getBalance( stock.address() ) );
-		assertEquals( 10.0, wallet.getBalance( m_config.rusd().address() ) );
+		// for refblocks, the balance is there; for fireblocks, you need 
+		// to wait for the positions
+		waitForBalance(user, stock.address(), 5, false);
+		waitForBalance(user, m_config.rusdAddr(), 10, false);
 		
 		t.done();
 	}
@@ -136,3 +140,5 @@ public class TestRusd extends MyTestCase {
 // non-existent stock token, it the transaction succeeds
 // 0x098262f4d177565409450602d90491e523d04ec5a0218847525e2c687771ee33
 // called with stock token addr 0xf000b01e40ffeef7d6b6c6a1365a8a9885027ece
+// very strange that if you make a smart contract call that will fail,
+// sometimes waitForHash() returns true and sometimes false

@@ -261,7 +261,8 @@ public class TestOrder extends MyTestCase {
 		assert200();
 		
 		String text = waitForFilled( map.getString("id") );
-		startsWith( "Bought .4", text);
+		S.out( text);
+		startsWith( "Bought 0.4", text);
 	}
 
 	public void testZeroShares()  throws Exception {
