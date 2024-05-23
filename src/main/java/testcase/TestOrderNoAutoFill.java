@@ -15,7 +15,7 @@ public class TestOrderNoAutoFill extends MyTestCase {
 
 	// reject order; price too high; IB won't accept it
 	public void testBuyTooHigh() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "BUY", 1, 30);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", 1, 30);
 		JsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");
@@ -26,7 +26,7 @@ public class TestOrderNoAutoFill extends MyTestCase {
 	
 	// reject order; sell price too low; IB rejects it
 	public void testSellTooLow() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "SELL", 1, -30);
+		JsonObject obj = TestOrder.createOrderWithOffset( "SELL", 1, -30);
 		JsonObject map = postOrderToObj(obj);
 		String code = map.getString( "code");
 		String text = map.getString("message");

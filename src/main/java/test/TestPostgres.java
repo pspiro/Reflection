@@ -1,14 +1,13 @@
 package test;
 
-import reflection.Config;
+import http.MyClient;
+import reflection.FireblocksStatus;
+import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 	
 	public static void main(String[] args) throws Exception {
-		Config.ask("Dt").rusd().addOrRemoveAdmin(
-				"Owner",
-				"0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3", 
-				true).displayHash();
+//		FireblocksStatus status = m_map.getEnumParam("status", FireblocksStatus.values() );		
 	}
 }

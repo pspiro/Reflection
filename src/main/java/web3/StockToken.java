@@ -8,3 +8,4 @@ public class StockToken extends Erc20 {
 		super( address, stockTokenDecimals, "StockToken");
 	}
 }
+

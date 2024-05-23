@@ -7,6 +7,7 @@ public enum FireblocksStatus {
 		DENIED(100), // Order failed before IB order was placed
 		
 		SUBMITTED(30), // The transaction was submitted to the Fireblocks system and is being processed
+		PENDING_ENRICHMENT(40), // no idea		
 		QUEUED(45), // Transaction is queued. Pending for another transaction to be processed
 		PENDING_AUTHORIZATION(60), // The transaction is pending authorization by other users (as defined in the Transaction Authorization Policy)
 		PENDING_SIGNATURE(70), // The transaction is pending the initiator to sign the transaction
@@ -34,4 +35,8 @@ public enum FireblocksStatus {
 		public int pct() { 
 			return m_pct; 
 		}
-	}
+}
+
+// I think CONFIRMING should be good enough; we have the 
+// transaction hash; we could then switch to wait for the transaction receipt
+// using Moralis or Web3j

@@ -11,6 +11,8 @@ import tw.util.S;
 public class RbStockToken {
 
 	public static String deploy( String ownerKey, String name, String symbol, String rusdAddr) throws Exception {
+		S.out( "Deploying stock token  name=%s  symbol=%s  RUSD addr=%s", name, symbol, rusdAddr); 
+		
 		return Stocktoken.deploy( 
 				Refblocks.web3j,
 				Refblocks.getWaitingTm( ownerKey),

@@ -8,9 +8,6 @@ import reflection.Stock;
 import web3.StockToken;
 
 public class TestSwap extends MyTestCase {
-	static {
-		readStocks();
-	}
 	
 	public void testSwap() throws Exception {
 		Iterator<Stock> set = stocks.stockSet().iterator();

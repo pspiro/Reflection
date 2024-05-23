@@ -15,7 +15,6 @@ public class TestHookServer extends MyTestCase {
 	static String wallet = Util.createFakeAddress();
 
 	static {
-		readStocks();
 		S.out( "testing with wallet %s", wallet);
 	}
 	

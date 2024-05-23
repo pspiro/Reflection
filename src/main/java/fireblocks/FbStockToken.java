@@ -2,14 +2,16 @@ package fireblocks;
 
 import common.Util;
 import tw.util.S;
+import web3.Erc20;
 import web3.RetVal;
+import web3.StockToken;
 
 public class FbStockToken extends FbErc20 {
 	public static final int stockTokenDecimals = 18;
 	static final String setRusdKeccak = "5f4fb7e5";
 	
-	public FbStockToken( String address) throws Exception {
-		super( address, stockTokenDecimals, "StockToken");
+	public FbStockToken(StockToken st) throws Exception {
+		super(st.address(), st.decimals(), st.name() );
 	}
 	
 	public static String deploy(String filename, String name, String symbol, String rusdAddr) throws Exception {
@@ -27,7 +29,7 @@ public class FbStockToken extends FbErc20 {
 
 		S.out( "Deploying stock token from %s  name=%s  symbol=%s", filename, name, symbol);
 
-		return deploy(
+		return FbErc20.deploy(
 				filename, 
 				Accounts.instance.getId("Owner"), 
 				paramTypes, 
@@ -36,18 +38,23 @@ public class FbStockToken extends FbErc20 {
 		);
 	}
 	
-	public RetVal setRusdAddress(String rusdAddr) throws Exception {
-		Util.reqValidAddress( rusdAddr);
+	/** This is never called in real life */
+	public RetVal setRusdAddress(int fromId, String rusdAddr) throws Exception {
+		
+		Util.isValidAddress( rusdAddr);
+		
 		String[] paramTypes = { "address" };
 		Object[] params = { rusdAddr };
 		
-		S.out( "Setting RUSD address to %s for stock token %s", rusdAddr, m_address);
+		S.out( "Account %s setting RUSD address on stock token %s to %s",
+				fromId, m_address, rusdAddr);
 
-		return call( 
-				Accounts.instance.getId( "Owner"), 
+		return Fireblocks.call2(
+				fromId,
+				m_address, 
 				setRusdKeccak, 
 				paramTypes, 
 				params, 
-				"StockToken setRusdAddress");		
+				"set RUSD address");
 	}
 }

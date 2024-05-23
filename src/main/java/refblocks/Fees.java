@@ -10,7 +10,10 @@ import positions.MoralisServer;
 import reflection.Config;
 import tw.util.S;
 
-class Fees {
+public class Fees {
+	public static double billion = Math.pow( 10, 9);
+	public static double ten18 = Math.pow( 10, 18);
+
 	static String gasUrl = "https://api.polygonscan.com/api?module=gastracker&action=gasoracle"; // api to get gas
 
 	private BigInteger baseFee;
@@ -39,7 +42,8 @@ class Fees {
 	}
 
 	public static Fees fetch() throws Exception {
-		JsonObject json = MoralisServer.getFeeHistory(5, 80).getObject( "result");
+		// params are # of blocks, which percentage to look at
+		JsonObject json = MoralisServer.getFeeHistory(5, 50).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -54,35 +58,18 @@ class Fees {
 		return new Fees( baseFee * 1.2, sum / 5.);
 	}
 
-	// this uses a third party API but you would need to pay for it
-	//		static Fees getFees() {
-	//			Fees fees = new Fees();
-	//			
-	//			try {
-	//				S.sleep( 200);  // don't break pacing of max 5 req per second; how do they know it's me???
-	//				JsonObject json = MyClient.getJson( gasUrl)
-	//						.getObject( "result");
-	//				fees.baseFee = json.getBlockchain( "suggestBaseFee", 9); // convert base fee from gwei to wei
-	//				fees.priorityFee = json.getBlockchain( "FastGasPrice", 9);  // it's very unclear if this is returning the priority fee or the total fee, but it doesn't matter because the base fee is so low 
-	//			} catch (Exception e) {
-	//				if (e.getMessage().contains("Max rate limit reached") ) {
-	//					S.out( "Error: Max rate limit exceeded for getFees(); using default values");
-	//				}
-	//				else {
-	//					e.printStackTrace();
-	//				}
-	//				fees.baseFee = defaultBaseFee;
-	//				fees.priorityFee = defaultPriorityFee;
-	//			}
-	//			
-	//			return fees;
-	//		}
-	
 	public static void main(String[] args) throws Exception {
 		Config.ask( "Dt2");
 		for (int i = 0; i < 5; i++) {
 			S.out( fetch() );
 			S.sleep( 1000);
 		}
+	}
+
+	public void showFees(BigInteger gasUnits) {
+		S.out( "  baseGas=%s gw  priority=%s gw  maxCost=$%s",  
+				baseFee.doubleValue() / billion,
+				priorityFee.doubleValue() / billion,
+				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
 	}
 }

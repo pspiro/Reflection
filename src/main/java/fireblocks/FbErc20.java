@@ -111,19 +111,22 @@ public class FbErc20 extends Erc20 {
 		return Fireblocks.call2(fromAcct, m_address, callData, paramTypes, params, note);
 	}
 
+//	public static RetVal mint(int fromAcct, String address, double amt) throws Exception {
+//	}
+	
 	/** This can be called by anybody, the BUSD does not have an owner.
 	 *  For testing only; cannot be called in production */
-	public RetVal mint(int fromAcct, String address, double amt) throws Exception {
+	public RetVal mint(int fromAcct, String toAddress, double amt) throws Exception {
 		S.out( "Minting %s %s for %s", amt, m_name, fromAcct);
 		
 		String[] paramTypes = { "address", "uint256" };
 		
 		Object[] params = { 
-				address, 
+				toAddress, 
 				toBlockchain( amt) 
 		};
 		
-		return call( fromAcct, mintKeccak, paramTypes, params, "Stablecoin mint");
+		return call( fromAcct, mintKeccak, paramTypes, params, "ERC20 mint");
 	}
 
 	/** This can be called by anybody, the BUSD does not have an owner.

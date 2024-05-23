@@ -25,7 +25,7 @@ public class TestSplitDates extends MyTestCase {
 		double price = 100;  // where to get this? pas
 		S.out( "price is %s", price);
 
-		JsonObject obj = TestOrder.createOrder2(side, qty, price * 1.05);
+		JsonObject obj = TestOrder.createOrderWithPrice(side, qty, price * 1.05);
 		obj.put( "conid", conid);
 		return obj;
 	}

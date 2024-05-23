@@ -86,7 +86,6 @@ public class Config extends ConfigBase {
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
-	private String fbStablecoin;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
@@ -282,7 +281,6 @@ public class Config extends ConfigBase {
 			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
-			this.fbStablecoin = m_tab.get("fbStablecoin");
 			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
@@ -588,10 +586,6 @@ public class Config extends ConfigBase {
 	
 	public double minPartialFillPct() {
 		return minPartialFillPct;
-	}
-	
-	public String fbStablecoin() {
-		return fbStablecoin;
 	}
 	
 	public double maxAutoRedeem() {

@@ -23,9 +23,9 @@ public class FbBusd extends FbErc20 implements IBusd {
 		);
 	}
 
-	/** @param callerKey is the name of the Fireblocks wallet */
-	@Override public RetVal approve(String callerKey, String spenderAddr, double amt) throws Exception {
-		return super.approve( Accounts.instance.getId( callerKey), spenderAddr, amt);
+	/** @param approverKey is the name of the Fireblocks wallet */
+	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
+		return super.approve( Accounts.instance.getId( approverKey), spenderAddr, amt);
 	}
 	
 	/** This can be called by anybody, the BUSD does not have an owner.

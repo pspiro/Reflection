@@ -11,6 +11,7 @@ import redis.ConfigBase;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
+import tw.util.S;
 import web3.StockToken;
 
 public class Stocks implements Iterable<Stock> {
@@ -26,6 +27,7 @@ public class Stocks implements Iterable<Stock> {
 
 	/** Use this version for better performance when reading multiple tabs from same sheet */
 	public void readFromSheet(Book book, ConfigBase config) throws Exception {
+		S.out( "Reading stocks from %s", config.symbolsTab() );
 		
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();
@@ -114,10 +116,9 @@ public class Stocks implements Iterable<Stock> {
 		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
 	}
 
-	/** Return the stock or NULL stock */
+	/** Return the stock or null */
 	public Stock getStockByConid(int conid) {
-		Stock stock = m_conidMap.get(conid);
-		return stock != null ? stock : NULL;
+		return m_conidMap.get(conid);
 	}
 
 	/** takes the token symbol from the release-specific tab */ 

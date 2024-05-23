@@ -210,6 +210,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new ArrayList<T>(); 
 	}
 
+	/** If this fails, try the one below */
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
 		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);

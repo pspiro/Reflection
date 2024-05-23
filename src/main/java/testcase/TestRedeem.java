@@ -17,7 +17,6 @@ public class TestRedeem extends MyTestCase {
 	
 	static {
 		try {
-			readStocks();
 			refWallet = m_config.refWalletAddr();
 		} catch (Exception e) {
 			e.printStackTrace();

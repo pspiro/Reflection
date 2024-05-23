@@ -26,7 +26,7 @@ public class TestFbOrders extends MyTestCase {
 	static {		
 		try {
 			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
-					? "bob" 
+					? "Bob" 
 					: Util.createPrivateKey();
 			bobAddr = m_config.matic().getAddress( bobKey);
 
@@ -66,7 +66,7 @@ public class TestFbOrders extends MyTestCase {
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
 		// buy more
-		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", maxQty + 1, 3);
 		obj.remove("noFireblocks");
 		postOrderToObj(obj);
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
@@ -96,7 +96,7 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "**minting 2000");
 		m_config.mintBusd( bobAddr, 2000)
 			.waitForHash();
-		waitForBalance(bobAddr, busd.address(), 2000, false);
+		waitForBalance(bobAddr, busd.address(), 2000, false); // not return json
 		
 		// let bob approve BUSD spending by RUSD
 		S.out( "**approving .49");
@@ -107,7 +107,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		showAmounts("updated amounts");
 		
-		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, true, busd.name() ) ).getString("id");
+		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, busd.name() ) ).getString("id");
 		assert200();
 		
 		// use this if we change the logic in RefAPI to check allowance before sending 
@@ -116,7 +116,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// note we will get back some messages and then the error
 		waitFor( 30, () -> {
-			JsonObject ret = getLiveMessage2(id);
+			JsonObject ret = getLiveMessage(id);
 			if (ret != null) {
 				ret.display();
 				if (ret.getString("type").equals("error") ) {
@@ -131,7 +131,7 @@ public class TestFbOrders extends MyTestCase {
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
 		// give bob some gas
-		m_config.matic().transfer( "b138aae3e4700252c20dc7f9548a0982db73c70e10db535fda13c11ea26077fd", bobAddr, .05)
+		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .05)
 				.waitForHash();
 
 		// set wallet
@@ -165,7 +165,7 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("updated amounts");
 
 		// submit order
-		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, true, busd.name() );
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
 		assert200();
