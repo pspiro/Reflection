@@ -47,12 +47,12 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 		
-		S.out( "%s buying %s %s for %s %s", 
-				Refblocks.getAddressPk( adminKey),
+		S.out( "RUSD buy %s %s paying %s %s for user %s", 
 				stockTokenAmt,
-				stockToken.name(),
+				stockToken.address(),
 				stablecoinAmt,
-				stablecoin.name() );
+				stablecoin.name(),
+				userAddr);
 		
 		return Refblocks.exec( adminKey, tm -> load( tm).buyStock(
 				userAddr, 
@@ -69,11 +69,11 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "%s sell %s %s for %s RUSD",
-				Refblocks.getAddressPk( adminKey),
+		S.out( "RUSD sell %s %s receive %s RUSD for user %s",
 				stockTokenAmt,
 				stockToken.name(),
-				rusdAmt);
+				rusdAmt,
+				userAddr);
 
 		return Refblocks.exec( adminKey, tm -> load( tm).sellStock( 
 				userAddr,
@@ -90,11 +90,13 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "%s redeeming %s RUSD for %s %s",
-				Refblocks.getAddressPk( adminKey),
+		S.out( "RUSD redeeming %s RUSD receive %s %s for user %s",
 				amt,
 				amt,
-				busd.name() );
+				busd.name(),
+				userAddr);
+		
+		//S.out( "  the allowance is %s", )
 
 		return Refblocks.exec( adminKey, tm -> load( tm).sellRusd(
 				userAddr,
@@ -108,7 +110,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(address);
 
-		S.out( "%s %s admin %s",
+		S.out( "RUSD %s admin %s",
 				Refblocks.getAddressPk( ownerKey),
 				add ? "adding" : "removing",
 				address);
@@ -118,4 +120,22 @@ public class RbRusd extends Erc20 implements IRusd {
 				add) );
 	}
 
+//	@Override public RetVal approve(String holderKey, String spenderAddr, double amt) throws Exception {
+//		Util.reqValidKey(holderKey);
+//		Util.reqValidAddress(spenderAddr);
+//
+//		S.out( "RUSD %s allows spending of %s RUSD by %s",
+//				holderKey,
+//				amt,
+//				spenderAddr);
+//		
+//		return Refblocks.exec( holderKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
+//	}
+
 }
+// this won't work. you either need to create a new RUSD and set it on all the stock tokens,
+// or redeploy the stock tokens with the new rusd, OR you have to update RUSD with a new
+// refwallet for which you know the key
+// that's fine, but it means you can't be live with both FB and RB; there has to be a cut-over
+// when you set the new refwallet
+// OR you need to get the private key for refwallet from Fireblocks for a seamless transfer

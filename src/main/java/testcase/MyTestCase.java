@@ -25,7 +25,8 @@ public class MyTestCase extends TestCase {
 	
 	static {
 		try {
-			m_config = Config.read();
+			m_config = Config.ask("Dt");
+			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -33,14 +34,6 @@ public class MyTestCase extends TestCase {
 	
 	public static void main(String[] args) {
 		S.out( "lkj");
-	}
-	
-	public static void readStocks() {
-		try {
-			stocks.readFromSheet(m_config);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 	
 	MyHttpClient cli() throws Exception {
@@ -74,25 +67,11 @@ public class MyTestCase extends TestCase {
 	}
 	
 	JsonObject getLiveMessage(String id) throws Exception {
-		// wait a tic for the order to fill, even autoFill orders take a few ms
-		S.sleep(1000);
-		
-		JsonArray msgs = getCompletedLiveOrders();
-		msgs.display();
-		for (JsonObject msg : msgs) {
-			if (msg.getString("id").equals(id) ) {
-				return msg;
-			}
-		}
-		throw new Exception("No live order found with id " + id);
-	}
-	
-	JsonObject getLiveMessage2(String id) throws Exception {
-		JsonArray msgs = getCompletedLiveOrders();
+		JsonArray msgs = getLiveMessages();
 		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	
-	JsonArray getCompletedLiveOrders() throws Exception {
+	JsonArray getLiveMessages() throws Exception {
 		return getAllLiveOrders(Cookie.wallet).getArray("messages");
 	}
 
@@ -160,5 +139,32 @@ public class MyTestCase extends TestCase {
 			S.sleep(1000);
 		}
 		assertTrue( false);
+	}
+
+	String str;
+	
+	/** For for order with uid 'uid' to return message with status filled */
+	public String waitForFilled(String uid) throws Exception {
+		waitFor( 120, () -> {
+			JsonObject ret = getLiveMessage( uid);
+			if (ret != null && ret.getString("type").equals( "message") && 
+					ret.getString( "status").equals( "Filled") ) {
+				str = ret.getString("text");
+				return true;
+			}
+			S.out( ret != null ? ret : "no message for order " + uid);
+			return false;
+		});
+		return str;
+	}
+	
+	protected void shouldFail( ExRunnable run) {
+		try {
+			run.run();
+			assertTrue( false);
+		}
+		catch( Exception e) {
+			S.out( e.getMessage() );
+		}
 	}
 }

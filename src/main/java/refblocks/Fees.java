@@ -10,7 +10,7 @@ import positions.MoralisServer;
 import reflection.Config;
 import tw.util.S;
 
-class Fees {
+public class Fees {
 	public static double billion = Math.pow( 10, 9);
 	public static double ten18 = Math.pow( 10, 18);
 
@@ -42,6 +42,7 @@ class Fees {
 	}
 
 	public static Fees fetch() throws Exception {
+		// params are # of blocks, which percentage to look at
 		JsonObject json = MoralisServer.getFeeHistory(5, 50).getObject( "result");
 
 		// get base fee of last/pending block

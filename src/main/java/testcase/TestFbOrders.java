@@ -66,7 +66,7 @@ public class TestFbOrders extends MyTestCase {
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
 		// buy more
-		JsonObject obj = TestOrder.createOrder( "BUY", maxQty + 1, 3);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", maxQty + 1, 3);
 		obj.remove("noFireblocks");
 		postOrderToObj(obj);
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
@@ -107,7 +107,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		showAmounts("updated amounts");
 		
-		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, true, busd.name() ) ).getString("id");
+		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, busd.name() ) ).getString("id");
 		assert200();
 		
 		// use this if we change the logic in RefAPI to check allowance before sending 
@@ -116,7 +116,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// note we will get back some messages and then the error
 		waitFor( 30, () -> {
-			JsonObject ret = getLiveMessage2(id);
+			JsonObject ret = getLiveMessage(id);
 			if (ret != null) {
 				ret.display();
 				if (ret.getString("type").equals("error") ) {
@@ -165,7 +165,7 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("updated amounts");
 
 		// submit order
-		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, true, busd.name() );
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
 		assert200();

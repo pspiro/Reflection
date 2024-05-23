@@ -16,7 +16,7 @@ public class TestUnwindOrder extends MyTestCase {
 		S.out( "pos1 = " + pos1);
 		
 		// place order set to fail
-		JsonObject order = TestOrder.createOrder2("BUY", 100, TestOrder.curPrice + 2);
+		JsonObject order = TestOrder.createOrderWithPrice("BUY", 100, TestOrder.curPrice + 2);
 		order.put("fail", true);
 		
 		postOrderToObj(order);

@@ -36,6 +36,10 @@ public class Rusd extends Stablecoin {
 	public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
 		return m_core.addOrRemoveAdmin( ownerKey, address, add);
 	}
+	
+//	public RetVal approve( String ownerKey, String spender, double amt) throws Exception {
+//		return m_core.approve( ownerKey, spender, amt);
+//	}
 
 	// real methods are implemented here
 
@@ -72,6 +76,7 @@ public class Rusd extends Stablecoin {
 
 	public interface IRusd {
 		RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
+//		RetVal approve(String ownerKey, String spender, double amt) throws Exception;
 		RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellRusd( String adminKey, String userAddr, Busd Busd, double amt) throws Exception;
 		RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception;

@@ -12,12 +12,9 @@ import web3.StockToken;
 public class TestRusd extends MyTestCase {
 	static String someKey = "bdc76b290316a836a01af129884bdf9a1977b81ae5a7a0f1d8b5ded4d9dcee4d";
 	
-	static {
-		readStocks();
-	}
 	
 	public void testAddOrRemovePass() throws Exception {
-		S.out( "adding admin to pass");
+		S.out( "***adding admin to pass");
 		m_config.rusd().addOrRemoveAdmin(
 				m_config.ownerKey(),
 				Util.createFakeAddress(),
@@ -26,7 +23,7 @@ public class TestRusd extends MyTestCase {
 
 	public void testAddOrRemoveFail() throws Exception {
 		try {
-			S.out( "adding admin to fail");
+			S.out( "***adding admin to fail");
 			RetVal ret = m_config.rusd().addOrRemoveAdmin(
 					someKey,
 					Util.createFakeAddress(),
@@ -47,48 +44,95 @@ public class TestRusd extends MyTestCase {
 		String user = Util.createFakeAddress();
 		
 		// mint 100 rusd
-		S.out( "minting rusd");
+		S.out( "***minting rusd");
 		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
 				; //.waitForHash();
 		
 		// buy stock
-		S.out( "buying stock");
 		StockToken stock = stocks.getAnyStockToken();
+		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				; //.waitForHash();
+				; // .waitForHash();
 		
 		// sell stock
-		S.out( "selling stock");  // failing with same nonce
+		S.out( "***selling stock");  // failing with same nonce
 		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
 				; //.waitForHash();
 		
 		// mint busd into refwallet so user can redeem (anyone can call this, must have matic)
-		S.out( "minting busd");
+		S.out( "***minting busd");
 		m_config.busd().mint( m_config.refWalletAddr(), 80)
 				; //.waitForHash();
 
 		// user has 90 redeem 80, left with 10
-		S.out( "redeeming rusd");
-		m_config.rusd().sellRusd( user, m_config.busd(), 80)  // failed insuf. allowance
-				.waitForHash();
+		S.out( "***redeeming rusd");
+		m_config.rusd().sellRusd( user, m_config.busd(), 80)  
+				.waitForHash();       // ---->>>>>> // failed insuf. allowance !!!!!!!!!
 		
-		t.next("checkpoint");
+		t.next("***checkpoint");
 		
 		Wallet wallet = new Wallet( user);
+		S.out( "balance is %s", wallet.getBalance( stock.address() ) );
 		assertEquals( 5.0, wallet.getBalance( stock.address() ) );
 		assertEquals( 10.0, wallet.getBalance( m_config.rusd().address() ) );
 		
 		t.done();
 	}
-		
-	// 13x + 678 ms with no waiting vs 33 sec with waiting for each one
-	// 8 sec + 705 ms
 	
-		// remove admin
-//		rusd.addOrRemoveAdmin(admin, false)
-//			.waitForCompleted();
+	public void testTrouble() throws Exception {
+		String user = "0xd60b716d9b511d21087ee02351a6b4e9ec90dcda"; //Util.createFakeAddress();
 		
+		// mint 100 rusd
+		S.out( "***minting rusd");
+		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
+				; //.waitForHash();
+
+		S.out( "  rusd balance = " + m_config.rusd().getPosition( user) );
+		
+		
+		// buy stock
+		StockToken stock = stocks.getAnyStockToken();
+		S.out( "***buying stock %s", stock.address() );
+		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
+				.waitForHash();
+		S.out( "  stock balance = " + stock.getPosition( user) );
+		
+
+//		
+//		// sell stock
+//		S.out( "***selling stock");  // failing with same nonce
+//		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
+//				; //.waitForHash();
+//		
+//		// mint busd into refwallet so user can redeem (anyone can call this, must have matic)
+//		S.out( "***minting busd");
+//		m_config.busd().mint( m_config.refWalletAddr(), 80)
+//				; //.waitForHash();
+//
+//		// user has 90 redeem 80, left with 10
+//		S.out( "***redeeming rusd");
+//		m_config.rusd().sellRusd( user, m_config.busd(), 80)  // failed insuf. allowance
+//				.waitForHash();
+//		
+//		t.next("***checkpoint");
+//		
+//		Wallet wallet = new Wallet( user);
+//		S.out( "balance is %s", wallet.getBalance( stock.address() ) );
+//		assertEquals( 5.0, wallet.getBalance( stock.address() ) );
+//		assertEquals( 10.0, wallet.getBalance( m_config.rusd().address() ) );
+//		
+//		t.done();
+	}
 		// buy a stock token - fail
 //		rusd.buyStockWithRusd(dead, 1, st, 1)
 //			.waitForStatus("FAILED");
+	public void testshow() throws Exception {
+		S.out( new Wallet( "0xafd9ecf37ed1530bf62341af28e0e4c51b48a75e")
+				.getBalance( "0xf000b01e40ffeef7d6b6c6a1365a8a9885027ece") );
+	}
+		
 }
+// this is a mystery: how can I call buyStock and pass the address of a
+// non-existent stock token, it the transaction succeeds
+// 0x098262f4d177565409450602d90491e523d04ec5a0218847525e2c687771ee33
+// called with stock token addr 0xf000b01e40ffeef7d6b6c6a1365a8a9885027ece

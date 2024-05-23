@@ -137,6 +137,12 @@ public class TestProfile extends MyTestCase {
 		return json;
 	}
 
+	static JsonObject createValidSkipEmail() {
+		JsonObject json = createValidProfile();
+		json.put( "email", "test@test.com");
+		return json;
+	}
+
 	static JsonObject createProfileNC() {
 		JsonObject json = createValidProfile();
 		json.remove("cookie");

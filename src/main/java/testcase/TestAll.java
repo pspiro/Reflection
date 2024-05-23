@@ -5,22 +5,23 @@ import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
 import testcase.web3.TestRusd;
+import testcase.web3.TestSendEth;
+import testcase.web3.TestStockToken;
 
 // NOTE: static variables are shared across tests
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-//	TestBackendMsgs.class,
-//	TestBusd.class,
-//	TestCheckIdentity.class,
-//	TestConfig.class,
-//	TestErrors.class,
-//	TestFaqs.class,
+	TestBackendMsgs.class,
+	TestCheckIdentity.class,
+	TestConfig.class,
+	TestErrors.class,
+	TestFaqs.class,
 	TestFbOrders.class,
 	TestFireblocks.class,
-//	TestGetCryptoTrans.class,
+	TestGetCryptoTrans.class,
 	TestGetPositions.class,
-//	TestGtable.class,
+	TestGtable.class,
 	TestHookServer.class,
 	TestHttpClient.class,
 	TestKyc.class,
@@ -38,15 +39,17 @@ import testcase.web3.TestRusd;
 	TestProfile.class,
 	TestRedeem.class,
 	TestRusd.class,
+	TestSendEth.class,
 	TestSignup.class,
 	TestSiwe.class,
 	TestSplitDates.class,
 	TestSql.class,
+	TestStockToken.class,
 	TestStrings.class,
 	TestSwap.class,
 	TestUnwindOrder.class,
 	TestUserTokMgr.class,
-	TestWallet.class,
+	TestWallet.class
 })
 public class TestAll extends TestCase {
 }

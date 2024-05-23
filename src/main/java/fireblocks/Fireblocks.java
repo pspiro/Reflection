@@ -422,21 +422,4 @@ public class Fireblocks {
 		return fb.transactToRetVal();
 	}
 
-//	public static void sign() {
-//		String body = """
-//				{
-//					"operation": "TRANSFER",
-//					"source": {
-//						"type": "VAULT_ACCOUNT"
-//					},
-//					"destination": {
-//						"type": "VAULT_ACCOUNT"
-//					}
-//				}""";
-//		
-//		Fireblocks fb = new Fireblocks();
-//		fb.endpoint( "/v1/transactions");
-//		fb.body( body);
-//		fb.transact();
-//	}
 }
