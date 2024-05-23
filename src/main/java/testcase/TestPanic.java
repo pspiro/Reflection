@@ -19,11 +19,11 @@ public class TestPanic extends MyTestCase {
 		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
-		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", 10, 3);
 		postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
-		obj = TestOrder.createOrder( "SELL", 10, 3);
+		obj = TestOrder.createOrderWithOffset( "SELL", 10, 3);
 		postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 		
@@ -31,11 +31,11 @@ public class TestPanic extends MyTestCase {
 		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
-		obj = TestOrder.createOrder( "BUY", 10, 3);
+		obj = TestOrder.createOrderWithOffset( "BUY", 10, 3);
 		postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
-		obj = TestOrder.createOrder( "SELL", 10, 3);
+		obj = TestOrder.createOrderWithOffset( "SELL", 10, 3);
 		postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
@@ -44,11 +44,11 @@ public class TestPanic extends MyTestCase {
 		cli().get("/api/?msg=refreshconfig");
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		
-		obj = TestOrder.createOrder( "BUY", 10, 3);
+		obj = TestOrder.createOrderWithOffset( "BUY", 10, 3);
 		postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 
-		obj = TestOrder.createOrder( "SELL", 10, 3);
+		obj = TestOrder.createOrderWithOffset( "SELL", 10, 3);
 		postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), cli.getRefCode().toString() );
 		
@@ -67,35 +67,35 @@ public class TestPanic extends MyTestCase {
 		JsonObject map;
 		
 		// Buy
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put( "conid", 73128548);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
 		
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put( "conid", 73128548);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
 		
 		// Sell
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put( "conid", 317467468);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
 		
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put( "conid", 317467468);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
 		
 		// All
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put( "conid", 6604766);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
 
 		// None
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put( "conid", 6842);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.TRADING_HALTED.toString(), map.getString( "code") );
@@ -114,42 +114,42 @@ public class TestPanic extends MyTestCase {
 		JsonObject obj;
 		JsonObject map;
 		
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", buy);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put("wallet_public_key", buy);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", sell);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put("wallet_public_key", sell);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", all);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put("wallet_public_key", all);
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
-		obj = TestOrder.createOrder("BUY", 10, 2);
+		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", none);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 
-		obj = TestOrder.createOrder("SELL", 10, 2);
+		obj = TestOrder.createOrderWithOffset("SELL", 10, 2);
 		obj.put("wallet_public_key", none);
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
