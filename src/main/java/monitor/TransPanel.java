@@ -5,7 +5,7 @@ import org.json.simple.JsonObject;
 import fireblocks.Transactions;
 
 class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,amount,conid,symbol,price,tds,rounded_quantity,commission,currency";
+		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,amount,price,currency,symbol,conid,tds,rounded_quantity,commission";
 		static String sql = """
 select 
 	transactions.created_at,

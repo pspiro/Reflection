@@ -18,6 +18,7 @@ import positions.MoralisServer;
 import redis.ConfigBase;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
+import tw.google.Auth;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
@@ -471,16 +472,30 @@ public class Config extends ConfigBase {
 		return m_tab.getRequiredDouble(key);
 	}
 
+	/** email template; replace %text with html or plain text */
+	public static final String template = """
+		<div style="margin: 0px; padding: 6px; background-color: #d3caee; font-family: Arial, sans-serif; border-radius: 6px;">
+		<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
+		<div style="text-align: center;"><img src="https://www.jotform.com/uploads/peter_peter662/form_files/Logo%201.6644b6589be269.57034100.png" alt="" width="253" height="60" /></div>
+		%text
+		</div>
+		</div>
+		"""; 
+
+// footer with horz line and address; good for marketing email but not regular comm.
+//	<hr />
+//	<p style="text-align: center; font-size: xx-small">Reflection.Trading Inc<br />6th Floor, Water&rsquo;s Edge Building 1<br />Wickham&rsquo;s Cay II, Road Town<br />Tortola, British Virgin Islands</p>
+
 	/** don't throw an exception; it's usually not critical */
-	public void sendEmail(String to, String subject, String text) {
+	public void sendEmail(String to, String subject, String html) {
 		Util.wrap( () -> {
-			String emailFmt = """ 
-				<div style="margin: 0px; padding: 1px; background-color: #D3CAEE; font-family: Arial, sans-serif; border-radius: 6px;">
-				<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
-				%s
-				</div></div> """;
-			String html = String.format( emailFmt, text);
-			Util.sendEmail(m_emailUsername, m_emailPassword, "Reflection", to, subject, html, true);
+			Auth.auth().getMail().send(
+					"Reflection", 
+					m_emailUsername,  // must be a valid "from" address in gmail 
+					to, 
+					subject, 
+					template.replace( "%text", html), 
+					true);
 		});
 	}
 	
@@ -572,4 +587,5 @@ public class Config extends ConfigBase {
 	public String getHookNameSuffix() {
 		return hookNameSuffix;
 	}
+
 }

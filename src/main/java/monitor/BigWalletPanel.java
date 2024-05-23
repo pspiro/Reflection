@@ -1,10 +1,13 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -18,10 +21,12 @@ import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
 import fireblocks.Fireblocks;
+import fireblocks.StockToken;
 import http.MyClient;
 import monitor.wallet.BlockSummaryPanel;
 import monitor.wallet.WalletPanel;
 import positions.Wallet;
+import reflection.Config;
 import reflection.Stock;
 import tw.util.DualPanel;
 import tw.util.HtmlButton;
@@ -37,16 +42,16 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	
 	private final WalletPanel m_parent;
 	private final JTextField m_wallet = new JTextField(27); 
-	private final JLabel m_rusd = new JLabel(); 
-	private final JLabel m_usdc = new JLabel(); 
-	private final JLabel m_approved = new JLabel(); 
-	private final JLabel m_matic = new JLabel(); 
-	private final JLabel m_name = new JLabel(); 
-	private final JLabel m_email = new JLabel(); 
-	private final JLabel m_kyc = new JLabel(); 
-	private final JLabel m_pan = new JLabel(); 
-	private final JLabel m_aadhaar = new JLabel(); 
-	private final JLabel m_locked = new JLabel(); 
+	private final JLabel m_rusd = new MyLabel(); 
+	private final JLabel m_usdc = new MyLabel(); 
+	private final JLabel m_approved = new MyLabel(); 
+	private final JLabel m_matic = new MyLabel(); 
+	private final JLabel m_name = new MyLabel(); 
+	private final JLabel m_email = new MyLabel(); 
+	private final JLabel m_kyc = new MyLabel(); 
+	private final JLabel m_pan = new MyLabel(); 
+	private final JLabel m_aadhaar = new MyLabel(); 
+	private final JLabel m_locked = new MyLabel(); 
 	private final JTextField m_firstName = new JTextField(8); 
 	private final UpperField m_mintAmt = new UpperField(8); 
 	private final UpperField m_burnAmt = new UpperField(8);
@@ -55,7 +60,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final UpperField m_requiredTrades = new UpperField(8);
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
-	private final JsonModel posModel = new JsonModel("Symbol,Balance");
+	private final JsonModel posModel = new PosModel();
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
 	private final BlockSummaryPanel blockPanel = new BlockSummaryPanel();
@@ -229,6 +234,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
+					obj.put( "stock", stock);
 					posModel.ar().add(obj);
 				}
 			}
@@ -375,5 +381,41 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			e.printStackTrace();
 			Util.inform( this, e.getMessage() );
 		}
+	}
+	
+	static class MyLabel extends JLabel {
+		MyLabel() {
+			addMouseListener( new MouseAdapter() {
+				public void mouseClicked(MouseEvent e) {
+					Util.copyToClipboard( getText() );
+					java.awt.Toolkit.getDefaultToolkit().beep();
+				}
+			});
+		}
+	}
+	
+	class PosModel extends JsonModel {
+		public PosModel() {
+			super("Symbol,Balance");
+		}
+		
+		protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
+			menu.add( JsonModel.menuItem("Double it", ev -> wrap( () -> doubleIt( record) ) ) );
+		}
+	}
+	
+	private void doubleIt(JsonObject rec) throws Exception {
+		String symbol = rec.getString("Symbol");
+		double amt = rec.getDouble( "Balance");
+		StockToken tok = rec.getStock( "stock").getToken();
+		String wallet = m_wallet.getText().toLowerCase();
+		
+		Util.reqValidAddress(wallet);
+		
+		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, wallet) ) ) {
+			Monitor.m_config.rusd().mintStockToken( wallet, tok, amt).waitForHash();
+			Util.inform( this, "Done");
+		}	
+		
 	}
 }

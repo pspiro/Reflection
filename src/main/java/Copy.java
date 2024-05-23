@@ -5,6 +5,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
+import reflection.Config;
 import tw.util.S;
 
 public class Copy {
@@ -39,21 +40,15 @@ public class Copy {
 		public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
 			return m_str;
 		}
-		
 	}
+	
 	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
 		// margin is on the outside, horz only
 		// padding is on the inside, vert and horz.		
-		String myString = """
-			<div style="margin: 0px; padding: 6px; background-color: #d3caee; font-family: Arial, sans-serif; border-radius: 6px;">
-			<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
-			<strong>abcd</strong>
-			</div>
-			<p><a href="https://t.me/ReflectionTrading">Join our Telegram</a></p>
-			</div>
-			""";
+		String myString = Config.template.replace( "%text", "<strong>abcd</strong>");
+		
 		Transferable stringSelection = new HtmlTrans(myString);
 		clipboard.setContents(stringSelection, null);
 
