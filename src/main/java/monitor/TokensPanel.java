@@ -8,9 +8,9 @@ import javax.swing.SwingUtilities;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.StockToken;
 import http.MyClient;
 import tw.util.S;
+import web3.StockToken;
 
 /** Note that we read the list directly from the spreadsheet,
  *  so changes are not picked up real-time

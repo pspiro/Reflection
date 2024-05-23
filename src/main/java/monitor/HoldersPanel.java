@@ -9,9 +9,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Erc20;
 import reflection.MySqlConnection;
 import tw.util.S;
+import web3.Erc20;
 
 /** Shows the holders for a given token (wallet and balance */
 public class HoldersPanel extends JsonPanel {
@@ -46,7 +46,7 @@ public class HoldersPanel extends JsonPanel {
 
 			Monitor.m_config.sqlCommand( sql -> {  // make all username queries from a single database connection
 				Util.forEach( map, (wallet, balance) -> { 
-					if (balance >= .009) {
+					if (balance >= .0001) {
 						ar.add( Util.toJson( 
 								"wallet", wallet,
 								"name", getUsersName(sql, wallet),

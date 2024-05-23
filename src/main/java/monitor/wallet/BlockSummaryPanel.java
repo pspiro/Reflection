@@ -10,7 +10,6 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
-import fireblocks.Accounts;
 
 /** Panel to display blockchain transactions with related transactions consolidated
  *  into a single row */
@@ -94,7 +93,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 
 		// redeem RUSD for USDT?
 		if (isUsdt( trans1) &&  
-			trans1.getString(fromAddress).equalsIgnoreCase(Accounts.instance.getAddress("RefWallet") ) &&
+			trans1.getString(fromAddress).equalsIgnoreCase(config().refWalletAddr()) &&
 			isBurn( trans2) && isRusd( trans2) ) {
 
 			obj.put("action", "Redeem");
