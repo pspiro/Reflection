@@ -1,6 +1,7 @@
 package fireblocks;
 
 import common.Util;
+import tw.util.S;
 import web3.Matic;
 import web3.RetVal;
 
@@ -18,5 +19,17 @@ public class FbMatic extends Matic {
 	@Override public String getAddress(String accountName) throws Exception {
 		Util.require( !Util.isValidKey(accountName), "not a valid FB account name");
 		return Accounts.instance.getAddress( accountName); 
+	}
+	
+	public void createSystemWallets() throws Exception {
+		createWallet( "Owner");
+		createWallet( "RefWallet");
+		createWallet( "Admin1");
+//		create( "Admin2");
+	}
+
+	private static void createWallet(String account) throws Exception {
+		Fireblocks.createWallet( Accounts.instance.getId(account), Fireblocks.platformBase);
+		S.out( "created wallet " + Accounts.instance.getAddress(account));
 	}
 }
