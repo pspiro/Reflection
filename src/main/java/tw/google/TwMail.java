@@ -82,7 +82,7 @@ public class TwMail {
 	
 	/** @param tos is space-separated
 	 *  @param type "plain" or "html" */
-	public void send(String from, String fromEmail, String tos, String subject, String text, String type) throws Exception {
+	public void send(String from, String fromEmail, String tos, String subject, String text, boolean html) throws Exception {
 		S.out( "Sending email");
 		S.out( "  from: %s <%s>", from, fromEmail);
 		S.out( "  to: %s", tos);
@@ -91,7 +91,7 @@ public class TwMail {
 		S.out( "");
 
 		MimeMessage message = createEmail( from, fromEmail, tos, subject);
-		message.setText(text, null, type);
+		message.setText(text, null, html ? "html" : "plain");
 		sendEmail( message);
 	}
 
