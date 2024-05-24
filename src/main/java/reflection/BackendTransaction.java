@@ -315,8 +315,7 @@ public class BackendTransaction extends MyTransaction {
 			String first = m_map.getUnescapedString("first");  // it would have been better just to unesc the whole uri
 			String last = m_map.getUnescapedString("last");
 			String email = m_map.getUnescapedString("email");
-			String referer = m_map.getUnescapedString("referer");  
-			String utmSource = m_map.getUnescapedString("utm_source");  
+			String referer = m_map.getUnescapedString("referer");
 			
 			// write them all until we get this working
 //			if (Util.isValidEmail( email) ) {
@@ -328,12 +327,22 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
 				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
-				obj.put( "utm_source", "null".equals(utmSource) ? "" : utmSource);  // frontend could pass 'null'
+				obj.put( "utm_source", getUtmVal("utm_source") );
+				obj.put( "utm_medium", getUtmVal("utm_medium") );
+				obj.put( "utm_campaign", getUtmVal("utm_campaign") );
+				obj.put( "utm_term", getUtmVal("utm_term") );
+				obj.put( "utm_content", getUtmVal("utm_content") );
 			
 				out( "Adding to signup table: " + obj.toString() );
 				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
 //			}
 		});
+	}
+
+	/** frontend might pass "null" */
+	private String getUtmVal(String tag) {
+		String val = m_map.getUnescapedString( tag);
+		return "null".equals( val) ? "" : val;
 	}
 
 	public void handleContact() {  // obsolete
