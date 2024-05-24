@@ -82,7 +82,8 @@ public class Rusd extends Stablecoin {
 		Util.isValidAddress(userAddr);
 		
 		// allow minting stock tokens in dev only
-		Util.require( stablecoinAmt > 0 || Fireblocks.isDev(), "Cannot buy stock with zero stablecoin");
+		// we allow minting as part of a promotion
+		//Util.require( stablecoinAmt > 0 || Fireblocks.isDev(), "Cannot buy stock with zero stablecoin");
 		
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 

@@ -24,6 +24,7 @@ import com.moonstoneid.siwe.SiweMessage;
 
 import common.Util;
 import reflection.SiweUtil;
+import reflection.Stock;
 import tw.util.S;
 
 /**
@@ -420,6 +421,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		try (FileWriter writer = new FileWriter( filename) ) {
 			writeJSONString( writer);
 		}
+	}
+
+	public Stock getStock(String tag) {
+		return (Stock)get( tag);
 	}
 
 }

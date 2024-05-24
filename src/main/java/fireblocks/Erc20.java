@@ -3,15 +3,18 @@ package fireblocks;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.json.simple.JsonObject;
 
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
+import tw.util.OStream;
 import tw.util.S;
 
 public class Erc20 {
@@ -217,12 +220,15 @@ public class Erc20 {
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
+		HashSet<String> transHashes = new HashSet<>();  // don't add the same transaction twice
 
 		// get all transactions in batches and build the map
 		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
-				inc( map, obj.getString("from_address"), -value);
-				inc( map, obj.getString("to_address"), value);
+				if (transHashes.add( obj.getString( "transaction_hash"))) {  // we can receive dup transactions from Moralis
+					double value = Erc20.fromBlockchain( obj.getString("value"), m_decimals);  // use value_decimal here
+					inc( map, obj.getString("from_address"), -value);
+					inc( map, obj.getString("to_address"), value);
+				}
 		} ) );
 		
 		return map;
@@ -236,11 +242,6 @@ public class Erc20 {
 						Util.left( obj.getString("to_address"), 8),
 						obj.getString("transaction_hash") );
 		} ) );
-	}
-	
-	public static void main(String[] args) throws Exception {
-//		Config config = Config.readFrom("Prod-config"); //ask();
-//		config.readStocks().getStock("AAPL").getToken().showBalances();
 	}
 	
 	public static void inc(HashMap<String, Double> map, String address, double amt) {

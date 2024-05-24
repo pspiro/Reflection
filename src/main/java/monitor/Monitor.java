@@ -101,7 +101,7 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
-		m_tabs.addTab( "Singups", new SignupPanel() );
+		m_tabs.addTab( "Signups", new SignupPanel() );
 		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", m_logPanel);

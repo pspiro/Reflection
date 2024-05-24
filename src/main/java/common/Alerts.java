@@ -32,7 +32,7 @@ public class Alerts {
 					m_emailAddr,
 					subject,
 					body,
-					"plain");
+					false);
 			S.out( "Sending alert %s - %s", subject, body);
 		}
 		catch( Exception e) {
