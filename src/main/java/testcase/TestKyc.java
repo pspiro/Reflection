@@ -25,7 +25,7 @@ public class TestKyc extends MyTestCase {
 		// place an order larger than kyc; it should fail
 		double price = TestOrder.curPrice * 1.1;
 		double qty = m_config.nonKycMaxOrderSize() / price + 10;
-		JsonObject order = TestOrder.createOrder2("buy", qty, price);
+		JsonObject order = TestOrder.createOrderWithPrice("buy", qty, price);
 		postOrderToObj(order);
 		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );
 		
@@ -58,7 +58,7 @@ public class TestKyc extends MyTestCase {
 
 		// place another order; it should pass
 		qty = m_config.nonKycMaxOrderSize() / price + 10;
-		order = TestOrder.createOrder2("buy", qty, price);
+		order = TestOrder.createOrderWithPrice("buy", qty, price);
 		postOrderToObj(order);
 		assert200();
 	}

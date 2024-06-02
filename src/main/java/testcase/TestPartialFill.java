@@ -10,7 +10,7 @@ public class TestPartialFill extends MyTestCase {
 
 	// IMPORTANT TEST because it tests that transactions are added to the database properly
 	public void testMore() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "BUY", 10, 3);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", 10, 3);
 		obj.put("simPartial", 5);
 		
 		String uid = postOrderToId(obj);
@@ -33,7 +33,7 @@ public class TestPartialFill extends MyTestCase {
 	
 	/** This order fails because it is below the 10% threshold */
 	public void testLess() throws Exception {
-		JsonObject obj = TestOrder.createOrder( "BUY", 11, 3);
+		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", 11, 3);
 		obj.put("simPartial", 1);
 		
 		String uid = postOrderToId(obj);

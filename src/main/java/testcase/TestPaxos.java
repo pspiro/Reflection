@@ -34,7 +34,7 @@ public class TestPaxos extends MyTestCase {
 			"tokenPrice", curPrice * 1.1
 		);
 		
-		JsonObject obj = TestOrder.createOrder3(json.toString(), false);
+		JsonObject obj = TestOrder.createOrder4(json.toString(), "RUSD");
 		S.out( "Placing bitcoin order " + obj);
 		
 		JsonObject map = postOrderToObj(obj);
