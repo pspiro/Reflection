@@ -10,12 +10,11 @@ import org.json.simple.JsonObject;
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
-import reflection.Config;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
-import tw.util.OStream;
 import tw.util.S;
+import web3.RetVal;
 
 public class Erc20 {
 	public static final int DECIMALS = 4; // must match the # of decimals in timesPower() below;
@@ -65,7 +64,7 @@ public class Erc20 {
 		
 		S.out( "Account %s approving %s to spend %s %s", accountId, spenderAddr, amt, m_address);
 		return Fireblocks.call2( accountId, m_address, 
-				Rusd.approveKeccak, paramTypes, params, "Stablecoin approve");
+				Erc20.approveKeccak, paramTypes, params, "Stablecoin approve");
 		
 	}
 
@@ -122,36 +121,6 @@ public class Erc20 {
 		return fromBlockchain(
 				supply.replaceAll("\"", ""), // strip quotes
 				m_decimals);
-	}
-
-	/** The wallet associated w/ ownerAcctId becomes the owner of the deployed contract.
-	 *  The parameters passed here are the passed to the constructor of the smart contract
-	 *  being deployed. The whole thing takes 30 seconds.
-	 *  @return the deployed contract address */
-	protected static String deploy(String filename, int ownerAcctId, String[] paramTypes, Object[] params, String note) throws Exception {
-		S.out( "Deploying contract from %s", filename);
-		
-		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-		String bytecode = JsonObject.parse( new IStream(filename).readAll() )
-				.getString("bytecode");
-		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
-//		String bytecode = new IStream(filename).readln();
-		
-		String id = Fireblocks.call( ownerAcctId, "0x0", bytecode, paramTypes, params, note);
-		
-		// if there's an error, you got message and code
-		
-		//{"message":"Source is invalid","code":1427}		
-		
-		// it takes 30 seconds to deploy a contract and get the contract address back; how long does it take from javascript?
-		S.out( "  fireblocks id is %s", id);
-
-		S.out( "  waiting for blockchain transaction hash");
-		String txHash = Fireblocks.waitForHash( id, 60, 1000);
-		S.out( "  blockchain transaction hash is %s", txHash);
-
-		S.out( "  waiting for deployed address");
-		return getDeployedAddress(txHash);
 	}
 
 	/** Query the blockchain transaction through Moralis until the transaction
@@ -248,17 +217,4 @@ public class Erc20 {
 		Double v = map.get(address);
 		map.put( address, v == null ? amt : v + amt);
 	}
-	
-	
-	public static class Stablecoin extends Erc20 {
-		public Stablecoin(String address, int decimals, String name) throws Exception {
-			super( address, decimals, name);
-		}
-
-		public final boolean isRusd() {
-			return this instanceof Rusd;
-		}
-	}
-
-	
 }

@@ -2,6 +2,7 @@ package fireblocks;
 
 import common.Util;
 import reflection.Config;
+import web3.StockToken;
 
 public class MintStockToken {
 	public static void main(String[] args) throws Exception {

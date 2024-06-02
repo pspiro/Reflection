@@ -1,4 +1,4 @@
-package fireblocks;
+package web3;
 
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -72,7 +72,7 @@ public class Encrypt {
 	public static String encode( String in) {
 		return encode( in.getBytes() );
 	}
-	static String encode( byte[] ar) {
+	public static String encode( byte[] ar) {
 		return strip( Base64.getEncoder().encodeToString(ar) );	
 	}
 	static byte[] decode( String str) {
@@ -111,7 +111,7 @@ public class Encrypt {
 	}
 
 	/** RSASSA-PKCS1-v1_5 using SHA-256 hash */
-	static String signRSA(String input, String key) throws Exception {
+	public static String signRSA(String input, String key) throws Exception {
 		byte[] b1 = Base64.getDecoder().decode(key);
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(b1);
 

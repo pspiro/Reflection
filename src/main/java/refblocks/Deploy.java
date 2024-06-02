@@ -1,6 +1,5 @@
-package fireblocks;
+package refblocks;
 
-import static fireblocks.Accounts.instance;
 
 import common.Util;
 import reflection.Config;
@@ -10,15 +9,13 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
 public class Deploy {
-	// it seems that you have to wait or call w/ the same Admin
-	// if you need the first transaction to finish because
-	// Fireblocks checks and thinks it will fail if the first
-	// one is not done yet
 	
-	// deploy RUSD and all stock tokens
+	// deploy RUSD, fake BUSD (for test system), and all stock tokens
+	
+	// NOTE you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
-		Util.require(config.web3Type() == Web3Type.Fireblocks, "Turn on Fireblocks");
+		Config config = Config.ask("Dt2");
+		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");
 		
 		String rusdAddress = config.rusd().address();
 		String busdAddress = config.busd().address();
@@ -26,8 +23,10 @@ public class Deploy {
 		S.out( "Deploying system");
 
 		// deploy BUSD? (for testing only)
+		// note that the number of decimals is set in the .sol file before the Busd file is generaged */
 		if ("deploy".equals( busdAddress) ) {
-			busdAddress = FbBusd.deploy("c:/work/smart-contracts/build/contracts/busd.json");
+			busdAddress = RbBusd.deploy( config.ownerKey() );
+			S.out( "deployed busd to " + busdAddress);
 			config.setBusdAddress( busdAddress);  // update spreadsheet with deployed address
 		}
 		else {
@@ -36,24 +35,22 @@ public class Deploy {
 		
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusdAddress) ) {
-			rusdAddress = FbRusd.deploy( 
-					"c:/work/smart-contracts/build/contracts/rusd.json",
-					instance.getAddress( "RefWallet"),
-					instance.getAddress( "Admin1")	);
+			rusdAddress = RbRusd.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
+			S.out( "deployed rusd to " + rusdAddress);
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
 
-			// let RefWallet approve RUSD to transfer BUSD
-			new FbBusd( busdAddress, config.busd().decimals(), config.busd().name() )
-				.approve( 
-						Accounts.instance.getId( "RefWallet"),
-						rusdAddress, 
-						1000000000); // $1B
+			// let RefWallet approve RUSD to transfer BUSD; RefWallet needs gas for this
+			//config.matic().transfer( config.ownerKey(), config.refWalletAddr(), .005);
+
+			// THIS IS BROKEN AND MUST BE FIXED
+			
+//			new RbRusd( busdAddress, config.busd().decimals(), config.busd().name() )
+//				.approve( config.refWalletKey(), rusdAddress, 1000000000); // $1B
 
 			// add a second admin
-			new FbRusd(rusdAddress, 6).addOrRemoveAdmin(
-					config.ownerKey(),
-					instance.getAddress( "Admin2"), 
-					true);
+//			rusd.addOrRemoveAdmin(
+//					instance.getAddress( "Admin2"), 
+//					true);
 		}
 		else {
 			Util.require( Util.isValidAddress( rusdAddress), "RUSD must be valid or set to 'deploy'");
@@ -63,18 +60,21 @@ public class Deploy {
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
 			if (row.getString( "Token Address").equalsIgnoreCase("deploy") ) {
 				// deploy stock token
-				String address = FbStockToken.deploy( 
-						"c:/work/smart-contracts/build/contracts/stocktoken.json",						
+				String address = RbStockToken.deploy(
+						config.ownerKey(),
 						row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
 						row.getString( "Token Symbol"),
 						rusdAddress
 				);
 				
 				// update row on Symbols tab with new stock token address
+				S.out( "deployed stock token to " + address);
 				row.setValue( "Token Address", address);
 				row.update();
 			}
 		}
 		
+		//Test.run(config, busd, rusd);
 	}
+// test build	
 }
