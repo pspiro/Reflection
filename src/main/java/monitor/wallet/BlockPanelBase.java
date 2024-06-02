@@ -6,8 +6,8 @@ import javax.swing.JPanel;
 
 import org.json.simple.JsonObject;
 
-import common.Util;
-import fireblocks.Accounts;
+import monitor.Monitor;
+import reflection.Config;
 
 public class BlockPanelBase extends JPanel {
 	static final String Me = "***";
@@ -23,7 +23,7 @@ public class BlockPanelBase extends JPanel {
 
 	BlockPanelBase() {
 		super( new BorderLayout() );
-		Util.wrap( () -> refWallet = Accounts.instance.getAddress( "RefWallet").toLowerCase() );
+		refWallet = Monitor.m_config.refWalletAddr();
 	}
 
 	protected boolean weCare(JsonObject trans) {
@@ -65,5 +65,8 @@ public class BlockPanelBase extends JPanel {
 	protected boolean isBurn(JsonObject obj) {
 		return obj.getString( toAddress).equals( "Burn");
 	}
-
+	
+	static Config config() {
+		return Monitor.m_config;
+	}
 }
