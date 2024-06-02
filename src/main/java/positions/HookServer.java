@@ -14,9 +14,9 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
+import http.MyServer;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
@@ -36,7 +36,7 @@ import tw.util.S;
 public class HookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
-	final Config m_config = new Config();
+	final Config m_config;
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
@@ -44,18 +44,14 @@ public class HookServer {
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
-	String chain() { return m_config.hookServerChain(); }
+	String chain() { return Util.toHex( m_config.chainId() ); }
 	
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("Hook");
 			S.out( "Starting HookServer");
 			
-			if (args.length == 0) {
-				throw new Exception( "You must specify a config tab name");
-			}
-
-			new HookServer().run(args[0]);
+			new HookServer(args).run();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -63,9 +59,12 @@ public class HookServer {
 		}
 	}
 	
-	void run(String tabName) throws Exception {
+	HookServer(String[] args) throws Exception {
+		m_config = Config.read( args);
+	}
+	
+	void run() throws Exception {
 		MyClient.filename = "hookserver.http.log";
-		m_config.readFromSpreadsheet(tabName);
 		stocks.readFromSheet( m_config);
 		BaseTransaction.setDebug( true);  // just temporary
 		
@@ -139,7 +138,8 @@ public class HookServer {
 		 *  positions is an array with fields address, position */ 
 		public void handleGetWallet() {
 			wrap( () -> {
-				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJson( m_config.minTokenPosition() ) );
+				respond( getOrCreateHookWallet( getWalletFromUri() )
+						.getAllJson( m_config.minTokenPosition() ) );
 			});
 		}
 
@@ -147,7 +147,8 @@ public class HookServer {
 		 *  positions is an object key address, position */ 
 		public void handleGetWalletMap() {
 			wrap( () -> {
-				respond( getOrCreateHookWallet( getWalletFromUri() ).getAllJsonMap( m_config.minTokenPosition() ) );
+				respond( getOrCreateHookWallet( getWalletFromUri() )
+						.getAllJsonMap( m_config.minTokenPosition() ) );
 			});
 		}
 

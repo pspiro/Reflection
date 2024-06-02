@@ -7,11 +7,13 @@ import java.net.URLDecoder;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
+import http.MyServer;
 import tw.util.S;
 
+/** This serve issues Linux commands received from the client and returns the results;
+ *  not currently being used */
 public class LinuxServer {
 	public static void main(String[] args) throws Exception {
 		Util.wrap( () -> MyClient.getResponse( "http://localhost?54545/linux/quit") );

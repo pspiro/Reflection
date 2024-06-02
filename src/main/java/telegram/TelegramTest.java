@@ -37,21 +37,21 @@ public class TelegramTest {
 	}
 */
 	
-	private static void queryMessages() throws Exception {
-		int last = 1;  // query for id's with this number or higher
-		
-		while (true) {
-			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
-					botKey, last + 1);
-
-			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
-				last = processUpdate( update);
-			}
-			
-			S.sleep(10);
-			break;
-		}
-	}
+//	private static void queryMessages() throws Exception {
+//		int last = 1;  // query for id's with this number or higher
+//		
+//		while (true) {
+//			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
+//					botKey, last + 1);
+//
+//			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
+//				last = processUpdate( update);
+//			}
+//			
+//			S.sleep(10);
+//			break;
+//		}
+//	}
 	
 	static int processUpdate( JsonObject item) throws Exception {
 		int updateId = item.getInt( "update_id");
@@ -74,10 +74,10 @@ public class TelegramTest {
 				"text", message);
 		S.out( params);
 
-		HttpResponse<String> resp = MyClient.create(part1 + "/sendmessage", params.toString() )
+		JsonObject resp = MyClient.create(part1 + "/sendmessage", params.toString() )
 				.header( "Content-Type", "application/json")
-				.query();
+				.queryToJson();
 
-		S.out( JsonObject.parse( resp.body() ) );
+		S.out( resp);
 	}
 }

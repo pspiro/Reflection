@@ -21,11 +21,9 @@ public class Telegram {
 				"text", message);
 		S.out( params);
 
-		HttpResponse<String> resp = MyClient.create(part1 + "/sendmessage", params.toString() )
+		return MyClient.create(part1 + "/sendmessage", params.toString() )
 				.header( "Content-Type", "application/json")
-				.query();
-
-		return JsonObject.parse( resp.body() );
+				.queryToJson();
 	}
 
 	public static void getMember(String chatId, String userId) throws Exception {

@@ -18,9 +18,9 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.ConnectionMgrBase;
 import common.Util;
-import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
+import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
 import test.MyTimer;
@@ -66,11 +66,7 @@ public class Main implements ITradeReportHandler {
 			Thread.currentThread().setName("RefAPI");
 			S.out( "Starting RefAPI - log times are NY time");
 			
-			if (args.length == 0) {
-				throw new Exception( "You must specify a config tab name");
-			}
-
-			new Main( args[0] );
+			new Main( args);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -78,14 +74,14 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
-	public Main(String tabName) throws Exception {
-		m_tabName = tabName;
+	public Main(String[] args) throws Exception {
+		m_tabName = Config.getTabName( args);
 		MyClient.filename = "refapi.http.log";
 		
 		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet; this must go first since other items depend on it
-		timer.next("Reading from google spreadsheet %s", tabName, NewSheet.Reflection);
+		timer.next("Reading from google spreadsheet %s", m_tabName, NewSheet.Reflection);
 		readSpreadsheet(true);
 		timer.done();
 		
@@ -458,6 +454,9 @@ public class Main implements ITradeReportHandler {
 					if (last > 0) {
 						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
+				}
+				else {
+					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
 				}
 			});
 		}
