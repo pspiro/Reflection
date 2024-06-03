@@ -4,8 +4,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
-import java.util.Date;
 import java.net.http.HttpResponse;
+import java.util.Date;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -70,6 +70,10 @@ public class MyClient {
 	public MyClient header( String tag, String val) {
 		m_builder.header( tag, val);
 		return this;
+	}
+	
+	public JsonObject queryToJson() throws Exception {
+		return JsonObject.parse( query().body() );
 	}
 	
 	/** query and return response */
@@ -172,6 +176,8 @@ public class MyClient {
 	public static HttpResponse<String> postToResponse( String url, String body) throws Exception {
 		return create( url, body).query();
 	}
+	
+	
 
 
 

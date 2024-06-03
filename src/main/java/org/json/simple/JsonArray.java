@@ -5,6 +5,7 @@
 package org.json.simple;
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -277,5 +278,11 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			});
 			
 		}	
+	}
+
+	public void writeToFile(String filename) throws IOException {
+		try (FileWriter writer = new FileWriter( filename) ) {
+			writeJSONString( writer);
+		}
 	}
 }

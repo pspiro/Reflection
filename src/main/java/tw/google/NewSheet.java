@@ -586,6 +586,10 @@ public class NewSheet {
 					String val = getString(tag);
 					return S.isNotNull(val) ? Double.valueOf(val) : 0.0;
 				}
+
+				public JsonObject getJsonObject(String tag) throws Exception {
+					return JsonObject.parse( getString( tag) );
+				}
 			}
 		}
 

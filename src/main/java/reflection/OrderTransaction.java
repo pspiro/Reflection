@@ -23,13 +23,15 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
-import fireblocks.Erc20.Stablecoin;
-import fireblocks.StockToken;
 import http.MyClient;
+import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import tw.util.S;
 import util.LogType;
+import web3.RetVal;
+import web3.Stablecoin;
+import web3.StockToken;
 
 public class OrderTransaction extends MyTransaction implements IOrderHandler, LiveTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
@@ -435,43 +437,65 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		out( "Starting Fireblocks protocol");
 
-		String fbId;
+		RetVal retval;
 
 		// buy
 		if (m_order.isBuy() ) {
-			fbId = m_config.rusd().buyStock(
+			retval = m_config.rusd().buyStock(
 					m_walletAddr,
 					m_stablecoin,
 					m_stablecoinAmt,
 					newStockToken(), 
 					m_desiredQuantity
-			).id();
+			);
 		}
 		
 		// sell
 		else {
-			fbId = m_config.rusd().sellStockForRusd(
+			retval = m_config.rusd().sellStockForRusd(
 					m_walletAddr,
 					m_stablecoinAmt,
 					newStockToken(),
 					m_desiredQuantity
-			).id();
+			);
 		}
+		
+		out( "Submitted blockchain order with id/hash=%s", retval.id() );
 		
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		allLiveTransactions.put(fbId, this);
+		allLiveTransactions.put(retval.id(), this);
 
-		// update transaction table with fireblocks id
-		m_main.queueSql( conn -> conn.execute( 
-				String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-					fbId, m_uid) ) );
+		// FIREBLOCKS: update transaction table with fireblocks id
+		// order will be updated with status via live order system
+		if (m_config.web3Type() == Web3Type.Fireblocks) {
+			m_main.queueSql( conn -> conn.execute( 
+					String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
+						retval.id(), m_uid) ) );
 		
-		olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-				"id", fbId, 
-				"currency", m_map.getParam("currency"),
-				"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
+			olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
+					"id", retval.id(), 
+					"currency", m_map.getParam("currency"),
+					"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
+		}
+		
+		// REFBLOCKS: wait for the transaction receipt (with polling)
+		// note this does not query for the real error message text if it fails;
+		// we could add that later if desired
+		else {
+			try {
+				out( "waiting for blockchain hash");
+				String hash = retval.waitForHash();
+				out( "blockchain transaction completed");
+				onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
+			}
+			catch( Exception e) {
+				out( "blockchain transaction failed " + e.getMessage() );
+				e.printStackTrace();
+				onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
+			}
+		}
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
 		// by shrinkWrap() and the live order will be failed()
@@ -492,7 +516,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 	}
 
-	/** Called when we receive an update from the Fireblocks server.
+	/** Called when we receive an update from the Fireblocks server OR now
+	 *  when we receive the receipt for the Refblocks transaction.
 	 *  The status is already logged before we come here  
 	 * @param hash blockchain hash
 	 * @param id Fireblocks id */
@@ -775,7 +800,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 
 	private boolean fireblocks() throws RefException {
-		return m_config.isProduction() || m_config.useFireblocks() && !m_map.getBool("noFireblocks");
+		return m_config.isProduction() || !m_map.getBool("noFireblocks");
 	}
 
 	private Vector<OrderTransaction> walletLiveOrders() {

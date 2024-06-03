@@ -21,6 +21,7 @@ import common.Util;
 import tw.util.S;
 import util.LogType;
 
+/** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class SiweTransaction extends MyTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>(); // not serialized
 	private static final STable<Session> sessionMap = new STable<Session>("siwe.dat", 5000, Session.class);  // map wallet address to Session

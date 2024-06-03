@@ -50,6 +50,7 @@ import reflection.RefException;
 import tw.google.Auth;
 import tw.util.S;
 
+/** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class Util {
 	public static final int MINUTE = 60 * 1000;
 	public static final int HOUR = 60 * MINUTE;
@@ -736,6 +737,14 @@ public class Util {
 		return sb.toString();  // change to EIP-55 address 
 	}
 	
+	public static String createPrivateKey() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < 64; i++) {
+			sb.append( String.format( "%x", rnd.nextInt(16) ) );
+		}
+		return sb.toString();  // change to EIP-55 address 
+	}
+	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
 	 *
@@ -815,6 +824,28 @@ public class Util {
 				.replaceAll( "%7[bB]", "{")
 				.replaceAll( "%7[dD]", "}")
 				;
+	}
+
+	/** Return true if it is a valid private key. This only checks length; you could
+	 *  check for valid characters as well */
+	public static boolean isValidKey(String privateKey) {
+		return privateKey != null && privateKey.length() == 64;
+	}
+
+	public static void reqValidKey(String privateKey) throws Exception {
+		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
+	}
+	
+	public static String toHex( long val) {
+		return "0x" + Long.toHexString( val);
+	}
+
+	public static long getLong(String str) {
+		return S.isNotNull( str) 
+				? str.startsWith( "0x")
+						? Long.parseLong( str.substring( 2), 16)
+								: Long.parseLong( str)
+				: 0;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

@@ -1,5 +1,6 @@
 package reflection;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -10,12 +11,16 @@ import com.ib.client.Types.TimeInForce;
 import common.Alerts;
 import common.Util;
 import fireblocks.Accounts;
-import fireblocks.Busd;
+import fireblocks.FbBusd;
+import fireblocks.FbMatic;
+import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
-import fireblocks.Rusd;
-import junit.framework.TestCase;
 import positions.MoralisServer;
 import redis.ConfigBase;
+import refblocks.RbBusd;
+import refblocks.RbMatic;
+import refblocks.RbRusd;
+import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import tw.google.Auth;
@@ -26,11 +31,19 @@ import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
 import tw.util.S;
+import web3.Busd;
+import web3.Busd.IBusd;
+import web3.Matic;
+import web3.RetVal;
+import web3.Rusd;
+import web3.Rusd.IRusd;
 
 public class Config extends ConfigBase {
-	
-	protected GTable m_tab;
 
+	public enum Web3Type { Fireblocks, Refblocks };
+
+	protected GTable m_tab;
+	
 	// user experience parameters
 	private double minOrderSize;  // in dollars
 	private double maxOrderSize; // max buy amt in dollars
@@ -45,7 +58,6 @@ public class Config extends ConfigBase {
 	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
-	//private String refApiHost; // not currently used; everyone listens on 0.0.0.0
 	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
@@ -55,7 +67,6 @@ public class Config extends ConfigBase {
 	private String postgresExtUrl;  // external URL, used by Monitor
 	private String postgresUser;
 	private String postgresPassword;
-	private String symbolsTab;  // tab name where symbols are stored
 	private String backendConfigTab;
 	private double commission;
 	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
@@ -76,17 +87,22 @@ public class Config extends ConfigBase {
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
-	private String fbStablecoin;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
 	private String hookServerUrl;
-	private String hookServerChain;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
+	private int chainId;
 
 	// Fireblocks
-	protected boolean useFireblocks;
+	private Web3Type web3Type;
+	private String admin1Addr;  // used for deployment and Monitor
+	private String ownerKey;  // for Fireblocks, this is "Owner"
+	private String ownerAddr;
+	private String refWalletKey;
+	private String refWalletAddr;
+
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
 	private String moralisPlatform;  // lower case
@@ -100,8 +116,6 @@ public class Config extends ConfigBase {
 	public Allow allowTrading() { return allowTrading; }
 	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
-	
-	public boolean useFireblocks() { return useFireblocks; }
 	
 	public boolean autoFill() { return autoFill; }
 
@@ -135,6 +149,29 @@ public class Config extends ConfigBase {
 	public TimeInForce tif() { return tif; }
 	public String fbAdmins() { return fbAdmins; }
 	
+	/** try first from args and then from config.txt file in resources folder */
+	public static Config read( String[] args) throws Exception {
+		return readFrom( getTabName( args) );
+	}
+
+	/** get tab name from args or config.txt file */
+	public static String getTabName(String[] args) throws Exception {
+		return args.length > 0 
+				? args[0] 
+				: Util.readResource( Config.class, "config.txt");
+	}
+
+	/** takes the prefix */
+	public static Config ask(String prefix) throws Exception {
+		return readFrom( prefix + "-config");
+	}
+
+	/** asks for prefix */
+	public static Config ask() throws Exception {
+		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
+	}
+
+	/** takes full tab name */
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
@@ -142,6 +179,11 @@ public class Config extends ConfigBase {
 		return config;
 	}
 
+	/** takes tab name from config.txt file */
+	public static Config read() throws Exception {
+		return readFrom( Util.readResource( Main.class, "config.txt") );
+	}
+	
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}
@@ -205,32 +247,39 @@ public class Config extends ConfigBase {
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
-		this.hookServerChain = m_tab.getRequiredString("hookServerChain");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
-
+		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
+		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
+		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
+		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
+		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+		this.chainId = m_tab.getRequiredInt( "chainId");
+		
 		Alerts.setEmail( this.alertEmail);
 		
 		// Fireblocks
 		this.platformBase = m_tab.getRequiredString("platformBase");
-		this.useFireblocks = m_tab.getBoolean("useFireblocks");
-		if (useFireblocks) {
-			this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
+		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
+		
+		IRusd rusdCore;
+		IBusd busdCore;
+		
+		if (web3Type == Web3Type.Fireblocks) {
+			rusdCore = new FbRusd(
+					m_tab.getRequiredString("rusdAddr").toLowerCase(),
+					m_tab.getRequiredInt("rusdDecimals") );
+
+			busdCore = new FbBusd(
+					m_tab.getRequiredString("busdAddr").toLowerCase(),
+					m_tab.getRequiredInt("busdDecimals"),
+					m_tab.getRequiredString("busdName") );
+			
 			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
 			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
 			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
-			this.fbStablecoin = m_tab.get("fbStablecoin");
-			
-			m_busd = new Busd( 
-					m_tab.getRequiredString("busdAddr").toLowerCase(),
-					m_tab.getRequiredInt("busdDecimals"),
-					m_tab.getRequiredString ("busdName") );
-
-			m_rusd = new Rusd(
-					m_tab.getRequiredString("rusdAddr").toLowerCase(),
-					m_tab.getRequiredInt("rusdDecimals") );
 			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
@@ -242,11 +291,39 @@ public class Config extends ConfigBase {
 			// update Fireblocks static keys and admins
 			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase);
 			Accounts.instance.setAdmins( fbAdmins);
-			
-			// update Moralis chain
-			MoralisServer.setChain( moralisPlatform);
 		}
-		
+		else {
+			rusdCore = new RbRusd(
+					m_tab.getRequiredString("rusdAddr").toLowerCase(),
+					m_tab.getRequiredInt("rusdDecimals") );
+
+			busdCore = new RbBusd(
+					m_tab.getRequiredString("busdAddr").toLowerCase(),
+					m_tab.getRequiredInt("busdDecimals"),
+					m_tab.getRequiredString("busdName") );
+			
+			Refblocks.setChainId( 
+					chainId,
+					m_tab.getRequiredString( "rpcUrl") );
+		}
+
+		m_rusd = new web3.Rusd(
+				m_tab.getRequiredString("rusdAddr").toLowerCase(),
+				m_tab.getRequiredInt("rusdDecimals"),
+				m_tab.getRequiredString( "admin1Key"),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				rusdCore);
+
+		m_busd = new Busd( 
+				m_tab.getRequiredString("busdAddr").toLowerCase(),
+				m_tab.getRequiredInt("busdDecimals"),
+				m_tab.getRequiredString ("busdName"),
+				m_tab.getRequiredString( "admin1Key"),
+				busdCore);
+
+		// update Moralis chain
+		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
+		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
+
 		if (isProduction() ) {
 			this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 		}
@@ -333,10 +410,6 @@ public class Config extends ConfigBase {
 		}
 	}
 	
-	public String symbolsTab() {
-		return symbolsTab;
-	}
-
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
 	public Rusd rusd() throws Exception {
@@ -364,28 +437,14 @@ public class Config extends ConfigBase {
 		m_tab.put( "busdAddr", address);
 	}
 
+	/** You could move refapi specific things into here if desired */
 	static class RefApiConfig extends Config {
 		
 		public void readFromSpreadsheet(String tabName) throws Exception {
 			super.readFromSpreadsheet(tabName);
-			
-			if (useFireblocks) {
-				require(S.isNotNull( this.rusdAddr()), "rusdAddr");
-			}
 		}
 	}
 	
-	public void testApiKeys() {
-		TestCase.assertTrue( useFireblocks);
-		
-		TestCase.assertEquals( "bbce654d-08da-2216-5b20-bed4deaad1be", fireblocksApiKey);
-		
-		TestCase.assertEquals( 
-				"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",
-				fireblocksPrivateKey);
-		
-	}
-
 	public void dump() {
 		S.out( "dumping config");
 		S.out( m_tab);
@@ -509,14 +568,6 @@ public class Config extends ConfigBase {
 		m_tab.put(key, val);
 	}
 
-	public static Config ask() throws Exception {
-		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
-	}
-	
-	public static Config ask(String prefix) throws Exception {
-		return readFrom( prefix + "-config");
-	}
-	
 	public String getTabName() {
 		return m_tab.tabName();
 	}
@@ -547,10 +598,6 @@ public class Config extends ConfigBase {
 		return minPartialFillPct;
 	}
 	
-	public String fbStablecoin() {
-		return fbStablecoin;
-	}
-	
 	public double maxAutoRedeem() {
 		return maxAutoRedeem;
 	}
@@ -568,10 +615,6 @@ public class Config extends ConfigBase {
 		return hookServerUrl;
 	}
 	
-	public String hookServerChain() {
-		return hookServerChain;
-	}
-
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
@@ -587,5 +630,40 @@ public class Config extends ConfigBase {
 	public String getHookNameSuffix() {
 		return hookNameSuffix;
 	}
+	
+	public String admin1Addr() {
+		return admin1Addr;
+	}
 
+	public String refWalletAddr() {
+		return refWalletAddr;
+	}
+	
+	public String refWalletKey() {
+		return refWalletKey;
+	}
+	
+	public String ownerKey() {  // private key or "Owner"
+		return ownerKey;
+	}
+
+	public String ownerAddr() {
+		return ownerAddr;
+	}
+	
+	public RetVal mintBusd(String wallet, double amt) throws Exception {
+		return busd().mint( wallet, amt);
+	}
+	
+	public Matic matic() {
+		return web3Type == Web3Type.Fireblocks ? new FbMatic() : new RbMatic();
+	}
+	
+	public int chainId() {
+		return chainId;
+	}
+
+	public Web3Type web3Type() {
+		return web3Type;
+	}
 }

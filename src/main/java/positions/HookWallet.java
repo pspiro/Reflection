@@ -6,9 +6,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Busd;
-import fireblocks.Erc20;
 import tw.util.S;
+import web3.Busd;
+import web3.Erc20;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case

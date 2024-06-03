@@ -3,8 +3,6 @@
 
 package com.ib.client;
 
-import java.util.Arrays;
-
 import static com.ib.client.Types.AlgoParam.allowPastEndTime;
 import static com.ib.client.Types.AlgoParam.catchUp;
 import static com.ib.client.Types.AlgoParam.componentSize;
@@ -25,6 +23,8 @@ import static com.ib.client.Types.AlgoParam.strategyType;
 import static com.ib.client.Types.AlgoParam.timeBetweenOrders;
 import static com.ib.client.Types.AlgoParam.useOddLots;
 import static com.ib.client.Types.AlgoParam.waitForFill;
+
+import java.util.Arrays;
 
 public class Types {
 	public enum TickByTickType {

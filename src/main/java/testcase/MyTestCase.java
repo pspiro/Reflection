@@ -17,26 +17,23 @@ import tw.util.S;
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
 
-	static Config m_config;
-	static Accounts accounts = Accounts.instance;
-	static Stocks stocks = new Stocks();  // you must read the stocks before using this
+	static protected Config m_config;
+	static protected Accounts accounts = Accounts.instance;
+	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
-			m_config = Config.readFrom("Dt-config");
+			m_config = Config.ask("Dt");
+			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void readStocks() {
-		try {
-			stocks.readFromSheet(m_config);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	public static void main(String[] args) {
+		S.out( "lkj");
 	}
 	
 	MyHttpClient cli() throws Exception {
@@ -70,25 +67,11 @@ public class MyTestCase extends TestCase {
 	}
 	
 	JsonObject getLiveMessage(String id) throws Exception {
-		// wait a tic for the order to fill, even autoFill orders take a few ms
-		S.sleep(1000);
-		
-		JsonArray msgs = getCompletedLiveOrders();
-		msgs.display();
-		for (JsonObject msg : msgs) {
-			if (msg.getString("id").equals(id) ) {
-				return msg;
-			}
-		}
-		throw new Exception("No live order found with id " + id);
-	}
-	
-	JsonObject getLiveMessage2(String id) throws Exception {
-		JsonArray msgs = getCompletedLiveOrders();
+		JsonArray msgs = getLiveMessages();
 		return msgs != null ? msgs.find( "id", id) : null;
 	}
 	
-	JsonArray getCompletedLiveOrders() throws Exception {
+	JsonArray getLiveMessages() throws Exception {
 		return getAllLiveOrders(Cookie.wallet).getArray("messages");
 	}
 
@@ -134,19 +117,19 @@ public class MyTestCase extends TestCase {
 	}
 
 	/** Wait for HookServer to catch up Exception */
-	protected static void waitForBalance(String walletAddr, String tokenAddr, double refPrice, boolean lt) throws Exception {
-		waitFor( 90, () -> {
+	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
+		waitFor( 120, () -> {
 			
 			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
-					.getObject( "positions")
+					.getObjectNN( "positions")
 					.getDouble( tokenAddr.toLowerCase() );
-			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", refPrice);
-			return (lt && balance < refPrice + .01 || !lt && balance > refPrice - .01);
+			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", bal);
+			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});
 	}
 
 	/** wait n seconds for supplier to return true, then fail */
-	static void waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
+	public static void waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
 		for (int i = 0; i < sec; i++) {
 			S.out( i);
 			if (sup.get() ) {
@@ -156,5 +139,32 @@ public class MyTestCase extends TestCase {
 			S.sleep(1000);
 		}
 		assertTrue( false);
+	}
+
+	String str;
+	
+	/** For for order with uid 'uid' to return message with status filled */
+	public String waitForFilled(String uid) throws Exception {
+		waitFor( 120, () -> {
+			JsonObject ret = getLiveMessage( uid);
+			if (ret != null && ret.getString("type").equals( "message") && 
+					ret.getString( "status").equals( "Filled") ) {
+				str = ret.getString("text");
+				return true;
+			}
+			S.out( ret != null ? ret : "no message for order " + uid);
+			return false;
+		});
+		return str;
+	}
+	
+	protected void shouldFail( ExRunnable run) {
+		try {
+			run.run();
+			assertTrue( false);
+		}
+		catch( Exception e) {
+			S.out( e.getMessage() );
+		}
 	}
 }

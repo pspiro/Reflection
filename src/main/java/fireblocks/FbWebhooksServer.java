@@ -1,12 +1,14 @@
-package http;
+package fireblocks;
 
 import java.util.Date;
 
 import org.json.simple.JsonObject;
 
+import http.SimpleTransaction;
 import tw.util.S;
 
-/** Fireblocks Webhooks server */
+/** Fireblocks Webhooks server listens for events from Fireblocs;
+ *  we never used this, we used polling instead because we got the results faster */
 public class FbWebhooksServer {
 	public static void main(String[] args) {
 		String host = "0.0.0.0";
