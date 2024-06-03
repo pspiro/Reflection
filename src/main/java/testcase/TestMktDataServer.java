@@ -6,7 +6,7 @@ import http.MyClient;
 import tw.util.S;
 
 public class TestMktDataServer extends MyTestCase {
-	String base = "http://localhost:6989/mdserver";
+	String base = "http://localhost:9395/mdserver";
 	
 	public void testStatus() throws Exception {
 		JsonObject json = MyClient.getJson( base + "/status");

@@ -2,6 +2,7 @@ package redis;
 
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.util.S;
 
 public class MdConfig extends ConfigBase {
 	// program parameters
@@ -24,6 +25,7 @@ public class MdConfig extends ConfigBase {
 	}
 	
 	public void readFromSpreadsheet(String tabName) throws Exception {
+		S.out( "Using config tab %s", tabName);
 		GTable tab = new GTable( NewSheet.Reflection, tabName, "Tag", "Value");
 
 		this.twsMdHost = tab.getRequiredString( "twsMdHost");

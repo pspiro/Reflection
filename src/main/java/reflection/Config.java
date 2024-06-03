@@ -1,6 +1,5 @@
 package reflection;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -80,7 +79,7 @@ public class Config extends ConfigBase {
 	private Allow allowTrading = Allow.All;  // won't be returned in getConfig message
 	private boolean allowRedemptions;
 	private String m_emailUsername;
-	private String m_emailPassword;
+	private String m_emailPassword;  // leave this in case we bring back sending email not using google
 	private int threads;
 	private int myWalletRefresh;  // "My Wallet" panel refresh interval
 	private double fbLookback;
@@ -154,13 +153,6 @@ public class Config extends ConfigBase {
 		return readFrom( getTabName( args) );
 	}
 
-	/** get tab name from args or config.txt file */
-	public static String getTabName(String[] args) throws Exception {
-		return args.length > 0 
-				? args[0] 
-				: Util.readResource( Config.class, "config.txt");
-	}
-
 	/** takes the prefix */
 	public static Config ask(String prefix) throws Exception {
 		return readFrom( prefix + "-config");
@@ -175,7 +167,6 @@ public class Config extends ConfigBase {
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
 		config.readFromSpreadsheet(tab);
-		S.out( "Using config tab %s", tab);
 		return config;
 	}
 
@@ -183,12 +174,20 @@ public class Config extends ConfigBase {
 	public static Config read() throws Exception {
 		return readFrom( Util.readResource( Main.class, "config.txt") );
 	}
-	
+
+	/** get tab name from args or config.txt file */
+	public static String getTabName(String[] args) throws Exception {
+		return args.length > 0 
+				? args[0] 
+				: Util.readResource( Config.class, "config.txt");
+	}
+
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}
 
 	public void readFromSpreadsheet(String tabName) throws Exception {
+		S.out( "Using config tab %s", tabName);
 		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
 	}
 	

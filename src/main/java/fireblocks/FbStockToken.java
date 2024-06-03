@@ -2,7 +2,6 @@ package fireblocks;
 
 import common.Util;
 import tw.util.S;
-import web3.Erc20;
 import web3.RetVal;
 import web3.StockToken;
 

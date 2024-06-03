@@ -20,7 +20,7 @@ public enum LogType {
 	ORDER_STATUS_UPDATED,
 	ORDER_TIMEOUT,		// our timeout occurred before the IB IOC timeout
 	REC_ORDER,			// received order (roundedQty has not been set yet)
-	REDEEM,				// user is redeeming RUSD 
+	REDEEMED,			// user is redeeming RUSD 
 	RESPOND_ERR,		// exception while sending response to Frontend 
 	RESPOND_ORDER,		// responding OK to Frontend
 	RESTART,			// application was restarted

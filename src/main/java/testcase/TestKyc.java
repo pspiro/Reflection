@@ -3,12 +3,16 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import http.MyHttpClient;
 import reflection.RefCode;
 import tw.util.S;
 
 public class TestKyc extends MyTestCase {
 
 	public void testKyc()  throws Exception {
+		// this must come first to trigger static code from TestOrder
+		double price = TestOrder.curPrice * 1.1;
+
 		// clear kyc status in database
 		m_config.sqlCommand( sql -> sql.execWithParams(
 				"update users set kyc_status = '', persona_response = '' where wallet_public_key = '%s'",
@@ -21,10 +25,11 @@ public class TestKyc extends MyTestCase {
 				.get(0);
 		row.display();
 		assertEquals("", S.notNull(row.getString("kyc_status")));
+		
 
 		// place an order larger than kyc; it should fail
-		double price = TestOrder.curPrice * 1.1;
 		double qty = m_config.nonKycMaxOrderSize() / price + 10;
+		mintRusd(Cookie.wallet, qty * price + 1); // give user sufficient stablecoin
 		JsonObject order = TestOrder.createOrderWithPrice("buy", qty, price);
 		postOrderToObj(order);
 		assertEquals( RefCode.NEED_KYC, cli.getRefCode() );

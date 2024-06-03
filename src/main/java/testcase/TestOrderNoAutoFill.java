@@ -9,7 +9,6 @@ import tw.util.S;
 // these test fail because the initial order is accepted, then later it is rejected
 public class TestOrderNoAutoFill extends MyTestCase {
 	static double curPrice;
-	static boolean m_noFireblocks = true;
 //	static double approved;
 	
 

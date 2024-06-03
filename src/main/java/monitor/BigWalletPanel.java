@@ -377,7 +377,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			Util.inform( this, e.getMessage() );
 		}
 	}
-	
+
+	/** JLabel that when you click it, copies text to the clipboard */
 	static class MyLabel extends JLabel {
 		MyLabel() {
 			addMouseListener( new MouseAdapter() {
@@ -410,7 +411,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, wallet) ) ) {
 			config().rusd().mintStockToken( wallet, tok, amt).waitForHash();
 			Util.inform( this, "Done");
-		}	
+		}
+	}
 		
 	static Config config() {
 		return Monitor.m_config;

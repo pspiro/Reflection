@@ -23,16 +23,6 @@ public class TestRedeem extends MyTestCase {
 		}
 	}
 	
-	public static void mintRusd(String wallet, double amt) throws Exception {
-		S.out( "Minting %s RUSD into %s", amt, wallet);
-
-		m_config.rusd()
-				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
-				.waitForCompleted();
-		
-		waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
-	}
-	
 	public void testLocked() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
 		
@@ -42,9 +32,8 @@ public class TestRedeem extends MyTestCase {
 		}
 		
 		// mint some RUSD to new wallet 
-//		Cookie.setNewFakeAddress( true);
-//		mintRusd(Cookie.wallet, 5);
-		Cookie.setWalletAddr("0xb162d6738d6e95fd39017411432525a6171ce3d3");
+		Cookie.setNewFakeAddress( true);
+		mintRusd(Cookie.wallet, 5);
 		
 		// lock it by time and redeem; should fail
 		lock( 5, System.currentTimeMillis() + Util.DAY, 0);

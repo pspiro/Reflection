@@ -5,6 +5,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
+import positions.MoralisServer;
 import reflection.Config.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
@@ -67,7 +68,6 @@ public class TestFbOrders extends MyTestCase {
 		
 		// buy more
 		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", maxQty + 1, 3);
-		obj.remove("noFireblocks");
 		postOrderToObj(obj);
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
 
@@ -130,9 +130,11 @@ public class TestFbOrders extends MyTestCase {
 
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
-		// give bob some gas
-		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .05)
-				.waitForHash();
+		// give bob some gas?
+		if (MoralisServer.getNativeBalance(bobAddr) < .1) {
+			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
+					.waitForHash();
+		}
 
 		// set wallet
 		S.out( "-----testFillWithFb");

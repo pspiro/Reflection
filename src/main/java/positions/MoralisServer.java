@@ -249,20 +249,9 @@ public class MoralisServer {
 			}""";
 		return nodeQuery( body).getLong( "result");
 	}
-	
-	public static JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
-	}
 
-	/** This is used to get gas history so we can estimate the base and priority fees */
+	/** Get the n latest blocks and for each return the gas price that covers
+	 *  pct percent of the transactions */
 	public static JsonObject getFeeHistory(int blocks, int pct) throws Exception {
 		String body = String.format( """
 			{
@@ -278,14 +267,14 @@ public class MoralisServer {
 		return nodeQuery( body);
 	}
 	
-	/** Always returns 30 gwei for Polygon */
-	public static JsonObject maxPriorityFee() throws Exception {
+	public static JsonObject getLatestBlock() throws Exception {
 		// the boolean says if it gets the "full" block or not
 		String body = """
 			{
 			"jsonrpc": "2.0",
 			"id": 1,
-			"method": "eth_maxPriorityFeePerGas"
+			"method": "eth_getBlockByNumber",
+			"params": [	"latest", false ]
 			}""";
 		return nodeQuery( body);
 	}
@@ -299,7 +288,6 @@ public class MoralisServer {
 				}""";
 		return nodeQuery( body);  // result -> pending and result -> queued
 	}
-    
 	
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask( "Dt2");

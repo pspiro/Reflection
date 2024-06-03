@@ -120,6 +120,10 @@ public class RbRusd extends Erc20 implements IRusd {
 				add) );
 	}
 
+	@Override public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
+		throw new Exception(); // not implemented yet
+	}
+
 //	@Override public RetVal approve(String holderKey, String spenderAddr, double amt) throws Exception {
 //		Util.reqValidKey(holderKey);
 //		Util.reqValidAddress(spenderAddr);

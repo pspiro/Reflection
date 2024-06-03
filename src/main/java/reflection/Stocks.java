@@ -15,7 +15,6 @@ import tw.util.S;
 import web3.StockToken;
 
 public class Stocks implements Iterable<Stock> {
-	private static Stock NULL = new Stock();
 	private final HashMap<Integer,Stock> m_conidMap = new HashMap<Integer,Stock>(); // map conid to JSON object storing all stock attributes; prices could go here as well if desired. pas
 	private final HashMap<String,Stock> m_tokenAddrMap = new HashMap<String,Stock>(); // map contract address (lower case) to JSON object storing all stock attributes
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject

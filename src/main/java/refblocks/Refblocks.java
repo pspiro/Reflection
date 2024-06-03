@@ -9,7 +9,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -36,7 +35,7 @@ public class Refblocks {
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	static Web3j web3j;
 	static long chainId;  // set from Config
-	private static String polygonRpcUrl = "https://polygon-rpc.com/";
+	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
 
 	/** Called when Config is read */

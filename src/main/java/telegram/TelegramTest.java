@@ -1,7 +1,5 @@
 package telegram;
 
-import java.net.http.HttpResponse;
-
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -74,10 +72,10 @@ public class TelegramTest {
 				"text", message);
 		S.out( params);
 
-		HttpResponse<String> resp = MyClient.create(part1 + "/sendmessage", params.toString() )
+		JsonObject resp = MyClient.create(part1 + "/sendmessage", params.toString() )
 				.header( "Content-Type", "application/json")
-				.query();
+				.queryToJson();
 
-		S.out( JsonObject.parse( resp.body() ) );
+		S.out( resp);
 	}
 }
