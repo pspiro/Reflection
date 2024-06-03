@@ -48,14 +48,13 @@ public class TestRusd extends MyTestCase {
 		
 		// mint 100 rusd
 		S.out( "***minting rusd");
-		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
-				.waitForCompleted();
+		mintRusd( user, 100);
 		
 		// buy stock
 		StockToken stock = stocks.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-		.waitForCompleted();
+				.waitForCompleted();
 		
 		// sell stock
 		S.out( "***selling stock");  // failing with same nonce
@@ -65,8 +64,6 @@ public class TestRusd extends MyTestCase {
 		// mint busd into refwallet so user can redeem (anyone can call this, 
 		// must have matic)
 		S.out( "***minting busd");
-		m_config.busd().mint( m_config.refWalletAddr(), 80)
-				.waitForCompleted(); // this one we need to wait for
 
 		// user has 90 redeem 80, left with 10
 		S.out( "***redeeming rusd");

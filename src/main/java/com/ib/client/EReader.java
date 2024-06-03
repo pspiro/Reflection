@@ -27,7 +27,6 @@ public class EReader extends Thread {
     private byte[] m_iBuf = new byte[IN_BUF_SIZE_DEFAULT];
     private int m_iBufLen = 0;
     private final Deque<EMessage> m_msgQueue = new LinkedList<>();
-	private boolean m_startupReader;  // just reads the first message, could help for debugging
     
     protected boolean isUseV100Plus() {  // always returns true
 		return m_clientSocket.isUseV100Plus();
@@ -40,12 +39,12 @@ public class EReader extends Thread {
      * Construct the EReader.
      * @param parent An EClientSocket connected to TWS.
      * @param signal A callback that informs that there are messages in msg queue.
+     * @param startupReader ignored
      */
     public EReader(EClientSocket parent, EJavaSignal signal, boolean startupReader) {
     	setName( "API-R");
     	m_clientSocket = parent;
         m_signal = signal;
-        m_startupReader = startupReader;
         m_processMsgsDecoder = new EDecoder(parent.serverVersion(), parent.wrapper(), parent);
     }
     

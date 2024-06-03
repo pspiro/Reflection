@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.LayoutManager;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
 
 import javax.swing.Box;
 import javax.swing.JButton;

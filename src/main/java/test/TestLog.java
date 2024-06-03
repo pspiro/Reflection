@@ -1,10 +1,11 @@
-package testcase;
+package test;
 
 import org.json.simple.JsonObject;
 
-import test.MyTimer;
+import testcase.MyTestCase;
 import util.LogType;
 
+/** compare speed of using a single db connection vs creating a new connection each time */
 public class TestLog extends MyTestCase {
 	
 	public void test() throws Exception {

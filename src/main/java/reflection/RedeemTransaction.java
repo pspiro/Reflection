@@ -133,9 +133,9 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// redeem it  try/catch here?
 			RetVal retVal = rusd.sellRusd(m_walletAddr, busd, m_quantity);  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
-			olog( LogType.REDEEM, "amount", m_quantity);
+			olog( LogType.REDEEMED, "amount", m_quantity);
 
-			insertRedemption( busd, m_quantity, "", LiveStatus.Working); // informational only, don't throw an exception
+			insertRedemption( busd, m_quantity, retVal.id(), LiveStatus.Working); // informational only, don't throw an exception
 
 			respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 				

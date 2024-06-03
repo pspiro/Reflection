@@ -26,11 +26,6 @@ public class TestOrder extends MyTestCase {
 			Util.require( curPrice > 0, "Zero price");
 	
 			createValidUser();
-			
-//			S.out( "minting 5000 RUSD");
-//			m_config.rusd().mintRusd( Cookie.wallet, 5000, stocks.getAnyStockToken() )
-//				.waitForHash();
-//			waitForRusdBalance(Cookie.wallet, 5000, false);
 
 			//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
 			
@@ -119,7 +114,7 @@ public class TestOrder extends MyTestCase {
 			S.out( "sleeping");
 			S.sleep(1000);
 			
-			postOrderToObj( TestOrder.createOrderWithOffset( "BUY", 10, 3) );
+			postOrderToObj( createOrderWithOffset( "BUY", 10, 3) );
 			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() ); 
 		});
 	}
@@ -131,7 +126,8 @@ public class TestOrder extends MyTestCase {
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
 		// buy 10
-		postOrderToObj( TestOrder.createOrderWithOffset( "BUY", 10, 3) );  // try again w/ autofill off
+		mintRusd( Cookie.wallet, 10 * (curPrice + 3) + 1);
+		postOrderToObj( createOrderWithOffset( "BUY", 10, 3) );  // try again w/ autofill off
 		assert200();
 		assertEquals( RefCode.OK, cli.getRefCode() );
 		S.out( "received %s %s", cli.getRefCode(), cli.getMessage() );
@@ -171,8 +167,7 @@ public class TestOrder extends MyTestCase {
 	/** When the IB order is filled, we get a message back saying
 	 *  the order is being processed on the blockchain */
 	public void testToast() throws Exception {
-		JsonObject ord = TestOrder.createOrderWithOffset( "BUY", 1, 3);
-		ord.remove( "noFireblocks");
+		JsonObject ord = createOrderWithOffset( "BUY", 1, 3);
 		postOrderToObj( ord );  // try again w/ autofill off
 		assert200();
 		
@@ -218,11 +213,7 @@ public class TestOrder extends MyTestCase {
 	// user must have passed KYC for this to pass
 	public void testMaxAmt()  throws Exception {
 		// mint some if needed
-		if (m_config.rusd().getPosition( Cookie.wallet) < m_config.maxOrderSize() + 10) {
-			m_config.rusd().mintRusd( Cookie.wallet, m_config.maxOrderSize() + 10, stocks.getAnyStockToken() )
-				.waitForHash();
-			waitForRusdBalance(Cookie.wallet, 5000, false);
-		}
+		mintRusd( Cookie.wallet, (m_config.maxOrderSize() + 1) * curPrice * 1.1 + 1);
 
 		// fail buy
 		JsonObject map = placeOrder( "buy", m_config.maxOrderSize() + 1, curPrice * 1.1);

@@ -17,7 +17,6 @@ public class FbMatic extends Matic {
 	}
 
 	@Override public String getAddress(String accountName) throws Exception {
-		Util.require( !Util.isValidKey(accountName), "not a valid FB account name");
 		return Accounts.instance.getAddress( accountName); 
 	}
 	

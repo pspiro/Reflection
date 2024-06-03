@@ -164,7 +164,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 //    uint256 _amount
 
 
-	public RetVal addOrRemoveAdmin(String owner, String adminAddr, boolean add) throws Exception {
+	@Override public RetVal addOrRemoveAdmin(String owner, String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		Object[] params = { adminAddr, add ? 1 : 0 };
 		
@@ -178,7 +178,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 				"RUSD add admin");
 	}
 	
-	public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
+	@Override public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
 		String[] paramTypes = { "address", "address", "address", "uint256", "uint256" };
 		Object[] params = { 
 				userAddr, 

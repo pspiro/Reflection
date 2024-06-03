@@ -80,7 +80,6 @@ public class TgServer {
 			S.out( "deleting message");
 			Telegram.deleteMessage( chat.getString("id"), msgId);
 		}
-		Util.input("press key");
 		
 		return updateId;
 	}

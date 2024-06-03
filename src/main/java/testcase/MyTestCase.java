@@ -37,7 +37,9 @@ public class MyTestCase extends TestCase {
 	}
 	
 	MyHttpClient cli() throws Exception {
-		return (cli=new MyHttpClient("localhost", 8383));
+		cli = new MyHttpClient("localhost", 8383);
+		cli.addHeader("X-Country-Code", "IN");
+		return cli;
 	}
 
 	public static void startsWith( String expected, String got) {
@@ -167,4 +169,23 @@ public class MyTestCase extends TestCase {
 			S.out( e.getMessage() );
 		}
 	}
+
+	public static void mintBusd(String wallet, double amt) throws Exception {
+		m_config.busd().mint( wallet, amt)
+				.waitForHash();
+		waitForBalance(wallet, m_config.busd().address(), amt, false); // make sure the new balance will register with the RefAPI
+	}
+	
+	public static void mintRusd(String wallet, double amt) throws Exception {
+		if (m_config.rusd().getPosition(wallet) < amt) {
+			S.out( "Minting %s RUSD into %s", amt, wallet);
+	
+			m_config.rusd()
+					.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
+					.waitForHash();
+			
+			waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
+		}
+	}
+	
 }

@@ -11,7 +11,7 @@ import tw.util.S;
  *  Restores the map from a file. Writes the entire map to the file up to
  *  every n seconds
  *
- *  The objects stored in the map must either native types or implement Ser
+ *  The objects stored in the map must either store native types or implement Ser
  *  
  *  Note that Integer doesn't work because the values are read back in as Long;
  *  you could fix it by reading them back in as Integer or by changing them

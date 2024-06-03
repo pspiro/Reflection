@@ -7,7 +7,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config;
 import tw.util.S;
 
 
@@ -104,25 +103,10 @@ public class TestMany {
 			TestTwoAdmins.mint( wallet, r.nextInt(5000, 100000), null); 
 			//config.busd().mint(addr, r.nextInt(5000, 100000) );  // if you use BUSD, you have to approve it first
 			S.out( "minted");
-			//createUserProfile(wallet.toLowerCase(), config);
+			//TestTwoAdmins.createUserProfile(wallet.toLowerCase(), config);
 		}
 		S.out( "done");
 		System.exit(0);
 	}
-
-	private static void createUserProfile(String wallet, Config config) throws Exception {
-		JsonObject o = new JsonObject();
-		o.put( "wallet_public_key", wallet);
-		o.put( "first_name", "peter");
-		o.put( "last_name", "spiro");
-		o.put( "email", "peteraspiro@gmail.com");
-		o.put( "phone", "9143933732");
-		o.put( "address", "Pinecliff Rd");
-		o.put( "pan_number", "8383838383");
-		o.put( "aadhaar", "838383838383");
-		config.sqlCommand(sql -> sql.insertOrUpdate("users", o, "wallet_public_key = '%s'", wallet) );
-		S.out( "Created user profile for %s", wallet);
-	}
-
 	
 }

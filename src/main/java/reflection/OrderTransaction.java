@@ -415,14 +415,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// set m_progress to 15%
 		m_progress = FireblocksStatus.STOCK_ORDER_FILLED.pct();
 
-		if (fireblocks() ) {
-			// execute this in a new thread because, the theory is, it can take a while
-			Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
-		}
-		else {
-			removeFromUserTokenMgr();
-			onFireblocksSuccess(null);
-		}
+		// execute this in a new thread because it can take a while and we don't want to tie
+		// up the IB execution thread
+		Util.execute( "FBL", () -> shrinkWrap( () -> startFireblocks(m_filledShares) ) );
 	}
 	
 	/** Call to this method is shrinkWrapped();
@@ -797,10 +792,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			e.printStackTrace();
 			alert( "Error occurred while unwinding order", e.getMessage() );
 		}
-	}
-
-	private boolean fireblocks() throws RefException {
-		return m_config.isProduction() || !m_map.getBool("noFireblocks");
 	}
 
 	private Vector<OrderTransaction> walletLiveOrders() {

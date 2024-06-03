@@ -1,7 +1,5 @@
 package telegram;
 
-import java.net.http.HttpResponse;
-
 import org.json.simple.JsonObject;
 
 import common.Util;

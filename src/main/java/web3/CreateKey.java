@@ -20,7 +20,11 @@ public class CreateKey {
 	
 	public static void main(String[] args) throws Exception {
 		//Config.read();  // we need this 
-		createUserWallet();
+		//createUserWallet();
+		String privateKey = createPrivateKey();
+		String address = Credentials.create( privateKey ).getAddress();
+		S.out( privateKey);
+		S.out( address);
 	}
 
 	/** Input wallet params from command line and create wallet on Prod-wallets tab */

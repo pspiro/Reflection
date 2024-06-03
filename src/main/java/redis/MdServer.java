@@ -27,7 +27,6 @@ import reflection.Stocks;
 import reflection.TradingHours;
 import reflection.TradingHours.Session;
 import test.MyTimer;
-import tw.google.NewSheet;
 import tw.util.S;
 import util.DateLogFile;
 import util.LogType;
