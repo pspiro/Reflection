@@ -26,6 +26,7 @@ public class MyTestCase extends TestCase {
 	static {
 		try {
 			m_config = Config.ask("Dt");
+			assertTrue( !m_config.isProduction() );  // don't even think about it!
 			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();

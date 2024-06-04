@@ -210,18 +210,24 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		ArrayList<T> array = (ArrayList<T>)get(key);
 		return array != null ? array : new ArrayList<T>(); 
 	}
-
+	
 	/** Can return null; caller should check */
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
 		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
 		return (JsonObject)obj;
 	}
+
+	/** Throws exception if not found */
+	public JsonObject getRequiredObj(String key) throws Exception {
+		JsonObject obj = getObject(key);
+		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
+		return obj;
+	}
 	
-	/** Never return null, return empty JsonObject  */ // this doesn't work, remove it
+	/** Never returns null, returns empty JsonObject  */
 	public JsonObject getObjectNN(String key) throws Exception {
-		Object obj = get(key);
-		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
+		Object obj = getObject(key);
 		return obj != null ? (JsonObject)obj : new JsonObject();
 	}
 	
@@ -318,12 +324,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public SiweMessage getSiweMessage() throws Exception {
 		return SiweUtil.toSiweMessage(this);
-	}
-
-	public JsonObject getRequiredObj(String key) throws Exception {
-		JsonObject obj = getObject(key);
-		Util.require(obj != null, "The required key is missing from the json object: " + key);
-		return obj;
 	}
 
 	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()

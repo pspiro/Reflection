@@ -97,11 +97,10 @@ public class Config extends ConfigBase {
 	// Fireblocks
 	private Web3Type web3Type;
 	private String admin1Addr;  // used for deployment and Monitor
-//	private String admin1Key;
 	private String ownerKey;  // for Fireblocks, this is "Owner"
 	private String ownerAddr;
-	private String refWalletAddr;
 	private String refWalletKey;
+	private String refWalletAddr;
 
 	private String fireblocksApiKey;
 	private String fireblocksPrivateKey;
@@ -182,7 +181,7 @@ public class Config extends ConfigBase {
 				? args[0] 
 				: Util.readResource( Config.class, "config.txt");
 	}
-	
+
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}

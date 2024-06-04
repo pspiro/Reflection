@@ -5,6 +5,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
+import reflection.Config;
 import tw.util.S;
 
 public class Copy {
@@ -44,16 +45,10 @@ public class Copy {
 	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		String myString = """
-			<div style="margin: 0px; padding: 1px; background-color: #D3CAEE; font-family: Arial, sans-serif; border-radius: 6px;">
-			<div style="margin: 10px auto; padding: 20px; background-color: #ffff; border-radius: 6px; max-width: 600px;" >
-			<div style="text-align: center;"> 
-			<img src="https://www.jotform.com/uploads/peter_peter662/form_files/Logo%201.6644b6589be269.57034100.png" alt="" width="253" height="60" />
-			</div>
-			<strong>abcd</strong>
-			</div>
-			</div>				
-			""";
+		// margin is on the outside, horz only
+		// padding is on the inside, vert and horz.		
+		String myString = Config.template.replace( "%text", "<strong>abcd</strong>");
+		
 		Transferable stringSelection = new HtmlTrans(myString);
 		clipboard.setContents(stringSelection, null);
 

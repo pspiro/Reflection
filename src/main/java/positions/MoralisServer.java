@@ -226,29 +226,20 @@ public class MoralisServer {
 		rpcUrl = rpcUrlIn;
 	}
 	
+	/** This can be a node created for you on Moralis, which you pay for, or a free node.
+	 *  Currently using the free node; if you hit pacing limits, switch to the Moralis node.
+	 *  The Moralis node requires auth data */
 	static JsonObject nodeQuery(String body) throws Exception {
 		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
-		
+
 		return MyClient.create( rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
 				.queryToJson();
-	}		
-	
-	/** This works but it only returns the total fee; we need base fee and priority fee. */
-	static long getGasPrice() throws Exception {
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_gasPrice"
-			}""";
-		
-		S.out( rpcUrl);
-		
-		return nodeQuery( body).getLong( "result");
 	}
-	
+
+
+
 	public static long getBlockNumber() throws Exception {
 		String body = """
 			{
@@ -297,7 +288,6 @@ public class MoralisServer {
 				}""";
 		return nodeQuery( body);  // result -> pending and result -> queued
 	}
-    
 	
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask( "Dt2");

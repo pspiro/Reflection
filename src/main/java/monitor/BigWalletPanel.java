@@ -319,7 +319,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	
 	private void burnAllRusd() {
 		wrap( () -> { 
-			double amt = new Wallet( m_wallet.getText() ).getBalance( Monitor.m_config.rusdAddr() );
+			double amt = new Wallet( m_wallet.getText() ).getBalance( config().rusdAddr() );
 			burn( amt);
 		});
 	}
@@ -409,7 +409,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		Util.reqValidAddress(wallet);
 		
 		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, wallet) ) ) {
-			Monitor.m_config.rusd().mintStockToken( wallet, tok, amt).waitForHash();
+			config().rusd().mintStockToken( wallet, tok, amt).waitForHash();
 			Util.inform( this, "Done");
 		}
 	}
