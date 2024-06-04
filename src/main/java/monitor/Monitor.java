@@ -124,15 +124,15 @@ public class Monitor {
 				"Reflection System Monitor - %s - %s", 
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
-		m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		m_frame.setSize( 1300, 800);
 		m_frame.setVisible(true);
 		
-		m_frame.addWindowListener(new WindowAdapter() {
-		    public void windowClosed(WindowEvent e) {
-		    	Util.execute( () -> Util.wrap( () -> start() ) );
-		    }
-		});
+		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		m_frame.addWindowListener(new WindowAdapter() {
+//		    public void windowClosed(WindowEvent e) {
+//		    	Util.execute( () -> Util.wrap( () -> start() ) );
+//		    }
+//		});
 	}
 	
 	static int num() {
