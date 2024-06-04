@@ -26,7 +26,6 @@ import tw.util.S;
 public class TgServer {
 	static TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
 	static final String ReflectionCommunity = "-1001262398926"; // community chat
-	static final String communityChatId = "-1001262398926"; // community chat
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey; 
 	static final String peterSpiro = "5053437013";
@@ -109,7 +108,7 @@ public class TgServer {
 	}
 
 	static void send( String message) throws Exception {
-		send( message, communityChatId);
+		send( message, ReflectionCommunity);
 	}
 	
 	static void send( String message, String chatId) throws Exception {
