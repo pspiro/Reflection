@@ -72,7 +72,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		}
 
 		else {
-			/** This code is obsolete; use parseToObject() instead */
+			/** This code is obsolete; use parseToObject() instead, unless you need to call validateCookie() */
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)

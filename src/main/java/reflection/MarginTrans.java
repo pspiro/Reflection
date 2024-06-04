@@ -6,6 +6,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import static reflection.Main.require;
 
 public class MarginTrans extends MyTransaction {
 	static JsonObject marginConfig;
@@ -24,7 +25,7 @@ public class MarginTrans extends MyTransaction {
 	}
 	
 	private void setMarginConfig() {
-		String[] gtc = { "Never, Always" };
+		String[] gtc = "Never,Always,Sometimes".split( ",");
 
 		//			JsonArray stocks = new JsonArray();
 		//			
@@ -82,5 +83,30 @@ public class MarginTrans extends MyTransaction {
 				"bidPrice", 65.12,
 				"askPrice", 66.12
 				);
+	}
+
+	public void marginOrder() {
+		wrap( () -> {
+			parseMsg();
+			
+			m_walletAddr = m_map.getWalletAddress();
+			
+			validateCookie( "margin-static");
+			
+			int conid = m_map.getRequiredInt("conid");
+			double amt = m_map.getRequiredDouble( "amountToSpend");
+
+			double leverage = m_map.getRequiredDouble( "leverage");
+			require( leverage >= 1 && leverage <= 20, RefCode.INVALID_REQUEST, "Leverage is out of range");
+			
+			double profitTakerPrice = m_map.getRequiredDouble( "profitTakerPrice");
+			double lmtPrice = m_map.getRequiredDouble( "entryPrice");
+			double stopLossPrice = m_map.getRequiredDouble( "stopLossPrice");
+			String goodUntil = m_map.getRequiredString( "goodUntil");
+			require( "SometimesAlwaysNever".indexOf( goodUntil) != -1, RefCode.INVALID_REQUEST, "Invalid goodUntil");
+			String currency = m_map.getRequiredString( "currency");
+
+			respondOk();
+		});
 	}
 }
