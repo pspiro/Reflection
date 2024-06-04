@@ -1,7 +1,6 @@
 package telegram;
 
 import java.io.IOException;
-import java.net.http.HttpResponse;
 import java.util.Date;
 import java.util.TimeZone;
 

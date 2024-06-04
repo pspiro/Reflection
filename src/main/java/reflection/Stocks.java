@@ -1,5 +1,6 @@
 package reflection;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,6 +20,7 @@ public class Stocks implements Iterable<Stock> {
 	private final HashMap<String,Stock> m_tokenAddrMap = new HashMap<String,Stock>(); // map contract address (lower case) to JSON object storing all stock attributes
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
+	private final JsonArray m_marginStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	
 	public void readFromSheet(ConfigBase config) throws Exception {
 		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);
@@ -30,6 +32,7 @@ public class Stocks implements Iterable<Stock> {
 		m_stocks.clear();
 		m_conidMap.clear();
 		m_hotStocks.clear();
+		m_marginStocks.clear();
 		m_allAddresses = null;
 		
 		// read master list of symbols and map conid to entry
@@ -53,6 +56,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "allow", row.getString("Allow") );
 				stock.put( "tokenSymbol", row.getString("Token Symbol"));
 				stock.put( "isHot", row.getBool("Hot") );
+				stock.put( "canMargin", row.getBool("Margin") );
 				
 				// read fields from Master tab
 				ListEntry masterRow = masterList.get(conid);
@@ -70,6 +74,10 @@ public class Stocks implements Iterable<Stock> {
 
 				if (stock.isHot() ) {
 					m_hotStocks.add( stock);
+				}
+
+				if (stock.canMargin() ) {
+					m_marginStocks.add( stock);
 				}
 			}
 		}
@@ -149,5 +157,9 @@ public class Stocks implements Iterable<Stock> {
 			}
 		}
 		return m_allAddresses;
+	}
+
+	public JsonArray marginStocks() {
+		return m_marginStocks;
 	}
 }

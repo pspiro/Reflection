@@ -70,7 +70,7 @@ public class ProfileTransaction extends MyTransaction {
 	public void handleUpdateProfile() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			m_walletAddr = m_map.getWalletAddress();
 			validateCookie("setprofile");
 
 			Profile profile = new Profile( m_map.obj() );

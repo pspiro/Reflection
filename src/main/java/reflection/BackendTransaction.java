@@ -201,7 +201,7 @@ public class BackendTransaction extends MyTransaction {
 	public void handleWalletUpdate() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			m_walletAddr = m_map.getWalletAddress();
 
 			// look to see what parameters are being passed; at least we should update the time
 			out( "received wallet-update message with params " + m_map);
@@ -214,7 +214,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			m_walletAddr = m_map.getWalletAddress();
 
 			validateCookie("register");
 			
@@ -523,7 +523,7 @@ public class BackendTransaction extends MyTransaction {
 	public void checkIdentity() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			m_walletAddr = m_map.getWalletAddress();
 			validateCookie("checkIdentity");
 			
 			JsonArray ar = Main.m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",

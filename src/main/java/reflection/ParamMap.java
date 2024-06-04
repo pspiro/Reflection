@@ -35,9 +35,9 @@ public class ParamMap {
 	}
 
 	/** Returns lower case, interned string. */
-	String getWalletAddress(String tag) throws RefException {
-		String val = getParam( tag);
-		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Param '%s' is missing", tag);
+	String getWalletAddress() throws RefException {
+		String val = getParam( "wallet_public_key");
+		Main.require( S.isNotNull( val), RefCode.INVALID_REQUEST, "Wallet address is missing");
 		Main.require( Util.isValidAddress(val), RefCode.INVALID_REQUEST, "Wallet address is invalid");
 		return val;
 	}

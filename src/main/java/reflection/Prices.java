@@ -117,6 +117,12 @@ public class Prices {
 				conid, m_bid, m_ask, m_last);	
 	}
 
+	/** If we have ask and last, return the smaller; if we have ask only
+	 *  return that. Last only doesn't help us because it could be old */
+	public double askMark() {
+		return validLast() ? Math.min( m_ask, m_last) : m_ask;
+	}
+
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");
 //	public static void main(String[] args) throws ParseException {
 //		String str = "09/01 14:57:23";
