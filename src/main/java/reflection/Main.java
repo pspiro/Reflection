@@ -133,6 +133,7 @@ public class Main extends App implements ITradeReportHandler {
 			
 			// margin
 			server.createContext("/api/margin-static", exch -> new MarginTrans(this, exch, true).marginStatic() );
+			server.createContext("/api/margin-dynamic", exch -> new MarginTrans(this, exch, true).marginDynamic() );
 
 
 			// orders and live orders
