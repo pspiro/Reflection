@@ -167,4 +167,8 @@ public abstract class MyTransaction extends BaseTransaction {
 	protected String getCountryCode() throws Exception {
 		return Util.left( getFirstHeader( "X-Country-Code"), 2);
 	}
+
+	protected String getUserIpAddress() throws Exception {
+		return Util.left( getFirstHeader( "X-Real-IP"), 15);
+	}
 }

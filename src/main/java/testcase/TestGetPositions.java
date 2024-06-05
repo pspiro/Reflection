@@ -48,7 +48,7 @@ public class TestGetPositions extends MyTestCase {
 	
 	public void testTokenPos() throws Exception {
 		MyHttpClient cli = cli();
-		cli.get("/api/positions/" + wallet);
+		cli.get("/api/positions-new/" + wallet);
 		assert200();
 		JsonArray ar = cli.readJsonArray();
 		assertTrue( ar.size() > 0);

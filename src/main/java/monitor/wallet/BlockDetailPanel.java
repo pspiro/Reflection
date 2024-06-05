@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 
 import common.JsonModel;
 import common.Util;
-import fireblocks.Accounts;
 import monitor.Monitor;
 import positions.MoralisServer;
 import tw.util.S;
@@ -39,9 +38,9 @@ public class BlockDetailPanel extends BlockPanelBase {
 		
 		Util.wrap( () -> {
 			commonMap.put( refWallet, RefWallet);
-			commonMap.put( Accounts.instance.getAddress("Admin1").toLowerCase(), "Admin1");
-			commonMap.put( Accounts.instance.getAddress("Admin2").toLowerCase(), "Admin2");
-			commonMap.put( Accounts.instance.getAddress("Owner").toLowerCase(), "Owner");
+			commonMap.put( Monitor.m_config.admin1Addr().toLowerCase(), "Admin1");
+			//commonMap.put( Monitor.m_config.admin1Addr().toLowerCase(), "Admin2");
+			commonMap.put( Monitor.m_config.ownerAddr().toLowerCase(), "Owner");
 			commonMap.put( "0x2703161d6dd37301ced98ff717795e14427a462b", "My prod wallet");
 			//map.put( nullAddr, "");
 		});

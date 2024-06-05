@@ -4,49 +4,53 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
+import testcase.web3.TestRusd;
+import testcase.web3.TestSendEth;
+import testcase.web3.TestStockToken;
 
 // NOTE: static variables are shared across tests
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-//	TestAllow.class,
+	// tests that require prices
+//	TestFbOrders.class,
+//	TestKyc.class,
+//	TestOrder.class,
+	TestOrderNoAutoFill.class,
+	TestPartialFill.class,
+	TestPaxos.class,
+	TestPrices.class,
+
 //	TestBackendMsgs.class,
 //	TestCheckIdentity.class,
 //	TestConfig.class,
-//	TestConfigSheet.class,
-//	TestEmail.class,
 //	TestErrors.class,
 //	TestFaqs.class,
-//	TestFbOrders.class,
 //	TestFireblocks.class,
 //	TestGetCryptoTrans.class,
 //	TestGetPositions.class,
-//	TestGtable.class,
+	TestGtable.class,
 //	TestHookServer.class,
 //	TestHttpClient.class,
-//	TestKyc.class,
-//	TestLog.class,
 //	TestMktDataServer.class,
 //	TestOnramp.class,
-//	TestOrder.class,
-//	TestOrderNoAutoFill.class,
-//	TestOutsideHours.class,
-//	TestPanic.class,
-//	TestPartialFill.class,
-//	TestPaxos.class,
+	TestOutsideHours.class,
+	TestPanic.class,
 //	TestPositionTracker.class,
-//	TestPrices.class,
-//	TestProfile.class,
+//	TestProfile.class,  // fails due to us not requiring the pan and aadhaar anymore
 //	TestRedeem.class,
-//	TestSignup.class,
+//	TestRusd.class,
+//	TestSendEth.class,
+	TestSignup.class,
 //	TestSiwe.class,
-//	TestSplitDates.class,
-//	TestSql.class,
-//	TestStrings.class,
+	TestSplitDates.class,
+	TestSql.class,
+	TestStockToken.class,
+	TestStrings.class,
 //	TestSwap.class,
-//	TestUnwindOrder.class,
-//	TestUserTokMgr.class,
-//	TestWallet.class,
+	TestUnwindOrder.class,
+	TestUserTokMgr.class,
+	TestWallet.class
 })
 public class TestAll extends TestCase {
 }

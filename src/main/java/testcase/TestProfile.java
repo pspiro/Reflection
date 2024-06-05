@@ -4,11 +4,12 @@ import java.util.Random;
 
 import org.json.simple.JsonObject;
 
-import common.Util;
+import common.MyScanner;
 import reflection.RefCode;
 
 public class TestProfile extends MyTestCase {
 	static String email = "jack" + ((new Random()).nextInt()) + "@gmail.com";
+	static MyScanner scanner = new MyScanner(); 
 	
 	public void testGetProfile() throws Exception {
 		JsonObject json = createValidProfile();
@@ -33,7 +34,7 @@ public class TestProfile extends MyTestCase {
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
 		// test correct code
-		String code = Util.input("Enter code:");
+		String code = scanner.input("Enter code:");
 		json.put("email_confirmation", code);
 		cli().post("/api/update-profile", json.toString() );
 		assert200();
@@ -62,6 +63,12 @@ public class TestProfile extends MyTestCase {
 		cli().post("/api/update-profile", json.toString() );
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 
+		// missing cookie
+		json = createValidProfile();
+		json.remove("cookie");
+		cli().post("/api/update-profile", json.toString() );
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
+
 		// missing missing aadhaar 
 		json = createValidProfile();
 		json.remove( "aadhaar");
@@ -85,12 +92,6 @@ public class TestProfile extends MyTestCase {
 		json.put( "pan_number", "junk");
 		cli().post("/api/update-profile", json.toString() );
 		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
-
-		// missing cookie
-		json = createValidProfile();
-		json.remove("cookie");
-		cli().post("/api/update-profile", json.toString() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
 	
 	public void testBigProfile() throws Exception {
@@ -99,7 +100,7 @@ public class TestProfile extends MyTestCase {
 		assert200();
 
 		// test correct code
-		String code = Util.input("Enter code:");
+		String code = scanner.input("Enter big profile code:");
 		json.put("email_confirmation", code);
 		cli().postToJson("/api/update-profile", json.toString() );
 		
@@ -134,6 +135,12 @@ public class TestProfile extends MyTestCase {
 		json.put( "phone", "9149399393");
 		json.put( "pan_number", "XXXXX9393Y");
 		json.put( "aadhaar", "939393939393");
+		return json;
+	}
+
+	static JsonObject createValidSkipEmail() {
+		JsonObject json = createValidProfile();
+		json.put( "email", "test@test.com");
 		return json;
 	}
 

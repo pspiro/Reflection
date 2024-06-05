@@ -1,11 +1,8 @@
 package testcase;
 
-import static fireblocks.Accounts.instance;
-
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Accounts;
 import monitor.BigWalletPanel;
 import positions.Wallet;
 import reflection.RefCode;
@@ -20,21 +17,10 @@ public class TestRedeem extends MyTestCase {
 	
 	static {
 		try {
-			readStocks();
-			refWallet = Accounts.instance.getAddress("RefWallet");
+			refWallet = m_config.refWalletAddr();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public static void mintRusd(String wallet, double amt) throws Exception {
-		S.out( "Minting %s RUSD into %s", amt, wallet);
-
-		m_config.rusd()
-				.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
-				.waitForStatus("COMPLETED");
-		
-		waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 	}
 	
 	public void testLocked() throws Exception {
@@ -42,13 +28,12 @@ public class TestRedeem extends MyTestCase {
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.busd().mint( refWallet, 2000).waitForCompleted();
+			m_config.mintBusd( refWallet, 2000).waitForCompleted();
 		}
 		
 		// mint some RUSD to new wallet 
-//		Cookie.setNewFakeAddress( true);
-//		mintRusd(Cookie.wallet, 5);
-		Cookie.setWalletAddr("0xb162d6738d6e95fd39017411432525a6171ce3d3");
+		Cookie.setNewFakeAddress( true);
+		mintRusd(Cookie.wallet, 5);
 		
 		// lock it by time and redeem; should fail
 		lock( 5, System.currentTimeMillis() + Util.DAY, 0);
@@ -89,7 +74,8 @@ public class TestRedeem extends MyTestCase {
 
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.busd().mint( refWallet, 2000).waitForCompleted();
+			m_config.mintBusd( refWallet, 2000)
+					.waitForCompleted();
 		}
 		
 		// mint an amount of RUSD that should work--high 
@@ -174,7 +160,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void test() throws Exception {
 		m_config.busd().approve( 
-				instance.getId( "RefWallet"), // called by
+				m_config.refWalletKey(),
 				m_config.rusdAddr(), // approving
 				1000000000); // $1B
 	}

@@ -8,9 +8,11 @@ import javax.swing.SwingUtilities;
 
 import common.Util;
 import common.Util.ExRunnable;
-import tw.util.UI;
+import reflection.Config;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.UI;
 
+/** Monitor panel, base class for all top-level Monitor panels */
 public abstract class MonPanel extends JPanel implements INewTab {
 	public MonPanel(LayoutManager layout) {
 		super(layout);
@@ -46,5 +48,9 @@ public abstract class MonPanel extends JPanel implements INewTab {
 	
 	protected Window getWindow() {
 		return SwingUtilities.getWindowAncestor(this);
+	}
+	
+	static Config config() {
+		return Monitor.m_config;
 	}
 }

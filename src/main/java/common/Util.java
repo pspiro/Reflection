@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TimeZone;
@@ -31,14 +30,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import javax.mail.Address;
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
@@ -47,9 +38,10 @@ import com.ib.client.Decimal;
 
 import reflection.RefCode;
 import reflection.RefException;
-import tw.google.Auth;
 import tw.util.S;
+import web3.CreateKey;
 
+/** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class Util {
 	public static final int MINUTE = 60 * 1000;
 	public static final int HOUR = 60 * MINUTE;
@@ -561,12 +553,6 @@ public class Util {
 		}
 	}
 	
-//	public static void main(String[] args) throws Exception {
-//		String user = "peter@reflection.trading";
-//		String pw = "mvLYAnCr4*7)";
-//		sendEmail( user, pw, "peter", "peteraspiro@gmail.com", "sub", "text", false);
-//	}
-
 	/** Send email from google */
 //	public static void sendEmail(String username, String password, 
 //			String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
@@ -579,8 +565,8 @@ public class Util {
 //				text, 
 //				isHtml);
 //	}
-
-    /** Send an email using SMTP */
+//
+//    /** Send an email using SMTP */
 //	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
 //		Properties props = new Properties();
 //		props.put("mail.smtp.auth", "true");
@@ -604,28 +590,16 @@ public class Util {
 //		Transport.send(message);
 //		S.out( "Sent email '%s' to %s", subject, to);
 //	}
-
-	
-	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
-	private static Address toEmail(String name, String email) throws AddressException {
-		return new InternetAddress( String.format( "%s <%s>", name, email) );
-	}
+//
+//	
+//	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
+//	private static Address toEmail(String name, String email) throws AddressException {
+//		return new InternetAddress( String.format( "%s <%s>", name, email) );
+//	}
 
 	/** Convert Throwable to Exception */
 	public static Exception toException(Throwable e) {
 		return e instanceof Exception ? (Exception)e : new Exception(e);
-	}
-
-	/** Show prompt and input string; Scanner does not work */
-	public static String input(String str) {
-		S.out( str);
-		try {
-			return new BufferedReader(new InputStreamReader(System.in) ).readLine();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 
 	/** Pop up a dialog, beep, and get user input */ 
@@ -735,6 +709,11 @@ public class Util {
 		}
 		return sb.toString();  // change to EIP-55 address 
 	}
+
+	/** return a wallet private key */
+	public static String createPrivateKey() {
+		return CreateKey.createPrivateKey();
+	}
 	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
@@ -815,6 +794,28 @@ public class Util {
 				.replaceAll( "%7[bB]", "{")
 				.replaceAll( "%7[dD]", "}")
 				;
+	}
+
+	/** Return true if it is a valid private key. This only checks length; you could
+	 *  check for valid characters as well */
+	public static boolean isValidKey(String privateKey) {
+		return privateKey != null && privateKey.length() == 64;
+	}
+
+	public static void reqValidKey(String privateKey) throws Exception {
+		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
+	}
+	
+	public static String toHex( long val) {
+		return "0x" + Long.toHexString( val);
+	}
+
+	public static long getLong(String str) {
+		return S.isNotNull( str) 
+				? str.startsWith( "0x")
+						? Long.parseLong( str.substring( 2), 16)
+						: Long.parseLong( str)
+				: 0;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

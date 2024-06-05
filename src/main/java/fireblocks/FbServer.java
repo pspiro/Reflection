@@ -13,7 +13,9 @@ import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyHttpClient;
+import http.MyServer;
 import reflection.Config;
+import reflection.Config.Web3Type;
 import reflection.FireblocksStatus;
 import tw.util.S;
 
@@ -29,7 +31,7 @@ import tw.util.S;
  *  out to be able to monitor the resource usage. Adding it to RefAPI would be a simpler solution. */
 public class FbServer {
 	static final TreeMap<String,Trans> m_map = new TreeMap<>(); /** Map fireblock id to transaction */
-	static final Config m_config = new Config();
+	static Config m_config;
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static long m_lastSuccessfulFetch;
 	static long m_lastSuccessfulPut;
@@ -43,8 +45,7 @@ public class FbServer {
 		try {
 			Thread.currentThread().setName("FBAS");
 			S.out( "Starting FbServer");
-			Util.require( args.length >= 1, "You must specify a config tab name");
-			run( args[0] );
+			run( args);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -52,10 +53,15 @@ public class FbServer {
 		}
 	}
 
-	public static void run(String tab) throws Exception {
+	public static void run(String[] args) throws Exception {
 		MyClient.filename = "fbserver.http.log";
 
-		m_config.readFromSpreadsheet(tab);
+		m_config = Config.read( args);
+
+		// this program is for Fireblocks mode only
+		Util.require(
+				m_config.web3Type() == Web3Type.Fireblocks,
+				"fbserver cannot run in Refblocks mode");
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> S.out("Shutdown message received") ) );
 

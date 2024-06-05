@@ -326,7 +326,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "email", email);
 				obj.put( "referer", referer);
 				obj.put( "country", getCountryCode() );
-				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+				obj.put( "ip", getUserIpAddress() );
 				obj.put( "utm_source", getUtmVal("utm_source") );
 				obj.put( "utm_medium", getUtmVal("utm_medium") );
 				obj.put( "utm_campaign", getUtmVal("utm_campaign") );
@@ -338,8 +338,8 @@ public class BackendTransaction extends MyTransaction {
 //			}
 		});
 	}
-
-	/** frontend might pass "null" */
+	
+/** frontend might pass "null" */
 	private String getUtmVal(String tag) {
 		String val = m_map.getUnescapedString( tag);
 		return "null".equals( val) ? "" : val;

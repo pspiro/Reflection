@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -26,6 +27,7 @@ import common.Util;
 import reflection.SiweUtil;
 import reflection.Stock;
 import tw.util.S;
+import web3.Erc20;
 
 /**
  * A JSON object. Key value pairs are unordered. JSONObject supports java.util.Map interface.
@@ -202,20 +204,36 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new JsonArray(); 
 	}
 
+	/** Call it like this: json.<String>getAnyArray( key) */
+	@SuppressWarnings("unchecked")
+	public <T> ArrayList<T> getArrayOf(String key) {
+		ArrayList<T> array = (ArrayList<T>)get(key);
+		return array != null ? array : new ArrayList<T>(); 
+	}
+	
+	/** Can return null; caller should check */
 	public JsonObject getObject(String key) throws Exception {
-		return (JsonObject)get(key);
+		Object obj = get(key);
+		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
+		return (JsonObject)obj;
+	}
+
+	/** Throws exception if not found */
+	public JsonObject getRequiredObj(String key) throws Exception {
+		JsonObject obj = getObject(key);
+		Util.require( obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
+		return obj;
 	}
 	
-	/** Never return null, return empty JsonObject  */
+	/** Never returns null, returns empty JsonObject  */
 	public JsonObject getObjectNN(String key) throws Exception {
-		JsonObject obj = getObject( key);
-		return obj != null ? obj : new JsonObject();
+		Object obj = getObject(key);
+		return obj != null ? (JsonObject)obj : new JsonObject();
 	}
 	
-	/** Returns zero for null value. */
+	/** Returns zero for null value Can handle hex calues starting with 0x. */
 	public long getLong(String key) {
-		String str = getString( key);
-		return S.isNotNull( str) ? Long.parseLong( str) : 0;
+		return Util.getLong( getString( key) );
 	}
 
 	/** Returns zero for null value. */
@@ -226,7 +244,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public BigInteger getBigInt(String key) {
 		String str = getString( key);
-		return S.isNotNull( str) ? BigInteger.ZERO : new BigInteger( str, 10);
+		return S.isNotNull( str) ? new BigInteger( str) : BigInteger.ZERO;
 	}
 
 	public double getDouble(String key) {
@@ -306,12 +324,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public SiweMessage getSiweMessage() throws Exception {
 		return SiweUtil.toSiweMessage(this);
-	}
-
-	public JsonObject getRequiredObj(String key) throws Exception {
-		JsonObject obj = getObject(key);
-		Util.require(obj != null, "The required key is missing from the json object: " + key);
-		return obj;
 	}
 
 	/** @deprecated; use putIf(); when everyone is uing putIf(), remove putIf()
@@ -427,6 +439,9 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return (Stock)get( tag);
 	}
 
+	public BigInteger getBlockchain(String key, int decimals) {
+		return Erc20.toBlockchain( getDouble( key), decimals);
+	}
 }
 /** NOTE: Timestamp objects are stored as
  *  

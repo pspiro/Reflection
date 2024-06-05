@@ -4,6 +4,9 @@ import reflection.Config;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
+import web3.Busd;
+import web3.Rusd;
+import web3.StockToken;
 
 /** Tests all RUSD, BUSD and StockToken features */
 public class Test {
@@ -36,21 +39,20 @@ public class Test {
 		// only Bob can buy with BUSD because only Bob can approve that
 				
 		// mint BUSD for user Bob
-		busd.mint( accounts.getAddress("Bob"), 1);
+		config.mintBusd( accounts.getAddress("Bob"), 1);
 		
 		// user to approve buying with BUSD; you must wait for this
-		busd.approve(
-				accounts.getId( "Bob"),
-				rusd.address(),
-				1).waitForHash();
-		
-		// let Bob buy 1 stock with 1 BUSD (now RefWallet has 1 BUSD which is needed when user wants to sell their RUSD) 
-		rusd.buyStock(
-				accounts.getAddress("Bob"),
-				busd,
-				1,
-				stock,
-				100);
+////		busd.approve(
+////				rusd.address(),
+////				1).waitForHash();
+//		
+//		// let Bob buy 1 stock with 1 BUSD (now RefWallet has 1 BUSD which is needed when user wants to sell their RUSD) 
+//		rusd.buyStock(
+//				accounts.getAddress("Bob"),
+//				busd,
+//				1,
+//				stock,
+//				100);
 
 		//S.input("Check balances, should be 1 BUSD in RefWallet");
 		
