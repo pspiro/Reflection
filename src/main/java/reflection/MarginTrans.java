@@ -17,6 +17,8 @@ public class MarginTrans extends MyTransaction {
 
 	public void marginStatic() {
 		wrap( () -> {
+			getWalletFromUri();
+			
 			if (marginConfig == null) {
 				setMarginConfig();
 			}
@@ -105,6 +107,22 @@ public class MarginTrans extends MyTransaction {
 			String goodUntil = m_map.getRequiredString( "goodUntil");
 			require( "SometimesAlwaysNever".indexOf( goodUntil) != -1, RefCode.INVALID_REQUEST, "Invalid goodUntil");
 			String currency = m_map.getRequiredString( "currency");
+
+			respondOk();
+		});
+	}
+
+	public void marginCancel() {
+		wrap( () -> {
+			parseMsg();
+			
+			m_walletAddr = m_map.getWalletAddress();
+			
+			validateCookie( "margin-static");
+
+			String id = m_map.getRequiredString("orderId");
+			boolean liquidate = m_map.getBool("liquidate");
+			
 
 			respondOk();
 		});
