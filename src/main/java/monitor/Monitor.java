@@ -160,37 +160,6 @@ public class Monitor {
 		return new QueryPanel( "trades", names, sql);
 	}
 
-	static class AnyQueryPanel extends QueryPanel {
-		
-		AnyQueryPanel() {
-			super( "", "", "");
-		}
-		
-		@Override protected void refresh() throws Exception {
-			wrap( () -> {
-				String query = where.getText().trim()
-						.replaceAll( "'wallet'", "'wallet_public_key'");
-				
-				if (S.isNotNull( query) ) {
-					JsonArray rows = Monitor.m_config.sqlQuery( query);
-					String[] names = rows.getKeys().toArray( new String[0]);
-					String str = String.join( ",", names);
-					m_model.setNames( str);
-					m_model.fireTableStructureChanged();
-		
-					setRows( rows);
-					
-					m_model.resetSort();  // sort by first column if it is sortable
-					m_model.fireTableDataChanged();
-					
-					S.out( "***Refreshed query model to %s", rows().size() );
-				}
-			});
-		}
-		
-		
-	}
-
 	static class EmptyPanel extends MonPanel {
 		EmptyPanel(LayoutManager layout) {
 			super(layout);
