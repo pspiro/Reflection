@@ -127,7 +127,9 @@ public class MySqlConnection implements AutoCloseable {
 	/** Do not include the word 'where' in the where clause
 	 *  Don't forget single quotes around string values in where clause */
 	public int updateJson( String table, JsonObject json, String where, Object... params) throws Exception {
-		Util.require( !where.startsWith( "where"), "Don't include where" );
+		if (!where.startsWith( "where")) {
+			where = "where " + where;
+		}
 
 		StringBuilder values = new StringBuilder();
 		for (Object key : json.keySet() ) {
@@ -137,7 +139,7 @@ public class MySqlConnection implements AutoCloseable {
 			values.append(key + " = " + toSqlValue( json.get(key) ) );
 		}
 		
-		return execute( String.format("update %s set %s where %s", table, values, String.format(where, params) ) );
+		return execute( String.format("update %s set %s %s", table, values, String.format(where, params) ) );
 	}
 	
 	/** These types are supported and get quoted.

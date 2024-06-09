@@ -334,11 +334,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return super.put(key, value);
 	}
 
-	/** Add the pair if val is not null
-	 * 
-	 *  WARNING: to be just like put(), you would have to remove() the element if val is null */
+	/** Add the pair if val is not null AND not empty string
+	 *  
+	 *  This should be used on newly created objects since it's not clear if you
+	 *  would want to overwrite existing values with null values */
 	public void putIf(String key, Object val) {
-		if (val != null) {
+		if (val != null && S.isNotNull( val.toString() ) ) {
 			put(key, val);
 		}
 	}
@@ -441,6 +442,15 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 
 	public BigInteger getBlockchain(String key, int decimals) {
 		return Erc20.toBlockchain( getDouble( key), decimals);
+	}
+
+	public void removeNulls() {
+		for (Iterator<Entry<String, Object>> iter = entrySet().iterator(); iter.hasNext(); ) {
+			Object val = iter.next().getValue();
+			if (val == null || S.isNull( val.toString() ) ) {
+				iter.remove();
+			}
+		}
 	}
 }
 /** NOTE: Timestamp objects are stored as

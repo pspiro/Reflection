@@ -318,24 +318,23 @@ public class BackendTransaction extends MyTransaction {
 			String referer = m_map.getUnescapedString("referer");
 			
 			// write them all until we get this working
-//			if (Util.isValidEmail( email) ) {
-				// add entry to signup table
+			if (Util.isValidEmail( email) ) {
 				JsonObject obj = new JsonObject();
-				obj.put( "first", first);
-				obj.put( "last", last);
 				obj.put( "email", email);
-				obj.put( "referer", referer);
-				obj.put( "country", getCountryCode() );
-				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
-				obj.put( "utm_source", getUtmVal("utm_source") );
-				obj.put( "utm_medium", getUtmVal("utm_medium") );
-				obj.put( "utm_campaign", getUtmVal("utm_campaign") );
-				obj.put( "utm_term", getUtmVal("utm_term") );
-				obj.put( "utm_content", getUtmVal("utm_content") );
+				obj.putIf( "first", first);
+				obj.putIf( "last", last);
+				obj.putIf( "referer", referer);
+				obj.putIf( "country", getCountryCode() );
+				obj.putIf( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+				obj.putIf( "utm_source", getUtmVal("utm_source") );
+				obj.putIf( "utm_medium", getUtmVal("utm_medium") );
+				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
+				obj.putIf( "utm_term", getUtmVal("utm_term") );
+				obj.putIf( "utm_content", getUtmVal("utm_content") );
 			
 				out( "Adding to signup table: " + obj.toString() );
-				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
-//			}
+				m_main.queueSql( sql -> sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) );
+			}
 		});
 	}
 
@@ -525,6 +524,17 @@ public class BackendTransaction extends MyTransaction {
 			respond( Util.toJson(
 					"verified", verified,
 					"message", verified ? "Your identity has already been confirmed" : "Please confirm your identiy") );
+		});
+	}
+
+	public void handleSagHtml() {
+		wrap( () -> {
+			respondFull( 
+					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
+					200,
+					null,
+					"text/html");
+			
 		});
 	}
 
