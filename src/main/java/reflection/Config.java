@@ -533,9 +533,11 @@ public class Config extends ConfigBase {
 	/** email template; replace %text with html or plain text */
 	public static final String template = """
 		<div style="margin: 0px; padding: 6px; background-color: #d3caee; font-family: Arial, sans-serif; border-radius: 6px;">
-		<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px;">
+		<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px; min-height: 200px">
 		<div style="text-align: center;"><img src="https://www.jotform.com/uploads/peter_peter662/form_files/Logo%201.6644b6589be269.57034100.png" alt="" width="253" height="60" /></div>
+		<div style="margin:10px; font-size:16px">		
 		%text
+		</div>
 		</div>
 		</div>
 		"""; 

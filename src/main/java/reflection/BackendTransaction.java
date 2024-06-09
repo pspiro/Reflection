@@ -337,8 +337,8 @@ public class BackendTransaction extends MyTransaction {
 			}
 		});
 	}
-
-	/** frontend might pass "null" */
+	
+/** frontend might pass "null" */
 	private String getUtmVal(String tag) {
 		String val = m_map.getUnescapedString( tag);
 		return "null".equals( val) ? "" : val;

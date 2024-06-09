@@ -17,17 +17,16 @@ class UsersPanel extends QueryPanel {
 		super( "users", names, sql);
 	}
 	
-	@Override public void adjust(JsonObject obj) {
-		obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
-		obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
+	@Override public void adjust(JsonObject userRec) {
+		userRec.update( "first_name", name -> Util.initialCap( name.toString() ) );
+		userRec.update( "last_name", name -> Util.initialCap( name.toString() ) );
 		
 		Util.wrap( () -> {
-			String persona = obj.getString( "persona_response");
-			if (JsonObject.isObject( persona) ) {
-				JsonObject fields = JsonObject.parse( persona).getObject("fields");
-				obj.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
-				obj.put( "persona_id", getVal( fields, "identification-number"));
-			}
+			JsonObject fields = userRec
+					.getObjectNN( "persona_response")
+					.getObjectNN("fields");
+			userRec.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
+			userRec.put( "persona_id", getVal( fields, "identification-number"));
 		});
 	}
 	
@@ -122,7 +121,7 @@ class UsersPanel extends QueryPanel {
 
 	}
 	
-	static String getVal( JsonObject obj, String tag) throws Exception {
-		return obj.getObject( tag).getString( "value");
+	static String getVal( JsonObject fields, String tag) throws Exception {
+		return fields.getObject( tag).getString( "value");
 	}
 }

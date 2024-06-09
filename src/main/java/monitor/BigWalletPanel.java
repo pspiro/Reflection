@@ -50,6 +50,9 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final JLabel m_pan = new MyLabel(); 
 	private final JLabel m_aadhaar = new MyLabel(); 
 	private final JLabel m_locked = new MyLabel(); 
+	private final JLabel m_userCountry = new MyLabel();
+	private final JLabel m_personaData = new MyLabel();
+	
 	private final JTextField m_firstName = new JTextField(8); 
 	private final UpperField m_mintAmt = new UpperField(8); 
 	private final UpperField m_burnAmt = new UpperField(8);
@@ -80,6 +83,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "KYC", m_kyc);
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
+		vp.add( "Country", m_userCountry);
+		vp.add( "Persona", m_personaData);
 		
 		vp.addHeader( "Crypto");
 		vp.add( "RUSD", m_rusd);
@@ -187,6 +192,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		m_pan.setText(null);
 		m_aadhaar.setText(null);
 		m_locked.setText(null);
+		m_userCountry.setText(null);
+		m_personaData.setText(null);
 		transPanel.clear();
 		redemPanel.clear();
 		blockPanel.clear();
@@ -203,6 +210,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_kyc.setText( json.getString("kyc_status"));
 				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
+				m_userCountry.setText( json.getString( "country") );
+				m_personaData.setText( S.isNotNull( json.getString( "persona_response") ) ? "tooltip" : "<empty>");
+				m_personaData.setToolTipText( json.getObjectNN( "persona_response").toHtml() );
+
 				
 				JsonObject obj = json.getObject("locked");
 				if (obj != null) {
