@@ -175,6 +175,7 @@ public class Main implements ITradeReportHandler {
 
 			// landing page
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/sag", exch -> new BackendTransaction(this, exch).handleSagHtml() );
 			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
 
 			// obsolete, remove
