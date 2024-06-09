@@ -165,4 +165,7 @@ public class CreateTables  {
 	}
 }
 
+// add an id field to a table (assigns an id to all records)
+// dev=> alter table users add column id INT GENERATED ALWAYS AS IDENTITY unique;
+
 // dev=> alter table users add column locked jsonb;
