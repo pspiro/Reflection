@@ -1,6 +1,8 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.util.HashMap;
 
 import javax.swing.JLabel;
@@ -15,6 +17,7 @@ import web3.Erc20;
 
 /** Shows the holders for a given token (wallet and balance */
 public class HoldersPanel extends JsonPanel {
+	public static Format FMT = new DecimalFormat( "#,##0.0000");
 	private JLabel m_title = new JLabel();
 	
 	HoldersPanel() {
@@ -25,6 +28,11 @@ public class HoldersPanel extends JsonPanel {
 
 	@Override protected void refresh() throws Exception {
 	}
+	
+	/** show four decimals */
+	@Override protected Object format(String key, Object value) {
+		return value instanceof Double ? S.fmt4((double)value) : value; 
+	}
 
 	@Override protected void onDouble(String tag, Object val) {
 		if (S.notNull(tag).equals("wallet") ) {
@@ -32,6 +40,10 @@ public class HoldersPanel extends JsonPanel {
 			Monitor.m_walletPanel.setWallet(val.toString());
 		}
 	}
+	
+	// there's a bug in the Moralis code; the same transaction gets returned twice;
+	// to fix it, look at the transaction_hash field and filter out the dups
+	// see email to Moralis on 6/9/24
 	
 	double total;
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work

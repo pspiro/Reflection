@@ -163,6 +163,11 @@ public class MoralisServer {
 //	}
 	
 	/** returns one page of transactions for a specific token
+	 * 
+	// there's a bug in the Moralis code; the same transaction gets returned twice;
+	// to fix it, look at the transaction_hash field and filter out the dups
+	// see email to Moralis on 6/9/24
+
 	 *  @address is ERC20 token address */
 	public static JsonObject getTokenTransfers(String address, String cursor) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
@@ -205,7 +210,11 @@ public class MoralisServer {
 	}	
 	
 	/** returns all transactions for a specific token;
-	 *  used by Monitor only */
+	 *  used by Monitor only 
+	// there's a bug in the Moralis code; the same transaction gets returned twice;
+	// to fix it, look at the transaction_hash field and filter out the dups
+	// see email to Moralis on 6/9/24
+	 *  */
 	public static void getAllTokenTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getTokenTransfers(address, cursor) );  
 	}

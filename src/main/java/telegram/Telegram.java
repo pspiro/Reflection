@@ -7,6 +7,7 @@ import http.MyClient;
 import tw.util.S;
 
 public class Telegram {
+	static final String reflectionChatId = "-1001262398926"; // community chat
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey; 
 
@@ -36,4 +37,36 @@ public class Telegram {
 		MyClient.getJson( url).display();
 	}
 	
+	static void queryMessages( String chatId) throws Exception {
+		int last = 1;  // query for id's with this number or higher
+
+		while (true) {
+			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
+					chatId, last + 1);
+
+			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
+				if (update != null) {
+					last = processUpdate( update);
+				}
+			}
+
+			S.sleep(10);
+			break;
+		}
+	}
+	
+	static int processUpdate( JsonObject item) throws Exception {
+		int updateId = item.getInt( "update_id");
+		JsonObject msg = item.getObject( "message");
+		JsonObject from = msg.getObject( "from");		// id, is_bot, first_name, username
+		
+		from.remove( "language_code");
+		from.remove( "is_premium");
+		
+		S.out( item);
+		
+		return updateId;
+	}
+	
+
 }

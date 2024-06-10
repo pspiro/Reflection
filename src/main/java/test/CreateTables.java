@@ -53,6 +53,9 @@ public class CreateTables  {
 				+ "utm_source varchar(200)"
 				+ ")";
 		con.execute(sql);
+
+		// create unique index on lower(email)
+		con.execute( "create unique index signup_email on user (lower(email))");
 	}
 
 	void createLogTable() throws Exception {

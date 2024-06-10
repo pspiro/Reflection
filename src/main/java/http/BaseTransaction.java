@@ -71,17 +71,23 @@ public class BaseTransaction {
 		return respondFull( response, 200, null);
 	}
 
+	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
+		return respondFull( response, responseCode, headers, "application/json");
+	}
+
+	
 	/** Respond with json
 	 * @param responseCode is 200 or 400
 	 * @param headers may be null */
-	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
+	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers, String contentType) {
 		if (m_responded) {
 			return false;
 		}
 		
 		// need this? pas
 		try (OutputStream outputStream = m_exchange.getResponseBody() ) {
-			m_exchange.getResponseHeaders().add( "Content-Type", "application/json");
+			Util.require( S.isNotNull( contentType), "contentType must be set");
+			m_exchange.getResponseHeaders().add( "Content-Type", contentType);
 
 			// add custom headers, if any  (add URL encoding here?)
 			if (headers != null) {
@@ -90,7 +96,7 @@ public class BaseTransaction {
 				}
 			}
 			
-			String data = response.toString();
+			String data = contentType.equals( "text/html") ? response.toHtml() : response.toString();
 			m_exchange.sendResponseHeaders( responseCode, data.length() );
 			outputStream.write(data.getBytes());
 
