@@ -42,14 +42,19 @@ public class TradingHours {
 
 			S.out( "Starting trading hours query thread every one hour");
 			
-			Util.executeEvery( 0, interval, () -> {
-				S.out( "Querying for trading hours now");
-				query( ibm, "SMART");
-				query( ibm, MdServer.Overnight);
-			});
+			Util.executeEvery( 0, interval, () -> queryNow() );
+		}
+		else {
+			queryNow();
 		}
 	}
 	
+	private void queryNow() {
+		S.out( "Querying for trading hours now");
+		query( ibm, "SMART");
+		query( ibm, MdServer.Overnight);
+	}
+
 	/** Query for trading hours of conid on exchange */
 	private void query(int conid, String exchange) {
 		Contract contract = new Contract();

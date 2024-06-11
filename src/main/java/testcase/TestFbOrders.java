@@ -98,6 +98,8 @@ public class TestFbOrders extends MyTestCase {
 			.waitForHash();
 		waitForBalance(bobAddr, busd.address(), 2000, false); // not return json
 		
+		gasUpBob();
+		
 		// let bob approve BUSD spending by RUSD
 		S.out( "**approving .49");
 		busd.approve(
@@ -107,7 +109,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		showAmounts("updated amounts");
 		
-		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, 200, busd.name() ) ).getString("id");
+		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() ) ).getString("id");
 		assert200();
 		
 		// use this if we change the logic in RefAPI to check allowance before sending 
@@ -130,11 +132,7 @@ public class TestFbOrders extends MyTestCase {
 
 	/** There must be a valid profile for Bob for this to work */
 	public void testFillWithFb() throws Exception {  // always fails the second time!!!
-		// give bob some gas?
-		if (MoralisServer.getNativeBalance(bobAddr) < .1) {
-			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
-					.waitForHash();
-		}
+		gasUpBob();
 
 		// set wallet
 		S.out( "-----testFillWithFb");
@@ -155,6 +153,8 @@ public class TestFbOrders extends MyTestCase {
 		S.out( "**minting 2000");
 		busd.mint( bobAddr, 2000).waitForHash();
 		waitForBalance( bobAddr, m_config.busd().address(), 2000, false);
+		
+		gasUpBob();
 		
 		// let bob approve buying with BUSD; you must wait for this
 		S.out( "**approving 20000");
@@ -211,6 +211,15 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
+	/** The owner wallet must have some gas for this to work */
+	private void gasUpBob() throws Exception {
+		// give bob some gas?
+		if (MoralisServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
+					.waitForHash();
+		}
+	}
+
 	static void showAmounts(String str) throws Exception {
 		S.out( "%s  approved=%s  USDC=%s  RUSD=%s  StockToken=%s",
 				str,
