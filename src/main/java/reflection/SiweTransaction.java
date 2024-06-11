@@ -147,7 +147,7 @@ public class SiweTransaction extends MyTransaction {
 			respondFull( Util.toJson( code, "OK"), 200, headers);
 			
 			// log successful sign-in
-			olog( LogType.SIGNED_IN, "country", getCountryCode(), "ip", getHeader("X-Real-IP") );
+			olog( LogType.SIGNED_IN, "country", getCountryCode(), "ip", getUserIpAddress() );
 		});
 	}
 	

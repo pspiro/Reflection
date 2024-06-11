@@ -41,6 +41,14 @@ public class Rusd extends Stablecoin {
 		return m_core.swap( userAddr, stockToBurn, stockToMint, burnAmt, mintAmt);
 	}
 
+	public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
+		return m_core.setOwner( ownerKey, ownerAddr); 
+	}
+
+	public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
+		return m_core.setRefWallet( ownerKey, refWalletAddr); 
+	}
+
 //	public RetVal approve( String ownerKey, String spender, double amt) throws Exception {
 //		return m_core.approve( ownerKey, spender, amt);
 //	}
@@ -80,10 +88,11 @@ public class Rusd extends Stablecoin {
 	
 	public interface IRusd {
 		RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
-//		RetVal approve(String ownerKey, String spender, double amt) throws Exception;
 		RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
 		RetVal sellRusd( String adminKey, String userAddr, Busd Busd, double amt) throws Exception;
 		RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception;
 		RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception;
+		RetVal setOwner( String ownerKey, String ownerAddr) throws Exception;
+		RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception;;
 	}
 }

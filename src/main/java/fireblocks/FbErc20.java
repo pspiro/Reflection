@@ -17,6 +17,7 @@ public class FbErc20 extends Erc20 {
 	static final String approveKeccak = "095ea7b3";
 	static final String mintKeccak = "40c10f19";
 	static final String burnKeccak = "9dc29fac";
+	static final String transOwnerKeccak = "f2fde38b";
 
 	public FbErc20( String address, int decimals, String name) throws Exception {
 		super( address, decimals, name);
@@ -142,5 +143,17 @@ public class FbErc20 extends Erc20 {
 		};
 		
 		return call( fromAcct, burnKeccak, paramTypes, params, "Stablecoin burn");
+	}
+	
+	public RetVal setOwner( int fromAcct, String ownerAddr) throws Exception {
+		S.out( "Setting owner on %s to %s", m_address, ownerAddr);
+		
+		String[] paramTypes = { "address" };
+		
+		Object[] params = { 
+				ownerAddr, 
+		};
+		
+		return call( fromAcct, transOwnerKeccak, paramTypes, params, "Transfer ownership");
 	}
 }

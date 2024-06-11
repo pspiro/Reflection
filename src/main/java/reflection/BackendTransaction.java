@@ -323,9 +323,9 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "email", email);
 				obj.putIf( "first", first);
 				obj.putIf( "last", last);
-				obj.putIf( "referer", referer);
+				obj.putIf( "referer", Util.urlFromUri( referer) );
 				obj.putIf( "country", getCountryCode() );
-				obj.putIf( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+				obj.putIf( "ip", getUserIpAddress() );
 				obj.putIf( "utm_source", getUtmVal("utm_source") );
 				obj.putIf( "utm_medium", getUtmVal("utm_medium") );
 				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
@@ -402,14 +402,11 @@ public class BackendTransaction extends MyTransaction {
 	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
 		wrap( () -> {
-			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();
-			
-			S.out( headers.get( "X-Country-Code") );
-			S.out( headers.get( "X-Real-IP") );
+			S.out( "countr=%s  ip=%s", getCountryCode(), getUserIpAddress() );
 			
 			respond( 
-					"X-Country-Code", headers.get( "X-Country-Code"),
-					"X-Real-IP", headers.get( "X-Real-IP") );
+					"X-Country-Code", getCountryCode(),
+					"X-Real-IP", getUserIpAddress() );
 		});
 	}
 	

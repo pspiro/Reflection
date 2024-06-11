@@ -1,9 +1,11 @@
 package reflection;
 
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
@@ -32,6 +34,7 @@ import tw.google.Secret;
 import tw.util.S;
 import web3.Busd;
 import web3.Busd.IBusd;
+import web3.CreateKey;
 import web3.Matic;
 import web3.RetVal;
 import web3.Rusd;
@@ -172,7 +175,7 @@ public class Config extends ConfigBase {
 
 	/** takes tab name from config.txt file */
 	public static Config read() throws Exception {
-		return readFrom( Util.readResource( Main.class, "config.txt") );
+		return readFrom( Util.readResource( Config.class, "config.txt") );
 	}
 
 	/** get tab name from args or config.txt file */
@@ -309,23 +312,21 @@ public class Config extends ConfigBase {
 		m_rusd = new web3.Rusd(
 				m_tab.getRequiredString("rusdAddr").toLowerCase(),
 				m_tab.getRequiredInt("rusdDecimals"),
-				m_tab.getRequiredString( "admin1Key"),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				getKey( m_tab.getRequiredString( "admin1Key") ),  // need to pass all FB related stuff here OR set it on the Fireblocks object
 				rusdCore);
-
+		
 		m_busd = new Busd( 
 				m_tab.getRequiredString("busdAddr").toLowerCase(),
 				m_tab.getRequiredInt("busdDecimals"),
 				m_tab.getRequiredString ("busdName"),
-				m_tab.getRequiredString( "admin1Key"),
+				ownerKey(),
 				busdCore);
 
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
 
-		if (isProduction() ) {
-			this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
-		}
+		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
 		require( !autoFill || !isProduction(), "No auto-fill in production");
 		require( buySpread > 0 && buySpread < .05, "buySpread");
@@ -339,6 +340,16 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
+	}
+	
+	/** json fields are address, salt, data, ivstr */
+	private String getKey(String key) throws Exception {
+		return JsonObject.isObject( key)
+				? CreateKey.decryptFromJson( 
+						Util.readResource( Config.class, "date.txt").trim(), 
+						JsonObject.parse( key) 
+						)
+				: key;
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {
@@ -640,12 +651,12 @@ public class Config extends ConfigBase {
 		return refWalletAddr;
 	}
 	
-	public String refWalletKey() {
-		return refWalletKey;
+	public String refWalletKey() throws Exception {
+		return getKey( refWalletKey);
 	}
 	
-	public String ownerKey() {  // private key or "Owner"
-		return ownerKey;
+	public String ownerKey() throws Exception {  // private key or "Owner"
+		return getKey( ownerKey);
 	}
 
 	public String ownerAddr() {
@@ -666,5 +677,11 @@ public class Config extends ConfigBase {
 
 	public Web3Type web3Type() {
 		return web3Type;
+	}
+
+	/** Let RefWallet approve RUSD to spend BUSD on its behalf 
+	 * @throws Exception */
+	public RetVal giveApproval() throws Exception {
+		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
 	}
 }

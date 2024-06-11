@@ -210,6 +210,14 @@ public class FbRusd extends FbErc20 implements IRusd {
 		return sellStockForRusd( null, address, amt, anyStockToken, 0.);
 	}
 
+	@Override public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
+		return super.setOwner( Accounts.instance.getId( ownerKey), ownerAddr);
+	}
+
+	@Override public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
+		throw new Exception();
+	}
+
 //	@Override public RetVal approve(String ownerKey, String spender, double amt) throws Exception {
 //		throw new Exception( "not implemented");
 //	}

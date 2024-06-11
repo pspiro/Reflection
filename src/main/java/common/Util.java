@@ -35,6 +35,7 @@ import javax.swing.JOptionPane;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
+import com.kenai.jffi.Main;
 
 import reflection.RefCode;
 import reflection.RefException;
@@ -742,7 +743,7 @@ public class Util {
 
 	/** "if not null"; execute block if object is not null and not empty string
 	 *  DOES NOT return a value */
-	public static <T> void iff( T obj, Consumer<T> consumer) {
+	public static <T> void iff( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}
@@ -817,6 +818,11 @@ public class Util {
 						? Long.parseLong( str.substring( 2), 16)
 						: Long.parseLong( str)
 				: 0;
+	}
+		
+	/** Return portion up to first ? */
+	public static String urlFromUri( String str) {
+		return S.isNull( str) ? "" : str.split("\\?")[0];
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

@@ -13,10 +13,12 @@ import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 
-@SuppressWarnings("rawtypes") class AnyQueryPanel extends JsonPanel {
-	MyComboBox m_sel = new MyComboBox();
+@SuppressWarnings("rawtypes")
+class AnyQueryPanel extends JsonPanel {
+	private MyComboBox m_sel = new MyComboBox();
+	private GTable tab;
 	
-	AnyQueryPanel() {
+	AnyQueryPanel() throws Exception {
 		super( new BorderLayout(), "");
 		
 		JPanel north = new JPanel();
@@ -30,7 +32,7 @@ import tw.util.S;
 	
 	@SuppressWarnings("unchecked")
 	@Override protected void refresh() throws Exception {
-		GTable tab = new GTable( NewSheet.Reflection, "Queries", "Name", "Query");
+		tab = new GTable( NewSheet.Reflection, "Queries", "Name", "Query");
 		m_sel.setModel( new DefaultComboBoxModel( tab.keySet().toArray() ) );
 		
 		setRows( new JsonArray() );
@@ -40,10 +42,11 @@ import tw.util.S;
 	}
 	
 	void run() throws Exception {
-		Object[] objs = m_sel.getSelectedObjects();
-		if (objs != null && objs.length > 0) {
+		Util.iff( m_sel.getString(), queryName -> {
+			String query = tab.get( queryName);
+			
 			// run query
-			JsonArray rows = Monitor.m_config.sqlQuery( objs[0].toString() );
+			JsonArray rows = Monitor.m_config.sqlQuery( query);
 
 			// update column names
 			String[] names = rows.getKeys().toArray( new String[0]);
@@ -57,7 +60,7 @@ import tw.util.S;
 			m_model.fireTableDataChanged();
 			
 			S.out( "***Refreshed query model to %s", rows().size() );
-		}
+		});
 	}
 
 	static class MyComboBox extends JComboBox {
@@ -68,6 +71,10 @@ import tw.util.S;
 		Object getSelected() {
 			Object[] objs = getSelectedObjects();
 			return objs != null && objs.length > 0 ? objs[0] : null;
+		}
+		
+		String getString() {
+			return getSelected() != null ? getSelected().toString() : null;
 		}
 	}
 	
