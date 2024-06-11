@@ -44,6 +44,7 @@ public class Deploy {
 
 			// THIS IS BROKEN AND MUST BE FIXED
 			
+			// must call it on BUSD, not RUSD
 //			new RbRusd( busdAddress, config.busd().decimals(), config.busd().name() )
 //				.approve( config.refWalletKey(), rusdAddress, 1000000000); // $1B
 
