@@ -323,9 +323,9 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "email", email);
 				obj.putIf( "first", first);
 				obj.putIf( "last", last);
-				obj.putIf( "referer", referer);
+				obj.putIf( "referer", Util.urlFromUri( referer) );
 				obj.putIf( "country", getCountryCode() );
-				obj.putIf( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
+				obj.putIf( "ip", getUserIpAddress() );
 				obj.putIf( "utm_source", getUtmVal("utm_source") );
 				obj.putIf( "utm_medium", getUtmVal("utm_medium") );
 				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );

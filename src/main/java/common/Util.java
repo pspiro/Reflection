@@ -35,6 +35,7 @@ import javax.swing.JOptionPane;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
+import com.kenai.jffi.Main;
 
 import reflection.RefCode;
 import reflection.RefException;
@@ -817,6 +818,11 @@ public class Util {
 						? Long.parseLong( str.substring( 2), 16)
 						: Long.parseLong( str)
 				: 0;
+	}
+		
+	/** Return portion up to first ? */
+	public static String urlFromUri( String str) {
+		return S.isNull( str) ? "" : str.split("\\?")[0];
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {
