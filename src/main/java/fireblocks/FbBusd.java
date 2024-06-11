@@ -36,12 +36,11 @@ public class FbBusd extends FbErc20 implements IBusd {
 	}
 	
 	public RetVal transfer( String callerKey, String address, double amount) throws Exception {
-		throw new Exception( "you need the Fireblocks name of the token");
-//		return Fireblocks.transfer(
-//				Accounts.instance.getId( callerKey), 
-//				address, 
-//				"???",
-//				amount, 
-//				"transfer BUSD");
+		return Fireblocks.transfer(
+				Accounts.instance.getId( callerKey), 
+				address, 
+				"USDT_POLYGON",
+				amount, 
+				"transfer BUSD");
 	}
 }

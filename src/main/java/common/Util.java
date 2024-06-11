@@ -742,7 +742,7 @@ public class Util {
 
 	/** "if not null"; execute block if object is not null and not empty string
 	 *  DOES NOT return a value */
-	public static <T> void iff( T obj, Consumer<T> consumer) {
+	public static <T> void iff( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}
