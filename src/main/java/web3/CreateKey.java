@@ -11,6 +11,7 @@ import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 
 import common.Util;
+import reflection.Config;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
@@ -19,12 +20,12 @@ public class CreateKey {
 	static SecureRandom rnd = new SecureRandom();
 	
 	public static void main(String[] args) throws Exception {
-		//Config.read();  // we need this 
-		//createUserWallet();
-		String privateKey = createPrivateKey();
-		String address = Credentials.create( privateKey ).getAddress();
-		S.out( privateKey);
-		S.out( address);
+		Config.ask();  // we need this 
+		createUserWallet();
+//		String privateKey = createPrivateKey();
+//		String address = Credentials.create( privateKey ).getAddress();
+//		S.out( privateKey);
+//		S.out( address);
 	}
 
 	/** Input wallet params from command line and create wallet on Prod-wallets tab */
@@ -57,11 +58,7 @@ public class CreateKey {
 				
 		// restore it and confirm
 		JsonObject json2 = tab.findRow("Name", name).getJsonObject( "Key");
-		SecretKey secret2 = Encrypt.getKeyFromPassword( pw, json2.getString( "salt") );  
-		String restoredKey = Encrypt.decrypt( 
-				json.getString( "data"),
-				secret2,
-				json2.getString( "ivstr") );
+		String restoredKey = decryptFromJson( pw, json2); 
 		
 		Util.require( 
 				Credentials.create( restoredKey).getAddress().equals( json.getString( "address") ), 
@@ -69,6 +66,15 @@ public class CreateKey {
 		
 		S.out( "Created prod wallet %s - %s", name, description);
 	}
+	
+	/** fields in json are address, salt, data, ivstr */ 
+	public static String decryptFromJson( String pw, JsonObject json) throws Exception {
+		return Encrypt.decrypt( 
+				json.getString( "data"),
+				Encrypt.getKeyFromPassword( pw, json.getString( "salt") ),
+				json.getString( "ivstr") );
+	}
+		
 	
 	public static JsonObject getEncryptedPrivateKey(String pw) throws Exception {
 		String privateKey = createPrivateKey();

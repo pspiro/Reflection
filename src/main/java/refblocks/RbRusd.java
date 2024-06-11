@@ -106,11 +106,26 @@ public class RbRusd extends Erc20 implements IRusd {
 				) );
 	}
 
+	@Override public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
+		throw new Exception();
+	}
+
+	@Override public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
+		
+		Util.reqValidKey(ownerKey);
+		Util.reqValidAddress(refWalletAddr);
+		
+		S.out( "RUSD setting RefWallet to %s", refWalletAddr);
+		
+		return Refblocks.exec( ownerKey, tm -> load( tm).setRefWalletAddress(
+				refWalletAddr) );
+	}
+
 	@Override public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(address);
 
-		S.out( "RUSD %s admin %s",
+		S.out( "RUSD %s %s admin %s",
 				Refblocks.getAddressPk( ownerKey),
 				add ? "adding" : "removing",
 				address);

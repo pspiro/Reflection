@@ -402,14 +402,11 @@ public class BackendTransaction extends MyTransaction {
 	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
 		wrap( () -> {
-			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();
-			
-			S.out( headers.get( "X-Country-Code") );
-			S.out( headers.get( "X-Real-IP") );
+			S.out( "countr=%s  ip=%s", getCountryCode(), getUserIpAddress() );
 			
 			respond( 
-					"X-Country-Code", headers.get( "X-Country-Code"),
-					"X-Real-IP", headers.get( "X-Real-IP") );
+					"X-Country-Code", getCountryCode(),
+					"X-Real-IP", getUserIpAddress() );
 		});
 	}
 	
