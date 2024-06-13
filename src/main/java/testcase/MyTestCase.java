@@ -16,7 +16,8 @@ import tw.util.S;
 
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
-
+	public static String prodWallet = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
+	
 	static protected Config m_config;
 	static protected Accounts accounts = Accounts.instance;
 	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this

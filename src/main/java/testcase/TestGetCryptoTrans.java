@@ -12,7 +12,7 @@ public class TestGetCryptoTrans extends MyTestCase {
 	}
 
 	public void testGetSome() throws Exception {
-		JsonArray ar = cli().post( "/api/crypto-transactions", Util.toJson("wallet_public_key", "0xab015eb8298e5364cea5c8f8e084e2fc3e3bdead").toString() )
+		JsonArray ar = cli().post( "/api/crypto-transactions", Util.toJson("wallet_public_key", prodWallet).toString() )
 				.readJsonArray();
 		ar.display();
 		assertEquals(0, ar.size() );

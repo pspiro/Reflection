@@ -211,6 +211,73 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
+	/** There must be a valid profile for Bob for this to work */
+	public void testFillRusd() throws Exception {  // always fails the second time!!!
+		// set wallet
+		S.out( "-----testFillRusd");
+		Cookie.setWalletAddr(bobAddr);
+		showAmounts("starting amounts");
+		
+		// give bob a valid user profile
+		JsonObject json = TestProfile.createValidProfile();
+		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
+		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		
+		// let it pass KYC
+		m_config.sqlCommand( sql -> sql.execWithParams( 
+				"update users set kyc_status = 'VERIFIED' where wallet_public_key = '%s'",  
+				bobAddr));
+
+		// mint RUSD for user Bob
+		S.out( "**minting 2000");
+		rusd.mintRusd( bobAddr, 2000, stocks.getAnyStockToken() ).waitForHash();
+		waitForRusdBalance( bobAddr, 2000, false);
+		
+		// submit order
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, rusd.name() );
+		S.out( "**Submitting: " + obj);
+		JsonObject map = postOrderToObj(obj);
+		assert200();
+
+		// show uid
+		String uid = map.getString("id");  // 5-digit code
+		assertTrue( S.isNotNull(uid) );
+		S.out( "Submitted order with uid %s", uid);
+
+		// wait for order to complete
+		waitFor( 120, () -> {
+			JsonObject liveOrders = getAllLiveOrders(bobAddr);
+			S.out( liveOrders);
+
+			JsonObject msg = liveOrders.getArray("messages").find("id", uid);
+			JsonObject order = liveOrders.getArray("orders").find("id", uid);
+			
+			// order is still working
+			if (order != null) {
+				if (msg != null) {
+					S.out( msg);
+				}
+			}
+			else if (msg != null) {
+				S.out("Completed: " + msg);
+				assertEquals( "message", msg.getString("type"));
+				startsWith( "Bought", msg.getString("text") );
+				return true;
+			}
+			assertTrue(order != null);
+			return false;
+		});
+		
+		// fetch most recent transaction from database
+		JsonArray ar = m_config.sqlQuery( "select * from transactions order by created_at desc limit 1");
+		assertTrue( ar.size() > 0);
+		
+		JsonObject rec = ar.get(0);
+		S.out(rec);
+		assertEquals( "COMPLETED", rec.getString("status") );
+		assertEquals( 1.0, rec.getDouble("quantity") );
+	}
+	
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
