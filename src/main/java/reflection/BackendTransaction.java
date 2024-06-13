@@ -333,11 +333,21 @@ public class BackendTransaction extends MyTransaction {
 				obj.putIf( "utm_content", getUtmVal("utm_content") );
 			
 				out( "Adding to signup table: " + obj.toString() );
-				m_main.queueSql( sql -> sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) );
+				m_main.queueSql( sql -> {
+					if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) ) {
+						
+						out( "Sending email to %s", email);
+						
+						String text = Util.readResource( this.getClass(), "signup_email.txt")
+								.replaceAll( "\\{name\\}", Util.initialCap( first) );
+						
+						m_config.sendEmail(email, "Welcome to Reflection", text);
+					}
+				});
 			}
 		});
 	}
-	
+
 /** frontend might pass "null" */
 	private String getUtmVal(String tag) {
 		String val = m_map.getUnescapedString( tag);

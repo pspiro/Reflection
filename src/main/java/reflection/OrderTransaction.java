@@ -482,7 +482,14 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			try {
 				out( "waiting for blockchain hash");
 				String hash = retval.waitForHash();
-				out( "blockchain transaction completed");
+				out( "blockchain transaction completed with hash %s", hash);
+				
+				// update hash in table; for Fireblocks, this is done when we receive a message 
+				// from the fbserver before onUpdateFbStatus() is called
+				m_main.queueSql( sql -> sql.execWithParams( 
+						"update transactions set blockchain_hash = '%s' where uid = '%s'", 
+						hash, m_uid) );
+				
 				onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
 			}
 			catch( Exception e) {
@@ -579,8 +586,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
 			
-			jlog( LogType.ORDER_COMPLETED, null);
-			
+			jlog( LogType.ORDER_COMPLETED, Util.toJson( "hash", hash) );
+
 			m_main.queueSql( sql -> sql.execWithParams( 
 					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 

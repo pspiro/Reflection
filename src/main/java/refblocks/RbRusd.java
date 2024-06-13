@@ -37,7 +37,7 @@ public class RbRusd extends Erc20 implements IRusd {
 				address(), 
 				Refblocks.web3j, 
 				tm, 
-				Refblocks.getGp( 1000000)  // this is good for everything except deployment
+				Refblocks.getGp( 500000)  // this is good for everything except deployment
 				);
 	}
 
