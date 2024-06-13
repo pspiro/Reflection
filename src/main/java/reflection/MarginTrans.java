@@ -1,15 +1,19 @@
 package reflection;
 
+import static reflection.Main.m_config;
+import static reflection.Main.require;
+
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import static reflection.Main.require;
+import fireblocks.Erc20.Stablecoin;
 
 public class MarginTrans extends MyTransaction {
 	static JsonObject marginConfig;
+	private Stablecoin m_stablecoin;
 
 	MarginTrans(Main main, HttpExchange exchange, boolean debug) {
 		super(main, exchange, debug);
@@ -46,6 +50,7 @@ public class MarginTrans extends MyTransaction {
 
 	// write test scripts for these
 	
+	// we could remember the set of orders for each user and only resend the changes
 	public void marginDynamic() {
 		wrap( () -> {
 			parseMsg();
@@ -56,20 +61,32 @@ public class MarginTrans extends MyTransaction {
 			
 			int conid = m_map.getRequiredInt("conid");
 			
-			JsonArray orders = new JsonArray();
-			orders.add( createMarginOrder() );
-			orders.add( createMarginOrder() );
-			
 			JsonObject resp = Util.toJson(
 					"bid", 83.83,
 					"ask", 84.84,
-					"orders", orders);
+					"orders", getOrders() );
 			
 			respond( resp);
 		});
 	}
 
-	private JsonObject createMarginOrder() {
+	private JsonArray getOrders() throws Exception {
+		JsonArray ar = m_config.sqlQuery( "select * from orders where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		Util.forEach( ar, order -> {
+			Stock stock = m_main.getStock( order.getInt( "conid") );
+			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
+
+			Prices prices = stock.prices();
+			order.put( "bidPrice", prices.bid() );
+			order.put( "askPrice", prices.ask() );
+		});
+			
+		ar.add( createFakeMarginOrder() );
+		
+		return ar;
+	}
+
+	JsonObject createFakeMarginOrder() {
 		return Util.toJson(
 				"conid", "265598",
 				"orderId", "73827383728",
@@ -87,28 +104,71 @@ public class MarginTrans extends MyTransaction {
 				);
 	}
 
+	enum GoodUntil {
+		Immediately,
+		OneHour,
+		EndOfDay,
+		EndOfWeek,
+		Never
+	}
+	
 	public void marginOrder() {
 		wrap( () -> {
 			parseMsg();
 			
 			m_walletAddr = m_map.getWalletAddress();
 			
-			validateCookie( "margin-static");
+			validateCookie( "margin-order");
 			
 			int conid = m_map.getRequiredInt("conid");
-			double amt = m_map.getRequiredDouble( "amountToSpend");
+			Stock stock = m_main.getStock(conid);
+			require( stock != null, RefCode.INVALID_REQUEST, "Invalid conid");
+
+			double amountToSpend = m_map.getRequiredDouble( "amountToSpend");
+			require( amountToSpend >= 0 && amountToSpend <= m_config.maxOrderSize(), RefCode.INVALID_REQUEST, "Order size is too large");
+			require( amountToSpend >= m_config.minOrderSize(), RefCode.INVALID_REQUEST, "Order size is too small");
 
 			double leverage = m_map.getRequiredDouble( "leverage");
 			require( leverage >= 1 && leverage <= 20, RefCode.INVALID_REQUEST, "Leverage is out of range");
 			
 			double profitTakerPrice = m_map.getRequiredDouble( "profitTakerPrice");
-			double lmtPrice = m_map.getRequiredDouble( "entryPrice");
+			require( profitTakerPrice > 0, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid");
+			
+			double entryrice = m_map.getRequiredDouble( "entryPrice");
+			require( entryrice > 0, RefCode.INVALID_REQUEST, "entryPrice is invalid");
+			
 			double stopLossPrice = m_map.getRequiredDouble( "stopLossPrice");
-			String goodUntil = m_map.getRequiredString( "goodUntil");
-			require( "SometimesAlwaysNever".indexOf( goodUntil) != -1, RefCode.INVALID_REQUEST, "Invalid goodUntil");
-			String currency = m_map.getRequiredString( "currency");
+			require( stopLossPrice > 0, RefCode.INVALID_REQUEST, "stopLossPrice is invalid");
 
-			respondOk();
+			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
+			
+			String currency = m_map.getRequiredString( "currency");
+			require( currency.equals( m_config.rusd().name() ) || currency.equals( m_config.busd().name() ),
+					RefCode.INVALID_REQUEST,
+					"currency is invalid");
+			
+			m_stablecoin = currency.equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
+			
+			String orderId = Util.uid( 10);
+			
+			JsonObject json = Util.toJson(
+					"wallet_public_key", m_walletAddr.toLowerCase(),
+					"orderId", orderId,
+					"conid", conid,
+					"action", "Buy",
+					//"quantity", quantity,
+					"amountToSpend", amountToSpend,
+					"leverage", leverage,
+					"entryPrice", entryrice,
+					"profitTakerPrice", profitTakerPrice,
+					"stopLossPrice", stopLossPrice,
+					"goodUntil", goodUntil,
+					"currency", currency
+					);
+			
+			m_config.sqlCommand( sql -> sql.insertJson( "orders", json) );
+
+			respond( code, RefCode.OK, "orderId", orderId);
 		});
 	}
 

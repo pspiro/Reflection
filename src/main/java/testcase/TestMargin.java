@@ -1,5 +1,7 @@
 package testcase;
 
+import org.json.simple.JsonObject;
+
 import common.Util;
 import reflection.RefCode;
 
@@ -27,7 +29,22 @@ public class TestMargin extends MyTestCase {
 		assert200();
 	}
 
-	public void testOrder() {
+	public void testOrder() throws Exception {
+		JsonObject ord = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"conid", "265598",
+				"amountToSpend", 100.12,
+				"leverage", 1.5,
+				"profitTakerPrice", 83.3,
+				"entryPrice", 83.2,
+				"stopLossPrice", 83.1,
+				"goodUntil", "EndOfDay",
+				"currency", "RUSD"
+				);
+		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
+		json.display();
+		assert200();
 	}
 
 	public void testCancel() throws Exception {

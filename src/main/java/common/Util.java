@@ -461,7 +461,7 @@ public class Util {
 	public static String uid(int n) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < n; i++) 
-			b.append( (char)('A' + rnd.nextInt(26) ) );
+			b.append( (char)('a' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
 
