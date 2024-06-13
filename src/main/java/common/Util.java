@@ -215,10 +215,17 @@ public class Util {
 		return Math.round( price * 100) / 100.0;		
 	}
 
-	public static String readResource(Class cls, String filename) throws IOException {
-        InputStream is = cls.getClassLoader().getResourceAsStream(filename);
-        byte[] data = new byte[100];
-        return new String( data, 0, is.read(data, 0, data.length) );
+	/** Currently has a limitation of 5k; increase it if necessary */
+	public static String readResource(Class cls, String filename) throws Exception {
+		int max = 5*1024;
+		
+        byte[] data = new byte[max];
+        int len = cls.getClassLoader()
+        		.getResourceAsStream(filename)
+        		.read(data, 0, data.length);
+        require( len < max, "readResource buffer too small"); 
+        
+        return new String( data, 0, len);
 	}
 	
 	/** Convert hex to integer to decimal and then apply # of decimal digits.

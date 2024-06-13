@@ -112,11 +112,18 @@ public class MySqlConnection implements AutoCloseable {
 	
 	/** Try update first, if it failes, do an insert
 	 *  Do not include the word 'where' in the where clause
-	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON */
-	public void insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
+	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON
+	 *  
+	 *  @return true for insert, false for update */
+	public boolean insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
+		boolean inserted = false;
+		
 		if (updateJson( table, json, where, params) == 0) {
 			insertJson( table, json);
+			inserted = true;
 		}
+		
+		return inserted;
 	}
 	
 	/** This can be used for insert, update, or delete */
