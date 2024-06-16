@@ -76,6 +76,9 @@ public class CreateTables  {
 				+ "utm_source varchar(200)"
 				+ ")";
 		con.execute(sql);
+
+		// create unique index on lower(email)
+		con.execute( "create unique index signup_email on user (lower(email))");
 	}
 
 	void createLogTable() throws Exception {
@@ -184,5 +187,9 @@ public class CreateTables  {
 		con.execute( sql);
 	}
 }
+
+// add an id field to a table (assigns an id to all records)
+//dev=> alter table users add column id INT GENERATED ALWAYS AS IDENTITY unique;
+//dev=> alter table signup add column id INT GENERATED ALWAYS AS IDENTITY unique;
 
 // dev=> alter table users add column locked jsonb;

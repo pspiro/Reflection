@@ -177,4 +177,8 @@ public abstract class MyTransaction extends BaseTransaction {
 				"select * from users where wallet_public_key = '%s'", 
 				wallet.toLowerCase() );  // note that this returns a map with all the null values
 	}
+	
+	protected String getUserIpAddress() throws Exception {
+		return Util.left( getFirstHeader( "X-Real-IP"), 15);
+	}
 }

@@ -60,7 +60,7 @@ public class Accounts {
 	
 	/** Returns the wallet address of the platform native token (mixed case).
 	 *  Note that other tokens (like Bitcoin) would have a different addresses. */
-	public String getAddress(String accountName) throws Exception {
+	protected String getAddress(String accountName) throws Exception {
 		return getAddress( getId(accountName) );
 	}
 	

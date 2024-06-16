@@ -315,25 +315,33 @@ public class BackendTransaction extends MyTransaction {
 			String first = m_map.getUnescapedString("first");  // it would have been better just to unesc the whole uri
 			String last = m_map.getUnescapedString("last");
 			String email = m_map.getUnescapedString("email");
-			String referer = m_map.getUnescapedString("referer");  
-			String utmSource = m_map.getUnescapedString("utm_source");  
+			String referer = m_map.getUnescapedString("referer");
 			
 			// write them all until we get this working
-//			if (Util.isValidEmail( email) ) {
-				// add entry to signup table
+			if (Util.isValidEmail( email) ) {
 				JsonObject obj = new JsonObject();
-				obj.put( "first", first);
-				obj.put( "last", last);
 				obj.put( "email", email);
-				obj.put( "referer", referer);
-				obj.put( "country", getCountryCode() );
-				obj.put( "ip", Util.left( getFirstHeader( "X-Real-IP"), 15) );
-				obj.put( "utm_source", "null".equals(utmSource) ? "" : utmSource);  // frontend could pass 'null'
+				obj.putIf( "first", first);
+				obj.putIf( "last", last);
+				obj.putIf( "referer", referer);
+				obj.putIf( "country", getCountryCode() );
+				obj.putIf( "ip", getUserIpAddress() );
+				obj.putIf( "utm_source", getUtmVal("utm_source") );
+				obj.putIf( "utm_medium", getUtmVal("utm_medium") );
+				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
+				obj.putIf( "utm_term", getUtmVal("utm_term") );
+				obj.putIf( "utm_content", getUtmVal("utm_content") );
 			
 				out( "Adding to signup table: " + obj.toString() );
-				m_main.queueSql( sql -> sql.insertJson("signup", obj) );
-//			}
+				m_main.queueSql( sql -> sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) );
+			}
 		});
+	}
+	
+/** frontend might pass "null" */
+	private String getUtmVal(String tag) {
+		String val = m_map.getUnescapedString( tag);
+		return "null".equals( val) ? "" : val;
 	}
 
 	public void handleContact() {  // obsolete
@@ -390,36 +398,15 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** Used by Frontend to determine if we should enable or disable the Wallet Connect button */
-	public void allowConnection() {
-		wrap( () -> {
-			String country = getCountryCode();
-			String ip = getHeader("X-Real-IP");
-			
-			boolean allow =
-					S.isNotNull( country) && m_main.isAllowedCountry(country ) ||
-					S.isNotNull( ip) && m_main.isAllowedIP(ip);
-			
-			respond( Util.toJson( 
-					"allow", allow,
-					"country", country,
-					"ip", ip
-					) );
-		});
-	}
-
 	/** Return IP address and country code passed from nginx; you could change it to
 	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {
 		wrap( () -> {
-			com.sun.net.httpserver.Headers headers = m_exchange.getRequestHeaders();
-			
-			S.out( headers.get( "X-Country-Code") );
-			S.out( headers.get( "X-Real-IP") );
+			S.out( "countr=%s  ip=%s", getCountryCode(), getUserIpAddress() );
 			
 			respond( 
-					"X-Country-Code", headers.get( "X-Country-Code"),
-					"X-Real-IP", headers.get( "X-Real-IP") );
+					"X-Country-Code", getCountryCode(),
+					"X-Real-IP", getUserIpAddress() );
 		});
 	}
 	
@@ -466,8 +453,8 @@ public class BackendTransaction extends MyTransaction {
 				"rusdBalance", positions.getDouble( m_config.rusdAddr() ),
 				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
 				"nonRusdApprovedAmt", json.getDouble( "approved"),
-				"bidPrice", prices.anyBid(),
-				"askPrice", prices.anyAsk()
+				"bidPrice", prices.anyBid() * (1. - m_config.sellSpread() ),
+				"askPrice", prices.anyAsk() * (1. + m_config.buySpread() )
 				);
 		});
 	}
@@ -534,6 +521,17 @@ public class BackendTransaction extends MyTransaction {
 			respond( Util.toJson(
 					"verified", verified,
 					"message", verified ? "Your identity has already been confirmed" : "Please confirm your identiy") );
+		});
+	}
+
+	public void handleSagHtml() {
+		wrap( () -> {
+			respondFull( 
+					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
+					200,
+					null,
+					"text/html");
+			
 		});
 	}
 

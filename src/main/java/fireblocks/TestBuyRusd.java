@@ -1,7 +1,6 @@
 package fireblocks;
 
 import reflection.Config;
-import tw.util.S;
 
 public class TestBuyRusd {
 	static Accounts accounts = Accounts.instance;
@@ -29,10 +28,10 @@ public class TestBuyRusd {
 //				rusd.address(),
 //				2).waitForHash();
 		
-		S.out( config.rusd().buyRusd(
-				accounts.getAddress("Bob"),
-				config.busd(),
-				1).id() );
+//		S.out( config.rusd().buyRusd(
+//				accounts.getAddress("Bob"),
+//				config.busd(),
+//				1).id() );
 		
 //		rusd.buyRusd(
 //				accounts.getAddress("Bob"),

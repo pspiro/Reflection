@@ -7,7 +7,6 @@ import java.util.TimeZone;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import http.MyClient;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.MyException;
@@ -27,7 +26,6 @@ import tw.util.S;
 public class TgServer {
 	static TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
 	static final String ReflectionCommunity = "-1001262398926"; // community chat
-	static final String communityChatId = "-1001262398926"; // community chat
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey; 
 	static final String peterSpiro = "5053437013";
@@ -47,20 +45,20 @@ public class TgServer {
 	}
 	
 	/** Listen for messages sent to my group or to the bot */
-	private static void queryMessages() throws Exception {
-		int last = 271551453;  // query for id's with this number or higher
-		
-		while (true) {
-			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
-					Telegram.botKey, last + 1);
-
-			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
-				last = processUpdate( update);
-			}
-			
-			S.sleep(10);
-		}
-	}
+//	private static void queryMessages() throws Exception {
+//		int last = 271551453;  // query for id's with this number or higher
+//		
+//		while (true) {
+//			String url = String.format( "https://api.telegram.org/%s/getUpdates?timeout=600&limit=30&offset=%s", 
+//					Telegram.botKey, last + 1);
+//
+//			for (JsonObject update : MyClient.getJson(url).getArray("result") ) {
+//				last = processUpdate( update);
+//			}
+//			
+//			S.sleep(10);
+//		}
+//	}
 	
 	static int processUpdate( JsonObject item) throws Exception {
 		int updateId = item.getInt( "update_id");
@@ -81,7 +79,6 @@ public class TgServer {
 			S.out( "deleting message");
 			Telegram.deleteMessage( chat.getString("id"), msgId);
 		}
-		Util.input("press key");
 		
 		return updateId;
 	}
@@ -111,7 +108,7 @@ public class TgServer {
 	}
 
 	static void send( String message) throws Exception {
-		send( message, communityChatId);
+		send( message, ReflectionCommunity);
 	}
 	
 	static void send( String message, String chatId) throws Exception {

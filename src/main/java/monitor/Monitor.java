@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.LayoutManager;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.HashSet;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -100,7 +99,7 @@ public class Monitor {
 		m_tabs.addTab( "Crypto", new CryptoPanel() );
 		m_tabs.addTab( "Wallet", m_walletPanel);
 		m_tabs.addTab( "Users", new UsersPanel() );
-		m_tabs.addTab( "Singups", new SignupPanel() );
+		m_tabs.addTab( "Signups", new SignupPanel() );
 		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
@@ -125,15 +124,15 @@ public class Monitor {
 				"Reflection System Monitor - %s - %s", 
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
-		m_frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		m_frame.setSize( 1300, 800);
 		m_frame.setVisible(true);
 		
-		m_frame.addWindowListener(new WindowAdapter() {
-		    public void windowClosed(WindowEvent e) {
-		    	Util.execute( () -> Util.wrap( () -> start() ) );
-		    }
-		});
+		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		m_frame.addWindowListener(new WindowAdapter() {
+//		    public void windowClosed(WindowEvent e) {
+//		    	Util.execute( () -> Util.wrap( () -> start() ) );
+//		    }
+//		});
 	}
 	
 	static int num() {
@@ -159,38 +158,6 @@ public class Monitor {
 				""";  // you must order by desc to get the latest entries
 		 
 		return new QueryPanel( "trades", names, sql);
-	}
-
-	static class AnyQueryPanel extends QueryPanel {
-		
-		AnyQueryPanel() {
-			super( "", "", "");
-		}
-		
-		@Override protected void refresh() throws Exception {
-			wrap( () -> {
-				String query = where.getText().trim()
-						.replaceAll( "'wallet'", "'wallet_public_key'");
-				
-				if (S.isNotNull( query) ) {
-					JsonArray rows = Monitor.m_config.sqlQuery( query);
-					HashSet<String> keys = rows.getKeys();
-					String[] names = keys.toArray( new String[0]);
-					String str = String.join( ",", names);
-					m_model.setNames( str);
-					m_model.fireTableStructureChanged();
-		
-					setRows( rows);
-					
-					m_model.resetSort();  // sort by first column if it is sortable
-					m_model.fireTableDataChanged();
-					
-					S.out( "***Refreshed query model to %s", rows().size() );
-				}
-			});
-		}
-		
-		
 	}
 
 	static class EmptyPanel extends MonPanel {

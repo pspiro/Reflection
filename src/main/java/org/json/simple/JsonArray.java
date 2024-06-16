@@ -5,11 +5,13 @@
 package org.json.simple;
 
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -205,6 +207,21 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		
 		String[] keys = getKeys().toArray(new String[0] );
 		
+		Util.wrapHtml( b, "style", """
+		        table {
+		            border-collapse: collapse;
+		            width: 100%;
+		        }
+
+		        table, th, td {
+		            border: 1px solid black;
+		        }
+
+		        th, td {
+		            padding: 8px;
+		            text-align: left;
+		        }""");
+		
 		Util.appendHtml( b, "table", () -> {
 			// add header row
 			Util.appendHtml( b, "tr", () -> {
@@ -230,20 +247,29 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		return b.toString();
 	}
 
-	/** Return all keys of all JsonObjects in this array */
-	public HashSet<String> getKeys() {
+	/** Return sorted set of all keys of all JsonObjects in this array */
+	public ArrayList<String> getKeys() {
 		HashSet<String> keys = new HashSet<>();
 		forEach( item -> {
 			if (item instanceof JsonObject) {
 				((JsonObject)item).addKeys( keys);
 			}
 		});
-		return keys;
+		
+		ArrayList<String> list = new ArrayList<>( keys);
+		Collections.sort( list);
+		return list;
 	}	
 
+	public void writeToCsv(String filename, char sep) throws FileNotFoundException {
+		writeToCsv( filename, sep, getKeys().toArray( new String[0]) );
+	}
+	
 	public void writeToCsv(String filename, char sep, String keysString) throws FileNotFoundException {
-		String[] keys = keysString.split( ",");  // you could use getKeys() to get all
-
+		writeToCsv( filename, sep, keysString.split(",") );
+	}
+	
+	private void writeToCsv(String filename, char sep, String[] keys) throws FileNotFoundException {
 		try( OStream os = new OStream(filename) ) {
 			
 			// write header row
@@ -267,5 +293,16 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			});
 			
 		}	
+	}
+
+	public void writeToFile(String filename) throws IOException {
+		try (FileWriter writer = new FileWriter( filename) ) {
+			writeJSONString( writer);
+		}
+	}
+
+	/** get rid of null values and empty strings */
+	public void removeNulls() {
+		forEach( rec -> rec.removeNulls() );
 	}
 }

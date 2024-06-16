@@ -11,7 +11,7 @@ public class CreateNativeWallets {
 		create( "Owner");
 		create( "RefWallet");
 		create( "Admin1");
-		create( "Admin2");
+//		create( "Admin2");
 	}
 
 	private static void create(String account) throws Exception {

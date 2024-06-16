@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TimeZone;
@@ -31,14 +30,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import javax.mail.Address;
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
@@ -48,7 +39,9 @@ import com.ib.client.Decimal;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
+import web3.CreateKey;
 
+/** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class Util {
 	public static final int MINUTE = 60 * 1000;
 	public static final int HOUR = 60 * MINUTE;
@@ -157,9 +150,6 @@ public class Util {
 		}
 	}
 	
-	
-	public static void main(String[] args) throws Exception {
-	}
 	
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
 //		String[] startToks = sessionStart.split( ":");
@@ -562,53 +552,54 @@ public class Util {
 			s.nextLine();
 		}
 	}
-
-    /** Send an email using SMTP */
-	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
-		Properties props = new Properties();
-		props.put("mail.smtp.auth", "true");
-		props.put("mail.smtp.tlsv1.2.enable", "true");  // tls also works but not smarttls
-		props.put("mail.smtp.host", "smtp.openxchange.eu");  // put any smpt server here
-		props.put("mail.smtp.port", "587");
-		
-		Session session = Session.getInstance( props,
-				new javax.mail.Authenticator() {
-					protected PasswordAuthentication getPasswordAuthentication() {
-						return new PasswordAuthentication(username, password);
-					}
-				});
-
-		MimeMessage message = new MimeMessage(session);
-		message.setFrom( toEmail( fromName, username) );
-		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-		message.setSubject(subject);
-		message.setText(text, null, isHtml ? "html" : "plain");
-
-		Transport.send(message);
-		S.out( "Sent email '%s' to %s", subject, to);
-	}
-
 	
-	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
-	private static Address toEmail(String name, String email) throws AddressException {
-		return new InternetAddress( String.format( "%s <%s>", name, email) );
-	}
+	/** Send email from google */
+//	public static void sendEmail(String username, String password, 
+//			String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
+//
+//		Auth.auth().getMail().send(
+//				fromName, 
+//				username, 
+//				to, 
+//				subject, 
+//				text, 
+//				isHtml);
+//	}
+//
+//    /** Send an email using SMTP */
+//	public static void sendEmail(String username, String password, String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
+//		Properties props = new Properties();
+//		props.put("mail.smtp.auth", "true");
+//		props.put("mail.smtp.tlsv1.2.enable", "true");  // tls also works but not starttls
+//		props.put("mail.smtp.host", "smtp.openxchange.eu");  // put any smpt server here
+//		props.put("mail.smtp.port", "587");
+//		
+//		Session session = Session.getInstance( props,
+//				new javax.mail.Authenticator() {
+//					protected PasswordAuthentication getPasswordAuthentication() {
+//						return new PasswordAuthentication(username, password);
+//					}
+//				});
+//
+//		MimeMessage message = new MimeMessage(session);
+//		message.setFrom( toEmail( fromName, username) );
+//		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+//		message.setSubject(subject);
+//		message.setText(text, null, isHtml ? "html" : "plain");
+//
+//		Transport.send(message);
+//		S.out( "Sent email '%s' to %s", subject, to);
+//	}
+//
+//	
+//	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
+//	private static Address toEmail(String name, String email) throws AddressException {
+//		return new InternetAddress( String.format( "%s <%s>", name, email) );
+//	}
 
 	/** Convert Throwable to Exception */
 	public static Exception toException(Throwable e) {
 		return e instanceof Exception ? (Exception)e : new Exception(e);
-	}
-
-	/** Show prompt and input string; Scanner does not work */
-	public static String input(String str) {
-		S.out( str);
-		try {
-			return new BufferedReader(new InputStreamReader(System.in) ).readLine();
-		} 
-		catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 
 	/** Pop up a dialog, beep, and get user input */ 
@@ -718,6 +709,11 @@ public class Util {
 		}
 		return sb.toString();  // change to EIP-55 address 
 	}
+
+	/** return a wallet private key */
+	public static String createPrivateKey() {
+		return CreateKey.createPrivateKey();
+	}
 	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
@@ -744,8 +740,9 @@ public class Util {
 		return t;
 	}
 
-	/** "if not null"; execute block if object is not null and not empty string */
-	public static <T> void iff( T obj, Consumer<T> consumer) {
+	/** "if not null"; execute block if object is not null and not empty string
+	 *  DOES NOT return a value */
+	public static <T> void iff( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}
@@ -798,6 +795,28 @@ public class Util {
 				.replaceAll( "%7[bB]", "{")
 				.replaceAll( "%7[dD]", "}")
 				;
+	}
+
+	/** Return true if it is a valid private key. This only checks length; you could
+	 *  check for valid characters as well */
+	public static boolean isValidKey(String privateKey) {
+		return privateKey != null && privateKey.length() == 64;
+	}
+
+	public static void reqValidKey(String privateKey) throws Exception {
+		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
+	}
+	
+	public static String toHex( long val) {
+		return "0x" + Long.toHexString( val);
+	}
+
+	public static long getLong(String str) {
+		return S.isNotNull( str) 
+				? str.startsWith( "0x")
+						? Long.parseLong( str.substring( 2), 16)
+						: Long.parseLong( str)
+				: 0;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

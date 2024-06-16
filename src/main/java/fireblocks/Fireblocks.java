@@ -5,7 +5,6 @@ import static common.Util.rnd;
 import java.math.BigInteger;
 import java.net.http.HttpResponse;
 
-import org.asynchttpclient.Response;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -16,6 +15,8 @@ import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
+import web3.Encrypt;
+import web3.RetVal;
 
 /** This shit works. You pass in everthing ahead of time, then call transact() */
 public class Fireblocks {
@@ -112,18 +113,6 @@ public class Fireblocks {
 		return response.body();
 	}
 	
-	static void process(Response resp) throws Exception {
-		String body = resp.getResponseBody();
-		S.out( body);
-		
-		if (body.startsWith( "{") ) {
-			JsonObject.parse(body).display();
-		}
-		else if (body.startsWith( "[")) {
-			JsonArray.parse(body).display();
-		}
-	}
-
 	/** Call a Fireblocks GET endpoint, return json object */
 	public static JsonObject fetchObject(String endpoint) throws Exception {
 		Fireblocks fb = new Fireblocks();
@@ -260,16 +249,11 @@ public class Fireblocks {
 		return sb.toString();
 	}
 	
-	/** Returns FB id */
-	public static String call(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
-		return call2(fromAcct, addr, callData, paramTypes, params, note).id();
-	}
-	
 	/** @param addr is the address of the contract for which you are calling a method OR 0x0 when deploying a contract 
 	 *  @param callData is keccak for call or bytecode for deploy; can start w/ 0x or not
 	 *  @param params are appended to the call data
 	 *  @return RetVal so caller can either get ID or wait for blockchain hash */
-	public static RetVal call2(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
+	public static FbRetVal call2(int fromAcct, String addr, String callData, String[] paramTypes, Object[] params, String note) throws Exception {
 		note = note.replaceAll( " ", "-");  // Fireblocks doesn't like spaces in the note
 		
 		String bodyTemplate = 
@@ -335,12 +319,12 @@ public class Fireblocks {
 		return fb.transactToRetVal();
 	}
 	
-	private RetVal transactToRetVal() throws Exception {
+	private FbRetVal transactToRetVal() throws Exception {
 		JsonObject obj = transactToObj();
 		String str = obj.getString("message");
 		Main.require( S.isNull( str), RefCode.BLOCKCHAIN_FAILED, "Error on Fireblocks.transact  msg=%s  code=%s",
 				str, obj.getString("code") );
-		return new RetVal( obj.getString("id") );
+		return new FbRetVal( obj.getString("id") );
 	}
 	
 	public static String toJson( String format, Object... params) {
@@ -437,22 +421,5 @@ public class Fireblocks {
 		fb.endpoint( String.format( "/v1/vault/accounts/%s/%s", accountId, assetId) );
 		return fb.transactToRetVal();
 	}
-	
-//	public static void sign() {
-//		String body = """
-//				{
-//					"operation": "TRANSFER",
-//					"source": {
-//						"type": "VAULT_ACCOUNT"
-//					},
-//					"destination": {
-//						"type": "VAULT_ACCOUNT"
-//					}
-//				}""";
-//		
-//		Fireblocks fb = new Fireblocks();
-//		fb.endpoint( "/v1/transactions");
-//		fb.body( body);
-//		fb.transact();
-//	}
+
 }

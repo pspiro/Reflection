@@ -9,7 +9,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
-import fireblocks.Erc20.Stablecoin;
+import web3.Stablecoin;
 
 public class MarginTrans extends MyTransaction {
 	static JsonObject marginConfig;

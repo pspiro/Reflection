@@ -12,16 +12,24 @@ import tw.util.S;
 import tw.util.UI;
 
 class UsersPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,first_name,last_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,address,city,country,id,persona_response";
+	static String names = "created_at,wallet_public_key,first_name,last_name,persona_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,persona_id,address,city,country,id,persona_response";
 	static String sql = "select * from users $where";
 	
 	UsersPanel() {
 		super( "users", names, sql);
 	}
 	
-	@Override public void adjust(JsonObject obj) {
-		obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
-		obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
+	@Override public void adjust(JsonObject userRec) {
+		userRec.update( "first_name", name -> Util.initialCap( name.toString() ) );
+		userRec.update( "last_name", name -> Util.initialCap( name.toString() ) );
+		
+		Util.wrap( () -> {
+			JsonObject fields = userRec
+					.getObjectNN( "persona_response")
+					.getObjectNN("fields");
+			userRec.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
+			userRec.put( "persona_id", getVal( fields, "identification-number"));
+		});
 	}
 	
 	@Override protected String getTooltip(JsonObject row, String tag) {
@@ -133,7 +141,7 @@ class UsersPanel extends QueryPanel {
 
 	}
 	
-	static String getVal( JsonObject obj, String tag) throws Exception {
-		return obj.getObject( tag).getString( "value");
+	static String getVal( JsonObject fields, String tag) throws Exception {
+		return fields.getObject( tag).getString( "value");
 	}
 }

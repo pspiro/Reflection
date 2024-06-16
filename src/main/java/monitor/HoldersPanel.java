@@ -1,6 +1,8 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.text.DecimalFormat;
+import java.text.Format;
 import java.util.HashMap;
 
 import javax.swing.JLabel;
@@ -9,12 +11,13 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import fireblocks.Erc20;
 import reflection.MySqlConnection;
 import tw.util.S;
+import web3.Erc20;
 
 /** Shows the holders for a given token (wallet and balance */
 public class HoldersPanel extends JsonPanel {
+	public static Format FMT = new DecimalFormat( "#,##0.0000");
 	private JLabel m_title = new JLabel();
 	
 	HoldersPanel() {
@@ -25,7 +28,24 @@ public class HoldersPanel extends JsonPanel {
 
 	@Override protected void refresh() throws Exception {
 	}
+	
+	/** show four decimals */
+	@Override protected Object format(String key, Object value) {
+		return value instanceof Double ? S.fmt4((double)value) : value; 
+	}
 
+	@Override protected void onDouble(String tag, Object val) {
+		if (S.notNull(tag).equals("wallet") ) {
+			Monitor.m_tabs.select("Wallet");
+			Monitor.m_walletPanel.setWallet(val.toString());
+		}
+	}
+	
+	// there's a bug in the Moralis code; the same transaction gets returned twice;
+	// to fix it, look at the transaction_hash field and filter out the dups
+	// see email to Moralis on 6/9/24
+	
+	double total;
 	public void refresh(Erc20 token) {  // the decimal is wrong here, that's why rusd doesn't work
 		wrap( () -> {
 			m_title.setText( token.name() );
@@ -33,20 +53,25 @@ public class HoldersPanel extends JsonPanel {
 			HashMap<String,Double> map = token.getAllBalances();
 
 			JsonArray ar = new JsonArray();
+			
+			total = 0;
 
 			Monitor.m_config.sqlCommand( sql -> {  // make all username queries from a single database connection
 				Util.forEach( map, (wallet, balance) -> { 
-					if (balance >= .001) {
+					if (balance >= .0001) {
 						ar.add( Util.toJson( 
 								"wallet", wallet,
 								"name", getUsersName(sql, wallet),
 								"balance", balance ) );
+						total += balance;
 					}
 				});
 			});
 			
 			setRows( ar);
 			m_model.fireTableDataChanged();
+			
+			m_title.setText( S.format( "%s  Total: %s", token.name(), total) ); 
 		});
 	}
 

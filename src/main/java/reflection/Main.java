@@ -18,9 +18,9 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.ConnectionMgrBase;
 import common.Util;
-import fireblocks.MyServer;
 import http.BaseTransaction;
 import http.MyClient;
+import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
 import test.MyTimer;
@@ -54,8 +54,6 @@ public class Main extends App implements ITradeReportHandler {
 //	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
-	private GTable m_allowedCountries;  // wallet is key, case insensitive
-	private GTable m_allowedIPs;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 
@@ -68,11 +66,7 @@ public class Main extends App implements ITradeReportHandler {
 			Thread.currentThread().setName("RefAPI");
 			S.out( "Starting RefAPI - log times are NY time");
 			
-			if (args.length == 0) {
-				throw new Exception( "You must specify a config tab name");
-			}
-
-			new Main( args[0] );
+			new Main( args);
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -80,14 +74,14 @@ public class Main extends App implements ITradeReportHandler {
 		}
 	}
 
-	public Main(String tabName) throws Exception {
-		m_tabName = tabName;
+	public Main(String[] args) throws Exception {
+		m_tabName = Config.getTabName( args);
 		MyClient.filename = "refapi.http.log";
 		
 		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet; this must go first since other items depend on it
-		timer.next("Reading from google spreadsheet %s", tabName, NewSheet.Reflection);
+		timer.next("Reading from google spreadsheet %s", m_tabName, NewSheet.Reflection);
 		readSpreadsheet(true);
 		timer.done();
 		
@@ -152,7 +146,6 @@ public class Main extends App implements ITradeReportHandler {
 			server.createContext("/api/update-profile", exch -> new ProfileTransaction(this, exch).handleUpdateProfile() );
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
-			server.createContext("/api/allowConnection", exch -> new BackendTransaction(this, exch).allowConnection() );
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
 			
 			// get/set config
@@ -189,6 +182,7 @@ public class Main extends App implements ITradeReportHandler {
 
 			// landing page
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/sag", exch -> new BackendTransaction(this, exch).handleSagHtml() );
 			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
 
 			// obsolete, remove
@@ -233,8 +227,6 @@ public class Main extends App implements ITradeReportHandler {
 			: null;
 		
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
-		m_allowedCountries = new GTable( book.getTab("Blacklist"), "Allowed Countries", "Allow", false);
-		m_allowedIPs = new GTable( book.getTab("Blacklist"), "Allowed IPs", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
 		if (readStocks) {
@@ -243,6 +235,9 @@ public class Main extends App implements ITradeReportHandler {
 		}
 	}
 
+	/** as of 5/10/24 Frontend no longer needs buy_spread and sell_spread; the spreads
+	 *  are now incorporated into the prices we send on the dynamic trading page query;
+	 *  these tags can/should be removed after frontend is promoted to prod */ 
 	private String readType1Config(Book book) throws Exception {
 		JsonObject obj = new JsonObject();
 		for (String key : "min_order_size,max_order_size,non_kyc_max_order_size,price_refresh_interval,commission,buy_spread,sell_spread".split(",") ) {
@@ -468,6 +463,9 @@ public class Main extends App implements ITradeReportHandler {
 						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
 				}
+				else {
+					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
+				}
 			});
 			
 			MarginTransaction.mgr.tick();
@@ -572,13 +570,6 @@ public class Main extends App implements ITradeReportHandler {
 		}
 	}
 	
-	boolean isAllowedCountry(String country) {
-		return m_allowedCountries.containsKey(country);
-	}
-	
-	boolean isAllowedIP(String ip) {
-		return m_allowedIPs.containsKey(ip);
-	}
 }
 
 //no change

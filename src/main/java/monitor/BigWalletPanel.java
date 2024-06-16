@@ -1,10 +1,13 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -16,12 +19,11 @@ import org.json.simple.JsonObject;
 import common.JsonModel;
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.Accounts;
-import fireblocks.Fireblocks;
 import http.MyClient;
 import monitor.wallet.BlockSummaryPanel;
 import monitor.wallet.WalletPanel;
 import positions.Wallet;
+import reflection.Config;
 import reflection.Stock;
 import tw.util.DualPanel;
 import tw.util.HtmlButton;
@@ -31,22 +33,26 @@ import tw.util.UI.MyTextArea;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.StockToken;
 
 public class BigWalletPanel extends JPanel {  // you can safely make this a MonPanel if desired
 	private static final double minBalance = .0001;
 	
 	private final WalletPanel m_parent;
 	private final JTextField m_wallet = new JTextField(27); 
-	private final JLabel m_rusd = new JLabel(); 
-	private final JLabel m_usdc = new JLabel(); 
-	private final JLabel m_approved = new JLabel(); 
-	private final JLabel m_matic = new JLabel(); 
-	private final JLabel m_name = new JLabel(); 
-	private final JLabel m_email = new JLabel(); 
-	private final JLabel m_kyc = new JLabel(); 
-	private final JLabel m_pan = new JLabel(); 
-	private final JLabel m_aadhaar = new JLabel(); 
-	private final JLabel m_locked = new JLabel(); 
+	private final JLabel m_rusd = new MyLabel(); 
+	private final JLabel m_usdc = new MyLabel(); 
+	private final JLabel m_approved = new MyLabel(); 
+	private final JLabel m_matic = new MyLabel(); 
+	private final JLabel m_name = new MyLabel(); 
+	private final JLabel m_email = new MyLabel(); 
+	private final JLabel m_kyc = new MyLabel(); 
+	private final JLabel m_pan = new MyLabel(); 
+	private final JLabel m_aadhaar = new MyLabel(); 
+	private final JLabel m_locked = new MyLabel(); 
+	private final JLabel m_userCountry = new MyLabel();
+	private final JLabel m_personaData = new MyLabel();
+	
 	private final JTextField m_firstName = new JTextField(8); 
 	private final UpperField m_mintAmt = new UpperField(8); 
 	private final UpperField m_burnAmt = new UpperField(8);
@@ -55,7 +61,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final UpperField m_requiredTrades = new UpperField(8);
 	private final JTextField m_subject = new JTextField(8);
 	private final JTextArea m_emailText = new MyTextArea(3, 30);
-	private final JsonModel posModel = new JsonModel("Symbol,Balance");
+	private final JsonModel posModel = new PosModel();
 	private final TransPanel transPanel = new TransPanel();
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
 	private final BlockSummaryPanel blockPanel = new BlockSummaryPanel();
@@ -72,11 +78,13 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		
 		vp.addHeader( "User details");
-		vp.add( "Name", m_name);
-		vp.add( "Email", new JScrollPane( m_email, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
+		vp.add( "Name", m_name); 
+		vp.add( "Email", m_email);
 		vp.add( "KYC", m_kyc);
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
+		vp.add( "Country", m_userCountry);
+		vp.add( "Persona", m_personaData);
 		
 		vp.addHeader( "Crypto");
 		vp.add( "RUSD", m_rusd);
@@ -87,7 +95,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		vp.addHeader( "Operations");
 		vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ) ); 
+		vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 		vp.add( "Award", 
 				m_awardAmt, 
 				new JLabel( "RUSD for "),
@@ -101,7 +109,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
-		vp.add( "Text", m_emailText);
+		vp.add( "Text", new JScrollPane( m_emailText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
 		
 		transPanel.small("Transactions");
 		redemPanel.small("Redemptions");
@@ -132,9 +140,14 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			// mint and lock?
 			if ( amt > 0) {
 				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+					if (amt > 500 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+						Util.inform( this, "The password was invalid");
+						return;
+					}
+					
 					mint( amt);
 					JsonObject obj = createLockObject( wallet, amt, lockUntil, m_requiredTrades.getInt() );
-					Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
+					config().sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 	
 					Util.inform( this, "Done");
 				}
@@ -142,7 +155,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			// mint nothing and lock all of it
 			else if (Util.confirm(this, "Lock all of this user's RUSD?") ) {
 				JsonObject obj = createLockObject( wallet, 1000000, lockUntil, m_requiredTrades.getInt() );
-				Monitor.m_config.sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
+				config().sqlCommand( sql -> sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", wallet) );
 
 				Util.inform( this, "Done");
 			}
@@ -179,6 +192,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		m_pan.setText(null);
 		m_aadhaar.setText(null);
 		m_locked.setText(null);
+		m_userCountry.setText(null);
+		m_personaData.setText(null);
 		transPanel.clear();
 		redemPanel.clear();
 		blockPanel.clear();
@@ -187,7 +202,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			S.out( "Updating values");
 
 			// query Users record for north-west panel
-			JsonArray users = Monitor.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", walletAddr);
+			JsonArray users = config().sqlQuery( "select * from users where wallet_public_key = '%s'", walletAddr);
 			if (users.size() == 1) {
 				JsonObject json = users.get(0);
 				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
@@ -195,6 +210,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_kyc.setText( json.getString("kyc_status"));
 				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
+				m_userCountry.setText( json.getString( "country") );
+				m_personaData.setText( S.isNotNull( json.getString( "persona_response") ) ? "tooltip" : "<empty>");
+				m_personaData.setToolTipText( json.getObjectNN( "persona_response").toHtml() );
+
 				
 				JsonObject obj = json.getObject("locked");
 				if (obj != null) {
@@ -224,6 +243,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
 					obj.put( "Balance", bal);
+					obj.put( "stock", stock);
 					posModel.ar().add(obj);
 				}
 			}
@@ -251,25 +271,22 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		if (Util.confirm( this, 
 					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
 			wrap( () -> {
-				Fireblocks.transfer(
-						Accounts.instance.getId("Admin1"), 
+				config().matic().transfer(
+						config().admin1Addr(),
 						m_wallet.getText(), 
-						Fireblocks.platformBase, 
-						.01, 
-						"give .01 MATIC for free"
-				).waitForHash();
+						.01); 
 			});
 		}
 	}
 
 	/** Open wallet in blockchain explorer */
 	private void explore() {
-		Util.browse( Monitor.m_config.blockchainAddress( m_wallet.getText() ) );
+		Util.browse( config().blockchainAddress( m_wallet.getText() ) );
 	}
 
 	private void createUser() {
 		wrap( () -> {
-			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "users",
+			config().sqlCommand( sql -> sql.insertJson( "users",
 					Util.toJson( 
 							"wallet_public_key", m_wallet.getText().toLowerCase(),
 							"first_name", m_firstName.getText() ) ) );
@@ -281,6 +298,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		wrap( () -> {
 			double amt = m_mintAmt.getDouble();
 			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+				if (amt > 100 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
+					Util.inform( this, "The password was invalid");
+					return;
+				}
+				
 				mint( amt);
 			}
 		});
@@ -289,10 +311,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private void mint(double amt) throws Exception {
 			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 
-			String hash = Monitor.m_config.rusd().mintRusd( 
+			String hash = config().rusd().mintRusd( 
 					m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 			
-			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.MINT,
 					"wallet_public_key", m_wallet.getText().toLowerCase(),
 					"data", Util.toJson( "amt", amt) ) ) );
@@ -303,16 +325,25 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 
 	private void burn() {
-		double amt = m_burnAmt.getDouble();
-			
+		burn( m_burnAmt.getDouble() );
+	}
+	
+	private void burnAllRusd() {
+		wrap( () -> { 
+			double amt = new Wallet( m_wallet.getText() ).getBalance( config().rusdAddr() );
+			burn( amt);
+		});
+	}
+
+	private void burn(double amt) {
 		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
 			wrap( () -> {
 					Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
 			
-				String hash = Monitor.m_config.rusd().burnRusd( 
+				String hash = config().rusd().burnRusd( 
 						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 				
-				Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+				config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 						"type", LogType.BURN,
 						"wallet_public_key", m_wallet.getText().toLowerCase(),
 						"data", Util.toJson( "amt", amt) ) ) );
@@ -331,12 +362,12 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 					"subject", m_subject.getText(), 
 					"text", m_emailText.getText() );
 			
-			Monitor.m_config.sendEmail(
+			config().sendEmail(
 					m_email.getText(),
 					m_subject.getText(),
 					m_emailText.getText() );
 			
-			Monitor.m_config.sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
+			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.EMAIL,
 					"wallet_public_key", m_wallet.getText().toLowerCase(),
 					"data", data) ) );
@@ -356,5 +387,45 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			e.printStackTrace();
 			Util.inform( this, e.getMessage() );
 		}
+	}
+
+	/** JLabel that when you click it, copies text to the clipboard */
+	static class MyLabel extends JLabel {
+		MyLabel() {
+			addMouseListener( new MouseAdapter() {
+				public void mouseClicked(MouseEvent e) {
+					Util.copyToClipboard( getText() );
+					java.awt.Toolkit.getDefaultToolkit().beep();
+				}
+			});
+		}
+	}
+	
+	class PosModel extends JsonModel {
+		public PosModel() {
+			super("Symbol,Balance");
+		}
+		
+		protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
+			menu.add( JsonModel.menuItem("Double it", ev -> wrap( () -> doubleIt( record) ) ) );
+		}
+	}
+	
+	private void doubleIt(JsonObject rec) throws Exception {
+		String symbol = rec.getString("Symbol");
+		double amt = rec.getDouble( "Balance");
+		StockToken tok = rec.getStock( "stock").getToken();
+		String wallet = m_wallet.getText().toLowerCase();
+		
+		Util.reqValidAddress(wallet);
+		
+		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, wallet) ) ) {
+			config().rusd().mintStockToken( wallet, tok, amt).waitForHash();
+			Util.inform( this, "Done");
+		}
+	}
+		
+	static Config config() {
+		return Monitor.m_config;
 	}
 }

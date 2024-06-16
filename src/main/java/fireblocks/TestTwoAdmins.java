@@ -5,6 +5,8 @@ import positions.Wallet;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
+import web3.Rusd;
+import web3.StockToken;
 
 /** This tests two wallets at the same time which will cause both 
  *  Admin1 and Amin2 accounts to be used */
