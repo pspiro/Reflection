@@ -624,7 +624,8 @@ public class EOrderDecoder {
     }
 
     public void readFilledQuantity() throws IOException {
-        m_order.filledQuantity(m_eDecoder.readDecimal());
+    	Decimal d = m_eDecoder.readDecimal();
+        m_order.filledQuantity(d == Decimal.INVALID ? 0 : d.toDouble() );
     }
 
     public void readRefFuturesConId() throws IOException {

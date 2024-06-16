@@ -122,4 +122,8 @@ public class Stock extends JsonObject {
 	public String getMdExchange() {
 		return getType().equals("Crypto") ? "PAXOS" : "SMART";
 	}
+
+	public boolean canMargin() {
+		return getBool( "canMargin");
+	}
 }

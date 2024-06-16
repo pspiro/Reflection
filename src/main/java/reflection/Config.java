@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
@@ -94,6 +95,9 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
+
+	private double bidLiqBuffer = 1.01;
+	private double markLiqBuffer = 1.02;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -413,6 +417,12 @@ public class Config extends ConfigBase {
 		}
 	}
 
+	/** Query for a single record (first) */
+	public JsonObject sqlQueryRec(String sql, Object... params) throws Exception {
+		JsonArray ar = sqlQuery( sql, params);
+		return ar.size() > 0 ? ar.get( 0) : null;
+	}
+
 	/** Use this one to make a single query */
 	public JsonArray sqlQuery(String sql, Object... params) throws Exception {
 		try ( MySqlConnection conn = createConnection() ) {
@@ -571,5 +581,11 @@ public class Config extends ConfigBase {
 	
 	public String getHookNameSuffix() {
 		return hookNameSuffix;
+	}
+	public double bidLiqBuffer() {
+		return bidLiqBuffer;
+	}
+	public double markLiqBuffer() {
+		return markLiqBuffer;
 	}
 }

@@ -209,7 +209,7 @@ public class Order {
     private boolean m_discretionaryUpToLimitPrice;
     
     private String  m_autoCancelDate;
-    private Decimal m_filledQuantity;
+    private double  m_filledQuantity;
     private int     m_refFuturesConId;
     private boolean m_autoCancelParent;
     private String  m_shareholder;
@@ -358,7 +358,7 @@ public class Order {
     public boolean isOmsContainer()                 { return m_isOmsContainer; }
     public boolean discretionaryUpToLimitPrice()    { return m_discretionaryUpToLimitPrice; }
     public String autoCancelDate()                  { return m_autoCancelDate; }
-    public Decimal filledQuantity()                 { return m_filledQuantity; }
+    public double filledQuantity()                  { return m_filledQuantity; }
     public int refFuturesConId()                    { return m_refFuturesConId; }
     public boolean autoCancelParent()               { return m_autoCancelParent; }
     public String shareholder()                     { return m_shareholder; }
@@ -507,7 +507,7 @@ public class Order {
     public void isOmsContainer(boolean v)                               { m_isOmsContainer = v; }
     public void discretionaryUpToLimitPrice(boolean v)                  { m_discretionaryUpToLimitPrice = v; }
     public void autoCancelDate(String v)                                { m_autoCancelDate = v; }
-    public void filledQuantity(Decimal v)                               { m_filledQuantity = v; }
+    public void filledQuantity(double v)                                { m_filledQuantity = v; }
     public void refFuturesConId(int v)                                  { m_refFuturesConId = v; }
     public void autoCancelParent(boolean v)                             { m_autoCancelParent = v; }
     public void shareholder(String v)                                   { m_shareholder = v; }
@@ -564,7 +564,7 @@ public class Order {
         m_isOmsContainer = false;
         m_discretionaryUpToLimitPrice = false;
         m_autoCancelDate = EMPTY_STR;
-        m_filledQuantity = Decimal.INVALID;
+        m_filledQuantity = 0;
         m_refFuturesConId = 0;
         m_autoCancelParent = false;
         m_shareholder = EMPTY_STR;

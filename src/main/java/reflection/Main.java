@@ -31,7 +31,7 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 import util.LogType;
 
-public class Main implements ITradeReportHandler {
+public class Main extends App implements ITradeReportHandler {
 	// constants
 	enum Status {
 		Connected, Disconnected
@@ -51,7 +51,7 @@ public class Main implements ITradeReportHandler {
 	private String m_faqs;
 	private String m_type1Config; 
 	private JsonObject m_type2Config;
-	final TradingHours m_tradingHours; 
+//	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private GTable m_allowedCountries;  // wallet is key, case insensitive
@@ -130,6 +130,13 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 			server.createContext("/api/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+			
+			// margin
+			server.createContext("/api/margin-static", exch -> new MarginTrans(this, exch, true).marginStatic() );
+			server.createContext("/api/margin-dynamic", exch -> new MarginTrans(this, exch, true).marginDynamic() );
+			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
+			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
+
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
@@ -462,6 +469,8 @@ public class Main implements ITradeReportHandler {
 					}
 				}
 			});
+			
+			MarginTransaction.mgr.tick();
 		}
 		catch( Exception e) {
 			S.err( "Error fetching prices", e); // need this because the exception doesn't give much info

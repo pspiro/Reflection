@@ -214,11 +214,6 @@ public class ApiController implements EWrapper {
 			handler.onRecOrderError( errorCode, errorMsg);  // once from here @*&   (fixed)
 		}
 
-        IOrderCancelHandler orderCancelHandler = m_orderCancelHandlers.get( id);
-        if (orderCancelHandler != null) {
-            orderCancelHandler.handle( errorCode, errorMsg);
-        }
-
 		for (ILiveOrderHandler liveHandler : m_liveOrderHandlers) {
 			liveHandler.handle( id, errorCode, errorMsg);
 		}
@@ -464,7 +459,7 @@ public class ApiController implements EWrapper {
 		void contractDetails(ContractDetails data);
 		void contractDetailsEnd();
 	}
-
+	
 	private void internalReqContractDetails( Contract contract, final IInternalHandler processor) {
 		int reqId = m_reqId++;
 		
@@ -942,9 +937,9 @@ public class ApiController implements EWrapper {
 
     public interface IOrderCancelHandler {
         void orderStatus(String orderStatus);
-        void handle(int errorCode, String errorMsg);
     }
 
+    // aka submitOrder
 	/** This method must be synchronized because we cannot allow orders to get placed out of order
 	 * or you receive dup order id error. This also assumes there is only one ApiController.
 	 * It also means that the order id is not available until after the order is placed */ 
@@ -959,11 +954,17 @@ public class ApiController implements EWrapper {
 		Util.require( order.roundedQty() > 0, "Set rounded quantity");
 		
 		if (handler != null) {
-			m_orderHandlers.put( order.orderId(), handler);
+			listenTo( order, handler);
 		}
 
 		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
 		sendEOM();
+	}
+
+	/** Let handler listen for events from IB for this order 
+	 *  Note that permId would be a better key */
+	public void listenTo( Order order, IOrderHandler handler) {
+		m_orderHandlers.put( order.orderId(), handler);
 	}
 
 	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {

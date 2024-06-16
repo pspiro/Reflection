@@ -72,7 +72,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		}
 
 		else {
-			/** This code is obsolete; use parseToObject() instead */
+			/** This code is obsolete; use parseToObject() instead, unless you need to call validateCookie() */
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
@@ -166,5 +166,15 @@ public abstract class MyTransaction extends BaseTransaction {
 	
 	protected String getCountryCode() throws Exception {
 		return Util.left( getFirstHeader( "X-Country-Code"), 2);
+	}
+
+	protected JsonObject queryUserRec() throws Exception {
+		return queryUserRec( m_walletAddr);
+	}
+
+	protected static JsonObject queryUserRec(String wallet) throws Exception {
+		return Main.m_config.sqlQueryRec( 
+				"select * from users where wallet_public_key = '%s'", 
+				wallet.toLowerCase() );  // note that this returns a map with all the null values
 	}
 }

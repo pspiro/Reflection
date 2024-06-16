@@ -64,12 +64,10 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// must come before profile and KYC checks
 			validateCookie("redeem");
 			
-			// get record from Users table
-			JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
-			require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your request");
-
 			// validate user profile fields
-			JsonObject userRecord = ar.get(0);
+			JsonObject userRecord = queryUserRec();
+			require( userRecord != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your request");
+
 			Profile profile = new Profile(userRecord);
 			profile.validate();
 			
