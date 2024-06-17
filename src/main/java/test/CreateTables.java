@@ -1,11 +1,8 @@
 package test;
 
-import static reflection.Main.require;
-
 import common.Util;
 import reflection.Config;
 import reflection.MySqlConnection;
-import reflection.RefCode;
 import tw.util.S;
 
 /** Create trades and commissions tables
@@ -39,18 +36,19 @@ public class CreateTables  {
 		String sql = """
 			create table orders (
 			created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
-			orderId varchar(10),
+			orderId varchar(10) primary key,
 			wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
 			conid int check (conid > 0),
 			action varchar(10),
 			quantity double precision check (quantity > 0),
 			amountToSpend double precision check (amountToSpend > 0),
 			leverage double precision check (leverage >= 1),
-			entryPrice double precision check (entryPrice > 0),
 			profitTakerPrice double precision,
+			entryPrice double precision check (entryPrice > 0),
 			stopLossPrice double precision,
 			goodUntil varchar(32),
-			currency varchar(32)
+			currency varchar(32),
+			status varchar(32)
 			)""";
 		con.execute(sql);
 	}

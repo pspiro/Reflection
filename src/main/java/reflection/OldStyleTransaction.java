@@ -127,12 +127,12 @@ public class OldStyleTransaction extends MyTransaction {
 	private void onCashBal() {
 		JsonObject obj = new JsonObject();
 		
-		m_main.orderController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
+		m_main.apiController().reqAccountSummary("All", AccountSummaryTag.nice, new IAccountSummaryHandler() {
 			@Override public void accountSummary(String account, AccountSummaryTag tag, String value, String currency) {
 				obj.put( tag.toString(), value);
 			}
 			@Override public void accountSummaryEnd() {
-				m_main.orderController().cancelAccountSummary(this);					
+				m_main.apiController().cancelAccountSummary(this);					
 				respond( obj);
 			}
 		});
@@ -150,7 +150,7 @@ public class OldStyleTransaction extends MyTransaction {
 	private void getStockPositions() {
 		JsonArray ar = new JsonArray();
 		
-		m_main.orderController().reqPositions( new IPositionHandler() {
+		m_main.apiController().reqPositions( new IPositionHandler() {
 			@Override public void position(String account, Contract contract, Decimal pos, double avgCost) {
 				JsonObject obj = new JsonObject();
 				obj.put( "conid", contract.conid() );
@@ -182,7 +182,7 @@ public class OldStyleTransaction extends MyTransaction {
 	/** Top-level method; used for admin purposes only, to get the conid */
 	// should be removed after we write an algo to update the spreadsheet w/ the conids
 	private void getDescription() throws RefException {
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
+		require( m_main.apiController().isConnected(), RefCode.NOT_CONNECTED, "Not connected");
 
 		out( "Returning stock description");
 		Contract contract = new Contract();
@@ -191,7 +191,7 @@ public class OldStyleTransaction extends MyTransaction {
 		contract.exchange( m_map.getParam("exchange") );
 		contract.currency( m_map.getParam("currency") );
 
-		m_main.orderController().reqContractDetails(contract, list -> {
+		m_main.apiController().reqContractDetails(contract, list -> {
 			wrap( () -> {
 				require( list.size() > 0, RefCode.NO_SUCH_STOCK, "No such stock");
 

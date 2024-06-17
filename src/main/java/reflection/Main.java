@@ -31,7 +31,7 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 import util.LogType;
 
-public class Main extends App implements ITradeReportHandler {
+public class Main implements ITradeReportHandler {
 	// constants
 	enum Status {
 		Connected, Disconnected
@@ -51,7 +51,7 @@ public class Main extends App implements ITradeReportHandler {
 	private String m_faqs;
 	private String m_type1Config; 
 	private JsonObject m_type2Config;
-//	final TradingHours m_tradingHours; 
+	final TradingHours m_tradingHours; 
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
@@ -196,12 +196,15 @@ public class Main extends App implements ITradeReportHandler {
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 
+		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr 
 
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
+		
+		// restore live orders
+		restoreLiveOrders();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}
@@ -434,7 +437,7 @@ public class Main extends App implements ITradeReportHandler {
 		m_dbQueue.add(runnable);
 	}
 
-	public ApiController orderController() {
+	public ApiController apiController() {
 		return m_orderConnMgr.controller();
 	}
 
@@ -468,7 +471,7 @@ public class Main extends App implements ITradeReportHandler {
 				}
 			});
 			
-			MarginTransaction.mgr.tick();
+			//MarginTransaction.mgr.tick();
 		}
 		catch( Exception e) {
 			S.err( "Error fetching prices", e); // need this because the exception doesn't give much info
@@ -569,7 +572,19 @@ public class Main extends App implements ITradeReportHandler {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
-	
+
+	private void restoreLiveOrders() throws Exception {
+		Util.forEach( m_config.sqlQuery("select * from orders"), order -> {
+			Stock stock = getStock( order.getInt( "conid") );
+			if (stock == null) {
+				S.out( "Error: could not restore order %s with conid %s", order.getString( "orderId"), order.getInt( "conid") );
+			}
+			else {
+				new MarginOrder( apiController(), order, null, stock).process();
+			}
+		});
+	}
+
 }
 
 //no change

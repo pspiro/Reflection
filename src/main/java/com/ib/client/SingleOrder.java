@@ -2,31 +2,33 @@ package com.ib.client;
 
 import org.json.simple.JsonObject;
 
+import com.ib.client.DualOrder.Type;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
 
 import tw.util.S;
 
+/** One order of a pair on DualOrder. This might not be needed
+ *  We could maybe just add two IB Order's to DualOrder */
 class SingleOrder implements IOrderHandler {
+	private final Order m_order;  // this is downloaded; could be null
+	private final Type m_session;
+	private final DualOrder m_parent;
 	private int m_orderId;  // this is serialized
 	private double m_filled;
 	private double m_avgPrice;
-	private Order m_order;  // this is downloaded; could be null
+	private OrderStatus m_status = OrderStatus.Inactive;
 
 	/** Called for new order, not submitted yet. Id will be set
-	 *  when order is submitted.  */
-	public SingleOrder() {
+	 *  when order is submitted.  
+	 * @param json 
+	 * @param night */
+	public SingleOrder(Type session, DualOrder parent) {
+		m_session = session;
+		m_parent = parent;
 		m_order = new Order();
 	}
 
-	/** Called when restoring from file. Order will be set when it is 
-	 *  downloaded from TWS */
-	public SingleOrder(JsonObject json) {
-		m_orderId = json.getInt( "orderId");
-		m_filled = json.getDouble( "filled");
-		m_avgPrice = json.getDouble( "avgPrice");
-	}
-	
 	JsonObject toJson() {
 		return common.Util.toJson(
 				"orderId", m_orderId,
@@ -44,12 +46,14 @@ class SingleOrder implements IOrderHandler {
 
 	public void placeOrder(ApiController controller, Contract contract) throws Exception {
 		common.Util.require( m_orderId == 0, "orderId should be zero");
+		
 		controller.placeOrder( contract, m_order, this);
 		m_orderId = m_order.orderId();
-		S.out( "Placed order and saved id " + m_orderId);
+		S.out( "Placed order %s order with id %s", m_session, m_orderId);
 	}
 			
 	@Override public void orderState(OrderState orderState) {
+		// ignore this, we don't care
 	}
 	
 	@Override public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
@@ -57,6 +61,10 @@ class SingleOrder implements IOrderHandler {
 
 		m_filled = filled.toDouble();
 		m_avgPrice = avgFillPrice;
+		m_status = status;
+
+		S.out( "received order status %s %s %s %s %s", m_session, status, filled, remaining, avgFillPrice);
+		m_parent.onRecOrderStatus( m_session);
 	}
 	
 	@Override public void onRecOrderError(int errorCode, String errorMsg) {
@@ -64,11 +72,11 @@ class SingleOrder implements IOrderHandler {
 
 	/** Set the IB order and listen for updates IF the permId matches */
 	public void setOrder(ApiController conn, Order order) {
-		if (m_orderId == order.orderId() && m_order == null) {
-			S.out( "Restoring order with orderId %s", m_orderId);
-			m_order = order;
-			conn.listenTo( m_order, this);
-		}
+//		if (m_orderId == order.orderId() && m_order == null) {
+//			S.out( "Restoring order with orderId %s", m_orderId);
+//			m_order = order;
+//			conn.listenTo( m_order, this);
+//		}
 	}
 
 	/** For debugging only */
@@ -102,5 +110,9 @@ class SingleOrder implements IOrderHandler {
 
 	public double filled() {
 		return m_filled;
+	}
+
+	public boolean isWorking() {
+		return m_status == OrderStatus.Inactive || m_status.isActive(); 
 	}
 }

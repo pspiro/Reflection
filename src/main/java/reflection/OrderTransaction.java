@@ -36,7 +36,7 @@ import web3.StockToken;
 public class OrderTransaction extends MyTransaction implements IOrderHandler, LiveTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
 
-	private static PositionTracker positionTracker = new PositionTracker(); 
+	static PositionTracker positionTracker = new PositionTracker(); 
 
 	private final Order m_order = new Order();
 	private double m_desiredQuantity;  // decimal desired quantity
@@ -82,7 +82,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		m_walletAddr = m_map.getWalletAddress();
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
-		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
+		require( m_main.apiController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
 		Action side = m_map.getEnumParam("action", Action.values() );
@@ -121,12 +121,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		validateCookie("order");
 
 		// get record from Users table
-		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
-		require( ar.size() == 1, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your order");
+		JsonObject userRec = queryUserRec();
+		require( userRec != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your order");
 
 		// validate user profile fields
-		JsonObject userRecord = ar.get(0);
-		Profile profile = new Profile(userRecord);
+		Profile profile = new Profile(userRec);
 		profile.validate();
 		
 		// save email to send alerts later
@@ -137,7 +136,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() )
 				&& getCountryCode().equals( "IN")
 				
-				|| S.equals( userRecord.getString("kyc_status"), "VERIFIED"),
+				|| S.equals( userRec.getString("kyc_status"), "VERIFIED"),
 				
 				RefCode.NEED_KYC,
 				"Please verify your identity and then resubmit your order");
@@ -277,7 +276,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  only shrinkWrap()  */
 	private void submitOrder( Contract contract) throws Exception {		
 		// place order for rounded quantity
-		m_main.orderController().placeOrder(contract, m_order, this);
+		m_main.apiController().placeOrder(contract, m_order, this);
 
 		jlog( LogType.SUBMITTED_TO_IB, m_order.getJsonLog(contract) );
 
@@ -360,7 +359,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			if (!m_order.status().isComplete() && !m_order.status().isCanceled() ) {
 				Util.wrap( () -> {
 					jlog( LogType.CANCEL_ORDER, null);
-					m_main.orderController().cancelOrder( m_order.orderId(), "", null);
+					m_main.apiController().cancelOrder( m_order.orderId(), "", null);
 				});
 			}
 			onIBOrderCompleted(true, false);
@@ -777,12 +776,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					Prices prices = m_main.getStock(conid).prices();
 					double price = m_order.isBuy() ? prices.bid() * 1.01 : prices.ask() * .99;
 					Util.require( price > 0, "Can't unwind, no market price");  // adjustment won't affect this 
-					m_main.orderController().placeOrder(contract, m_order, null);
+					m_main.apiController().placeOrder(contract, m_order, null);
 					
 					// cancel the order; if it already filled, there's no harm done
 					// we can't wait too long for this to fill because it will prevent us from
 					// placing orders for the same contract on the opposite side
-					Util.executeIn( 5000, () -> m_main.orderController().cancelOrder( m_order.orderId(), "", null) );
+					Util.executeIn( 5000, () -> m_main.apiController().cancelOrder( m_order.orderId(), "", null) );
 					
 					// better would be to monitor the order and only cancel if not filled
 				}

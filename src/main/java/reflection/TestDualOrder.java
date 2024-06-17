@@ -10,8 +10,23 @@ import common.Util;
 import tw.util.S;
 
 public class TestDualOrder extends ConnectionAdapter {
+//	static public class App {
+//		TradingHours m_tradingHours;
+//		private Stocks m_stocks;
+//
+//		public void config(Config config, TradingHours tradingHours) throws Exception {
+//			m_stocks = config.readStocks();
+//			m_tradingHours = tradingHours;
+//		}
+//
+//		Stock getStock( int conid) throws RefException {
+//			return m_stocks.stockMap().get( conid);
+//		}
+//
+//
+//	}
+
 	ApiController controller = new ApiController(this);
-	App app = new App();
 	private TradingHours m_tradingHours;
 
 	/* you have status and you have events; status you can get from the order:
@@ -22,55 +37,32 @@ public class TestDualOrder extends ConnectionAdapter {
 		new TestDualOrder().run();
 	}
 
-
 	void run() throws Exception {
 		S.out( "reading config");
-		Config config = Config.ask( "Dt");
+		Config config = Config.read();
 		
-		m_tradingHours = new TradingHours(controller, config);
-		app.config( config, m_tradingHours);
+//		m_tradingHours = new TradingHours(controller, config);
+//		app.config( config, m_tradingHours);
 
 		S.out( "connecting");
 		controller.connect( config.twsOrderHost(), config.twsOrderPort(), 34, "");
 	}
 	
 	@Override public void onConnected() {
-		m_tradingHours.startQuery();
 	}
 
 	@Override public void onRecNextValidId(int id) {
+		S.out( "received next valid id");
 		Util.executeAndWrap( () -> {
-			{
+			
 				// place order to both exchanges
-				DualOrder o = new DualOrder();
-				o.action(Action.Buy);
-				o.quantity( 1);
-				o.lmtPrice( 160);
-				o.outsideRth(true);
-				o.ocaGroup( Util.uid(5) );
-				o.tif( TimeInForce.GTC);
-				o.placeOrder( controller, 8314);
-	
-				MarginOrder t = new MarginOrder( o);
-	
-				MarginOrderMgr mgr = new MarginOrderMgr();
-				mgr.add( t);
-	
-				mgr.write();
-			}
-
-			S.sleep( 5000);
-			S.out( "-----Restoring orders");
-			MarginOrderMgr mgr2 = new MarginOrderMgr();
-			mgr2.restore(app, controller, () -> {
-				S.out( "-----restored Orders");
-				mgr2.display();
-	
-				S.out( "sleep 5");
-				S.sleep( 10000);
-				S.out( "  done");
-				//mgr2.cancel(controller);
-			});
+				DualOrder ord = new DualOrder( filled -> S.out( "dual order completed filled=%s", filled), controller);
+				ord.action(Action.Buy);
+				ord.quantity( 1);
+				ord.lmtPrice( 160);
+				ord.outsideRth(true);
+				ord.ocaGroup( Util.uid(5) );
+				ord.placeOrder( controller, 8314);
 		});
 	}
 }

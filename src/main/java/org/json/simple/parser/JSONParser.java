@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -74,6 +75,19 @@ public class JSONParser {
 	
 	public Object parse(String s) throws ParseException{
 		return parse(s, (ContainerFactory)null);
+	}
+
+	/** You can use this to return JsonObject subclass. The same could be done for JsonArray */
+	public <T extends Map> T parse2(String s, Supplier<Map> supplier) throws ParseException{
+		return (T) parse( s, new ContainerFactory() {
+			@Override public Map createObjectContainer() {
+				return supplier.get();
+			}
+			
+			@Override public List creatArrayContainer() {
+				return null;
+			}
+		} );
 	}
 	
 	public Object parse(String s, ContainerFactory containerFactory) throws ParseException{
@@ -531,4 +545,21 @@ public class JSONParser {
 		status = S_IN_ERROR;
 		throw new ParseException(getPosition(), ParseException.ERROR_UNEXPECTED_TOKEN, token);
 	}
+
+//	static class ObjFactory implements ContainerFactory {
+//		
+//		private Supplier<Map> m_supplier;
+//
+//		ObjFactory( Supplier<Map> supplier) {
+//			m_supplier = supplier;
+//		}
+//		
+//		@Override public List creatArrayContainer() {
+//			return null;
+//		}
+//
+//		@Override public Map createObjectContainer() {
+//			return m_supplier.get();
+//		}
+//	}
 }

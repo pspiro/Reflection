@@ -65,10 +65,10 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			validateCookie("redeem");
 			
 			// validate user profile fields
-			JsonObject userRecord = queryUserRec();
-			require( userRecord != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your request");
+			JsonObject userRec = queryUserRec();
+			require( userRec != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your request");
 
-			Profile profile = new Profile(userRecord);
+			Profile profile = new Profile(userRec);
 			profile.validate();
 			
 			// save email to send alerts later
@@ -88,7 +88,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// check if RUSD is locked, meaning they were awarded RUSD and need to wait until 
 			// a certain date until redeeming
 			String msg = null; // null msg will not get passed to Frontend 
-			JsonObject locked = userRecord.getObject( "locked");  // locked fields are: amount, lockedUntil, requiredTrades
+			JsonObject locked = userRec.getObject( "locked");  // locked fields are: amount, lockedUntil, requiredTrades
 
 			if (locked != null) {
 				double remainingDays = Math.max(0., (locked.getLong( "lockedUntil") - System.currentTimeMillis() ) / (double)Util.DAY);

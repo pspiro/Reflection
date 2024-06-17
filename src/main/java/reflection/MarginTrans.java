@@ -11,9 +11,15 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import web3.Stablecoin;
 
+
 public class MarginTrans extends MyTransaction {
-	static JsonObject marginConfig;
+	static JsonObject staticConfig;
 	private Stablecoin m_stablecoin;
+	
+	// new config
+	static int maxLeverage = 1;
+	static int minSpend = 10;
+	static int maxSpend = 1000;
 
 	MarginTrans(Main main, HttpExchange exchange, boolean debug) {
 		super(main, exchange, debug);
@@ -23,33 +29,19 @@ public class MarginTrans extends MyTransaction {
 		wrap( () -> {
 			getWalletFromUri();
 			
-			if (marginConfig == null) {
-				setMarginConfig();
+			if (staticConfig == null) {
+				staticConfig = Util.toJson(
+						"maxLeverage", 5.0,
+						"goodUntil", GoodUntil.values(),
+						"refreshInterval", 5000,
+						"stocks", m_main.stocks().marginStocks().toArray( new Stock[0])
+						);
 			}
-			respond( marginConfig);
+			
+			respond( staticConfig);
 		});
 	}
-	
-	private void setMarginConfig() {
-		String[] gtc = "Never,Always,Sometimes".split( ",");
 
-		//			JsonArray stocks = new JsonArray();
-		//			
-		//			m_main.stocks().forEach( stock -> {
-		//				if (stock.canMargin() ) {
-		//					stocks.add( Util.toJson( 
-		//							""
-
-		marginConfig = Util.toJson(
-				"maxLeverage", 5.0,
-				"goodUntil", gtc,
-				"refreshInterval", 5000,
-				"stocks", m_main.stocks().marginStocks().toArray( new Stock[0])
-				);
-	}
-
-	// write test scripts for these
-	
 	// we could remember the set of orders for each user and only resend the changes
 	public void marginDynamic() {
 		wrap( () -> {
@@ -60,10 +52,13 @@ public class MarginTrans extends MyTransaction {
 			validateCookie( "margin-static");
 			
 			int conid = m_map.getRequiredInt("conid");
+			Stock stock = m_main.getStock(conid);
+			Util.require( stock != null, "invalid conid");
+			Prices prices = stock.prices();
 			
 			JsonObject resp = Util.toJson(
-					"bid", 83.83,
-					"ask", 84.84,
+					"bid", prices.bid(),
+					"ask", prices.ask(),
 					"orders", getOrders() );
 			
 			respond( resp);
@@ -81,37 +76,26 @@ public class MarginTrans extends MyTransaction {
 			order.put( "askPrice", prices.ask() );
 		});
 			
-		ar.add( createFakeMarginOrder() );
-		
 		return ar;
 	}
 
-	JsonObject createFakeMarginOrder() {
-		return Util.toJson(
-				"conid", "265598",
-				"orderId", "73827383728",
-				"symbol", "APPL (Apple)",
-				"sharesToBuy", 100.12,
-				"sharesHeld", 100.12,
-				"value", 2600.12,
-				"loanAmount", 2500.12,
-				"liquidationPrice", 50.12,
-				"stopLossPrice", 60.12,
-				"entryPrice", 70.12,
-				"profitTakerPrice", 80.12,
-				"bidPrice", 65.12,
-				"askPrice", 66.12
-				);
+
+	public void marginCancel() {
+		wrap( () -> {
+			parseMsg();
+			
+			m_walletAddr = m_map.getWalletAddress();
+			
+			validateCookie( "margin-static");
+
+			String id = m_map.getRequiredString("orderId");
+			boolean liquidate = m_map.getBool("liquidate");
+			
+
+			respondOk();
+		});
 	}
 
-	enum GoodUntil {
-		Immediately,
-		OneHour,
-		EndOfDay,
-		EndOfWeek,
-		Never
-	}
-	
 	public void marginOrder() {
 		wrap( () -> {
 			parseMsg();
@@ -120,25 +104,34 @@ public class MarginTrans extends MyTransaction {
 			
 			validateCookie( "margin-order");
 			
+			// get record from Users table
+			JsonObject userRec = queryUserRec();
+			require( userRec != null, RefCode.INVALID_USER_PROFILE, "Please update your profile and then resubmit your order");
+
+			// validate user profile fields
+			Profile profile = new Profile(userRec);
+			profile.validate();
+			
 			int conid = m_map.getRequiredInt("conid");
 			Stock stock = m_main.getStock(conid);
 			require( stock != null, RefCode.INVALID_REQUEST, "Invalid conid");
 
-			double amountToSpend = m_map.getRequiredDouble( "amountToSpend");
-			require( amountToSpend >= 0 && amountToSpend <= m_config.maxOrderSize(), RefCode.INVALID_REQUEST, "Order size is too large");
-			require( amountToSpend >= m_config.minOrderSize(), RefCode.INVALID_REQUEST, "Order size is too small");
+			double amtToSpend = m_map.getRequiredDouble( "amountToSpend");
+			require( amtToSpend >= minSpend, RefCode.INVALID_REQUEST, "The amount to spend must be at least %s", minSpend);
+			require( amtToSpend >= 0 && amtToSpend <= maxSpend, RefCode.INVALID_REQUEST, "The amount to spend cannot be greater than %s", maxSpend);
 
 			double leverage = m_map.getRequiredDouble( "leverage");
-			require( leverage >= 1 && leverage <= 20, RefCode.INVALID_REQUEST, "Leverage is out of range");
+			require( leverage >= 1, RefCode.INVALID_REQUEST, "Leverage must be greater than or equal to one");
+			require( leverage <= maxLeverage, RefCode.INVALID_REQUEST, "Leverage must less than %s", maxLeverage);
 			
-			double profitTakerPrice = m_map.getRequiredDouble( "profitTakerPrice");
-			require( profitTakerPrice > 0, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid");
+			double profitTakerPrice = m_map.getDoubleParam( "profitTakerPrice");
+			require( profitTakerPrice >= 0, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid");
 			
 			double entryrice = m_map.getRequiredDouble( "entryPrice");
 			require( entryrice > 0, RefCode.INVALID_REQUEST, "entryPrice is invalid");
 			
-			double stopLossPrice = m_map.getRequiredDouble( "stopLossPrice");
-			require( stopLossPrice > 0, RefCode.INVALID_REQUEST, "stopLossPrice is invalid");
+			double stopLossPrice = m_map.getDoubleParam( "stopLossPrice");
+			require( stopLossPrice >= 0, RefCode.INVALID_REQUEST, "stopLossPrice is invalid");
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
@@ -157,7 +150,7 @@ public class MarginTrans extends MyTransaction {
 					"conid", conid,
 					"action", "Buy",
 					//"quantity", quantity,
-					"amountToSpend", amountToSpend,
+					"amountToSpend", amtToSpend,
 					"leverage", leverage,
 					"entryPrice", entryrice,
 					"profitTakerPrice", profitTakerPrice,
@@ -166,25 +159,44 @@ public class MarginTrans extends MyTransaction {
 					"currency", currency
 					);
 			
+			out( "Received valid order " + json);
+			
 			m_config.sqlCommand( sql -> sql.insertJson( "orders", json) );
-
-			respond( code, RefCode.OK, "orderId", orderId);
+			
+			// don't tie up the http server thread
+			Util.execute( () -> wrap( () -> {
+				// transfer the crypto to RefWallet  (must change this to a different wallet; we could even create a new one specifically for this user and store it in the db
+				String hash = m_config.rusd().buyStock(m_walletAddr, m_stablecoin, amtToSpend, stock.getToken(), 0)
+						.waitForHash();
+	
+				// make this an order log entry instead
+				
+				// update order in db with transaction hash
+				m_config.sqlCommand( sql -> sql.updateJson( 
+						"orders",
+						Util.toJson( 
+								"orderId", orderId,
+								"blockchainHash", hash),
+						"where orderId = %s", 
+						orderId) );
+				
+				// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
+				// when it restarts we won't know for sure if the transaction was successful or not;
+				// operator assistance would be required
+				
+				out( "took payment from user for order %s with trans hash %s", orderId, hash);
+				
+				new MarginOrder( m_main.apiController(), json, userRec, stock).placeBuyOrder();
+	
+				respond( code, RefCode.OK, "orderId", orderId);
+			}));
 		});
 	}
-
-	public void marginCancel() {
-		wrap( () -> {
-			parseMsg();
-			
-			m_walletAddr = m_map.getWalletAddress();
-			
-			validateCookie( "margin-static");
-
-			String id = m_map.getRequiredString("orderId");
-			boolean liquidate = m_map.getBool("liquidate");
-			
-
-			respondOk();
-		});
+	enum GoodUntil {
+		Immediately,
+		OneHour,
+		EndOfDay,
+		EndOfWeek,
+		Never
 	}
 }

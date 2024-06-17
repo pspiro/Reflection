@@ -1,7 +1,5 @@
 package com.ib.client;
 
-import static reflection.Main.require;
-
 import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
@@ -10,27 +8,32 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 
-import reflection.RefCode;
 import reflection.TradingHours.Session;
 import tw.util.S;
 
 /** This gives a view of a single order but actually places two orders,
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder {
-	private final SingleOrder m_dayOrder;
-	private final SingleOrder m_nightOrder;
-
-	public DualOrder() {
-		m_dayOrder = new SingleOrder();
-		m_nightOrder = new SingleOrder();
+	public interface ParentOrder {
+		void onCompleted(double totalFilled);
 	}
 	
-	/** Called when restoring from file */
-	public DualOrder(JsonObject json) {
-		m_dayOrder = new SingleOrder( json);
-		m_nightOrder = new SingleOrder( json);
-	}
+	enum Type { Day, Night };  // you could combine this with TradingHours.Session
+	
+	private final ParentOrder m_parent;
+	private final SingleOrder m_dayOrder;
+	private final SingleOrder m_nightOrder;
+	private int m_quantity;
+	boolean m_done;
+	private ApiController m_conn;
 
+	public DualOrder( ParentOrder parent, ApiController conn) {
+		m_parent = parent;
+		m_conn = conn;
+		m_dayOrder = new SingleOrder( Type.Day, this);
+		m_nightOrder = new SingleOrder( Type.Night, this);
+	}
+	
 	public JsonObject toJson() {
 		return common.Util.toJson( 
 				"day_order", m_dayOrder,
@@ -38,6 +41,7 @@ public class DualOrder {
 	}
 	
 	public void quantity( int size) {
+		m_quantity = size;
 		both( order -> order.o().roundedQty( size) );
 	}
 	
@@ -79,13 +83,17 @@ public class DualOrder {
 	}
 	
 	public void placeOrder( ApiController controller, int conid) throws Exception {
+		common.Util.require( controller.isConnected(), "not connected");
+		
 		Contract contract = new Contract();
 		contract.conid( conid);
 		
 		contract.exchange( Session.Smart.toString() );
+		m_dayOrder.o().tif( TimeInForce.GTC);
 		m_dayOrder.placeOrder( controller, contract);
 		
 		contract.exchange( Session.Overnight.toString() );
+		m_nightOrder.o().tif( TimeInForce.DAY);
 		m_nightOrder.placeOrder( controller, contract);
 	}
 
@@ -119,5 +127,23 @@ public class DualOrder {
 	public double getPosition() {
 		return m_dayOrder.filled() + m_nightOrder.filled();
 	}
-	
+
+	public void onRecOrderStatus(Type session) {
+		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
+
+		if (!m_done) {
+			if (totalFilled >= m_quantity) {
+				both( order -> order.cancel( m_conn) );
+				m_parent.onCompleted( totalFilled);
+				m_done = true;
+			}
+			
+			else if (!m_dayOrder.isWorking() && !m_nightOrder.isWorking() ) {
+				m_parent.onCompleted( totalFilled);
+				m_done = true;
+			}
+		}
+		
+	}
+
 }
