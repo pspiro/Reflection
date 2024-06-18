@@ -746,6 +746,14 @@ public class Util {
 		}
 	}
 
+	/** "if not null"; execute block if object is not null and not empty string
+	 *  DOES NOT return a value */
+	public static <T> void ifff( T obj, Consumer<T> consumer) {
+		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
+			consumer.accept( obj);
+		}
+	}
+
 	/** wrap text like this <tag>text</tag> */
 	public static String wrapHtml( String tag, String text) {
 		return String.format( "<%s>%s</%s>", tag, text, tag);

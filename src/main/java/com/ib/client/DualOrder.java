@@ -18,11 +18,11 @@ import tw.util.S;
 /** This gives a view of a single order but actually places two orders,
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder implements SingleParent {
-	public interface ParentOrder {
+	public interface DualParent {
 		void onCompleted(double totalFilled, DualOrder order);
 	}
 	
-	private final ParentOrder m_parent;
+	private final DualParent m_parent;
 	private final SingleOrder m_dayOrder;
 	private final SingleOrder m_nightOrder;
 	private int m_quantity;
@@ -30,15 +30,15 @@ public class DualOrder implements SingleParent {
 	private ApiController m_conn;
 
 	/** prices are only need for sim stop orders on Overnight */ 
-	public DualOrder( ApiController conn, ParentOrder parent) {
-		this( conn, parent, null);
+	public DualOrder( ApiController conn, DualParent parent, String name) {
+		this( conn, parent, name, null);
 	}
 	
-	public DualOrder( ApiController conn, ParentOrder parent, Prices prices) {
+	public DualOrder( ApiController conn, DualParent parent, String name, Prices prices) {
 		m_parent = parent;
 		m_conn = conn;
-		m_dayOrder = new SingleOrder( SingleOrder.Type.Day, prices, this);
-		m_nightOrder = new SingleOrder( Type.Night, prices, this);
+		m_dayOrder = new SingleOrder( SingleOrder.Type.Day, prices, name, this);
+		m_nightOrder = new SingleOrder( Type.Night, prices, name, this);
 	}
 	
 	public JsonObject toJson() {
@@ -136,22 +136,24 @@ public class DualOrder implements SingleParent {
 		return m_dayOrder.filled() + m_nightOrder.filled();
 	}
 
-	@Override public void onRecOrderStatus(Type session) {
-		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
-
+	/** Called when one of the child orders status updates; could be filled,
+	 *  partially filled, or not at all filled. Note that DualOrder can be
+	 *  complete even if both children are still work, if the total fill size
+	 *  is sufficient */
+	@Override public void onStatusUpdated(Type session, int filled) {
 		if (!m_done) {
-			if (totalFilled >= m_quantity) {
+			double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
+
+			if (totalFilled >= m_quantity || isComplete() ) {
 				both( order -> order.cancel( m_conn) );
 				m_parent.onCompleted( totalFilled, this);
 				m_done = true;
 			}
-			
-			else if (!m_dayOrder.isWorking() && !m_nightOrder.isWorking() ) {
-				m_parent.onCompleted( totalFilled, this);
-				m_done = true;
-			}
 		}
-		
+	}
+
+	private boolean isComplete() {
+		return m_dayOrder.isComplete() && m_nightOrder.isComplete();
 	}
 
 	public void stopPrice(double stopPrice) {

@@ -94,6 +94,16 @@ public class ParamMap {
 		}
 	}		
 
+	/** Rounds to two decimals as required by IB for most prices */
+	double getPrice(String tag) throws RefException {
+		return S.round( getDoubleParam( tag) );
+	}		
+
+	/** Rounds to two decimals as required by IB for most prices */
+	double getRequiredPrice(String tag) throws RefException {
+		return S.round( getRequiredDouble( tag) );
+	}		
+
 	/** Case-insensitive */
 	<T extends Enum<T>> T getEnumParam(String tag, T[] values) throws RefException {
 		try {

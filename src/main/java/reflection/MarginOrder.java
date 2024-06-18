@@ -3,7 +3,7 @@ package reflection;
 import org.json.simple.JsonObject;
 
 import com.ib.client.DualOrder;
-import com.ib.client.DualOrder.ParentOrder;
+import com.ib.client.DualOrder.DualParent;
 import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
@@ -13,11 +13,10 @@ import common.Util;
 import tw.util.S;
 import web3.Stablecoin;
 
-class MarginOrder implements ParentOrder {
+class MarginOrder implements DualParent {
 		enum Status {
 			Start,
-			SubmittedOrder, 
-			PlacedOrder, 
+			Filled, 
 			Liquidation, 
 			SubLiquidation  
 		}
@@ -44,7 +43,9 @@ class MarginOrder implements ParentOrder {
 		private double m_filledPrimary;
 
 
-		private DualOrder m_dualOrder;
+		private DualOrder m_primaryOrder;
+		private DualOrder m_profitOrder;
+		private DualOrder m_stopOrder;
 
 		private String fbId; // must be serialized
 		private JsonObject m_userRec;  // not needed. pas
@@ -79,6 +80,10 @@ class MarginOrder implements ParentOrder {
 			m_stock = stock;
 			m_status = Status.Start;
 		}
+		
+		private void out( String format, Object... params) {
+			S.out( orderId() + " " + format, params);
+		}
 
 		// called when the order is restored from the db
 		synchronized void process() throws Exception {
@@ -91,14 +96,14 @@ class MarginOrder implements ParentOrder {
 //				double loan = -balance;
 //				
 //				if (prices.bid() <= 0) {
-//					S.out( "liquidating  no bid");
+//					out( "liquidating  no bid");
 //					liquidate( conn);
 //				}
 //				else {
 //					double bidCollat = prices.bid() * position;
 //					double bidCoverage = bidCollat / loan; 
 //					if (bidCoverage <= Main.m_config.bidLiqBuffer() ) {
-//						S.out( "liquidate bid=%s  bidCollat=%s  loan=%s  bidCovererage=%s", 
+//						out( "liquidate bid=%s  bidCollat=%s  loan=%s  bidCovererage=%s", 
 //								prices.bid(), bidCollat, loan, bidCoverage);
 //						liquidate( conn);
 //					}
@@ -107,7 +112,7 @@ class MarginOrder implements ParentOrder {
 //						double markCollat = prices.askMark() * position;
 //						double markCoverage = markCollat / loan;
 //						if (markCoverage <= Main.m_config.markLiqBuffer() ) {
-//							S.out( "liquidate bid=%s  ask=%s  last=%s  markCollat=%s  loan=%s  markCovererage=%s", 
+//							out( "liquidate bid=%s  ask=%s  last=%s  markCollat=%s  loan=%s  markCovererage=%s", 
 //									prices.bid(), prices.ask(), prices.ask(), markCollat, loan, markCoverage);
 //						}
 //					}
@@ -117,39 +122,43 @@ class MarginOrder implements ParentOrder {
 		}
 		
 		void placeBuyOrder() throws Exception {
-			if (m_dualOrder == null) {
+			if (m_primaryOrder == null) {
+				out( "***Placing margin primary orders");
 				double feePct = .01; // fix this. pas
 				double totalSpend = userAmt() * leverage() * (1. - feePct);
 				desiredQty = totalSpend / entryPrice();
 				roundedQty = OrderTransaction.positionTracker.buyOrSell( m_stock.conid(), true, desiredQty, 1);
 				
 				// place day and night orders
-				m_dualOrder = new DualOrder( m_conn, this);
-				m_dualOrder.action( Action.Buy);
-				m_dualOrder.quantity( roundedQty);
-				m_dualOrder.orderType( OrderType.LMT);
-				m_dualOrder.lmtPrice( entryPrice() );
-				m_dualOrder.tif( TimeInForce.GTC);   // must consider this
-				m_dualOrder.outsideRth( true);
-				m_dualOrder.orderRef( orderId() + " primary" );
-				m_dualOrder.ocaGroup( orderId() + " primary" );
+				m_primaryOrder = new DualOrder( m_conn, this, "PRIMARY");
+				m_primaryOrder.action( Action.Buy);
+				m_primaryOrder.quantity( roundedQty);
+				m_primaryOrder.orderType( OrderType.LMT);
+				m_primaryOrder.lmtPrice( entryPrice() );
+				m_primaryOrder.tif( TimeInForce.GTC);   // must consider this
+				m_primaryOrder.outsideRth( true);
+				m_primaryOrder.orderRef( orderId() + " primary" );
+				// m_primaryOrder.ocaGroup( orderId() + " primary" ); // the problem is that the pair is canceled and then we can't see easily which was canceled first, plus we have to replace both orders
 
-				m_dualOrder.placeOrder( conid() );
+				m_primaryOrder.placeOrder( conid() );
 			}
 		}
 
-		/** Called by dualOrder when the day and night orders are done */
+		/** Called by dualOrder when the day and night orders are done */  // really we should listen for amt filled and add up the amounts from the profit taker and stop loss; could encapsulate this in a BracketOrder class
 		@Override public void onCompleted(double totalFilled, DualOrder which) {
-			if (which == m_dualOrder) {  // check status here as well to be safe
+			if (which == m_primaryOrder && m_status == Status.Start) {  // check status here as well to be safe
+				m_status = Status.Filled;
+				
 				m_filledPrimary = totalFilled;
 				
-				S.out( "The initial buy order has completed with %s filled shares", totalFilled);
+				out( "The primary buy order has completed with %s filled shares", totalFilled);
+				
 				if (totalFilled == 0 && roundedQty > 0) {
-					S.out( "Your order could not be filled");  // how to communicate this?
+					out( "Your order could not be filled");  // how to communicate this?
 				}
 				else {
 					if (totalFilled < roundedQty) {
-						S.out( "Partial fill");
+						out( "Partial fill");
 						// need to adjust...something?
 					}
 					
@@ -163,40 +172,54 @@ class MarginOrder implements ParentOrder {
 					// else we have to monitor the prices and simulate
 				}
 			}
+			else if (which == m_stopOrder || which == m_profitOrder) {
+				if (m_status == Status.Filled) {
+					Util.ifff( which == m_stopOrder ? m_profitOrder : m_stopOrder, other -> 
+							other.cancel( m_conn) );
+				}
+				else {
+					out( "Ignoring onCompleted() event");
+				}
+			}
 		}
 
 		private void placeStopLoss() {
+			out( "***Placing margin stop-loss orders");
+			
 			// need to check m_filledPrimary; if < roundedQty, we need to adjust the size here. pas
-			DualOrder stopOrder = new DualOrder( m_conn, this, m_stock.prices() );
-			stopOrder.action( Action.Buy);
-			stopOrder.quantity( roundedQty);
-			stopOrder.orderType( OrderType.STP);
-			stopOrder.stopPrice( stopLossPrice() );
-			stopOrder.tif( TimeInForce.GTC);   // must consider this
-			stopOrder.outsideRth( true);
-			stopOrder.orderRef( orderId() + " stop" );
-			stopOrder.ocaGroup( orderId() + " bracket" );
+			m_stopOrder = new DualOrder( m_conn, this, "STOP", m_stock.prices() );
+			m_stopOrder.action( Action.Sell);
+			m_stopOrder.quantity( roundedQty);
+			m_stopOrder.orderType( OrderType.STP_LMT);  // use STOP_LMT  because STOP cannot be set to trigger outside RTH
+			m_stopOrder.lmtPrice( stopLossPrice() * .95);
+			m_stopOrder.stopPrice( stopLossPrice() );
+			m_stopOrder.tif( TimeInForce.GTC);   // must consider this
+			m_stopOrder.outsideRth( true);
+			m_stopOrder.orderRef( orderId() + " stop" );
+			// m_stopOrder.ocaGroup( orderId() + " bracket" );
 			
 			try {
-				stopOrder.placeOrder( conid() );
+				m_stopOrder.placeOrder( conid() );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}  // you need to cancel one when the other one fills; make sure stop is > liq order or place your own stop at the liq price
 		
 		private void placeProfitTaker() {
-			DualOrder profitOrder = new DualOrder( m_conn, this);
-			profitOrder.action( Action.Buy);
-			profitOrder.quantity( roundedQty);
-			profitOrder.orderType( OrderType.LMT);
-			profitOrder.lmtPrice( profitTakerPrice() );
-			profitOrder.tif( TimeInForce.GTC);   // must consider this
-			profitOrder.outsideRth( true);
-			profitOrder.orderRef( orderId() + " profit" );
-			profitOrder.ocaGroup( orderId() + " bracket" );
+			out( "***Placing margin profit-taker orders");
+			
+			m_profitOrder = new DualOrder( m_conn, this, "PROFIT");
+			m_profitOrder.action( Action.Sell);
+			m_profitOrder.quantity( roundedQty);
+			m_profitOrder.orderType( OrderType.LMT);
+			m_profitOrder.lmtPrice( profitTakerPrice() );
+			m_profitOrder.tif( TimeInForce.GTC);   // must consider this
+			m_profitOrder.outsideRth( true);
+			m_profitOrder.orderRef( orderId() + " profit" );
+			//m_profitOrder.ocaGroup( orderId() + " bracket" );
 
 			try {
-				profitOrder.placeOrder( conid() );
+				m_profitOrder.placeOrder( conid() );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

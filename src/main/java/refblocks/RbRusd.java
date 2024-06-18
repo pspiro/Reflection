@@ -47,7 +47,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 		
-		S.out( "RUSD buy %s %s paying %s %s for user %s", 
+		S.out( "RUSD buyStock %s %s paying %s %s for user %s", 
 				stockTokenAmt,
 				stockToken.address(),
 				stablecoinAmt,
@@ -69,7 +69,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "RUSD sell %s %s receive %s RUSD for user %s",
+		S.out( "RUSD sellStock %s %s receive %s RUSD for user %s",
 				stockTokenAmt,
 				stockToken.name(),
 				rusdAmt,

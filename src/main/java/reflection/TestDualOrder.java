@@ -49,7 +49,8 @@ public class TestDualOrder extends ConnectionAdapter {
 		// place order to both exchanges
 		DualOrder ord = new DualOrder( 
 				conn, 
-				(filled, order) -> S.out( "dual order completed filled=%s", filled), 
+				(filled, order) -> S.out( "dual order completed filled=%s", filled),
+				"TEST",
 				prices);
 		
 		ord.action(Action.Sell);
@@ -57,7 +58,6 @@ public class TestDualOrder extends ConnectionAdapter {
 		ord.quantity( 1);
 		ord.stopPrice( 169);
 		ord.outsideRth(true);
-		ord.ocaGroup( Util.uid(5) );
 
 		try {
 			ord.placeOrder( 8314);
@@ -90,7 +90,7 @@ public class TestDualOrder extends ConnectionAdapter {
 		
 		Prices prices = new Prices();
 
-		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, type -> {
+		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", type -> {
 			S.out( "order status changed");
 		});
 		ord.o().action(Action.Sell);

@@ -1,5 +1,6 @@
 package testcase;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -37,17 +38,33 @@ public class TestMargin extends MyTestCase {
 				"conid", "265598",
 				"amountToSpend", 100.12,
 				"leverage", 1.,
-				"profitTakerPrice", 218,
-				"entryPrice", 217,
-				"stopLossPrice", 216,
+				"profitTakerPrice", 216,
+				"entryPrice", 215,
+				"stopLossPrice", 214.99,
 				"goodUntil", "EndOfDay",
 				"currency", "RUSD"
 				);
 		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
-		json.display();
-		S.out( "CHECK FOR ORDER ID");
 		assert200();
+		assertEquals( 10, json.getString( "orderId").length() );
+		json.display();
+		
+		
+		JsonObject live = cli().postToJson( "/api/margin-dynamic", Util.toJson(
+				"wallet_public_key", Cookie.wallet, 
+				"cookie", Cookie.cookie,
+				"conid", "265598") );
+		live.display();
+		
+		boolean found = false;
+		
+		for (JsonObject liveOrd : live.getArray( "orders") ) {
+			if (live.getString("orderid").equals( json.getString("orderId"))) {
+				found = true;
+			}
+		}
+		assertTrue( found);
 	}
 
 	public void testCancel() throws Exception {

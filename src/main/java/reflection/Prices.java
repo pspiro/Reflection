@@ -12,7 +12,7 @@ import common.Util;
 import tw.util.S;
 
 public class Prices {
-	public static final Prices NULL = new Prices();
+	//public static final Prices NULL = new Prices();
 	
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
 	public static String TOO_HIGH = "Your order was not filled because the price was too high; try refreshing the token price and resubmitting the order";
@@ -45,7 +45,10 @@ public class Prices {
 		m_ask = obj.getDouble("ask");
 		m_last = obj.getDouble("last");
 		m_time = obj.getLong("time");
-		
+
+		if (m_listeners.size() > 0) {
+			S.out( "prices %s with %s %s got updated", this, m_listeners.size(), m_listeners.get(0) );
+		}
 		// make a copy to avoid ConcurrentMod error because 
 		// the listener may remove itself during processing
 		new ArrayList<Runnable>( m_listeners)
@@ -143,6 +146,20 @@ public class Prices {
 	 *  return that. Last only doesn't help us because it could be old */
 	public double askMark() {
 		return validLast() ? Math.min( m_ask, m_last) : m_ask;
+	}
+
+	/** Must have valid bid and ask; check before calling.
+	 *  @return last price bounded by bid/ask, or midpoint if no last 
+	 * @throws Exception */
+	public double markPrice() throws Exception {
+		Util.require( validBid() && validAsk(), "No valid prices for mark price");
+		return validLast() ? S.between( m_last, m_bid, m_ask) : (m_bid + m_ask) / 2.;
+	}
+
+	/** for debug and S.out() only */
+	@Override public String toString() {
+		return S.format( "bid=%s  ask=%s  last=%s  time=%s",
+				m_bid, m_ask, m_last, Util.hhmmss.format( m_time) );
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");

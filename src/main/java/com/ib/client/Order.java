@@ -19,6 +19,8 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.client.Types.TriggerMethod;
 import com.ib.client.Types.VolatilityType;
 
+import tw.util.S;
+
 public class Order {
     final public static int 	CUSTOMER = 0;
     final public static int 	FIRM = 1;
@@ -388,7 +390,7 @@ public class Order {
     public void algoStrategy(String v)                                  { m_algoStrategy = v; }
     public void algoId(String v)                                        { m_algoId = v; }
     public void allOrNone(boolean v)                                    { m_allOrNone = v; }
-    public void stopPrice(double v)                                     { m_auxPrice = v; }
+    public void stopPrice(double v)                                     { m_auxPrice = S.round(v); }
     public void blockOrder(boolean v)                                   { m_blockOrder = v; }
     public void clientId(int v)                                         { m_clientId = v; }
     public void continuousUpdate(int v)                                 { m_continuousUpdate = v; }
@@ -414,7 +416,7 @@ public class Order {
     public void hedgeType(HedgeType v)                                  { m_hedgeType = ( v == null ) ? null : v.getApiString(); }
     public void hedgeType(String v)                                     { m_hedgeType = v; }
     public void hidden(boolean v)                                       { m_hidden = v; }
-    public void lmtPrice(double v)                                      { m_lmtPrice = v; }
+    public void lmtPrice(double v)                                      { m_lmtPrice = S.round(v); }
     public void minQty(int v)                                           { m_minQty = v; }
     public void notHeld(boolean v)                                      { m_notHeld = v; }
     public void solicited(boolean v)                                    { m_solicited = v; }
@@ -605,8 +607,8 @@ public class Order {
 				"roundedQty", m_roundedQty, 
 				"conid", contract.conid(),
 				"orderType", m_orderType,
-				"lmtPrice", m_lmtPrice,
-				"auxPrice", m_auxPrice,
+				"lmtPrice", nice( m_lmtPrice),
+				"auxPrice", nice( m_auxPrice),
 				"exchange", contract.exchange(),
 				"tif", m_tif,
 				"outsideRth", m_outsideRth,
@@ -615,7 +617,11 @@ public class Order {
 				);
 	}
 
-    public int roundedQty() {
+	/** Format price with 1-3 decimals */
+    private String nice(double price) {
+		return price == Double.MAX_VALUE ? "max_val" : S.FMT3.format( price);
+	}
+	public int roundedQty() {
 		return m_roundedQty;
 	}
     

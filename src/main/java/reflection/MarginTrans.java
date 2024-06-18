@@ -115,6 +115,9 @@ public class MarginTrans extends MyTransaction {
 			int conid = m_map.getRequiredInt("conid");
 			Stock stock = m_main.getStock(conid);
 			require( stock != null, RefCode.INVALID_REQUEST, "Invalid conid");
+			
+			Prices prices = stock.prices();
+			require( prices.validBid() && prices.validAsk(), RefCode.INVALID_PRICE, "No valid prices in market");
 
 			double amtToSpend = m_map.getRequiredDouble( "amountToSpend");
 			require( amtToSpend >= minSpend, RefCode.INVALID_REQUEST, "The amount to spend must be at least %s", minSpend);
@@ -124,14 +127,16 @@ public class MarginTrans extends MyTransaction {
 			require( leverage >= 1, RefCode.INVALID_REQUEST, "Leverage must be greater than or equal to one");
 			require( leverage <= maxLeverage, RefCode.INVALID_REQUEST, "Leverage must less than %s", maxLeverage);
 			
-			double entryPrice = m_map.getRequiredDouble( "entryPrice");
-			require( entryPrice > 0, RefCode.INVALID_REQUEST, "entryPrice is invalid");
+			double entryPrice = m_map.getRequiredPrice( "entryPrice");
+			require( entryPrice > prices.markPrice() * .5, RefCode.INVALID_PRICE, "Entry price is too high");
+			require( entryPrice < prices.markPrice() * 1.1, RefCode.INVALID_PRICE, "Entry price is too high");
 
-			double profitTakerPrice = m_map.getDoubleParam( "profitTakerPrice");
+			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
 			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid; must be > entry price");
 			
-			double stopLossPrice = m_map.getDoubleParam( "stopLossPrice");
-			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_REQUEST, "stopLossPrice is invalid; must be < entry price");
+			double stopLossPrice = m_map.getPrice( "stopLossPrice");
+			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_REQUEST, "stopLossPrice must be < entry price");
+			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_REQUEST, "stopLossPrice must be < entry price");
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
@@ -142,11 +147,9 @@ public class MarginTrans extends MyTransaction {
 			
 			m_stablecoin = currency.equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
 			
-			String orderId = Util.uid( 10);
-			
 			JsonObject json = Util.toJson(
 					"wallet_public_key", m_walletAddr.toLowerCase(),
-					"orderId", orderId,
+					"orderId", m_uid + Util.uid(2),  // add an extra 2 to ensure uniqueness but also keep it tied to the original uid
 					"conid", conid,
 					"action", "Buy",
 					//"quantity", quantity,
@@ -159,35 +162,36 @@ public class MarginTrans extends MyTransaction {
 					"currency", currency
 					);
 			
-			out( "Received valid order " + json);
+			out( "Received valid margin order " + json);
 			
 			m_config.sqlCommand( sql -> sql.insertJson( "orders", json) );
 			
 			// don't tie up the http server thread
 			Util.execute( () -> wrap( () -> {
+				out( "Accepting payment");
 				// transfer the crypto to RefWallet  (must change this to a different wallet; we could even create a new one specifically for this user and store it in the db
 				String hash = m_config.rusd().buyStock(m_walletAddr, m_stablecoin, amtToSpend, stock.getToken(), 0)
 						.waitForHash();
 	
 				// make this an order log entry instead
 				
+				out( "took payment from user for order %s with trans hash %s", m_uid, hash);
+
 				// update order in db with transaction hash
 				m_config.sqlCommand( sql -> sql.updateJson( 
 						"orders",
 						Util.toJson( "blockchain_hash", hash),
 						"where orderId = '%s'", 
-						orderId) );
+						m_uid) );
 				
 				// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
 				// when it restarts we won't know for sure if the transaction was successful or not;
 				// operator assistance would be required
 				
-				out( "took payment from user for order %s with trans hash %s", orderId, hash);
-				
 				new MarginOrder( m_main.apiController(), json, userRec, stock)
 						.placeBuyOrder();
 	
-				respond( code, RefCode.OK, "orderId", orderId);
+				respond( code, RefCode.OK, "orderId", m_uid);
 			}));
 		});
 	}

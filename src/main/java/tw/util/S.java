@@ -469,6 +469,10 @@ public class S {
 		return sb.toString();
 	}
 
+	public static double between(double num, double min, double max) {
+		return Math.min( Math.max( num, min), max);
+	}
+
 	public static int between(int num, int min, int max) {
 		return Math.min( Math.max( num, min), max);
 	}

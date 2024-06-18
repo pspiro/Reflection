@@ -32,6 +32,7 @@ class Builder implements ObjectOutput {
 		send( a == Integer.MAX_VALUE ? "" : String.valueOf( a) );
 	}
 
+	// this is not great, you should format numbers w/ correct decimals, esp for prices
 	public void send(double a) throws EClientException {
         send( String.valueOf( a) );
 	}

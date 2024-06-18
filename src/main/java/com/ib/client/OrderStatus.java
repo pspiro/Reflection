@@ -10,6 +10,7 @@ public enum OrderStatus {
 	PreSubmitted,
 	PendingCancel,
 	Cancelled,
+	Inactive,
 	Submitted,
 	Filled,
 	PendingSubmit,
@@ -35,5 +36,9 @@ public enum OrderStatus {
 
 	public boolean isComplete() {
 		return this == Cancelled || this == Filled;
+	}
+
+	boolean canCancel() {
+		return this == ApiPending || this == PreSubmitted || this == Submitted || this == PendingSubmit;
 	}
 }
