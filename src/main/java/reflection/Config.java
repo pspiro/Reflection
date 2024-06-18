@@ -314,14 +314,14 @@ public class Config extends ConfigBase {
 		m_rusd = new web3.Rusd(
 				m_tab.getRequiredString("rusdAddr").toLowerCase(),
 				m_tab.getRequiredInt("rusdDecimals"),
-				m_tab.getRequiredString( getKey( "admin1Key") ),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				getKey( m_tab.getRequiredString( "admin1Key") ),  // need to pass all FB related stuff here OR set it on the Fireblocks object
 				rusdCore);
 
 		m_busd = new Busd( 
 				m_tab.getRequiredString("busdAddr").toLowerCase(),
 				m_tab.getRequiredInt("busdDecimals"),
 				m_tab.getRequiredString ("busdName"),
-				m_tab.getRequiredString( getKey( "admin1Key") ),
+				getKey( m_tab.getRequiredString( "admin1Key") ),
 				busdCore);
 
 		// update Moralis chain

@@ -76,10 +76,10 @@ public class EOrderDecoder {
 
     public void readAuxPrice() throws IOException {
         if (m_version < 30) {
-            m_order.auxPrice(m_eDecoder.readDouble());
+            m_order.stopPrice(m_eDecoder.readDouble());
         }
         else {
-            m_order.auxPrice(m_eDecoder.readDoubleMax());
+            m_order.stopPrice(m_eDecoder.readDoubleMax());
         }
     }
 

@@ -124,14 +124,14 @@ public class MarginTrans extends MyTransaction {
 			require( leverage >= 1, RefCode.INVALID_REQUEST, "Leverage must be greater than or equal to one");
 			require( leverage <= maxLeverage, RefCode.INVALID_REQUEST, "Leverage must less than %s", maxLeverage);
 			
+			double entryPrice = m_map.getRequiredDouble( "entryPrice");
+			require( entryPrice > 0, RefCode.INVALID_REQUEST, "entryPrice is invalid");
+
 			double profitTakerPrice = m_map.getDoubleParam( "profitTakerPrice");
-			require( profitTakerPrice >= 0, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid");
-			
-			double entryrice = m_map.getRequiredDouble( "entryPrice");
-			require( entryrice > 0, RefCode.INVALID_REQUEST, "entryPrice is invalid");
+			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_REQUEST, "profitTakerPrice is invalid; must be > entry price");
 			
 			double stopLossPrice = m_map.getDoubleParam( "stopLossPrice");
-			require( stopLossPrice >= 0, RefCode.INVALID_REQUEST, "stopLossPrice is invalid");
+			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_REQUEST, "stopLossPrice is invalid; must be < entry price");
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
@@ -152,7 +152,7 @@ public class MarginTrans extends MyTransaction {
 					//"quantity", quantity,
 					"amountToSpend", amtToSpend,
 					"leverage", leverage,
-					"entryPrice", entryrice,
+					"entryPrice", entryPrice,
 					"profitTakerPrice", profitTakerPrice,
 					"stopLossPrice", stopLossPrice,
 					"goodUntil", goodUntil,
@@ -174,10 +174,8 @@ public class MarginTrans extends MyTransaction {
 				// update order in db with transaction hash
 				m_config.sqlCommand( sql -> sql.updateJson( 
 						"orders",
-						Util.toJson( 
-								"orderId", orderId,
-								"blockchainHash", hash),
-						"where orderId = %s", 
+						Util.toJson( "blockchain_hash", hash),
+						"where orderId = '%s'", 
 						orderId) );
 				
 				// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
@@ -186,7 +184,8 @@ public class MarginTrans extends MyTransaction {
 				
 				out( "took payment from user for order %s with trans hash %s", orderId, hash);
 				
-				new MarginOrder( m_main.apiController(), json, userRec, stock).placeBuyOrder();
+				new MarginOrder( m_main.apiController(), json, userRec, stock)
+						.placeBuyOrder();
 	
 				respond( code, RefCode.OK, "orderId", orderId);
 			}));

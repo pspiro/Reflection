@@ -35,14 +35,13 @@ import web3.StockToken;
     
  *    */
 public class Stock extends JsonObject {
-	private Prices m_prices = Prices.NULL;  // this does not get serialized into the json
+	private final Prices m_prices = new Prices();
 
-	void setPrices( Prices prices) {
-		Objects.requireNonNull(prices, "prices cannot be null");
-		m_prices = prices;
+	void setPrices( JsonObject json) {
+		m_prices.update( json);
 
-		put( "bid", Main.round( prices.anyBid() ) );  // for front-end display
-		put( "ask", Main.round( prices.anyAsk() ) );
+		put( "bid", Main.round( m_prices.anyBid() ) );  // for front-end display
+		put( "ask", Main.round( m_prices.anyAsk() ) );
 	}
 
 	Prices prices() { 

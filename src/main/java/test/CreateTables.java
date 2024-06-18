@@ -38,6 +38,7 @@ public class CreateTables  {
 			created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
 			orderId varchar(10) primary key,
 			wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
+			blockchain_hash varchar(66),
 			conid int check (conid > 0),
 			action varchar(10),
 			quantity double precision check (quantity > 0),

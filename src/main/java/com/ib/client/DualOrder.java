@@ -4,21 +4,23 @@ import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
 
+import com.ib.client.SingleOrder.SingleParent;
+import com.ib.client.SingleOrder.Type;
 import com.ib.client.Types.Action;
+import com.ib.client.Types.OcaType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 
+import reflection.Prices;
 import reflection.TradingHours.Session;
 import tw.util.S;
 
 /** This gives a view of a single order but actually places two orders,
  *  one on SMART and one on OVERNIGHT. */
-public class DualOrder {
+public class DualOrder implements SingleParent {
 	public interface ParentOrder {
-		void onCompleted(double totalFilled);
+		void onCompleted(double totalFilled, DualOrder order);
 	}
-	
-	enum Type { Day, Night };  // you could combine this with TradingHours.Session
 	
 	private final ParentOrder m_parent;
 	private final SingleOrder m_dayOrder;
@@ -27,11 +29,16 @@ public class DualOrder {
 	boolean m_done;
 	private ApiController m_conn;
 
-	public DualOrder( ParentOrder parent, ApiController conn) {
+	/** prices are only need for sim stop orders on Overnight */ 
+	public DualOrder( ApiController conn, ParentOrder parent) {
+		this( conn, parent, null);
+	}
+	
+	public DualOrder( ApiController conn, ParentOrder parent, Prices prices) {
 		m_parent = parent;
 		m_conn = conn;
-		m_dayOrder = new SingleOrder( Type.Day, this);
-		m_nightOrder = new SingleOrder( Type.Night, this);
+		m_dayOrder = new SingleOrder( SingleOrder.Type.Day, prices, this);
+		m_nightOrder = new SingleOrder( Type.Night, prices, this);
 	}
 	
 	public JsonObject toJson() {
@@ -71,6 +78,7 @@ public class DualOrder {
 
 	public void ocaGroup(String group) {
 		both( order -> order.o().ocaGroup(group) );
+		both( order -> order.o().ocaType(OcaType.ReduceWithBlocking) );
 	}
 
 	public void orderType(OrderType type) {
@@ -82,19 +90,19 @@ public class DualOrder {
 		consumer.accept( m_nightOrder);
 	}
 	
-	public void placeOrder( ApiController controller, int conid) throws Exception {
-		common.Util.require( controller.isConnected(), "not connected");
+	public void placeOrder( int conid) throws Exception {
+		common.Util.require( m_conn.isConnected(), "not connected");
 		
 		Contract contract = new Contract();
 		contract.conid( conid);
 		
 		contract.exchange( Session.Smart.toString() );
 		m_dayOrder.o().tif( TimeInForce.GTC);
-		m_dayOrder.placeOrder( controller, contract);
+		m_dayOrder.placeOrder( m_conn, contract);
 		
 		contract.exchange( Session.Overnight.toString() );
 		m_nightOrder.o().tif( TimeInForce.DAY);
-		m_nightOrder.placeOrder( controller, contract);
+		m_nightOrder.placeOrder( m_conn, contract);
 	}
 
 	/** Set the IB order and listen for updates IF the permId matches */
@@ -128,22 +136,26 @@ public class DualOrder {
 		return m_dayOrder.filled() + m_nightOrder.filled();
 	}
 
-	public void onRecOrderStatus(Type session) {
+	@Override public void onRecOrderStatus(Type session) {
 		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
 
 		if (!m_done) {
 			if (totalFilled >= m_quantity) {
 				both( order -> order.cancel( m_conn) );
-				m_parent.onCompleted( totalFilled);
+				m_parent.onCompleted( totalFilled, this);
 				m_done = true;
 			}
 			
 			else if (!m_dayOrder.isWorking() && !m_nightOrder.isWorking() ) {
-				m_parent.onCompleted( totalFilled);
+				m_parent.onCompleted( totalFilled, this);
 				m_done = true;
 			}
 		}
 		
+	}
+
+	public void stopPrice(double stopPrice) {
+		both( order -> order.o().stopPrice( stopPrice) );
 	}
 
 }

@@ -388,7 +388,7 @@ public class Order {
     public void algoStrategy(String v)                                  { m_algoStrategy = v; }
     public void algoId(String v)                                        { m_algoId = v; }
     public void allOrNone(boolean v)                                    { m_allOrNone = v; }
-    public void auxPrice(double v)                                      { m_auxPrice = v; }
+    public void stopPrice(double v)                                     { m_auxPrice = v; }
     public void blockOrder(boolean v)                                   { m_blockOrder = v; }
     public void clientId(int v)                                         { m_clientId = v; }
     public void continuousUpdate(int v)                                 { m_continuousUpdate = v; }
@@ -603,8 +603,10 @@ public class Order {
 				"permId", m_permId,
 				"action", m_action, 
 				"roundedQty", m_roundedQty, 
-				"conid", contract.conid(), 
+				"conid", contract.conid(),
+				"orderType", m_orderType,
 				"lmtPrice", m_lmtPrice,
+				"auxPrice", m_auxPrice,
 				"exchange", contract.exchange(),
 				"tif", m_tif,
 				"outsideRth", m_outsideRth,

@@ -1,6 +1,7 @@
 package reflection;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.json.simple.JsonObject;
@@ -24,20 +25,41 @@ public class Prices {
 	private double m_last;
 	private long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
 
+	private final ArrayList<Runnable> m_listeners = new ArrayList<>();
+
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
 	public double last() { return m_last; }
 	public long time() { return m_time; }
 
 	public Prices(JsonObject obj) {
-		m_bid = obj.getDouble("bid");
-		m_ask = obj.getDouble("ask");
-		m_last = obj.getDouble("last");
-		m_time = obj.getLong("time");
+		update( obj);
 	}
 	
 	/** Used only by NULL prices. */
 	public Prices() {
+	}
+
+	public void update(JsonObject obj) {
+		m_bid = obj.getDouble("bid");
+		m_ask = obj.getDouble("ask");
+		m_last = obj.getDouble("last");
+		m_time = obj.getLong("time");
+		
+		// make a copy to avoid ConcurrentMod error because 
+		// the listener may remove itself during processing
+		new ArrayList<Runnable>( m_listeners)
+			.forEach( listener -> listener.run() );
+	}
+
+	/** Used by simulated stop orders */
+	public void addListener( Runnable listener) {
+		m_listeners.add( listener);
+	}
+
+	/** note listener could be null */
+	public void removeListener(Runnable listener) {
+		m_listeners.remove( listener);
 	}
 
 	public String getFormattedTime() {

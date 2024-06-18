@@ -14,8 +14,13 @@ public class PositionTracker {
 	
 	private static final double Small = .0000001;
 	
+	/** For stop or limit orders, always trade at least one share */
 	public int buyOrSell( int conid, boolean buy, double qty) {
-		return Util.getOrCreate(m_map, conid, () -> new Pos() ).buyOrSell(buy, qty);  
+		return buyOrSell( conid, buy, qty, 0);  
+	}
+
+	public int buyOrSell( int conid, boolean buy, double qty, int atLeast) {
+		return Util.getOrCreate(m_map, conid, () -> new Pos() ).buyOrSell(buy, qty, atLeast);  
 	}
 
 	public void undo( int conid, boolean buy, double qty, int rounded) {
@@ -29,8 +34,9 @@ public class PositionTracker {
 		double m_desired; 	// total desired fractional shares only
 		int m_actual; 		// total number of real shares derived from fractional shares 
 		
-		synchronized int buyOrSell(boolean buy, double qty) {
-			return buy ? buy(qty) : sell(qty);
+		/** For stop or limit orders, always trade at least one share */
+		synchronized int buyOrSell(boolean buy, double qty, int atLeast) {
+			return buy ? buy(qty, atLeast) : sell(qty, atLeast);
 		}
 		
 		synchronized void undo(boolean buy, double qty, int rounded) {
@@ -42,22 +48,24 @@ public class PositionTracker {
 			}
 		}
 
-		private int buy( double qty) {
+		/** For stop or limit orders, always trade at least one share */
+		private int buy( double qty, int atLeast) {
 			double dec = dec(qty);
 			m_desired += dec;
 			
-			if (m_desired - m_actual >= (.5 - Small) ) {
+			if (m_desired - m_actual >= (.5 - Small) || qty < 1. && atLeast >= 1) {
 				m_actual++;
 				return roundUp(qty); 
 			}
 			return roundDown(qty);
 		}
 
-		private int sell(double qty) {
+		/** For stop or limit orders, always trade at least one share */
+		private int sell(double qty, int atLeast) {
 			double dec = dec(qty);
 			m_desired -= dec;
 			
-			if (m_actual - m_desired > .5 + Small ) {
+			if (m_actual - m_desired > .5 + Small || qty < 1 && atLeast >= 1) {
 				m_actual--;
 				return roundUp(qty);
 			}

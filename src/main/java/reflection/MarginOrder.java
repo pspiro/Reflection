@@ -4,6 +4,7 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.DualOrder;
 import com.ib.client.DualOrder.ParentOrder;
+import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
@@ -14,11 +15,11 @@ import web3.Stablecoin;
 
 class MarginOrder implements ParentOrder {
 		enum Status {
-			Entry,
+			Start,
 			SubmittedOrder, 
 			PlacedOrder, 
 			Liquidation, 
-			SubLiquidation 
+			SubLiquidation  
 		}
 		
 		//Status m_status;
@@ -40,21 +41,16 @@ class MarginOrder implements ParentOrder {
 		private Stock m_stock;
 		private Stablecoin m_stablecoin;
 		private String m_email;  // from users table
+		private double m_filledPrimary;
 
-		// user fields from order
-//		private int conid;
-//		private double userAmt;
-//		private double leverage;
-//		private double profitTaker;
-//		private double entryPrice;
-//		private double stopLoss;
 
-		private String walletAddr;
 		private DualOrder m_dualOrder;
 
 		private String fbId; // must be serialized
 		private JsonObject m_userRec;  // not needed. pas
 		private ApiController m_conn;
+		private int roundedQty;
+		private double desiredQty;
 
 		// jsonorder fields
 		/* 
@@ -81,7 +77,7 @@ class MarginOrder implements ParentOrder {
 			m_order = order;
 			m_userRec = userRec;
 			m_stock = stock;
-			m_status = Util.getEnum( order.getString( "status"), Status.values() );
+			m_status = Status.Start;
 		}
 
 		// called when the order is restored from the db
@@ -124,36 +120,94 @@ class MarginOrder implements ParentOrder {
 			if (m_dualOrder == null) {
 				double feePct = .01; // fix this. pas
 				double totalSpend = userAmt() * leverage() * (1. - feePct);
-				double desiredQty = totalSpend / entryPrice();
-				int roundedQty = OrderTransaction.positionTracker.buyOrSell( m_stock.conid(), true, desiredQty);
+				desiredQty = totalSpend / entryPrice();
+				roundedQty = OrderTransaction.positionTracker.buyOrSell( m_stock.conid(), true, desiredQty, 1);
 				
 				// place day and night orders
-				m_dualOrder = new DualOrder( this, m_conn);
+				m_dualOrder = new DualOrder( m_conn, this);
 				m_dualOrder.action( Action.Buy);
 				m_dualOrder.quantity( roundedQty);
+				m_dualOrder.orderType( OrderType.LMT);
 				m_dualOrder.lmtPrice( entryPrice() );
 				m_dualOrder.tif( TimeInForce.GTC);   // must consider this
 				m_dualOrder.outsideRth( true);
-				m_dualOrder.orderRef( orderId() );
-				m_dualOrder.ocaGroup( orderId() );
-				
-				m_dualOrder.placeOrder( m_conn, conid() );
-			}
+				m_dualOrder.orderRef( orderId() + " primary" );
+				m_dualOrder.ocaGroup( orderId() + " primary" );
 
-			if (m_status == Status.PlacedOrder) {
-				if (m_dualOrder == null) {
-				}
-				//m_order.tick( prices);  // submits the order if necessary  can we just place it once, or we really need to wait for the exchange to be open?
+				m_dualOrder.placeOrder( conid() );
 			}
-			
-			// must check status here
-			
-//			double balance = getBalance();
 		}
 
-		/** Called by dualOrder */
-		@Override public void onCompleted(double totalFilled) {
-			S.out( "some dual order finished; which one?");
+		/** Called by dualOrder when the day and night orders are done */
+		@Override public void onCompleted(double totalFilled, DualOrder which) {
+			if (which == m_dualOrder) {  // check status here as well to be safe
+				m_filledPrimary = totalFilled;
+				
+				S.out( "The initial buy order has completed with %s filled shares", totalFilled);
+				if (totalFilled == 0 && roundedQty > 0) {
+					S.out( "Your order could not be filled");  // how to communicate this?
+				}
+				else {
+					if (totalFilled < roundedQty) {
+						S.out( "Partial fill");
+						// need to adjust...something?
+					}
+					
+					if (stopLossPrice() > 0) {
+						placeStopLoss();
+					}
+					
+					if (profitTakerPrice() > 0) {
+						placeProfitTaker();
+					}
+					// else we have to monitor the prices and simulate
+				}
+			}
+		}
+
+		private void placeStopLoss() {
+			// need to check m_filledPrimary; if < roundedQty, we need to adjust the size here. pas
+			DualOrder stopOrder = new DualOrder( m_conn, this, m_stock.prices() );
+			stopOrder.action( Action.Buy);
+			stopOrder.quantity( roundedQty);
+			stopOrder.orderType( OrderType.STP);
+			stopOrder.stopPrice( stopLossPrice() );
+			stopOrder.tif( TimeInForce.GTC);   // must consider this
+			stopOrder.outsideRth( true);
+			stopOrder.orderRef( orderId() + " stop" );
+			stopOrder.ocaGroup( orderId() + " bracket" );
+			
+			try {
+				stopOrder.placeOrder( conid() );
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private void placeProfitTaker() {
+			DualOrder profitOrder = new DualOrder( m_conn, this);
+			profitOrder.action( Action.Buy);
+			profitOrder.quantity( roundedQty);
+			profitOrder.orderType( OrderType.LMT);
+			profitOrder.lmtPrice( profitTakerPrice() );
+			profitOrder.tif( TimeInForce.GTC);   // must consider this
+			profitOrder.outsideRth( true);
+			profitOrder.orderRef( orderId() + " profit" );
+			profitOrder.ocaGroup( orderId() + " bracket" );
+
+			try {
+				profitOrder.placeOrder( conid() );
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private double stopLossPrice() {
+			return m_order.getDouble( "stopLossPrice");
+		}
+
+		private double profitTakerPrice() {
+			return m_order.getDouble( "profitTakerPrice");
 		}
 
 		private String orderId() {

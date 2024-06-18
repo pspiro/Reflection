@@ -458,7 +458,7 @@ public class Main implements ITradeReportHandler {
 			MyClient.getArray( m_mdsUrl).forEach( prices -> {
 				Stock stock = m_stocks.getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
-					stock.setPrices( new Prices(prices) );
+					stock.setPrices( prices);
 				
 					// we never delete a valid last price
 					double last = prices.getDouble("last");

@@ -4,6 +4,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import reflection.RefCode;
+import tw.util.S;
 
 public class TestMargin extends MyTestCase {
 	public void testStatic() throws Exception {
@@ -22,7 +23,7 @@ public class TestMargin extends MyTestCase {
 
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"conid", "8314",
+				"conid", "265598",
 				"cookie", Cookie.cookie
 				).toString() )
 			.display();
@@ -35,15 +36,17 @@ public class TestMargin extends MyTestCase {
 				"cookie", Cookie.cookie,
 				"conid", "265598",
 				"amountToSpend", 100.12,
-				"leverage", 1.5,
-				"profitTakerPrice", 83.3,
-				"entryPrice", 83.2,
-				"stopLossPrice", 83.1,
+				"leverage", 1.,
+				"profitTakerPrice", 218,
+				"entryPrice", 217,
+				"stopLossPrice", 216,
 				"goodUntil", "EndOfDay",
 				"currency", "RUSD"
 				);
+		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
 		json.display();
+		S.out( "CHECK FOR ORDER ID");
 		assert200();
 	}
 

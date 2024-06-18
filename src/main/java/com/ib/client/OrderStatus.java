@@ -12,7 +12,6 @@ public enum OrderStatus {
 	Cancelled,
 	Submitted,
 	Filled,
-	Inactive,
 	PendingSubmit,
 	Timeout,
 	Unknown;
