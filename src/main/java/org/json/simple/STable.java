@@ -107,6 +107,7 @@ public class STable<T> extends HashMap<String,T> {
 		return val instanceof Ser ? ((Ser)val).getJson() : val;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void readFile(Class<T> clas) {
 		try {
 			Util.require( clas != Integer.class, "Use Long not int; vals are deserialized as long");
