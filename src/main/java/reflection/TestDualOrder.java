@@ -90,9 +90,9 @@ public class TestDualOrder extends ConnectionAdapter {
 		
 		Prices prices = new Prices();
 
-		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", type -> {
-			S.out( "order status changed");
-		});
+		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", 
+				(session,filled) -> S.out( "order status changed  session=%s  filled=%s", session, filled) );
+		
 		ord.o().action(Action.Sell);
 		ord.o().orderType( OrderType.STP);
 		ord.o().roundedQty( 1);
