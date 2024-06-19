@@ -4,8 +4,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
-import testcase.web3.TestRusd;
-import testcase.web3.TestSendEth;
 import testcase.web3.TestStockToken;
 
 // NOTE: static variables are shared across tests

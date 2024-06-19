@@ -2,8 +2,6 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.JButton;

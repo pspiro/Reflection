@@ -1,6 +1,5 @@
 package fireblocks;
 
-import common.Util;
 import tw.util.S;
 import web3.Matic;
 import web3.RetVal;

@@ -4,10 +4,6 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -35,7 +31,6 @@ import javax.swing.JOptionPane;
 import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
-import com.kenai.jffi.Main;
 
 import reflection.RefCode;
 import reflection.RefException;
