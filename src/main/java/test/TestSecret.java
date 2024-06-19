@@ -21,9 +21,7 @@ public class TestSecret {
 
 		void test() {
 			wrap( () -> {
-				String name = Util.getLastToken(
-						m_exchange.getRequestURI().toString().toLowerCase(), 
-						"/");
+				String name = getLastToken();
 
 				String val = System.getenv(name);
 				S.out( "%s=%s", name, val);

@@ -285,4 +285,8 @@ public class BaseTransaction {
 		List<String> headers = getHeaders(name);
 		return headers != null && headers.size() > 0 ? headers.get(0) : "";
 	}
+
+	public String getLastToken() {
+		return Util.getLastToken(m_exchange.getRequestURI().toString(), "/");
+	}
 }
