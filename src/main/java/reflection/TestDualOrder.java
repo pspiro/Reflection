@@ -92,8 +92,8 @@ public class TestDualOrder extends ConnectionAdapter {
 		
 		Prices prices = new Prices();
 
-		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", (session,filled) -> {
-				S.out( "%s child updated %s", session, filled);
+		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", 
+				(session,filled) -> { S.out( "%s child updated %s", session, filled);
 		});
 		
 		ord.o().action(Action.Sell);
