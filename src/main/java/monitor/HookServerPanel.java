@@ -78,8 +78,8 @@ class HookServerPanel extends JsonPanel {
 
 	private void getWallet() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/get-wallet/" + m_wallet.getText() );
-			Util.inform( this, json.toHtml() );
+			query( "/hook/get-wallet/" + m_wallet.getText() ).display();
+			Util.inform( this, "printed to stdout");
 		});
 	}
 

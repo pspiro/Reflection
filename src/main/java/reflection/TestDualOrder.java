@@ -4,6 +4,8 @@ import com.ib.client.Contract;
 import com.ib.client.DualOrder;
 import com.ib.client.OrderType;
 import com.ib.client.SingleOrder;
+import com.ib.client.SingleOrder.SingleParent;
+import com.ib.client.SingleOrder.Type;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
@@ -90,9 +92,10 @@ public class TestDualOrder extends ConnectionAdapter {
 		
 		Prices prices = new Prices();
 
-		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", type -> {
-			S.out( "order status changed");
+		SingleOrder ord = new SingleOrder( SingleOrder.Type.Night, prices, "test", (session,filled) -> {
+				S.out( "%s child updated %s", session, filled);
 		});
+		
 		ord.o().action(Action.Sell);
 		ord.o().orderType( OrderType.STP);
 		ord.o().roundedQty( 1);
