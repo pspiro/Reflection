@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
+import tw.util.S;
 
 public class TestSecret {
 	public static void main(String[] args) throws Exception {
@@ -25,7 +26,8 @@ public class TestSecret {
 						"/");
 
 				String val = System.getenv(name);
-				respond( Util.toJson( "val", val) );
+				S.out( "%s=%s", name, val);
+				respond( Util.toJson( name, val) );
 			});
 		}
 	}
