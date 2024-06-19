@@ -787,6 +787,7 @@ public class Util {
 	}
 
 	public static String initialCap(String name) {
+		name = name.trim();
 		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
 	}
 	
@@ -823,6 +824,23 @@ public class Util {
 						? Long.parseLong( str.substring( 2), 16)
 						: Long.parseLong( str)
 				: 0;
+	}
+
+	/** @param email is in this format: 'name <email>'
+	    @return array first name, then email */
+	public static String[] parseEmail( String email) {
+		String[] parts = email.replace( '<', '>').split( "\\>");
+		if (parts.length >= 2) {
+			parts[0] = parts[0].trim();
+			parts[1] = parts[1].trim().toLowerCase();
+			return parts;
+		}
+		return new String[] { "", "" };
+	}
+
+	/** Return full email address w/ name and email */
+	public static String formatEmail( String name, String email) {
+		return String.format( "%s <%s>", name, email);
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {
