@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>com.google.api-client</groupId>
 			<artifactId>google-api-client</artifactId>
-			<version>1.23.0</version>
+			<version>1.31.5</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.apis</groupId>
@@ -168,12 +168,6 @@
 				<version>25.4.0</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
-			
-			<dependency>
-				<groupId>com.google.guava</groupId>
-				<artifactId>guava</artifactId>
-				<version>31.1-jre</version>
 			</dependency>
 			
 		</dependencies>
