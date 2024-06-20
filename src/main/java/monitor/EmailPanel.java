@@ -16,11 +16,13 @@ import tw.util.HtmlButton;
 import tw.util.VerticalPanel;
 
 public class EmailPanel extends MonPanel {
-	JTextArea text = new JTextArea(20, 500);
-	JTextArea recips = new JTextArea(20, 300);
-	JTextField subject = new JTextField( 50);
-	MyComboBox selector = new MyComboBox();
-	GTable tab;
+	final static String testRecip = "peter <peteraspiro@gmail.com>";
+
+	private JTextArea recips = new JTextArea(20, 300);
+	private MyComboBox selector = new MyComboBox();
+	private JTextArea text = new JTextArea(20, 500);
+	private JTextField subject = new JTextField( 50);
+	private GTable tab;
 	
 	EmailPanel() {
 		super( new BorderLayout() );
@@ -29,30 +31,34 @@ public class EmailPanel extends MonPanel {
 		pan.add( "Select email", selector);
 //		pan.add( "Email text", new JScrollPane( text) );
 //		pan.add( "Recipients", new JScrollPane( recips) );
-		panladd( "Email subject", subject);
+		pan.add( "Email subject", subject);
 		pan.add( "Email text", text);
 		pan.add( "Recipients", recips);
-		panladd( "Send", new HtmlButton( "Send", ev -> onSend() ) );
+		pan.add( "Send", new HtmlButton( "Send", ev -> Util.wrap( () -> onSend() ) ) );
 		
 		add( pan);
 		
 		selector.addActionListener( event -> Util.wrap( () -> onSelected() ) );
 	}
 	
-	private void onSend() {
-		String sub = ;
+	private void onSend() throws Exception {
+		String emailText = text.getText().replaceAll( "\n", "<br>\n");  
 		
-		ArrayList<String> ar = toArray( recips.getText() );
-		Monitor.m_config.sendEmail("peteraspiro@gmail.com", subject.getText(), 
-		
-		
-		
-		private void sendTestEmail() {
-			// TODO Auto-generated method stub
-			
+		// send test email
+		Monitor.m_config.sendEmail("peter<peteraspiro@gmail.com>", subject.getText(), emailText);
+		Monitor.m_config.sendEmail("peter <peteraspiro@gmail.com>", subject.getText(), emailText);
+		Monitor.m_config.sendEmail("<peteraspiro@gmail.com>", subject.getText(), emailText);
+		Monitor.m_config.sendEmail("peteraspiro@gmail.com", subject.getText(), emailText);
+
+		// confirm and send all emails
+		ArrayList<String> list = toArray( recips.getText() );
+		if (Util.confirm( this, "A test email was sent to %s;\n"
+				+ "please review.\n\n"
+				+ "Send now to \n recipients?", testRecip, list.size() ) ) {
+			for (String recip : list) {
+				Monitor.m_config.sendEmail( recip, subject.getText(), text.getText() );
+			}
 		}
-		
-		Util.confirm( this, "Send this text to %s recipients", )
 	}
 	
 	static ArrayList<String> toArray( String text) throws Exception {
