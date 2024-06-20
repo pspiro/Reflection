@@ -161,6 +161,7 @@
 	     version of google-cloud-secretmanager -->
 	<dependencyManagement>
 		<dependencies>
+			
 			<dependency>
 				<groupId>com.google.cloud</groupId>
 				<artifactId>libraries-bom</artifactId>
@@ -168,7 +169,14 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-		 </dependencies>
-  </dependencyManagement>	
+			
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>31.1-jre</version>
+			</dependency>
+			
+		</dependencies>
+	</dependencyManagement>	
 
 </project>
