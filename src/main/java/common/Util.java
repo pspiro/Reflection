@@ -827,7 +827,29 @@ public class Util {
 		return S.isNull( str) ? "" : str.split("\\?")[0];
 	}
 
-//	<T> T[] toArray( ArrayList<T> list) {
-//		return (T[])list.toArray();
-//	}
+	/** @param email is in this format: 'name <email>'
+    @return array first name, then email */
+	public static String[] parseEmail( String email) {
+		String[] parts = email.replace( '<', '>').split( "\\>");
+		if (parts.length >= 2) {
+			parts[0] = parts[0].trim();
+			parts[1] = parts[1].trim().toLowerCase();
+			return parts;
+		}
+		return new String[] { "", "" };
+	}
+
+	/** take full format with display name, return email only */
+	public static String parseEmailOnly( String email) {
+		return parseEmail( email)[1];
+	}
+
+	/** Return full email address w/ name and email */
+	public static String formatEmail( String name, String email) {
+		return String.format( "%s <%s>", name, email);
+	}
+
+	//	<T> T[] toArray( ArrayList<T> list) {
+	//		return (T[])list.toArray();
+	//	}
 }

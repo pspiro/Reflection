@@ -27,6 +27,7 @@ import com.google.api.services.gmail.model.MessagePartBody;
 import com.google.api.services.gmail.model.MessagePartHeader;
 import com.google.api.services.gmail.model.ModifyMessageRequest;
 
+import common.Util;
 import tw.util.S;
 
 /** Adds functionality to Gmail; use it. */
@@ -83,12 +84,12 @@ public class TwMail {
 	/** @param tos is space-separated
 	 *  @param type "plain" or "html" */
 	public void send(String from, String fromEmail, String tos, String subject, String text, boolean html) throws Exception {
+		Util.require( tos.indexOf( '<') == -1, "display name in 'to' field is not supported"); // doesn't work with gmail
+		
 		S.out( "Sending email");
 		S.out( "  from: %s <%s>", from, fromEmail);
 		S.out( "  to: %s", tos);
 		S.out( "  subject: %s", subject);
-		S.out( "  " + text);
-		S.out( "");
 
 		MimeMessage message = createEmail( from, fromEmail, tos, subject);
 		message.setText(text, null, html ? "html" : "plain");

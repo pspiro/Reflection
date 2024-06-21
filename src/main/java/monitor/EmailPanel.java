@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 
+import javax.swing.Box;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -16,24 +17,27 @@ import tw.util.HtmlButton;
 import tw.util.VerticalPanel;
 
 public class EmailPanel extends MonPanel {
-	final static String testRecip = "peter <peteraspiro@gmail.com>";
+	final static String testEmail = "peteraspiro@gmail.com heather@reflection.trading";
 
-	private JTextArea recips = new JTextArea(20, 300);
+	private JTextField testRecipients = new JTextField( testEmail);
+	private JTextField subject = new JTextField( 50);
 	private MyComboBox selector = new MyComboBox();
 	private JTextArea text = new JTextArea(20, 500);
-	private JTextField subject = new JTextField( 50);
+	private JTextArea recips = new JTextArea(20, 300);
 	private GTable tab;
 	
 	EmailPanel() {
 		super( new BorderLayout() );
 	
 		VerticalPanel pan = new VerticalPanel();
-		pan.add( "Select email", selector);
-//		pan.add( "Email text", new JScrollPane( text) );
-//		pan.add( "Recipients", new JScrollPane( recips) );
+		pan.add( "Test recipients", testRecipients);
+		pan.add( Box.createVerticalStrut(20));
 		pan.add( "Email subject", subject);
+		pan.add( Box.createVerticalStrut(20));
+		pan.add( "Select email", selector);
 		pan.add( "Email text", text);
-		pan.add( "Recipients", recips);
+		pan.add( Box.createVerticalStrut(20));
+		pan.add( "Recipients (one per line)", recips);
 		pan.add( "Send", new HtmlButton( "Send", ev -> Util.wrap( () -> onSend() ) ) );
 		
 		add( pan);
@@ -42,21 +46,22 @@ public class EmailPanel extends MonPanel {
 	}
 	
 	private void onSend() throws Exception {
-		String emailText = text.getText().replaceAll( "\n", "<br>\n");  
+		String emailText = text.getText().replaceAll( "\n", " <br>\n");  
 		
 		// send test email
-		Monitor.m_config.sendEmail("peter<peteraspiro@gmail.com>", subject.getText(), emailText);
-		Monitor.m_config.sendEmail("peter <peteraspiro@gmail.com>", subject.getText(), emailText);
-		Monitor.m_config.sendEmail("<peteraspiro@gmail.com>", subject.getText(), emailText);
-		Monitor.m_config.sendEmail("peteraspiro@gmail.com", subject.getText(), emailText);
+		Monitor.m_config.sendEmail( testRecipients.getText(), "[test] " + subject.getText(), emailText);
 
 		// confirm and send all emails
 		ArrayList<String> list = toArray( recips.getText() );
 		if (Util.confirm( this, "A test email was sent to %s;\n"
 				+ "please review.\n\n"
-				+ "Send now to \n recipients?", testRecip, list.size() ) ) {
+				+ "Send now to %s recipients?", testEmail, list.size() ) ) {
 			for (String recip : list) {
-				Monitor.m_config.sendEmail( recip, subject.getText(), text.getText() );
+				Monitor.m_config.sendEmail(
+						recip.indexOf( '<') != -1 ? Util.parseEmailOnly( recip) : recip,  // our current email send function does not support display names in the "to" field, i.e. peter <pet@gmail.com> is not supported
+						subject.getText(), 
+						text.getText() 
+						);
 			}
 		}
 	}

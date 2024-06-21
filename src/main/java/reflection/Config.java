@@ -561,7 +561,7 @@ public class Config extends ConfigBase {
 		Util.wrap( () -> {
 			Auth.auth().getMail().send(
 					"Reflection", 
-					m_emailUsername,  // must be a valid "from" address in gmail 
+					m_emailUsername,  // must be a valid "from" address in gmail; display name is supported 
 					to, 
 					subject, 
 					template.replace( "%text", html), 
