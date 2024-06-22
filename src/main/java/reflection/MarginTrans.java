@@ -1,15 +1,19 @@
 package reflection;
 
+import static org.junit.jupiter.api.Assertions.fail;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Alerts;
 import common.Util;
 import web3.Stablecoin;
+import web3.StockToken;
 
 
 public class MarginTrans extends MyTransaction {
@@ -66,7 +70,8 @@ public class MarginTrans extends MyTransaction {
 	}
 
 	private JsonArray getOrders() throws Exception {
-		JsonArray ar = m_config.sqlQuery( "select * from orders where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		JsonArray ar = MarginStore.store.getOrders( m_walletAddr);
+		
 		Util.forEach( ar, order -> {
 			Stock stock = m_main.getStock( order.getInt( "conid") );
 			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
@@ -79,6 +84,10 @@ public class MarginTrans extends MyTransaction {
 		return ar;
 	}
 
+	public Object marginUpdate() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	public void marginCancel() {
 		wrap( () -> {
@@ -87,10 +96,11 @@ public class MarginTrans extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress();
 			
 			validateCookie( "margin-static");
-
-			String id = m_map.getRequiredString("orderId");
-			boolean liquidate = m_map.getBool("liquidate");
 			
+			MarginOrder order = MarginStore.store.getById( m_map.getRequiredString("orderId") );
+			require( order != null, RefCode.INVALID_REQUEST, "No order found");
+			
+			// think about the different states
 
 			respondOk();
 		});
@@ -147,49 +157,78 @@ public class MarginTrans extends MyTransaction {
 			
 			m_stablecoin = currency.equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
 			
-			JsonObject json = Util.toJson(
-					"wallet_public_key", m_walletAddr.toLowerCase(),
-					"orderId", m_uid + Util.uid(2),  // add an extra 2 to ensure uniqueness but also keep it tied to the original uid
-					"conid", conid,
-					"action", "Buy",
-					//"quantity", quantity,
-					"amountToSpend", amtToSpend,
-					"leverage", leverage,
-					"entryPrice", entryPrice,
-					"profitTakerPrice", profitTakerPrice,
-					"stopLossPrice", stopLossPrice,
-					"goodUntil", goodUntil,
-					"currency", currency
+			MarginOrder mo = new MarginOrder(
+					m_walletAddr,
+					m_uid + Util.uid(2),  // add an extra 2 to ensure uniqueness but also keep it tied to the original uid
+					conid,
+					Action.Buy,
+					amtToSpend,
+					leverage,
+					entryPrice,
+					profitTakerPrice,
+					stopLossPrice,
+					goodUntil,
+					currency
 					);
 			
-			out( "Received valid margin order " + json);
+			MarginStore.store.add( mo);		
 			
-			m_config.sqlCommand( sql -> sql.insertJson( "orders", json) );
+			out( "Received valid margin order " + mo);
 			
 			// don't tie up the http server thread
 			Util.execute( () -> wrap( () -> {
 				out( "Accepting payment");
-				// transfer the crypto to RefWallet  (must change this to a different wallet; we could even create a new one specifically for this user and store it in the db
-				String hash = m_config.rusd().buyStock(m_walletAddr, m_stablecoin, amtToSpend, stock.getToken(), 0)
+				
+				// get current receipt balance
+				StockToken receipt = m_main.stocks().getReceipt();
+				double prevBalance = receipt.getPosition( m_walletAddr);  // or get from HookServer
+				
+				// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
+				String hash = m_config.rusd().buyStock(m_walletAddr, m_stablecoin, amtToSpend, receipt, amtToSpend)
 						.waitForHash();
 	
 				// make this an order log entry instead
 				
 				out( "took payment from user for order %s with trans hash %s", m_uid, hash);
+				
+				// update transaction hash on MarginOrder
+				mo.transHash( hash);
+				MarginStore.store.save();
+				
+				// wait for receipt to register because a transaction hash is not a guarantee of success;
+				// alternatively we could wait for some other type of finality
+				int i = Util.waitFor( 60, () -> receipt.getPosition( 
+						m_walletAddr) - prevBalance >= amtToSpend - .01);
+				
+				if (i >= 0) {
+					out( "Check receipt balance in %s seconds", i);
+				}
+				else {
+					// user did not get a receipt in one minute
+					// this should never happen and someone needs to investigate
+					Alerts.alert( "Reflection", "USER DID NOT RECEIVE RECEIPT FOR MARGIN ORDER", 
+							String.format( "wallet=%s  uid=%s", m_walletAddr, m_uid) );
+					require( false, RefCode.BLOCKCHAIN_FAILED, "No receipt, please contact support");
+				}
+				
+				mo.gotReceipt( true);
+				MarginStore.store.save();
+				
+				mo.placeBuyOrder();
 
 				// update order in db with transaction hash
-				m_config.sqlCommand( sql -> sql.updateJson( 
-						"orders",
-						Util.toJson( "blockchain_hash", hash),
-						"where orderId = '%s'", 
-						m_uid) );
+//				m_config.sqlCommand( sql -> sql.updateJson( 
+//						"orders",
+//						Util.toJson( "blockchain_hash", hash),
+//						"where orderId = '%s'", 
+//						m_uid) );
 				
 				// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
 				// when it restarts we won't know for sure if the transaction was successful or not;
 				// operator assistance would be required
 				
-				new MarginOrder( m_main.apiController(), json, userRec, stock)
-						.placeBuyOrder();
+//				new MarginOrder( m_main.apiController(), mo, userRec, stock)
+//						.placeBuyOrder();
 	
 				respond( code, RefCode.OK, "orderId", m_uid);
 			}));

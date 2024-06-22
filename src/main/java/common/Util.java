@@ -34,6 +34,7 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Decimal;
 
+import common.Util.ExSupplier;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -841,6 +842,19 @@ public class Util {
 	/** Return full email address w/ name and email */
 	public static String formatEmail( String name, String email) {
 		return String.format( "%s <%s>", name, email);
+	}
+
+	/** wait n seconds for supplier to return true, then fail 
+	 *  @return number of seconds, or -1 if it failed */
+	public static int waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
+		for (int i = 0; i < sec; i++) {
+			S.out( i);
+			if (sup.get() ) {
+				return i;
+			}
+			S.sleep(1000);
+		}
+		return -1;
 	}
 
 //	<T> T[] toArray( ArrayList<T> list) {

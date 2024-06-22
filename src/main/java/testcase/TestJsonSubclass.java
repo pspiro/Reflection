@@ -1,24 +1,75 @@
 package testcase;
 
-import org.json.simple.JsonObject;
-import org.json.simple.parser.JSONParser;
+import java.io.StringReader;
 
-public class TestJsonSubclass {
-	static class UserRec extends JsonObject {
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+import org.json.simple.TJsonArray;
+
+import junit.framework.TestCase;
+import tw.util.S;
+
+
+public class TestJsonSubclass extends TestCase {
+	static class Rec extends JsonObject {
 	}
 	
+	static class Recs extends TJsonArray<Rec> {
+	}
 
-	/** this shows how to read back a json object that returns a JsonObject subclass */
-	public static void main(String[] args) throws Exception {
-		UserRec rec = new UserRec();
+	/** this shows how to read back a json object that returns a JsonObject subclass 
+	 * @throws Exception */
+	public void test1() throws Exception {
+		Rec rec = new Rec();
 		rec.put( "name", "peter");
 		rec.put( "age", 55);
 		
+		// parse object, maintian types
 		String str = rec.toString();
+		Rec rec2 = JsonObject.parse( new StringReader(str), () -> new Rec() );
+		rec2.display2();
+
+		// parse object, no types
+		str = rec.toString();
+		JsonObject obj = JsonObject.parse( str);
+		obj.display2();
 		
-		UserRec rec2 = new JSONParser().parse2( str, () -> new UserRec() );
-		rec2.display();
+		Rec rec3 = new Rec();
+		rec3.put( "name", "dam");
+		rec3.put( "age", 42);
+
+		Recs recs = new Recs();
+		recs.add( rec);
+		recs.add( rec3);
 		
+		str = recs.toString();
+
+		// parse array, maintain types
+		Recs recs2 = JsonArray.parse( new StringReader( str), () -> new Rec(), () -> new Recs() );
+		S.out( recs2.getClass().getName() );
+		recs2.display();
+		
+		S.out( "object type = " + recs2.get( 0).getClass().getName() );
+
+		// parse array, no types
+		JsonArray recs3 = JsonArray.parse( str);
+		S.out( recs3.getClass().getName() );
+		recs3.display();
+		
+		
+		
+		
+//		TJsonArray<Rec> ar = new TJsonArray();
+//		ar.put( rec);
+//		
+//		String str = ar.toString();
+//		
+//		TJsonArray<Rec> ar2 = new JSONParser().parse3( str, Rec.class);
+//		rec2.display();
+//		
+//		TJsonArray<Rec> ar = new TJsonArray();
+//		
+//		
 	}
 
 }

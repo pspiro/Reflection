@@ -130,6 +130,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-dynamic", exch -> new MarginTrans(this, exch, true).marginDynamic() );
 			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
+			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
 
 
 			// orders and live orders

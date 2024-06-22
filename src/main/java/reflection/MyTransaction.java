@@ -75,7 +75,7 @@ public abstract class MyTransaction extends BaseTransaction {
 			/** This code is obsolete; use parseToObject() instead, unless you need to call validateCookie() */
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            m_map = new ParamMap( JsonObject.parse( reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	            if (!(this instanceof OrderTransaction) ) {  // order transaction prints its own log
 	            	out( "  parsed POST request " + m_map);
 	            }

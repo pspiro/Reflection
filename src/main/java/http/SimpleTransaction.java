@@ -113,8 +113,7 @@ public class SimpleTransaction {
 		else {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
-				JSONParser parser = new JSONParser();
-	            JsonObject jsonObject = (JsonObject)parser.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
+	            JsonObject jsonObject = JsonObject.parse(reader);  // if this returns a String, it means the text has been over-stringified (stringify called twice)
 	            map = jsonObject;
 			}
 			catch( Exception e) {

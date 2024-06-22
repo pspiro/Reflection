@@ -10,66 +10,83 @@ import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 
 import common.Util;
+import reflection.MarginTrans.GoodUntil;
 import tw.util.S;
 import web3.Stablecoin;
 
-class MarginOrder implements DualParent {
-		enum Status {
-			Start,
-			Filled, 
-			Liquidation, 
-			SubLiquidation  
-		}
-		
-		//Status m_status;
+class MarginOrder extends JsonObject implements DualParent {
+	// margin config
+	double feePct;
+	double lastBuffer;  // as percent, try 
+	double bidBuffer;
+	double maxLeverage;
+	double minUserAmt = 100;
+	double maxUserAmt = 200;
+	
+	enum Status {
+		Start,
+		Filled,		// primary order has filled, we are now monitoring
+		Liquidation, 
+		SubLiquidation  
+	}
+// move all this into a separate sub-object
+		// field specified by user
+		String wallet() { return getString( "wallet_public_key"); }
+		String orderId() { return getString( "orderId"); }
+		int conid() { return getInt( "conid"); }
+		Action action() throws Exception { return getEnum( "action", Action.values() ); }
+		double amtToSpend() { return getDouble( "amountToSpend"); }
+		double leverage() { return getDouble( "leverage"); }
+		double entryPrice() { return getDouble( "entryPrice"); }
+		double profitTakerPrice() { return getDouble( "profitTakerPrice"); }
+		double stopLossPrice() { return getDouble( "stopLossPrice"); }
+		String goodUntil() { return getString( "goodUntil"); }
+		String currency() { return getString( "currency"); }
 
-		// new margin config
-		double feePct;
-		double lastBuffer;  // as percent, try 
-		double bidBuffer;
-		double maxLeverage;
-		double minUserAmt = 100;
-		double maxUserAmt = 200;
-
-		// serialized
-		private MarginOrder.Status m_status;
-		private final JsonObject m_order;
-		// dualOrder; // places the order to both SMART and OVERNIGHT
-		// rebuild
-		
+		// transient, non-serializeable 
+		private ApiController m_conn;
 		private Stock m_stock;
 		private Stablecoin m_stablecoin;
 		private String m_email;  // from users table
 		private double m_filledPrimary;
-
-
-		private DualOrder m_primaryOrder;
-		private DualOrder m_profitOrder;
-		private DualOrder m_stopOrder;
-
-		private String fbId; // must be serialized
-		private JsonObject m_userRec;  // not needed. pas
-		private ApiController m_conn;
 		private int roundedQty;
 		private double desiredQty;
 
-		// jsonorder fields
-		/* 
-			"wallet_public_key"
-			"orderId"
-			"conid"
-			"action"
-			"amountToSpend"
-			"leverage"
-			"entryPrice"
-			"profitTakerPrice"
-			"stopLossPrice"
-			"goodUntil"
-			"currency",
-			blockchainHash,  // move to log
-			status
-		 */
+		// the orders
+		private DualOrder m_primaryOrder;
+		private DualOrder m_profitOrder;
+		private DualOrder m_stopOrder;
+		private JsonObject m_order;
+		private JsonObject m_userRec;
+		private Status m_status;
 		
+		MarginOrder(
+				String wallet,
+				String orderId,
+				int conid,
+				Action action,
+				double amt,
+				double leverage,
+				double entryPrice,
+				double profitTakerPrice,
+				double stopPrice,
+				GoodUntil goodUntil,
+				String currency) {
+			
+			put( "wallet_public_key", wallet.toLowerCase() );
+			put( "orderId", orderId); 
+			put( "conid", conid);
+			put( "action", action); 
+			put( "amountToSpend", amt);
+			put( "leverage", leverage);
+			put( "entryPrice", entryPrice);
+			put( "profitTakerPrice", profitTakerPrice);
+			put( "stopLossPrice", stopPrice);
+			put( "goodUntil", goodUntil);
+			put( "currency", currency);
+		}
+
+
 		/** Called when order is received by user OR when order is restored from database.
 		 *  Note order.status() could be enum or string 
 		 * @throws Exception */
@@ -79,6 +96,10 @@ class MarginOrder implements DualParent {
 			m_userRec = userRec;
 			m_stock = stock;
 			m_status = Status.Start;
+		}
+
+		// must set apicontroller
+		public MarginOrder() {
 		}
 		
 		private void out( String format, Object... params) {
@@ -121,29 +142,6 @@ class MarginOrder implements DualParent {
 			
 		}
 		
-		void placeBuyOrder() throws Exception {
-			if (m_primaryOrder == null) {
-				out( "***Placing margin primary orders");
-				double feePct = .01; // fix this. pas
-				double totalSpend = userAmt() * leverage() * (1. - feePct);
-				desiredQty = totalSpend / entryPrice();
-				roundedQty = OrderTransaction.positionTracker.buyOrSell( m_stock.conid(), true, desiredQty, 1);
-				
-				// place day and night orders
-				m_primaryOrder = new DualOrder( m_conn, this, "PRIMARY");
-				m_primaryOrder.action( Action.Buy);
-				m_primaryOrder.quantity( roundedQty);
-				m_primaryOrder.orderType( OrderType.LMT);
-				m_primaryOrder.lmtPrice( entryPrice() );
-				m_primaryOrder.tif( TimeInForce.GTC);   // must consider this
-				m_primaryOrder.outsideRth( true);
-				m_primaryOrder.orderRef( orderId() + " primary" );
-				// m_primaryOrder.ocaGroup( orderId() + " primary" ); // the problem is that the pair is canceled and then we can't see easily which was canceled first, plus we have to replace both orders
-
-				m_primaryOrder.placeOrder( conid() );
-			}
-		}
-
 		/** Called by dualOrder when the day and night orders are done */  // really we should listen for amt filled and add up the amounts from the profit taker and stop loss; could encapsulate this in a BracketOrder class
 		@Override public void onCompleted(double totalFilled, DualOrder which) {
 			if (which == m_primaryOrder && m_status == Status.Start) {  // check status here as well to be safe
@@ -225,22 +223,6 @@ class MarginOrder implements DualParent {
 			}
 		}
 		
-		private double stopLossPrice() {
-			return m_order.getDouble( "stopLossPrice");
-		}
-
-		private double profitTakerPrice() {
-			return m_order.getDouble( "profitTakerPrice");
-		}
-
-		private String orderId() {
-			return m_order.getString( "orderId");
-		}
-
-		private int conid() {
-			return m_stock.conid();
-		}
-
 		private void liquidate(ApiController conn) throws Exception {
 //			m_status = Status.Liquidation;
 //			
@@ -270,20 +252,35 @@ class MarginOrder implements DualParent {
 			return balance;
 		}
 
-		double userAmt() {
-			return m_order.getDouble( "amountToSpend");
+		public void transHash(String hash) {
+			put( "transHash", hash);
+			//m_status = paid;
+			
 		}
-		double leverage() {
-			return m_order.getDouble( "leverage");
-		}
-		double entryPrice() {
-			return m_order.getDouble( "entryPrice");
-		}
-//		private double userAmt;
-//		private double leverage;
-//		private double profitTaker;
-//		private double entryPrice;
-//		private double stopLoss;
 
+		public void gotReceipt(boolean v) {
+			put( "gotReceipt", v);
+		}
+
+		void placeBuyOrder() throws Exception {
+			out( "***Placing margin primary orders");
+			double feePct = .01; // fix this. pas
+			double totalSpend = amtToSpend() * leverage() * (1. - feePct);
+			desiredQty = totalSpend / entryPrice();
+			roundedQty = OrderTransaction.positionTracker.buyOrSell( m_stock.conid(), true, desiredQty, 1);
+			
+			// place day and night orders
+			m_primaryOrder = new DualOrder( m_conn, this, "PRIMARY");
+			m_primaryOrder.action( Action.Buy);
+			m_primaryOrder.quantity( roundedQty);
+			m_primaryOrder.orderType( OrderType.LMT);
+			m_primaryOrder.lmtPrice( entryPrice() );
+			m_primaryOrder.tif( TimeInForce.GTC);   // must consider this
+			m_primaryOrder.outsideRth( true);
+			m_primaryOrder.orderRef( orderId() + " primary" );
+			// m_primaryOrder.ocaGroup( orderId() + " primary" ); // the problem is that the pair is canceled and then we can't see easily which was canceled first, plus we have to replace both orders
+
+			m_primaryOrder.placeOrder( conid() );
+		}
 
 	}
