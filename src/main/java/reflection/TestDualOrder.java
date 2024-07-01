@@ -15,7 +15,6 @@ import tw.util.S;
 public class TestDualOrder {
 	static Config config;
 	private ApiController conn;
-	private TradingHours m_tradingHours;
 
 	public static void main(String[] args) throws Exception {
 		config = Config.read();

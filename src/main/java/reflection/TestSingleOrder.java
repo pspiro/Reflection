@@ -1,14 +1,11 @@
 package reflection;
 
-import java.util.HashMap;
-
 import com.ib.client.Contract;
 import com.ib.client.OrderType;
 import com.ib.client.SingleOrder;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
-import com.ib.controller.ApiController.LiveOrder;
 import com.ib.controller.ConnectionAdapter;
 
 import common.Util;
@@ -17,7 +14,6 @@ import tw.util.S;
 public class TestSingleOrder {
 	static Config config;
 	private ApiController conn;
-	private TradingHours m_tradingHours;
 
 	public static void main(String[] args) throws Exception {
 		config = Config.read();

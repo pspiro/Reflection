@@ -23,7 +23,6 @@ import web3.Stablecoin;
 import web3.StockToken;
 
 class MarginOrder extends JsonObject implements DualParent {
-		// margin config
 	double feePct;
 	double lastBuffer;  // as percent, try 
 	double bidBuffer;

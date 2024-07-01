@@ -9,10 +9,7 @@ import org.json.simple.JsonObject;
 import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
-import common.Alerts;
 import common.Util;
-import web3.Stablecoin;
-import web3.StockToken;
 
 
 public class MarginTrans extends MyTransaction {

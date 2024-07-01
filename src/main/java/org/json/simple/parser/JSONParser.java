@@ -31,7 +31,6 @@ public class JSONParser {
 	public static final int S_END=6;
 	public static final int S_IN_ERROR=-1;
 	
-	private LinkedList handlerStatusStack;
 	private Yylex lexer = new Yylex((Reader)null);
 	private Yytoken token = null;
 	private int status = S_INIT;
@@ -50,7 +49,6 @@ public class JSONParser {
     public void reset(){
         token = null;
         status = S_INIT;
-        handlerStatusStack = null;
     }
     
     /**

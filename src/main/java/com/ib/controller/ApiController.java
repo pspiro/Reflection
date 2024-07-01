@@ -57,7 +57,6 @@ import com.ib.client.Types.FundamentalType;
 import com.ib.client.Types.NewsType;
 import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
-import com.ib.controller.ApiController.LiveOrder;
 
 import common.Util;
 import common.Util.ObjectHolder;
