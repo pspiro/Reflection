@@ -174,6 +174,10 @@ public class BaseTransaction {
 		return true;
 	}
 	
+	protected final void executeAndWrap( ExRunnable runnable) {
+		Util.execute( () -> wrap( () -> runnable.run() ) );
+	}
+		
 	
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */

@@ -1,5 +1,6 @@
 package com.ib.client;
 
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
@@ -10,6 +11,7 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.OcaType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
+import com.ib.controller.ApiController.LiveOrder;
 
 import reflection.Prices;
 import reflection.TradingHours.Session;
@@ -19,26 +21,33 @@ import tw.util.S;
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder implements SingleParent {
 	public interface DualParent {
-		void onCompleted(double totalFilled, DualOrder order);
+		void onFilled(DualOrder order, int permId, Action action, int totalFilled, double avgPrice);
 	}
 	
-	private final DualParent m_parent;
+	private ApiController m_conn;
+	private final DualParent m_parent;  // not used? 
 	private final SingleOrder m_dayOrder;
 	private final SingleOrder m_nightOrder;
-	private int m_quantity;
 	boolean m_done;
-	private ApiController m_conn;
+	private String m_name;  // for debug only; could change to an enum
 
 	/** prices are only need for sim stop orders on Overnight */ 
-	public DualOrder( ApiController conn, DualParent parent, String name) {
-		this( conn, parent, name, null);
-	}
-	
-	public DualOrder( ApiController conn, DualParent parent, String name, Prices prices) {
+	public DualOrder( 
+			ApiController conn, 
+			Prices prices, 
+			String name, 
+			String key,
+			DualParent parent 
+			) {
 		m_parent = parent;
 		m_conn = conn;
-		m_dayOrder = new SingleOrder( SingleOrder.Type.Day, prices, name, this);
-		m_nightOrder = new SingleOrder( Type.Night, prices, name, this);
+		m_dayOrder = new SingleOrder( conn, prices, SingleOrder.Type.Day, name, key + " day", this);
+		m_nightOrder = new SingleOrder( conn, prices, Type.Night, name, key + " night", this);
+		m_name = name;
+	}
+	
+	public String name() {
+		return m_name;
 	}
 	
 	public JsonObject toJson() {
@@ -48,7 +57,6 @@ public class DualOrder implements SingleParent {
 	}
 	
 	public void quantity( int size) {
-		m_quantity = size;
 		both( order -> order.o().roundedQty( size) );
 	}
 	
@@ -89,29 +97,24 @@ public class DualOrder implements SingleParent {
 		consumer.accept( m_dayOrder);
 		consumer.accept( m_nightOrder);
 	}
-	
-	public void placeOrder( int conid) throws Exception {
+
+	/** really place or restore order */
+	public void placeOrder( int conid, HashMap<String,LiveOrder> liveOrders) throws Exception {
 		common.Util.require( m_conn.isConnected(), "not connected");
+		
+		// we have two choices; either save the permId for the single order that was last active,
+		// or look for the correct order based on orderId, side, and, for sell, also name (profit/stop)
 		
 		Contract contract = new Contract();
 		contract.conid( conid);
 		
 		contract.exchange( Session.Smart.toString() );
 		m_dayOrder.o().tif( TimeInForce.GTC);
-		m_dayOrder.placeOrder( m_conn, contract);
+		m_dayOrder.placeOrder( contract, liveOrders);
 		
 		contract.exchange( Session.Overnight.toString() );
 		m_nightOrder.o().tif( TimeInForce.DAY);
-		m_nightOrder.placeOrder( m_conn, contract);
-	}
-
-	/** Set the IB order and listen for updates IF the permId matches */
-	public void setOrder(ApiController conn, Order order) {
-		if (order.permId() == 0) {
-			S.out( "zero");
-		}
-		m_dayOrder.setOrder( conn, order);
-		m_nightOrder.setOrder( conn, order);
+		m_nightOrder.placeOrder( contract, liveOrders);
 	}
 
 	public void display() {
@@ -119,13 +122,8 @@ public class DualOrder implements SingleParent {
 		S.out( "night order: " + m_nightOrder.toString() );
 	}
 
-	public void cancel(ApiController conn) {
-		both( order -> order.cancel( conn) );
-	}
-
-	public void tick(Session session) {
-		m_dayOrder.tick( session == Session.Smart);
-		m_nightOrder.tick( session == Session.Overnight);
+	public void cancel() {
+		both( order -> order.cancel() );
 	}
 
 	public double getBalance() {
@@ -140,16 +138,12 @@ public class DualOrder implements SingleParent {
 	 *  partially filled, or not at all filled. Note that DualOrder can be
 	 *  complete even if both children are still work, if the total fill size
 	 *  is sufficient */
-	@Override public void onStatusUpdated(Type session, int filled) {
-		if (!m_done) {
-			double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
+	@Override public void onStatusUpdated(SingleOrder single, int permId, Action action, int filled, double avgPrice) {
+		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
 
-			if (totalFilled >= m_quantity || isComplete() ) {
-				both( order -> order.cancel( m_conn) );
-				m_parent.onCompleted( totalFilled, this);
-				m_done = true;
-			}
-		}
+		S.out( "DualOrder  day=%s  night=%s  total=%s", m_dayOrder.filled(), m_nightOrder.filled(), totalFilled);
+		
+		m_parent.onFilled( this, permId, action, filled, avgPrice); 
 	}
 
 	private boolean isComplete() {

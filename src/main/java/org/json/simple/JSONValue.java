@@ -5,80 +5,17 @@
 package org.json.simple;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
 import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 
 /**
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
 public class JSONValue {
-	/**
-	 * Parse JSON text into java object from the input source. 
-	 * Please use parseWithException() if you don't want to ignore the exception.
-	 * 
-	 * @see org.json.simple.parser.JSONParser#parse(Reader)
-	 * @see #parseWithException(Reader)
-	 * 
-	 * @param in
-	 * @return Instance of the following:
-	 *	org.json.simple.JSONObject,
-	 * 	org.json.simple.JSONArray,
-	 * 	java.lang.String,
-	 * 	java.lang.Number,
-	 * 	java.lang.Boolean,
-	 * 	null
-	 * 
-	 */
-	public static Object parse(Reader in){
-		try{
-			JSONParser parser=new JSONParser();
-			return parser.parse(in);
-		}
-		catch(Exception e){
-			return null;
-		}
-	}
-	
-	public static Object parse(String s){
-		StringReader in=new StringReader(s);
-		return parse(in);
-	}
-	
-	/**
-	 * Parse JSON text into java object from the input source.
-	 * 
-	 * @see org.json.simple.parser.JSONParser
-	 * 
-	 * @param in
-	 * @return Instance of the following:
-	 * 	org.json.simple.JSONObject,
-	 * 	org.json.simple.JSONArray,
-	 * 	java.lang.String,
-	 * 	java.lang.Number,
-	 * 	java.lang.Boolean,
-	 * 	null
-	 * 
-	 * @throws IOException
-	 * @throws ParseException
-	 */
-	public static Object parseWithException(Reader in) throws IOException, ParseException{
-		JSONParser parser=new JSONParser();
-		return parser.parse(in);
-	}
-	
-	public static Object parseWithException(String s) throws ParseException{
-		JSONParser parser=new JSONParser();
-		return parser.parse(s);
-	}
 	
     /**
      * Encode an object into JSON text and write it to out.

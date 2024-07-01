@@ -46,6 +46,7 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickAttribBidAsk;
 import com.ib.client.TickAttribLast;
 import com.ib.client.TickType;
+import com.ib.client.Types.Action;
 import com.ib.client.Types.BarSize;
 import com.ib.client.Types.DeepSide;
 import com.ib.client.Types.DeepType;
@@ -58,6 +59,7 @@ import com.ib.client.Types.WhatToShow;
 import com.ib.controller.ApiConnection.ILogger;
 
 import common.Util;
+import common.Util.ObjectHolder;
 import tw.util.S;
 
 public class ApiController implements EWrapper {
@@ -329,7 +331,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 		
-		Integer reqId = getAndRemoveKey( m_acctSummaryHandlers, handler);
+		Integer reqId = getAndRemoveByValue( m_acctSummaryHandlers, handler);
 		if (reqId != null) {
 			m_client.cancelAccountSummary( reqId);
 			sendEOM();
@@ -350,7 +352,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_mktValSummaryHandlers, handler);
+		Integer reqId = getAndRemoveByValue( m_mktValSummaryHandlers, handler);
 		if (reqId != null) {
 			m_client.cancelAccountSummary( reqId);
 			sendEOM();
@@ -612,7 +614,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_topMktDataMap, handler);
+		Integer reqId = getAndRemoveByValue( m_topMktDataMap, handler);
     	if (reqId != null) {
     		m_client.cancelMktData( reqId);
     	}
@@ -624,12 +626,12 @@ public class ApiController implements EWrapper {
 
     public void cancelOptionMktData( IOptHandler handler) {
     	cancelTopMktData( handler);
-    	getAndRemoveKey( m_optionCompMap, handler);
+    	getAndRemoveByValue( m_optionCompMap, handler);
     }
 
     public void cancelEfpMktData( IEfpHandler handler) {
     	cancelTopMktData( handler);
-    	getAndRemoveKey( m_efpMap, handler);
+    	getAndRemoveByValue( m_efpMap, handler);
     }
 
 	public void reqMktDataType( int mktDataType) {
@@ -734,7 +736,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-    	Integer reqId = getAndRemoveKey( m_deepMktDataMap, handler);
+    	Integer reqId = getAndRemoveByValue( m_deepMktDataMap, handler);
     	if (reqId != null) {
     		m_client.cancelMktDepth( reqId, isSmartDepth);
     		sendEOM();
@@ -782,7 +784,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_optionCompMap, handler);
+		Integer reqId = getAndRemoveByValue( m_optionCompMap, handler);
 		if (reqId != null) {
 			m_client.cancelCalculateOptionPrice( reqId);
 			sendEOM();
@@ -996,11 +998,11 @@ public class ApiController implements EWrapper {
 	}
 
 	public void removeOrderHandler( IOrderHandler handler) {
-		getAndRemoveKey(m_orderHandlers, handler);
+		getAndRemoveByValue(m_orderHandlers, handler);
 	}
 
     public void removeOrderCancelHandler( IOrderCancelHandler orderCancelHandler) {
-        getAndRemoveKey(m_orderCancelHandlers, orderCancelHandler);
+        getAndRemoveByValue(m_orderCancelHandlers, orderCancelHandler);
     }
 
 	// ---------------------------------------- Live order handling ----------------------------------------
@@ -1013,13 +1015,112 @@ public class ApiController implements EWrapper {
 		void handle(int orderId, int errorCode, String errorMsg);  // add permId?
 	}
 
-	public void reqLiveOrders( ILiveOrderHandler handler) {
-		if (!checkConnection())
-			return;
+	public ILiveOrderHandler reqLiveOrders( ILiveOrderHandler handler) throws Exception {
+		if (!checkConnection() ) {
+			throw new Exception( "not connected");
+		}
 
 		m_liveOrderHandlers.add( handler);
 		m_client.reqAllOpenOrders();
 		sendEOM();
+		
+		return handler;
+	}
+
+	/** we could add more fields here such as Contract */
+	public static class LiveOrder {
+		private int m_permId;
+		private OrderStatus m_status;
+		private int m_filled;
+		private double m_avgPrice;
+		private Order m_order;
+
+		public LiveOrder(int permId) {
+			m_permId = permId;
+		}
+
+		public void update(OrderStatus status, int filled, double avgPrice) {
+			m_status = status;
+			m_filled = filled;
+			m_avgPrice = avgPrice;
+		}
+		
+		public String orderRef() {
+			return m_order.orderRef();
+		}
+
+		public void order(Order order) {
+			m_order = order;
+		}
+		
+		public OrderStatus status() {
+			return m_status;
+		}
+		
+		public int permId() {
+			return m_permId;
+		}
+		
+		public int filled() {
+			return m_filled;
+		}
+		
+		public double avgPrice() {
+			return m_avgPrice;
+		}
+		
+		public Order order() {
+			return m_order;
+		}
+
+		public Action action() {
+			return m_order.action();
+		}
+	}
+	
+	/** Request live orders. Aggregate both the Order and the orderStatus. Return as a 
+	 *  map of permId to LiveOrder */ 
+	public HashMap<Integer,LiveOrder> reqLiveOrderMap() throws Exception {
+		if (!checkConnection()) {
+			throw new Exception( "Not connected");
+		}
+		
+		HashMap<Integer,LiveOrder> map = new HashMap<>();
+		
+		// save the order handler here so we can remove it when done
+		ObjectHolder<ILiveOrderHandler> handler = new ObjectHolder<>();
+
+		// block until openOrderEnd() is called
+		Util.sync( queue -> {
+			handler.val = reqLiveOrders( new ILiveOrderHandler() {
+				@Override public void orderStatus(int orderId, OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
+						int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
+					
+					Util.getOrCreate( map, permId, () -> new LiveOrder( permId) )
+						.update( status, filled.toInt(), avgFillPrice);
+				}
+	
+				@Override public void openOrder(Contract contract, Order order, OrderState orderState) {
+					Util.getOrCreate( map, order.permId(), () -> new LiveOrder( order.permId() ) )
+						.order( order);
+				}
+				
+				@Override public void openOrderEnd() {
+					try {
+						removeLiveOrderHandler( handler.val);
+						queue.put( "");
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				@Override public void handle(int orderId, int errorCode, String errorMsg) {
+					// ignore
+				}
+			});
+		});
+		
+		return map;
 	}
 
 	public void takeTwsOrders( ILiveOrderHandler handler) {
@@ -1115,7 +1216,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_scannerMap, handler);
+		Integer reqId = getAndRemoveByValue( m_scannerMap, handler);
 		if (reqId != null) {
 			m_client.cancelScannerSubscription( reqId);
 			sendEOM();
@@ -1167,7 +1268,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_historicalDataMap, handler);
+		Integer reqId = getAndRemoveByValue( m_historicalDataMap, handler);
     	if (reqId != null) {
     		m_client.cancelHistoricalData( reqId);
     		sendEOM();
@@ -1219,7 +1320,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-    	Integer reqId = getAndRemoveKey( m_realTimeBarMap, handler);
+    	Integer reqId = getAndRemoveByValue( m_realTimeBarMap, handler);
     	if (reqId != null) {
     		m_client.cancelRealTimeBars( reqId);
     		sendEOM();
@@ -1324,7 +1425,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_positionMultiMap, handler);
+		Integer reqId = getAndRemoveByValue( m_positionMultiMap, handler);
 		if (reqId != null) {
 			m_client.cancelPositionsMulti( reqId);
 			sendEOM();
@@ -1367,7 +1468,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey( m_accountUpdateMultiMap, handler);
+		Integer reqId = getAndRemoveByValue( m_accountUpdateMultiMap, handler);
 		if (reqId != null) {
 			m_client.cancelAccountUpdatesMulti( reqId);
 			sendEOM();
@@ -1420,7 +1521,7 @@ public class ApiController implements EWrapper {
 		m_connectionHandler.show( string);
 	}
 
-    private static <K,V> K getAndRemoveKey( Map<K,V> map, V value) {
+    private static <K,V> K getAndRemoveByValue( Map<K,V> map, V value) {
     	for (Entry<K,V> entry : map.entrySet() ) {
     		if (entry.getValue() == value) {
     			map.remove( entry.getKey() );
@@ -1760,7 +1861,7 @@ public class ApiController implements EWrapper {
 		if (!checkConnection())
 			return;
 
-		Integer reqId = getAndRemoveKey(m_histogramDataMap, handler);
+		Integer reqId = getAndRemoveByValue(m_histogramDataMap, handler);
 		
     	if (reqId != null) {
     		m_client.cancelHistogramData(reqId);
@@ -1835,7 +1936,7 @@ public class ApiController implements EWrapper {
 	    if (!checkConnection())
 	        return;
 
-	    Integer reqId = getAndRemoveKey(m_pnlMap, handler);
+	    Integer reqId = getAndRemoveByValue(m_pnlMap, handler);
 
 	    if (reqId != null) {
 	        m_client.cancelPnL(reqId);
@@ -1875,7 +1976,7 @@ public class ApiController implements EWrapper {
         if (!checkConnection())
             return;
 
-        Integer reqId = getAndRemoveKey(m_pnlSingleMap, handler);
+        Integer reqId = getAndRemoveByValue(m_pnlSingleMap, handler);
 
         if (reqId != null) {
             m_client.cancelPnLSingle(reqId);
@@ -1990,7 +2091,7 @@ public class ApiController implements EWrapper {
         if (!checkConnection())
             return;
 
-        Integer reqId = getAndRemoveKey( m_tickByTickDataMap, handler);
+        Integer reqId = getAndRemoveByValue( m_tickByTickDataMap, handler);
         if (reqId != null) {
             m_client.cancelTickByTickData( reqId);
             sendEOM();
@@ -2087,7 +2188,7 @@ public class ApiController implements EWrapper {
         if (!checkConnection())
             return;
 
-        Integer reqId = getAndRemoveKey(m_wshMetaDataMap, handler);
+        Integer reqId = getAndRemoveByValue(m_wshMetaDataMap, handler);
         if (reqId != null) {
             m_client.cancelWshMetaData(reqId);
             sendEOM();
@@ -2125,7 +2226,7 @@ public class ApiController implements EWrapper {
         if (!checkConnection())
             return;
 
-        Integer reqId = getAndRemoveKey(m_wshEventDataMap, handler);
+        Integer reqId = getAndRemoveByValue(m_wshEventDataMap, handler);
         if (reqId != null) {
             m_client.cancelWshMetaData(reqId);
             sendEOM();
@@ -2164,7 +2265,7 @@ public class ApiController implements EWrapper {
         if (!checkConnection())
             return;
 
-        Integer reqId = getAndRemoveKey(m_historicalScheduleMap, handler);
+        Integer reqId = getAndRemoveByValue(m_historicalScheduleMap, handler);
         if (reqId != null) {
             m_client.cancelHistoricalData(reqId);
 

@@ -133,15 +133,14 @@ public class MyTestCase extends TestCase {
 
 	/** wait n seconds for supplier to return true, then fail */
 	public static void waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
-		for (int i = 0; i < sec; i++) {
-			S.out( i);
-			if (sup.get() ) {
-				S.out( "succeeded in %s seconds", i);
-				return;
-			}
-			S.sleep(1000);
+		int i = Util.waitFor( sec, sup);
+		
+		if (i >= 1) {
+			S.out( "succeeded in %s sec", i);
 		}
-		assertTrue( false);
+		else {
+			assertTrue( false);
+		}
 	}
 
 	String str;

@@ -99,11 +99,4 @@ public class ProfileTransaction extends MyTransaction {
 		});
 	}
 
-	private String getExistingEmail(String walletAddr) throws Exception {
-		JsonArray res = Main.m_config.sqlQuery( conn -> conn.queryToJson("select email from users where wallet_public_key = '%s'", walletAddr) );
-		return res.size() > 0
-				? res.get(0).getString("email")
-				: "";
-	}	
-
 }

@@ -185,4 +185,8 @@ public class Decimal implements Comparable<Decimal>{
     public Double toDouble() {
     	return Double.valueOf( m_value.toString() );
     }
+    
+    public int toInt() {
+    	return (int)(double)Double.valueOf( m_value.toString() );
+    }
 }

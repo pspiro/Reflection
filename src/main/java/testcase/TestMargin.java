@@ -1,6 +1,5 @@
 package testcase;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;

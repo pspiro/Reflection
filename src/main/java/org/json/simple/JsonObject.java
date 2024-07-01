@@ -9,6 +9,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.json.simple.parser.JSONParser;
 
@@ -185,20 +188,42 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return val != null ? val.toString().toLowerCase() : ""; 
 	}
 
+	/** string only */
 	public static JsonObject parse( String text) throws Exception {
 		Util.require( isObject(text), "Error: not a json object: " + text);
-		return (JsonObject)new JSONParser().parse( text);
+
+		return parse( new StringReader(text) );
 	}
 	
+	/** reader stream only */
 	public static JsonObject parse(InputStream is) throws Exception {
-		return (JsonObject)new JSONParser().parse( new InputStreamReader(is) );  // parseMsg() won't work here because it assumes all values are strings
+		return parse( new InputStreamReader(is) ); 
+	}	
+	
+	/** reader only */
+	public static JsonObject parse(Reader reader) throws Exception {
+		return parse( reader, () -> new JsonObject() );
+	}	
+	
+	/** reader with types */
+	@SuppressWarnings("unchecked")
+	public static <T> T parse(
+			Reader reader, 
+			Supplier<JsonObject> objSupplier) throws Exception {
+		
+		return (T)new JSONParser().parse( 
+				reader, 
+				objSupplier,
+				() -> new JsonArray()       // there could still be arrays, just not the top level
+				);  // parseMsg() won't work here because it assumes all values are strings
 	}	
 	
 	public static boolean isObject(String text) {
 		return text != null && text.trim().startsWith("{");
 	}
 
-	/** If the key does not exist, it returns an empty array */
+	/** If the key does not exist, it returns an empty array; this could be an issue
+	 *  if the type is TJsonArray */
 	public JsonArray getArray(String key) {
 		JsonArray array = (JsonArray)get(key);
 		return array != null ? array : new JsonArray(); 
@@ -263,6 +288,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		System.out.println();
 	}
 	
+	/** for testing only */
+	public void display2() {
+		put( "type", getClass().getName() );
+		display( this, 0, false);
+		System.out.println();
+	}
+	
 	public static void display(Object objIn, int level, boolean arrayItem) {
 		if (objIn instanceof JsonObject) {
 			out( "{\n");
@@ -285,8 +317,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			}
 			out( "\n%s%s", Util.tab(level), "}");
 		}
-		else if (objIn instanceof JsonArray) {
-			JsonArray ar = (JsonArray)objIn;
+		else if (objIn instanceof TJsonArray) {
+			TJsonArray ar = (TJsonArray)objIn;
 			
 			if (ar.size() == 0) {
 				out( "[ ]");
@@ -387,8 +419,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			Util.appendHtml( b, "tr", () -> {
 				Util.wrapHtml( b, "td", key);
 
-				if (value instanceof JsonArray) {
-					Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+				if (value instanceof TJsonArray) {
+					Util.wrapHtml( b, "td", ((TJsonArray)value).toHtml() );
 				}
 				else {
 					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
@@ -413,12 +445,28 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		put( key, getDouble(key) + val);
 	}
 	
-	/** Will convert a string to enum; may return null */
+	/** Will convert a string to enum; may return null; use method below for no exceptions */
 	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
 		Object val = get(key);
-		return val == null 
-			? null 
-			: Util.getEnum(val.toString(), values);
+		return val instanceof Enum ? (T)val : Util.getEnum(val.toString(), values);
+	}
+
+	/** Will convert a string to enum. Defaults to def. Note that this will not
+	 *  report an error if the string is invalid; the caller must be assured that
+	 *  the string is null or one of the valid values. */
+	public <T extends Enum<T>> T getEnum( String key, T[] values, T def) {
+		try {
+			Object val = get(key);
+			return val instanceof Enum 
+					? (T)val 
+			: val == null || S.isNull( val.toString() )
+					? def
+					: Util.getEnum(val.toString(), values);
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			return def;
+		}
 	}
 
 	/** Add all keys to the key set */
