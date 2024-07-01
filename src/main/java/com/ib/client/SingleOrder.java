@@ -1,9 +1,13 @@
 package com.ib.client;
 
+import java.util.HashMap;
+
 import org.json.simple.JsonObject;
 
+import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
+import com.ib.controller.ApiController.LiveOrder;
 
 import reflection.Prices;
 import tw.util.S;
@@ -14,32 +18,44 @@ public class SingleOrder implements IOrderHandler {
 	public enum Type { Day, Night };  // you could combine this with TradingHours.Session
 
 	public interface SingleParent {
-		void onStatusUpdated(Type session, int filled);  // change to Consumer<Type>  
+		void onStatusUpdated(SingleOrder order, int permId, Action action, int filled, double avgFillPrice);  
 	}
 
-	private final Order m_order = new Order();  // this is downloaded; could be null
 	private final Type m_session;
 	private final SingleParent m_parent;
 	private final Prices m_prices;  // could be null
-	private double m_filled;
-	private double m_avgPrice;
-	private OrderStatus m_status = OrderStatus.Unknown;
-	private Runnable m_listener;
 	private String m_name;
 	
+	// order and order status; comes from LiveOrder
+	private Order m_order = new Order();  // could be replaced in placeOrder()
+	private OrderStatus m_status = OrderStatus.Unknown;
+	private int m_filled;
+	private double m_avgPrice;
+
+	private Runnable m_listener; // access to this must be synchronized
+	private ApiController m_conn;
+	private String m_key;
+	
 	/** Called for new order, not submitted yet. Id will be set
-	 *  when order is submitted.  
+	 *  when order is submitted.
+	 *  @parent is last for ease of call  
 	 * @param json 
-	 * @param night */
-	public SingleOrder(Type session, Prices prices, String name, SingleParent parent) {
+	 * @param night 
+	 * @throws Exception */
+	public SingleOrder(
+			ApiController conn, 
+			Prices prices, 
+			Type session, 
+			String name, 
+			String key,
+			SingleParent parent) {
+		
+		m_conn = conn;
 		m_session = session;
 		m_parent = parent;
 		m_prices = prices;
 		m_name = (name + "/" + session).toUpperCase();
-	}
-
-	public Order o() {
-		return m_order;
+		m_key = key;
 	}
 	
 	private void out( String format, Object... params) {
@@ -52,7 +68,7 @@ public class SingleOrder implements IOrderHandler {
 				"avgPrice", m_avgPrice);
 	}
 
-	public void placeOrder(ApiController conn, Contract contract) throws Exception {
+	public synchronized void placeOrder( Contract contract, HashMap<String, LiveOrder> liveOrders) throws Exception {
 		common.Util.require( m_order.status() == OrderStatus.Unknown, "order should be Inactive");
 
 		// we must simulate stop-limit orders on Overnight exchange (stop orders won't work as market orders are not supported)
@@ -60,19 +76,37 @@ public class SingleOrder implements IOrderHandler {
 			out( "Simulating stop order");
 
 			// called when the prices are updated
-			m_listener = () -> onPriceChanged( conn, contract);
+			m_listener = () -> onPriceChanged( contract);
 
 			common.Util.require( m_prices != null, "must pass prices for sim stop order");
 			m_prices.addListener( m_listener);
 		}
 		else {
-			conn.placeOrder( contract, m_order, this);
-			out( "Placed order with id %s", m_order.orderId() );
+			LiveOrder liveOrder = liveOrders != null ? liveOrders.get( m_key) : null;
+
+			// if there is aready a live IB order, sync to it; otherwise
+			// place a new order
+			if (liveOrder != null) {
+				m_order = liveOrder.order();
+				m_status = liveOrder.status();
+				m_filled = liveOrder.filled();
+				m_avgPrice = liveOrder.avgPrice();
+				
+				m_conn.listenTo( m_order, this);
+
+				S.out( "Restored SingleOrder id=%s  key=%s  permId=%s", 
+						m_order.orderId(), m_key, m_order.permId() );
+			}
+			else {
+				m_order.orderRef( m_key);
+				m_conn.placeOrder( contract, m_order, this);
+				out( "Placed new SingleOrder id=%s  key=%s", m_order.orderId(), m_key);
+			}
 		}
 	}
 			
 	/** triggers when the BID is <= trigger price; somewhat dangerous */
-	private void onPriceChanged(ApiController conn, Contract contract) {
+	private void onPriceChanged( Contract contract) {
 		if (m_prices.bid() <= m_order.auxPrice() && m_listener != null) {
 			out( "Simulated stop order has triggered  %s", m_prices);
 			stopListening();
@@ -86,7 +120,7 @@ public class SingleOrder implements IOrderHandler {
 			}
 
 			try {
-				conn.placeOrder( contract, m_order, this);
+				m_conn.placeOrder( contract, m_order, this);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -104,14 +138,14 @@ public class SingleOrder implements IOrderHandler {
 				? filled.toDouble() >= m_order.roundedQty() ? "filled" : "traded"
 				: "status"; 
 
-		m_filled = filled.toDouble();
+		m_filled = filled.toInt();
 		m_avgPrice = avgFillPrice;
 		m_status = status;
 
 		out( "margin order %s %s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
 				m_name, description, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
 		
-		m_parent.onStatusUpdated( m_session, (int)m_filled);
+		m_parent.onStatusUpdated( this, permId, m_order.action(), filled.toInt(), avgFillPrice);
 	}
 	
 	@Override public void onRecOrderError(int errorCode, String errorMsg) {
@@ -134,9 +168,9 @@ public class SingleOrder implements IOrderHandler {
 				: String.format( "orderId=%s  (order is null)", m_order.orderId() );
 	}
 
-	public void cancel(ApiController conn) {
+	public void cancel() {
 		if (m_order != null && m_status.canCancel() ) {
-			conn.cancelOrder( m_order.orderId(), "", status -> 
+			m_conn.cancelOrder( m_order.orderId(), "", status -> 
 				out( "Canceled order  orderId=%s  status=%s", m_order.orderId(), status) );
 		}
 		
@@ -150,25 +184,22 @@ public class SingleOrder implements IOrderHandler {
 		m_listener = null;
 	}
 
-	public void tick(boolean open) {
-		if (m_order != null) {
-			if (m_order.status() == OrderStatus.Unknown && m_filled == 0) {
-				out( "Submitting single order");
-			}
-		}
-	}
-
 	/** Return dollar amount spent. Spending is negative.
 	 *  Ideally we would subtract out the IB commissions as well */
 	public double getBalance() {
 		return -m_filled * m_avgPrice;
 	}
 
-	public double filled() {
+	public int filled() {
 		return m_filled;
 	}
 
 	public boolean isComplete() {
 		return m_status.isComplete();
 	}
+
+	public Order o() {
+		return m_order;
+	}
+
 }

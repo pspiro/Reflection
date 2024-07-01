@@ -1,18 +1,20 @@
 package reflection;
 
+import java.util.HashMap;
+
 import com.ib.client.Contract;
-import com.ib.client.DualOrder;
 import com.ib.client.OrderType;
 import com.ib.client.SingleOrder;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
+import com.ib.controller.ApiController.LiveOrder;
 import com.ib.controller.ConnectionAdapter;
 
 import common.Util;
 import tw.util.S;
 
-public class TestDualOrder {
+public class TestSingleOrder {
 	static Config config;
 	private ApiController conn;
 	private TradingHours m_tradingHours;
@@ -20,15 +22,15 @@ public class TestDualOrder {
 	public static void main(String[] args) throws Exception {
 		config = Config.read();
 
-		new TestDualOrder().testDualOrder();
+		new TestSingleOrder().testSingleBuyOrder();
 	}
 
 	Prices prices = new Prices();
 	
-	public void testDualOrder() {
+	public void testSingleBuyOrder() {
 		conn = new ApiController( new ConnectionAdapter() {
 			@Override public void onRecNextValidId(int id) {
-				Util.execute( () -> testDualBuyPlace( this) );
+				Util.execute( () -> testSingleBuyPlace( this) );
 			}
 		});
 		
@@ -39,30 +41,31 @@ public class TestDualOrder {
 	int i = Util.rnd.nextInt( 5000);
 	int m_permId;
 	
-	private void testDualBuyPlace(ConnectionAdapter connectionAdapter) {
+	private void testSingleBuyPlace(ConnectionAdapter connectionAdapter) {
 		S.out( "connected; testing single buy order");
 		
-		DualOrder ord = new DualOrder( 
+		SingleOrder ord = new SingleOrder( 
 				conn,
 				prices, 
+				SingleOrder.Type.Night, 
 				"test",
-				"test " + i,				
+				"test " + i,
 				(order, permId, action, filled, avgFillPrice) -> {
 					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
 					m_permId = permId;
 				});
 		
-		ord.action(Action.Buy);
-		ord.orderType( OrderType.LMT);
-		ord.quantity( 1);
-		ord.lmtPrice( 169);
-		ord.tif( TimeInForce.GTC);
-		ord.outsideRth(true);
+		ord.o().action(Action.Buy);
+		ord.o().orderType( OrderType.LMT);
+		ord.o().roundedQty( 1);
+		ord.o().lmtPrice( 169);
+		ord.o().tif( TimeInForce.GTC);
+		ord.o().outsideRth(true);
 		
 		try {
 			S.out( "***Place order");
-			ord.placeOrder( 8314, null);
+			ord.placeOrder( contract(), null);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -75,7 +78,7 @@ public class TestDualOrder {
 		
 		conn = new ApiController( new ConnectionAdapter() {
 			@Override public void onRecNextValidId(int id) {
-				Util.execute( () -> testBuyRestore() );
+				Util.execute( () -> testSingleBuyRestore() );
 			}
 		});
 		S.out( "***reconnect");
@@ -83,7 +86,7 @@ public class TestDualOrder {
 	}
 
 	// exec in sep. thread
-	void testBuyRestore() {
+	void testSingleBuyRestore() {
 		try {
 			S.out( "***reconnected; testing restore single from live");
 			
@@ -91,9 +94,10 @@ public class TestDualOrder {
 			var orderIdMap = conn.reqLiveOrderMap();
 			var orderRefMap = MarginStore.getOrderRefMap(orderIdMap);
 			
-			DualOrder ord = new DualOrder( 
+			SingleOrder ord = new SingleOrder( 
 					conn, 
 					prices, 
+					SingleOrder.Type.Night, 
 					"test",
 					"test " + i,
 					(order, permId, action, filled, avgFillPrice) -> {
@@ -101,7 +105,7 @@ public class TestDualOrder {
 								permId, action, filled, avgFillPrice);
 					} );
 			
-			ord.placeOrder( 8314, orderRefMap);
+			ord.placeOrder( contract(), orderRefMap);
 			S.sleep( 1000);
 			S.out( "***canceling order");
 			ord.cancel();
@@ -111,6 +115,13 @@ public class TestDualOrder {
 		}
 	}
 	
+	private Contract contract() {
+		Contract contract = new Contract();
+		contract.conid( 8314);
+		contract.exchange( "SMART");
+		return contract;
+	}
+
 	public void testSingleStopOrder() {
 		S.out( "testing trigger single stop order");
 		

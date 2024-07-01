@@ -1,5 +1,6 @@
 package reflection;
 
+import java.io.FileReader;
 import java.io.OutputStream;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -56,6 +57,7 @@ public class Main implements ITradeReportHandler {
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
+	private MarginStore m_marginStore;
 
 	
 	Stocks stocks() { return m_stocks; }
@@ -130,6 +132,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-dynamic", exch -> new MarginTrans(this, exch, true).marginDynamic() );
 			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
+			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
 
 
 			// orders and live orders
@@ -203,7 +206,7 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
 		
-		// restore live orders
+		// restore margin store and live orders
 		restoreLiveOrders();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
@@ -320,6 +323,8 @@ public class Main implements ITradeReportHandler {
 		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
 			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
+
+			Util.execute( () -> startMarginStore() );
 		}
 
 		@Override public synchronized void onDisconnected() {
@@ -409,6 +414,10 @@ public class Main implements ITradeReportHandler {
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj);  
+		
+		if (m_marginStore != null) {
+			m_marginStore.tradeReport( tradeKey, contract, exec);
+		}
 	}
 
 	/** Ignore this. */
@@ -572,17 +581,34 @@ public class Main implements ITradeReportHandler {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
+	
+	public MarginStore marginStore() {
+		return m_marginStore;
+	}
+	
+	/** Called at startup only. Read it from disk but not not start the order processing yet */
+	void restoreLiveOrders() {
+		try {
+			S.out( "Reading margin store");
+			
+			m_marginStore = (MarginStore)JsonArray.parse(
+					new FileReader( "margin.store"),
+					() -> new MarginOrder( apiController(), m_stocks),  // note that connection may not be established yet
+					() -> new MarginStore() );
+			
+			S.out( "  read %s records", m_marginStore.size() );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			m_marginStore = new MarginStore();
+		}
+	}
 
-	private void restoreLiveOrders() throws Exception {
-		Util.forEach( m_config.sqlQuery("select * from orders"), order -> {
-			Stock stock = getStock( order.getInt( "conid") );
-			if (stock == null) {
-				S.out( "Error: could not restore order %s with conid %s", order.getString( "orderId"), order.getInt( "conid") );
-			}
-			else {
-				new MarginOrder( apiController(), order, null, stock).process();
-			}
-		});
+	/** Start the margin store order processing; runs in its own thread */
+	private void startMarginStore() {
+		S.out( "Starting up margin store");
+		
+		Util.wrap( () -> m_marginStore.onReconnected( apiController() ) );
 	}
 
 }

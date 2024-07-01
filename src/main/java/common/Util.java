@@ -24,7 +24,9 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -843,7 +845,59 @@ public class Util {
 		return String.format( "%s <%s>", name, email);
 	}
 
-//	<T> T[] toArray( ArrayList<T> list) {
-//		return (T[])list.toArray();
-//	}
+	/** wait n seconds for supplier to return true, then fail 
+	 *  @return number of seconds, or -1 if it failed */
+	public static int waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
+		for (int i = 0; i < sec; i++) {
+			S.out( i);
+			if (sup.get() ) {
+				return i;
+			}
+			S.sleep(1000);
+		}
+		return -1;
+	}
+
+	/** Sum up all the items in the list where func returns the value of each item */
+	public static <T> double sum( Iterable<T> iter, Function<T,Double> func) {
+		double sum = 0;
+		for (T item : iter) {
+			sum += func.apply( item);
+		}
+		return sum;
+	}
+
+	/** Use as follows:
+	 *
+		sync( queue -> {
+			requestSomething( () -> queue.put( "") );
+		});
+		
+		you call queue.put() when done processing to complete the sync block
+		
+		note that you CANNOT call queue.put() in the same thread as both
+		put() AND take() both block; to change this, switch to a ArrayBlockingQueue
+		that has at least one item capacity 
+	 * 
+	 */
+	public static void sync( ExConsumer<SynchronousQueue<String>> consumer) throws Exception {
+		SynchronousQueue<String> q = new SynchronousQueue<>();
+		consumer.accept(q);
+		q.take();
+	}
+
+	public static void main(String[] args) throws Exception {
+		S.out( "start");
+
+		sync( queue -> Util.executeIn(1000, () -> {
+			try {
+				queue.put( "");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}));
+
+		S.out( "done");
+	}
+			
 }

@@ -1,11 +1,9 @@
 package testcase;
 
-import java.util.concurrent.SynchronousQueue;
-import java.util.function.Consumer;
-
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import common.Util.ObjectHolder;
 import http.ClientException;
 import http.MyClient;
@@ -64,21 +62,11 @@ public class TestHttpClient extends MyTestCase {
 		assertEquals("OK", obj.getString("code"));
 	}
 
-	/** This performs the action and wait for it to complete;
-	 *  The action must signal completion by calling q.put(""); 
-	 * @throws InterruptedException */
-	public static void sync( Consumer<SynchronousQueue<String>> consumer) throws InterruptedException {
-		SynchronousQueue<String> q = new SynchronousQueue<>();
-		consumer.accept(q);
-		q.take();
-	}
-		
-		
 	/** get json object, async */ 
 	public static void testgetJsonAsync() throws Exception {
 		ObjectHolder<JsonObject> ob = new ObjectHolder<>();
 		
-		sync( q -> {
+		Util.sync( q -> {
 			MyClient.getJson("https://reflection.trading/api/ok", obj -> {
 				ob.val = obj;
 				q.put("");
@@ -87,7 +75,7 @@ public class TestHttpClient extends MyTestCase {
 
 		assertEquals("OK", ob.val.getString("code") );
 		
-		sync( q -> {
+		Util.sync( q -> {
 			MyClient.postToJson("https://reflection.trading/api/ok", "abc", obj -> {
 				ob.val = obj;
 				q.put("");
@@ -104,7 +92,7 @@ public class TestHttpClient extends MyTestCase {
 		assertTrue( MyClient.getArray(url).size() > 0);
 		
 		ObjectHolder<JsonArray> ob = new ObjectHolder<>();
-		sync( q ->
+		Util.sync( q ->
 			MyClient.getArray(url, ar -> {
 				ob.val = ar;
 				q.put("");

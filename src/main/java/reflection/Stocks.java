@@ -162,4 +162,9 @@ public class Stocks implements Iterable<Stock> {
 	public JsonArray marginStocks() {
 		return m_marginStocks;
 	}
+
+	/** receipt is a special stock token used to prove that the user paid for a margin order */
+	public StockToken getReceipt() throws Exception {
+		return getStockByConid( 1).getToken();
+	}
 }
