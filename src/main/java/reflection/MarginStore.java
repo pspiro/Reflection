@@ -14,9 +14,9 @@ import com.ib.controller.ApiController.LiveOrder;
 import tw.util.S;
 
 class MarginStore extends TJsonArray<MarginOrder> {
-	private String m_filename;
-
-	void filename( String filename) {
+	private String m_filename ;
+	
+	public MarginStore(String filename) {
 		m_filename = filename;
 	}
 	

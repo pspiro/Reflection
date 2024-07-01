@@ -155,6 +155,7 @@ public class MarginTrans extends MyTransaction {
 			MarginOrder mo = new MarginOrder(
 					m_main.apiController(),
 					m_main.stocks(),
+					m_main.marginStore(),
 					m_walletAddr,
 					m_uid + Util.uid(2),  // add an extra 2 to ensure uniqueness but also keep it tied to the original uid
 					conid,
@@ -173,14 +174,14 @@ public class MarginTrans extends MyTransaction {
 			m_main.marginStore().add( mo);
 			m_main.marginStore().save();
 			
-			respond( code, RefCode.OK, "orderId", m_uid);
+			respond( code, RefCode.OK, "orderId", mo.orderId() );
 
+			// don't tie up the http server thread
 			executeAndWrap( () -> {
 				mo.acceptPayment();
 			});
 		});
 		
-		// don't tie up the http server thread
 	}
 	enum GoodUntil {
 		Immediately,

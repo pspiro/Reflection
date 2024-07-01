@@ -588,19 +588,21 @@ public class Main implements ITradeReportHandler {
 	
 	/** Called at startup only. Read it from disk but not not start the order processing yet */
 	void restoreLiveOrders() {
+		String filename = "margin.store";
+		
 		try {
 			S.out( "Reading margin store");
 			
 			m_marginStore = (MarginStore)JsonArray.parse(
-					new FileReader( "margin.store"),
-					() -> new MarginOrder( apiController(), m_stocks),  // note that connection may not be established yet
-					() -> new MarginStore() );
+					new FileReader( filename),
+					() -> new MarginOrder( apiController(), m_stocks, m_marginStore),  // note that connection may not be established yet
+					() -> new MarginStore( filename) );
 			
 			S.out( "  read %s records", m_marginStore.size() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			m_marginStore = new MarginStore();
+			m_marginStore = new MarginStore( filename);
 		}
 	}
 

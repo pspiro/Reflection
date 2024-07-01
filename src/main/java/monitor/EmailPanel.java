@@ -48,11 +48,11 @@ public class EmailPanel extends MonPanel {
 		Monitor.m_config.sendEmail(testRecip, subject.getText(), emailText);
 
 		// confirm and send all emails
-		ArrayList<String> recips = toArray( recips.getText() );
+		ArrayList<String> list = toArray( recips.getText() );
 		if (Util.confirm( this, "A test email was sent to %s;\n"
 				+ "please review.\n\n"
-				+ "Send now to \n recipients?", testRecip, recips.size() ) ) {
-			for (String recip : recips) {
+				+ "Send now to \n recipients?", testRecip, list.size() ) ) {
+			for (String recip : list) {
 				Monitor.m_config.sendEmail( Util.parseEmail( recip)[1], subject.getText(), text.getText() );
 			}
 		}
@@ -77,7 +77,7 @@ public class EmailPanel extends MonPanel {
 
 	@Override protected void refresh() throws Exception {
 		tab = new GTable( NewSheet.Prefinery, "Templates", "Name", "Text");
-		selector.set( tab.keySet().toArray() );
+		//selector.set( tab.keySet().toArray() );
 	}
 
 }

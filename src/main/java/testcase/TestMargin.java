@@ -58,8 +58,8 @@ public class TestMargin extends MyTestCase {
 		
 		boolean found = false;
 		
-		for (JsonObject liveOrd : live.getArray( "orders") ) {
-			if (live.getString("orderid").equals( json.getString("orderId"))) {
+		for (var liveOrd : live.getArray( "orders") ) {
+			if (liveOrd.getString("orderId").equals( json.getString("orderId"))) {
 				found = true;
 			}
 		}

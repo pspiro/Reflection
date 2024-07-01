@@ -20,6 +20,7 @@ public class Stocks implements Iterable<Stock> {
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	private final JsonArray m_marginStocks = new JsonArray(); // hot stocks as per the spreadsheet
+	private StockToken m_receipt;  // used as receipt for margin orders
 	
 	public void readFromSheet(ConfigBase config) throws Exception {
 		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);
@@ -41,13 +42,19 @@ public class Stocks implements Iterable<Stock> {
 		
 		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
 			Stock stock = new Stock();
+			int conid = Integer.valueOf( row.getString("Conid") );
+			String address = row.getString("TokenAddress");
+			
+			// special case: receipt for margin orders
+			if (conid == 1 && Util.isValidAddress(address) ) {
+				m_receipt = new StockToken( address); 
+			}
+			
 			if ("Y".equals( row.getString( "Active") ) ) {
-				int conid = Integer.valueOf( row.getString("Conid") );
 
 				stock.put( "conid", String.valueOf( conid) );
 				
 				// read fields from from specific tab 
-				String address = row.getString("TokenAddress");
 				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
 				stock.put( "smartcontractid", address);
 				stock.put( "startDate", row.getString("Start Date") );
@@ -165,6 +172,6 @@ public class Stocks implements Iterable<Stock> {
 
 	/** receipt is a special stock token used to prove that the user paid for a margin order */
 	public StockToken getReceipt() throws Exception {
-		return getStockByConid( 1).getToken();
+		return m_receipt;
 	}
 }
