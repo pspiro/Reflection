@@ -97,8 +97,9 @@ public class BaseTransaction {
 			}
 			
 			String data = contentType.equals( "text/html") ? response.toHtml() : response.toString();
-			m_exchange.sendResponseHeaders( responseCode, data.length() );
-			outputStream.write(data.getBytes());
+			byte[] bytes = data.getBytes();
+			m_exchange.sendResponseHeaders( responseCode, bytes.length);
+			outputStream.write( bytes);
 
 			if (m_timer != null) {
 				out( "  responded in %s ms %s", m_timer.time(), Util.left(data, 200) );
@@ -284,5 +285,9 @@ public class BaseTransaction {
 	public String getFirstHeader(String name) throws Exception {
 		List<String> headers = getHeaders(name);
 		return headers != null && headers.size() > 0 ? headers.get(0) : "";
+	}
+
+	public String getLastToken() {
+		return Util.getLastToken(m_exchange.getRequestURI().toString(), "/");
 	}
 }

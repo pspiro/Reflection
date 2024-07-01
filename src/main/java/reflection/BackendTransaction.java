@@ -354,7 +354,8 @@ public class BackendTransaction extends MyTransaction {
 		return "null".equals( val) ? "" : val;
 	}
 
-	public void handleContact() {  // obsolete
+	/** Called when the user sends a message from the signup page */
+	public void handleContact() {
 		wrap( () -> {
 			parseMsg();
 			

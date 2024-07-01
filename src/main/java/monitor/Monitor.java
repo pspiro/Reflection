@@ -2,8 +2,6 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -114,6 +112,7 @@ public class Monitor {
 		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
+		m_tabs.addTab( "Email", new EmailPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
