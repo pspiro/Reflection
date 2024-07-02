@@ -284,10 +284,13 @@ public class TJsonArray<T extends JsonObject> extends ArrayList<T> implements JS
 	}
 
 	public void writeToFile(String filename) throws IOException {
-		try (FileWriter writer = new FileWriter( filename) ) {
-			writeJSONString( writer);
+		try ( var os = new OStream( filename) ) {
+			os.writeln( "[");
+			forEach( record -> os.writeln( record.toString() ) );
+			os.writeln( "]");
 		}
 	}
+
 	/** get rid of null values and empty strings */
 	public void removeNulls() {
 		forEach( rec -> rec.removeNulls() );

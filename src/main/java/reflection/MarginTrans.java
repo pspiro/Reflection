@@ -93,7 +93,7 @@ public class MarginTrans extends MyTransaction {
 			validateCookie( "margin-static");
 			
 			MarginOrder order = m_main.marginStore().getById( m_map.getRequiredString("orderId") );
-			require( order != null, RefCode.INVALID_REQUEST, "No order found");
+			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
 			
 			order.userCancel();
 			

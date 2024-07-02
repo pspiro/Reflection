@@ -32,7 +32,7 @@ class MarginOrder extends JsonObject implements DualParent {
 	
 	enum Status {
 		NeedPayment,		// waiting for blockchain payment transaction to complete; we may or may not have transaction hash
-		StartedPayment,		// submitted transaction; may or may not have trans hash and receipt
+		InitiatedPayment,		// submitted transaction; may or may not have trans hash and receipt
 		GotReceipt,
 		PlacedBuyOrder,
 		PlacedSellOrders,
@@ -151,7 +151,7 @@ class MarginOrder extends JsonObject implements DualParent {
 				acceptPayment();
 				break;
 				
-			case StartedPayment:
+			case InitiatedPayment:
 				// this means we were waiting for payment and we don't know if we got it or not
 				// should be rare, will only happen if RefAPI resets while waiting for payment
 				// we can improve this and figure out if payment was received if desired. pas
@@ -199,7 +199,7 @@ class MarginOrder extends JsonObject implements DualParent {
 		// wrong, don't pull config from Main. pas
 		Stablecoin stablecoin = currency().equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
 
-		status( Status.StartedPayment);
+		status( Status.InitiatedPayment);
 
 		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
 		String hash = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend)
@@ -441,11 +441,14 @@ class MarginOrder extends JsonObject implements DualParent {
 	public void userCancel() throws RefException {
 		switch( status() ) {
 		case NeedPayment:
-		case StartedPayment:
+		case InitiatedPayment:
+		case GotReceipt:
+		case PlacedBuyOrder:
 			cancelByUser();
 			break;
-
+			
 		case BuyOrderFilled:
+		case PlacedSellOrders:
 			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the buy order has already been filled");
 			break;
 
@@ -556,7 +559,7 @@ class MarginOrder extends JsonObject implements DualParent {
 	 *  
 	 * @throws Exception */  // create a JsonMap object, same as JsonObject but any type. pas
 	JsonObject orderMap() throws Exception {  // could we cast this to HashMap<String,JsonObject>? pas
-		return getObject( "orderMap");
+		return getObjectNN( "orderMap");
 	}
 	
 	void updateOrderStatus( int permId, Action action, int filled, double avgPrice) throws Exception {

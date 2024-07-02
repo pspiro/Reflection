@@ -1,6 +1,5 @@
 package testcase;
 
-import java.io.IOException;
 import java.io.StringReader;
 
 import org.json.simple.JsonArray;
@@ -21,15 +20,16 @@ public class TestJsonSubclass extends TestCase {
 	static class Recs extends TJsonArray<Rec> {
 	}
 	
-	public void testEnum() throws IOException {
+	public void testEnum() throws Exception {
 		JsonObject obj = Util.toJson( "name", "peter", "action", Action.Buy);
 
 		JsonArray ar = new JsonArray();
 		ar.add( obj);
 		ar.add( obj);
 		ar.writeToFile("file.t");
-
-		S.out( ar);
+		
+		JsonArray ar2 = JsonArray.readFromFile( "file.t");
+		ar2.print();
 	}
 
 	/** this shows how to read back a json object that returns a JsonObject subclass 

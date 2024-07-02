@@ -4,6 +4,7 @@
  */
 package org.json.simple;
 
+import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.function.Supplier;
@@ -19,6 +20,10 @@ public class JsonArray extends TJsonArray<JsonObject> {
 		Util.require( JsonArray.isArray(text), "Error: not a json array: " + text);
 	
 		return parse( new StringReader( text) ); 
+	}
+	
+	public static JsonArray readFromFile( String filename) throws Exception {
+		return parse( new FileReader( filename) );
 	}
 
 	/** reader, no types */
