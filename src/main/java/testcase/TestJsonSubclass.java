@@ -4,7 +4,7 @@ import java.io.StringReader;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
-import org.json.simple.TJsonArray;
+import org.json.simple.TsonArray;
 
 import com.ib.client.Types.Action;
 
@@ -17,7 +17,7 @@ public class TestJsonSubclass extends TestCase {
 	static class Rec extends JsonObject {
 	}
 	
-	static class Recs extends TJsonArray<Rec> {
+	static class Recs extends TsonArray<Rec> {
 	}
 	
 	public void testEnum() throws Exception {

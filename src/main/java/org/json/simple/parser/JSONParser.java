@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.json.simple.JsonObject;
-import org.json.simple.TJsonArray;
+import org.json.simple.TsonArray;
 
 
 /**
@@ -91,7 +91,7 @@ public class JSONParser {
 	public <T extends JsonObject> Object parse(
 			Reader in, 
 			Supplier<T> objSupplier, 
-			Supplier<TJsonArray<T>> listSupplier
+			Supplier<TsonArray<T>> listSupplier
 			) throws Exception {
 			
 		reset(in);

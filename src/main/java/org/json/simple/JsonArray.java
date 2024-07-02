@@ -13,7 +13,7 @@ import org.json.simple.parser.JSONParser;
 
 import common.Util;
 
-public class JsonArray extends TJsonArray<JsonObject> {
+public class JsonArray extends TsonArray<JsonObject> {
 
 	/** string, no types */
 	public static JsonArray parse( String text) throws Exception {
@@ -38,10 +38,10 @@ public class JsonArray extends TJsonArray<JsonObject> {
 	/** reader, with types  (could be moved to base class)
 	 *  to read a file, pass FileReader(filename) */
 	@SuppressWarnings("unchecked")
-	public static <T extends JsonObject, L extends TJsonArray<T>> L parse(
+	public static <T extends JsonObject, L extends TsonArray<T>> L parse(
 			Reader reader, 
 			Supplier<T> objSupplier, 
-			Supplier<TJsonArray<T>> listSupplier
+			Supplier<TsonArray<T>> listSupplier
 			) throws Exception {
 		
 		return (L)new JSONParser().parse( 

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
-import org.json.simple.TJsonArray;
+import org.json.simple.TsonArray;
 
 import com.ib.client.Contract;
 import com.ib.client.Execution;
@@ -13,7 +13,7 @@ import com.ib.controller.ApiController.LiveOrder;
 
 import tw.util.S;
 
-class MarginStore extends TJsonArray<MarginOrder> {
+class MarginStore extends TsonArray<MarginOrder> {
 	private String m_filename ;
 	
 	public MarginStore(String filename) {

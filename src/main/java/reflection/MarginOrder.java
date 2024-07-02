@@ -41,8 +41,6 @@ class MarginOrder extends JsonObject implements DualParent {
 		Canceled,  
 	}
 
-	// move all this into a separate sub-object
-	// field specified by user
 	String wallet() { return getString( "wallet_public_key"); }
 	String orderId() { return getString( "orderId"); }
 	int conid() { return getInt( "conid"); }
@@ -57,9 +55,26 @@ class MarginOrder extends JsonObject implements DualParent {
 	String completedHow() { return getString( "completedHow"); }
 	double desiredQty() { return getDouble( "desiredQty"); }
 	int roundedQty() { return getInt( "roundedQty"); }
+	Status status() { return getEnum( "status", Status.values(), Status.NeedPayment); } // status fields set by us; these will be sent to Frontend and must be ignored
+	JsonObject orderMap() throws Exception { return getObjectNN( "orderMap"); } // map orderId order state where order state has: orderId, action, filled, and avgPrice; to try to cast this to OrderMap with types 
+
 	
-	// status fields set by us; these will be sent to Frontend and must be ignored
-	Status status() { return getEnum( "status", Status.values(), Status.NeedPayment); }
+	// other fields:
+//	loanAmt, 
+//	liquidationPrice, 
+//	bidPrice, 
+//	askPrice, 
+//	value, 
+//	sharesHeld, 
+//	sharesToBuy, 
+//	symbol,
+	private void updateSharesHeld() {
+		//for (var rec : )
+		
+	}
+	
+
+	
 	// also hash and receipt
 
 	// transient, non-serializeable 
@@ -312,6 +327,8 @@ class MarginOrder extends JsonObject implements DualParent {
 			
 			Status status = status();
 			
+			updateSharesHeld();
+			
 			S.out( "MarginOrder received fill  name=%s  status=%s", dualOrd.name(), status);
 	
 			if (status == Status.PlacedBuyOrder && dualOrd == m_entryOrder) {
@@ -558,9 +575,6 @@ class MarginOrder extends JsonObject implements DualParent {
 	 * it would be so much better if this could be a map of id->OrdStatus object
 	 *  
 	 * @throws Exception */  // create a JsonMap object, same as JsonObject but any type. pas
-	JsonObject orderMap() throws Exception {  // could we cast this to HashMap<String,JsonObject>? pas
-		return getObjectNN( "orderMap");
-	}
 	
 	void updateOrderStatus( int permId, Action action, int filled, double avgPrice) throws Exception {
 		getOrCreateOrderStatus( permId, action)
@@ -574,8 +588,9 @@ class MarginOrder extends JsonObject implements DualParent {
 				() -> Util.toJson( "permId", permId, "action", action) );
 	}
 }
-// implement save()
-// open items
+
+// add these fields:  
+
 // check for fill during reset, i.e. live savedOrder that is not restored
 // liquidation
 // test single stop order
@@ -594,3 +609,4 @@ class MarginOrder extends JsonObject implements DualParent {
 // you need to cancel one when the other one fills; make sure stop is > liq order or place your own stop at the liq price
 // allow modifying the order
 // on reconnect, if status is PlacedBuyOrder, check that we have buy orders working
+// synchronize access to status()

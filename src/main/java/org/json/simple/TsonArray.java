@@ -26,7 +26,7 @@ import tw.util.S;
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class TJsonArray<T extends JsonObject> extends ArrayList<T> implements JSONAware, JSONStreamAware {
+public class TsonArray<T extends JsonObject> extends ArrayList<T> implements JSONAware, JSONStreamAware {
 	private static final long serialVersionUID = 3957988303675231981L;
 
     /**

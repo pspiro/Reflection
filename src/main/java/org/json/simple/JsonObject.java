@@ -317,8 +317,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			}
 			out( "\n%s%s", Util.tab(level), "}");
 		}
-		else if (objIn instanceof TJsonArray) {
-			TJsonArray ar = (TJsonArray)objIn;
+		else if (objIn instanceof TsonArray) {
+			TsonArray ar = (TsonArray)objIn;
 			
 			if (ar.size() == 0) {
 				out( "[ ]");
@@ -419,8 +419,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			Util.appendHtml( b, "tr", () -> {
 				Util.wrapHtml( b, "td", key);
 
-				if (value instanceof TJsonArray) {
-					Util.wrapHtml( b, "td", ((TJsonArray)value).toHtml() );
+				if (value instanceof TsonArray) {
+					Util.wrapHtml( b, "td", ((TsonArray)value).toHtml() );
 				}
 				else {
 					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
