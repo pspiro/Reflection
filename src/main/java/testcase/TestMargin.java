@@ -4,6 +4,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import reflection.MarginOrder.Status;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -14,6 +15,7 @@ public class TestMargin extends MyTestCase {
 	}
 
 	public void testDynamic() throws Exception {
+		// fail, missing conid
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie
@@ -22,6 +24,15 @@ public class TestMargin extends MyTestCase {
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
 		assertStartsWith( "Param 'conid'", cli.getMessage() );
 
+		// fail, missing cookie
+		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
+				"wallet_public_key", Cookie.wallet,
+				"conid", "265598"
+				).toString() )
+			.display();
+		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
+
+		// success
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"conid", "265598",
@@ -78,6 +89,64 @@ public class TestMargin extends MyTestCase {
 			//S.out( "status: %s", ord.getString( "status") ) );
 			S.out( ord) );
 	}
+	
+	private JsonArray queryDynamic() throws Exception {
+		return cli().postToJson( "/api/margin-dynamic", Util.toJson(
+				"wallet_public_key", Cookie.wallet, 
+				"cookie", Cookie.cookie,
+				"conid", "265598") )
+			.getArray( "orders");
+	}
+	
+	public void testFillBuyOnly() throws Exception {
+		JsonObject ord = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"conid", "265598",
+				"amountToSpend", 100.12,
+				"leverage", 1.,
+				"profitTakerPrice", 226,
+				"entryPrice", 225,
+				"stopLossPrice", 200,
+				"goodUntil", "EndOfDay",
+				"currency", "RUSD"
+				);
+		S.out( "placing order");
+		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
+		assert200();
+
+		S.out( "wait 5 sec to fill");
+		S.sleep( 5000);
+		
+		JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
+		assertEquals( Status.BuyOrderFilled, live.getString( "status") );
+
+	}
+
+	public void testFillBuyAndStop() throws Exception {
+		JsonObject ord = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"conid", "265598",
+				"amountToSpend", 100.12,
+				"leverage", 1.,
+				"profitTakerPrice", 226,
+				"entryPrice", 225,
+				"stopLossPrice", 224,
+				"goodUntil", "EndOfDay",
+				"currency", "RUSD"
+				);
+		S.out( "placing order");
+		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
+		assert200();
+		
+		S.out( "wait 5 sec to fill");
+		S.sleep( 5000);
+		
+		JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
+		assertEquals( Status.Completed, live.getString( "status") );
+		
+	}
 
 	public void testFullOrder() throws Exception {
 		JsonObject ord = Util.toJson(
@@ -99,20 +168,17 @@ public class TestMargin extends MyTestCase {
 		json.display();
 		
 		
-		JsonObject live = cli().postToJson( "/api/margin-dynamic", Util.toJson(
+		JsonObject dynamic = cli().postToJson( "/api/margin-dynamic", Util.toJson(
 				"wallet_public_key", Cookie.wallet, 
 				"cookie", Cookie.cookie,
 				"conid", "265598") );
+		
+		JsonObject live = dynamic.getArray( "orders").find( "orderId", json.getString("orderId") );
+		assertTrue( "live order not found", live != null);
 		live.display();
 		
-		boolean found = false;
+		// add assertions here
 		
-		for (var liveOrd : live.getArray( "orders") ) {
-			if (liveOrd.getString("orderId").equals( json.getString("orderId"))) {
-				found = true;
-			}
-		}
-		assertTrue( found);
 		
 		// cancel, missing orderId
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 

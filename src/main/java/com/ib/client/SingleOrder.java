@@ -135,16 +135,12 @@ public class SingleOrder implements IOrderHandler {
 	@Override public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
 			int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 		
-		String description = filled.toDouble() > m_filled
-				? filled.toDouble() >= m_order.roundedQty() ? "filled" : "traded"
-				: "status"; 
-
 		m_filled = filled.toInt();
 		m_avgPrice = avgFillPrice;
 		m_status = status;
 
-		out( "margin order %s %s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
-				m_name, description, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
+		out( "SingleOrder name=%s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
+				m_name, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
 		
 		m_parent.onStatusUpdated( this, permId, m_order.action(), filled.toInt(), avgFillPrice);
 	}

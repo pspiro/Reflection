@@ -133,6 +133,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
 			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
+			server.createContext("/api/margin-all", exch -> new MarginTrans(this, exch, true).marginAll() );
 
 
 			// orders and live orders
@@ -201,13 +202,13 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr 
 
+		// restore margin store and live orders (must come before connecting to TWS)
+		restoreLiveOrders();
+
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
-		
-		// restore margin store and live orders
-		restoreLiveOrders();
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}
@@ -593,10 +594,12 @@ public class Main implements ITradeReportHandler {
 		try {
 			S.out( "Reading margin store");
 			
-			m_marginStore = (MarginStore)JsonArray.parse(
+			m_marginStore = new MarginStore( filename);
+			
+			JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
 					new FileReader( filename),
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore),  // note that connection may not be established yet
-					() -> new MarginStore( filename) );
+					() -> m_marginStore);
 			
 			S.out( "  read %s records", m_marginStore.size() );
 		}

@@ -859,8 +859,17 @@ public class Util {
 	}
 
 	/** Sum up all the items in the list where func returns the value of each item */
-	public static <T> int sum( Iterable<T> iter, Function<T,Integer> func) {
+	public static <T> int sumInt( Iterable<T> iter, Function<T,Integer> func) {
 		int sum = 0;
+		for (T item : iter) {
+			sum += func.apply( item);
+		}
+		return sum;
+	}
+
+	/** Sum up all the items in the list where func returns the value of each item */
+	public static <T> double sum( Iterable<T> iter, Function<T,Double> func) {
+		double sum = 0;
 		for (T item : iter) {
 			sum += func.apply( item);
 		}

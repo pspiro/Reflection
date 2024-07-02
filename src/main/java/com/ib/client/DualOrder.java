@@ -21,7 +21,7 @@ import tw.util.S;
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder implements SingleParent {
 	public interface DualParent {
-		void onFilled(DualOrder order, int permId, Action action, int totalFilled, double avgPrice);
+		void onStatusUpdated(DualOrder order, int permId, Action action, int totalFilled, double avgPrice);
 	}
 	
 	private ApiController m_conn;
@@ -141,9 +141,9 @@ public class DualOrder implements SingleParent {
 	@Override public void onStatusUpdated(SingleOrder single, int permId, Action action, int filled, double avgPrice) {
 		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
 
-		S.out( "DualOrder  day=%s  night=%s  total=%s", m_dayOrder.filled(), m_nightOrder.filled(), totalFilled);
+		S.out( "DualOrder status  day=%s  night=%s  total=%s", m_dayOrder.filled(), m_nightOrder.filled(), totalFilled);
 		
-		m_parent.onFilled( this, permId, action, filled, avgPrice); 
+		m_parent.onStatusUpdated( this, permId, action, filled, avgPrice); 
 	}
 
 	private boolean isComplete() {

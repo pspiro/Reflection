@@ -47,9 +47,6 @@ public class Prices {
 		m_last = obj.getDouble("last");
 		m_time = obj.getLong("time");
 
-		if (m_listeners.size() > 0) {
-			S.out( "prices %s with %s %s got updated", this, m_listeners.size(), m_listeners.get(0) );
-		}
 		// make a copy to avoid ConcurrentMod error because 
 		// the listener may remove itself during processing
 		new ArrayList<Consumer<Prices>>( m_listeners)
@@ -159,8 +156,9 @@ public class Prices {
 
 	/** for debug and S.out() only */
 	@Override public String toString() {
-		return S.format( "bid=%s  ask=%s  last=%s  time=%s",
-				m_bid, m_ask, m_last, Util.hhmmss.format( m_time) );
+		throw new RuntimeException();
+//		return S.format( "bid=%s  ask=%s  last=%s  time=%s",
+//				m_bid, m_ask, m_last, Util.hhmmss.format( m_time) );
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");

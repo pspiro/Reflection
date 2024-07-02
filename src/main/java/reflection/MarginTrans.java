@@ -190,4 +190,12 @@ public class MarginTrans extends MyTransaction {
 		EndOfWeek,
 		Never
 	}
+
+	public void marginAll() {
+		wrap( () -> respondFull(
+				m_main.marginStore(),		
+				200,
+				null,
+				"text/html") );
+	}
 }
