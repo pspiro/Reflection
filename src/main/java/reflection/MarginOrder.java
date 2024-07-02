@@ -53,28 +53,37 @@ class MarginOrder extends JsonObject implements DualParent {
 	String goodUntil() { return getString( "goodUntil"); }
 	String currency() { return getString( "currency"); }
 	String completedHow() { return getString( "completedHow"); }
-	double desiredQty() { return getDouble( "desiredQty"); }
+	double desiredQty() { return getDouble( "desiredQty"); } // could calc this instead of storing it
 	int roundedQty() { return getInt( "roundedQty"); }
 	Status status() { return getEnum( "status", Status.values(), Status.NeedPayment); } // status fields set by us; these will be sent to Frontend and must be ignored
-	JsonObject orderMap() throws Exception { return getObjectNN( "orderMap"); } // map orderId order state where order state has: orderId, action, filled, and avgPrice; to try to cast this to OrderMap with types 
 
+
+	// order state fields:
+	// orderId
+	// action
+	// filled
+	// avgPrice
+	
 	
 	// other fields:
 //	loanAmt, 
 //	liquidationPrice, 
-//	bidPrice, 
-//	askPrice, 
-//	value, 
-//	sharesHeld, 
-//	sharesToBuy, 
-//	symbol,
-	private void updateSharesHeld() {
-		//for (var rec : )
-		
-	}
+//	value (of position + cash)   
+//	bidPrice,		// done 
+//	askPrice, 		// done
+//	sharesHeld,   // done
+//	sharesToBuy,  // done
+//	symbol,       // done
 	
 
-	
+	/** If there is a partial fill, return that amount; if we are 
+	 *  completely filled, return the desired quantity */ 
+	private double adjust(int traded) {
+		return traded >= roundedQty() ? desiredQty() : traded;
+	}
+
+
+
 	// also hash and receipt
 
 	// transient, non-serializeable 
@@ -120,11 +129,15 @@ class MarginOrder extends JsonObject implements DualParent {
 		put( "stopLossPrice", stopPrice);
 		put( "goodUntil", goodUntil);
 		put( "currency", currency);
+		put( "symbol", stock().symbol() );
 		
 		double feePct = .01; // fix this. pas
 		double totalSpend = amtToSpend() * leverage() * (1. - feePct);
 		put( "desiredQty", totalSpend / entryPrice() );
 		put( "roundedQty", OrderTransaction.positionTracker.buyOrSell( conid(), true, desiredQty(), 1) );
+		put( "sharesHeld", 0);
+		put( "sharesToBuy", desiredQty() );
+		put( "loanAmt", 0);
 
 		status( Status.NeedPayment);  // waiting for blockchain payment transaction
 	}			
@@ -135,8 +148,9 @@ class MarginOrder extends JsonObject implements DualParent {
 		m_conn = conn;
 		m_stocks = stocks;
 		m_store = store;
+		
+		prices().addListener( prices -> updateBidAsk( prices) );
 	}			
-
 	/** receive live orders only for this MarginOrder 
 	 * @param orderRefMap 
 	 * @throws Exception */ 
@@ -326,8 +340,12 @@ class MarginOrder extends JsonObject implements DualParent {
 					avgPrice);
 			
 			Status status = status();
-			
-			updateSharesHeld();
+
+			// update sharesHeld which must be sent to Frontend
+			int bought = totalBought();
+			put( "sharesHeld", adjust( bought) - adjust( totalSold() ));
+			put( "sharesToBuy", desiredQty() - adjust( bought) );
+			updateValueAndLoanAmt();
 			
 			S.out( "MarginOrder received fill  name=%s  status=%s", dualOrd.name(), status);
 	
@@ -358,7 +376,7 @@ class MarginOrder extends JsonObject implements DualParent {
 			}
 		});
 	}
-	
+
 	void placeSellOrders(HashMap<String,LiveOrder> liveOrders) throws Exception {
 		Util.require( status() == Status.BuyOrderFilled, "Invalid status %s to place sell orders", status() );
 		
@@ -402,7 +420,7 @@ class MarginOrder extends JsonObject implements DualParent {
 		// need to check m_filledPrimary; if < roundedQty, we need to adjust the size here. pas
 		m_stopOrder = new DualOrder( 
 				m_conn, 
-				m_stocks.getStockByConid( conid() ).prices(), 
+				stock().prices(), 
 				"STOP", 
 				orderId() + " stop", 
 				this);
@@ -526,16 +544,41 @@ class MarginOrder extends JsonObject implements DualParent {
 		
 	}
 	
-	static class OrdStatus extends JsonObject {
-		OrdStatus( String permId, Action action) {
-			put( "permId", permId);
-			put( "action", action);
+	private void updateValueAndLoanAmt() {
+//		double value = value();
+//		put( "value", value);
+//		var loanAmt = Math.max( 0, cashValue() ); 
+	}
+
+
+	/** value is stock plus cash */
+	double value() {
+		return cashValue() + stockValue();
+	}
+	
+	private double stockValue() {
+		return adjust( netPosition() ) * markPrice();
+	}
+
+	private int cashValue() {
+		// inflows - outflows
+		return 0;
+	}
+	
+	private double markPrice() {
+		try {
+			return prices().markPrice();
+		} catch (Exception e) {
+			out( "Error: no mark price for %s", stock().symbol() );
+			return 0.;
 		}
-		
-		void update( int filled, double avgPrice) {
-			put( "filled", filled);
-			put( "avgPrice", avgPrice);
-		}
+	}
+	
+	private int netPosition() {
+		return Util.sum( orderMap().values(), item -> {
+			JsonObject ord = (JsonObject)item;
+			return ord.getString( "action").equals( "Buy") ? ord.getInt( "filled") : -ord.getInt( "filled");
+		});
 	}
 	
 	private int totalBought() {
@@ -547,19 +590,12 @@ class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	private int total(Action action) {
-		try {
-			int sum = 0;
-			for (var item : orderMap().values() ) {
-				JsonObject ord = (JsonObject)item;
-				sum += ord.getString( "action").equals( action.toString() ) ? ord.getInt( "filled") : 0;
-			}
-			return sum;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return 0;  // should never happen
-		}
+		return Util.sum( orderMap().values(), item -> {
+			JsonObject ord = (JsonObject)item;
+			return ord.getString( "action").equals( action.toString() ) ? ord.getInt( "filled") : 0;
+		});
 	}
-
+	
 	private void out( String format, Object... params) {
 		S.out( orderId() + " " + format, params);
 	}
@@ -587,6 +623,29 @@ class MarginOrder extends JsonObject implements DualParent {
 				"" + permId,
 				() -> Util.toJson( "permId", permId, "action", action) );
 	}
+
+	private Stock stock() {
+		return m_stocks.getStockByConid( conid() );
+	}
+
+	private Prices prices() {
+		return stock().prices();
+	}
+	
+	private void updateBidAsk(Prices prices) {
+		put( "bidPrice", prices.bid() );
+		put( "askPrice", prices.ask() );
+	}
+
+	// map orderId to order state; to try to cast this to OrderMap with types, maybe create a wrapper
+	JsonObject orderMap() { 
+		try {
+			return getObjectNN( "orderMap");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new JsonObject(); // should never happen
+		} 
+	}  
 }
 
 // add these fields:  

@@ -3,6 +3,7 @@ package reflection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
 
@@ -25,7 +26,7 @@ public class Prices {
 	private double m_last;
 	private long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
 
-	private final ArrayList<Runnable> m_listeners = new ArrayList<>();
+	private final ArrayList<Consumer<Prices>> m_listeners = new ArrayList<>();
 
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
@@ -51,17 +52,17 @@ public class Prices {
 		}
 		// make a copy to avoid ConcurrentMod error because 
 		// the listener may remove itself during processing
-		new ArrayList<Runnable>( m_listeners)
-			.forEach( listener -> listener.run() );
+		new ArrayList<Consumer<Prices>>( m_listeners)
+			.forEach( listener -> listener.accept( this) );
 	}
 
 	/** Used by simulated stop orders */
-	public void addListener( Runnable listener) {
+	public void addListener( Consumer<Prices> listener) {
 		m_listeners.add( listener);
 	}
 
 	/** note listener could be null */
-	public void removeListener(Runnable listener) {
+	public void removeListener(Consumer<Prices> listener) {
 		m_listeners.remove( listener);
 	}
 

@@ -1,6 +1,7 @@
 package com.ib.client;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
 
@@ -32,7 +33,7 @@ public class SingleOrder implements IOrderHandler {
 	private int m_filled;
 	private double m_avgPrice;
 
-	private Runnable m_listener; // access to this must be synchronized
+	private Consumer<Prices> m_listener; // access to this must be synchronized
 	private ApiController m_conn;
 	private String m_key;
 	
@@ -76,7 +77,7 @@ public class SingleOrder implements IOrderHandler {
 			out( "Simulating stop order");
 
 			// called when the prices are updated
-			m_listener = () -> onPriceChanged( contract);
+			m_listener = prices -> onPriceChanged( contract);
 
 			common.Util.require( m_prices != null, "must pass prices for sim stop order");
 			m_prices.addListener( m_listener);
