@@ -331,6 +331,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
 				obj.putIf( "utm_term", getUtmVal("utm_term") );
 				obj.putIf( "utm_content", getUtmVal("utm_content") );
+				obj.putIf( "user_agent", getUtmVal("user_agent") );  // contains device type, OS, etc
 			
 				out( "Adding to signup table: " + obj.toString() );
 				m_main.queueSql( sql -> {
@@ -348,7 +349,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-/** frontend might pass "null" */
+	/** frontend might pass "null" */
 	private String getUtmVal(String tag) {
 		String val = m_map.getUnescapedString( tag);
 		return "null".equals( val) ? "" : val;
