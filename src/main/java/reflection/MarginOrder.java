@@ -20,6 +20,7 @@ import common.Alerts;
 import common.Util;
 import reflection.MarginTrans.GoodUntil;
 import tw.util.S;
+import web3.RetVal;
 import web3.Stablecoin;
 import web3.StockToken;
 
@@ -145,7 +146,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	/** Called only for orders restored from disk */ 
-	public void onReconnected( HashMap<Integer,LiveOrder> permIdMap, HashMap<String, LiveOrder> orderRefMap) {
+	public void onReconnected( HashMap<String,LiveOrder> orderRefMap) {
 		out( "onReconnected()");
 		
 		prices().addListener( m_listener);
@@ -159,8 +160,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// update the saved live orders with the new set of live orders in case the status
 		// or filled amount changed during the restart
 		for (var liveOrder : orderRefMap.values() ) {
-			String orderId = liveOrder.orderRef().split( " ")[0]; // get Margin order orderId from order ref
-			if (orderId.equals( orderId() ) ) {
+			if (liveOrder.orderId().equals( orderId() ) ) {
 				Util.wrap( () -> updateOrderStatus( 
 						liveOrder.permId(),
 						liveOrder.action(),
@@ -188,6 +188,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				break;
 				
 			case GotReceipt:
+			case PlacedBuyOrder:
 				// waiting for buy order to fill
 				// we may or may not have placed the buy order yet
 				// there should be an open buy order
@@ -195,22 +196,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 				// was open when the RefAPI reset; it was either filled or canceled
 				placeBuyOrder( orderRefMap);
 				break;
-				
-			case PlacedBuyOrder:  // waiting for buy orders to fill
-				break;
 			
 			case BuyOrderFilled:
+			case PlacedSellOrders:
 				placeSellOrders( orderRefMap);
 				break;
 
-			case PlacedSellOrders:
 			case Completed:
 			case Canceled:  // nothing to do
 				break;
 		}
-			
 	}
-
+	
 	public void acceptPayment() {
 		try {
 			acceptPayment_();
@@ -236,20 +233,21 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// wrong, don't pull config from Main. pas
 		Stablecoin stablecoin = currency().equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
 
+		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
+		RetVal val = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend);
+
 		status( Status.InitiatedPayment);
 		save();
-
-		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
-		String hash = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend)
-				.waitForHash();
-
-		// make this an order log entry instead
 		
+		String hash = val.waitForHash();
+
 		out( "Accepted payment with trans hash %s", hash);
 		
 		// update transaction hash on MarginOrder
 		transHash( hash);
 		save();
+		
+		// it's not good to tie up the looping thread here. pas
 		
 		// wait for receipt to register because a transaction hash is not a guarantee of success;
 		// alternatively we could wait for some other type of blockchain finality
@@ -308,20 +306,21 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		out( "***Placing margin entry orders");
 		
-		// if we are restoring, and there is no live order, you have to subtract
-		// out the filled amount and place for the remaining size only. pas
-		
-		int remainingQty = roundedQty() - totalBought();
-		
 		// place day and night orders
-		m_entryOrder = new DualOrder( m_conn, null, "ENTRY", orderId() + " entry", this); 
-		m_entryOrder.action( Action.Buy);
-		m_entryOrder.quantity( remainingQty);
-		m_entryOrder.orderType( OrderType.LMT);
-		m_entryOrder.lmtPrice( entryPrice() );
-		m_entryOrder.tif( TimeInForce.GTC);   // must consider this
-		m_entryOrder.outsideRth( true);
+		if (m_entryOrder == null) {
+			m_entryOrder = new DualOrder( m_conn, null, "ENTRY", orderId() + " entry", this);
+			m_entryOrder.action( Action.Buy);
+			m_entryOrder.orderType( OrderType.LMT);
+			m_entryOrder.lmtPrice( entryPrice() );
+			m_entryOrder.tif( TimeInForce.GTC);   // must consider this
+			m_entryOrder.outsideRth( true);
+		}
 
+		// if we are restoring, and there is no live order, you have to subtract
+		// out the filled amount and place for the remaining size only
+		int remainingQty = roundedQty() - totalBought();
+
+		m_entryOrder.quantity( remainingQty);
 		m_entryOrder.placeOrder( conid(), liveOrders);
 
 		status( Status.PlacedBuyOrder);

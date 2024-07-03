@@ -25,10 +25,9 @@ public class DualOrder implements SingleParent {
 	}
 	
 	private ApiController m_conn;
-	private final DualParent m_parent;  // not used? 
+	private final DualParent m_parent;
 	private final SingleOrder m_dayOrder;
 	private final SingleOrder m_nightOrder;
-	boolean m_done;
 	private String m_name;  // for debug only; could change to an enum
 
 	/** prices are only need for sim stop orders on Overnight */ 
@@ -126,22 +125,13 @@ public class DualOrder implements SingleParent {
 		both( order -> order.cancel() );
 	}
 
-	public double getBalance() {
-		return m_dayOrder.getBalance() + m_nightOrder.getBalance();
-	}
-
-	public double getPosition() {
-		return m_dayOrder.filled() + m_nightOrder.filled();
-	}
-
 	/** Called when one of the child orders status updates; could be filled,
 	 *  partially filled, or not at all filled. Note that DualOrder can be
 	 *  complete even if both children are still work, if the total fill size
 	 *  is sufficient */
 	@Override public void onStatusUpdated(SingleOrder single, int permId, Action action, int filled, double avgPrice) {
-		double totalFilled = m_dayOrder.filled() + m_nightOrder.filled();
-
-		S.out( "DualOrder status  day=%s  night=%s  total=%s", m_dayOrder.filled(), m_nightOrder.filled(), totalFilled);
+		S.out( "DualOrder status  name=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
+				single.name(), permId, action, filled, avgPrice);
 		
 		m_parent.onStatusUpdated( this, permId, action, filled, avgPrice); 
 	}

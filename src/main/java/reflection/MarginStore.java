@@ -17,9 +17,12 @@ import tw.util.S;
 
 class MarginStore extends TsonArray<MarginOrder> {
 	private String m_filename ;
+	private boolean m_started;
+	private ApiController m_conn;
 	
-	public MarginStore(String filename) {
+	public MarginStore(String filename, ApiController conn) {
 		m_filename = filename;
+		m_conn = conn;
 	}
 	
 	void save() {
@@ -52,27 +55,29 @@ class MarginStore extends TsonArray<MarginOrder> {
 		return null;
 	}
 
-	// we should filter the orders and only pass the relevant live orders for each MarginOrder. pas
-	public void onReconnected(ApiController conn) {
+	// this is no good; if we call it a second time, we need a different way to sync up the 
+	// orders
+	public synchronized void onReconnected() {
 		HashMap<Integer, LiveOrder> permIdMap;
 		try {
-			permIdMap = conn.reqLiveOrderMap();
+			permIdMap = m_conn.reqLiveOrderMap();
 		} catch (Exception e1) {
 			Alerts.alert( "RefAPI", "COULD NOT GET LIVE ORDER MAP", "");
-			
 			S.out( "Could not get live order map; we should probably reset the connection to TWS. Will try again in 30 seconds");
-			
 			e1.printStackTrace();
-
-			Util.executeIn( 30000, () -> onReconnected( conn) );
 			return;
 		}
 		
-		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder
+		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder; better would be map orderId to list of orders with with that orderId
 		
-		forEach( order -> {
-			order.onReconnected( permIdMap, orderRefMap);
-		});
+		// call this every time we reconnect to update the margin orders with the
+		// current live IB orders
+		forEach( order -> order.onReconnected( orderRefMap) );
+		
+		// start the thread only one, then it runs forever
+		if (!m_started) {
+			Util.executeEvery( 0, 10000, () -> processOrders() );
+		}
 	}
 
 	public static HashMap<String, LiveOrder> getOrderRefMap(HashMap<Integer, LiveOrder> permIdMap) {
@@ -85,9 +90,10 @@ class MarginStore extends TsonArray<MarginOrder> {
 		return orderRefMap;
 	}
 
-	public void tradeReport(String tradeKey, Contract contract, Execution exec) {
-//		forEach()
-		
+	private void processOrders() {
+		forEach( order -> order.onReconnected( orderRefMap) );
 	}
-	
+
+	public void tradeReport(String tradeKey, Contract contract, Execution exec) {
+	}
 }

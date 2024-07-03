@@ -30,9 +30,6 @@ public class SingleOrder implements IOrderHandler {
 	// order and order status; comes from LiveOrder
 	private Order m_order = new Order();  // could be replaced in placeOrder()
 	private OrderStatus m_status = OrderStatus.Unknown;
-	private int m_filled;
-	private double m_avgPrice;
-
 	private Consumer<Prices> m_listener; // access to this must be synchronized
 	private ApiController m_conn;
 	private String m_key;
@@ -59,21 +56,39 @@ public class SingleOrder implements IOrderHandler {
 		m_key = key;
 	}
 	
+	String name() {
+		return m_name;
+	}
+	
 	private void out( String format, Object... params) {
 		S.out( m_name + " " + format, params);
-	}
-
-	JsonObject toJson() {
-		return common.Util.toJson(
-				"filled", m_filled,
-				"avgPrice", m_avgPrice);
 	}
 
 	public synchronized void placeOrder( Contract contract, HashMap<String, LiveOrder> liveOrders) throws Exception {
 		common.Util.require( m_order.status() == OrderStatus.Unknown, "order should be Inactive");
 
-		// we must simulate stop-limit orders on Overnight exchange (stop orders won't work as market orders are not supported)
-		if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {
+		// no good; the order could have already triggered. pas
+		
+		LiveOrder liveOrder = liveOrders != null ? liveOrders.get( m_key) : null;
+
+		// if there is aready a live IB order, sync to it; otherwise place a new order
+		if (liveOrder != null) {
+			// 
+			if (m_order != null) {
+				m_conn.stopListening( m_order);
+			}
+			
+			m_order = liveOrder.order();
+			m_status = liveOrder.status();
+			
+			m_conn.listenTo( m_order, this);
+
+			S.out( "Restored SingleOrder id=%s  key=%s  permId=%s", 
+					m_order.orderId(), m_key, m_order.permId() );
+		}
+		// simulate stop-limit orders on Overnight exchange (stop orders won't work as 
+		// market orders are not supported)
+		else if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {
 			out( "Simulating stop order");
 
 			// called when the prices are updated
@@ -83,29 +98,15 @@ public class SingleOrder implements IOrderHandler {
 			m_prices.addListener( m_listener);
 		}
 		else {
-			LiveOrder liveOrder = liveOrders != null ? liveOrders.get( m_key) : null;
 
-			// if there is aready a live IB order, sync to it; otherwise
-			// place a new order
-			if (liveOrder != null) {
-				m_order = liveOrder.order();
-				m_status = liveOrder.status();
-				m_filled = liveOrder.filled();
-				m_avgPrice = liveOrder.avgPrice();
-				
-				m_conn.listenTo( m_order, this);
-
-				S.out( "Restored SingleOrder id=%s  key=%s  permId=%s", 
-						m_order.orderId(), m_key, m_order.permId() );
-			}
-			else {
-				m_order.orderRef( m_key);
-				m_conn.placeOrder( contract, m_order, this);
-				out( "Placed new SingleOrder id=%s  key=%s", m_order.orderId(), m_key);
-			}
+		else {
+			m_order.orderRef( m_key);
+			m_conn.placeOrder( contract, m_order, this);
+			out( "Placed new SingleOrder id=%s  key=%s", m_order.orderId(), m_key);
+		}
 		}
 	}
-			
+		
 	/** triggers when the BID is <= trigger price; somewhat dangerous */
 	private void onPriceChanged( Contract contract) {
 		if (m_prices.bid() <= m_order.auxPrice() && m_listener != null) {
@@ -179,16 +180,6 @@ public class SingleOrder implements IOrderHandler {
 			m_prices.removeListener( m_listener);
 		}
 		m_listener = null;
-	}
-
-	/** Return dollar amount spent. Spending is negative.
-	 *  Ideally we would subtract out the IB commissions as well */
-	public double getBalance() {
-		return -m_filled * m_avgPrice;
-	}
-
-	public int filled() {
-		return m_filled;
 	}
 
 	public boolean isComplete() {

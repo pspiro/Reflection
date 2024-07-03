@@ -325,7 +325,7 @@ public class Main implements ITradeReportHandler {
 		@Override public synchronized void onRecNextValidId(int id) {
 			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
 
-			Util.execute( () -> startMarginStore() );
+			m_marginStore.startProcessing();
 		}
 
 		@Override public synchronized void onDisconnected() {
@@ -608,14 +608,6 @@ public class Main implements ITradeReportHandler {
 			m_marginStore = new MarginStore( filename);
 		}
 	}
-
-	/** Start the margin store order processing; runs in its own thread */
-	private void startMarginStore() {
-		S.out( "Starting up margin store");
-		
-		Util.execute( () -> m_marginStore.onReconnected( apiController() ) );
-	}
-
 }
 
 //no change

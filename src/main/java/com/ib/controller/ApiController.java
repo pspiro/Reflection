@@ -40,6 +40,7 @@ import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
 import com.ib.client.PriceIncrement;
 import com.ib.client.ScannerSubscription;
+import com.ib.client.SingleOrder;
 import com.ib.client.SoftDollarTier;
 import com.ib.client.TagValue;
 import com.ib.client.TickAttrib;
@@ -968,6 +969,10 @@ public class ApiController implements EWrapper {
 	public void listenTo( Order order, IOrderHandler handler) {
 		m_orderHandlers.put( order.orderId(), handler);
 	}
+	
+	public void stopListening(Order order) {
+		m_orderHandlers.remove( order.orderId() );
+	}
 
 	public void cancelOrder(int orderId, String manualOrderCancelTime, final IOrderCancelHandler orderCancelHandler) {
 		if (!checkConnection())
@@ -1045,7 +1050,7 @@ public class ApiController implements EWrapper {
 			m_avgPrice = avgPrice;
 		}
 		
-		public String orderRef() {
+		public String orderRef() {  // format is orderId + " " + name
 			return m_order.orderRef();
 		}
 
@@ -1075,6 +1080,10 @@ public class ApiController implements EWrapper {
 
 		public Action action() {
 			return m_order.action();
+		}
+
+		public String orderId() {
+			return orderRef().split( " ")[0];
 		}
 	}
 	
