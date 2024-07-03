@@ -106,7 +106,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				new HtmlButton("Go", e -> award() ) ); 
 
 		vp.add( "First name", m_firstName, new HtmlButton("Create new user", e -> createUser() ) );
-		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
+		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Owner to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
 		vp.add( "Text", new JScrollPane( m_emailText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
@@ -269,10 +269,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	
 	private void giveMatic() {
 		if (Util.confirm( this, 
-					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
+					"Are you sure you want to transfer .01 MATIC from Owner to " + m_wallet.getText() ) ) {
 			wrap( () -> {
 				config().matic().transfer(
-						config().admin1Addr(),
+						config().ownerKey(),
 						m_wallet.getText(), 
 						.01); 
 			});
