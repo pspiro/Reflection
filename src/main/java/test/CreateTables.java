@@ -12,7 +12,7 @@ import tw.util.S;
  *  some other inconsistent timezone; data is always returned in the time
  *  zone that was used when setting the value
  */
-public class CreateTables  {
+public class '  {
 	static MySqlConnection con;
 	static final int tradeKeyLen = 64; 
 	
@@ -64,16 +64,22 @@ public class CreateTables  {
 	}
 	
 	void createSignupTable() throws Exception {
-		String sql = "create table signup ("
-			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "first varchar(60),"
-				+ "last varchar(60),"
-				+ "email varchar(60),"
-				+ "referer varchar,"
-				+ "country varchar(2),"
-				+ "ip varchar(15),"
-				+ "utm_source varchar(200)"
-				+ ")";
+		String sql = """
+				create table signup (
+			    created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+				first varchar(60),
+				last varchar(60),
+				email varchar(60),
+				referer varchar,
+				country varchar(2),
+				ip varchar(15),
+				utm_source varchar(200),
+				utm_medium varchar(200),
+				utm_campaign varchar(200),
+				utm_term varchar(200),
+				utm_content varchar(200),
+				user_agent varchar(400)
+				)""";
 		con.execute(sql);
 
 		// create unique index on lower(email)
