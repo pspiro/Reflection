@@ -1,21 +1,22 @@
 package test;
 
-import java.util.List;
-
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
+import com.ib.client.TickAttrib;
+import com.ib.client.TickType;
 import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
-import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.IOrderHandler;
+import com.ib.controller.ApiController.TopMktDataAdapter;
+import com.ib.controller.ConnectionAdapter;
 
 import common.Util;
 import tw.util.S;
 
-public class TestApi implements IConnectionHandler {
+public class TestApi extends ConnectionAdapter {
 	ApiController m_controller = new ApiController( this, null, null);
 	
 	public static void main(String[] args) {
@@ -24,7 +25,7 @@ public class TestApi implements IConnectionHandler {
 	
 	void run() {
 		//m_controller.connect("localhost", 9395, 838, null);
-		m_controller.connect("localhost", 7393, 838, null);
+		m_controller.connect("34.125.231.254", 7498, 838, null);
 	}
 
 	@Override
@@ -33,9 +34,28 @@ public class TestApi implements IConnectionHandler {
 	
 	@Override
 	public void onRecNextValidId(int id) {
+		//placeOrder();
+		reqMktData();
+	}
+	
+	void reqMktData() {
 		Contract c = new Contract();
-		c.conid(265598);
-		c.exchange("OVERNIGHT");
+		c.conid(8314);
+		c.exchange("SMART");
+		
+		m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+			public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s", tickType, price);
+			}
+		});
+
+		Util.executeIn( 10000, () -> System.exit(0) );
+	}
+	
+	void placeOrder() {
+		Contract c = new Contract();
+		c.conid(8314);
+		c.exchange("SMART");
 		
 		Order o = new Order();
 		o.action(Action.Buy);
@@ -44,7 +64,7 @@ public class TestApi implements IConnectionHandler {
 		o.transmit(true);
 		o.outsideRth(true);
 		o.orderRef("ZZZZZZZZ");
-
+		
 		try {
 			m_controller.placeOrder(c, o, new IOrderHandler() {
 				
@@ -71,33 +91,4 @@ public class TestApi implements IConnectionHandler {
 		Util.executeIn( 6000, () -> System.exit(0) );
 	}
 
-	@Override
-	public void onDisconnected() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void accountList(List<String> list) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void error(Exception e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void show(String string) {
-		// TODO Auto-generated method stub
-		
-	}
 }
