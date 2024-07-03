@@ -14,7 +14,7 @@ public class TestMargin extends MyTestCase {
 		assert200();
 	}
 	
-	public void testShowBal() throws Exception {
+	public void testFailNoGas() throws Exception {
 		//S.out( "RUSD balance = %s", m_config.rusd().getPosition(Cookie.wallet) );
 		Cookie.setNewFakeAddress( false);
 
@@ -48,6 +48,8 @@ public class TestMargin extends MyTestCase {
 				);
 		cli().postToJson( "/api/margin-order", ord.toString() );
 		assert200();
+		
+		
 		//assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() ); // fail due to insufficient stablecoin
 	}
 	
@@ -122,9 +124,7 @@ public class TestMargin extends MyTestCase {
 				"cookie", Cookie.cookie
 				) ).getArray( "orders");
 
-		Util.iff( ords.find( "orderId", id), ord -> 
-			//S.out( "status: %s", ord.getString( "status") ) );
-			S.out( ord) );
+		Util.iff( ords.find( "orderId", id), ord -> S.out( ord) );
 	}
 	
 	private JsonArray queryDynamic() throws Exception {
@@ -152,11 +152,14 @@ public class TestMargin extends MyTestCase {
 		JsonObject json = cli().postToJson( "/api/margin-order", ord.toString() );
 		assert200();
 
-		S.out( "wait to accept pmt and fill buy order");
+		S.out( "wait to accept pmt and place buy order");
 		int i = Util.waitFor(20, () -> {
-			JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
-			return live.getString( "status") == "BuyOrderPlaced";
+			return queryDynamic()
+					.find( "orderId", json.getString("orderId") )
+					.getString( "status").equals( "BuyOrderPlaced");
 		});
+
+		cancel( json.getString("orderId") );
 		
 		assertTrue( i >= 0);
 	}
@@ -180,9 +183,12 @@ public class TestMargin extends MyTestCase {
 
 		S.out( "wait 5 sec to accept pmt and fill buy order");
 		int i = Util.waitFor(20, () -> {
-			JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
-			return live.getString( "status") == "BuyOrderFilled" || live.getString( "status") == "PlacedSellOrders";
+			String status = queryDynamic().find( "orderId", json.getString("orderId") )
+					.getString( "status");
+			return status.equals( "BuyOrderFilled") || status.equals( "PlacedSellOrders");
 		});
+		
+		cancel( json.getString("orderId") );
 		
 		assertTrue( i >= 0);
 	}
@@ -209,7 +215,6 @@ public class TestMargin extends MyTestCase {
 		
 		JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
 		assertEquals( Status.Completed, live.getString( "status") );
-		
 	}
 
 	public void testFullOrder() throws Exception {
@@ -261,15 +266,19 @@ public class TestMargin extends MyTestCase {
 				).toString() )
 			.display();
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
-
+		
 		// cancel, success
+		cancel( json.getString("orderId") );
+	}
+	
+	void cancel(String orderId) throws Exception {
+		showStatus( orderId);
+
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"orderId", json.getString("orderId"),
+				"orderId", orderId,
 				"cookie", Cookie.cookie
-				).toString() )
-			.display();
+				).toString() );
 		assert200();
-
 	}
 }

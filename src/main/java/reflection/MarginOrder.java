@@ -728,6 +728,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
+// out of gas
+
 //now
 //you need a thread to retry in case there is a random moralis error
 //auto-liq at COB regular hours if market is closed next day
@@ -752,6 +754,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //think about this: stop order triggers during day, night order is conv. to limit but does not fill, then gets canceled; you need to remember that it triggered  
 //add the config items
 //check for fill during reset, i.e. live savedOrder that is not restored
+//create a new msg to retrieve status of a single message, used for testing
 //test single stop order
 //test dual stop orders
 //test canceling at all different states
