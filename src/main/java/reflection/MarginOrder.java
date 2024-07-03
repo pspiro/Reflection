@@ -145,7 +145,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	/** Called only for orders restored from disk */ 
-	public void onReconnected( HashMap<Integer,LiveOrder> permIdMap, HashMap<String, LiveOrder> orderRefMap) throws Exception {
+	public void onReconnected( HashMap<Integer,LiveOrder> permIdMap, HashMap<String, LiveOrder> orderRefMap) {
 		out( "onReconnected()");
 		
 		prices().addListener( m_listener);
@@ -211,7 +211,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 			
 	}
 
-	public void acceptPayment() throws Exception {
+	public void acceptPayment() {
+		try {
+			acceptPayment_();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			
+			cancel( "Failed to accept payment - " + e.getMessage() );
+		}
+	}
+	
+	public void acceptPayment_() throws Exception  {
 		Util.require( status() == Status.NeedPayment, "Invalid status %s to accept payment", status() );
 		
 		out( "Accepting payment");
@@ -226,6 +237,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		Stablecoin stablecoin = currency().equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
 
 		status( Status.InitiatedPayment);
+		save();
 
 		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
 		String hash = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend)
@@ -251,12 +263,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// this should never happen and someone needs to investigate
 			Alerts.alert( "Reflection", "USER DID NOT RECEIVE RECEIPT FOR MARGIN ORDER", 
 					String.format( "wallet=%s  orderId=%s", walletAddr, orderId() ) );
-
-			put( "completedHow", String.format( 
-					"Canceled by user; status was %s", status() ) );
 			
-			status( Status.Canceled);
-			return;
+			throw new Exception( "Received transaction hash but could not confirm receipt");
 		}
 
 		out( "Confirmed receipt balance in %s seconds", retVal);
@@ -283,7 +291,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** really place or restore buy order 
 	 * @throws Exception */
-	void placeBuyOrder( HashMap<String,LiveOrder> liveOrders) throws Exception {
+	void placeBuyOrder( HashMap<String,LiveOrder> liveOrders) {
+		try {
+			placeBuyOrder_( liveOrders);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+
+			cancel( "Failed to place buy orders - " + e.getMessage() );
+		}
+	}
+	
+	private void placeBuyOrder_( HashMap<String,LiveOrder> liveOrders) throws Exception {
 		
 		Util.require( status() == Status.GotReceipt, "Invalid status %s when placing buy order", status() );
 		
@@ -303,20 +322,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		m_entryOrder.tif( TimeInForce.GTC);   // must consider this
 		m_entryOrder.outsideRth( true);
 
-		try {
-			m_entryOrder.placeOrder( conid(), liveOrders);
+		m_entryOrder.placeOrder( conid(), liveOrders);
 
-			status( Status.PlacedBuyOrder);
-			save();
-		} catch (Exception e) {
-			e.printStackTrace();
-			
-			put( "completedHow", "Buy order failed: " + e.getMessage() );
-			cancelBuyOrders();
-
-			status( Status.Canceled);
-			save();
-		}
+		status( Status.PlacedBuyOrder);
+		save();
 
 		// now we wait for the buy order to be filled or canceled 
 	}
@@ -339,17 +348,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 			Status status = status();
 
 			// update sharesHeld which must be sent to Frontend
-			int bought = totalBought();
-			put( "sharesHeld", adjust( bought) - adjust( totalSold() ));
-			put( "sharesToBuy", desiredQty() - adjust( bought) );
+			double bought = adjust( totalBought() );
+			put( "sharesHeld", bought - adjust( totalSold() ));
+			put( "sharesToBuy", desiredQty() - bought);
 			updateValueAndLoanAmt();
 			
-			S.out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
+			out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
 					permId, dualOrd.name(), status, filled, roundedQty(), avgPrice);
 	
 			if (status == Status.PlacedBuyOrder && dualOrd == m_entryOrder) {
 				if (totalBought() >= roundedQty() ) {
-					S.out( "  entry order has filled");
+					out( "  entry order has filled");
+					
 					status( Status.BuyOrderFilled);
 					save();
 					
@@ -361,7 +371,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 			}
 			else if (status == Status.PlacedSellOrders && (dualOrd == m_profitOrder || dualOrd == m_stopOrder) ) {
 				if (totalSold() >= roundedQty() ) {
-					S.out( "  sell orders have filled");
+					out( "  sell orders have filled");
+					
 					status( Status.Completed);
 					save();
 
@@ -369,6 +380,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 					
 					// we should have zero position, so stop listening for stock updates
 					prices().removeListener( m_listener);
+					
+					// we are done, nothing left to do; order will remain in Completed state
+					// until user withdraws the cash
 				}
 			}
 			else {
@@ -377,44 +391,58 @@ public class MarginOrder extends JsonObject implements DualParent {
 		});
 	}
 
-	void placeSellOrders(HashMap<String,LiveOrder> liveOrders) throws Exception {
+	/** Place new sell orders OR sync up with the existing sell orders */
+	void placeSellOrders(HashMap<String,LiveOrder> liveOrders) {
+		try {
+			placeSellOrders_( liveOrders);
+		} catch (Exception e) {
+			out( "Error placing sell orders; will try again in 30 sec");
+			
+			e.printStackTrace();
+			
+			// we have to keep trying
+			Alerts.alert( "RefAPI", "COULD NOT PLACE MARGIN SELL ORDERS", 
+					String.format( "orderId=%s  sharesHeld=%s  loanAmt=%s", orderId(), sharesHeld(), loanAmt() ) );
+			
+			Util.executeIn(30000, () -> placeSellOrders( liveOrders) );
+		}
+	}
+	
+	void placeSellOrders_(HashMap<String,LiveOrder> liveOrders) throws Exception  {
 		Util.require( status() == Status.BuyOrderFilled, "Invalid status %s to place sell orders", status() );
 		
+		int quantity = roundedQty() - totalSold();
+		
 		if (profitTakerPrice() > 0) {
-			placeProfitTaker( liveOrders);
+			placeProfitTaker( quantity, liveOrders);
 		}
 
 		// we must set our own stop loss price which is >= theirs
 		if (stopLossPrice() > 0) {
-			placeStopLoss( liveOrders);
+			placeStopLoss( quantity, liveOrders);
 		}
 		
 		status( Status.PlacedSellOrders);
 		save();
 		
-		// waiting for sell orders to fill; do we need a timer at this point?
+		// waiting for sell orders to fill
 	}			
 	
-	private void placeProfitTaker(HashMap<String,LiveOrder> liveOrders) {
+	private void placeProfitTaker(int quantity, HashMap<String,LiveOrder> liveOrders) throws Exception {
 		out( "***Placing margin profit-taker orders");
 		
 		m_profitOrder = new DualOrder( m_conn, null, "PROFIT", orderId() + " profit", this);
 		m_profitOrder.action( Action.Sell);
-		m_profitOrder.quantity( roundedQty() );
+		m_profitOrder.quantity( quantity);
 		m_profitOrder.orderType( OrderType.LMT);
 		m_profitOrder.lmtPrice( profitTakerPrice() );
 		m_profitOrder.tif( TimeInForce.GTC);   // must consider this
 		m_profitOrder.outsideRth( true);
 
-		try {
-			m_profitOrder.placeOrder( conid(), liveOrders);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// this is bad; we need to keep trying
-		}
+		m_profitOrder.placeOrder( conid(), liveOrders);
 	}
 
-	private void placeStopLoss(HashMap<String,LiveOrder> liveOrders) {
+	private void placeStopLoss(int quantity, HashMap<String,LiveOrder> liveOrders) throws Exception {
 		out( "***Placing margin stop-loss orders");
 		
 		// need to check m_filledPrimary; if < roundedQty, we need to adjust the size here. pas
@@ -426,19 +454,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 				this);
 		
 		m_stopOrder.action( Action.Sell);
-		m_stopOrder.quantity( roundedQty() );
+		m_stopOrder.quantity( quantity);
 		m_stopOrder.orderType( OrderType.STP_LMT);  // use STOP_LMT  because STOP cannot be set to trigger outside RTH
 		m_stopOrder.lmtPrice( stopLossPrice() * .95);
 		m_stopOrder.stopPrice( stopLossPrice() );
 		m_stopOrder.tif( TimeInForce.GTC);   // must consider this
 		m_stopOrder.outsideRth( true);
 		
-		try {
-			m_stopOrder.placeOrder( conid(), liveOrders);
-		} catch (Exception e) {
-			// this is bad; we need to keep trying
-			e.printStackTrace();
-		}
+		m_stopOrder.placeOrder( conid(), liveOrders);
 	}
 	
 	void cancelBuyOrders() {
@@ -511,6 +534,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// there must be no sell orders; we can't cancel if there are
 
 		status( Status.Canceled);
+		save();
 		
 		// if there's no position, we have no need for a listener
 		if (totalBought() - totalSold() <= 0) {
@@ -642,6 +666,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	
 	void status( Status status) {
 		put( "status", status);
+		// you could move "save()" here, it's called every time
 	}
 
 	/** maps permId to OrdStatus; 
@@ -686,44 +711,56 @@ public class MarginOrder extends JsonObject implements DualParent {
 			return null; // should never happen
 		} 
 	}  
+	
+	double sharesHeld() {
+		return getDouble( "sharesHeld");
+	}
+
+	double loanAmt() {
+		return getDouble( "loanAmt");
+	}
 
 	/** If there is a partial fill, return that amount; if we are 
-	 *  completely filled, return the desired quantity */ 
+	 *  completely filled, return the desired quantity (i.e. the decimal 
+	 *  amount desired by the user) */ 
 	private double adjust(int traded) {
 		return traded >= roundedQty() ? desiredQty() : traded;
 	}
 }
 
-// add these fields:  
+//now
+//you need a thread to retry in case there is a random moralis error
+//auto-liq at COB regular hours if market is closed next day
+//do liquidation
+//do not accept order during extended hours if market is closed next day
+//detect order being canceled
+//handle failure when placing initial ib order
+//handle system cancel event; replace order when appropriate
+//let canceled orders remain for some time and then get cleared out; user must withdraw the cash
+//don't allow user cancel if there is any bought size; just allow canceling remaining buy orders
+//you need to cancel one when the other one fills; make sure stop is > liq order or place your own stop at the liq price
+//allow modifying the order
+//on reconnect, if status is PlacedBuyOrder, check that we have buy orders working
+//synchronize access to status()
+//allow user to add in more money later
+//you have to remove the stock listener, but when? def. at least when the order is removed from the store
+//now we need to cash out the user; they must initiate this
+//don't allow place stop order above current price
+//for now, if a working order is canceled by system, let it cancel the order here and move to next state
+//don't allow cancel if there is any loan amount > 0, otherwise yes
+//probably add the order status to the orderMap() so you can see the final status of all orders
+//think about this: stop order triggers during day, night order is conv. to limit but does not fill, then gets canceled; you need to remember that it triggered  
+//add the config items
+//check for fill during reset, i.e. live savedOrder that is not restored
+//test single stop order
+//test dual stop orders
+//test canceling at all different states
 
-// check for failure during acceptPayment, create a test for this	
-// check for fill during reset, i.e. live savedOrder that is not restored
-// liquidation
-// test single stop order
-// test dual stop orders
-// implement cancel, user sell/liquidation, user modify stop/profit/entry prices
-// auto-liq at COB regular hours if market is closed next day
-// do not accept order during extended hours if market is closed next day
-// build an index to return wallet order efficiently
-// get leach MarginOrder hold a ptr to Prices so you don't have to look it up in MarginTrans.getOrders()
-// test canceling at all different states
-// detect order being canceled
-// handle failure when placing initial ib order
-// handle system cancel event; replace order when appropriate
-// let canceled orders remain for some time and then get cleared out; user must withdraw the cash
-// don't allow user cancel if there is any bought size; just allow canceling remaining buy orders
-// you need to cancel one when the other one fills; make sure stop is > liq order or place your own stop at the liq price
-// allow modifying the order
-// on reconnect, if status is PlacedBuyOrder, check that we have buy orders working
-// synchronize access to status()
-// allow user to add in more money later
-// you have to remove the stock listener, but when? def. at least when the order is removed from the store
-// now we need to cash out the user; they must initiate this
-// don't allow place stop order above current price
-// for now, if a working order is canceled by system, let it cancel the order here and move to next state
-// don't allow cancel if there is any loan amount > 0, otherwise yes
-// probably add the order status to the orderMap() so you can see the final status of all orders
-// think about this: stop order triggers during day, night order is conv. to limit but does not fill, then gets canceled; you need to remember that it triggered  
+//later:
+//implement user sell/liquidation, user modify stop/profit/entry prices
+//build an index to return wallet order efficiently
+//need an efficient way to save, can't write the whole store each time
+//we need a thread that calls check() continuously; remove the 30 sec timer threads
 
 //	old notes from textpad
 //	

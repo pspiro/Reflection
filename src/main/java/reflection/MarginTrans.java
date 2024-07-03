@@ -16,9 +16,9 @@ public class MarginTrans extends MyTransaction {
 	static JsonObject staticConfig;
 	
 	// new config
-	static int maxLeverage = 1;
+	static int maxLeverage = 2;
 	static int minSpend = 10;
-	static int maxSpend = 1000;
+	static int maxSpend = 10000;
 
 	MarginTrans(Main main, HttpExchange exchange, boolean debug) {
 		super(main, exchange, debug);
@@ -177,7 +177,7 @@ public class MarginTrans extends MyTransaction {
 			respond( code, RefCode.OK, "orderId", mo.orderId() );
 
 			// don't tie up the http server thread
-			executeAndWrap( () -> {
+			Util.execute( () -> {
 				mo.acceptPayment();
 			});
 		});

@@ -613,7 +613,7 @@ public class Main implements ITradeReportHandler {
 	private void startMarginStore() {
 		S.out( "Starting up margin store");
 		
-		Util.wrap( () -> m_marginStore.onReconnected( apiController() ) );
+		Util.execute( () -> m_marginStore.onReconnected( apiController() ) );
 	}
 
 }

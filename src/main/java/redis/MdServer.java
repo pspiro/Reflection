@@ -111,7 +111,7 @@ public class MdServer {
 
 	class MdConnectionMgr extends ConnectionMgrBase {
 		MdConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
-			super( host, port, 444, reconnectInterval);
+			super( host, port, 555, reconnectInterval);
 		}
 		
 		/** Called when we receive server version. We don't always receive nextValidId. */
