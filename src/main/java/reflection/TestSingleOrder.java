@@ -46,6 +46,7 @@ public class TestSingleOrder {
 				SingleOrder.Type.Night, 
 				"test",
 				"test " + i,
+				8314,
 				(order, permId, action, filled, avgFillPrice) -> {
 					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
@@ -61,7 +62,7 @@ public class TestSingleOrder {
 		
 		try {
 			S.out( "***Place order");
-			ord.placeOrder( contract(), null);
+			ord.placeOrder();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -96,12 +97,13 @@ public class TestSingleOrder {
 					SingleOrder.Type.Night, 
 					"test",
 					"test " + i,
+					8314,
 					(order, permId, action, filled, avgFillPrice) -> {
 						S.out( "child TWO updated  permId=%s  action=%s  filled=%s  price=%s",
 								permId, action, filled, avgFillPrice);
 					} );
 			
-			ord.placeOrder( contract(), orderRefMap);
+			ord.placeOrder();
 			S.sleep( 1000);
 			S.out( "***canceling order");
 			ord.cancel();
@@ -129,6 +131,7 @@ public class TestSingleOrder {
 				SingleOrder.Type.Night, 
 				"test",
 				"testId",
+				8314,
 				(order, permId, action, filled, avgFillPrice) -> {
 					S.out( "child updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
@@ -146,7 +149,7 @@ public class TestSingleOrder {
 		contract.exchange( "OVERNIGHT");
 
 		try {
-			ord.placeOrder( contract, null);
+			ord.placeOrder();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

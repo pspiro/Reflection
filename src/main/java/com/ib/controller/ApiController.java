@@ -40,7 +40,6 @@ import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
 import com.ib.client.PriceIncrement;
 import com.ib.client.ScannerSubscription;
-import com.ib.client.SingleOrder;
 import com.ib.client.SoftDollarTier;
 import com.ib.client.TagValue;
 import com.ib.client.TickAttrib;
@@ -957,7 +956,7 @@ public class ApiController implements EWrapper {
 		Util.require( order.roundedQty() > 0, "Set rounded quantity");
 		
 		if (handler != null) {
-			listenTo( order, handler);
+			listenTo( order.orderId(), handler);
 		}
 
 		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
@@ -966,8 +965,8 @@ public class ApiController implements EWrapper {
 
 	/** Let handler listen for events from IB for this order 
 	 *  Note that permId would be a better key */
-	public void listenTo( Order order, IOrderHandler handler) {
-		m_orderHandlers.put( order.orderId(), handler);
+	public void listenTo( int orderId, IOrderHandler handler) {
+		m_orderHandlers.put( orderId, handler);
 	}
 	
 	public void stopListening(Order order) {

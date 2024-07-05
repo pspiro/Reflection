@@ -12,7 +12,7 @@ import tw.util.S;
  *  some other inconsistent timezone; data is always returned in the time
  *  zone that was used when setting the value
  */
-public class '  {
+public class CreateTables {
 	static MySqlConnection con;
 	static final int tradeKeyLen = 64; 
 	

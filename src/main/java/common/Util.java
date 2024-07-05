@@ -22,8 +22,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.TimeZone;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -274,21 +272,14 @@ public class Util {
 		}).start();
 	}
 
-	static Timer m_timer;
+	static NiceTimer m_timer; // for one Timer, all tasks execute serially in a single Thread, so don't tie up the thread
 	
-	/** Execute the runnable in a new thread now and every period ms forever. */
+	/** Execute the runnable in a new thread now and every period in ms forever. */
 	public static synchronized void executeEvery( int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
-			m_timer = new Timer();
+			m_timer = new NiceTimer();
 		}
-		
-		TimerTask task = new TimerTask() {
-			@Override public void run() {
-				runnable.run();
-			}
-		};
-		
-		m_timer.schedule( task, wait, period);
+		m_timer.executeEvery( wait, period, runnable);
 	}
 
 	public static String getenv(String env) throws Exception {

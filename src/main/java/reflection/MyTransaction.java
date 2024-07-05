@@ -34,7 +34,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	static Map<String,LiveTransaction> allLiveTransactions = Collections.synchronizedMap( new HashMap<String,LiveTransaction>() );  // key is fireblocks id; records are not added here until we submit to Fireblocks, so it is not the complete list
 
 	static final double SMALL = .0001; // if difference between order size and fill size is less than this, we consider the order fully filled
-	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 EST (14:30 IST).";
+	public static final String exchangeIsClosed = "The exchange is closed. Please try your order again after the stock exchange opens. For US stocks and ETF's, this is usually 4:00 am EST.";
 	public static final String etf24 = "ETF-24";  // must match type column from spreadsheet
 	protected static final String Message = "message";
 

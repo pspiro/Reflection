@@ -3,14 +3,14 @@ package com.ib.client;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-import org.json.simple.JsonObject;
-
 import com.ib.client.Types.Action;
+import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.ib.controller.ApiController.LiveOrder;
 
 import reflection.Prices;
+import reflection.TradingHours.Session;
 import tw.util.S;
 
 /** One order of a pair on DualOrder. This might not be needed
@@ -22,30 +22,27 @@ public class SingleOrder implements IOrderHandler {
 		void onStatusUpdated(SingleOrder order, int permId, Action action, int filled, double avgFillPrice);  
 	}
 
-	private final Type m_session;
-	private final SingleParent m_parent;
+	private final ApiController m_conn;
 	private final Prices m_prices;  // could be null
-	private String m_name;
+	private final Type m_session;
+	private final String m_name;
+	private final String m_key;
+	private final int m_conid;
+	private final SingleParent m_parent;
 	
 	// order and order status; comes from LiveOrder
-	private Order m_order = new Order();  // could be replaced in placeOrder()
-	private OrderStatus m_status = OrderStatus.Unknown;
+	private Order m_order = new Order();  // could be replaced in placeOrder(); other than that, it does not change
 	private Consumer<Prices> m_listener; // access to this must be synchronized
-	private ApiController m_conn;
-	private String m_key;
 	
-	/** Called for new order, not submitted yet. Id will be set
-	 *  when order is submitted.
-	 *  @parent is last for ease of call  
-	 * @param json 
-	 * @param night 
-	 * @throws Exception */
+	/** Called for new order, not submitted yet. Id will be set when order is submitted.
+	 *  @parent is last for ease of call */  
 	public SingleOrder(
-			ApiController conn, 
+			ApiController conn,
 			Prices prices, 
 			Type session, 
 			String name, 
 			String key,
+			int conid,
 			SingleParent parent) {
 		
 		m_conn = conn;
@@ -54,61 +51,82 @@ public class SingleOrder implements IOrderHandler {
 		m_prices = prices;
 		m_name = (name + "/" + session).toUpperCase();
 		m_key = key;
-	}
-	
-	String name() {
-		return m_name;
-	}
-	
-	private void out( String format, Object... params) {
-		S.out( m_name + " " + format, params);
-	}
-
-	public synchronized void placeOrder( Contract contract, HashMap<String, LiveOrder> liveOrders) throws Exception {
-		common.Util.require( m_order.status() == OrderStatus.Unknown, "order should be Inactive");
-
-		// no good; the order could have already triggered. pas
+		m_conid = conid;
 		
-		LiveOrder liveOrder = liveOrders != null ? liveOrders.get( m_key) : null;
-
-		// if there is aready a live IB order, sync to it; otherwise place a new order
-		if (liveOrder != null) {
-			// 
-			if (m_order != null) {
-				m_conn.stopListening( m_order);
-			}
-			
+		m_order.orderRef( m_key);
+		m_order.tif( m_session == Type.Day ? TimeInForce.GTC : TimeInForce.DAY);
+	}
+	
+	public void rehydrate(HashMap<String, LiveOrder> orderRefMap) {
+		common.Util.ifff( orderRefMap.get( m_key), liveOrder -> {
 			m_order = liveOrder.order();
-			m_status = liveOrder.status();
+			m_order.status( liveOrder.status() ); //remove. pas
 			
-			m_conn.listenTo( m_order, this);
+			m_conn.listenTo( m_order.orderId(), this);
 
-			S.out( "Restored SingleOrder id=%s  key=%s  permId=%s", 
-					m_order.orderId(), m_key, m_order.permId() );
+			S.out( "Restored SingleOrder id=%s  key=%s  permId=%s  status=%s", 
+					m_order.orderId(), m_key, m_order.permId(), m_order.status() );
+			
+			// notify parent in case state has changed in some way
+			m_parent.onStatusUpdated( this, m_order.permId(), m_order.action(), 
+					liveOrder.filled(), liveOrder.avgPrice() );
+		});
+	}
+
+	/** Called periodically; the order should be working 
+	 * @throws Exception */
+	synchronized void checkOrder( int quantity) {
+		if (m_order.status().isActive() || m_listener != null) {
+			// nothing to do
 		}
+		else {
+			S.out( "WARNING: SingleOrder state is %s when it should be active", m_order.status() );
+
+			// probably should send an alert here. pas
+			
+			try {
+				m_order.roundedQty( quantity);
+				placeOrder();
+			} catch (Exception e) {
+				e.printStackTrace();  // we will try again in the next loop iteration
+			}
+		}
+	}
+
+	public void checkCanceled() {
+		if (m_order.status().isActive() ) {
+			S.out( "WARNING: SingleOrder state is %s when it should be canceled");
+			cancel();
+		}
+	}
+
+	public synchronized void placeOrder() throws Exception {
+		common.Util.require( m_order.status() == OrderStatus.Unknown, "SingleOrder should be inactive");
+	
 		// simulate stop-limit orders on Overnight exchange (stop orders won't work as 
 		// market orders are not supported)
-		else if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {
-			out( "Simulating stop order");
-
-			// called when the prices are updated
-			m_listener = prices -> onPriceChanged( contract);
-
-			common.Util.require( m_prices != null, "must pass prices for sim stop order");
-			m_prices.addListener( m_listener);
+		if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {  // technically, if the order triggered, we should send it in even if it is now untriggered. pas
+			if (m_listener == null) {
+				out( "Simulating stop order");
+				
+				// listen for price changes
+				common.Util.require( m_prices != null, "must pass prices for sim stop order");
+				m_listener = prices -> onPriceChanged();
+				m_prices.addListener( m_listener);
+			}
+			else {
+				S.out( "ERROR: stop order is already listening");  // should never happen
+			}
 		}
 		else {
-
-		else {
-			m_order.orderRef( m_key);
-			m_conn.placeOrder( contract, m_order, this);
-			out( "Placed new SingleOrder id=%s  key=%s", m_order.orderId(), m_key);
-		}
+			m_conn.placeOrder( contract(), m_order, this);
+			m_order.status( OrderStatus.PendingSubmit);  // so we know the order was submitted, in case "check()" is called before we get a response from TWS"
+			out( "Placed new SingleOrder id=%s  key=%s", m_order.orderId(), m_key);  // must come after placeOrder()
 		}
 	}
-		
+
 	/** triggers when the BID is <= trigger price; somewhat dangerous */
-	private void onPriceChanged( Contract contract) {
+	private void onPriceChanged() {
 		if (m_prices.bid() <= m_order.auxPrice() && m_listener != null) {
 			out( "Simulated stop order has triggered  %s", m_prices);
 			stopListening();
@@ -122,60 +140,45 @@ public class SingleOrder implements IOrderHandler {
 			}
 
 			try {
-				m_conn.placeOrder( contract, m_order, this);
+				m_conn.placeOrder( contract(), m_order, this);
 			} catch (Exception e) {
-				e.printStackTrace();
+				e.printStackTrace();  // what to do here? pas
 			}
 		}
-	}
-
-	@Override public void orderState(OrderState orderState) {
-		// ignore this, we don't care
 	}
 	
 	@Override public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
 			int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 		
-		m_filled = filled.toInt();
-		m_avgPrice = avgFillPrice;
-		m_status = status;
+		m_order.status( status);
 
 		out( "SingleOrder name=%s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
 				m_name, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
 		
 		m_parent.onStatusUpdated( this, permId, m_order.action(), filled.toInt(), avgFillPrice);
 	}
+
+	@Override public void orderState(OrderState orderState) {
+		// ignore this, we don't care
+	}
 	
 	@Override public void onRecOrderError(int errorCode, String errorMsg) {
-	}
-
-	/** Set the IB order and listen for updates IF the permId matches */
-	public void setOrder(ApiController conn, Order order) {
-//		if (m_orderId == order.orderId() && m_order == null) {
-//			out( "Restoring order with orderId %s", m_orderId);
-//			m_order = order;
-//			conn.listenTo( m_order, this);
-//		}
-	}
-
-	/** For debugging only */
-	@Override public String toString() {
-		return m_order != null
-				? String.format( "orderId=%s  side=%s  qty=%s  price=%s",
-					m_order.orderId(), m_order.action(), m_order.roundedQty(), m_order.lmtPrice() )
-				: String.format( "orderId=%s  (order is null)", m_order.orderId() );
+		// ignore this, we don't care
 	}
 
 	public void cancel() {
-		if (m_order != null && m_status.canCancel() ) {
+		if (m_order != null && m_order.status().canCancel() && m_conn.isConnected() ) {
+
+			m_order.status( OrderStatus.PendingCancel);
+			
 			m_conn.cancelOrder( m_order.orderId(), "", status -> 
-				out( "Canceled order  orderId=%s  status=%s", m_order.orderId(), status) );
+				out( "Canceled order  orderId=%s  permId=%s  status=%s", m_order.orderId(), m_order.permId(), status) );
 		}
 		
 		stopListening();
 	}
 
-	private void stopListening() {
+	private synchronized void stopListening() {
 		if (m_prices != null) {
 			m_prices.removeListener( m_listener);
 		}
@@ -183,11 +186,28 @@ public class SingleOrder implements IOrderHandler {
 	}
 
 	public boolean isComplete() {
-		return m_status.isComplete();
+		return m_order.status().isComplete();
 	}
 
 	public Order o() {
 		return m_order;
 	}
+	
+	String name() {
+		return m_name;
+	}
+	
+	private void out( String format, Object... params) {
+		S.out( m_name + " " + format, params);
+	}
+	
+	private String exchange() {
+		return m_session == Type.Day ? Session.Smart.toString() : Session.Overnight.toString();
+	}
+	
+	private Contract contract() {
+		return new Contract( m_conid, exchange() );
+	}
+
 
 }

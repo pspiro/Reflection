@@ -325,7 +325,7 @@ public class Main implements ITradeReportHandler {
 		@Override public synchronized void onRecNextValidId(int id) {
 			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
 
-			m_marginStore.startProcessing();
+			m_marginStore.onReconnected();
 		}
 
 		@Override public synchronized void onDisconnected() {
@@ -594,19 +594,21 @@ public class Main implements ITradeReportHandler {
 		try {
 			S.out( "Reading margin store");
 			
-			m_marginStore = new MarginStore( filename);
+			//m_marginStore = new MarginStore( filename);
 			
-			JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
+			m_marginStore = (MarginStore)JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
 					new FileReader( filename),
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore),  // note that connection may not be established yet
-					() -> m_marginStore);
+					() -> new MarginStore( filename, apiController() ) );
 			
 			S.out( "  read %s records", m_marginStore.size() );
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			m_marginStore = new MarginStore( filename);
+			m_marginStore = new MarginStore( filename, apiController() );
 		}
+		
+		m_marginStore.postInit();
 	}
 }
 

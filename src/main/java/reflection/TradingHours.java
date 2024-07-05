@@ -20,6 +20,12 @@ import util.LogType;
 
 public class TradingHours {
 	public enum Session { Smart, Overnight, None }
+	public enum Slot { Main, Extended, Overnight, None }
+
+	static class SlotInfo {
+		Slot slot;
+		String hours;
+	}
 
 	static final int interval = 60 * 60 * 1000; // 1 hour
     static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
@@ -160,18 +166,18 @@ public class TradingHours {
 					: Session.None;
 	}
 
+	/** Return map of exchange -> (map of sessionType -> tradingHours) */ 
 	public JsonObject getHours() {
 		JsonObject obj = new JsonObject();
 		
-		m_map.forEach( (item1, deets) -> {
+		m_map.forEach( (exchange, deets) -> {
 			JsonObject inner = new JsonObject();
 			inner.put( "Trading hours", deets.tradingHours() );
 			inner.put( "Liquid hours", deets.liquidHours() );
-			obj.put( item1, inner);
+			obj.put( exchange, inner);
 		});
 
 		return obj;
 
 	}
-	
 }

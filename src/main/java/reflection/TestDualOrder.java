@@ -45,7 +45,8 @@ public class TestDualOrder {
 				conn,
 				prices, 
 				"test",
-				"test " + i,				
+				"test " + i,
+				8314,
 				(order, permId, action, filled, avgFillPrice) -> {
 					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
@@ -61,7 +62,7 @@ public class TestDualOrder {
 		
 		try {
 			S.out( "***Place order");
-			ord.placeOrder( 8314, null);
+			ord.placeOrder( 8314);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -95,12 +96,13 @@ public class TestDualOrder {
 					prices, 
 					"test",
 					"test " + i,
+					8314,
 					(order, permId, action, filled, avgFillPrice) -> {
 						S.out( "child TWO updated  permId=%s  action=%s  filled=%s  price=%s",
 								permId, action, filled, avgFillPrice);
 					} );
 			
-			ord.placeOrder( 8314, orderRefMap);
+			ord.placeOrder( 8314);
 			S.sleep( 1000);
 			S.out( "***canceling order");
 			ord.cancel();
@@ -121,6 +123,7 @@ public class TestDualOrder {
 				SingleOrder.Type.Night, 
 				"test",
 				"testId",
+				8314,
 				(order, permId, action, filled, avgFillPrice) -> {
 					S.out( "child updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
@@ -138,7 +141,7 @@ public class TestDualOrder {
 		contract.exchange( "OVERNIGHT");
 
 		try {
-			ord.placeOrder( contract, null);
+			ord.placeOrder();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

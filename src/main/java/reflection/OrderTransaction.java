@@ -285,7 +285,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		setTimer( m_config.orderTimeout(), () -> onOrderTimeout() );
 	}
 	
-	@Override public synchronized void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
+	@Override public synchronized void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgPrice, int permId,
 			int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 		
 		if (m_ibOrderCompleted) return;

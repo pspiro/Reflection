@@ -78,10 +78,12 @@ public class Contract implements Cloneable {
     public void comboLegs(List<ComboLeg> v)  { m_comboLegs = v; }
     public void comboLegsDescrip(String v)        { m_comboLegsDescrip = v; }
 
+    public Contract( int conid, String exchange) {
+    	m_conid = conid;
+    	m_exchange = exchange;
+    }
+
     public Contract() {
-    	m_conid = 0;
-        m_strike = 0;
-        m_includeExpired = false;
     }
 
     @Override public Contract clone() {

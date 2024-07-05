@@ -3,8 +3,6 @@ package com.ib.client;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-import org.json.simple.JsonObject;
-
 import com.ib.client.SingleOrder.SingleParent;
 import com.ib.client.SingleOrder.Type;
 import com.ib.client.Types.Action;
@@ -14,7 +12,6 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.LiveOrder;
 
 import reflection.Prices;
-import reflection.TradingHours.Session;
 import tw.util.S;
 
 /** This gives a view of a single order but actually places two orders,
@@ -36,23 +33,23 @@ public class DualOrder implements SingleParent {
 			Prices prices, 
 			String name, 
 			String key,
+			int conid,
 			DualParent parent 
 			) {
 		m_parent = parent;
 		m_conn = conn;
-		m_dayOrder = new SingleOrder( conn, prices, SingleOrder.Type.Day, name, key + " day", this);
-		m_nightOrder = new SingleOrder( conn, prices, Type.Night, name, key + " night", this);
+		m_dayOrder = new SingleOrder( conn, prices, Type.Day, name, key + " day", conid, this);
+		m_nightOrder = new SingleOrder( conn, prices, Type.Night, name, key + " night", conid, this);
 		m_name = name;
 	}
 	
+	public void rehydrate(HashMap<String, LiveOrder> orderRefMap) {
+		m_dayOrder.rehydrate( orderRefMap);
+		m_nightOrder.rehydrate( orderRefMap);
+	}
+
 	public String name() {
 		return m_name;
-	}
-	
-	public JsonObject toJson() {
-		return common.Util.toJson( 
-				"day_order", m_dayOrder,
-				"night_order", m_nightOrder);
 	}
 	
 	public void quantity( int size) {
@@ -83,7 +80,7 @@ public class DualOrder implements SingleParent {
 		both( order -> order.o().orderRef(uid) );
 	}
 
-	public void ocaGroup(String group) {
+	public void ocaGroup(String group) {  // not used
 		both( order -> order.o().ocaGroup(group) );
 		both( order -> order.o().ocaType(OcaType.ReduceWithBlocking) );
 	}
@@ -91,38 +88,39 @@ public class DualOrder implements SingleParent {
 	public void orderType(OrderType type) {
 		both( order -> order.o().orderType(type) );
 	}
+
+	public void stopPrice(double stopPrice) {
+		both( order -> order.o().stopPrice( stopPrice) );
+	}
+
+	public void checkOrder( int quantity) {
+		both( order -> order.checkOrder( quantity) );
+	}
 	
+	public void checkCanceled() {
+		both( order -> order.checkCanceled() );
+	}
+
+	public void cancel() {
+		both( order -> order.cancel() );
+	}
+
 	private void both(Consumer<SingleOrder> consumer) {
 		consumer.accept( m_dayOrder);
 		consumer.accept( m_nightOrder);
 	}
 
 	/** really place or restore order */
-	public void placeOrder( int conid, HashMap<String,LiveOrder> liveOrders) throws Exception {
+	public void placeOrder( int conid) throws Exception {
 		common.Util.require( m_conn.isConnected(), "not connected");
-		
-		// we have two choices; either save the permId for the single order that was last active,
-		// or look for the correct order based on orderId, side, and, for sell, also name (profit/stop)
-		
-		Contract contract = new Contract();
-		contract.conid( conid);
-		
-		contract.exchange( Session.Smart.toString() );
-		m_dayOrder.o().tif( TimeInForce.GTC);
-		m_dayOrder.placeOrder( contract, liveOrders);
-		
-		contract.exchange( Session.Overnight.toString() );
-		m_nightOrder.o().tif( TimeInForce.DAY);
-		m_nightOrder.placeOrder( contract, liveOrders);
+
+		m_dayOrder.placeOrder();
+		m_nightOrder.placeOrder();
 	}
 
 	public void display() {
 		S.out( "day order: " + m_dayOrder.toString() );
 		S.out( "night order: " + m_nightOrder.toString() );
-	}
-
-	public void cancel() {
-		both( order -> order.cancel() );
 	}
 
 	/** Called when one of the child orders status updates; could be filled,
@@ -136,12 +134,7 @@ public class DualOrder implements SingleParent {
 		m_parent.onStatusUpdated( this, permId, action, filled, avgPrice); 
 	}
 
-	private boolean isComplete() {
-		return m_dayOrder.isComplete() && m_nightOrder.isComplete();
-	}
 
-	public void stopPrice(double stopPrice) {
-		both( order -> order.o().stopPrice( stopPrice) );
-	}
+
 
 }
