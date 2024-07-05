@@ -207,20 +207,20 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		
 		String[] keys = getKeys().toArray(new String[0] );
 		
-		Util.wrapHtml( b, "style", """
-		        table {
-		            border-collapse: collapse;
-		            width: 100%;
-		        }
-
-		        table, th, td {
-		            border: 1px solid black;
-		        }
-
-		        th, td {
-		            padding: 8px;
-		            text-align: left;
-		        }""");
+//		Util.wrapHtml( b, "style", """
+//		        table {
+//		            border-collapse: collapse;
+//		            width: 100%;
+//		        }
+//
+//		        table, th, td {
+//		            border: 1px solid black;
+//		        }
+//
+//		        th, td {
+//		            padding: 8px;
+//		            text-align: left;
+//		        }""");
 		
 		Util.appendHtml( b, "table", () -> {
 			// add header row

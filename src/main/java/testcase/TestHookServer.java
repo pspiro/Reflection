@@ -72,19 +72,20 @@ public class TestHookServer extends MyTestCase {
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				wallet,
-				.001);
+				.001).waitForHash();
 		
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
+			S.out( "pos " + pos);
 			return Util.isEq( pos, .001, .00001);
 		});
 	}
 	
 	public void testApprove() throws Exception {
-		int n = Util.rnd.nextInt( 10000) + 1;
-
+		int n = Util.rnd.nextInt( 10000) + 10;
+		
 		// let Owner approve RUSD to spend BUSD
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
 				.waitForHash();
@@ -93,7 +94,8 @@ public class TestHookServer extends MyTestCase {
 		waitFor( 120, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
 					.getDouble( "approved");
-			return pos == n;
+			S.out( m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
+			return pos == n; 
 		});
 	}
 	

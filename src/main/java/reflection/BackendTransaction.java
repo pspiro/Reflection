@@ -476,6 +476,14 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> respond( UserTokenMgr.getJson() ) );
 	}
 
+	/** used by Monitor */
+	public void resetUserTokenMgr() {
+		wrap( () -> {
+			UserTokenMgr.reset();
+			respondOk();
+		});
+	}
+
 	public void handleOnramp() {
 		wrap( () -> {
 			JsonObject obj = parseToObject();

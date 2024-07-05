@@ -18,6 +18,7 @@ import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
 import monitor.wallet.WalletPanel;
 import redis.MyRedis;
+import reflection.Stock;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
@@ -214,4 +215,17 @@ public class Monitor {
 			return key.equals("referer") ? Util.unescHtml(value.toString()) : value;
 		}
 	}
+
+	/** Or you could let HookServer return the names which might be more user-friendly */
+	public static String getDescription(String address) throws Exception {
+		if (address.equalsIgnoreCase( m_config.rusdAddr())) {
+			return m_config.rusd().name();
+		}
+		if (address.equalsIgnoreCase( m_config.busd().address())) {
+			return m_config.busd().name();
+		}
+		Stock stock = stocks.getStockByTokenAddr(address);
+		return stock != null ? stock.symbol() : "Unknown";
+	}
+
 }

@@ -49,6 +49,14 @@ public class TestUserTokMgr extends MyTestCase {
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INSUFFICIENT_STOCK_TOKEN, cli.getRefCode() );
 		
+		// clear it out
+		cli().get( "/api/reset-user-tok-mgr");
+		
+		// repost - should succeed
+		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, "RUSD") );
+		assert200();
+		
+		
 		// you might want to create log entries for the updates to the UserTokMgr
 		
 		// TEST SELL

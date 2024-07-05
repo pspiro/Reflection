@@ -3,6 +3,7 @@ package monitor;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 
+import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -18,10 +19,14 @@ import tw.util.UI;
 
 class HookServerPanel extends JsonPanel {
 	private JTextField m_wallet = new JTextField(30);
+	private JEditorPane m_htmlPane = new JEditorPane();
 	
 	HookServerPanel() throws Exception {
 		super( new BorderLayout(), String.format( 
 				"wallet,native,approved,positions", Monitor.m_config.busd().name(), Monitor.m_config.nativeTokName() ) );
+		
+        m_htmlPane.setContentType("text/html");
+        m_htmlPane.setEditable(false); // Make the editor pane read-only
 		
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
@@ -34,6 +39,7 @@ class HookServerPanel extends JsonPanel {
 		top.add( new HtmlButton( "Delete hooks at Moralis", e -> deleteHooks() ) );
 	
 		add( top, BorderLayout.NORTH);
+		add( m_htmlPane, BorderLayout.EAST);
 		add( m_model.createTable() );
 	}
 	
@@ -78,8 +84,11 @@ class HookServerPanel extends JsonPanel {
 
 	private void getWallet() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/get-wallet/" + m_wallet.getText() );
-			Util.inform( this, json.toHtml() );
+			var positions = query( "/hook/get-wallet/" + m_wallet.getText() ).getArray( "positions");
+			for (var pos : positions) { 
+				pos.put( "description", Monitor.getDescription( pos.getString( "address") ) );
+			}
+			m_htmlPane.setText( positions.toHtml() );
 		});
 	}
 
@@ -122,4 +131,4 @@ class HookServerPanel extends JsonPanel {
 	static JsonObject query( String uri) throws Exception {
 		return MyClient.getJson( Monitor.m_config.hookBaseUrl() + uri);
 	}
-}
+	}

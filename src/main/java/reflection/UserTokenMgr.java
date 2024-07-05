@@ -46,7 +46,7 @@ public class UserTokenMgr {
 	 *  data from the file, it will stay wrong forever. */
 	private static HashMap<String,UserToken> m_map = new HashMap<>();
 	
-	public static UserToken getUserToken(String wallet, String tokenAddr) {
+	public static synchronized UserToken getUserToken(String wallet, String tokenAddr) {
 		String key = wallet.toLowerCase() + tokenAddr.toLowerCase(); 
 		return Util.getOrCreate(m_map, key, () -> new UserToken() );
 	}
@@ -60,5 +60,11 @@ public class UserTokenMgr {
 				"token", Util.right( tag, 42),
 				"offset", userToken.offset() ) ) );
 		return ar; 
+	}
+
+	/** Give a way to clear it out if something gets stuck. Better would be to auto-clear
+	 *  after some time */
+	public static synchronized void reset() {
+		m_map.clear();
 	}
 }
