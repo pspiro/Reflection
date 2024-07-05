@@ -22,7 +22,7 @@ public class LookupConid extends ConnectionAdapter {
 	}
 
 	LookupConid() throws Exception {
-		Config config = Config.readFrom("Dt-config");
+		Config config = Config.readFrom("Dev3-config");
 		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 9284, null);
 	}
 

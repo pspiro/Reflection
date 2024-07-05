@@ -483,20 +483,31 @@ public class MarginOrder extends JsonObject implements DualParent {
 	void placeSellOrders_() throws Exception  {
 		Util.require( status() == Status.BuyOrderFilled, "Invalid status %s to place sell orders", status() );
 		
+		boolean someSell = false;
 		int quantity = roundedQty() - totalSold();
 		
 		if (profitTakerPrice() > 0) {
 			placeProfitTaker( quantity );
+			someSell= true;
 		}
 
 		// we must set our own stop loss price which is >= theirs
 		if (stopLossPrice() > 0) {
 			placeStopLoss( quantity );
+			someSell= true;
 		}
 		
-		status( Status.PlacedSellOrders);
+		if (loanAmt() > 0) {
+			//placeLiqOrder();
+			someSell= true;
+		}
 		
-		// waiting for sell orders to fill
+		if (someSell) {  // waiting for sell orders to fill
+			status( Status.PlacedSellOrders);
+		}
+		else {  // we're done
+			status( Status.Completed);
+		}
 	}			
 	
 	private void placeProfitTaker(int quantity) throws Exception {
@@ -550,16 +561,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 		case NeedPayment:
 		case InitiatedPayment:
 		case GotReceipt:
-		case PlacedBuyOrder:
+		case PlacedBuyOrder: {
 			// Payment may or may not have been accepted.
 			// Buy orders may or may not have been placed or filled. 
 			boolean success = cancel( String.format( "Canceled by user; status was %s", status() ) );
 			require( success, RefCode.CANT_CANCEL, "The buy order was partially filled; the remaining quantity has been canceled");
 			break;
+		}
 			
 		case BuyOrderFilled:
 		case PlacedSellOrders:
-			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the buy order has already been filled");
+			cancelSellOrders();
+			// this is temporary, until we implement the liq order
+//			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the buy order has already been filled");
 			break;
 
 		case Completed:
@@ -789,7 +803,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 //don't allow user cancel if there is any bought size; just allow canceling remaining buy orders
 //you need to cancel one when the other one fills; 
 
-//get rid of LiveOrder.status, use Order.m_status instead; or check if the live order comes with correct status, qty, and avgPrice
 //**you can allow cancel if there is a position, just not if there is a loan amount > 0
 //for now, if a working order is canceled by system, let it cancel the order here and move to next state
 //probably add the order status to the orderMap() so you can see the final status of all orders
@@ -799,6 +812,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //create a new msg to retrieve status of a single message, used for testing
 //for save(), aggregate multiple calls, or save every time after calling process()
 //check for sufficient crypto, reject order if not
+//user reqCompltedOrders to find the missing orders after a reconnect
 
 //test single stop order
 //test dual stop orders

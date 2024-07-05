@@ -1034,10 +1034,10 @@ public class ApiController implements EWrapper {
 	/** we could add more fields here such as Contract */
 	public static class LiveOrder {
 		private int m_permId;
-		private OrderStatus m_status;
 		private int m_filled;
 		private double m_avgPrice;
 		private Order m_order;
+		private OrderStatus m_status; // temp use only so we can't get out of sync with Order.m_status
 
 		public LiveOrder(int permId) {
 			m_permId = permId;
@@ -1058,7 +1058,7 @@ public class ApiController implements EWrapper {
 		}
 		
 		public OrderStatus status() {
-			return m_status;
+			return m_order.status();
 		}
 		
 		public int permId() {
@@ -1084,6 +1084,12 @@ public class ApiController implements EWrapper {
 		public String orderId() {
 			return orderRef().split( " ")[0];
 		}
+
+		/** Update the status on the order with the status from the orderStatus() event */ 
+		public void updateStatus() throws Exception {
+			Util.require( m_order != null, "Error: cannot update order status because order is null");
+			m_order.status( m_status);  // we could update filled and avgPrice here too if desired
+		}
 	}
 	
 	/** Request live orders. Aggregate both the Order and the orderStatus. Return as a 
@@ -1100,6 +1106,7 @@ public class ApiController implements EWrapper {
 
 		// block until openOrderEnd() is called
 		Util.sync( queue -> {
+			S.out( "Requesting live order map");
 			handler.val = reqLiveOrders( new ILiveOrderHandler() {
 				@Override public void orderStatus(int orderId, OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
 						int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
@@ -1115,13 +1122,16 @@ public class ApiController implements EWrapper {
 				
 				@Override public void openOrderEnd() {
 					try {
+						S.out( "  finished receiving live order map");
+						map.values().forEach( live -> Util.wrap( () -> live.updateStatus() ) );
 						removeLiveOrderHandler( handler.val);
 						queue.put( "");
-					} catch (InterruptedException e) {
+					} catch (Exception e) {
+						S.out( "Error creating live order map");
 						e.printStackTrace();
 					}
 				}
-				
+
 				@Override public void handle(int orderId, int errorCode, String errorMsg) {
 					// ignore
 				}

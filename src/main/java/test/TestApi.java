@@ -1,103 +1,82 @@
 package test;
 
-import java.util.List;
+import java.util.HashMap;
 
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
-import com.ib.client.Order;
-import com.ib.client.OrderState;
-import com.ib.client.OrderStatus;
-import com.ib.client.Types.Action;
+import com.ib.client.TickAttrib;
+import com.ib.client.TickType;
 import com.ib.controller.ApiController;
-import com.ib.controller.ApiController.IConnectionHandler;
-import com.ib.controller.ApiController.IOrderHandler;
+import com.ib.controller.ApiController.IPositionHandler;
+import com.ib.controller.ApiController.LiveOrder;
+import com.ib.controller.ApiController.TopMktDataAdapter;
+import com.ib.controller.ConnectionAdapter;
 
-import common.Util;
 import tw.util.S;
 
-public class TestApi implements IConnectionHandler {
-	ApiController m_controller = new ApiController( this, null, null);
+public class TestApi extends ConnectionAdapter {
+	ApiController m_conn = new ApiController( this, null, null);
 	
 	public static void main(String[] args) {
-		new TestApi().run();
+		new TestApi().run(args);
 	}
 	
-	void run() {
-		//m_controller.connect("localhost", 9395, 838, null);
-		m_controller.connect("localhost", 7393, 838, null);
+	void run(String[] args) {
+		m_conn.connect(args[0], Integer.parseInt( args[1]), 838, null);
+		//m_conn.connect("34.125.231.254", 7498, 838, null);  // dev
+		//m_conn.connect("34.100.227.194", 7393, 838, null);  // prod
 	}
 
 	@Override
 	public void onConnected() {
+		S.out( "onConnected()");
 	}
 	
 	@Override
 	public void onRecNextValidId(int id) {
-		Contract c = new Contract();
-		c.conid(265598);
-		c.exchange("OVERNIGHT");
+		S.out( "rec valid id");
 		
-		Order o = new Order();
-		o.action(Action.Buy);
-		o.roundedQty(1);
-		o.lmtPrice(186);
-		o.transmit(true);
-		o.outsideRth(true);
-		o.orderRef("ZZZZZZZZ");
-
+		m_conn.reqPositions( new IPositionHandler() {
+			
+			@Override
+			public void positionEnd() {
+				S.out( "end");
+			}
+			
+			@Override
+			public void position(String account, Contract contract, Decimal pos, double avgCost) {
+				S.out( "pos %s ", pos);
+				
+			}
+		});
+		
+		Contract c = new Contract();
+		c.conid( 265598);
+		c.exchange( "SMART");
+		
+		m_conn.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s", tickType, price);
+			}
+	
+		});
+		
+		
 		try {
-			m_controller.placeOrder(c, o, new IOrderHandler() {
-				
-				@Override
-				public void orderState(OrderState orderState) {
-					S.out("state: " + orderState);
-				}
-				
-				@Override
-				public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
-						int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
-					S.out("status: " + status);
-				}
-				
-				@Override
-				public void onRecOrderError(int errorCode, String errorMsg) {
-					S.out("%s - %s", errorCode, errorMsg);
-				}
-			});
+			HashMap<Integer, LiveOrder> map = m_conn.reqLiveOrderMap();
+			map.values().forEach( ord -> show(ord) );
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		Util.executeIn( 6000, () -> System.exit(0) );
-	}
-
-	@Override
-	public void onDisconnected() {
-		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
-	public void accountList(List<String> list) {
-		// TODO Auto-generated method stub
-		
-	}
+	private void show(LiveOrder ord) {
+		S.out( "id=%s  status=%s  filled=%s  price=%s",
+				ord.orderId(), ord.status(), ord.filled(), ord.avgPrice() );
 
-	@Override
-	public void error(Exception e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void show(String string) {
-		// TODO Auto-generated method stub
-		
+		S.out( "id=%s  status=%s  filled=%s  price=%s",
+				ord.order().orderId(), ord.order().status(), ord.order().filledQuantity() );
 	}
 }

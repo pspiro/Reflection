@@ -34,7 +34,7 @@ public class ConnectionAdapter implements IConnectionHandler  {
 
 	@Override
 	public void error(Exception e) {
-		// TODO Auto-generated method stub
+		e.printStackTrace();
 		
 	}
 
@@ -48,8 +48,7 @@ public class ConnectionAdapter implements IConnectionHandler  {
 
 	@Override
 	public void show(String string) {
-		// TODO Auto-generated method stub
-		
+		S.out( string);
 	}
 
 }
