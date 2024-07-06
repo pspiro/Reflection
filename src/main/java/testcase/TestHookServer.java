@@ -85,7 +85,12 @@ public class TestHookServer extends MyTestCase {
 	
 	public void testApprove() throws Exception {
 		int n = Util.rnd.nextInt( 10000) + 10;
-		
+
+		// create the wallet first so we know we get the event
+		double prev = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
+				.getDouble( "approved");
+		S.out( "prev=%s", prev);
+
 		// let Owner approve RUSD to spend BUSD
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
 				.waitForHash();
@@ -94,7 +99,8 @@ public class TestHookServer extends MyTestCase {
 		waitFor( 120, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
 					.getDouble( "approved");
-			S.out( m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
+			S.out( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
+					n, pos, m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
 			return pos == n; 
 		});
 	}

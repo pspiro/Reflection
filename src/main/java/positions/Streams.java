@@ -46,8 +46,11 @@ public class Streams {
 		S.out( "  " + obj);
 	}
 
-	/** @return stream id */
+	/** @param chain is hex chain id 
+	 *  @return stream id */
 	public static String createStream(String stream, String name, String webhookUrl, String chain, String... addresses) throws Exception {
+		Util.require( chain.startsWith( "0x"), "chain must be hex"); 
+		
 		JsonObject json = JsonObject.parse( stream);
 		json.put( "description", name);
 		json.put( "tag", name);
@@ -156,7 +159,7 @@ public class Streams {
 //	}
 //	""";
 	
-	static String approval = """
+	public static String approval = """
 	{
 		"includeNativeTxs" : false,
 		"includeContractLogs" : true,

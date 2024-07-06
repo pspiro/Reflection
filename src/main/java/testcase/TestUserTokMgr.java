@@ -3,6 +3,8 @@ package testcase;
 import static testcase.TestOrder.curPrice;
 
 import reflection.RefCode;
+import reflection.Stock;
+import reflection.Stocks;
 import tw.util.S;
 
 public class TestUserTokMgr extends MyTestCase {
@@ -33,7 +35,9 @@ public class TestUserTokMgr extends MyTestCase {
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
 
 		// wait for apple balance
-		waitForBalance(Cookie.wallet, "0xda0984159f86dfa0fd82177a7d4ada226b7b0910", 2, false);
+		waitForBalance(	Cookie.wallet, 
+				stocks.getStockByConid( TestOrder.conid).getSmartContractId(),
+				2, false);
 
 		// first order - should pass
 		double sellPrice = curPrice * .9;

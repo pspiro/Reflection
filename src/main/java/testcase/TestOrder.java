@@ -284,9 +284,11 @@ public class TestOrder extends MyTestCase {
 		return createOrder3( side, qty, price, "RUSD");
 	}
 	
+	static int conid = 265598;
+	
 	static JsonObject createOrder3(String side, double qty, double price, String currency) throws Exception {
-		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
-				side, qty, price);
+		String json = String.format( "{ 'conid': '%s', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
+				conid, side, qty, price);
 		return createOrder4(json, currency);
 	}
 	
