@@ -60,6 +60,7 @@ public class MarginTrans extends MyTransaction {
 			JsonObject resp = Util.toJson(
 					"bid", prices.bid(),
 					"ask", prices.ask(),
+					"last", prices.last(),
 					"orders", getOrders() );
 			
 			respond( resp);
