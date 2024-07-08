@@ -207,4 +207,9 @@ public class MyHttpClient {
 		post(url, data);
 		return readJsonObject();
 	}
+
+	public JsonObject getToJson(String url) throws Exception {
+		get(url);
+		return readJsonObject();
+	}
 }

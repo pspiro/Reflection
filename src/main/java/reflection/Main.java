@@ -133,7 +133,8 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
 			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
-			server.createContext("/api/margin-all", exch -> new MarginTrans(this, exch, true).marginAll() );
+			server.createContext("/api/margin-get-order", exch -> new MarginTrans(this, exch, true).marginGetOrder() );
+			server.createContext("/api/margin-get-all", exch -> new MarginTrans(this, exch, true).marginGetAll() );
 
 
 			// orders and live orders
@@ -142,7 +143,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
-			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );
+			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() ); // orders that are waiting to complete on the blockchain
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 
 			// get/update profile
@@ -415,10 +416,6 @@ public class Main implements ITradeReportHandler {
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj);  
-		
-		if (m_marginStore != null) {
-			m_marginStore.tradeReport( tradeKey, contract, exec);
-		}
 	}
 
 	/** Ignore this. */

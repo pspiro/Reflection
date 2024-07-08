@@ -42,7 +42,7 @@ public abstract class MyTableModel extends AbstractTableModel {
 	public void onHeaderClicked(int col) {
 	}
 
-	public void selectionChanged(ListSelectionEvent e) {
+	public void selectionChanged(int row) {
 	}
 	
 	

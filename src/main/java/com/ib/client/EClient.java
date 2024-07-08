@@ -2266,6 +2266,8 @@ public abstract class EClient {
             }
         }
 
+        S.out( "Canceling order with IB orderId " + id);
+        
         final int VERSION = 1;
 
         // send cancel order msg

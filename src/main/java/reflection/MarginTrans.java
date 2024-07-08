@@ -11,6 +11,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import reflection.TradingHours.Session;
+import web3.Stablecoin;
 
 
 public class MarginTrans extends MyTransaction {
@@ -63,21 +64,6 @@ public class MarginTrans extends MyTransaction {
 			
 			respond( resp);
 		});
-	}
-
-	private JsonArray getOrders() throws Exception {
-		JsonArray ar = m_main.marginStore().getOrders( m_walletAddr);
-		
-		Util.forEach( ar, order -> {
-			Stock stock = m_main.getStock( order.getInt( "conid") );
-			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
-
-			Prices prices = stock.prices();
-			order.put( "bidPrice", prices.bid() );
-			order.put( "askPrice", prices.ask() );
-		});
-			
-		return ar;
 	}
 
 	public Object marginUpdate() {
@@ -153,6 +139,10 @@ public class MarginTrans extends MyTransaction {
 					RefCode.INVALID_REQUEST,
 					"currency is invalid");
 			
+			// check that they have sufficient stablecoin
+			Stablecoin stablecoin = m_config.getStablecoin( currency);
+			require( Util.isGtEq( stablecoin.getPosition( m_walletAddr), amtToSpend), RefCode.INSUFFICIENT_STABLECOIN, "You don't have enough stablecoin in your wallet for this transaction");
+			
 			// for leveraged orders, if the exchange is open, we must have bid/ask prices
 			// if the exchange is closed, we don't care because the Buy order will not fill;
 			// we can accept orders at any time; if we are in an overnight session, it means that the
@@ -187,7 +177,7 @@ public class MarginTrans extends MyTransaction {
 			out( "Received valid margin order " + mo);
 
 			m_main.marginStore().add( mo);
-			m_main.marginStore().save();
+			m_main.marginStore().saveNow();
 			
 			respond( code, RefCode.OK, "orderId", mo.orderId() );
 
@@ -206,11 +196,37 @@ public class MarginTrans extends MyTransaction {
 		Never
 	}
 
-	public void marginAll() {
-		wrap( () -> respondFull(
-				m_main.marginStore(),		
-				200,
-				null,
-				"text/html") );
+	/** Return orders for one wallet */
+	private JsonArray getOrders() throws Exception {
+		JsonArray ar = m_main.marginStore().getOrders( m_walletAddr);
+		
+		Util.forEach( ar, order -> {
+			Stock stock = m_main.getStock( order.getInt( "conid") );
+			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
+
+			Prices prices = stock.prices();
+			order.put( "bidPrice", prices.bid() );
+			order.put( "askPrice", prices.ask() );
+		});
+			
+		return ar;
+	}
+
+	/** Return all orders. For debug only */
+	public void marginGetAll() {
+		wrap( () -> respond( m_main.marginStore() ) );		
+	}
+
+	/** Get a single order by order id; used for debug only */
+	public void marginGetOrder() {
+		wrap( () -> {
+			String orderId = Util.getLastToken(m_uri, "/");
+			require( orderId.length() == m_uid.length() + 2, RefCode.INVALID_REQUEST, "Invalid order id");
+			
+			MarginOrder order = m_main.marginStore().getById(orderId.toUpperCase() );  // this won't work if we change to mixed case orderId
+			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
+			
+			respond( order);
+		});
 	}
 }

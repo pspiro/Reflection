@@ -7,12 +7,14 @@ import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
+import com.ib.client.TickAttrib;
+import com.ib.client.TickType;
 import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IConnectionHandler;
 import com.ib.controller.ApiController.IOrderHandler;
+import com.ib.controller.ApiController.TopMktDataAdapter;
 
-import common.Util;
 import tw.util.S;
 
 public class TestApi implements IConnectionHandler {
@@ -40,7 +42,7 @@ public class TestApi implements IConnectionHandler {
 		Order o = new Order();
 		o.action(Action.Buy);
 		o.roundedQty(1);
-		o.lmtPrice(186);
+		o.lmtPrice(150);
 		o.transmit(true);
 		o.outsideRth(true);
 		o.orderRef("ZZZZZZZZ");
@@ -67,8 +69,12 @@ public class TestApi implements IConnectionHandler {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-		Util.executeIn( 6000, () -> System.exit(0) );
+		
+		m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s", tickType, price);
+			}
+		});
 	}
 
 	@Override
@@ -85,19 +91,19 @@ public class TestApi implements IConnectionHandler {
 
 	@Override
 	public void error(Exception e) {
-		// TODO Auto-generated method stub
+		e.printStackTrace();
 		
 	}
 
 	@Override
 	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-		// TODO Auto-generated method stub
+		S.out(errorMsg);
 		
 	}
 
 	@Override
 	public void show(String string) {
-		// TODO Auto-generated method stub
+		S.out(string);
 		
 	}
 }

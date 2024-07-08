@@ -29,9 +29,6 @@ import tw.util.S;
 // you could use this to easily replace the Backend method that combines it with with the market data 
 
 public class Monitor {
-	static final String farDate = "12-31-2999";
-	static final String moralis = "https://deep-index.moralis.io/api/v2";
-	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 	static final Stocks stocks = new Stocks();
 
 	public static MonitorConfig m_config;
@@ -100,6 +97,7 @@ public class Monitor {
 		m_tabs.addTab( "Signups", new SignupPanel() );
 		m_tabs.addTab( "Persona", new PersonaPanel() );
 		m_tabs.addTab( "Transactions", new TransPanel() );
+		m_tabs.addTab( "Margin Orders", new MarginPanel() );
 		m_tabs.addTab( "Log", m_logPanel);
 		m_tabs.addTab( "Trades", createTradesPanel() );
 		m_tabs.addTab( "Tokens", new TokensPanel() );  // Stock Tokens

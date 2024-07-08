@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.TableCellRenderer;
 
 import org.json.simple.JsonArray;
@@ -26,6 +27,11 @@ public class JsonModel extends MyTableModel {
 	
 	public void setNames( String allNames) {
 		m_colNames = allNames.split(",");
+		
+		// trim the column names
+		for (int i = 0; i < m_colNames.length; i++) {
+			m_colNames[i] = m_colNames[i].trim();
+		}
 		
 		for (int i = 0; i < m_colNames.length; i++) {
 			m_namesMap.put( i, m_colNames[i].split("=")[0]);  // if the col name has an equal sign, just take the first part
@@ -97,6 +103,13 @@ public class JsonModel extends MyTableModel {
 		Object val = getValueAt(row, col);
 		onDoubleClick(tag, val);
 	}
+	
+	public void selectionChanged(int row) {
+		JsonObject val = m_ar.get(row);
+		if (val != null) {
+			onSelChanged( val);
+		}
+	}
 
 	@Override final public void onRightClick(MouseEvent e, int row, int col) {
 		JsonObject record = m_ar.get(row);
@@ -151,6 +164,9 @@ public class JsonModel extends MyTableModel {
 	}
 
 	protected void onCtrlClick(JsonObject row, String tag) {
+	}
+
+	protected void onSelChanged(JsonObject row) {
 	}
 
 }
