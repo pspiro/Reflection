@@ -80,7 +80,7 @@ public class TestApi extends ConnectionAdapter {
 			e.printStackTrace();
 		}
 		
-		m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+		m_conn.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
 			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
 				S.out( "%s %s", tickType, price);
 			}
@@ -96,6 +96,7 @@ public class TestApi extends ConnectionAdapter {
 	private void show(LiveOrder ord) {
 		S.out( "id=%s  status=%s  filled=%s  price=%s",
 				ord.orderId(), ord.status(), ord.filled(), ord.avgPrice() );
+	}
 
 	@Override
 	public void error(Exception e) {

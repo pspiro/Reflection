@@ -532,6 +532,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			out( "***Placing margin profit-taker orders");
 			m_profitOrder.quantity( quantity);
 			m_profitOrder.placeOrder( conid() );
+			someSell = true;
 		}
 
 		// we must set our own stop loss price which is >= theirs
@@ -539,14 +540,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 			out( "***Placing margin stop-loss orders");
 			m_stopOrder.quantity( quantity);
 			m_stopOrder.placeOrder( conid() );
+			someSell = true;
 		}
 		
-		if (loanAmt() > 0) {
-			//placeLiqOrder();
-			someSell= true;
-		}
-		
-		if (someSell) {  // waiting for sell orders to fill
+		if (someSell || loanAmt() > 0) {  // waiting for sell orders to fill or monitoring for liquidation
 			status( Status.PlacedSellOrders);
 		}
 		else {  // we're done
