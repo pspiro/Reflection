@@ -14,6 +14,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config.Web3Type;
 
 /** Test the three servers */
 public class SouthPanel extends JPanel {
@@ -52,8 +53,11 @@ public class SouthPanel extends JPanel {
 		try {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
-			test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);
 			test( Monitor.m_config.hookBaseUrl() + "/hook/ok", m_hookServer);
+			
+			if (Monitor.m_config.web3Type() == Web3Type.Fireblocks) {
+				test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);
+			}
 		}
 		catch( Exception e) {
 			e.printStackTrace();

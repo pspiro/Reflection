@@ -11,6 +11,7 @@ import http.MyClient;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
+import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
 
@@ -81,8 +82,16 @@ public class MyTestCase extends TestCase {
 	protected void assert200() throws Exception {
 		if (cli.getResponseCode() != 200) {
 			S.out( "%s - %s", cli.getRefCode(), cli.getMessage() );
+			assertEquals( RefCode.OK, cli.getRefCode() );
+			assertEquals( 200, cli.getResponseCode() );
 		}
-		assertEquals( 200, cli.getResponseCode() );
+	}
+	
+	protected void assert400() throws Exception {
+		if (cli.getResponseCode() != 400) {
+			S.out( "%s - %s", cli.getRefCode(), cli.getMessage() );
+		}
+		assertEquals( 400, cli.getResponseCode() );
 	}
 	
 	protected void assertNotEquals(String notExpected, String actual) {

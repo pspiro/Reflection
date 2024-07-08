@@ -38,6 +38,7 @@ import web3.Matic;
 import web3.RetVal;
 import web3.Rusd;
 import web3.Rusd.IRusd;
+import web3.Stablecoin;
 
 public class Config extends ConfigBase {
 
@@ -698,5 +699,9 @@ public class Config extends ConfigBase {
 	 * @throws Exception */
 	public RetVal giveApproval() throws Exception {
 		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
+	}
+
+	public Stablecoin getStablecoin(String currency) throws Exception {
+		return currency.equals( rusd().name() ) ? rusd() : busd(); 
 	}
 }

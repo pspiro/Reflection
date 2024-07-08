@@ -1,31 +1,17 @@
 package test;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
+import common.NiceTimer;
 import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 	public static void main(String[] args) throws Exception {
-		TimerTask task1 = new TimerTask() {
-			@Override public void run() {
-				S.out( "start 1");
-				S.sleep( 2000);
-				S.out( "  end 1");
-			}
-		};
+		NiceTimer t = new NiceTimer();
 
-		TimerTask task2 = new TimerTask() {
-			@Override public void run() {
-				S.out( "start 2");
-				S.sleep( 2000);
-				S.out( "  end 2");
-			}
-		};
+		for (int i = 0; i < 5000; i++) {
+			t.schedule( 1000, () -> S.out( "exec") );
+			S.sleep( 10);
+		}
 		
-		Timer timer = new Timer();
-		timer.schedule( task1, 0);
-		timer.schedule( task2, 0);
 	}
 }

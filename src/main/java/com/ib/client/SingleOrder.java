@@ -64,7 +64,7 @@ public class SingleOrder implements IOrderHandler {
 			
 			m_conn.listenTo( m_order.orderId(), this);
 
-			S.out( "Restored SingleOrder id=%s  key=%s  permId=%s  status=%s", 
+			out( "Restored SingleOrder id=%s  key=%s  permId=%s  status=%s", 
 					m_order.orderId(), m_key, m_order.permId(), m_order.status() );
 			
 			// notify parent in case state has changed in some way
@@ -73,29 +73,25 @@ public class SingleOrder implements IOrderHandler {
 		});
 	}
 
-	/** Called periodically; the order should be working 
-	 * @throws Exception */
+	/** Called periodically; the order should be working */ 
 	synchronized void checkOrder( int quantity) {
 		if (m_order.status().isActive() || m_listener != null) {
 			// nothing to do
 		}
 		else {
-			S.out( "WARNING: SingleOrder state is %s when it should be active", m_order.status() );
-
-			// probably should send an alert here. pas
-			
+			out( "WARNING: SingleOrder state is %s when it should be active", m_order.status() );
+			m_order.roundedQty( quantity);
 			try {
-				m_order.roundedQty( quantity);
 				placeOrder();
 			} catch (Exception e) {
-				e.printStackTrace();  // we will try again in the next loop iteration
+				e.printStackTrace();
 			}
 		}
 	}
 
 	public void checkCanceled() {
 		if (m_order.status().isActive() ) {
-			S.out( "WARNING: SingleOrder state is %s when it should be canceled");
+			out( "WARNING: SingleOrder state is %s when it should be canceled");
 			cancel();
 		}
 	}
@@ -115,7 +111,7 @@ public class SingleOrder implements IOrderHandler {
 				m_prices.addListener( m_listener);
 			}
 			else {
-				S.out( "ERROR: stop order is already listening");  // should never happen
+				out( "ERROR: stop order is already listening");  // should never happen
 			}
 		}
 		else {

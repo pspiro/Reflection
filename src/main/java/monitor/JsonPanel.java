@@ -50,6 +50,9 @@ public abstract class JsonPanel extends MonPanel {
 	protected void onDouble(String tag, Object val) {
 	}
 
+	public void onSelChanged(JsonObject row) {
+	}
+
 	protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
 	}
 
@@ -77,6 +80,11 @@ public abstract class JsonPanel extends MonPanel {
 
 		@Override public final void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
 			JsonPanel.this.buildMenu(menu, record, tag, val);
+		}
+		
+		@Override protected void onSelChanged(JsonObject row) {
+			// TODO Auto-generated method stub
+			JsonPanel.this.onSelChanged(row);
 		}
 	}
 }

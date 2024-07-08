@@ -19,7 +19,9 @@ class MarginStore extends TsonArray<MarginOrder> {
 	private String m_filename ;
 	private boolean m_started;
 	private ApiController m_conn;
-	private final NiceTimer m_timer = new NiceTimer();
+	private final NiceTimer m_processTimer = new NiceTimer();  // check every ten sec
+	private final NiceTimer m_saveTimer = new NiceTimer(); // save up to every
+	private final Runnable m_saver = () -> saveNow(); 
 	
 	public MarginStore(String filename, ApiController conn) {
 		m_filename = filename;
@@ -30,9 +32,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 	public void postInit() {
 		forEach( order -> order.postInit() );		
 	}
+
+	public void saveLater() {
+		m_saveTimer.schedule( 500, m_saver);
+	}
 	
-	void save() {
+	void saveNow() {
 		try {
+			S.out( "Writing margin store");
 			writeToFile(m_filename);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -81,7 +88,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 		// call this every time we reconnect to update the margin orders with the
 		// current live IB orders; use executeEvery to put this in the same thread
 		// as the calls to MarginOrder.process() so they don't overlap
-		m_timer.executeEvery( 0, 0, () -> 
+		m_processTimer.executeEvery( 0, 0, () -> 
 			forEach( order -> order.onReconnected( orderRefMap) ) );
 		
 		// start the thread only once, after the first successful connection to TWS, then it runs forever
@@ -89,7 +96,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 			m_started = true;
 			
 			//forEach( order -> order.restart() );
-			m_timer.executeEvery( 0, 10000, () -> 
+			m_processTimer.executeEvery( 0, 10000, () -> 
 				forEach( order -> order.process() ) );
 		}
 	}
@@ -102,9 +109,6 @@ class MarginStore extends TsonArray<MarginOrder> {
 			}
 		}
 		return orderRefMap;
-	}
-
-	public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 	}
 
 }

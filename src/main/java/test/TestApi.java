@@ -4,8 +4,10 @@ import java.util.HashMap;
 
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
+import com.ib.client.Order;
 import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
+import com.ib.client.Types.Action;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.ib.controller.ApiController.LiveOrder;
@@ -62,6 +64,14 @@ public class TestApi extends ConnectionAdapter {
 		});
 		
 		
+		Order o = new Order();
+		o.action(Action.Buy);
+		o.roundedQty(1);
+		o.lmtPrice(150);
+		o.transmit(true);
+		o.outsideRth(true);
+		o.orderRef("ZZZZZZZZ");
+
 		try {
 			HashMap<Integer, LiveOrder> map = m_conn.reqLiveOrderMap();
 			map.values().forEach( ord -> show(ord) );
@@ -70,13 +80,38 @@ public class TestApi extends ConnectionAdapter {
 			e.printStackTrace();
 		}
 		
+		m_controller.reqTopMktData(c, null, false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s", tickType, price);
+			}
+		});
+	}
+
+	@Override
+	public void onDisconnected() {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void show(LiveOrder ord) {
 		S.out( "id=%s  status=%s  filled=%s  price=%s",
 				ord.orderId(), ord.status(), ord.filled(), ord.avgPrice() );
 
-		S.out( "id=%s  status=%s  filled=%s  price=%s",
-				ord.order().orderId(), ord.order().status(), ord.order().filledQuantity() );
+	@Override
+	public void error(Exception e) {
+		e.printStackTrace();
+		
+	}
+
+	@Override
+	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
+		S.out(errorMsg);
+		
+	}
+
+	@Override
+	public void show(String string) {
+		S.out(string);
+		
 	}
 }

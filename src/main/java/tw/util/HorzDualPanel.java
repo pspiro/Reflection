@@ -7,7 +7,8 @@ import java.awt.LayoutManager;
 
 import javax.swing.JPanel;
 
-/** Split into two or three panels stacked horizontally */
+/** Split into two or three panels stacked horizontally
+ *  To add components, call add( "1", comp1) */
 public class HorzDualPanel extends JPanel implements LayoutManager {
 	private final Dimension pref = new Dimension(1, 1);
 	private Component c1;

@@ -31,14 +31,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 	double maxLeverage;
 	double minUserAmt = 100;
 	double maxUserAmt = 200;
+	double maxLtv = 1.02;
 	
 	public enum Status {
 		NeedPayment,		// waiting for blockchain payment transaction to complete; we may or may not have transaction hash
 		InitiatedPayment,		// submitted transaction; may or may not have trans hash and receipt
 		GotReceipt,
 		PlacedBuyOrder,
-		BuyOrderFilled,			// primary order has filled, we are now monitoring sell orders
+		BuyOrderFilled,			// primary order has filled, we are now monitoring sell orders 
 		PlacedSellOrders,
+		Liquidation,
 		Completed,
 		Canceled,  
 	}
@@ -46,7 +48,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 	String wallet() { return getString( "wallet_public_key"); }
 	String orderId() { return getString( "orderId"); }
 	int conid() { return getInt( "conid"); }
-	Action action() throws Exception { return getEnum( "action", Action.values() ); }
 	double amtToSpend() { return getDouble( "amountToSpend"); }
 	double leverage() { return getDouble( "leverage"); }
 	double entryPrice() { return getDouble( "entryPrice"); }
@@ -68,7 +69,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	
 	
 	// other fields:
-//	hash
+//	transHash
 //	receipt
 //	loanAmt, 
 //	liquidationPrice, 
@@ -78,17 +79,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 //	sharesHeld,   // done
 //	sharesToBuy,  // done
 //	symbol,       // done
+//  placed
 	
 	// transient, non-serializeable 
 	private final ApiController m_conn;
 	private final Stocks m_stocks;
 	private final MarginStore m_store;
-	private final Consumer<Prices> m_listener = prices -> updateBidAsk( prices);
+	private final Consumer<Prices> m_listener = prices -> onTickBidAsk( prices);
 			
 	// the orders
 	private DualOrder m_buyOrder;
 	private DualOrder m_profitOrder;
 	private DualOrder m_stopOrder;
+	private DualOrder m_liqOrder;
 
 	/** Called when order is received from Frontend */
 	MarginOrder(
@@ -130,10 +133,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "sharesToBuy", desiredQty() );
 		put( "loanAmt", 0);
 		put( "orderMap", new JsonObject() );
-
 		put( "status", Status.NeedPayment);  // waiting for blockchain payment transaction
+		put( "placed", System.currentTimeMillis() );
 
 		prices().addListener( m_listener);
+		
+		postInit();
 	}			
 
 	/** Called when order is restore from MarginStore 
@@ -173,6 +178,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			m_stopOrder.tif( TimeInForce.GTC);   // must consider this
 			m_stopOrder.outsideRth( true);
 		}
+
+		m_liqOrder = new DualOrder( m_conn, null, "LIQUIDATION", orderId() + " liquidation", conid(), this);
+		m_liqOrder.action( Action.Sell);
+		m_liqOrder.orderType( OrderType.LMT);
+		m_liqOrder.tif( TimeInForce.GTC);
+		m_liqOrder.outsideRth( true);
 
 		prices().addListener( m_listener);  // always?
 	}
@@ -224,7 +235,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 						"MARGIN_ORDER PAYMENT IS LOST, HANDLE THIS", 
 						S.format( "orderId=%s", orderId() ) );
 				
-				cancel( "Order payment was lost");
+				systemCancel( "Order payment was lost");
 				break;
 				
 			case GotReceipt:
@@ -247,7 +258,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 			case PlacedSellOrders:
 				checkSellOrders();
 				break;
-
+			
+			case Liquidation:
+				checkLiquidation();
+				break;
+				
 			case Canceled:
 				m_buyOrder.checkCanceled();
 				break;
@@ -255,21 +270,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 			case Completed:
 				checkCompleted();
 				break;
-		}
-	}
-	
-	private void checkBuyOrder() {
-		int remainingQty = roundedQty() - totalBought();
-
-		if (remainingQty <= 0) { 
-			out( "WARNING: Buy order is completely filled but order is in state %s", status() );
-			
-			status( Status.BuyOrderFilled);
-			
-			placeSellOrders();
-		}
-		else {
-			m_buyOrder.checkOrder( remainingQty);
 		}
 	}
 
@@ -280,7 +280,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		catch (Exception e) {
 			e.printStackTrace();
 			
-			cancel( "Failed to accept payment - " + e.getMessage() );
+			systemCancel( "Failed to accept payment - " + e.getMessage() );
 		}
 	}
 	
@@ -296,7 +296,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		double prevBalance = receipt.getPosition( walletAddr);  // or get from HookServer
 
 		// wrong, don't pull config from Main. pas
-		Stablecoin stablecoin = currency().equals( m_config.rusd().name() ) ? m_config.rusd() : m_config.busd();
+		Stablecoin stablecoin = m_config.getStablecoin( currency() );
 
 		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
 		RetVal val = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend);
@@ -349,19 +349,54 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// when it restarts we won't know for sure if the transaction was successful or not;
 		// operator assistance would be required		
 	}
+	
+	/** Buy orders should be working */
+	private void checkBuyOrder() {
+		int qtyToBuy = roundedQty() - totalBought();
 
-	private void checkSellOrders() {
-		int qty = roundedQty() - totalBought();
-		
-		if (m_profitOrder != null) {
-			m_profitOrder.checkOrder( qty);
+		if (qtyToBuy > 0) { 
+			m_buyOrder.checkOrder( qtyToBuy);
 		}
-		
-		if (m_stopOrder != null) {
-			m_stopOrder.checkOrder( qty);
+		else {
+			out( "WARNING: Buy order is completely filled but order is in state %s", status() );
+			
+			status( Status.BuyOrderFilled);
+
+			cancelBuyOrders();
+			
+			placeSellOrders();
 		}
 	}
 
+	/** Sell orders should be working */
+	private void checkSellOrders() {
+		int qtyToSell = totalBought() - totalSold();
+		
+		if (qtyToSell > 0) {
+			if (m_profitOrder != null) {
+				m_profitOrder.checkOrder( qtyToSell);
+			}
+			
+			if (m_stopOrder != null) {
+				m_stopOrder.checkOrder( qtyToSell);
+			}
+		}
+		else {
+			out( "WARNING: Sell orders are filled but order is in state %s", status() );
+		}
+	}
+
+	private void checkLiquidation() {
+		int qtyToSell = totalBought() - totalSold();
+		
+		if (qtyToSell > 0) {
+			m_liqOrder.checkOrder( qtyToSell);
+		}
+		else {
+			out( "WARNING: Sell orders are filled but order is in state %s", status() );
+		}
+	}
+	
 	/** Completed orders should not have any size or orders */
 	private void checkCompleted() {
 		int net = totalBought() - totalSold();
@@ -371,16 +406,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	/** really place or restore buy order 
-	 * @throws Exception */
 	void placeBuyOrder() {
 		try {
 			placeBuyOrder_();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-
-			cancel( "Failed to place buy orders - " + e.getMessage() );
 		}
 	}
 	
@@ -414,7 +445,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// add or update order map if there was a fill; we don't care what state we are in
 			// but we might give a warning if not in an expected state
 			if (filled > 0) {
-				updateOrderStatus( permId, action, filled, avgPrice);
+				updateOrderStatus( permId, action, filled, avgPrice);  // we could add OrderStatus here if desired. pas
 			}
 			
 			final Status status = status();
@@ -423,7 +454,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 			double bought = adjust( totalBought() );
 			put( "sharesHeld", bought - adjust( totalSold() ));
 			put( "sharesToBuy", desiredQty() - bought);
-			updateValueAndLoanAmt();
+
+			double cashBalance = cashBalance();
+			put( "value", cashBalance + stockValueLast() );
+			put( "loanAmt",  Math.max( 0, cashBalance() ) );
 			
 			out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
 					permId, dualOrd.name(), status, filled, roundedQty(), avgPrice);
@@ -441,11 +475,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 				}
 			}
 			else if (status == Status.PlacedSellOrders && (dualOrd == m_profitOrder || dualOrd == m_stopOrder) ) {
-				if (totalSold() >= roundedQty() ) {
+				if (totalSold() >= totalBought() ) {
 					out( "  sell orders have filled");
 					
 					status( Status.Completed);
-					save();
 
 					cancelSellOrders();
 					
@@ -454,6 +487,17 @@ public class MarginOrder extends JsonObject implements DualParent {
 					
 					// we are done, nothing left to do; order will remain in Completed state
 					// until user withdraws the cash
+				}
+			}
+			else if (status == Status.Liquidation && dualOrd == m_liqOrder) {
+				if (totalSold() >= totalBought() ) {
+					out( "  liquidation has completed");
+
+					status( Status.Completed);
+					
+					cancelLiqOrder();
+					
+					// we are dont
 				}
 			}
 			else {
@@ -475,8 +519,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// we have to keep trying
 			Alerts.alert( "RefAPI", "COULD NOT PLACE MARGIN SELL ORDERS", 
 					String.format( "orderId=%s  sharesHeld=%s  loanAmt=%s", orderId(), sharesHeld(), loanAmt() ) );
-			
-			Util.executeIn(30000, () -> placeSellOrders() );
 		}
 	}
 	
@@ -487,14 +529,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 		int quantity = roundedQty() - totalSold();
 		
 		if (profitTakerPrice() > 0) {
-			placeProfitTaker( quantity );
-			someSell= true;
+			out( "***Placing margin profit-taker orders");
+			m_profitOrder.quantity( quantity);
+			m_profitOrder.placeOrder( conid() );
 		}
 
 		// we must set our own stop loss price which is >= theirs
 		if (stopLossPrice() > 0) {
-			placeStopLoss( quantity );
-			someSell= true;
+			out( "***Placing margin stop-loss orders");
+			m_stopOrder.quantity( quantity);
+			m_stopOrder.placeOrder( conid() );
 		}
 		
 		if (loanAmt() > 0) {
@@ -510,30 +554,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}			
 	
-	private void placeProfitTaker(int quantity) throws Exception {
-		out( "***Placing margin profit-taker orders");
-
-		m_stopOrder.quantity( quantity);
-		m_profitOrder.placeOrder( conid() );
-	}
-
-	private void placeStopLoss(int quantity) throws Exception {
-		out( "***Placing margin stop-loss orders");
-		
-		m_stopOrder.quantity( quantity);
-		m_stopOrder.placeOrder( conid() );
-	}
-	
 	void cancelBuyOrders() {
-		if (m_buyOrder != null) {
-			out( "canceling buy orders");
-			m_buyOrder.cancel();
-		}
+		out( "canceling buy orders");
+		m_buyOrder.cancel();
 	}
 
 	private void cancelSellOrders() {
 		if (m_profitOrder != null) {
-			out( "canceling profit orders");
+			out( "canceling profit order");
 			m_profitOrder.cancel();
 		}
 		
@@ -543,8 +571,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 	
+	private void cancelLiqOrder() {
+		out( "canceling liquidation order");
+		m_liqOrder.cancel();
+	}
+	
 	private void save() {
-		m_store.save(); 
+		m_store.saveLater(); 
 	}
 
 	public void transHash(String hash) {
@@ -556,112 +589,67 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "gotReceipt", v);
 	}
 
-	public boolean userCancel() throws RefException {
+	public void userCancel() throws RefException {
 		switch( status() ) {
 		case NeedPayment:
 		case InitiatedPayment:
 		case GotReceipt:
-		case PlacedBuyOrder: {
-			// Payment may or may not have been accepted.
-			// Buy orders may or may not have been placed or filled. 
-			boolean success = cancel( String.format( "Canceled by user; status was %s", status() ) );
-			require( success, RefCode.CANT_CANCEL, "The buy order was partially filled; the remaining quantity has been canceled");
-			break;
-		}
-			
+		case PlacedBuyOrder:
 		case BuyOrderFilled:
 		case PlacedSellOrders:
-			cancelSellOrders();
-			// this is temporary, until we implement the liq order
-//			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the buy order has already been filled");
+			cancelBuyOrders();  // buy orders can always be canceled
+
+			require( loanAmt() <= 0, RefCode.CANT_CANCEL, "The order has a loan amount and will remain active");
+			
+			status( Status.Canceled);
+			put( "completedHow", "Canceled by user");
+
+			prices().removeListener(m_listener);
 			break;
 
-		case Completed:
+		case Liquidation:
 			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the order has already completed");
+			break;
+			
+		case Completed:
+			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the position is being liquidated");
 			break;
 			
 		case Canceled:
 			require( false, RefCode.CANT_CANCEL, "The order has already been canceled");
 			break;
 		}
-
-		throw new RefException( RefCode.CANT_CANCEL, "Unreachable code");
 	}
 
-	private boolean cancel(String how) {
-		boolean rc;
-		
-		// if there's no position, we have no need for a listener
-		if (totalBought() - totalSold() <= 0) {
-			put( "completedHow", how);
+	private void systemCancel(String how) {
+		cancelBuyOrders();  // buy orders can always be canceled
 
+		if (loanAmt() > 0) {
+			out( "WARNING: can't cancel order with positive loan amount");
+		}
+		else {
 			// set status first so if it fails, we will come back here
 			status( Status.Canceled);
-
+			put( "completedHow", how);
 			prices().removeListener(m_listener);
-
-			rc = true;  // fully canceled
 		}
-		else { // we can't cancel if there is a position
-			status( Status.BuyOrderFilled);
-			rc = false; // not fully canceled
-		}
-		return rc;
 	}
 	
-	// called when the order is restored from the db
-	synchronized void process2() throws Exception {
-//			if (m_status == Status.Entry) {
-//				placeBuyOrder();
-//			}
-
-		// check for liquidation
-//			if (balance < 0) {
-//				double loan = -balance;
-//				
-//				if (prices.bid() <= 0) {
-//					out( "liquidating  no bid");
-//					liquidate( conn);
-//				}
-//				else {
-//					double bidCollat = prices.bid() * position;
-//					double bidCoverage = bidCollat / loan; 
-//					if (bidCoverage <= Main.m_config.bidLiqBuffer() ) {
-//						out( "liquidate bid=%s  bidCollat=%s  loan=%s  bidCovererage=%s", 
-//								prices.bid(), bidCollat, loan, bidCoverage);
-//						liquidate( conn);
-//					}
-//					
-//					if (prices.validAsk() ) {
-//						double markCollat = prices.askMark() * position;
-//						double markCoverage = markCollat / loan;
-//						if (markCoverage <= Main.m_config.markLiqBuffer() ) {
-//							out( "liquidate bid=%s  ask=%s  last=%s  markCollat=%s  loan=%s  markCovererage=%s", 
-//									prices.bid(), prices.ask(), prices.ask(), markCollat, loan, markCoverage);
-//						}
-//					}
-//				}
-//			}
-		
-	}
-	
-	private void updateValueAndLoanAmt() {
-		double cashValue = cashValue();
-		put( "value", cashValue + stockValue() );
-		put( "loanAmt",  Math.max( 0, cashValue() ) ); 
-	}
-
-	double value() {
-		return stockValue() + cashValue();
-	}
-	
-	double stockValue() {
+	/** for liquidation calculation purposes, we have to use mark price which uses the bid
+	 *  price; for display purposes, we use the last price because we will frequently have
+	 *  a last price even if there is no bid */
+	double stockValueMark() throws Exception {
 		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
-		return stockPos * markPrice();
+		return stockPos * prices().markPrice();
+	}
+	
+	double stockValueLast() {
+		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
+		return stockPos * prices().last();
 	}
 	
 	/** value is stock plus cash */
-	double cashValue() {
+	double cashBalance() {
 		return 
 			amtToSpend() + // the user may contribute more money later which we have to add in here  
 			adjust( totalSold() ) * avgSellPrice() -
@@ -673,15 +661,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 	// this should be IB commissions plus the 1% fee
 	private double fees() {
 		return .01 * amtToSpend() * leverage();
-	}
-	
-	private double markPrice() {
-		try {
-			return prices().markPrice();
-		} catch (Exception e) {
-			out( "Error: no mark price for %s", stock().symbol() );
-			return 0.;
-		}
 	}
 	
 	private int totalBought() {
@@ -732,7 +711,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 	
 	void status( Status status) {
-		put( "status", status);
+		Object prev = put( "status", status);
+		out( "Set status to %s  (prev %s)", status, prev); 
 		save();
 		// you could move "save()" here, it's called every time
 	}
@@ -766,9 +746,51 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 	
 	/** update bid/ask fields which are displayed by Frontend */
-	private void updateBidAsk(Prices prices) {
+	private synchronized void onTickBidAsk(Prices prices) {
 		put( "bidPrice", prices.bid() );
 		put( "askPrice", prices.ask() );
+		
+		put( "value", cashBalance() + stockValueLast() );
+		
+		if (status() != Status.PlacedBuyOrder || status() == Status.BuyOrderFilled) {
+			double loanVal = loanAmt();
+			
+			if (loanVal > 0) {
+				try {
+					double stockVal = stockValueMark();
+					if (stockVal < loanVal * maxLtv) {
+						out( "LIQUIDATING! Stock value of %s cannot support loan amount of %s", stockVal, loanVal);
+						liquidate();
+					}
+				} 
+				catch (Exception e) {
+					e.printStackTrace();
+					Alerts.alert( "MarginMgr", "WARNING: Cannot calculate stock value for margin order",
+							String.format( "wallet=%s  orderId=%s", wallet(), orderId() ) );
+				}
+			}
+		}
+	}
+
+	private void liquidate() {
+		status( Status.Liquidation);
+		
+		cancelSellOrders();
+		
+		prices().removeListener( m_listener);
+		
+		out( "***Placing liquidation order");
+		m_liqOrder.lmtPrice( prices().bid() * .9);
+		m_liqOrder.quantity( totalBought() - totalSold() );
+
+		try {
+			m_liqOrder.placeOrder( conid() );
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			Alerts.alert( "RefAPI", "COULD NOT PLACE MARGIN LIQUIDATION ORDER", 
+					String.format( "orderId=%s  sharesHeld=%s  loanAmt=%s", orderId(), sharesHeld(), loanAmt() ) );
+		}
 	}
 
 	// map orderId to order state; to try to cast this to OrderMap with types, maybe create a wrapper
@@ -798,22 +820,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 }
 
 //auto-liq at COB regular hours if market is closed next day
-//do liquidation
-//make sure stop is > liq order or place your own stop at the liq price
-//don't allow user cancel if there is any bought size; just allow canceling remaining buy orders
-//you need to cancel one when the other one fills; 
-
-//**you can allow cancel if there is a position, just not if there is a loan amount > 0
-//for now, if a working order is canceled by system, let it cancel the order here and move to next state
-//probably add the order status to the orderMap() so you can see the final status of all orders
-//think about this: stop order triggers during day, night order is conv. to limit but does not fill, then gets canceled; you need to remember that it triggered  
+//you can allow cancel if there is a position, just not if there is a loan amount > 0
+//check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
 //add the config items
-//check for fill during reset, i.e. live savedOrder that is not restored
-//create a new msg to retrieve status of a single message, used for testing
-//for save(), aggregate multiple calls, or save every time after calling process()
-//check for sufficient crypto, reject order if not
-//user reqCompltedOrders to find the missing orders after a reconnect
 
+//test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
 //test dual stop orders
 //test canceling at all different states
@@ -829,6 +840,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //need an efficient way to save, can't write the whole store each time
 //we need a thread that calls check() continuously; remove the 30 sec timer threads
 //allow user to add in more money later
+//update Monitor to show more info per wallet, e.g. margin orders, live orders, etc
+
 
 //	old notes from textpad
 //	

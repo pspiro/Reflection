@@ -80,7 +80,14 @@ public class MyTable extends JTable { // nicole
 		getColumnModel().setColumnMargin( width);
 	}
 	
+	/** Note this will fire more than once when changing selection */
+	int m_selRow = -1;
 	protected void selectionChanged(ListSelectionEvent e) {
+		int newRow = getSelectedRow();
+		if (newRow != m_selRow) {
+			getModel().selectionChanged( newRow);
+			m_selRow = newRow;
+		}
 	}
 
 	@Override public TableCellRenderer getCellRenderer(int row, int col) {
