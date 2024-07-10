@@ -14,7 +14,7 @@ public class Deploy {
 	
 	// NOTE you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask("Dev");
+		Config config = Config.ask();
 		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");
 		
 		String rusdAddress = config.rusd().address();
@@ -41,12 +41,9 @@ public class Deploy {
 
 			// let RefWallet approve RUSD to transfer BUSD; RefWallet needs gas for this
 			//config.matic().transfer( config.ownerKey(), config.refWalletAddr(), .005);
-
-			// THIS IS BROKEN AND MUST BE FIXED
 			
-			// must call it on BUSD, not RUSD
-//			new RbRusd( busdAddress, config.busd().decimals(), config.busd().name() )
-//				.approve( config.refWalletKey(), rusdAddress, 1000000000); // $1B
+			new RbBusd( busdAddress, config.busd().decimals(), config.busd().name() )
+				.approve( config.refWalletKey(), rusdAddress, 1000000); // $1M
 
 			// add a second admin
 //			rusd.addOrRemoveAdmin(

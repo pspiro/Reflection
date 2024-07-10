@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import positions.MoralisServer;
+import positions.NodeServer;
 import reflection.Config;
 import tw.util.S;
 
@@ -43,7 +43,7 @@ public class Fees {
 
 	public static Fees fetch() throws Exception {
 		// params are # of blocks, which percentage to look at
-		JsonObject json = MoralisServer.getFeeHistory(5, 50).getObject( "result");
+		JsonObject json = NodeServer.server.getFeeHistory(5, 50).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );

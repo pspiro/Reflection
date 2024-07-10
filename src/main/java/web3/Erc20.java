@@ -7,6 +7,7 @@ import java.util.HashMap;
 import common.Util;
 import positions.MoralisServer;
 import positions.Wallet;
+import refblocks.Refblocks;
 import tw.util.S;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
@@ -43,7 +44,9 @@ public class Erc20 {
 	
 	public static double fromBlockchain(String amt, int power) {
 		return S.isNotNull(amt)
-				? new BigDecimal( amt).divide( ten.pow(power) ).doubleValue()
+				? new BigDecimal( Refblocks.decodeQuantity( amt) )
+						.divide( ten.pow(power) )
+						.doubleValue()
 				: 0.0;
 	}
 	

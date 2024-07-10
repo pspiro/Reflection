@@ -22,7 +22,6 @@ https://docs.evmos.org/develop/api/ethereum-json-rpc  all here
  *  */
 public class MoralisServer {
 	private static String chain;  // this is chain name e.g. polygon
-	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	static final String moralis = "https://deep-index.moralis.io/api/v2.2";
 	static final String stream = "https://api.moralis-streams.com/streams/evm";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
@@ -232,88 +231,8 @@ public class MoralisServer {
 
 	public static void setChain(String chainIn, String rpcUrlIn) {
 		chain = chainIn;
-		rpcUrl = rpcUrlIn;
+		NodeServer.server = new NodeServer( rpcUrlIn); 
 	}
 	
-	/** This can be a node created for you on Moralis, which you pay for, or a free node.
-	 *  Currently using the free node; if you hit pacing limits, switch to the Moralis node.
-	 *  The Moralis node requires auth data */
-	static JsonObject nodeQuery(String body) throws Exception {
-		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
-
-		return MyClient.create( rpcUrl, body)
-				.header( "accept", "application/json")
-				.header( "content-type", "application/json")
-				.queryToJson();
-	}
-
-
-
-	public static long getBlockNumber() throws Exception {
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_blockNumber"
-			}""";
-		return nodeQuery( body).getLong( "result");
-	}
-
-	/** Get the n latest blocks and for each return the gas price that covers
-	 *  pct percent of the transactions */
-	public static JsonObject getFeeHistory(int blocks, int pct) throws Exception {
-		String body = String.format( """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_feeHistory",
-			"params": [
-				"%s",
-				"latest",
-				[ %s ]
-			]
-			}""", blocks, pct); 
-		return nodeQuery( body);
-	}
-	
-	public static JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
-	}
-	
-	public static JsonObject getQueuedTrans( String from) throws Exception {
-		String body = """
-				{
-				"jsonrpc": "2.0",
-				"id": 1,
-				"method": "txpool_content"
-				}""";
-		return nodeQuery( body);  // result -> pending and result -> queued
-	}
-	
-	public static void main(String[] args) throws Exception {
-		Config c = Config.ask( "Dt2");
-		JsonObject result = getQueuedTrans("").getObject("result");
-
-		S.out( "Pending");
-		show( result.getObject( "pending"), c.ownerAddr() );
-		
-		S.out( "");
-		S.out( "Queued");
-		show( result.getObject( "queued"), c.ownerAddr() );
-	}
-	// I think the issue is that you have pending trans that will never get picked up
-	// and they are blocking next trans; they have to be removed
-	static void show( JsonObject obj, String addr) throws Exception {
-		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
-	}
-		
 }
 // for getapproved or allocated use Erc20.getAllowance()

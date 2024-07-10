@@ -64,7 +64,7 @@ public class Refblocks {
 	}
 	
 	/** Can take hex or decimal */
-	private static BigInteger decodeQuantity(String hex) {
+	public static BigInteger decodeQuantity(String hex) {
 		try {
 			return Numeric.decodeQuantity( hex);
 		}
@@ -172,6 +172,8 @@ public class Refblocks {
 
 	/** This is only used for deployment and minting stock tokens.
 	 *  Should not be used in production because nonce will get mixed up with FasterTm
+	 *  
+	 *  It polls for receipt every 15 sec.
 	 * 
 	 *  This transaction manager queries for the nonce and waits for the transaction 
 	 *  receipt. If there is an error, it queries for the real error text from the contract.

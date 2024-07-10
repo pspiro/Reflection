@@ -24,7 +24,7 @@ public class RbRusd extends Erc20 implements IRusd {
 	public static String deploy( String ownerKey, String refWallet, String admin1) throws Exception {
 		return Rusd.deploy( 
 				Refblocks.web3j,
-				Refblocks.getWaitingTm( ownerKey),
+				Refblocks.getWaitingTm( ownerKey),  // this one polls every 15 sec
 				Refblocks.getGp( Refblocks.deployGas),
 				refWallet, admin1
 				).send().getContractAddress();
