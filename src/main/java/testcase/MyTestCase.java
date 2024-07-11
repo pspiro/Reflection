@@ -197,4 +197,8 @@ public class MyTestCase extends TestCase {
 		}
 	}
 	
+	void failWith(RefCode refCode) throws Exception {
+		assertEquals( refCode, cli.getRefCode() );
+	}
+	
 }

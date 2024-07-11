@@ -105,10 +105,7 @@ public class JsonModel extends MyTableModel {
 	}
 	
 	public void selectionChanged(int row) {
-		JsonObject val = m_ar.get(row);
-		if (val != null) {
-			onSelChanged( val);
-		}
+		onSelChanged( row >= 0 && row < m_ar.size() ? m_ar.get(row) : null);
 	}
 
 	@Override final public void onRightClick(MouseEvent e, int row, int col) {

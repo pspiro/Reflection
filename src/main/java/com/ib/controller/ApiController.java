@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.function.Consumer;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -1091,10 +1092,31 @@ public class ApiController implements EWrapper {
 			m_order.status( m_status);  // we could update filled and avgPrice here too if desired
 		}
 	}
-	
+
+	/** WARNING: do not call this from the API processing thread or it will hang the program.
+	 *  Use the version below except for testing. */
+	public HashMap<Integer,LiveOrder> _reqLiveOrderMap() throws Exception {
+		ObjectHolder<HashMap<Integer,LiveOrder>> holder = new ObjectHolder<>();
+		
+		S.out( "FOR TESTING ONLY");
+		
+		Util.sync( queue -> {
+			reqLiveOrderMap( map -> {
+				holder.val = map;
+				try {
+					queue.put( "");
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			});
+		});
+		
+		return holder.val;
+	}
+
 	/** Request live orders. Aggregate both the Order and the orderStatus. Return as a 
 	 *  map of permId to LiveOrder */ 
-	public HashMap<Integer,LiveOrder> reqLiveOrderMap() throws Exception {
+	public void reqLiveOrderMap( Consumer<HashMap<Integer,LiveOrder>> consumer) throws Exception {
 		if (!checkConnection()) {
 			throw new Exception( "Not connected");
 		}
@@ -1105,40 +1127,36 @@ public class ApiController implements EWrapper {
 		ObjectHolder<ILiveOrderHandler> handler = new ObjectHolder<>();
 
 		// block until openOrderEnd() is called
-		Util.sync( queue -> {
-			S.out( "Requesting live order map");
-			handler.val = reqLiveOrders( new ILiveOrderHandler() {
-				@Override public void orderStatus(int orderId, OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
-						int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
-					
-					Util.getOrCreate( map, permId, () -> new LiveOrder( permId) )
-						.update( status, filled.toInt(), avgFillPrice);
-				}
-	
-				@Override public void openOrder(Contract contract, Order order, OrderState orderState) {
-					Util.getOrCreate( map, order.permId(), () -> new LiveOrder( order.permId() ) )
-						.order( order);
-				}
+		S.out( "Requesting live order map");
+		handler.val = reqLiveOrders( new ILiveOrderHandler() {
+			@Override public void orderStatus(int orderId, OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice,
+					int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 				
-				@Override public void openOrderEnd() {
-					try {
-						S.out( "  finished receiving live order map");
-						map.values().forEach( live -> Util.wrap( () -> live.updateStatus() ) );
-						removeLiveOrderHandler( handler.val);
-						queue.put( "");
-					} catch (Exception e) {
-						S.out( "Error creating live order map");
-						e.printStackTrace();
-					}
-				}
+				Util.getOrCreate( map, permId, () -> new LiveOrder( permId) )
+					.update( status, filled.toInt(), avgFillPrice);
+			}
 
-				@Override public void handle(int orderId, int errorCode, String errorMsg) {
-					// ignore
+			@Override public void openOrder(Contract contract, Order order, OrderState orderState) {
+				Util.getOrCreate( map, order.permId(), () -> new LiveOrder( order.permId() ) )
+					.order( order);
+			}
+			
+			@Override public void openOrderEnd() {
+				try {
+					S.out( "  finished receiving live order map");
+					map.values().forEach( live -> Util.wrap( () -> live.updateStatus() ) ); // update the order status on the Order
+					removeLiveOrderHandler( handler.val);
+				} catch (Exception e) {
+					S.out( "Error creating live order map");
+					e.printStackTrace();
 				}
-			});
+				consumer.accept( map);
+			}
+
+			@Override public void handle(int orderId, int errorCode, String errorMsg) {
+				// ignore
+			}
 		});
-		
-		return map;
 	}
 
 	public void takeTwsOrders( ILiveOrderHandler handler) {

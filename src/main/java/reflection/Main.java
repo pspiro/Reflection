@@ -135,6 +135,11 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
 			server.createContext("/api/margin-get-order", exch -> new MarginTrans(this, exch, true).marginGetOrder() );
 			server.createContext("/api/margin-get-all", exch -> new MarginTrans(this, exch, true).marginGetAll() );
+			server.createContext("/api/margin-liquidate", exch -> new MarginTrans(this, exch, true).marginLiquidate() );
+			server.createContext("/api/margin-add-funds", exch -> new MarginTrans(this, exch, true).marginAddFunds() );
+			server.createContext("/api/margin-withdraw-funds", exch -> new MarginTrans(this, exch, true).marginWithdrawFunds() );
+			server.createContext("/api/margin-withdraw-tokens", exch -> new MarginTrans(this, exch, true).marginWithdrawTokens() );
+			server.createContext("/api/margin-info", exch -> new MarginTrans(this, exch, true).marginInfo() );
 
 
 			// orders and live orders
@@ -309,7 +314,8 @@ public class Main implements ITradeReportHandler {
 	class ConnectionMgr extends ConnectionMgrBase {
 
 		ConnectionMgr(String host, int port) {
-			super( host, port, rnd.nextInt( Integer.MAX_VALUE) + 1, m_config.reconnectInterval() ); 
+			// must MUST always use same client ID or we won't get updates on live margin orders
+			super( host, port, 1, m_config.reconnectInterval() ); 
 
 			m_controller.handleExecutions( Main.this);
 		}

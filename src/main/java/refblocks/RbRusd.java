@@ -47,7 +47,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 		
-		S.out( "RUSD buyStock %s %s paying %s %s for user %s", 
+		S.out( "RB-RUSD buyStock %s %s paying %s %s for user %s", 
 				stockTokenAmt,
 				stockToken.address(),
 				stablecoinAmt,
@@ -69,7 +69,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "RUSD sellStock %s %s receive %s RUSD for user %s",
+		S.out( "RB-RUSD sellStock %s %s receive %s RUSD for user %s",
 				stockTokenAmt,
 				stockToken.name(),
 				rusdAmt,
@@ -90,7 +90,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "RUSD redeeming %s RUSD receive %s %s for user %s",
+		S.out( "RB-RUSD redeeming %s RUSD receive %s %s for user %s",
 				amt,
 				amt,
 				busd.name(),
@@ -115,7 +115,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(refWalletAddr);
 		
-		S.out( "RUSD setting RefWallet to %s", refWalletAddr);
+		S.out( "RB-RUSD setting RefWallet to %s", refWalletAddr);
 		
 		return Refblocks.exec( ownerKey, tm -> load( tm).setRefWalletAddress(
 				refWalletAddr) );
@@ -125,7 +125,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(ownerKey);
 		Util.reqValidAddress(address);
 
-		S.out( "RUSD %s %s admin %s",
+		S.out( "RB-RUSD %s %s admin %s",
 				Refblocks.getAddressPk( ownerKey),
 				add ? "adding" : "removing",
 				address);
@@ -143,7 +143,7 @@ public class RbRusd extends Erc20 implements IRusd {
 //		Util.reqValidKey(holderKey);
 //		Util.reqValidAddress(spenderAddr);
 //
-//		S.out( "RUSD %s allows spending of %s RUSD by %s",
+//		S.out( "RB-RUSD %s allows spending of %s RUSD by %s",
 //				holderKey,
 //				amt,
 //				spenderAddr);

@@ -70,17 +70,20 @@ class MarginStore extends TsonArray<MarginOrder> {
 
 	/** connection to TWS has been established; could be the first time or a subsequent time */
 	public synchronized void onReconnected() {
-		// fetch all live orders from TWS
-		HashMap<Integer, LiveOrder> permIdMap;
 		try {
-			permIdMap = m_conn.reqLiveOrderMap();
-		} catch (Exception e1) {
+			// fetch all live orders from TWS
+			m_conn.reqLiveOrderMap( permIdMap -> onRecMap( permIdMap) );
+		} 
+		catch (Exception e1) {
 			Alerts.alert( "RefAPI", "COULD NOT GET LIVE ORDER MAP", "");
 			S.out( "Could not get live order map; we should probably reset the connection to TWS. Will try again in 30 seconds");
 			e1.printStackTrace();
 
-			permIdMap = new HashMap<>();
+			onRecMap(new HashMap<Integer, LiveOrder>() );
 		}
+	}
+	
+	public synchronized void onRecMap(HashMap<Integer, LiveOrder> permIdMap) {
 		
 		// build map of order ref to live orders
 		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder; better would be map orderId to list of orders with with that orderId

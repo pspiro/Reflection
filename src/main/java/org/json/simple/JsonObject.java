@@ -500,6 +500,15 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			}
 		}
 	}
+
+	/** This assumes that this object is a map of key to JsonObject */
+	public JsonArray toArray() {
+		JsonArray ar = new JsonArray();
+		for (var obj : values() ) {
+			ar.add( (JsonObject)obj);
+		}
+		return ar;
+	}
 }
 /** NOTE: Timestamp objects are stored as
  *  

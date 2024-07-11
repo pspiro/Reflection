@@ -3,8 +3,10 @@ package monitor;
 import java.awt.BorderLayout;
 import java.awt.Component;
 
+import javax.swing.JEditorPane;
 import javax.swing.JTextField;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -16,17 +18,17 @@ public class MarginPanel extends MonPanel {
 	// warning, names must be trimmed
 	static final String someNames = """
 			placed,
-			wallet_public_key,
 			orderId,
+			status,
 			symbol,
 			bidPrice, 
 			askPrice,
-			status,
 			desiredQty,
 			loanAmt, 
 			sharesHeld,
 			sharesToBuy,
-			completedHow
+			completedHow,
+			wallet_public_key
 			""";
 
 	static final String endpoint = "/api/margin-get-all";
@@ -52,28 +54,46 @@ public class MarginPanel extends MonPanel {
 		}
 		
 		@Override public void onSelChanged(JsonObject json) {
-			right.update( json); 
+			Util.wrap( () -> right.update( json) ); 
 		}
 	}
 
+	/** Display a table from JsonArray */
+	static class HtmlPanel extends JEditorPane {
+		HtmlPanel() {
+			setContentType("text/html");
+	        setEditable(false);
+		}
+		
+		HtmlPanel(JsonArray json) {
+			this();
+			setText( json);
+		}
+		
+		void setText( JsonArray obj) {
+	        setText( obj.toHtml() );
+		}
+	}
+	
 	static class RightPanel extends VerticalPanel {
 		private JsonObject m_json;
 
 		RightPanel() {
 		}
 		
-		/** json would be null when row is deselected */
-		void update( JsonObject json) {
+		/** json would be null when row is deselected 
+		 * @throws Exception */
+		void update( JsonObject json) throws Exception {
 			removeAll();
 			
 			if (json != null) {
 				m_json = json;
 				
 				addOne( "wallet_public_key", "wallet_public_key");
-				addOne( "mkt prices", "bid", "ask");
+				addOne( "mkt prices", "bidPrice", "askPrice");
 				addHeader( "Entered by user");
 				addOne( "stock", "symbol", "conid");
-				addOne( "order prices", "stopPrice", "entryPrice", "profitTakerPrice");
+				addOne( "order prices", "stopLossPrice", "entryPrice", "profitTakerPrice");
 				addOne( "amount/leverage", "amountToSpend", "leverage");
 				addOne( "quantity (desired/rounded)", "desiredQty", "roundedQty");
 				addOne( "misc", "goodUntil", "currency");
@@ -84,6 +104,8 @@ public class MarginPanel extends MonPanel {
 				addOne( "trans hash/gotReceipt", "transHash", "gotReceipt");
 				addOne( "shares (held/toBuy)", "sharesHeld", "sharesToBuy");
 				addOne( "loan/value", "loanAmt", "value");
+				
+				add( "map", new HtmlPanel( json.getObject( "orderMap").toArray() ) );
 			}
 			
 			revalidate();

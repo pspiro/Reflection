@@ -245,7 +245,6 @@ public class Config extends ConfigBase {
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
 		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
-		this.fbLookback = m_tab.getRequiredDouble("fbLookback");
 		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
@@ -285,7 +284,8 @@ public class Config extends ConfigBase {
 			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
-			
+			this.fbLookback = m_tab.getRequiredDouble("fbLookback");
+
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
 			if (fireblocksApiKey.startsWith("projects/") ) {

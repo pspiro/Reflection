@@ -113,10 +113,11 @@ public class Refblocks {
 		TransactionManager tm = null;
 		
 		try {
-			tm = getFasterTm( callerKey);
+			//tm = getFasterTm( callerKey);
+			tm = getSlowerTm( callerKey);
 			
 			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
-			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
+			//Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
 
 			return new RbRetVal( receipt);
 		}
@@ -168,6 +169,11 @@ public class Refblocks {
 				web3j, 
 				Credentials.create( callerKey), 
 				new DelayedTrp() ) );
+	}
+
+	/** note that we could use a singleton DelayedTrp if desired; there is no state */
+	protected static TransactionManager getSlowerTm(String callerKey) {
+		return new SlowerTm(web3j, Credentials.create( callerKey) );
 	}
 
 	/** This is only used for deployment and minting stock tokens.
@@ -259,8 +265,8 @@ public class Refblocks {
 
 		private String m_key;  // for debugonly
 
-		public SlowerTm(Web3j web3j, Credentials credentials, TransactionReceiptProcessor trp) {
-			super(web3j, credentials, chainId, trp);
+		public SlowerTm(Web3j web3j, Credentials credentials) {
+			super(web3j, credentials, chainId);
 			m_key = credentials.getAddress().substring( 0, 6);
 		}
 		

@@ -73,7 +73,7 @@ public class TestApi extends ConnectionAdapter {
 		o.orderRef("ZZZZZZZZ");
 
 		try {
-			HashMap<Integer, LiveOrder> map = m_conn.reqLiveOrderMap();
+			HashMap<Integer, LiveOrder> map = m_conn._reqLiveOrderMap();
 			map.values().forEach( ord -> show(ord) );
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

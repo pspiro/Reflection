@@ -33,7 +33,7 @@ public class NiceTimer {
 			}
 		};
 
-		if (period >= 0) {
+		if (period > 0) {
 			m_timer.schedule( task, wait, period);
 		}
 		else {

@@ -230,4 +230,29 @@ public class MarginTrans extends MyTransaction {
 			respond( order);
 		});
 	}
+
+	public void marginLiquidate() {
+		wrap( () -> {
+		});
+	}
+
+	public void marginAddFunds() {
+		wrap( () -> {
+		});
+	}
+
+	public void marginWithdrawFunds() {
+		wrap( () -> {
+		});
+	}
+
+	public void marginWithdrawTokens() {
+		wrap( () -> {
+		});
+	}
+
+	public void marginInfo() {
+		wrap( () -> {
+		});
+	}
 }

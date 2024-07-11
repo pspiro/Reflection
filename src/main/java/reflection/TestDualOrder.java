@@ -88,7 +88,7 @@ public class TestDualOrder {
 			S.out( "***reconnected; testing restore single from live");
 			
 			// get live order maps
-			var orderIdMap = conn.reqLiveOrderMap();
+			var orderIdMap = conn._reqLiveOrderMap();
 			var orderRefMap = MarginStore.getOrderRefMap(orderIdMap);
 			
 			DualOrder ord = new DualOrder( 

@@ -153,11 +153,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 	public void postInit() {
 		out( "postInit " + this);
 		
+		// NOTE: we don't set the TIF here; it is set in SingleOrder ctor
+		
 		m_buyOrder = new DualOrder( m_conn, null, "ENTRY", orderId() + " entry", conid(), this);
 		m_buyOrder.action( Action.Buy);
 		m_buyOrder.orderType( OrderType.LMT);
 		m_buyOrder.lmtPrice( entryPrice() );
-		m_buyOrder.tif( TimeInForce.GTC);   // must consider this
 		m_buyOrder.outsideRth( true);
 
 		if (profitTakerPrice() > 0) {
@@ -165,7 +166,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 			m_profitOrder.action( Action.Sell);
 			m_profitOrder.orderType( OrderType.LMT);
 			m_profitOrder.lmtPrice( profitTakerPrice() );
-			m_profitOrder.tif( TimeInForce.GTC);   // must consider this
 			m_profitOrder.outsideRth( true);
 		}
 		
@@ -175,14 +175,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			m_stopOrder.orderType( OrderType.STP_LMT);  // use STOP_LMT  because STOP cannot be set to trigger outside RTH
 			m_stopOrder.lmtPrice( stopLossPrice() * .95);
 			m_stopOrder.stopPrice( stopLossPrice() );
-			m_stopOrder.tif( TimeInForce.GTC);   // must consider this
 			m_stopOrder.outsideRth( true);
 		}
 
 		m_liqOrder = new DualOrder( m_conn, null, "LIQUIDATION", orderId() + " liquidation", conid(), this);
 		m_liqOrder.action( Action.Sell);
 		m_liqOrder.orderType( OrderType.LMT);
-		m_liqOrder.tif( TimeInForce.GTC);
 		m_liqOrder.outsideRth( true);
 
 		prices().addListener( m_listener);  // always?
@@ -816,6 +814,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
+//continue with testordernofill; it's not moving to the "placed buy order" status, where should that happen
 //auto-liq at COB regular hours if market is closed next day
 //you can allow cancel if there is a position, just not if there is a loan amount > 0
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
@@ -838,7 +837,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //we need a thread that calls check() continuously; remove the 30 sec timer threads
 //allow user to add in more money later
 //update Monitor to show more info per wallet, e.g. margin orders, live orders, etc
-
+//move the marginstore into the database using a json field for the entire order?
 
 //	old notes from textpad
 //	
