@@ -13,14 +13,15 @@ import com.ib.controller.ApiController.LiveOrder;
 
 import common.Alerts;
 import common.NiceTimer;
+import common.Util;
 import tw.util.S;
 
 class MarginStore extends TsonArray<MarginOrder> {
 	private String m_filename ;
 	private boolean m_started;
 	private ApiController m_conn;
-	private final NiceTimer m_processTimer = new NiceTimer();  // check every ten sec
-	private final NiceTimer m_saveTimer = new NiceTimer(); // save up to every
+	private final NiceTimer m_processingThread = new NiceTimer();  // check every ten sec
+	private final NiceTimer m_saveTimer = new NiceTimer(); // save in 500 ms
 	private final Runnable m_saver = () -> saveNow(); 
 	
 	public MarginStore(String filename, ApiController conn) {
@@ -68,6 +69,13 @@ class MarginStore extends TsonArray<MarginOrder> {
 		return null;
 	}
 
+	/** Called when a new margin order is received from user */
+	public void startOrder(MarginOrder mo) {
+		add( mo);
+		saveNow();
+		m_processingThread.execute( () -> mo.acceptPayment() );
+	}
+
 	/** connection to TWS has been established; could be the first time or a subsequent time */
 	public synchronized void onReconnected() {
 		try {
@@ -83,7 +91,8 @@ class MarginStore extends TsonArray<MarginOrder> {
 		}
 	}
 	
-	public synchronized void onRecMap(HashMap<Integer, LiveOrder> permIdMap) {
+	/** Called on reconnect */
+	private synchronized void onRecMap(HashMap<Integer, LiveOrder> permIdMap) {
 		
 		// build map of order ref to live orders
 		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder; better would be map orderId to list of orders with with that orderId
@@ -91,15 +100,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 		// call this every time we reconnect to update the margin orders with the
 		// current live IB orders; use executeEvery to put this in the same thread
 		// as the calls to MarginOrder.process() so they don't overlap
-		m_processTimer.executeEvery( 0, 0, () -> 
-			forEach( order -> order.onReconnected( orderRefMap) ) );
+		m_processingThread.execute( () -> forEach( order -> order.onReconnected( orderRefMap) ) );
 		
 		// start the thread only once, after the first successful connection to TWS, then it runs forever
 		if (!m_started) {
 			m_started = true;
 			
 			//forEach( order -> order.restart() );
-			m_processTimer.executeEvery( 0, 10000, () -> 
+			m_processingThread.executeEvery( 0, 10000, () -> 
 				forEach( order -> order.process() ) );
 		}
 	}

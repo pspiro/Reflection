@@ -142,6 +142,6 @@ class UsersPanel extends QueryPanel {
 	}
 	
 	static String getVal( JsonObject fields, String tag) throws Exception {
-		return fields.getObject( tag).getString( "value");
+		return fields.getObjectNN( tag).getString( "value");
 	}
 }

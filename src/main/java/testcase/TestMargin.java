@@ -11,6 +11,7 @@ import tw.util.S;
 
 public class TestMargin extends MyTestCase {
 	static double base = TestOrder.curPrice;
+	static String conid = "" + TestOrder.conid;
 	
 //	server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 //	server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
@@ -41,7 +42,7 @@ public class TestMargin extends MyTestCase {
 		// fail missing cookie
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"conid", "265598"
+				"conid", conid
 				) )
 			.display();
 		failWith( RefCode.VALIDATION_FAILED);
@@ -49,7 +50,7 @@ public class TestMargin extends MyTestCase {
 		// success
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"conid", "265598",
+				"conid", conid,
 				"cookie", Cookie.cookie
 				) )
 			.display();
@@ -121,7 +122,7 @@ public class TestMargin extends MyTestCase {
 		JsonObject ord = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"conid", "265598",
+				"conid", conid,
 				"amountToSpend", 100.12,
 				"leverage", 1.,
 				"profitTakerPrice", 226,
@@ -145,7 +146,7 @@ public class TestMargin extends MyTestCase {
 		JsonObject ord = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"conid", "265598",
+				"conid", conid,
 				"amountToSpend", 100.12,
 				"leverage", 1.,
 				"profitTakerPrice", 216,
@@ -164,7 +165,7 @@ public class TestMargin extends MyTestCase {
 		JsonObject dynamic = cli().postToJson( "/api/margin-dynamic", Util.toJson(
 				"wallet_public_key", Cookie.wallet, 
 				"cookie", Cookie.cookie,
-				"conid", "265598") );
+				"conid", conid) );
 		
 		JsonObject live = dynamic.getArray( "orders").find( "orderId", json.getString("orderId") );
 		assertTrue( "live order not found", live != null);
@@ -200,7 +201,7 @@ public class TestMargin extends MyTestCase {
 		JsonObject ord = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"conid", "265598",
+				"conid", conid,
 				"amountToSpend", 100.12,
 				"leverage", 1.,
 				"profitTakerPrice", 216,
@@ -259,7 +260,7 @@ public class TestMargin extends MyTestCase {
 		return Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"conid", "265598",
+				"conid", conid,
 				"amountToSpend", 100,
 				"leverage", 1.,
 				"profitTakerPrice", base + 1,
@@ -273,7 +274,7 @@ public class TestMargin extends MyTestCase {
 	private void showStatus(String id) throws Exception {
 		JsonArray ords = cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"conid", "265598",
+				"conid", conid,
 				"cookie", Cookie.cookie
 				) ).getArray( "orders");
 
@@ -284,7 +285,7 @@ public class TestMargin extends MyTestCase {
 		return cli().postToJson( "/api/margin-dynamic", Util.toJson(
 				"wallet_public_key", Cookie.wallet, 
 				"cookie", Cookie.cookie,
-				"conid", "265598") )
+				"conid", conid) )
 			.getArray( "orders");
 	}
 

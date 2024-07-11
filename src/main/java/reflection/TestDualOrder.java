@@ -47,9 +47,9 @@ public class TestDualOrder {
 				"test",
 				"test " + i,
 				8314,
-				(order, permId, action, filled, avgFillPrice) -> {
-					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s",
-							permId, action, filled, avgFillPrice);
+				(order, status, permId, action, filled, avgFillPrice) -> {
+					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
+							permId, action, filled, avgFillPrice, status);
 					m_permId = permId;
 				});
 		
@@ -97,7 +97,7 @@ public class TestDualOrder {
 					"test",
 					"test " + i,
 					8314,
-					(order, permId, action, filled, avgFillPrice) -> {
+					(order, status, permId, action, filled, avgFillPrice) -> {
 						S.out( "child TWO updated  permId=%s  action=%s  filled=%s  price=%s",
 								permId, action, filled, avgFillPrice);
 					} );
@@ -124,7 +124,7 @@ public class TestDualOrder {
 				"test",
 				"testId",
 				8314,
-				(order, permId, action, filled, avgFillPrice) -> {
+				(order, status, permId, action, filled, avgFillPrice) -> {
 					S.out( "child updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
 				});

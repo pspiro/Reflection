@@ -177,15 +177,10 @@ public class MarginTrans extends MyTransaction {
 			
 			out( "Received valid margin order " + mo);
 
-			m_main.marginStore().add( mo);
-			m_main.marginStore().saveNow();
+			
+			m_main.marginStore().startOrder( mo);
 			
 			respond( code, RefCode.OK, "orderId", mo.orderId() );
-
-			// don't tie up the http server thread
-			Util.execute( () -> {
-				mo.acceptPayment();
-			});
 		});
 		
 	}

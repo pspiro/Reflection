@@ -597,12 +597,14 @@ public class Main implements ITradeReportHandler {
 		try {
 			S.out( "Reading margin store");
 			
-			//m_marginStore = new MarginStore( filename);
+			// we have to create the margin store before parsing the json
+			// because the store is used in the constructor to the MarginOrders
+			m_marginStore = new MarginStore( filename, apiController() );
 			
-			m_marginStore = (MarginStore)JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
+			JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
 					new FileReader( filename),
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore),  // note that connection may not be established yet
-					() -> new MarginStore( filename, apiController() ) );
+					() -> m_marginStore);
 			
 			S.out( "  read %s records", m_marginStore.size() );
 		}

@@ -10,9 +10,9 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.DualOrder;
 import com.ib.client.DualOrder.DualParent;
+import com.ib.client.OrderStatus;
 import com.ib.client.OrderType;
 import com.ib.client.Types.Action;
-import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.LiveOrder;
 
@@ -198,7 +198,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		for (var liveOrder : orderRefMap.values() ) {
 			if (liveOrder.orderId().equals( orderId() ) ) {
 				Util.wrap( () -> updateOrderStatus( 
-						liveOrder.permId(), liveOrder.action(), liveOrder.filled(), liveOrder.avgPrice() ) );
+						liveOrder.permId(), liveOrder.action(), liveOrder.filled(), liveOrder.avgPrice(), liveOrder.status() ) );
 			}
 		}
 		
@@ -218,7 +218,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	/** called on a timer every few seconds; make sure the margin order is in sync with the IB order */ 
 	// no good, we can't be calling this and methods like placeBuyOrder in different threads
 	// you either have to only call them in this thread, or only call this after reconnect
-	synchronized void process() {  // check this sync. pas
+	synchronized void process() {
 		switch( status() ) {
 			case NeedPayment:
 				acceptPayment();
@@ -271,7 +271,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	public void acceptPayment() {
+	public synchronized void acceptPayment() {
 		try {
 			acceptPayment_();
 		}
@@ -293,7 +293,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		StockToken receipt = m_stocks.getReceipt();
 		double prevBalance = receipt.getPosition( walletAddr);  // or get from HookServer
 
-		// wrong, don't pull config from Main. pas
+		// wrong, don't pull config from Main, won't work for isolated testing outside RefAPI pas
 		Stablecoin stablecoin = m_config.getStablecoin( currency() );
 
 		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
@@ -431,8 +431,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// now we wait for the buy order to be filled or canceled 
 	}
 	
+	/** Called when an order is updated; note that it is called in the API processing thread;
+	 *  we could put it in the margin thread if desired */
 	@Override public synchronized void onStatusUpdated(
-			DualOrder dualOrd, 
+			DualOrder dualOrd,
+			OrderStatus ibOrderStatus,
 			int permId, 
 			Action action, 
 			int filled, 
@@ -442,8 +445,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 			// add or update order map if there was a fill; we don't care what state we are in
 			// but we might give a warning if not in an expected state
-			if (filled > 0) {
-				updateOrderStatus( permId, action, filled, avgPrice);  // we could add OrderStatus here if desired. pas
+			if (filled > 0 || ibOrderStatus != OrderStatus.Cancelled) {
+				updateOrderStatus( permId, action, filled, avgPrice, ibOrderStatus);  // we could add OrderStatus here if desired. pas
+			}
+			else {
+				orderMap().remove( "" + permId);
 			}
 			
 			final Status status = status();
@@ -498,14 +504,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 					// we are dont
 				}
 			}
-			else {
-				out( "Error: received fill we were not expecting; maybe order was canceled?");
-			}
+//			else {
+//				probably just one of the extra day/night orders being canceled; we can ignore it
+//			}
 		});
 	}
 
-	/** Place new sell orders OR sync up with the existing sell orders */
-	void placeSellOrders() {
+	/** Place new sell orders. Called in API or margin thread */
+	private synchronized void placeSellOrders() {
 		try {
 			placeSellOrders_();
 		}
@@ -520,7 +526,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 	
-	void placeSellOrders_() throws Exception  {
+	private void placeSellOrders_() throws Exception  {
 		Util.require( status() == Status.BuyOrderFilled, "Invalid status %s to place sell orders", status() );
 		
 		boolean someSell = false;
@@ -549,11 +555,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}			
 	
-	void cancelBuyOrders() {
+	/** called in API or margin thread */
+	private void cancelBuyOrders() {
 		out( "canceling buy orders");
 		m_buyOrder.cancel();
 	}
 
+	/** called in API or margin thread */
 	private void cancelSellOrders() {
 		if (m_profitOrder != null) {
 			out( "canceling profit order");
@@ -566,25 +574,27 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 	
+	/** Called in API thread */
 	private void cancelLiqOrder() {
 		out( "canceling liquidation order");
 		m_liqOrder.cancel();
 	}
-	
+
+	/** save entire order store in 500 ms */
 	private void save() {
 		m_store.saveLater(); 
 	}
 
-	public void transHash(String hash) {
+	private void transHash(String hash) {
 		put( "transHash", hash);
-		
 	}
 
-	public void gotReceipt(boolean v) {
+	private void gotReceipt(boolean v) {
 		put( "gotReceipt", v);
 	}
 
-	public void userCancel() throws RefException {
+	/** called by user in HTTP processing thread */
+	public synchronized void userCancel() throws RefException {
 		switch( status() ) {
 		case NeedPayment:
 		case InitiatedPayment:
@@ -633,18 +643,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 	/** for liquidation calculation purposes, we have to use mark price which uses the bid
 	 *  price; for display purposes, we use the last price because we will frequently have
 	 *  a last price even if there is no bid */
-	double stockValueMark() throws Exception {
+	private double stockValueMark() throws Exception {
 		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
 		return stockPos * prices().markPrice();
 	}
 	
-	double stockValueLast() {
+	private double stockValueLast() {
 		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
 		return stockPos * prices().last();
 	}
 	
 	/** value is stock plus cash */
-	double cashBalance() {
+	private double cashBalance() {
 		return 
 			amtToSpend() + // the user may contribute more money later which we have to add in here  
 			adjust( totalSold() ) * avgSellPrice() -
@@ -705,7 +715,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		S.out( orderId() + " " + format, params);
 	}
 	
-	void status( Status status) {
+	private void status( Status status) {
 		Object prev = put( "status", status);
 		out( "Set status to %s  (prev %s)", status, prev); 
 		save();
@@ -720,12 +730,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 	 *  
 	 * @throws Exception */  // create a JsonMap object, same as JsonObject but any type. pas
 	
-	void updateOrderStatus( int permId, Action action, int filled, double avgPrice) throws Exception {
+	private void updateOrderStatus( int permId, Action action, int filled, double avgPrice, OrderStatus status) throws Exception {
 		getOrCreateOrderStatus( permId, action)
-			.putAll( Util.toJson( "filled", filled, "avgPrice", avgPrice) );  // we could add orderStatus here if needed
+			.putAll( Util.toJson( "filled", filled, "avgPrice", avgPrice, "status", status) );  // we could add orderStatus here if needed
 	}
 	
-	JsonObject getOrCreateOrderStatus( int permId, Action action) throws Exception {
+	/** Return a value for the IB order map; it's a json with permId, action, status, filled, and avgPrice */
+	private JsonObject getOrCreateOrderStatus( int permId, Action action) throws Exception {
 		return (JsonObject)Util.getOrCreate( 
 				orderMap(), 
 				"" + permId,
@@ -740,7 +751,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return stock().prices();
 	}
 	
-	/** update bid/ask fields which are displayed by Frontend */
+	/** update bid/ask fields which are displayed by Frontend; called
+	 *  in the Util.m_timer thread */
 	private synchronized void onTickBidAsk(Prices prices) {
 		put( "bidPrice", prices.bid() );
 		put( "askPrice", prices.ask() );
@@ -750,7 +762,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		if (status() != Status.PlacedBuyOrder || status() == Status.BuyOrderFilled) {
 			double loanVal = loanAmt();
 			
-			if (loanVal > 0) {
+			if (loanVal > 0) {     // loan value and liq. is wrong; 
 				try {
 					double stockVal = stockValueMark();
 					if (stockVal < loanVal * maxLtv) {
@@ -767,6 +779,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
+	/** Called when the price ticks and the stock value has dropped below min required value */
 	private void liquidate() {
 		status( Status.Liquidation);
 		
@@ -788,8 +801,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	// map orderId to order state; to try to cast this to OrderMap with types, maybe create a wrapper
-	JsonObject orderMap() { 
+	/** map IB order permId (as string) to order state; to try to cast this to OrderMap with types, maybe create a wrapper;
+	    the map contains all live orders and all filled orders; unfilled canceled orders are removed */
+	private JsonObject orderMap() { 
 		try {
 			return getObject( "orderMap");
 		} catch (Exception e) {
@@ -798,11 +812,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		} 
 	}  
 	
-	double sharesHeld() {
+	private double sharesHeld() {
 		return getDouble( "sharesHeld");
 	}
 
-	double loanAmt() {
+	private double loanAmt() {
 		return getDouble( "loanAmt");
 	}
 
@@ -814,6 +828,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
+//loan value is wrong
 //continue with testordernofill; it's not moving to the "placed buy order" status, where should that happen
 //auto-liq at COB regular hours if market is closed next day
 //you can allow cancel if there is a position, just not if there is a loan amount > 0

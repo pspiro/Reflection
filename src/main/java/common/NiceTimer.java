@@ -26,6 +26,11 @@ public class NiceTimer {
 	}
 
 	/** Just adds the convenience of not having to create a TimerTask */
+	public void execute( Runnable runnable) {
+		executeEvery( 0, 0, runnable);
+	}
+
+	/** Just adds the convenience of not having to create a TimerTask */
 	public void executeEvery(int wait, int period, Runnable runnable) {
 		TimerTask task = new TimerTask() {
 			@Override public void run() {

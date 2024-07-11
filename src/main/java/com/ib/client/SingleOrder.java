@@ -19,7 +19,7 @@ public class SingleOrder implements IOrderHandler {
 	public enum Type { Day, Night };  // you could combine this with TradingHours.Session
 
 	public interface SingleParent {
-		void onStatusUpdated(SingleOrder order, int permId, Action action, int filled, double avgFillPrice);  
+		void onStatusUpdated(SingleOrder order, OrderStatus status, int permId, Action action, int filled, double avgFillPrice);  
 	}
 
 	private final ApiController m_conn;
@@ -57,6 +57,7 @@ public class SingleOrder implements IOrderHandler {
 		m_order.tif( m_session == Type.Day ? TimeInForce.GTC : TimeInForce.DAY);
 	}
 	
+	/** Called after reconnect */
 	public void rehydrate(HashMap<String, LiveOrder> orderRefMap) {
 		common.Util.ifff( orderRefMap.get( m_key), liveOrder -> {
 			m_order = liveOrder.order();
@@ -68,8 +69,11 @@ public class SingleOrder implements IOrderHandler {
 					m_order.orderId(), m_key, m_order.permId(), m_order.status() );
 			
 			// notify parent in case state has changed in some way
-			m_parent.onStatusUpdated( this, m_order.permId(), m_order.action(), 
-					liveOrder.filled(), liveOrder.avgPrice() );
+			// we don't need this because we are going to call MarginOrder.process() 
+			// right after this method, plus we have already saved/update the live order
+			// in the orderMap()
+//			m_parent.onStatusUpdated( this, liveOrder.status(), m_order.permId(), m_order.action(), 
+//					liveOrder.filled(), liveOrder.avgPrice() );
 		});
 	}
 
@@ -151,7 +155,7 @@ public class SingleOrder implements IOrderHandler {
 		out( "SingleOrder name=%s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
 				m_name, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
 		
-		m_parent.onStatusUpdated( this, permId, m_order.action(), filled.toInt(), avgFillPrice);
+		m_parent.onStatusUpdated( this, status, permId, m_order.action(), filled.toInt(), avgFillPrice);
 	}
 
 	@Override public void orderState(OrderState orderState) {

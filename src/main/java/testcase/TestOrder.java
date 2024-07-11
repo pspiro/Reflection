@@ -13,13 +13,14 @@ import web3.StockToken;
 
 public class TestOrder extends MyTestCase {
 	static double curPrice;
+	static int conid = 3691937; //265598;
 	
 //	static double approved;
 	
 	static {
 		try {
 			JsonObject json = new MyHttpClient("localhost", 8383) 
-					.get( "/api/get-price/265598")
+					.get( "/api/get-price/" + conid)
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
 			S.out( "TestOrder: Current AMZN price is %s", curPrice);
@@ -121,7 +122,7 @@ public class TestOrder extends MyTestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		StockToken stockToken = stocks.getStockByConid(265598).getToken();
+		StockToken stockToken = stocks.getStockByConid(conid).getToken();
 		
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
@@ -257,7 +258,7 @@ public class TestOrder extends MyTestCase {
 	}
 
 	public void testZeroShares()  throws Exception {
-		JsonObject obj = createOrder4("{ 'msg': 'order', 'conid': '265598', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", "RUSD"); 
+		JsonObject obj = createOrder4("{ 'msg': 'order', 'conid': '" + conid + "', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", "RUSD"); 
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -285,7 +286,7 @@ public class TestOrder extends MyTestCase {
 	}
 	
 	static JsonObject createOrder3(String side, double qty, double price, String currency) throws Exception {
-		String json = String.format( "{ 'conid': '265598', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
+		String json = String.format( "{ 'conid': '" + conid + "', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
 				side, qty, price);
 		return createOrder4(json, currency);
 	}

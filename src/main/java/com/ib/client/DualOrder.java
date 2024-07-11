@@ -18,7 +18,7 @@ import tw.util.S;
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder implements SingleParent {
 	public interface DualParent {
-		void onStatusUpdated(DualOrder order, int permId, Action action, int totalFilled, double avgPrice);
+		void onStatusUpdated(DualOrder order, OrderStatus ibOrderStatus, int permId, Action action, int totalFilled, double avgPrice);
 	}
 	
 	private ApiController m_conn;
@@ -127,11 +127,11 @@ public class DualOrder implements SingleParent {
 	 *  partially filled, or not at all filled. Note that DualOrder can be
 	 *  complete even if both children are still work, if the total fill size
 	 *  is sufficient */
-	@Override public void onStatusUpdated(SingleOrder single, int permId, Action action, int filled, double avgPrice) {
-		S.out( "DualOrder status  name=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
-				single.name(), permId, action, filled, avgPrice);
+	@Override public void onStatusUpdated(SingleOrder single, OrderStatus status, int permId, Action action, int filled, double avgPrice) {
+		S.out( "DualOrder onStatus  name=%s  status=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
+				single.name(), status, permId, action, filled, avgPrice);
 		
-		m_parent.onStatusUpdated( this, permId, action, filled, avgPrice); 
+		m_parent.onStatusUpdated( this, status, permId, action, filled, avgPrice); 
 	}
 
 

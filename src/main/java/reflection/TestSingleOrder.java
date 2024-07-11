@@ -47,7 +47,7 @@ public class TestSingleOrder {
 				"test",
 				"test " + i,
 				8314,
-				(order, permId, action, filled, avgFillPrice) -> {
+				(order, status, permId, action, filled, avgFillPrice) -> {
 					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
 					m_permId = permId;
@@ -98,7 +98,7 @@ public class TestSingleOrder {
 					"test",
 					"test " + i,
 					8314,
-					(order, permId, action, filled, avgFillPrice) -> {
+					(order, status, permId, action, filled, avgFillPrice) -> {
 						S.out( "child TWO updated  permId=%s  action=%s  filled=%s  price=%s",
 								permId, action, filled, avgFillPrice);
 					} );
@@ -132,7 +132,7 @@ public class TestSingleOrder {
 				"test",
 				"testId",
 				8314,
-				(order, permId, action, filled, avgFillPrice) -> {
+				(order, status, permId, action, filled, avgFillPrice) -> {
 					S.out( "child updated  permId=%s  action=%s  filled=%s  price=%s",
 							permId, action, filled, avgFillPrice);
 				});
