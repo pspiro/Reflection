@@ -1,7 +1,7 @@
 package test;
 
-import positions.MoralisServer;
 import reflection.Config;
+import web3.MoralisServer;
 
 public class TestMoralis {
 	

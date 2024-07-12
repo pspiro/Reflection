@@ -15,7 +15,6 @@ import fireblocks.FbBusd;
 import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
-import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -35,6 +34,8 @@ import web3.Busd;
 import web3.Busd.IBusd;
 import web3.CreateKey;
 import web3.Matic;
+import web3.MoralisServer;
+import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
 import web3.Rusd.IRusd;
@@ -112,6 +113,7 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
+	private NodeServer m_nodeServer;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -324,6 +326,7 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
+		m_nodeServer = new NodeServer( m_tab.getRequiredString( "rpcUrl") );
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -682,5 +685,9 @@ public class Config extends ConfigBase {
 	 * @throws Exception */
 	public RetVal giveApproval() throws Exception {
 		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
+	}
+	
+	public NodeServer nodeServer() {
+		return m_nodeServer;
 	}
 }

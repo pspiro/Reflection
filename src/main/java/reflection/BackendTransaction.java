@@ -14,7 +14,7 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
-import positions.Wallet;
+import refblocks.Refblocks;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
@@ -43,9 +43,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonArray retVal = new JsonArray();
 			
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			Util.forEach( wallet.reqPositionsMap(m_main.stocks().getAllContractsAddresses() ).entrySet(), entry -> {
+			Util.forEach( Refblocks.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
 				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
@@ -241,15 +239,12 @@ public class BackendTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			HashMap<String, Double> map = wallet.reqPositionsMap( 
-					m_config.rusdAddr(), 
-					m_config.busd().address() ); 
+			double rusdBal = m_config.rusd().getPosition( m_walletAddr);
+			double busdBal = m_config.rusd().getPosition( m_walletAddr);
 			
 			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
-			rusd.put( "balance", Wallet.getBalance(map, m_config.rusdAddr() ) );
+			rusd.put( "balance", rusdBal);
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
@@ -271,7 +266,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", Wallet.getBalance( map, m_config.busd().address() ) );
+			busd.put( "balance", busdBal);
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);
@@ -279,7 +274,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", wallet.getNativeBalance() );
+			base.put( "balance", m_config.nodeServer().getNativeBalance( m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();

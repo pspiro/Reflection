@@ -3,12 +3,21 @@ package refblocks;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -26,6 +35,8 @@ import org.web3j.utils.Numeric;
 import common.Util;
 import tw.util.S;
 import web3.Erc20;
+import web3.Fees;
+import web3.NodeServer;
 
 /** Support code for Web3j library */
 public class Refblocks {
@@ -34,6 +45,7 @@ public class Refblocks {
 	static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	static Web3j web3j;
+	static NodeServer nodeServer;
 	static long chainId;  // set from Config
 	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
@@ -42,6 +54,7 @@ public class Refblocks {
 	public static void setChainId( long id, String rpcUrl) {
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
+		nodeServer = new NodeServer( rpcUrl);
 	}
 
 	/** returns same fees that are displayed here: https://polygonscan.com/gastracker */
@@ -193,7 +206,7 @@ public class Refblocks {
 	public static StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = Fees.fetch();
+		Fees fees = nodeServer.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider( // fails with this
@@ -228,7 +241,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 40000);
     		
-    		Fees fees = Fees.fetch();
+    		Fees fees = nodeServer.queryFees();
     		fees.showFees( gasUnits);
     		
     		return sendEIP1559(
@@ -323,7 +336,85 @@ public class Refblocks {
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
 		return new DelayedTrp().reallyWait( receipt);
 	}
+
+	private static int getTokenDecimals(String contractAddr) throws Exception {
+		Function function = new Function(
+				"decimals",
+				Arrays.asList(),
+				Arrays.asList(new TypeReference<Uint256>() {})
+				);
+
+		EthCall response = web3j.ethCall(
+				Transaction.createEthCallTransaction(null, contractAddr, FunctionEncoder.encode(function) ),
+				org.web3j.protocol.core.DefaultBlockParameterName.LATEST
+				).sendAsync().get();
+
+		return Numeric.decodeQuantity( response.getValue() )
+				.intValue();
+		
+		// same as this:
+//		String json = """
+//				{
+//				"jsonrpc": "2.0",
+//				"method": "eth_call",
+//				"params": [
+//					{
+//					"to": "<contract_Address>",
+//					"data":"0x313ce567"
+//					},
+//					"latest"
+//				],
+//				"id":1
+//				}";
+//				""";
+
+    }
+	
+	
+	/** map contract address (lower case) to number of Decimals, so we only query it once;
+	 *  this assumes all calls are on the same blockchain */ 
+	static HashMap<String,Integer> decMap = new HashMap<>();
+	
+	/** Return number of decimals for the contract; first time sends a query,
+	 *  subsequent times are map lookup */
+	private synchronized static int getDecimals(String contractAddr) throws Exception {
+		return Util.getOrCreateEx( decMap, contractAddr.toLowerCase(), () ->
+			getTokenDecimals( contractAddr.toLowerCase() ) );
+	}
+	
+	/** Pass zero for decimals to look it up; first time sends a query; if you know it, pass it */
+	static public double getERC20Balance(String walletAddr, String contractAddr, int decimals) throws Exception {
+		Util.reqValidAddress(walletAddr);
+		Util.reqValidAddress(contractAddr);
+
+		Function function = new Function(
+				"balanceOf",
+				Arrays.asList(new Address(walletAddr)),
+				Arrays.asList(new TypeReference<Uint256>() {})
+				);
+
+		EthCall response = web3j.ethCall(
+				Transaction.createEthCallTransaction(walletAddr, contractAddr, FunctionEncoder.encode(function) ),
+				org.web3j.protocol.core.DefaultBlockParameterName.LATEST
+				).sendAsync().get();
+
+		return Erc20.fromBlockchain( 
+				response.getValue(), 
+				decimals == 0 ? getDecimals( contractAddr) : decimals);
+	}
+
+	/** Makes a separate call for each one */
+	static public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
+		HashMap<String, Double> positionsMap = new HashMap<>();
+
+		for (String contractAddr : contracts) {
+			positionsMap.put( contractAddr, getERC20Balance(walletAddr, contractAddr, decimals) );
+		}
+
+		return positionsMap;
+	}
 }
+
 
 // MUST we wait for the transaction receipt from first call before sending second call???
 

@@ -1,13 +1,7 @@
-package refblocks;
+package web3;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 
-import org.json.simple.JsonObject;
-
-import common.Util;
-import positions.NodeServer;
-import reflection.Config;
 import tw.util.S;
 
 public class Fees {
@@ -39,31 +33,6 @@ public class Fees {
 	@Override public String toString() {
 		return String.format( "base=%s  priority=%s  total=%s",
 				baseFee, priorityFee, baseFee.add( priorityFee) );
-	}
-
-	public static Fees fetch() throws Exception {
-		// params are # of blocks, which percentage to look at
-		JsonObject json = NodeServer.server.getFeeHistory(5, 50).getObject( "result");
-
-		// get base fee of last/pending block
-		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
-
-		// take average of median priority fee over last 5 blocks 
-		long sum = 0;
-		ArrayList<ArrayList> reward = json.<ArrayList>getArrayOf( "reward");
-		for ( ArrayList ar : reward) {
-			sum += Util.getLong( ar.get(0).toString() );
-		}
-
-		return new Fees( baseFee * 1.2, sum / 5.);
-	}
-
-	public static void main(String[] args) throws Exception {
-		Config.ask( "Dt2");
-		for (int i = 0; i < 5; i++) {
-			S.out( fetch() );
-			S.sleep( 1000);
-		}
 	}
 
 	public void showFees(BigInteger gasUnits) {

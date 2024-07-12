@@ -6,9 +6,11 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import refblocks.Refblocks;
 import tw.util.S;
 import web3.Busd;
 import web3.Erc20;
+import web3.NodeServer;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case
@@ -45,7 +47,7 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = new Wallet(m_walletAddr).getBalance( contract);
+			double bal = Refblocks.getERC20Balance(m_walletAddr, contract, 0);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
 				// this should only occur if we missed the unconfirmed event, i.e. if
 				// the HookServer was started after the event came in or if the
@@ -58,13 +60,13 @@ class HookWallet {
 		}
 	}
 	
-	public void adjustNative( double amt, boolean confirmed) throws Exception {
+	public void adjustNative( double amt, boolean confirmed, NodeServer nodeServer) throws Exception {
 		if (!confirmed) {
 			m_nativeBal += amt;
 			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
 		}
 		else {
-			double bal = MoralisServer.getNativeBalance(m_walletAddr);
+			double bal = nodeServer.getNativeBalance(m_walletAddr);
 			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
 				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
 				m_nativeBal = bal;

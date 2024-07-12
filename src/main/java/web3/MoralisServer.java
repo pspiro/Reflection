@@ -1,4 +1,4 @@
-package positions;
+package web3;
 
 
 import java.net.http.HttpResponse;
@@ -6,13 +6,10 @@ import java.util.function.Consumer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
-import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config;
 import tw.util.S;
-import web3.Erc20;
 
 /** This app keeps the positions of all wallets in memory for fast access.
  *  This is not really useful because the queries from Moralis are really quick 
@@ -231,7 +228,6 @@ public class MoralisServer {
 
 	public static void setChain(String chainIn, String rpcUrlIn) {
 		chain = chainIn;
-		NodeServer.server = new NodeServer( rpcUrlIn); 
 	}
 	
 }

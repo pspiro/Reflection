@@ -17,6 +17,7 @@ import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
+import refblocks.Refblocks;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
@@ -312,7 +313,7 @@ public class HookServer {
 		}
 		
 		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
+			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed, m_config.nodeServer() ) );
 			
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in
@@ -327,14 +328,13 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = new Wallet( walletAddr)
-					.reqPositionsMap(m_allContracts);
+			HashMap<String, Double> positions = Refblocks.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+			double nativeBal = m_config.nodeServer().getNativeBalance( walletAddr);
 			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
 			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			

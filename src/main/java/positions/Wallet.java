@@ -7,8 +7,11 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 import web3.Erc20;
+import web3.MoralisServer;
+import web3.NodeServer;
 
-/** Get token positions; will only send one query */
+/** Get token positions; will only send one query
+ * @deprecated  */
 public class Wallet {
 	private String m_walletAddr;
 	
@@ -19,19 +22,6 @@ public class Wallet {
 	
 	public String walletAddr() {
 		return m_walletAddr;
-	}
-
-	/** Sends a request every time
-	 *  @deprecated use Erc20.getPosition() instead
-	 *  @param token is token address */
-	public double getBalance(String token) throws Exception {
-		return getBalance( reqPositionsMap(m_walletAddr, token), token);
-	}
-
-	/** Look up the value in the map and convert to decimal;
-	 *  Use this one if you want more than one token balance */
-	public static double getBalance(HashMap<String,Double> map, String token) throws Exception {
-		return Util.toDouble( map.get(token.toLowerCase() ) );
 	}
 
 	/** Returns a map of contract address (lower case) -> position (Double).
@@ -62,41 +52,6 @@ public class Wallet {
 		}
 		
 		return map;
-	}
-	
-	/** Returns a map of contract address (lower case) -> position (Double)
-	 *  This version works by looking at all token transfers for the wallet
-	    this doesn't work because mint and burn transfers are not returned
-		supposedly being fixed "by end of Q1" */
-//	public static HashMap<String,Double> reqPositionsMap(String address) throws Exception {
-//		HashMap<String,Double> map = new HashMap<>();
-//
-//		// get all transactions in batches and build the map
-//		MoralisServer.getAllWalletTransfers(address, ar -> ar.forEach( obj -> {
-//				String tokenAddress = obj.getString("address").toLowerCase();
-//				double amt = obj.getDouble("value_decimal");
-//
-//				// note that the wallet could be from, to, or both
-//				if (obj.getString("from_address").equalsIgnoreCase(address) ) {
-//					Erc20.inc( map, tokenAddress, -amt);
-//				}
-//				
-//				if (obj.getString("to_address").equalsIgnoreCase(address) ) {
-//					Erc20.inc( map, tokenAddress, amt);
-//				}
-//		} ) );
-//		
-//		Util.filter( map, val -> Math.abs(val) >= .000001);  // remove items with tiny balance
-//		return map;
-//	}
-
-	/** Sends a new query every time */
-	public static double getBalance(String wallet, String tokenAddr) throws Exception {
-		return new Wallet(wallet).getBalance(tokenAddr);
-	}
-	
-	public double getNativeBalance() throws Exception {
-		return MoralisServer.getNativeBalance(m_walletAddr);
 	}
 	
 }

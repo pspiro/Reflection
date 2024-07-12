@@ -6,6 +6,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import tw.util.S;
+import web3.MoralisServer;
 
 // Q: does JsonObject translate // back and forth to \/\/?
 // Q my question is, if allAddresses is set to false, how do I specify which contract it listens to?
@@ -142,23 +143,6 @@ public class Streams {
 	}
 	""";
 
-	
-	
-//	static String nativeTrans = """
-//	{
-//		"description": "Native token transfers %s",
-//		"webhookUrl" : "%s",
-//		"chainIds": [ "%s" ],
-//		"tag": "refl-native",
-//		"demo": false,
-//		"includeNativeTxs": true,
-//		"allAddresses": false,
-//		"includeContractLogs": false,
-//		"includeInternalTxs": false,
-//		"includeAllTxLogs": false
-//	}
-//	""";
-	
 	public static String approval = """
 	{
 		"includeNativeTxs" : false,

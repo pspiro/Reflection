@@ -1,4 +1,6 @@
-package positions;
+package web3;
+
+import java.util.ArrayList;
 
 import org.json.simple.JsonObject;
 import org.web3j.crypto.Keys;
@@ -7,36 +9,30 @@ import common.Util;
 import http.MyClient;
 import reflection.Config;
 import tw.util.S;
-import web3.Erc20;
 
 public class NodeServer {
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
 	static NodeServer pulse = new NodeServer( pulseRpc);
-	static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
+	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	
-	public static NodeServer server;  // must be set when config is read
-
+	private String m_rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	
-	private String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
-	
-	NodeServer( String rpc) {
-		rpcUrl = rpc;
+	public NodeServer( String rpc) {
+		m_rpcUrl = rpc;
 	}
 
 	/** This can be a node created for you on Moralis, which you pay for, or a free node.
 	 *  Currently using the free node; if you hit pacing limits, switch to the Moralis node.
 	 *  The Moralis node requires auth data */
 	JsonObject nodeQuery(String body) throws Exception {
-		Util.require( rpcUrl != null, "Set the node rpcUrl");
+		Util.require( m_rpcUrl != null, "Set the node rpcUrl");
 
-		return MyClient.create( rpcUrl, body)
+		return MyClient.create( m_rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
 				.queryToJson();
 	}
-
-
 
 	public long getBlockNumber() throws Exception {
 		String body = """
@@ -56,11 +52,7 @@ public class NodeServer {
 			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "eth_feeHistory",
-			"params": [
-				"%s",
-				"latest",
-				[ %s ]
-			]
+			"params": [ "%s", "latest", [ %s ] ]
 			}""", blocks, pct); 
 		return nodeQuery( body);
 	}
@@ -99,6 +91,22 @@ public class NodeServer {
 		return Erc20.fromBlockchain( nodeQuery( body).getString( "result"), 18);
 	}
 
+	public Fees queryFees() throws Exception {
+		// params are # of blocks, which percentage to look at
+		JsonObject json = getFeeHistory(5, 50).getObject( "result");
+
+		// get base fee of last/pending block
+		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
+
+		// take average of median priority fee over last 5 blocks 
+		long sum = 0;
+		ArrayList<ArrayList> reward = json.<ArrayList>getArrayOf( "reward");
+		for ( ArrayList ar : reward) {
+			sum += Util.getLong( ar.get(0).toString() );
+		}
+
+		return new Fees( baseFee * 1.2, sum / 5.);
+	}
 	
 	public static void main(String[] args) throws Exception {
 		S.out( pulse.getNativeBalance( prod) );

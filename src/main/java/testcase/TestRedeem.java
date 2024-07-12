@@ -4,7 +4,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import monitor.BigWalletPanel;
-import positions.Wallet;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -116,7 +115,7 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testCheckBalance() throws Exception {
-		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
+		S.out( "Balance: " + m_config.rusd().getPosition(Cookie.wallet) );
 	}
 		
 	/** can't use waitFor() here because we want to stop when there is any non-null status */

@@ -3,7 +3,6 @@ package monitor;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -22,7 +21,7 @@ import common.Util.ExRunnable;
 import http.MyClient;
 import monitor.wallet.BlockSummaryPanel;
 import monitor.wallet.WalletPanel;
-import positions.Wallet;
+import refblocks.Refblocks;
 import reflection.Config;
 import reflection.Stock;
 import tw.util.DualPanel;
@@ -234,11 +233,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_matic.setText( S.fmt4( ar.get(2).getDouble("balance")) );			
 			});
 
-			Wallet wallet = new Wallet( walletAddr);
-			HashMap<String, Double> posMap = wallet.reqPositionsMap();
-			
+			// we send a query for each stock; for most platforms we could use Moralis and
+			// send a single query
 			for (Stock stock : Monitor.stocks) {
-				double bal = Util.toDouble( posMap.get( stock.getSmartContractId().toLowerCase() ) );
+				double bal = Refblocks.getERC20Balance(walletAddr, stock.getSmartContractId(), 18);
 				if (bal > minBalance) {
 					JsonObject obj = new JsonObject();
 					obj.put( "Symbol", stock.symbol() );
@@ -329,10 +327,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 	
 	private void burnAllRusd() {
-		wrap( () -> { 
-			double amt = new Wallet( m_wallet.getText() ).getBalance( config().rusdAddr() );
-			burn( amt);
-		});
+		wrap( () -> burn( config().rusd().getPosition(m_wallet.getText() ) ) );
 	}
 
 	private void burn(double amt) {

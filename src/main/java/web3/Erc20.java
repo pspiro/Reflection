@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 
 import common.Util;
-import positions.MoralisServer;
 import positions.Wallet;
 import refblocks.Refblocks;
 import tw.util.S;
@@ -42,6 +41,7 @@ public class Erc20 {
 		return fromBlockchain( amt, m_decimals);
 	}
 	
+	/** Can take decimal or hex */
 	public static double fromBlockchain(String amt, int power) {
 		return S.isNotNull(amt)
 				? new BigDecimal( Refblocks.decodeQuantity( amt) )
@@ -64,8 +64,7 @@ public class Erc20 {
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
-		Util.reqValidAddress(walletAddr);
-		return new Wallet(walletAddr).getBalance(m_address); 
+		return Refblocks.getERC20Balance( walletAddr, m_address, m_decimals); 
 	}
 
 	/** return the balances of all wallets holding this token
