@@ -42,10 +42,10 @@ public class Stocks implements Iterable<Stock> {
 		
 		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
 			Stock stock = new Stock();
-			int conid = Integer.valueOf( row.getString("Conid") );
+			int conid = Integer.valueOf( row.getInt("Conid") );
 			String address = row.getString("TokenAddress");
 			
-			// special case: receipt for margin orders
+			// special case: conid 1 is receipt for margin orders
 			if (conid == 1 && Util.isValidAddress(address) ) {
 				m_receipt = new StockToken( address); 
 			}
