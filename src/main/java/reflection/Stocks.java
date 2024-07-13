@@ -120,7 +120,7 @@ public class Stocks implements Iterable<Stock> {
 		return m_conidMap.get(conid);
 	}
 
-	/** takes the token symbol from the release-specific tab */ 
+	/** takes the Token Symbol from the release-specific tab, e.g. AAPL.r */ 
 	public Stock getStockBySymbol(String tokenSymbol) throws Exception {
 		for (Stock stock : this) {
 			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {

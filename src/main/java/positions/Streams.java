@@ -27,16 +27,16 @@ public class Streams {
 	}
 
 	/** Display stream and up to five addresses */
-	static void displayStreams() throws Exception {
+	public static void displayStreams() throws Exception {
 		S.out( "Existing streams");
 		JsonObject obj = MoralisServer.queryObject( "https://api.moralis-streams.com/streams/evm?limit=5");
 		int total = obj.getInt("total");
 		JsonArray ar = obj.getArray("result");
 		
 		for (JsonObject stream : ar) {
-//			stream.display();
 			S.out( "Stream " + stream.getString("description") );
-			S.out( stream);
+			stream.display();
+			//S.out( stream);
 			displayAddresses( stream.getString("id"), 5);
 		}
 	}

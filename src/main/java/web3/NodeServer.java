@@ -93,7 +93,7 @@ public class NodeServer {
 
 	public Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
-		JsonObject json = getFeeHistory(5, 50).getObject( "result");
+		JsonObject json = getFeeHistory(5, 60).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );

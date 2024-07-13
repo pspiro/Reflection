@@ -6,9 +6,9 @@ import web3.StockToken;
 
 public class MintStockToken {
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
+		Config config = Config.readFrom( "Prod-config");
 		double amt = Double.parseDouble( Util.ask( "Enter amount:") );
-		String tok = Util.ask("Enter token name");
+		String tok = "AVGO.r"; // Util.ask("Enter token name");
 		String wallet = Util.ask( "Enter destination wallet:");
 		
 		StockToken st = config.readStocks().getStockBySymbol(tok).getToken();

@@ -5,6 +5,7 @@ import static testcase.TestOrder.curPrice;
 import reflection.RefCode;
 import tw.util.S;
 
+/** You need bid/ask prices for these tests to pass */
 public class TestUserTokMgr extends MyTestCase {
 	
 	public void test() throws Exception {

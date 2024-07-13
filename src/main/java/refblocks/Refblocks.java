@@ -148,7 +148,7 @@ public class Refblocks {
 	 * @param address
 	 * @throws Exception 
 	 */
-	static void cancelStuckTransaction(String address) throws Exception {
+	public static void cancelStuckTransaction(String address) throws Exception {
 		// start by showing all nonces and figuring out which one or ones
 		// need to be canceled
 		showAllNonces(address);
@@ -157,14 +157,14 @@ public class Refblocks {
 		// create a RawTransactionManager that will create a transaction what that nonce
 	}
 
-	/** for debugging 
+	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
-	public static void showAllNonces(String address) throws Exception {
+	public static void showAllNonces(String walletAddr) throws Exception {
 		S.out( "%s nonce  finalized=%s  latest=%s  pending=%s",
-        		address,
-        		getNonce( address, DefaultBlockParameterName.FINALIZED),
-        		getNonce( address, DefaultBlockParameterName.LATEST),
-        		getNonce( address, DefaultBlockParameterName.PENDING)
+        		walletAddr,
+        		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
+        		getNonce( walletAddr, DefaultBlockParameterName.LATEST),
+        		getNonce( walletAddr, DefaultBlockParameterName.PENDING)
         		);
 	}
 	
