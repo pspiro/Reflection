@@ -92,7 +92,7 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	private String hookServerUrl;
+	private String hookServerUrl; // webhook url passed to Moralis
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
@@ -145,6 +145,10 @@ public class Config extends ConfigBase {
 	/** @return RUSD address lower case */
 	public String rusdAddr() { 
 		return m_rusd.address(); 
+	}
+
+	public String busdAddr() { 
+		return m_busd.address(); 
 	}
 	
 	public double minTokenPosition() { return minTokenPosition; }
@@ -342,6 +346,7 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
+		require( hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
 	
 	/** json fields are address, salt, data, ivstr */

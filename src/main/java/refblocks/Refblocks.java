@@ -44,7 +44,7 @@ public class Refblocks {
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
 	static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
-	static Web3j web3j;
+	public static Web3j web3j;
 	static NodeServer nodeServer;
 	static long chainId;  // set from Config
 	//private static String polygonRpcUrl = "https://polygon-rpc.com/";

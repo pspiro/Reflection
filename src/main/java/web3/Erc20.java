@@ -43,11 +43,14 @@ public class Erc20 {
 	
 	/** Can take decimal or hex */
 	public static double fromBlockchain(String amt, int power) {
-		return S.isNotNull(amt)
-				? new BigDecimal( Refblocks.decodeQuantity( amt) )
-						.divide( ten.pow(power) )
-						.doubleValue()
-				: 0.0;
+		if (S.isNull(amt) ) {
+			return 0.;
+		}
+		
+		BigInteger bigint = amt.startsWith( "0x") ? new BigInteger( amt.substring( 2), 16) : new BigInteger( amt);
+		return new BigDecimal( bigint)
+				.divide( ten.pow(power) )
+				.doubleValue();
 	}
 	
 	public BigInteger toBlockchain(double amt) {
@@ -109,8 +112,8 @@ public class Erc20 {
 	}
 
 	/** Sends a query to Moralis */
-	public double getAllowance(String wallet, String spender) throws Exception {
-		Util.reqValidAddress(wallet);
-		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
+	public double getAllowance(String approverAddr, String spender) throws Exception {
+		Util.reqValidAddress(approverAddr);
+		return fromBlockchain( MoralisServer.reqAllowance(m_address, approverAddr, spender).getString("allowance") );
 	}
 }

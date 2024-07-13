@@ -11,11 +11,18 @@ import web3.StockToken;
 /** This test should be done in Dev or Prod only */
 public class TestHookServer extends MyTestCase {
 	//String hook = "https://live.reflection.trading/hook";
-	String hook = "http://localhost:8484/hook";
+	static String hook = "http://localhost:8484/hook";
 	static String wallet = Util.createFakeAddress();
 
 	static {
 		S.out( "testing with wallet %s", wallet);
+
+		// create the wallet first so we know we are getting values from the events
+		try {
+			MyClient.getJson( hook + "/get-wallet/" + wallet);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	void runn() throws Exception {
@@ -30,15 +37,12 @@ public class TestHookServer extends MyTestCase {
 	}
 		
 	public void testTransfers() throws Exception {
-//		// let the HookServer start monitoring for this wallet
-		MyClient.getJson( hook + "/get-wallet/" + wallet);
-		
 		StockToken tok = stocks.getAnyStockToken();
 
 		// mint RUSD
 		S.out( "minting 10 rusd into %s", wallet);
 		m_config.rusd().mintRusd(wallet, 10, stocks.getAnyStockToken() )
-				.waitForHash();
+				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
@@ -51,7 +55,7 @@ public class TestHookServer extends MyTestCase {
 		// buy stock token - wait for changes in RUSD and stock token
 		S.out( "buying 1 stock token %s for %s", tok.address(), wallet);
 		m_config.rusd().buyStockWithRusd(wallet, 1, tok, 2)
-				.waitForHash();
+				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
@@ -68,32 +72,32 @@ public class TestHookServer extends MyTestCase {
 	}
 
 	public void testNative() throws Exception {
+		double n = .0001;
+		
 		// send native token to wallet
+		S.out( "testing native transfer");
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				wallet,
-				.001).waitForHash();
+				n).displayHash();
 		
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
-			S.out( "pos " + pos);
-			return Util.isEq( pos, .001, .00001);
+			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
+					n, pos, m_config.nodeServer().getNativeBalance( wallet) ) );
+			return Util.isEq( pos, n, .00001);
 		});
 	}
 	
 	public void testApprove() throws Exception {
 		int n = Util.rnd.nextInt( 10000) + 10;
 
-		// create the wallet first so we know we get the event
-		double prev = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
-				.getDouble( "approved");
-		S.out( "prev=%s", prev);
-
 		// let Owner approve RUSD to spend BUSD
+		S.out( "testing approve");
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
-				.waitForHash();
+				.displayHash();
 
 		// wait for it to be reflected in wallet
 		waitFor( 120, () -> {

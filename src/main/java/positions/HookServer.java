@@ -73,7 +73,7 @@ public class HookServer {
 		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
-		m_allContracts = list.toArray( new String[list.size()]);
+		m_allContracts = list.toArray( new String[list.size()]); 
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );

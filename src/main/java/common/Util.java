@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Credentials;
 
 import com.ib.client.Decimal;
 
@@ -717,6 +718,11 @@ public class Util {
 	public static String createPrivateKey() {
 		return CreateKey.createPrivateKey();
 	}
+	
+	public static String getAddress( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
+
 	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
