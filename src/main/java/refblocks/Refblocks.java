@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.TypeReference;
@@ -18,6 +17,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -33,6 +33,7 @@ import org.web3j.utils.Convert;
 import org.web3j.utils.Numeric;
 
 import common.Util;
+import reflection.Config;
 import tw.util.S;
 import web3.Erc20;
 import web3.Fees;
@@ -52,6 +53,7 @@ public class Refblocks {
 
 	/** Called when Config is read */
 	public static void setChainId( long id, String rpcUrl) {
+		S.out( "Refblocks  chainId=%s  rpcUrl=%s", id, rpcUrl);
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
 		nodeServer = new NodeServer( rpcUrl);
@@ -413,6 +415,22 @@ public class Refblocks {
 
 		return positionsMap;
 	}
+
+	public static void main(String[] args) throws Exception {
+		Config.read();
+		testPulseGas();
+	}
+	public static void testPulseGas() throws IOException {
+			// Fetch the current gas price
+			EthGasPrice ethGasPrice = web3j.ethGasPrice().send();
+			BigInteger gasPrice = ethGasPrice.getGasPrice();
+
+			// Assuming Beats are similar to Gwei in Ethereum
+			BigInteger gasPriceInBeats = Convert.toWei(gasPrice.toString(), Convert.Unit.GWEI).toBigInteger();
+
+			System.out.println("Current Gas Price in Beats: " + gasPriceInBeats);
+	}
+
 }
 
 

@@ -36,9 +36,17 @@ public class Fees {
 	}
 
 	public void showFees(BigInteger gasUnits) {
-		S.out( "  baseGas=%s gw  priority=%s gw  maxCost=$%s",  
-				baseFee.doubleValue() / billion,
-				priorityFee.doubleValue() / billion,
+		S.out( "  baseGas=%s gw  priority=%s gw  effectiveGas=%s  maxCost=$%s",  
+				baseFee.doubleValue(),
+				priorityFee.doubleValue(),
+				baseFee.add( priorityFee).doubleValue(),
 				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
 	}
+//	public void showFees(BigInteger gasUnits) {
+//		S.out( "  baseGas=%s gw  priority=%s gw  effectiveGas=%s  maxCost=$%s",  
+//				baseFee.doubleValue() / billion,
+//				priorityFee.doubleValue() / billion,
+//				baseFee.add( priorityFee).doubleValue() / billion,
+//				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
+//	}
 }

@@ -1,5 +1,6 @@
 package web3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 
 import org.json.simple.JsonObject;
@@ -94,6 +95,7 @@ public class NodeServer {
 	public Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
 		JsonObject json = getFeeHistory(5, 60).getObject( "result");
+		json.display();
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -110,6 +112,7 @@ public class NodeServer {
 	
 	public static void main(String[] args) throws Exception {
 		S.out( pulse.getNativeBalance( prod) );
+		pulse.queryFees().showFees( BigInteger.valueOf( 21000L));
 	}
 	
 	public void showTrans() throws Exception {
