@@ -201,4 +201,9 @@ public class MyTestCase extends TestCase {
 		assertEquals( refCode, cli.getRefCode() );
 	}
 	
+	void failWith(RefCode refCode, String message) throws Exception {
+		assertEquals( refCode, cli.getRefCode() );
+		startsWith( message, cli.getMessage() );
+	}
+	
 }

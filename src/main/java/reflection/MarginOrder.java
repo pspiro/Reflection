@@ -42,7 +42,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		PlacedSellOrders,
 		Liquidation,
 		Completed,
-		Canceled,  
+		Canceled;
+
+		boolean canCancel() {
+			return this != Liquidation && this != Completed && this != Canceled;  
+		}  
 	}
 
 	String wallet() { return getString( "wallet_public_key"); }
@@ -185,6 +189,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 		prices().addListener( m_listener);  // always?
 	}
+	
+	void onUpdate(
+			double entryPrice,
+			double profitTakerPrice,
+			double stopPrice) {
+	}
+
 
 	/** Called every time the connection is restored. Update the orders in the orderMap()
 	 *  and set the Order on the SingleOrders (first time only) */ 
@@ -296,7 +307,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// wrong, don't pull config from Main, won't work for isolated testing outside RefAPI pas
 		Stablecoin stablecoin = m_config.getStablecoin( currency() );
 
-		// transfer the crypto to RefWallet and give the user a receipt; it would be good if we can find a way to tie the receipt to this order
+		// transfer the crypto to RefWallet and give the user a receipt; 
+		// it would be good if we can find a way to tie the receipt to this order
 		RetVal val = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend);
 
 		status( Status.InitiatedPayment);
@@ -603,21 +615,22 @@ public class MarginOrder extends JsonObject implements DualParent {
 		case BuyOrderFilled:
 		case PlacedSellOrders:
 			cancelBuyOrders();  // buy orders can always be canceled
+			cancelSellOrders();
 
 			require( loanAmt() <= 0, RefCode.CANT_CANCEL, "The order has a loan amount and will remain active");
 			
 			status( Status.Canceled);
 			put( "completedHow", "Canceled by user");
-
 			prices().removeListener(m_listener);
+			
 			break;
 
 		case Liquidation:
-			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the order has already completed");
+			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the position is being liquidated");
 			break;
 			
 		case Completed:
-			require( false, RefCode.CANT_CANCEL, "It's too late to cancel; the position is being liquidated");
+			require( false, RefCode.CANT_CANCEL, "The order has already completed");
 			break;
 			
 		case Canceled:
@@ -626,17 +639,26 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	private void systemCancel(String how) {
-		cancelBuyOrders();  // buy orders can always be canceled
-
-		if (loanAmt() > 0) {
-			out( "WARNING: can't cancel order with positive loan amount");
+	/** Called internally and by Monitor */
+	void systemCancel(String how) {
+		if ( !status().canCancel() ) {
+			out( "Can't cancel order with status %s", status() );
 		}
 		else {
-			// set status first so if it fails, we will come back here
-			status( Status.Canceled);
-			put( "completedHow", how);
-			prices().removeListener(m_listener);
+			out( "System-canceling order - %s", how);
+		
+			cancelBuyOrders();  // buy orders can always be canceled
+			cancelSellOrders();
+	
+			if (loanAmt() > 0) {
+				out( "WARNING: order with loan amount was canceled but we are still monitoring for liquidation");
+			}
+			else {
+				// set status first so if it fails, we will come back here
+				status( Status.Canceled);
+				put( "completedHow", how);
+				prices().removeListener(m_listener);
+			}
 		}
 	}
 	
@@ -839,6 +861,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test single stop order
 //test dual stop orders
 //test canceling at all different states
+//test different good until values
 
 //later:
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
@@ -853,6 +876,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //allow user to add in more money later
 //update Monitor to show more info per wallet, e.g. margin orders, live orders, etc
 //move the marginstore into the database using a json field for the entire order?
+//suppor increasing the buy price or increasing the buyAmount
+//support time_t values for good until, it will be good for testing
 
 //	old notes from textpad
 //	

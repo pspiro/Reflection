@@ -211,8 +211,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
 				m_userCountry.setText( json.getString( "country") );
-				m_personaData.setText( S.isNotNull( json.getString( "persona_response") ) ? "tooltip" : "<empty>");
-				m_personaData.setToolTipText( json.getObjectNN( "persona_response").toHtml() );
+//				m_personaData.setText( S.isNotNull( json.getString( "persona_response") ) ? "tooltip" : "<empty>");
+//				m_personaData.setToolTipText( json.getObjectNN( "persona_response").toHtml() );
 
 				
 				JsonObject obj = json.getObject("locked");

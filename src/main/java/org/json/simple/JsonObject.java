@@ -4,6 +4,7 @@
  */
 package org.json.simple;
 
+import java.awt.Component;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -508,6 +509,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			ar.add( (JsonObject)obj);
 		}
 		return ar;
+	}
+
+	public void show( Component parent) {
+		Util.inform( parent, toString() );
 	}
 }
 /** NOTE: Timestamp objects are stored as

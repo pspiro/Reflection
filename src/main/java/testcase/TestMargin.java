@@ -24,12 +24,24 @@ public class TestMargin extends MyTestCase {
 //	server.createContext("/api/margin-withdraw-tokens", exch -> new MarginTrans(this, exch, true).marginWithdrawTokens() );
 //	server.createContext("/api/margin-info", exch -> new MarginTrans(this, exch, true).marginInfo() );
 	
-	public void testStatic() throws Exception {
+	static {
+		try {
+			if (m_config.rusd().getPosition(Cookie.wallet) < 1000) {
+				m_config.rusd().mintRusd(Cookie.wallet, 100000, stocks.getAnyStockToken() )
+					.displayHash();
+			}
+		} 
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void testStaticQuery() throws Exception {
 		cli().get("/api/margin-static/" + Cookie.wallet).readJsonObject().display(); // cookie is not required but Frontend should pass it for debugging
 		assert200();
 	}
 
-	public void testDynamic() throws Exception {
+	public void testDynamicQuery() throws Exception {
 		// fail missing conid
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
@@ -57,15 +69,56 @@ public class TestMargin extends MyTestCase {
 		assert200();
 	}
 
-	public void testFailUserProfile() throws Exception {
+	public void testFailOrder() throws Exception {
+		// fail user profile
+		String prev = Cookie.wallet;
 		Cookie.setNewFakeAddress( false);
 		cli().postToJson( "/api/margin-order", newOrd() );
 		failWith( RefCode.INVALID_USER_PROFILE);
+		Cookie.setWalletAddr(prev);
+		
+		// fail no cookie
+		JsonObject json = newOrd();
+		json.remove( "cookie");
+		cli().postToJson( "/api/margin-order", json);
+		failWith( RefCode.VALIDATION_FAILED);
+		
+		// fail amt too high
+		json = newOrd();
+		json.put( "amountToSpend", 1000000.0);
+		cli().postToJson( "/api/margin-order", json);
+		failWith( RefCode.INVALID_REQUEST, "The amount to spend");
 
-		Cookie.setNewFakeAddress( true);
-		cli().postToJson( "/api/margin-order", newOrd() );
-		assert200();
+		// leverage too high
+		json = newOrd();
+		json.put( "leverage", 200.0);
+		cli().postToJson( "/api/margin-order", json);
+		failWith( RefCode.INVALID_REQUEST, "Leverage");
 	}
+	
+	public void testGetOrder() throws Exception {
+		// place order
+		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
+		assert200();
+		
+		// fail invalid order id
+		cli().getToJson("/api/margin-get-order/" + json.getString( "abc") ).display();
+		assert400();
+		
+		// fail no such order
+		cli().getToJson("/api/margin-get-order/" + json.getString( "abcdeghij") ).display();
+		assert400();
+		
+		// success
+		cli().getToJson("/api/margin-get-order/" + json.getString( "orderId") ).display();
+		assert200();
+		
+		// cancel order
+		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId") ) );
+	}	
 
 	public void testBuyNoFill() throws Exception {
 		S.out( "placing order");
@@ -73,20 +126,13 @@ public class TestMargin extends MyTestCase {
 		json.display();
 		assert200();
 
-		// test retrieving the order - fail invalid order id
-		cli().getToJson("/api/margin-get-order/" + json.getString( "abc") ).display();
-		assert400();
-		
-		// test retrieving the order - fail no such order
-		cli().getToJson("/api/margin-get-order/" + json.getString( "abcdeghij") ).display();
-		assert400();
 
 		// retrieve the order
 		cli().getToJson("/api/margin-get-order/" + json.getString( "orderId") ).display();
 		assert200();
 
 		S.out( "wait to accept pmt and place buy order");
-		int i = Util.waitFor(20, () -> {
+		int i = Util.waitFor(40, () -> {
 			return cli().getToJson("/api/margin-get-order/" + json.getString( "orderId") ) 
 					.getString( "status").equals( "PlacedBuyOrder");
 		});
@@ -107,7 +153,7 @@ public class TestMargin extends MyTestCase {
 		assert200();
 
 		S.out( "wait 5 sec to accept pmt and fill buy order");
-		int i = Util.waitFor(20, () -> {
+		int i = Util.waitFor(40, () -> {
 			String status = queryDynamic().find( "orderId", json.getString("orderId") )
 					.getString( "status");
 			return status.equals( "BuyOrderFilled") || status.equals( "PlacedSellOrders");
@@ -119,18 +165,11 @@ public class TestMargin extends MyTestCase {
 	}
 
 	public void testFillBuyAndStop() throws Exception {
-		JsonObject ord = Util.toJson(
-				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
-				"conid", conid,
-				"amountToSpend", 100.12,
-				"leverage", 1.,
-				"profitTakerPrice", 226,
-				"entryPrice", 225,
-				"stopLossPrice", 224,
-				"goodUntil", "EndOfDay",
-				"currency", "RUSD"
-				);
+		JsonObject ord = newOrd();
+		ord.put( "profitTakerPrice", base + 3);
+		ord.put( "entryPrice", base + 2);
+		ord.put( "stopLossPrice", base + 1);
+		
 		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		assert200();
@@ -141,27 +180,66 @@ public class TestMargin extends MyTestCase {
 		JsonObject live = queryDynamic().find( "orderId", json.getString("orderId") );
 		assertEquals( Status.Completed, live.getString( "status") );
 	}
-
-	public void testFullOrder() throws Exception {
-		JsonObject ord = Util.toJson(
-				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
-				"conid", conid,
-				"amountToSpend", 100.12,
-				"leverage", 1.,
-				"profitTakerPrice", 216,
-				"entryPrice", 215,
-				"stopLossPrice", 214.99,
-				"goodUntil", "EndOfDay",
-				"currency", "RUSD"
-				);
+	
+	public void testUpdate() throws Exception {
 		S.out( "placing order");
-		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
+		assert200();
+
+		// fail no cookie
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"orderId", json.getString( "orderId"),
+				"profitTakerPrice", base + 3,
+				"entryPrice", base + 2,
+				"stopLossPrice", base + 1) );
+
+		// fail wrong order id
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"orderId", "lkjsdflksjdf",
+				"profitTakerPrice", base + 3,
+				"entryPrice", base + 2,
+				"stopLossPrice", base + 1) );
+
+		// fail entry price has been increased
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId"),
+				"profitTakerPrice", base + 3,
+				"entryPrice", base,
+				"stopLossPrice", base + 1) );
+
+		// succeed
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId"),
+				"profitTakerPrice", base + 3,
+				"entryPrice", base + 2,
+				"stopLossPrice", base + 1) );
+	}
+	
+	public void testLiquidate() {
+	}
+
+	public void testAddFunds() {
+	}
+
+	public void testWithdrawFunds() {
+		
+	}
+
+	public void testWithdrawTokens() {
+	}
+
+
+	public void testCancel() throws Exception {
+		S.out( "placing order");
+		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
 		assertEquals( 10, json.getString( "orderId").length() );
 		json.display();
-		
-		
+
+		// find order in query
 		JsonObject dynamic = cli().postToJson( "/api/margin-dynamic", Util.toJson(
 				"wallet_public_key", Cookie.wallet, 
 				"cookie", Cookie.cookie,
@@ -171,68 +249,36 @@ public class TestMargin extends MyTestCase {
 		assertTrue( "live order not found", live != null);
 		live.display();
 		
-		// add assertions here
-		
-		
-		// cancel, missing orderId
+		// missing orderId
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie
-				) )
+				"cookie", Cookie.cookie) )
 			.display();
-		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
+		failWith( RefCode.INVALID_REQUEST);
 		assertStartsWith( "Param 'orderId'", cli.getMessage() );
 
-		// cancel, wrong orderId
+		// fail wrong orderId
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"orderId", "myorderid",
-				"cookie", Cookie.cookie
-				) )
+				"cookie", Cookie.cookie) )
 			.display();
-		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
+		failWith( RefCode.INVALID_REQUEST);
+		
+		// fail wrong wallet
+		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
+				"wallet_public_key", dead,
+				"orderId", "myorderid",
+				"cookie", Cookie.cookie) )
+			.display();
 		
 		// cancel, success
 		cancel( json.getString("orderId") );
+
+		// fail already canceled
+		cancel( json.getString("orderId") );
 	}
 	
-	// need to test cancel from more states, pass and fail
-	public void testCancel() throws Exception {
-		JsonObject ord = Util.toJson(
-				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
-				"conid", conid,
-				"amountToSpend", 100.12,
-				"leverage", 1.,
-				"profitTakerPrice", 216,
-				"entryPrice", 215,
-				"stopLossPrice", 214.99,
-				"goodUntil", "EndOfDay",
-				"currency", "RUSD"
-				);
-		JsonObject json = cli().postToJson( "/api/margin-order", ord );
-		assert200();
-		String id = json.getString( "orderId");
-		
-		for (int i = 0; i < 3; i++) {
-			showStatus( id);
-			S.sleep( 500);
-		}
-		
-		// cancel, success
-		S.out( "canceling");
-		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
-				"wallet_public_key", Cookie.wallet,
-				"orderId", id,
-				"cookie", Cookie.cookie) );
-		assert200();
-		
-		for (int i = 0; i < 15; i++) {
-			showStatus( id);
-			S.sleep( 1000);
-		}
-	}
-
 	void cancel(String orderId) throws Exception {
 		showStatus( orderId);
 
@@ -243,19 +289,6 @@ public class TestMargin extends MyTestCase {
 				) );
 		assert200();
 	}
-	
-	public void testmarginLiquidate() {
-	}
-
-	public void testmarginAddFunds() {
-	}
-
-	public void testmarginWithdrawFunds() {
-	}
-
-	public void testmarginWithdrawTokens() {
-	}
-
 	static JsonObject newOrd() {
 		return Util.toJson(
 				"wallet_public_key", Cookie.wallet,
@@ -281,6 +314,7 @@ public class TestMargin extends MyTestCase {
 		Util.iff( ords.find( "orderId", id), ord -> S.out( ord) );
 	}
 	
+	/** Return the orders from the dynamic query */
 	private JsonArray queryDynamic() throws Exception {
 		return cli().postToJson( "/api/margin-dynamic", Util.toJson(
 				"wallet_public_key", Cookie.wallet, 
