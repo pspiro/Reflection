@@ -101,7 +101,7 @@ public class SingleOrder implements IOrderHandler {
 	}
 
 	public synchronized void placeOrder() throws Exception {
-		common.Util.require( m_order.status() == OrderStatus.Unknown, "SingleOrder should be inactive");
+		//common.Util.require( m_order.status() == OrderStatus.Unknown, "SingleOrder should be inactive");
 	
 		// simulate stop-limit orders on Overnight exchange (stop orders won't work as 
 		// market orders are not supported)
