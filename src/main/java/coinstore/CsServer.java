@@ -19,7 +19,7 @@ import http.MyServer;
 import tw.util.HtmlButton;
 import tw.util.NewLookAndFeel;
 import tw.util.S;
-import tw.util.VerticalPanel.FlowPanel;
+import tw.util.VerticalPanel.HorzPanel;
 
 public class CsServer {
 	private static final String refPriceUrl = "https://reflection.trading/api/get-price/265598";
@@ -65,7 +65,7 @@ public class CsServer {
 		HtmlButton refresh = new HtmlButton( "Refresh", ev -> onRefresh() );
 		HtmlButton check = new HtmlButton( "Check", ev -> Util.wrap( () -> check() ) );
 		HtmlButton cancelAll = new HtmlButton( "Cancel all", ev -> onCancelAll() );
-		FlowPanel butPanel = new FlowPanel(20, 5, refresh, check, cancelAll);
+		HorzPanel butPanel = new HorzPanel(20, 5, refresh, check, cancelAll);
 		
 		JFrame f = new JFrame();
 		f.add( butPanel, BorderLayout.NORTH);

@@ -101,20 +101,8 @@ public class VerticalPanel extends JPanel {
 		throw new RuntimeException(); // not valid
 	}
 	
-
 	public static class HorzPanel extends JPanel {
-		public HorzPanel() {
-			setLayout( new BoxLayout( this, BoxLayout.X_AXIS));
-		}
-		
-		public void add(JComponent comp) {
-			comp.setAlignmentY(0);
-			super.add( comp);
-		}
-	}
-
-	public static class FlowPanel extends JPanel {
-		public FlowPanel(int h, int v, Component... cs) {
+		public HorzPanel(int h, int v, Component... cs) {
 			setLayout( new FlowLayout( FlowLayout.LEFT, h, v) );
 			addAll(cs);
 		}

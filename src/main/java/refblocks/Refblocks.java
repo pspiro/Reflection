@@ -113,8 +113,11 @@ public class Refblocks {
 		TransactionManager tm = null;
 		
 		try {
-			//tm = getFasterTm( callerKey);
-			tm = getSlowerTm( callerKey);
+			// faster TM uses custom-nonce and returns immediately
+			tm = getFasterTm( callerKey);
+			
+			// slower TM queries for the nonce and waits for the receipt
+			//tm = getSlowerTm( callerKey);
 			
 			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
 			//Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");

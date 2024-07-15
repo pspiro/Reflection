@@ -15,6 +15,15 @@ import web3.Stablecoin;
 
 
 public class MarginTrans extends MyTransaction {
+	
+	enum GoodUntil {
+		Immediately,
+		OneHour,
+		EndOfDay,
+		EndOfWeek,
+		Never
+	}
+
 	static JsonObject staticConfig;
 	
 	// new config
@@ -67,23 +76,35 @@ public class MarginTrans extends MyTransaction {
 		});
 	}
 
-	public Object marginUpdate() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void marginCancel() {
+	public void userCancel() {
 		wrap( () -> {
 			parseMsg();
 			
 			m_walletAddr = m_map.getWalletAddress();
 			
 			validateCookie( "margin-static");
-			
+
 			MarginOrder order = m_main.marginStore().getById( m_map.getRequiredString("orderId") );
 			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
+			require( order.wallet().equalsIgnoreCase( m_walletAddr), 
+					RefCode.INVALID_REQUEST, "Wallet does not match");
 			
 			order.userCancel();
+
+			respondSuccess();
+		});
+	}
+
+	/** Called from monitor */
+	public void systemCancel() {
+		wrap( () -> {
+			String orderId = Util.getLastToken(m_uri, "/").toUpperCase();
+			require( orderId.length() == 10, RefCode.INVALID_REQUEST, "Invalid order id");
+			
+			MarginOrder order = m_main.marginStore().getById( orderId); 
+			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
+			
+			order.systemCancel( "Canceled by Monitor");
 
 			respondOk();
 		});
@@ -122,16 +143,15 @@ public class MarginTrans extends MyTransaction {
 			require( prices.validLast(), RefCode.NO_PRICES, "No valid last price in market");
 
 			double entryPrice = m_map.getRequiredPrice( "entryPrice");
-			require( entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "Entry price is too low");
-			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "Entry price is too high");
+			require( entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "The 'buy' price is too low");
+			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "The 'buy' price is too high");
 
 			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
-			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "profitTakerPrice is invalid; must be > entry price");
+			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
 
 			double stopLossPrice = m_map.getPrice( "stopLossPrice");
-			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "stopLossPrice must be < entry price");
-			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "stopLossPrice must be < entry price");
-			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "stopLossPrice price must be less than current market price of %s", prices.last() );
+			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
+			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
@@ -176,21 +196,46 @@ public class MarginTrans extends MyTransaction {
 					);
 			
 			out( "Received valid margin order " + mo);
-
 			
 			m_main.marginStore().startOrder( mo);
 			
 			respond( code, RefCode.OK, "orderId", mo.orderId() );
 		});
-		
 	}
-	enum GoodUntil {
-		Immediately,
-		OneHour,
-		EndOfDay,
-		EndOfWeek,
-		Never
+
+	/** Update margin order; user can update prices only */
+	public void marginUpdate() {
+		wrap( () -> {
+			parseMsg();
+
+			m_walletAddr = m_map.getWalletAddress();
+
+			validateCookie( "margin-order");
+
+			String orderId = m_map.getRequiredString( "orderId");
+			MarginOrder marginOrder = m_main.marginStore().getById( orderId);
+			require( marginOrder != null, RefCode.INVALID_REQUEST, "The order could not be found");
+			
+			Prices prices = m_main.stocks().getStockByConid( marginOrder.conid() ).prices();
+			require( prices.validLast(), RefCode.NO_PRICES, "The order cannot be modified because there is no valid stock price available");
+
+			double entryPrice = m_map.getRequiredPrice( "entryPrice");
+			require( entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "The 'buy' price is too low");
+			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "The 'buy' price is too high (may not be more than 10% higher than current market price)");
+			require( entryPrice - marginOrder.entryPrice() > .01, RefCode.INVALID_PRICE, "The 'buy' price cannot be increased"); // to suppor this, you would have to transfer more crypto 
+
+			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
+			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
+
+			double stopLossPrice = m_map.getPrice( "stopLossPrice");
+			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
+			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
+			
+			marginOrder.onUpdate( entryPrice, profitTakerPrice, stopLossPrice);
+			respondSuccess();
+		});
 	}
+
 
 	/** Return orders for one wallet */
 	private JsonArray getOrders() throws Exception {
@@ -222,32 +267,43 @@ public class MarginTrans extends MyTransaction {
 			MarginOrder order = m_main.marginStore().getById(orderId.toUpperCase() );  // this won't work if we change to mixed case orderId
 			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
 			
-			respond( order);
+			respondOk();
 		});
 	}
 
 	public void marginLiquidate() {
 		wrap( () -> {
+			respondSuccess();
 		});
 	}
 
 	public void marginAddFunds() {
 		wrap( () -> {
+			respondSuccess();
 		});
 	}
 
 	public void marginWithdrawFunds() {
 		wrap( () -> {
+			respondSuccess();
 		});
 	}
 
 	public void marginWithdrawTokens() {
 		wrap( () -> {
+			respondSuccess();
 		});
 	}
 
 	public void marginInfo() {
 		wrap( () -> {
+			respondSuccess();
 		});
 	}
+
+	private void respondSuccess() {
+		respond( code, RefCode.OK, Message, "Success"); 
+	}
+	
+	
 }

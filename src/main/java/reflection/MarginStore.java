@@ -70,10 +70,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 	}
 
 	/** Called when a new margin order is received from user */
-	public void startOrder(MarginOrder mo) {
-		add( mo);
+	public void startOrder(MarginOrder order) {
+		// add order to margin store and save
+		add( order);
 		saveNow();
-		m_processingThread.execute( () -> mo.acceptPayment() );
+		
+		// initiate process to accept stablecoin payment; use the same thread 
+		// as the periodic processing calls so as not to overlap
+		m_processingThread.execute( () -> order.acceptPayment() );
 	}
 
 	/** connection to TWS has been established; could be the first time or a subsequent time */
@@ -93,7 +97,6 @@ class MarginStore extends TsonArray<MarginOrder> {
 	
 	/** Called on reconnect */
 	private synchronized void onRecMap(HashMap<Integer, LiveOrder> permIdMap) {
-		
 		// build map of order ref to live orders
 		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder; better would be map orderId to list of orders with with that orderId
 		
@@ -104,14 +107,15 @@ class MarginStore extends TsonArray<MarginOrder> {
 		
 		// start the thread only once, after the first successful connection to TWS, then it runs forever
 		if (!m_started) {
+			S.out( "Starting margin thread to check each order every ten seconds");
 			m_started = true;
 			
-			//forEach( order -> order.restart() );
 			m_processingThread.executeEvery( 0, 10000, () -> 
 				forEach( order -> order.process() ) );
 		}
 	}
 
+	/** Build map of order ref to LiveOrder; order ref should be unique for each IB order */
 	public static HashMap<String, LiveOrder> getOrderRefMap(HashMap<Integer, LiveOrder> permIdMap) {
 		HashMap<String, LiveOrder> orderRefMap = new HashMap<>();
 		for (var liveOrder : permIdMap.values() ) {
