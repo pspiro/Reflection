@@ -131,7 +131,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		double feePct = .01; // fix this. pas
 		double totalSpend = amtToSpend() * leverage() * (1. - feePct);
-		put( "desiredQty", totalSpend / entryPrice() );
+		put( "desiredQty", totalSpend / entryPrice() );  // note that entryPrice cannot be zero
 		put( "roundedQty", OrderTransaction.positionTracker.buyOrSell( conid(), true, desiredQty(), 1) );
 		put( "sharesHeld", 0);
 		put( "sharesToBuy", desiredQty() );
@@ -186,11 +186,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 		m_liqOrder.action( Action.Sell);
 		m_liqOrder.orderType( OrderType.LMT);
 		m_liqOrder.outsideRth( true);
-
-		prices().addListener( m_listener);  // always?
 	}
 	
-	void onUpdate(
+	void onUserUpdate(
 			double entryPrice,
 			double profitTakerPrice,
 			double stopPrice) {
@@ -222,7 +220,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		if (m_profitOrder != null) {
 			m_stopOrder.rehydrate( orderRefMap);
 		}
-		
+
+		// check status first. pas
+		prices().addListener( m_listener);  // always?
+
 		// you have to call onUpdated() in case order has filled more
 	}
 	
@@ -473,7 +474,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 			double cashBalance = cashBalance();
 			put( "value", cashBalance + stockValueLast() );
-			put( "loanAmt",  Math.max( 0, cashBalance() ) );
+			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.);
+
+			S.out( "-----> shares=%s  needed=%s  cash=%s  val=%s  loan=%s", 
+					sharesHeld(), sharesToBuy(), cashBalance, value(), loanAmt() );
+			S.out( this);
 			
 			out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
 					permId, dualOrd.name(), status, filled, roundedQty(), avgPrice);
@@ -709,11 +714,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 	 *  we use the desiredQty * avgPrice of all orders; otherwise, we use
 	 *  the actual qty * avgPrice of all orders */
 	private double avgBuyPrice() {
-		return totalBoughtAmt() / totalBought();
+		return div( totalBoughtAmt(), totalBought() );
 	}
 	
 	private double avgSellPrice() {
-		return totalSoldAmt() / totalSold();
+		return div( totalSoldAmt(), totalSold() );
+	}
+	
+	/** divide and avoid NaN if bot is zero */
+	private double div(double top, double bot) {
+		return bot != 0 ? top / bot : 0;
 	}
 	
 	private double totalBoughtAmt() {
@@ -801,19 +811,36 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	/** Called when the price ticks and the stock value has dropped below min required value */
-	private void liquidate() {
+	/** Called when the price ticks and the stock value has dropped below min required value.
+	 *  Note we don't care if there is a loan or not, we are going to sell at the bid. 
+	 * @throws Exception */
+	protected void userLiquidate() throws Exception {
+		require( status() != Status.Liquidation, RefCode.INVALID_REQUEST, "The order is already in liquidation");
+		
+		cancelSellOrders();
+		
+		double net = totalBought() - totalSold();
+
+		require( net > 0, RefCode.INVALID_REQUEST, "There is no position to liquidate; any resting orders will be canceled");
+
+		liquidate();
+	}
+
+	private synchronized void liquidate() {
 		status( Status.Liquidation);
 		
+		out( "***Liquidating");
+
 		cancelSellOrders();
 		
 		prices().removeListener( m_listener);
 		
-		out( "***Placing liquidation order");
-		m_liqOrder.lmtPrice( prices().bid() * .9);
-		m_liqOrder.quantity( totalBought() - totalSold() );
-
+		int qty = OrderTransaction.positionTracker.buyOrSell( 
+				conid(), false, totalBought() - totalSold(), 1);
+		
 		try {
+			m_liqOrder.quantity( qty);
+			m_liqOrder.lmtPrice( prices().bid() * .9);
 			m_liqOrder.placeOrder( conid() );
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -838,8 +865,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return getDouble( "sharesHeld");
 	}
 
+	private double sharesToBuy() {
+		return getDouble( "sharesToBuy");
+	}
+
 	private double loanAmt() {
 		return getDouble( "loanAmt");
+	}
+
+	private double value() {
+		return getDouble( "value");
 	}
 
 	/** If there is a partial fill, return that amount; if we are 
@@ -858,12 +893,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 //you can allow cancel if there is a position, just not if there is a loan amount > 0
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
 //add the config items
+//enforce only one LIVE order per conid per wallet
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
 //test dual stop orders
 //test canceling at all different states
 //test different good until values
+//bug  WXDTORZHIT Error: order is in Completed state but still has net position 1
 
 //later:
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
@@ -880,6 +917,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 //move the marginstore into the database using a json field for the entire order?
 //suppor increasing the buy price or increasing the buyAmount
 //support time_t values for good until, it will be good for testing
+//add orders from here to the UserTok mgr?
+//very concerning bug: transaction was successful but never got "receipt" 0xd2c5d0cf7086832e89f035d066c3db04d1f8c6d035390b75db747e208defb621
+
 
 //	old notes from textpad
 //	

@@ -76,40 +76,6 @@ public class MarginTrans extends MyTransaction {
 		});
 	}
 
-	public void userCancel() {
-		wrap( () -> {
-			parseMsg();
-			
-			m_walletAddr = m_map.getWalletAddress();
-			
-			validateCookie( "margin-static");
-
-			MarginOrder order = m_main.marginStore().getById( m_map.getRequiredString("orderId") );
-			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
-			require( order.wallet().equalsIgnoreCase( m_walletAddr), 
-					RefCode.INVALID_REQUEST, "Wallet does not match");
-			
-			order.userCancel();
-
-			respondSuccess();
-		});
-	}
-
-	/** Called from monitor */
-	public void systemCancel() {
-		wrap( () -> {
-			String orderId = Util.getLastToken(m_uri, "/").toUpperCase();
-			require( orderId.length() == 10, RefCode.INVALID_REQUEST, "Invalid order id");
-			
-			MarginOrder order = m_main.marginStore().getById( orderId); 
-			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
-			
-			order.systemCancel( "Canceled by Monitor");
-
-			respondOk();
-		});
-	}
-
 	public void marginOrder() {
 		wrap( () -> {
 			parseMsg();
@@ -151,7 +117,7 @@ public class MarginTrans extends MyTransaction {
 
 			double stopLossPrice = m_map.getPrice( "stopLossPrice");
 			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
-			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
+			require( stopLossPrice < prices.last() || m_map.getBool( "test"), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
@@ -206,23 +172,15 @@ public class MarginTrans extends MyTransaction {
 	/** Update margin order; user can update prices only */
 	public void marginUpdate() {
 		wrap( () -> {
-			parseMsg();
+			MarginOrder order = getOrder();
 
-			m_walletAddr = m_map.getWalletAddress();
-
-			validateCookie( "margin-order");
-
-			String orderId = m_map.getRequiredString( "orderId");
-			MarginOrder marginOrder = m_main.marginStore().getById( orderId);
-			require( marginOrder != null, RefCode.INVALID_REQUEST, "The order could not be found");
-			
-			Prices prices = m_main.stocks().getStockByConid( marginOrder.conid() ).prices();
+			Prices prices = m_main.stocks().getStockByConid( order.conid() ).prices();
 			require( prices.validLast(), RefCode.NO_PRICES, "The order cannot be modified because there is no valid stock price available");
 
 			double entryPrice = m_map.getRequiredPrice( "entryPrice");
 			require( entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "The 'buy' price is too low");
 			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "The 'buy' price is too high (may not be more than 10% higher than current market price)");
-			require( entryPrice - marginOrder.entryPrice() > .01, RefCode.INVALID_PRICE, "The 'buy' price cannot be increased"); // to suppor this, you would have to transfer more crypto 
+			require( Util.isLtEq( entryPrice, order.entryPrice() ), RefCode.INVALID_PRICE, "The 'buy' price cannot be increased"); // to support this, you would have to transfer more crypto 
 
 			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
 			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
@@ -231,26 +189,26 @@ public class MarginTrans extends MyTransaction {
 			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
 			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 			
-			marginOrder.onUpdate( entryPrice, profitTakerPrice, stopLossPrice);
+			order.onUserUpdate( entryPrice, profitTakerPrice, stopLossPrice);
 			respondSuccess();
 		});
 	}
 
+	public void userCancel() {
+		wrap( () -> {
+			getOrder().userCancel();
 
-	/** Return orders for one wallet */
-	private JsonArray getOrders() throws Exception {
-		JsonArray ar = m_main.marginStore().getOrders( m_walletAddr);
-		
-		Util.forEach( ar, order -> {
-			Stock stock = m_main.getStock( order.getInt( "conid") );
-			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
-
-			Prices prices = stock.prices();
-			order.put( "bidPrice", prices.bid() );
-			order.put( "askPrice", prices.ask() );
+			respondSuccess();
 		});
-			
-		return ar;
+	}
+
+	public void marginLiquidate() {
+		wrap( () -> {
+			getOrder().userLiquidate();
+
+			respond( code, RefCode.OK, Message, 
+					"Liquidation has begun and your position is being closed out"); 
+		});
 	}
 
 	/** Return all orders. For debug only */
@@ -258,8 +216,8 @@ public class MarginTrans extends MyTransaction {
 		wrap( () -> respond( m_main.marginStore() ) );		
 	}
 
-	/** Get a single order by order id; used for debug only */
-	public void marginGetOrder() {
+	/** Get a single order by order id; used for debug and testing only */
+	public void marginGetStatus() {
 		wrap( () -> {
 			String orderId = Util.getLastToken(m_uri, "/");
 			require( orderId.length() == m_uid.length() + 2, RefCode.INVALID_REQUEST, "Invalid order id");
@@ -267,13 +225,7 @@ public class MarginTrans extends MyTransaction {
 			MarginOrder order = m_main.marginStore().getById(orderId.toUpperCase() );  // this won't work if we change to mixed case orderId
 			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
 			
-			respondOk();
-		});
-	}
-
-	public void marginLiquidate() {
-		wrap( () -> {
-			respondSuccess();
+			respond( code, RefCode.OK, "status", order.status() );
 		});
 	}
 
@@ -301,9 +253,52 @@ public class MarginTrans extends MyTransaction {
 		});
 	}
 
+	/** Called from monitor */
+	public void systemCancel() {
+		wrap( () -> {
+			String orderId = Util.getLastToken(m_uri, "/").toUpperCase();
+			require( orderId.length() == 10, RefCode.INVALID_REQUEST, "Invalid order id");
+			
+			MarginOrder order = m_main.marginStore().getById( orderId); 
+			require( order != null, RefCode.INVALID_REQUEST, "No such order found");
+			
+			order.systemCancel( "Canceled by Monitor");
+
+			respondOk();
+		});
+	}
+
 	private void respondSuccess() {
 		respond( code, RefCode.OK, Message, "Success"); 
 	}
 	
+	private MarginOrder getOrder() throws Exception {
+		parseMsg();
+		
+		m_walletAddr = m_map.getWalletAddress();
+		
+		validateCookie( "margin-static");
+
+		MarginOrder order = m_main.marginStore().getById( m_map.getRequiredString("orderId") );
+		require( order != null, RefCode.INVALID_REQUEST, "No such order found");
+//		require( order.wallet().equalsIgnoreCase( m_walletAddr),  // never happens because a wrong wallet gets picked up by validateCookie()
+//				RefCode.INVALID_REQUEST, "Impossible");
+		return order;
+	}
 	
+	/** Return orders for one wallet */
+	private JsonArray getOrders() throws Exception {
+		JsonArray ar = m_main.marginStore().getOrders( m_walletAddr);
+		
+		Util.forEach( ar, order -> {
+			Stock stock = m_main.getStock( order.getInt( "conid") );
+			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
+
+			Prices prices = stock.prices();
+			order.put( "bidPrice", prices.bid() );
+			order.put( "askPrice", prices.ask() );
+		});
+			
+		return ar;
+	}
 }

@@ -134,7 +134,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).userCancel() );
 			server.createContext("/api/margin-system-cancel", exch -> new MarginTrans(this, exch, true).systemCancel() );
 			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
-			server.createContext("/api/margin-get-order", exch -> new MarginTrans(this, exch, false).marginGetOrder() );
+			server.createContext("/api/margin-get-status", exch -> new MarginTrans(this, exch, false).marginGetStatus() );
 			server.createContext("/api/margin-get-all", exch -> new MarginTrans(this, exch, true).marginGetAll() );
 			server.createContext("/api/margin-liquidate", exch -> new MarginTrans(this, exch, true).marginLiquidate() );
 			server.createContext("/api/margin-add-funds", exch -> new MarginTrans(this, exch, true).marginAddFunds() );
