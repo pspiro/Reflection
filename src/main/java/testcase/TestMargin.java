@@ -140,6 +140,7 @@ public class TestMargin extends MyTestCase {
 		//cancel( json.getString("orderId") );
 		
 		assertTrue( i >= 0);
+		cancel( json.getString( "orderId"));
 	}
 
 	public void testFillBuyOnly() throws Exception {
@@ -186,36 +187,64 @@ public class TestMargin extends MyTestCase {
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
 
-		// fail no cookie
+		// fail no wallet
 		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
 				"orderId", json.getString( "orderId"),
 				"profitTakerPrice", base + 3,
 				"entryPrice", base + 2,
 				"stopLossPrice", base + 1) );
+		failWith( RefCode.INVALID_REQUEST, "Wallet address is missing");
+
+		// fail wrong wallet
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"wallet_public_key", dead,
+				"orderId", json.getString( "orderId"),
+				"profitTakerPrice", base + 3,
+				"entryPrice", base + 2,
+				"stopLossPrice", base + 1) );
+		failWith( RefCode.INVALID_REQUEST, "kdk");
+
+		// fail no cookie
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"orderId", json.getString( "orderId"),
+				"profitTakerPrice", base + 3,
+				"entryPrice", base + 2,
+				"stopLossPrice", base + 1) );
+		assert200();
+		failWith( RefCode.VALIDATION_FAILED);
 
 		// fail wrong order id
 		cli().postToJson( "/api/margin-update", Util.toJson(
 				"cookie", Cookie.cookie,
+				"wallet_public_key", Cookie.wallet,
 				"orderId", "lkjsdflksjdf",
 				"profitTakerPrice", base + 3,
 				"entryPrice", base + 2,
 				"stopLossPrice", base + 1) );
+		assert200();
 
 		// fail entry price has been increased
 		cli().postToJson( "/api/margin-update", Util.toJson(
 				"cookie", Cookie.cookie,
+				"wallet_public_key", Cookie.wallet,
 				"orderId", json.getString( "orderId"),
 				"profitTakerPrice", base + 3,
 				"entryPrice", base,
 				"stopLossPrice", base + 1) );
-
+		assert200();
+		
 		// succeed
 		cli().postToJson( "/api/margin-update", Util.toJson(
 				"cookie", Cookie.cookie,
+				"wallet_public_key", Cookie.wallet,
 				"orderId", json.getString( "orderId"),
 				"profitTakerPrice", base + 3,
 				"entryPrice", base + 2,
 				"stopLossPrice", base + 1) );
+		assert200();
 	}
 	
 	public void testLiquidate() {

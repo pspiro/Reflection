@@ -850,6 +850,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
+// need pagination at frontend, 
+// need status column on frontend
 //loan value is wrong
 //continue with testordernofill; it's not moving to the "placed buy order" status, where should that happen
 //auto-liq at COB regular hours if market is closed next day

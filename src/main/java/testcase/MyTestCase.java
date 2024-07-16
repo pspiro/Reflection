@@ -202,8 +202,11 @@ public class MyTestCase extends TestCase {
 	}
 	
 	void failWith(RefCode refCode, String message) throws Exception {
-		assertEquals( refCode, cli.getRefCode() );
+		if (refCode != cli.getRefCode() || !message.equals( cli.getMessage() ) ) {
+			S.out( "RefCode got%s   message got=%s", cli.getRefCode(), cli.getMessage() );
+		}
 		startsWith( message, cli.getMessage() );
+		assertEquals( refCode, cli.getRefCode() );
 	}
 	
 }
