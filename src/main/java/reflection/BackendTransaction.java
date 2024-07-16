@@ -218,20 +218,30 @@ public class BackendTransaction extends MyTransaction {
 
 			validateCookie("register");
 			
-			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
-			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
-
+			// we don't look at kyc_status anymore; Frontend should stop sending it
+			//require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
+			
+			String personaStr = m_map.getString("persona_response");
+			require( S.isNotNull( personaStr), RefCode.INVALID_REQUEST, "null persona_response");
+			require( JsonObject.isObject(personaStr), RefCode.INVALID_REQUEST, "persona_response is not a valid json object");
+			
+			JsonObject persona = JsonObject.parse( personaStr);
+			String status = persona.getString( "status");
+			
 			// create record
 			JsonObject obj = new JsonObject();
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
-			obj.copyFrom( m_map.obj(), "kyc_status", "persona_response");
+			obj.put( "kyc_status", status);  // this is the exact "status" text from the json returned by Persona; used to be VERIFIED
 
 			// insert or update record in users table with KYC info
 			Main.m_config.sqlCommand(sql -> 
 				sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
+			// this is unconventional in that we return 400 even though we updated the database
+			require( status.equals( "completed"),
+					RefCode.INVALID_REQUEST, "KYC failed with status '%s'", status);
+
 			respondOk();
-			
 			alert("KYC COMPLETED", m_walletAddr);
 		});
 	}
@@ -536,7 +546,8 @@ public class BackendTransaction extends MyTransaction {
 			JsonArray ar = Main.m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",
 					m_walletAddr.toLowerCase() );
 			
-			boolean verified = ar.size() == 1 && ar.get( 0).getString( "kyc_status").equals( "VERIFIED");
+			String status = ar.size() == 1 ? status = ar.get( 0).getString( "kyc_status") : null;
+			boolean verified = Util.equalsIgnore( status, "VERIFIED", "completed");  // VERIFIED is obsolete and should be removed
 			
 			respond( Util.toJson(
 					"verified", verified,
