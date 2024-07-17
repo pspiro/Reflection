@@ -173,20 +173,20 @@ public class MarginTrans extends MyTransaction {
 	public void marginUpdate() {
 		wrap( () -> {
 			MarginOrder order = getOrder();
-
+			
 			Prices prices = m_main.stocks().getStockByConid( order.conid() ).prices();
 			require( prices.validLast(), RefCode.NO_PRICES, "The order cannot be modified because there is no valid stock price available");
 
-			double entryPrice = m_map.getRequiredPrice( "entryPrice");
-			require( entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "The 'buy' price is too low");
+			double entryPrice = m_map.getPrice( "entryPrice");
+			require( entryPrice == 0 || entryPrice > prices.last() * .5, RefCode.INVALID_PRICE, "The 'buy' price is too low");
 			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "The 'buy' price is too high (may not be more than 10% higher than current market price)");
-			require( Util.isLtEq( entryPrice, order.entryPrice() ), RefCode.INVALID_PRICE, "The 'buy' price cannot be increased"); // to support this, you would have to transfer more crypto 
 
 			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
 			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
 
 			double stopLossPrice = m_map.getPrice( "stopLossPrice");
-			require( stopLossPrice >= 0 && stopLossPrice < entryPrice, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
+			double realEntry = entryPrice != 0 ? entryPrice : order.getDouble( "entryPrice");
+			require( stopLossPrice < realEntry, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
 			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 			
 			order.onUserUpdate( entryPrice, profitTakerPrice, stopLossPrice);

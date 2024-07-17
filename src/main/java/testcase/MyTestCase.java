@@ -198,6 +198,9 @@ public class MyTestCase extends TestCase {
 	}
 	
 	void failWith(RefCode refCode) throws Exception {
+		if (refCode != cli.getRefCode() ) {
+			S.out( "RefCode got%s   message got=%s", cli.getRefCode(), cli.getMessage() );
+		}
 		assertEquals( refCode, cli.getRefCode() );
 	}
 	

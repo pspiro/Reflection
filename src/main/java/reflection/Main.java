@@ -316,7 +316,7 @@ public class Main implements ITradeReportHandler {
 
 		ConnectionMgr(String host, int port) {
 			// must MUST always use same client ID or we won't get updates on live margin orders
-			super( host, port, 249, m_config.reconnectInterval() ); 
+			super( host, port, 876, m_config.reconnectInterval() ); 
 
 			m_controller.handleExecutions( Main.this);
 		}

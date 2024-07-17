@@ -187,17 +187,6 @@ public class TestMargin extends MyTestCase {
 				"stopLossPrice", base - 2) );
 		failWith( RefCode.INVALID_REQUEST, "No such order found");
 
-		// fail entry price has been increased; we could support this
-		// but then we have to collect more $ from the user
-		cli().postToJson( "/api/margin-update", Util.toJson(
-				"cookie", Cookie.cookie,
-				"wallet_public_key", Cookie.wallet,
-				"orderId", orderId,
-				"profitTakerPrice", base + 1,
-				"entryPrice", base - .5,
-				"stopLossPrice", base - 2) );
-		failWith( RefCode.INVALID_PRICE, "The 'buy' price cannot be increased");
-		
 		// succeed
 		cli().postToJson( "/api/margin-update", Util.toJson(
 				"cookie", Cookie.cookie,
@@ -248,7 +237,8 @@ public class TestMargin extends MyTestCase {
 		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
-		assertEquals( 10, json.getString( "orderId").length() );
+		String orderId = json.getString( "orderId");
+		assertEquals( 10, orderId.length() );
 		json.display();
 
 		// find order in query
@@ -272,7 +262,7 @@ public class TestMargin extends MyTestCase {
 		// fail wrong orderId
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"orderId", "myorderid",
+				"orderId", "myorderidd",
 				"cookie", Cookie.cookie) )
 			.display();
 		failWith( RefCode.INVALID_REQUEST);
@@ -280,7 +270,7 @@ public class TestMargin extends MyTestCase {
 		// fail wrong wallet
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", dead,
-				"orderId", "myorderid",
+				"orderId", orderId,
 				"cookie", Cookie.cookie) )
 			.display();
 		
@@ -290,7 +280,7 @@ public class TestMargin extends MyTestCase {
 		// fail already canceled
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"orderId", "myorderid",
+				"orderId", orderId,
 				"cookie", Cookie.cookie) );
 		failWith( RefCode.CANT_CANCEL);
 	}

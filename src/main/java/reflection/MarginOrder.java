@@ -34,11 +34,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 	double maxLtv = 1.02;
 	
 	public enum Status {
-		NeedPayment,		// waiting for blockchain payment transaction to complete; we may or may not have transaction hash
-		InitiatedPayment,		// submitted transaction; may or may not have trans hash and receipt
-		GotReceipt,
-		PlacedBuyOrder,
-		BuyOrderFilled,			// primary order has filled, we are now monitoring sell orders 
+		NeedPayment,			// initial state
+		InitiatedPayment,		// initiated blockchain transaction; may or may not have trans hash and receipt
+		GotReceipt,				// got blockchain hash and 
+		PlacedBuyOrder,			// buy order was been placed; waiting for it to fill
+		BuyOrderFilled,			// buy order has filled; need to place sell orders, if any 
 		PlacedSellOrders,
 		Liquidation,
 		Completed,
@@ -894,6 +894,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
 //add the config items
 //enforce only one LIVE order per conid per wallet
+//let orders be pruned after one week (configurable)
+//entry price higher is okay, you just need to adjust down the order quantities, and check status
+//don't use the Util thread to accept payment, need a separate thread for each request, or a better way to "wait"
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
