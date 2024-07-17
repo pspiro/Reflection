@@ -1,0 +1,473 @@
+/*
+ * $Id: TsonObject.java,v 1.1 2006/04/15 14:10:48 platform Exp $
+ * Created on 2006-4-10
+ */
+package org.json.simple;
+
+import java.awt.Component;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.Writer;
+import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.json.simple.parser.JSONParser;
+
+import com.moonstoneid.siwe.SiweMessage;
+
+import common.Util;
+import reflection.SiweUtil;
+import reflection.Stock;
+import tw.util.S;
+import web3.Erc20;
+
+/**
+ * A JSON object. Key value pairs are unordered. TsonObject supports java.util.Map interface.
+ * 
+ * Note that null values are supported by put(); use putIf() to avoid null values
+ * 
+ * @author FangYidong<fangyidong@yahoo.com.cn>
+ */
+public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONStreamAware, Comparable<TsonObject> {
+	
+	private static final long serialVersionUID = -503443796854799292L;
+	
+	
+	public TsonObject() {
+		super();
+	}
+
+	public TsonObject(Map<String,T> base) {
+		super(base);
+	}
+
+	/**
+	 * Allows creation of a TsonObject from a Map. After that, both the
+	 * generated TsonObject and the Map can be modified independently.
+	 * 
+	 * @param map
+	 */
+//	public TsonObject(Map map) {
+//		super(map);
+//	}
+
+
+    /**
+     * Encode a map into JSON text and write it to out.
+     * If this map is also a JSONAware or JSONStreamAware, JSONAware or JSONStreamAware specific behaviours will be ignored at this top level.
+     * 
+     * @see org.json.simple.JSONValue#writeJSONString(Object, Writer)
+     * 
+     * @param map
+     * @param out
+     */
+	public static void writeJSONString(Map map, Writer out) throws IOException {
+		if(map == null){
+			out.write("null");
+			return;
+		}
+		
+		boolean first = true;
+		Iterator iter=map.entrySet().iterator();
+		
+        out.write('{');
+		while(iter.hasNext()){
+            if(first)
+                first = false;
+            else
+                out.write(',');
+			Map.Entry entry=(Map.Entry)iter.next();
+            out.write('\"');
+            out.write(escape(String.valueOf(entry.getKey())));
+            out.write('\"');
+            out.write(':');
+			JSONValue.writeJSONString(entry.getValue(), out);
+		}
+		out.write('}');
+	}
+
+	public void writeJSONString(Writer out) throws IOException{
+		writeJSONString(this, out);
+	}
+	
+	/**
+	 * Convert a map to JSON text. The result is a JSON object. 
+	 * If this map is also a JSONAware, JSONAware specific behaviours will be omitted at this top level.
+	 * 
+	 * @see org.json.simple.JSONValue#toJSONString(Object)
+	 * 
+	 * @param map
+	 * @return JSON text, or "null" if map is null.
+	 */
+	public static String toJSONString(Map map){
+		if(map == null)
+			return "null";
+		
+        StringBuffer sb = new StringBuffer();
+        boolean first = true;
+		Iterator iter=map.entrySet().iterator();
+		
+        sb.append('{');
+		while(iter.hasNext()){
+            if(first)
+                first = false;
+            else
+                sb.append(',');
+            
+			Map.Entry entry=(Map.Entry)iter.next();
+			toJSONString(String.valueOf(entry.getKey()),entry.getValue(), sb);
+		}
+        sb.append('}');
+		return sb.toString();
+	}
+	
+	public String toJSONString(){
+		return toJSONString(this);
+	}
+	
+	private static String toJSONString(String key,Object value, StringBuffer sb){
+		sb.append('\"');
+        if(key == null)
+            sb.append("null");
+        else
+            JSONValue.escape(key, sb);
+		sb.append('\"').append(':');
+		
+		sb.append(JSONValue.toJSONString(value));
+		
+		return sb.toString();
+	}
+	
+	public String toString(){
+		return toJSONString();
+	}
+
+	public static String toString(String key,Object value){
+        StringBuffer sb = new StringBuffer();
+		toJSONString(key, value, sb);
+        return sb.toString();
+	}
+	
+	/**
+	 * Escape quotes, \, /, \r, \n, \b, \f, \t and other control characters (U+0000 through U+001F).
+	 * It's the same as JSONValue.escape() only for compatibility here.
+	 * 
+	 * @see org.json.simple.JSONValue#escape(String)
+	 * 
+	 * @param s
+	 * @return
+	 */
+	public static String escape(String s){
+		return JSONValue.escape(s);
+	}
+
+	
+	
+	
+	
+	/** Converts any object type to string or returns empty string, never null. */
+	public String getString(String key) {
+		Object val = get(key);
+		return val != null ? val.toString() : ""; 
+	}
+
+	/** Converts any object type to string or returns empty string, never null. */
+	public String getLowerString(String key) {
+		Object val = get(key);
+		return val != null ? val.toString().toLowerCase() : ""; 
+	}
+
+	/** string only */
+//	public static TsonObject parse( String text) throws Exception {
+//		Util.require( isObject(text), "Error: not a json object: " + text);
+//
+//		return parse( new StringReader(text) );
+//	}
+//	
+//	/** reader stream only */
+//	public static TsonObject parse(InputStream is) throws Exception {
+//		return parse( new InputStreamReader(is) ); 
+//	}	
+	
+	/** reader only */
+//	public static TsonObject parse(Reader reader) throws Exception {
+//		return parse( reader, () -> new TsonObject() );
+//	}	
+	
+	
+//	public static TsonObject readFromFile(String filename) throws Exception {
+//		return parse( new FileInputStream( filename) );
+//	}
+
+	/** reader with types */
+	@SuppressWarnings("unchecked")
+//	public static <T> T parse(
+//			Reader reader, 
+//			Supplier<TsonObject> objSupplier) throws Exception {
+//		
+//		return (T)new JSONParser().parse( 
+//				reader, 
+//				objSupplier,
+//				() -> new TsonArray<T>()       // there could still be arrays, just not the top level
+//				);  // parseMsg() won't work here because it assumes all values are strings
+//	}	
+	
+	public static boolean isObject(String text) {
+		return text != null && text.trim().startsWith("{");
+	}
+
+	/** If the key does not exist, it returns an empty array; this could be an issue
+	 *  if the type is TJsonArray */
+	public JsonArray getArray(String key) {
+		JsonArray array = (JsonArray)get(key);
+		return array != null ? array : new JsonArray(); 
+	}
+
+	/** Call it like this: json.<String>getAnyArray( key) */
+	@SuppressWarnings("unchecked")
+	public <T> ArrayList<T> getArrayOf(String key) {
+		ArrayList<T> array = (ArrayList<T>)get(key);
+		return array != null ? array : new ArrayList<T>(); 
+	}
+	
+	/** Returns zero for null value Can handle hex calues starting with 0x. */
+	public long getLong(String key) {
+		return Util.getLong( getString( key) );
+	}
+
+	/** Returns zero for null value. */
+	public int getInt( String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
+	}
+
+	public BigInteger getBigInt(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? new BigInteger( str) : BigInteger.ZERO;
+	}
+
+	public double getDouble(String key) {
+		String str = getString( key);
+		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
+	}
+	
+	public void display(String title) {
+		S.out(title);
+		display( this, 0, false);
+		System.out.println();
+	}
+
+	public void display() {
+		display( this, 0, false);
+		System.out.println();
+	}
+	
+	public static void display(Object objIn, int level, boolean arrayItem) {
+		if (objIn instanceof TsonObject) {
+			out( "{\n");
+
+			TsonObject map = ((TsonObject)objIn);
+			
+			boolean first = true;
+			for (Object key : map.keySet() ) {
+				Object val = map.get( key);
+				
+				if (val != null && val.toString().length() > 0) {
+					if (!first) {
+						out( ",\n");
+					}
+
+					out( "%s\"%s\" : ", Util.tab( level+1), key);
+					display( val, level + 1, false);
+					first = false;
+				}
+			}
+			out( "\n%s%s", Util.tab(level), "}");
+		}
+		else if (objIn instanceof TsonArray) {
+			TsonArray ar = (TsonArray)objIn;
+			
+			if (ar.size() == 0) {
+				out( "[ ]");
+			}
+			else {
+				out( "[\n%s", Util.tab(level+1) );
+				
+				boolean first = true;
+				for (Object obj : ar) {
+					if (!first) {
+						out( ", ");
+					}
+					display( obj, level + 1, true);
+					first = false;
+				}
+				out( "\n%s]", Util.tab(level) );
+			}
+		}
+		else {
+			out( JSONValue.toJSONString(objIn) );
+		}
+	}
+	
+	static void out( String format, Object... params) {
+		System.out.print( String.format( format, params) );
+	}
+
+	static void out( Object str) {
+		System.out.print( str);
+	}
+
+	public boolean getBool(String key) {
+		return Boolean.parseBoolean( getString(key) );
+	}
+
+	/** Add the pair if val is not null AND not empty string
+	 *  
+	 *  This should be used on newly created objects since it's not clear if you
+	 *  would want to overwrite existing values with null values */
+	public void putIf(String key, T val) {
+		if (val != null && S.isNotNull( val.toString() ) ) {
+			put(key, val);
+		}
+	}
+
+
+	/** Update the value for one specific key;
+	 *  the value passed to the callback will never be null
+	 *  
+	 *  WARNING: if updater returns null, the present value will be maintained */
+	public void update(String key, Function<Object,T> updater) {
+		Object obj = get(key);
+		if (obj != null ) {
+			put( key, updater.apply(obj) );
+		}
+	}
+
+	/** Return true if val is not null */
+	public boolean has(String key) {
+		return S.isNotNull( getString(key) );
+	}
+
+	@Override public int compareTo(TsonObject o) {
+		return toString().compareTo(o.toString() );
+	}
+
+	public String getTime(String key, SimpleDateFormat fmt) {
+		long v = getLong(key);
+		return v == 0 ? "" : fmt.format(v);
+	}
+
+	/** Trim all string values */
+	public TsonObject trim() {
+		entrySet().forEach( entry -> {
+			if (entry.getValue() instanceof String) {
+				entry.setValue( (T)entry.getValue().toString().trim() );
+			}
+		});
+		return this;
+	}
+	
+	/** Don't add \n's because it break JOptionPane in Util.inform */ 
+	public String toHtml() {
+		StringBuilder b = new StringBuilder();
+		forEach( (key,value) -> {
+			Util.appendHtml( b, "tr", () -> {
+				Util.wrapHtml( b, "td", key);
+
+				if (value instanceof TsonArray) {
+					Util.wrapHtml( b, "td", ((TsonArray)value).toHtml() );
+				}
+				else {
+					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
+				}
+			});
+		});
+		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
+	}
+
+
+	/** Copy all tags from other to this object; null values are okay but not added */
+	public void copyFrom(TsonObject<T> other, String... tags) {
+		for (String tag : tags) {
+			if (other.get(tag) != null) {
+				put( tag, other.get(tag) );
+			}
+		}
+	}
+
+	/** Increment the key by val; stored value must be a Double */
+	public void increment(String key, double val) {
+		put( key, (T)(Double)(getDouble(key) + val));
+	}
+	
+	/** Will convert a string to enum; may return null; use method below for no exceptions */
+	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
+		Object val = get(key);
+		return val instanceof Enum ? (T)val : Util.getEnum(val.toString(), values);
+	}
+
+	/** Will convert a string to enum. Defaults to def. Note that this will not
+	 *  report an error if the string is invalid; the caller must be assured that
+	 *  the string is null or one of the valid values. */
+	public <T extends Enum<T>> T getEnum( String key, T[] values, T def) {
+		try {
+			Object val = get(key);
+			return val instanceof Enum 
+					? (T)val 
+			: val == null || S.isNull( val.toString() )
+					? def
+					: Util.getEnum(val.toString(), values);
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			return def;
+		}
+	}
+
+	/** Add all keys to the key set */
+	public void addKeys(HashSet<String> keys) {
+		keySet().forEach( key -> keys.add( key) );
+	}
+	
+	public void writeToFile(String filename) throws IOException {
+		try (FileWriter writer = new FileWriter( filename) ) {
+			writeJSONString( writer);
+		}
+	}
+
+	public Stock getStock(String tag) {
+		return (Stock)get( tag);
+	}
+
+	public BigInteger getBlockchain(String key, int decimals) {
+		return Erc20.toBlockchain( getDouble( key), decimals);
+	}
+
+	public void removeNulls() {
+		for (Iterator<Entry<String, T>> iter = entrySet().iterator(); iter.hasNext(); ) {
+			Object val = iter.next().getValue();
+			if (val == null || S.isNull( val.toString() ) ) {
+				iter.remove();
+			}
+		}
+	}
+
+	public void show( Component parent) {
+		Util.inform( parent, toString() );
+	}
+}
+/** NOTE: Timestamp objects are stored as
+ *  
+ */

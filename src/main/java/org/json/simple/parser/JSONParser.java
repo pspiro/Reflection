@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import org.json.simple.JsonObject;
 import org.json.simple.TsonArray;
+import org.json.simple.TsonObject;
 
 
 /**
@@ -91,7 +92,7 @@ public class JSONParser {
 	public <T extends JsonObject> Object parse(
 			Reader in, 
 			Supplier<T> objSupplier, 
-			Supplier<TsonArray<T>> listSupplier
+			Supplier<TsonArray<T>> listSupplier // remove this. pas
 			) throws Exception {
 			
 		reset(in);
@@ -219,7 +220,7 @@ public class JSONParser {
 						break;
 					case Yytoken.TYPE_LEFT_BRACE:
 						val=(List)valueStack.getFirst();
-						Map newObject=objSupplier.get();
+						var newObject=objSupplier.get();
 						val.add(newObject);
 						status=S_IN_OBJECT;
 						statusStack.addFirst(new Integer(status));
