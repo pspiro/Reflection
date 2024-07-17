@@ -20,8 +20,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 	private String m_filename ;
 	private boolean m_started;
 	private ApiController m_conn;
-	private final NiceTimer m_processingThread = new NiceTimer();  // check every ten sec
-	private final NiceTimer m_saveTimer = new NiceTimer(); // save in 500 ms
+	private final NiceTimer m_processingThread = new NiceTimer( "MarginStore");  // check every ten sec
 	private final Runnable m_saver = () -> saveNow(); 
 	
 	public MarginStore(String filename, ApiController conn) {
@@ -35,10 +34,10 @@ class MarginStore extends TsonArray<MarginOrder> {
 	}
 
 	public void saveLater() {
-		m_saveTimer.schedule( 500, m_saver);
+		m_processingThread.schedule( 500, m_saver);
 	}
 	
-	void saveNow() {
+	private synchronized void saveNow() {
 		try {
 			S.out( "Writing margin store");
 			writeToFile(m_filename);
@@ -48,7 +47,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 	}
 	
 	/** Return orders for the specified wallet address */
-	public JsonArray getOrders(String walletAddr) {
+	public synchronized JsonArray getOrders(String walletAddr) {
 		JsonArray ar = new JsonArray();
 		
 		for (MarginOrder order : this) {
@@ -60,7 +59,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 		return ar;
 	}
 
-	public MarginOrder getById(String orderId) {
+	public synchronized MarginOrder getById(String orderId) {
 		for (MarginOrder order : this) {
 			if (order.orderId().equals( orderId) ) {
 				return order;
@@ -72,12 +71,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 	/** Called when a new margin order is received from user */
 	public void startOrder(MarginOrder order) {
 		// add order to margin store and save
-		add( order);
-		saveNow();
+		synchronized( this) {
+			add( order);
+			saveNow();
+		}
 		
-		// initiate process to accept stablecoin payment; use the same thread 
-		// as the periodic processing calls so as not to overlap
-		m_processingThread.execute( () -> order.acceptPayment() );
+		// initiate process to accept stablecoin payment
+		// this executes in its own thread since it can take a while 
+		order.acceptPayment();
 	}
 
 	/** connection to TWS has been established; could be the first time or a subsequent time */

@@ -196,7 +196,11 @@ public class MarginTrans extends MyTransaction {
 
 	public void userCancel() {
 		wrap( () -> {
-			getOrder().userCancel();
+			MarginOrder order = getOrder();
+			
+			out( "canceling order %s", order.orderId() ); // tie the cancel message to the original order
+			
+			order.userCancel();
 
 			respondSuccess();
 		});
@@ -204,6 +208,10 @@ public class MarginTrans extends MyTransaction {
 
 	public void marginLiquidate() {
 		wrap( () -> {
+			MarginOrder order = getOrder();
+			
+			out( "liquidating order %s", order.orderId() ); // tie the cancel message to the original order
+
 			getOrder().userLiquidate();
 
 			respond( code, RefCode.OK, Message, 

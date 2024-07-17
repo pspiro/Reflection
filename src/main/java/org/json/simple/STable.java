@@ -32,7 +32,7 @@ public class STable<T> extends HashMap<String,T> {
 		
 		readFile(clas);
 		
-		Util.executeEvery(m_period, m_period, () -> check() );
+		Util.executeEvery( "STable", m_period, m_period, () -> check() );
 	}
 
 	@Override public T put(String key, T value) {

@@ -275,9 +275,9 @@ public class Util {
 	static NiceTimer m_timer; // for one Timer, all tasks execute serially in a single Thread, so don't tie up the thread
 	
 	/** Execute the runnable in a new thread now and every period in ms forever. */
-	public static synchronized void executeEvery( int wait, int period, Runnable runnable) {
+	public static synchronized void executeEvery( String name, int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
-			m_timer = new NiceTimer();
+			m_timer = new NiceTimer(name);
 		}
 		m_timer.executeEvery( wait, period, runnable);
 	}

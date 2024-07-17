@@ -110,7 +110,7 @@ public class Main implements ITradeReportHandler {
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
-		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
+		Util.executeEvery( "MdServerQuery", 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
