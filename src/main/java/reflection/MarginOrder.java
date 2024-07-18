@@ -952,6 +952,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //let orders be pruned after one week (configurable)
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
 //don't use the Util thread to accept payment, need a separate thread for each request, or a better way to "wait"
+//you could charge a different fee for a lev order with leverage of 1, something more similar to the 
+//consider if you really want to collect a fee for an order that is never filled
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
@@ -980,6 +982,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //very concerning bug: transaction was successful but never got "receipt" 0xd2c5d0cf7086832e89f035d066c3db04d1f8c6d035390b75db747e208defb621
 //you have to protect against file corruption because the maps could be modified while writing; maybe move the existing file away before writing the new one, and alway try to read it if the main one can't be read
 //review how you are waiting for blockchain transactions, e.g. acceptPayment
+//add some detection for an order that is continuously placed and canceled by IB
 
 //	old notes from textpad
 //	
