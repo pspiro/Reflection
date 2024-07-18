@@ -96,6 +96,18 @@ class UsersPanel extends QueryPanel {
 			where.setText( "where persona_response <> ''");
 		}
 		
+		@Override protected void buildMenu(JPopupMenu menu, JsonObject rec, String tag, Object val) {
+			menu.add( JsonModel.menuItem("Show in Persona", ev -> {
+				wrap( () -> {
+					Util.iff( rec.getObject( "persona_response"), persona -> {
+						Util.iff( persona.getString( "inquiryId"), id -> {
+							Util.browse( "https://app.withpersona.com/dashboard/inquiries/" + id);
+						});
+					});
+				});
+			}));
+		}
+		
 		@Override public void adjust(JsonObject obj) {
 			obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
 			obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
