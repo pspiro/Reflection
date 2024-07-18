@@ -17,8 +17,7 @@ public class Transactions {
 		S.sleep(5000);
 		//getTransaction("a0ad82f8-810b-4a54-8273-49f25658e853").display();
 
-//		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
-//		Transactions.getTransactions().display();
+		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
 	}
 
 	static JsonArray getLastTransactions(int limit) throws Exception {

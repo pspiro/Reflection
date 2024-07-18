@@ -1,6 +1,7 @@
 package monitor;
 
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JPopupMenu;
 
@@ -114,6 +115,12 @@ class UsersPanel extends QueryPanel {
 				   "wallet_public_key,first_name,last_name,email,persona_name,persona_id,birthdate,country",
 				   "select * from users $where");
 			where.setText( "where persona_response <> ''");
+		}
+
+		@Override
+		protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
+			// TODO Auto-generated method stub
+			super.buildMenu(menu, record, tag, val);
 		}
 		
 		@Override public void adjust(JsonObject obj) {

@@ -39,10 +39,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 		GotReceipt,				// got blockchain hash and 
 		PlacedBuyOrder,			// buy order was been placed; waiting for it to fill
 		BuyOrderFilled,			// buy order has filled; need to place sell orders, if any 
-		PlacedSellOrders,
+		PlacedSellOrders,		// placed sell orders, if there were any
+		Monitoring,				// monitor the orders IF there are any sell orders OR there is a loan
 		Liquidation,
-		Completed,
-		Canceled;
+		Completed,				// we're done; nothing to monitor, no loan
+		Canceled,				//
+		Withdrawn,
 
 		boolean canCancel() {
 			return this != Liquidation && this != Completed && this != Canceled;  
