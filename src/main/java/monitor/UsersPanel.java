@@ -91,7 +91,7 @@ class UsersPanel extends QueryPanel {
 	static class PersonaPanel extends QueryPanel {
 		PersonaPanel() {
 			super( "users", 
-				   "wallet_public_key,first_name,last_name,email,persona_name,persona_id,birthdate,country",
+				   "wallet_public_key,first_name,last_name,kyc_status,persona_status,email,persona_name,persona_id,birthdate,country",
 				   "select * from users $where");
 			where.setText( "where persona_response <> ''");
 		}
@@ -100,10 +100,13 @@ class UsersPanel extends QueryPanel {
 			obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
 			obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
 			
+			// add fields from the persona response
 			Util.wrap( () -> {
-				String persona = obj.getString( "persona_response");
-				if (JsonObject.isObject( persona) ) {
-					JsonObject fields = JsonObject.parse( persona).getObject("fields");
+				JsonObject persona = obj.getObject( "persona_response");
+				if (persona != null) {
+					obj.put( "persona_status", persona.getString( "status") ); // status from persona response
+					
+					JsonObject fields = persona.getObject("fields");
 					obj.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
 					obj.put( "birthdate", getVal( fields, "birthdate") );
 					obj.put( "country", getVal( fields, "address-country-code") );

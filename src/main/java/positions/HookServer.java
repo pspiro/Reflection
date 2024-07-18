@@ -66,7 +66,6 @@ public class HookServer {
 	void run() throws Exception {
 		MyClient.filename = "hookserver.http.log";
 		stocks.readFromSheet( m_config);
-		BaseTransaction.setDebug( true);  // just temporary
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
@@ -222,9 +221,9 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			if (BaseTransaction.debug() ) {
-				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);  // change this to debug mode only
-			}
+//			if (BaseTransaction.debug() ) {
+				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);
+//			}
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {

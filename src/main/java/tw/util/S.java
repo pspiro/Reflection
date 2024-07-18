@@ -403,10 +403,6 @@ public class S {
 		return "c:\\temp";
 	}
 
-	public static boolean equals(String str1, String str2) {
-		return str1 != null && str1.equals( str2);
-	}
-
 	/** This can handle strings formatted with commas and/or dollar signs.
 	 *  Null or empty string returns zero.
 	 *  Throws no exceptions. */

@@ -66,6 +66,8 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final RedemptionPanel redemPanel = new RedemptionPanel();
 	private final BlockSummaryPanel blockPanel = new BlockSummaryPanel();
 
+	private JsonObject m_personaResp;
+
 	public BigWalletPanel(WalletPanel parent) {
 		super( new BorderLayout() );
 		m_parent = parent;
@@ -84,7 +86,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
 		vp.add( "Country", m_userCountry);
-		vp.add( "Persona", m_personaData);
+		vp.add( "Persona", m_personaData, new HtmlButton( "Show in Persona", ev -> onShowInPersona() ) );
 		
 		vp.addHeader( "Crypto");
 		vp.add( "RUSD", m_rusd);
@@ -106,7 +108,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				new HtmlButton("Go", e -> award() ) ); 
 
 		vp.add( "First name", m_firstName, new HtmlButton("Create new user", e -> createUser() ) );
-		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Admin1 to this wallet", e -> giveMatic() ) );
+		vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Owner to this wallet", e -> giveMatic() ) );
 
 		vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
 		vp.add( "Text", new JScrollPane( m_emailText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
@@ -125,6 +127,17 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		add( leftPanel, BorderLayout.WEST);
 		add( rightPanel);
+	}
+
+	private void onShowInPersona() {
+		if (m_personaResp != null) {
+			try {
+				Util.iff( m_personaResp.getString( "inquiryId"), id ->
+					Util.browse( "https://app.withpersona.com/dashboard/inquiries/" + id) );
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public String getWallet() {
@@ -211,9 +224,12 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
 				m_userCountry.setText( json.getString( "country") );
-				//m_personaData.setText( S.isNotNull( json.getString( "persona_response") ) ? "tooltip" : "<empty>");
-				//m_personaData.setToolTipText( json.getObjectNN( "persona_response").toHtml() );
 
+				m_personaResp = json.getObject( "persona_response");
+				if (m_personaResp != null) {
+					m_personaData.setText( "<hover for tooltip>");
+					m_personaData.setToolTipText( m_personaResp.getObject( "fields").toHtml() );
+				}
 				
 				JsonObject obj = json.getObject("locked");
 				if (obj != null) {
@@ -269,10 +285,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	
 	private void giveMatic() {
 		if (Util.confirm( this, 
-					"Are you sure you want to transfer .01 MATIC from Admin1 to " + m_wallet.getText() ) ) {
+					"Are you sure you want to transfer .01 MATIC from Owner to " + m_wallet.getText() ) ) {
 			wrap( () -> {
 				config().matic().transfer(
-						config().admin1Addr(),
+						config().ownerKey(),
 						m_wallet.getText(), 
 						.01); 
 			});

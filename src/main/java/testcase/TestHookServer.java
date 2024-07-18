@@ -8,10 +8,12 @@ import http.MyClient;
 import tw.util.S;
 import web3.StockToken;
 
-/** This test should be done in Dev or Prod only */
+/** This test should be done in Dev or Prod only. Why?
+ * 
+ *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	//String hook = "https://live.reflection.trading/hook";
-	String hook = "http://localhost:8484/hook";
+	String hook = "https://live.reflection.trading/hook";  // this WORKS
+	//String hook = "http://localhost:8484/hook";          // this FAILS--why???
 	static String wallet = Util.createFakeAddress();
 
 	static {
@@ -38,7 +40,7 @@ public class TestHookServer extends MyTestCase {
 		// mint RUSD
 		S.out( "minting 10 rusd into %s", wallet);
 		m_config.rusd().mintRusd(wallet, 10, stocks.getAnyStockToken() )
-				.waitForHash();
+				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
@@ -51,7 +53,7 @@ public class TestHookServer extends MyTestCase {
 		// buy stock token - wait for changes in RUSD and stock token
 		S.out( "buying 1 stock token %s for %s", tok.address(), wallet);
 		m_config.rusd().buyStockWithRusd(wallet, 1, tok, 2)
-				.waitForHash();
+				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
@@ -68,32 +70,42 @@ public class TestHookServer extends MyTestCase {
 	}
 
 	public void testNative() throws Exception {
+		MyClient.getJson( hook + "/get-wallet/" + wallet);
+
 		// send native token to wallet
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				wallet,
-				.001);
+				.001).displayHash();
 		
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
+			S.out( "pos " + pos);
 			return Util.isEq( pos, .001, .00001);
 		});
 	}
 	
 	public void testApprove() throws Exception {
-		int n = Util.rnd.nextInt( 10000) + 1;
+		int n = Util.rnd.nextInt( 10000) + 10;
 
-		// let Owner approve RUSD to spend BUSD
+		// create the wallet first so we know we get the event
+		double prev = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
+				.getDouble( "approved");
+		S.out( "prev=%s", prev);
+
+		// let Owner approve RUSD to spend BUSD (no sig needed)
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
-				.waitForHash();
+				.displayHash();
 
 		// wait for it to be reflected in wallet
 		waitFor( 120, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
 					.getDouble( "approved");
-			return pos == n;
+			S.out( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
+					n, pos, m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
+			return pos == n; 
 		});
 	}
 	
