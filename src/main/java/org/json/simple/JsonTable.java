@@ -47,7 +47,7 @@ public class JsonTable<T extends JsonObject> extends TsonObject<T> {
 			JsonTable<T> table,
 			Supplier<T> objSupplier) throws Exception {
 		
-		return (JsonTable<T>) new JSONParser().parse( reader, table, null, objSupplier );
+		return new JSONParser().parseTable( reader, table, objSupplier);
 	}	
 
 	private static void show(String str) throws Exception {

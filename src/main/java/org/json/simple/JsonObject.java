@@ -195,20 +195,12 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	
 	/** reader only */
 	public static JsonObject parse(Reader reader) throws Exception {
-		return parse( reader, () -> new JsonObject() );
+		return parse( reader, new JsonObject() );
 	}	
 	
 	/** reader with types */
-	@SuppressWarnings("unchecked")
-	public static <T> T parse(
-			Reader reader, 
-			Supplier<JsonObject> objSupplier) throws Exception {
-		
-		return (T)new JSONParser().parse( 
-				reader, 
-				new JsonArray(),       // there could still be arrays, just not the top level
-				objSupplier
-				);  // parseMsg() won't work here because it assumes all values are strings
+	public static <T extends JsonObject> T parse( Reader reader, T topLevel) throws Exception {
+		return (T) new JSONParser().parseObject( reader, topLevel);
 	}	
 	
 	public static boolean isObject(String text) {

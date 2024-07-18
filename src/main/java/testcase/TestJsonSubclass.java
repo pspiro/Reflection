@@ -41,7 +41,7 @@ public class TestJsonSubclass extends TestCase {
 		
 		// parse object, maintain types
 		String str = rec.toString();
-		Rec rec2 = JsonObject.parse( new StringReader(str), () -> new Rec() );
+		Rec rec2 = JsonObject.parse( new StringReader(str), new Rec() );
 		rec2.display2();
 
 		// parse object, no types

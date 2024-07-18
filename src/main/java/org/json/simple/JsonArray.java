@@ -41,7 +41,7 @@ public class JsonArray extends TsonArray<JsonObject> {
 			Supplier<T> objSupplier 
 			) throws Exception {
 		
-		return (L)new JSONParser().parse( reader, list, objSupplier);
+		return (L)new JSONParser().parseArray( reader, list, objSupplier);
 	}
 	
 
