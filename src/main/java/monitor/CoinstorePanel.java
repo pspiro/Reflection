@@ -97,7 +97,7 @@ class CoinstorePanel extends MonPanel {
 			refreshTop();
 			
 			S.out( "Monitoring for new trades");
-			Util.executeEvery(period, period, () -> check() );
+			Util.executeEvery( "Coinstore", period, period, () -> check() );
 		}
 		
 		/** Load up existing trades */

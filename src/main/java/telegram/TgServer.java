@@ -36,7 +36,7 @@ public class TgServer {
 
 	// https://core.telegram.org/bots/api#available-methods
 	public static void main(String[] args) throws Exception {
-		Util.executeEvery(0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
+		Util.executeEvery("Telegram", 0,  Util.MINUTE, () -> Util.wrap( () -> check() ) );
 		//queryMessages();
 		
 //		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 

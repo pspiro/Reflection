@@ -42,12 +42,15 @@ public class TestMargin extends MyTestCase {
 	}
 
 	public void testDynamicQuery() throws Exception {
+		// place order
+		JsonObject orderJson = cli().postToJson( "/api/margin-order", newOrd() );
+		assert200();
+
 		// fail missing conid
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie
-				) )
-			.display();
+				) );
 		failWith( RefCode.INVALID_REQUEST);
 		assertStartsWith( "Param 'conid'", cli.getMessage() );
 
@@ -55,18 +58,34 @@ public class TestMargin extends MyTestCase {
 		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"conid", conid
-				) )
-			.display();
+				) );
+		failWith( RefCode.VALIDATION_FAILED);
+
+		// fail missing wallet
+		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
+				"cookie", Cookie.cookie,
+				"conid", conid
+				) );
+		failWith( RefCode.INVALID_REQUEST);
+
+		// fail wrong wallet
+		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
+				"cookie", Cookie.cookie,
+				"wallet_public_key", Cookie.dead,
+				"conid", conid
+				) );
 		failWith( RefCode.VALIDATION_FAILED);
 
 		// success
-		cli().postToJson( "/api/margin-dynamic", Util.toJson( 
+		JsonObject json = cli().postToJson( "/api/margin-dynamic", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"conid", conid,
-				"cookie", Cookie.cookie
-				) )
-			.display();
-		assert200();
+				"cookie", Cookie.cookie) );
+		json.display();
+		JsonObject order = json.getArray( "orders").find( "orderId", orderJson.getString( "orderId") );
+		assertTrue( order != null);
+		
+		cancel( orderJson.getString( "orderId"));
 	}
 
 	public void testFailOrder() throws Exception {
@@ -237,21 +256,13 @@ public class TestMargin extends MyTestCase {
 		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
-		String orderId = json.getString( "orderId");
-		assertEquals( 10, orderId.length() );
 		json.display();
 
-		// find order in query
-		JsonObject dynamic = cli().postToJson( "/api/margin-dynamic", Util.toJson(
-				"wallet_public_key", Cookie.wallet, 
-				"cookie", Cookie.cookie,
-				"conid", conid) );
-		
-		JsonObject live = dynamic.getArray( "orders").find( "orderId", json.getString("orderId") );
-		assertTrue( "live order not found", live != null);
-		live.display();
-		
+		String orderId = json.getString( "orderId");
+		assertEquals( 10, orderId.length() );
+
 		// missing orderId
+		S.out( "fail");
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie) )
@@ -260,24 +271,29 @@ public class TestMargin extends MyTestCase {
 		assertStartsWith( "Param 'orderId'", cli.getMessage() );
 
 		// fail wrong orderId
+		S.out( "fail");
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"orderId", "myorderidd",
+				"orderId", "xxxxxxxxxx",
 				"cookie", Cookie.cookie) )
 			.display();
 		failWith( RefCode.INVALID_REQUEST);
 		
 		// fail wrong wallet
+		S.out( "fail");
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", dead,
 				"orderId", orderId,
 				"cookie", Cookie.cookie) )
 			.display();
+		failWith( RefCode.VALIDATION_FAILED);
 		
 		// cancel, success
+		S.out( "succeed");
 		cancel( json.getString("orderId") );
 
 		// fail already canceled
+		S.out( "fail");
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"orderId", orderId,

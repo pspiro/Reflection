@@ -283,17 +283,21 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
+	/** Executes in the MarginStore timer thread */
 	public synchronized void acceptPayment() {
-		try {
-			acceptPayment_();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-			
-			systemCancel( "Failed to accept payment - " + e.getMessage() );
-		}
+		// this can take a while; don't tie up the timer thread of the HTTP processing thread
+		Util.execute( () -> {
+			try {
+				acceptPayment_();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				systemCancel( "Failed to accept payment - " + e.getMessage() );
+			}
+		});
 	}
 	
+	/** Executes in the MarginStore timer thread */
 	public void acceptPayment_() throws Exception  {
 		Util.require( status() == Status.NeedPayment, "Invalid status %s to accept payment", status() );
 		
@@ -314,6 +318,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 		status( Status.InitiatedPayment);
 		
+		// this takes a while; note that order could be canceled while we are waiting
 		String hash = val.waitForHash();
 
 		out( "Accepted payment with trans hash %s", hash);
@@ -348,6 +353,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		// if order has been canceled by user while we were waiting, bail out
 		if ( status() == Status.Canceled) {
+			out( "Order was canceled while waiting for hash or receipt");
 			return;
 		}
 		
@@ -355,7 +361,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 		save();
 		
 		placeBuyOrder();
-
 		// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
 		// when it restarts we won't know for sure if the transaction was successful or not;
 		// operator assistance would be required		
@@ -612,6 +617,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** called by user in HTTP processing thread */
 	public synchronized void userCancel() throws RefException {
+		out( "User cancel");
+		
 		switch( status() ) {
 		case NeedPayment:
 		case InitiatedPayment:
@@ -922,7 +929,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //support time_t values for good until, it will be good for testing
 //add orders from here to the UserTok mgr?
 //very concerning bug: transaction was successful but never got "receipt" 0xd2c5d0cf7086832e89f035d066c3db04d1f8c6d035390b75db747e208defb621
-
+//you have to protect against file corruption because the maps could be modified while writing; maybe move the existing file away before writing the new one, and alway try to read it if the main one can't be read
 
 //	old notes from textpad
 //	

@@ -48,7 +48,7 @@ public class TradingHours {
 
 			S.out( "Starting trading hours query thread every one hour");
 			
-			Util.executeEvery( 0, interval, () -> {
+			Util.executeEvery( "TradingHours", 0, interval, () -> {
 				S.out( "Querying for trading hours now");
 				query( ibm, "SMART");
 				query( ibm, MdServer.Overnight);

@@ -5,10 +5,16 @@ import java.util.TimerTask;
 
 /** All calls to a single instance this execute in the same thread */
 public class NiceTimer {
-	private final Timer m_timer = new Timer();
+	private final Timer m_timer;
 	private boolean m_scheduled;
 
-	/** This can be called multiple times but will only allow one to be scheduled. */
+	public NiceTimer(String name) {
+		m_timer = new Timer( name);
+	}
+
+	/** This can be called multiple times but will only allow one to be scheduled.
+	 *  NOTE you can only call this with the same Runnable each time;
+	 *  it could be improved to support different schedules for different Runnables*/
 	public synchronized void schedule( int wait, Runnable runnable) {
 		if (!m_scheduled) {
 			
