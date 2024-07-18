@@ -156,9 +156,8 @@ public class Prices {
 
 	/** for debug and S.out() only */
 	@Override public String toString() {
-		throw new RuntimeException();
-//		return S.format( "bid=%s  ask=%s  last=%s  time=%s",
-//				m_bid, m_ask, m_last, Util.hhmmss.format( m_time) );
+		return S.format( "bid=%s  ask=%s  last=%s  time=%s",
+				m_bid, m_ask, m_last, Util.hhmmss.format( m_time) );
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");

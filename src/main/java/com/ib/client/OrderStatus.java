@@ -38,7 +38,8 @@ public enum OrderStatus {
 		return this == Cancelled || this == Filled;
 	}
 
-	boolean canCancel() {
+	/** This is really canCancel or modify */
+	boolean canModify() {
 		return this == ApiPending || this == PreSubmitted || this == Submitted || this == PendingSubmit;
 	}
 }

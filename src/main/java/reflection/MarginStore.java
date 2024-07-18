@@ -109,7 +109,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 			m_started = true;
 			
 			m_processingThread.executeEvery( 0, 10000, () -> 
-				forEach( order -> order.process() ) );
+				forEach( order -> order.onProcess() ) );
 		}
 	}
 

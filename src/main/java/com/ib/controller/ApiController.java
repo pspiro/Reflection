@@ -964,6 +964,18 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
+	public synchronized void modifyOrder( Contract contract, Order order, IOrderHandler handler) throws Exception {
+		if (!checkConnection())
+			return;
+
+		if (handler != null) {
+			listenTo( order.orderId(), handler);
+		}
+
+		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
+		sendEOM();
+	}
+
 	/** Let handler listen for events from IB for this order 
 	 *  Note that permId would be a better key */
 	public void listenTo( int orderId, IOrderHandler handler) {

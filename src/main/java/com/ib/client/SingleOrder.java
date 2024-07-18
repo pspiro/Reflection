@@ -125,6 +125,28 @@ public class SingleOrder implements IOrderHandler {
 		}
 	}
 
+	/** Called when the price is modified. Submit or resubmit the order */ 
+	public synchronized void resubmit() throws Exception {
+		if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {  // technically, if the order triggered, we should send it in even if it is now untriggered. pas
+			if (m_listener == null) {
+				out( "Simulating stop order");
+				
+				// listen for price changes
+				common.Util.require( m_prices != null, "must pass prices for sim stop order");
+				m_listener = prices -> onPriceChanged();
+				m_prices.addListener( m_listener);
+			}
+			// else already listening, nothing to do
+		}
+		
+		if (m_order.status().canModify() ) {
+			m_conn.modifyOrder( contract(), m_order, this);
+		}
+		else if (m_order.status() == OrderStatus.Unknown) {
+			m_conn.placeOrder( contract(), m_order, this);
+		}
+	}
+
 	/** triggers when the BID is <= trigger price; somewhat dangerous */
 	private void onPriceChanged() {
 		if (m_prices.bid() <= m_order.auxPrice() && m_listener != null) {
@@ -167,7 +189,7 @@ public class SingleOrder implements IOrderHandler {
 	}
 
 	public void cancel() {
-		if (m_order != null && m_order.status().canCancel() && m_conn.isConnected() ) {
+		if (m_order != null && m_order.status().canModify() && m_conn.isConnected() ) {
 
 			m_order.status( OrderStatus.PendingCancel);
 			

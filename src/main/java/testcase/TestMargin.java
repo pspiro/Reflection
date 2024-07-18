@@ -37,11 +37,14 @@ public class TestMargin extends MyTestCase {
 	}
 	
 	public void testStaticQuery() throws Exception {
+		S.out( "testing static");
 		cli().get("/api/margin-static/" + Cookie.wallet).readJsonObject().display(); // cookie is not required but Frontend should pass it for debugging
 		assert200();
 	}
 
 	public void testDynamicQuery() throws Exception {
+		S.out( "testing dynamic");
+		
 		// place order
 		JsonObject orderJson = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
@@ -89,6 +92,8 @@ public class TestMargin extends MyTestCase {
 	}
 
 	public void testFailOrder() throws Exception {
+		S.out( "testing fail order");
+		
 		// fail user profile
 		String prev = Cookie.wallet;
 		Cookie.setNewFakeAddress( false);
@@ -116,7 +121,7 @@ public class TestMargin extends MyTestCase {
 	}
 	
 	public void testBuyNoFill() throws Exception {
-		S.out( "placing order");
+		S.out( "testing buy no fill");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		json.display();
 		assert200();
@@ -129,6 +134,7 @@ public class TestMargin extends MyTestCase {
 
 	/** sell orders will be resting */
 	public void testFillBuyOnly() throws Exception {
+		S.out( "testing fill buy only");
 		JsonObject ord = newOrd();
 		ord.put( "profitTakerPrice", base + 2);
 		ord.put( "entryPrice", base + 1);
@@ -141,13 +147,15 @@ public class TestMargin extends MyTestCase {
 		S.out( "wait 5 sec to accept pmt and fill buy order");
 		waitFor(40, () -> {
 			Status status = getOrderStatus( json);
-			return status == Status.BuyOrderFilled || status == Status.PlacedSellOrders;
+			return status == Status.BuyOrderFilled || status == Status.Monitoring;
 		});
 		
 		cancel( json.getString("orderId") );
 	}
 
 	public void testFillBuyAndStop() throws Exception {
+		S.out( "testing fill buy and stop");
+		
 		JsonObject ord = newOrd();
 		ord.put( "profitTakerPrice", base + 3);
 		ord.put( "entryPrice", base + 2);
@@ -162,7 +170,7 @@ public class TestMargin extends MyTestCase {
 	}
 	
 	public void testUpdate() throws Exception {
-		S.out( "placing order");
+		S.out( "testing update");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
 		
@@ -220,7 +228,7 @@ public class TestMargin extends MyTestCase {
 	}
 	
 	public void testLiquidate1() throws Exception {
-		S.out( "placing order with buy only");
+		S.out( "testing liquidate1");
 		
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + .5);
@@ -234,26 +242,21 @@ public class TestMargin extends MyTestCase {
 		waitFor(40, () -> getOrderStatus( json) == Status.Completed);
 	}
 
-	private MarginOrder.Status getOrderStatus(JsonObject json) throws Exception {
-		JsonObject ret = cli().getToJson("/api/margin-get-status/" + json.getString( "orderId") );
-		String status = ret.getString( "status");
-		Util.require( S.isNotNull( status), "Error: no status for order " + json.getString( "orderId") );
-		return Util.getEnum( status, MarginOrder.Status.values() );
-	}
-
 	public void testAddFunds() {
+		assertTrue( false);
 	}
 
 	public void testWithdrawFunds() {
-		
+		assertTrue( false);
 	}
 
 	public void testWithdrawTokens() {
+		assertTrue( false);
 	}
 
 
 	public void testCancel() throws Exception {
-		S.out( "placing order");
+		S.out( "testing cancel");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
 		assert200();
 		json.display();
@@ -337,13 +340,11 @@ public class TestMargin extends MyTestCase {
 		Util.iff( ords.find( "orderId", id), ord -> S.out( ord) );
 	}
 	
-	/** Return the orders from the dynamic query */
-	private JsonArray queryDynamic() throws Exception {
-		return cli().postToJson( "/api/margin-dynamic", Util.toJson(
-				"wallet_public_key", Cookie.wallet, 
-				"cookie", Cookie.cookie,
-				"conid", conid) )
-			.getArray( "orders");
+	private MarginOrder.Status getOrderStatus(JsonObject json) throws Exception {
+		JsonObject ret = cli().getToJson("/api/margin-get-status/" + json.getString( "orderId") );
+		String status = ret.getString( "status");
+		Util.require( S.isNotNull( status), "Error: no status for order " + json.getString( "orderId") );
+		return Util.getEnum( status, MarginOrder.Status.values() );
 	}
 
 }

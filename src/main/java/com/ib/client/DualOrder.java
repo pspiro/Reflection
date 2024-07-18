@@ -134,6 +134,10 @@ public class DualOrder implements SingleParent {
 		m_parent.onStatusUpdated( this, status, permId, action, filled, avgPrice); 
 	}
 
+	public void resubmit() throws Exception {
+		m_dayOrder.resubmit();
+		m_nightOrder.resubmit();
+	}
 
 
 

@@ -39,16 +39,33 @@ public class MarginOrder extends JsonObject implements DualParent {
 		GotReceipt,				// got blockchain hash and 
 		PlacedBuyOrder,			// buy order was been placed; waiting for it to fill
 		BuyOrderFilled,			// buy order has filled; need to place sell orders, if any 
-		PlacedSellOrders,		// placed sell orders, if there were any
-		Monitoring,				// monitor the orders IF there are any sell orders OR there is a loan
-		Liquidation,
-		Completed,				// we're done; nothing to monitor, no loan
-		Canceled,				//
-		Withdrawn,
+		Monitoring,				// placed sell orders (if any); monitoring sell orders and for liquidation
+		Liquidation,			// in liquidation
+		Completed,				// we're done; nothing to monitor, no loan; there may be a position
+		Canceled,				// canceled by user or system; nothing to monitor 
+		Settled;				// funds and/or shares have been withdrawn; the order can be removed from the screen
+
+		private boolean is(Status... statuses) {
+			for (var status : statuses) {
+				if (this == status) {
+					return true;
+				}
+			}
+			return false;
+		}
 
 		boolean canCancel() {
-			return this != Liquidation && this != Completed && this != Canceled;  
+			return is( Liquidation, Completed, Canceled);  
 		}  
+		
+		boolean canUpdateEntryPrice() {
+			return is( NeedPayment, InitiatedPayment, GotReceipt, PlacedBuyOrder);
+		}
+
+		boolean canUpdateBracketPrice() {
+			return is( NeedPayment, InitiatedPayment, GotReceipt, PlacedBuyOrder, BuyOrderFilled, Monitoring);		
+		}
+
 	}
 
 	String wallet() { return getString( "wallet_public_key"); }
@@ -92,7 +109,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private final Stocks m_stocks;
 	private final MarginStore m_store;
 	private final Consumer<Prices> m_listener = prices -> onTickBidAsk( prices);
-			
+	boolean m_initiatedPayment; // set this flag if we have initiated payment in this session
+
 	// the orders
 	private DualOrder m_buyOrder;
 	private DualOrder m_profitOrder;
@@ -189,12 +207,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 		m_liqOrder.orderType( OrderType.LMT);
 		m_liqOrder.outsideRth( true);
 	}
-	
-	void onUserUpdate(
-			double entryPrice,
-			double profitTakerPrice,
-			double stopPrice) {
-	}
 
 
 	/** Called every time the connection is restored. Update the orders in the orderMap()
@@ -232,22 +244,25 @@ public class MarginOrder extends JsonObject implements DualParent {
 	/** called on a timer every few seconds; make sure the margin order is in sync with the IB order */ 
 	// no good, we can't be calling this and methods like placeBuyOrder in different threads
 	// you either have to only call them in this thread, or only call this after reconnect
-	synchronized void process() {
+	synchronized void onProcess() {
 		switch( status() ) {
 			case NeedPayment:
 				acceptPayment();
 				break;
 				
 			case InitiatedPayment:
-				// this means we were waiting for payment and we don't know if we got it or not
-				// should be rare, will only happen if RefAPI resets while waiting for payment
-				// we can improve this and figure out if payment was received if desired. pas
-				Alerts.alert(
-						"RefAPI", 
-						"MARGIN_ORDER PAYMENT IS LOST, HANDLE THIS", 
-						S.format( "orderId=%s", orderId() ) );
-				
-				systemCancel( "Order payment was lost");
+				if (!m_initiatedPayment) {
+					// this means we were waiting for payment and RefAPI restarted;
+					// we don't know if we got it or not and we don't know how to
+					// wait for it; we can improve this if we save and restore the info needed
+					// to wait for a payment
+					Alerts.alert(
+							"RefAPI", 
+							"MARGIN_ORDER PAYMENT IS LOST, HANDLE THIS", 
+							S.format( "orderId=%s", orderId() ) );
+					
+					systemCancel( "Order payment was lost");
+				}
 				break;
 				
 			case GotReceipt:
@@ -267,8 +282,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 				placeSellOrders();
 				break;
 
-			case PlacedSellOrders:
-				checkSellOrders();
+			case Monitoring:
+				checkMonitoring();
 				break;
 			
 			case Liquidation:
@@ -280,15 +295,43 @@ public class MarginOrder extends JsonObject implements DualParent {
 				break;
 				
 			case Completed:
-				checkCompleted();
+			case Settled:
+				// nothing to do
 				break;
+		}
+	}
+
+	void onUserUpdate( double entryPrice, double profitTakerPrice, double stopPrice) throws Exception {
+		if (entryPrice > 0 && Util.isNotEq( entryPrice, entryPrice(), .005) ) {
+			Main.require( status().canUpdateEntryPrice(), RefCode.INVALID_REQUEST, "The entry price cannot be updated; the buy order has already been filled or canceled.");
+
+			put( "entryPrice", entryPrice);
+			m_buyOrder.lmtPrice( entryPrice() );
+			m_buyOrder.resubmit();
+		}
+		
+		if (profitTakerPrice > 0 && Util.isNotEq( profitTakerPrice, profitTakerPrice(), .005) ) {
+			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
+			
+			put( "profitTakerPrice", profitTakerPrice);
+			m_profitOrder.lmtPrice( profitTakerPrice);
+			m_profitOrder.resubmit();
+		}
+		
+		if (stopPrice > 0 && Util.isNotEq( stopPrice, stopLossPrice(), .005) ) {
+			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The stop-loss price cannot be updated at this time; the order status is '%s'", status() );
+
+			put( "stopLossPrice", stopPrice);
+			m_stopOrder.stopPrice(stopPrice);
+			m_stopOrder.lmtPrice(stopPrice * .9);
+			m_profitOrder.resubmit();
 		}
 	}
 
 	/** Executes in the MarginStore timer thread */
 	public synchronized void acceptPayment() {
 		// this can take a while; don't tie up the timer thread of the HTTP processing thread
-		Util.execute( () -> {
+		Util.execute( "AcceptPmt", () -> {
 			try {
 				acceptPayment_();
 			}
@@ -299,8 +342,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 		});
 	}
 	
-	/** Executes in the MarginStore timer thread */
-	public void acceptPayment_() throws Exception  {
+	/** Executes in a new thread every time. Cannot synchronize here
+	 *  because it will block the processing thread.  */
+	private void acceptPayment_() throws Exception  {
 		Util.require( status() == Status.NeedPayment, "Invalid status %s to accept payment", status() );
 		
 		out( "Accepting payment");
@@ -318,8 +362,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// it would be good if we can find a way to tie the receipt to this order
 		RetVal val = m_config.rusd().buyStock(walletAddr, stablecoin, amtToSpend, receipt, amtToSpend);
 
+		m_initiatedPayment = true;  // must come first; we need this because it will be a problem if process() is called and status is InitiatedPayment and this flag is not set 
 		status( Status.InitiatedPayment);
-		
+
 		// this takes a while; note that order could be canceled while we are waiting
 		String hash = val.waitForHash();
 
@@ -386,8 +431,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
-	/** Sell orders should be working */
-	private void checkSellOrders() {
+	/** check sell orders; no need to check for liquidation; 
+	 *  that occurs in the onTick() method */
+	private void checkMonitoring() {
+		// sell orders should be working
 		int qtyToSell = totalBought() - totalSold();
 		
 		if (qtyToSell > 0) {
@@ -399,9 +446,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				m_stopOrder.checkOrder( qtyToSell);
 			}
 		}
-		else {
-			out( "WARNING: Sell orders are filled but order is in state %s", status() );
-		}
+		// we could also be monitoring for liquidation 
 	}
 
 	private void checkLiquidation() {
@@ -416,13 +461,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 	
 	/** Completed orders should not have any size or orders */
-	private void checkCompleted() {
-		int net = totalBought() - totalSold();
-		
-		if (net > 0) {
-			out( "Error: order is in Completed state but still has net position %s", net);
-		}
-	}
+//	private void checkCompleted() {
+//	}
 
 	void placeBuyOrder() {
 		try {
@@ -502,7 +542,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 					placeSellOrders();
 				}
 			}
-			else if (status == Status.PlacedSellOrders && (dualOrd == m_profitOrder || dualOrd == m_stopOrder) ) {
+			else if (status == Status.Monitoring && (dualOrd == m_profitOrder || dualOrd == m_stopOrder) ) {
 				if (totalSold() >= totalBought() ) {
 					out( "  sell orders have filled");
 					
@@ -572,7 +612,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 		
 		if (someSell || loanAmt() > 0) {  // waiting for sell orders to fill or monitoring for liquidation
-			status( Status.PlacedSellOrders);
+			status( Status.Monitoring);
 		}
 		else {  // we're done
 			status( Status.Completed);
@@ -627,11 +667,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		case GotReceipt:
 		case PlacedBuyOrder:
 		case BuyOrderFilled:
-		case PlacedSellOrders:
+		case Monitoring:
 			cancelBuyOrders();  // buy orders can always be canceled
 			cancelSellOrders();
 
-			require( loanAmt() <= 0, RefCode.CANT_CANCEL, "The order has a loan amount and will remain active");
+			require( loanAmt() <= 0, RefCode.CANT_CANCEL, "The buy and sell orders, if any, have been canceled. The order has a positive loan amount and will remain active.");
 			
 			status( Status.Canceled);
 			put( "completedHow", "Canceled by user");
@@ -644,6 +684,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			break;
 			
 		case Completed:
+		case Settled:
 			require( false, RefCode.CANT_CANCEL, "The order has already completed");
 			break;
 			
@@ -793,14 +834,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 	
 	/** update bid/ask fields which are displayed by Frontend; called
-	 *  in the Util.m_timer thread */
+	 *  in the Util.m_timer thread 
+	 *  
+	 *  Alternatively, we could NOT receive these ticks and just check
+	 *  for liquidation in the process() method which gets called every
+	 *  n seconds anyway */
 	private synchronized void onTickBidAsk(Prices prices) {
 		put( "bidPrice", prices.bid() );
 		put( "askPrice", prices.ask() );
 		
 		put( "value", cashBalance() + stockValueLast() );
 		
-		if (status() != Status.PlacedBuyOrder || status() == Status.BuyOrderFilled) {
+		if (status() == Status.Monitoring) {
+		//if (status() != Status.PlacedBuyOrder || status() == Status.BuyOrderFilled) {
 			double loanVal = loanAmt();
 			
 			if (loanVal > 0) {     // loan value and liq. is wrong; 
@@ -913,6 +959,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test canceling at all different states
 //test different good until values
 //bug  WXDTORZHIT Error: order is in Completed state but still has net position 1
+//need test scripts for 
 
 //later:
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
@@ -932,6 +979,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //add orders from here to the UserTok mgr?
 //very concerning bug: transaction was successful but never got "receipt" 0xd2c5d0cf7086832e89f035d066c3db04d1f8c6d035390b75db747e208defb621
 //you have to protect against file corruption because the maps could be modified while writing; maybe move the existing file away before writing the new one, and alway try to read it if the main one can't be read
+//review how you are waiting for blockchain transactions, e.g. acceptPayment
 
 //	old notes from textpad
 //	

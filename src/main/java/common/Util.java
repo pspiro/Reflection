@@ -86,9 +86,14 @@ public class Util {
 		return isGtEq(larger, smaller);
 	}
 
-	/** Do a decimal compare down to four digits */
+	/** Do a decimal compare down to specified tolerance.
+	 *  Go one decimal past what you care about, e.g. if you care about .01, pass .005 */
 	public static boolean isEq(double d1, double d2, double tolerance) {
 		return Math.abs(d1 - d2) < tolerance;
+	}
+
+	public static boolean isNotEq(double d1, double d2, double tolerance) {
+		return !isEq( d1, d2, tolerance);
 	}
 
 	/** Typical format of hours string is:
