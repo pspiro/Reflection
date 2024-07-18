@@ -591,7 +591,7 @@ public class Main implements ITradeReportHandler {
 		return m_marginStore;
 	}
 	
-	/** Called at startup only. Read it from disk but not not start the order processing yet */
+	/** Called at startup only. Read it from disk but do not start the order processing yet */
 	void restoreLiveOrders() {
 		String filename = "margin.store";
 		
@@ -602,10 +602,11 @@ public class Main implements ITradeReportHandler {
 			// because the store is used in the constructor to the MarginOrders
 			m_marginStore = new MarginStore( filename, apiController() );
 			
-			JsonArray.parse(  // this is a bit weird in that we create the MarginStore before it is parsed
+			JsonArray.parse( 
 					new FileReader( filename),
-					() -> new MarginOrder( apiController(), m_stocks, m_marginStore),  // note that connection may not be established yet
-					() -> m_marginStore);
+					m_marginStore,
+					() -> new MarginOrder( apiController(), m_stocks, m_marginStore)  // note that connection may not be established yet
+					);
 			
 			S.out( "  read %s records", m_marginStore.size() );
 		}

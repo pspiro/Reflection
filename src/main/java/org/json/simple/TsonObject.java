@@ -13,11 +13,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-import java.math.BigInteger;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.function.Function;
@@ -25,13 +21,8 @@ import java.util.function.Supplier;
 
 import org.json.simple.parser.JSONParser;
 
-import com.moonstoneid.siwe.SiweMessage;
-
 import common.Util;
-import reflection.SiweUtil;
-import reflection.Stock;
 import tw.util.S;
-import web3.Erc20;
 
 /**
  * A JSON object. Key value pairs are unordered. TsonObject supports java.util.Map interface.
@@ -40,7 +31,7 @@ import web3.Erc20;
  * 
  * @author FangYidong<fangyidong@yahoo.com.cn>
  */
-public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONStreamAware, Comparable<TsonObject> {
+public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONStreamAware {
 	
 	private static final long serialVersionUID = -503443796854799292L;
 	
@@ -173,96 +164,40 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 		return JSONValue.escape(s);
 	}
 
-	
-	
-	
-	
-	/** Converts any object type to string or returns empty string, never null. */
-	public String getString(String key) {
-		Object val = get(key);
-		return val != null ? val.toString() : ""; 
-	}
-
-	/** Converts any object type to string or returns empty string, never null. */
-	public String getLowerString(String key) {
-		Object val = get(key);
-		return val != null ? val.toString().toLowerCase() : ""; 
-	}
-
 	/** string only */
-//	public static TsonObject parse( String text) throws Exception {
-//		Util.require( isObject(text), "Error: not a json object: " + text);
-//
-//		return parse( new StringReader(text) );
-//	}
-//	
-//	/** reader stream only */
-//	public static TsonObject parse(InputStream is) throws Exception {
-//		return parse( new InputStreamReader(is) ); 
-//	}	
+	public static JsonObject parse( String text) throws Exception {
+		Util.require( isObject(text), "Error: not a json object: " + text);
+
+		return parse( new StringReader(text) );
+	}
+	
+	/** reader stream only */
+	public static JsonObject parse(InputStream is) throws Exception {
+		return parse( new InputStreamReader(is) ); 
+	}	
 	
 	/** reader only */
-//	public static TsonObject parse(Reader reader) throws Exception {
-//		return parse( reader, () -> new TsonObject() );
-//	}	
+	public static JsonObject parse(Reader reader) throws Exception {
+		return parse( reader, () -> new JsonObject() );
+	}	
 	
-	
-//	public static TsonObject readFromFile(String filename) throws Exception {
-//		return parse( new FileInputStream( filename) );
-//	}
-
 	/** reader with types */
 	@SuppressWarnings("unchecked")
-//	public static <T> T parse(
-//			Reader reader, 
-//			Supplier<TsonObject> objSupplier) throws Exception {
-//		
-//		return (T)new JSONParser().parse( 
-//				reader, 
-//				objSupplier,
-//				() -> new TsonArray<T>()       // there could still be arrays, just not the top level
-//				);  // parseMsg() won't work here because it assumes all values are strings
-//	}	
+	public static <T> T parse(
+			Reader reader, 
+			Supplier<JsonObject> objSupplier) throws Exception {
+		
+		return (T)new JSONParser().parse( 
+				reader, 
+				new JsonArray(),       // there could still be arrays, just not the top level
+				objSupplier
+				);  // parseMsg() won't work here because it assumes all values are strings
+	}	
 	
 	public static boolean isObject(String text) {
 		return text != null && text.trim().startsWith("{");
 	}
 
-	/** If the key does not exist, it returns an empty array; this could be an issue
-	 *  if the type is TJsonArray */
-	public JsonArray getArray(String key) {
-		JsonArray array = (JsonArray)get(key);
-		return array != null ? array : new JsonArray(); 
-	}
-
-	/** Call it like this: json.<String>getAnyArray( key) */
-	@SuppressWarnings("unchecked")
-	public <T> ArrayList<T> getArrayOf(String key) {
-		ArrayList<T> array = (ArrayList<T>)get(key);
-		return array != null ? array : new ArrayList<T>(); 
-	}
-	
-	/** Returns zero for null value Can handle hex calues starting with 0x. */
-	public long getLong(String key) {
-		return Util.getLong( getString( key) );
-	}
-
-	/** Returns zero for null value. */
-	public int getInt( String key) {
-		String str = getString( key);
-		return S.isNotNull( str) ? Integer.parseInt( str) : 0;
-	}
-
-	public BigInteger getBigInt(String key) {
-		String str = getString( key);
-		return S.isNotNull( str) ? new BigInteger( str) : BigInteger.ZERO;
-	}
-
-	public double getDouble(String key) {
-		String str = getString( key);
-		return S.isNotNull( str) ? Double.valueOf( str) : 0.;
-	}
-	
 	public void display(String title) {
 		S.out(title);
 		display( this, 0, false);
@@ -273,7 +208,7 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 		display( this, 0, false);
 		System.out.println();
 	}
-	
+
 	public static void display(Object objIn, int level, boolean arrayItem) {
 		if (objIn instanceof TsonObject) {
 			out( "{\n");
@@ -328,10 +263,10 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 	static void out( Object str) {
 		System.out.print( str);
 	}
-
-	public boolean getBool(String key) {
-		return Boolean.parseBoolean( getString(key) );
-	}
+//
+//	public boolean getBool(String key) {
+//		return Boolean.parseBoolean( getString(key) );
+//	}
 
 	/** Add the pair if val is not null AND not empty string
 	 *  
@@ -355,104 +290,14 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 		}
 	}
 
-	/** Return true if val is not null */
-	public boolean has(String key) {
-		return S.isNotNull( getString(key) );
+	public static JsonObject readFromFile(String filename) throws Exception {
+		return parse( new FileInputStream( filename) );
 	}
 
-	@Override public int compareTo(TsonObject o) {
-		return toString().compareTo(o.toString() );
-	}
-
-	public String getTime(String key, SimpleDateFormat fmt) {
-		long v = getLong(key);
-		return v == 0 ? "" : fmt.format(v);
-	}
-
-	/** Trim all string values */
-	public TsonObject trim() {
-		entrySet().forEach( entry -> {
-			if (entry.getValue() instanceof String) {
-				entry.setValue( (T)entry.getValue().toString().trim() );
-			}
-		});
-		return this;
-	}
-	
-	/** Don't add \n's because it break JOptionPane in Util.inform */ 
-	public String toHtml() {
-		StringBuilder b = new StringBuilder();
-		forEach( (key,value) -> {
-			Util.appendHtml( b, "tr", () -> {
-				Util.wrapHtml( b, "td", key);
-
-				if (value instanceof TsonArray) {
-					Util.wrapHtml( b, "td", ((TsonArray)value).toHtml() );
-				}
-				else {
-					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
-				}
-			});
-		});
-		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
-	}
-
-
-	/** Copy all tags from other to this object; null values are okay but not added */
-	public void copyFrom(TsonObject<T> other, String... tags) {
-		for (String tag : tags) {
-			if (other.get(tag) != null) {
-				put( tag, other.get(tag) );
-			}
-		}
-	}
-
-	/** Increment the key by val; stored value must be a Double */
-	public void increment(String key, double val) {
-		put( key, (T)(Double)(getDouble(key) + val));
-	}
-	
-	/** Will convert a string to enum; may return null; use method below for no exceptions */
-	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
-		Object val = get(key);
-		return val instanceof Enum ? (T)val : Util.getEnum(val.toString(), values);
-	}
-
-	/** Will convert a string to enum. Defaults to def. Note that this will not
-	 *  report an error if the string is invalid; the caller must be assured that
-	 *  the string is null or one of the valid values. */
-	public <T extends Enum<T>> T getEnum( String key, T[] values, T def) {
-		try {
-			Object val = get(key);
-			return val instanceof Enum 
-					? (T)val 
-			: val == null || S.isNull( val.toString() )
-					? def
-					: Util.getEnum(val.toString(), values);
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-			return def;
-		}
-	}
-
-	/** Add all keys to the key set */
-	public void addKeys(HashSet<String> keys) {
-		keySet().forEach( key -> keys.add( key) );
-	}
-	
 	public void writeToFile(String filename) throws IOException {
 		try (FileWriter writer = new FileWriter( filename) ) {
 			writeJSONString( writer);
 		}
-	}
-
-	public Stock getStock(String tag) {
-		return (Stock)get( tag);
-	}
-
-	public BigInteger getBlockchain(String key, int decimals) {
-		return Erc20.toBlockchain( getDouble( key), decimals);
 	}
 
 	public void removeNulls() {
@@ -466,6 +311,19 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 
 	public void show( Component parent) {
 		Util.inform( parent, toString() );
+	}
+	
+	@Override public String toHtml() {
+		return "not implemented";
+	}
+
+	/** This assumes that this object is a map of key to JsonObject */
+	public JsonArray toArray() {
+		JsonArray ar = new JsonArray();
+		for (var obj : values() ) {
+			ar.add( (JsonObject)obj);
+		}
+		return ar;
 	}
 }
 /** NOTE: Timestamp objects are stored as

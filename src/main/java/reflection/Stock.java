@@ -78,7 +78,7 @@ public class Stock extends JsonObject {
 	public boolean isHot() {
 		return getBool("isHot");
 	}
-
+	
 	@Override public int compareTo(JsonObject o) {
 		return getString("symbol").compareTo(o.getString("symbol"));
 	}

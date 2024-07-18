@@ -60,7 +60,7 @@ public class TestJsonSubclass extends TestCase {
 		str = recs.toString();
 
 		// parse array, maintain types
-		Recs recs2 = JsonArray.parse( new StringReader( str), () -> new Rec(), () -> new Recs() );
+		Recs recs2 = JsonArray.parse( new StringReader( str), new Recs(), () -> new Rec() );
 		S.out( recs2.getClass().getName() );
 		recs2.display();
 		
