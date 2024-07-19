@@ -279,7 +279,7 @@ public class TestSiwe extends MyTestCase {
 		Cookie.setNewFakeAddress(false);
 		
 		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
-		assert200();
+		assert200_();
 
 		S.out( "Restart RefAPI");
 		Util.pause();
@@ -289,7 +289,7 @@ public class TestSiwe extends MyTestCase {
 		assertEquals( 400, cli.getResponseCode() );
 
 		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
-		assert200();
+		assert200_();
 	}
 	
 	public void testFailCookie() throws Exception {
