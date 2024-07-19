@@ -3,10 +3,12 @@ package monitor;
 import java.awt.BorderLayout;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
 import reflection.Stock;
+import tw.util.HtmlButton;
 
 /** This tracks the UserTokenMgr which subtracts out the quantity of live order 
  * so as not to double-spend crypto */
@@ -14,9 +16,19 @@ public class UserTokenPanel extends JsonPanel {
 
 	public UserTokenPanel() {
 		super(new BorderLayout(), "createdAt,updatedAt,wallet,token,offset");
+		add( new HtmlButton( "Reset", ev -> reset() ), BorderLayout.NORTH);
 		add( m_model.createTable() );
 	}
 	
+	private void reset() {
+		wrap( () -> {
+		String url = String.format( "%s/api/reset-user-token-mgr", Monitor.refApiBaseUrl() );
+		JsonObject json = MyClient.getJson( url);
+		json.display();
+		Util.inform( this, json.getString( "code"));
+		});
+	}
+
 	@Override protected Object format(String key, Object value) {
 		return switch (key) {
 			case "createdAt" -> Util.yToS.format( (long)value);

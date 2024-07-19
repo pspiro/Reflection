@@ -138,7 +138,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-profile", exch -> new ProfileTransaction(this, exch).handleGetProfile() );
 			server.createContext("/api/update-profile", exch -> new ProfileTransaction(this, exch).handleUpdateProfile() );
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
-			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
+			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
 			
 			// get/set config
