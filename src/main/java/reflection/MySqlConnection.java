@@ -114,6 +114,9 @@ public class MySqlConnection implements AutoCloseable {
 	 *  Do not include the word 'where' in the where clause
 	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON
 	 *  
+	 *  WARNING: any table with an auto-generated ID column, the update will throw
+	 *  an exception if there is no existing record (e.g. users table)
+	 *  
 	 *  @return true for insert, false for update */
 	public boolean insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
 		boolean inserted = false;

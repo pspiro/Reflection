@@ -114,7 +114,7 @@ public class MyTestCase extends TestCase {
 	}
 	
 	public static void assertStartsWith(String expected, Object actual) {
-		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
+		assertEquals( expected, Util.left( actual.toString(), expected.length() ) );
 	}
 
 	/** Wait for HookServer to catch up Exception */

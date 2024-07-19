@@ -11,6 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -170,5 +171,17 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	protected String getUserIpAddress() throws Exception {
 		return Util.left( getFirstHeader( "X-Real-IP"), 15);
+	}
+
+	/** create a User object for this */
+	protected JsonObject getUser() throws Exception {
+		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		return ar.size() == 0 ? null : ar.get( 0);
+	}
+
+	/** create a User object for this */
+	protected JsonObject getorCreateUser() throws Exception {
+		var user = getUser();
+		return user != null ? user : new JsonObject();
 	}
 }
