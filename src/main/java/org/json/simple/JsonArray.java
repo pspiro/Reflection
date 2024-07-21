@@ -13,6 +13,7 @@ import org.json.simple.parser.JSONParser;
 
 import common.Util;
 
+/** An array of JsonObjects */
 public class JsonArray extends TsonArray<JsonObject> {
 
 	/** string, no types */
@@ -28,11 +29,7 @@ public class JsonArray extends TsonArray<JsonObject> {
 
 	/** reader, no types */
 	public static JsonArray parse( Reader reader) throws Exception {
-		return parse( 
-				reader, 
-				() -> new JsonObject(),
-				() -> new JsonArray()
-				);
+		return parse( reader, new JsonArray(), () -> new JsonObject() );
 	}
 
 	/** reader, with types  (could be moved to base class)
@@ -40,15 +37,11 @@ public class JsonArray extends TsonArray<JsonObject> {
 	@SuppressWarnings("unchecked")
 	public static <T extends JsonObject, L extends TsonArray<T>> L parse(
 			Reader reader, 
-			Supplier<T> objSupplier, 
-			Supplier<TsonArray<T>> listSupplier
+			TsonArray<T> list,
+			Supplier<T> objSupplier 
 			) throws Exception {
 		
-		return (L)new JSONParser().parse( 
-				reader, 
-				objSupplier, 
-				listSupplier
-				);
+		return (L)new JSONParser().parseArray( reader, list, objSupplier);
 	}
 	
 

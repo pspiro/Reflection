@@ -3,7 +3,7 @@ package telegram;
 import javax.swing.JFrame;
 
 import org.json.simple.JsonArray;
-import org.json.simple.JsonObject;
+import org.json.simple.TsonObject;
 
 import common.JsonModel;
 import tw.util.NewLookAndFeel;
@@ -16,7 +16,7 @@ public class ImportTelegram {
 		NewLookAndFeel.register();
 		String folder = "C:/temp/";
 		String filename = folder + "result.json";
-		JsonArray ar = JsonObject.readFromFile( filename).getArray("messages");
+		JsonArray ar = TsonObject.readFromFile( filename).getArray("messages");
 		ar.forEach( obj -> obj.update( "text", textObj -> extract(textObj) ) ); 
 		ar.forEach( obj -> obj.update( "date", text -> text.toString().replace( 'T', ' ') ) ); 
 		

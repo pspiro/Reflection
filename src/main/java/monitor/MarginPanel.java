@@ -24,11 +24,11 @@ public class MarginPanel extends MonPanel {
 			placed,
 			orderId,
 			status,
+			loanAmt, 
 			symbol,
 			bidPrice, 
 			askPrice,
 			desiredQty,
-			loanAmt, 
 			sharesHeld,
 			sharesToBuy,
 			completedHow,
@@ -88,12 +88,21 @@ public class MarginPanel extends MonPanel {
 		RightPanel() {
 			super( new BorderLayout() );
 
+			HtmlButton cancelAll = new HtmlButton( "Cancel All", event -> {
+				wrap( () -> {
+					if (Util.confirm( this, "Are you sure?") ) {
+						MyClient.getJson( String.format( "%s/api/margin-system-cancel-all", 
+								Monitor.refApiBaseUrl() ) );
+					}
+				});
+			});
+
 			HtmlButton cancel = new HtmlButton( "Cancel", event -> {
 				wrap( () -> MyClient.getJson( String.format( "%s/api/margin-system-cancel/%s",
 						Monitor.refApiBaseUrl(), m_orderPanel.orderId() ) ).show( this) );
 			});
 
-			add( new HorzPanel( 10, 4, cancel), BorderLayout.NORTH);
+			add( new HorzPanel( 15, 4, cancelAll, cancel), BorderLayout.NORTH);
 			add( m_orderPanel);
 		}
 

@@ -11,6 +11,7 @@ import com.ib.controller.ApiController.LiveOrder;
 
 import common.Alerts;
 import common.NiceTimer;
+import reflection.MarginOrder.Status;
 import tw.util.S;
 
 class MarginStore extends TsonArray<MarginOrder> {
@@ -122,6 +123,28 @@ class MarginStore extends TsonArray<MarginOrder> {
 			}
 		}
 		return orderRefMap;
+	}
+
+	public void cancelAll() {
+		m_processingThread.execute( () -> {
+			S.out( "Canceling all orders");
+			forEach( order -> {
+				order.systemCancel("SystemCancelAll");
+				S.sleep( 10);  // don't break TWS pacing
+			});
+		});
+	}
+
+	/** Return false if there is an open order for the same wallet and conid */
+	public boolean canPlace(String walletAddr, int conid) {
+		for (MarginOrder order : this) {
+			if (order.wallet().equalsIgnoreCase( walletAddr) &&
+				order.conid() == conid &&
+				(order.status() == Status.Monitoring || order.status() == Status.Liquidation) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

@@ -469,6 +469,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			placeBuyOrder_();
 		}
 		catch (Exception e) {
+			out( e.getMessage() );
 			e.printStackTrace();
 		}
 	}
@@ -938,22 +939,21 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private double adjust(int traded) {
 		return traded >= roundedQty() ? desiredQty() : traded;
 	}
+
+	public synchronized void withdrawAll() {
+		
+	}
 }
 
-// need pagination at frontend, 
-// need status column on frontend
-//loan value is wrong
-//continue with testordernofill; it's not moving to the "placed buy order" status, where should that happen
 //auto-liq at COB regular hours if market is closed next day
-//you can allow cancel if there is a position, just not if there is a loan amount > 0
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
-//add the config items
 //enforce only one LIVE order per conid per wallet
 //let orders be pruned after one week (configurable)
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
 //don't use the Util thread to accept payment, need a separate thread for each request, or a better way to "wait"
 //you could charge a different fee for a lev order with leverage of 1, something more similar to the 
 //consider if you really want to collect a fee for an order that is never filled
+//implement "get info" from frontend
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
@@ -964,6 +964,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //need test scripts for 
 
 //later:
+//need pagination at frontend, 
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
 //now we need to cash out the user; they must initiate this
 //remove the margin order stock listener, when the order is removed from the store

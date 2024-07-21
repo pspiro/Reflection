@@ -11,8 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.json.simple.JsonTable;
 import org.json.simple.TsonArray;
+import org.json.simple.TsonObject;
+
+import common.Util;
 
 
 /**
@@ -69,31 +74,42 @@ public class JSONParser {
 	public int getPosition(){
 		return lexer.getPosition();
 	}
+
+//	public <T extends JsonObject> Object parse(
+//			Reader reader, 
+//			TsonArray<T> list,
+//			Supplier<T> objSupplier 
+//			) throws Exception {
+//		
+//		return parse( reader, null, list, objSupplier);
+//	}
+
+	/** parse an array where the array is JsonArray subclass and each element is JsonObject subclass */
+	public <T extends JsonObject> TsonArray<T> parseArray(Reader in, TsonArray<T> array, Supplier<T> objSupplier) throws Exception {
+		return (TsonArray<T>)parse( in, null, array, objSupplier);
+	}
+
+	/** parse a table where string -> JsonObject subclass */
+	public <T extends JsonObject> JsonTable<T> parseTable(Reader in, JsonTable<T> table, Supplier<T> objSupplier) throws Exception {
+		return (JsonTable<T>) parse( in, table, null, objSupplier);
+	}
+
+	/** parse JsonObject subclass, e.g. Person extends JsonObject */ 
+	public JsonObject parseObject(Reader in, JsonObject topLevelObj) throws Exception {
+		return (JsonObject)parse( in, topLevelObj, null, () -> new JsonObject() );
+	}
 	
-	/**
-	 * Parse JSON text into java object from the input source.
-	 * 	
-	 * @param in
-     * @param factory - Use this factory to createyour own JSON object and JSON array containers.
-	 * @return Instance of the following:
-	 *  org.json.simple.JSONObject,
-	 * 	org.json.simple.JSONArray,
-	 * 	java.lang.String,
-	 * 	java.lang.Number,
-	 * 	java.lang.Boolean,
-	 * 	null
-	 * 
-	 * now we only use objSupplier for items inside an array; not so good, should be fixed
-	 * 
-	 * @throws IOException
-	 * @throws ParseException
-	 */
-	public <T extends JsonObject> Object parse(
+	// for tables and array the supplier has to supply Json subclasses; for a normal object, it doesn't
+	/** modify it so objSupplier is only used for top level array or table */
+	private Object parse(  // by saying extends, it means it takes only a table
 			Reader in, 
-			Supplier<T> objSupplier, 
-			Supplier<TsonArray<T>> listSupplier
+			TsonObject topLevelObj, 
+			TsonArray topLevelArray,
+			Supplier objSupplier
 			) throws Exception {
-			
+		
+		Util.require( topLevelObj == null || topLevelArray == null, "Can't have both");
+		
 		reset(in);
 		LinkedList statusStack = new LinkedList();
 		LinkedList valueStack = new LinkedList();
@@ -112,13 +128,12 @@ public class JSONParser {
 					case Yytoken.TYPE_LEFT_BRACE:
 						status=S_IN_OBJECT;
 						statusStack.addFirst(new Integer(status));
-						//valueStack.addFirst(objSupplier.get());
-						valueStack.addFirst( new JsonObject() );
+						valueStack.addFirst( topLevelObj);
 						break;
 					case Yytoken.TYPE_LEFT_SQUARE:
 						status=S_IN_ARRAY;
 						statusStack.addFirst(new Integer(status));
-						valueStack.addFirst(listSupplier.get());
+						valueStack.addFirst(topLevelArray);
 						break;
 					default:
 						status=S_IN_ERROR;
@@ -177,7 +192,7 @@ public class JSONParser {
 						statusStack.removeFirst();
 						key=(String)valueStack.removeFirst();
 						parent=(Map)valueStack.getFirst();
-						List newArray=listSupplier.get();
+						List newArray=new JsonArray();
 						parent.put(key,newArray);
 						status=S_IN_ARRAY;
 						statusStack.addFirst(new Integer(status));
@@ -219,7 +234,7 @@ public class JSONParser {
 						break;
 					case Yytoken.TYPE_LEFT_BRACE:
 						val=(List)valueStack.getFirst();
-						Map newObject=objSupplier.get();
+						var newObject=objSupplier.get();
 						val.add(newObject);
 						status=S_IN_OBJECT;
 						statusStack.addFirst(new Integer(status));
@@ -227,7 +242,7 @@ public class JSONParser {
 						break;
 					case Yytoken.TYPE_LEFT_SQUARE:
 						val=(List)valueStack.getFirst();
-						List newArray=listSupplier.get();
+						List newArray=new JsonArray();
 						val.add(newArray);
 						status=S_IN_ARRAY;
 						statusStack.addFirst(new Integer(status));
@@ -257,6 +272,7 @@ public class JSONParser {
 		if(token == null)
 			token = new Yytoken(Yytoken.TYPE_EOF, null);
 	}
+
 
 //	static class ObjFactory implements factory {
 //		

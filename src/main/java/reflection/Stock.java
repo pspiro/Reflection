@@ -42,7 +42,7 @@ public class Stock extends JsonObject {
 		put( "ask", Main.round( m_prices.anyAsk() ) );
 	}
 
-	Prices prices() { 
+	public Prices prices() { 
 		return m_prices; 
 	}
 
@@ -78,7 +78,7 @@ public class Stock extends JsonObject {
 	public boolean isHot() {
 		return getBool("isHot");
 	}
-
+	
 	@Override public int compareTo(JsonObject o) {
 		return getString("symbol").compareTo(o.getString("symbol"));
 	}

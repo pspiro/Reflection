@@ -150,6 +150,32 @@ public class TestMargin extends MyTestCase {
 			return status == Status.BuyOrderFilled || status == Status.Monitoring;
 		});
 		
+		// place another order; it should fail
+		JsonObject json2 = cli().postToJson( "/api/margin-order", ord );
+		json2.display();
+		failWith( RefCode.INVALID_REQUEST, "There is already an open margin order");
+		
+		cancel( json.getString("orderId") );
+	}
+
+	/** sell orders will be resting */
+	public void testFillBuyLev() throws Exception {
+		JsonObject ord = newOrd();
+		ord.put( "profitTakerPrice", base + 2);
+		ord.put( "entryPrice", base + 1);
+		ord.put( "stopLossPrice", base - 1);
+		ord.put( "leverage", 3);
+
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		json.display();
+		assert200();
+
+		S.out( "wait 5 sec to accept pmt and fill buy order");
+		waitFor(40, () -> {
+			Status status = getOrderStatus( json);
+			return status == Status.BuyOrderFilled || status == Status.Monitoring;
+		});
+		
 		cancel( json.getString("orderId") );
 	}
 

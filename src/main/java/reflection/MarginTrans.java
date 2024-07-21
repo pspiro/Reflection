@@ -26,11 +26,6 @@ public class MarginTrans extends MyTransaction {
 
 	static JsonObject staticConfig;
 	
-	// new config
-	static int maxLeverage = 2;
-	static int minSpend = 10;
-	static int maxSpend = 10000;
-
 	MarginTrans(Main main, HttpExchange exchange, boolean debug) {
 		super(main, exchange, debug);
 	}
@@ -95,14 +90,16 @@ public class MarginTrans extends MyTransaction {
 			int conid = m_map.getRequiredInt("conid");
 			Stock stock = m_main.getStock(conid);
 			require( stock != null, RefCode.INVALID_REQUEST, "Invalid conid");
+			require( m_main.marginStore().canPlace( m_walletAddr, conid), RefCode.INVALID_REQUEST, 
+					"There is already an open margin order for this stock");  
 			
 			double amtToSpend = m_map.getRequiredDouble( "amountToSpend");
-			require( amtToSpend >= minSpend, RefCode.INVALID_REQUEST, "The amount to spend must be at least %s", minSpend);
-			require( amtToSpend >= 0 && amtToSpend <= maxSpend, RefCode.INVALID_REQUEST, "The amount to spend cannot be greater than %s", maxSpend);
+			require( amtToSpend >= m_config.marginMinSpend(), RefCode.INVALID_REQUEST, "The amount to spend must be at least %s", m_config.marginMinSpend() );
+			require( amtToSpend >= 0 && amtToSpend <= m_config.marginMaxSpend(), RefCode.INVALID_REQUEST, "The amount to spend cannot be greater than %s", m_config.marginMaxSpend() );
 
 			double leverage = m_map.getRequiredDouble( "leverage");
 			require( leverage >= 1, RefCode.INVALID_REQUEST, "Leverage must be greater than or equal to one");
-			require( leverage <= maxLeverage, RefCode.INVALID_REQUEST, "Leverage must less than %s", maxLeverage);
+			require( leverage <= m_config.marginMaxLeverage(), RefCode.INVALID_REQUEST, "Leverage cannot be greater than %s", m_config.marginMaxLeverage() );
 			
 			// must always have valid last, even for limit order
 			Prices prices = stock.prices();
@@ -239,12 +236,24 @@ public class MarginTrans extends MyTransaction {
 
 	public void marginAddFunds() {
 		wrap( () -> {
+			MarginOrder order = getOrder();
+			
+			out( "Adding funds to order %s", order.orderId() ); // tie the cancel message to the original order
+			
+			//order.addFunds();
+
 			respondSuccess();
 		});
 	}
 
 	public void marginWithdrawFunds() {
 		wrap( () -> {
+			MarginOrder order = getOrder();
+			
+			out( "Withdrawing from order %s", order.orderId() ); // tie the cancel message to the original order
+			
+			order.withdrawAll();
+
 			respondSuccess();
 		});
 	}
@@ -272,6 +281,13 @@ public class MarginTrans extends MyTransaction {
 			
 			order.systemCancel( "Canceled by Monitor");
 
+			respondOk();
+		});
+	}
+
+	public void systemCancelAll() {
+		wrap( () -> {
+			m_main.marginStore().cancelAll();
 			respondOk();
 		});
 	}
