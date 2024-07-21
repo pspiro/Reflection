@@ -42,7 +42,7 @@ public class Stock extends JsonObject {
 		put( "ask", Main.round( m_prices.anyAsk() ) );
 	}
 
-	Prices prices() { 
+	public Prices prices() { 
 		return m_prices; 
 	}
 

@@ -56,7 +56,8 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 			S.out( "  connect() success");
 		}
 		catch( Exception e) {
-			e.printStackTrace();
+			S.out( "ERROR connecting to TWS - " + e.getMessage() );
+			//e.printStackTrace();
 		}
 	}
 	

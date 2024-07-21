@@ -47,6 +47,7 @@ public class Prices {
 		m_last = obj.getDouble("last");
 		m_time = obj.getLong("time");
 
+		// notify all listeners that the price has changed;
 		// make a copy to avoid ConcurrentMod error because 
 		// the listener may remove itself during processing
 		new ArrayList<Consumer<Prices>>( m_listeners)
@@ -168,4 +169,21 @@ public class Prices {
 //		S.out(t);
 //		1693595099113
 //	}
+	
+	static final double dailyVol = .02;
+	static final double secVol = dailyVol / Math.sqrt(28800);
+	
+	public void fakeInit() {
+		m_last = Util.rnd.nextDouble(20, 500);
+		m_bid = .998 * m_last;
+		m_ask = 1.002 * m_last;
+		
+		Util.executeEvery("ticker", 0, 1000, () -> {
+			double mult = Util.rnd.nextBoolean() ? 1. + secVol : 1. - secVol;
+			m_last *= mult;
+			m_bid = m_last * .998;
+			m_ask = m_last * 1.002;
+		});
+	}
+
 }

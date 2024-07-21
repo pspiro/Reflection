@@ -2,7 +2,6 @@ package reflection;
 
 import java.io.FileReader;
 import java.io.OutputStream;
-import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonArray;
@@ -40,7 +39,6 @@ public class Main implements ITradeReportHandler {
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 	
 	// static
-	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
 
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
@@ -133,6 +131,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
 			server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).userCancel() );
 			server.createContext("/api/margin-system-cancel", exch -> new MarginTrans(this, exch, true).systemCancel() );
+			server.createContext("/api/margin-system-cancel-all", exch -> new MarginTrans(this, exch, true).systemCancelAll() );
 			server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
 			server.createContext("/api/margin-get-status", exch -> new MarginTrans(this, exch, false).marginGetStatus() );
 			server.createContext("/api/margin-get-all", exch -> new MarginTrans(this, exch, true).marginGetAll() );
@@ -210,12 +209,12 @@ public class Main implements ITradeReportHandler {
 		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr 
 
 		// restore margin store and live orders (must come before connecting to TWS)
+		timer.next( "Restoring margin orders");
 		restoreLiveOrders();
-
-		// connect to TWS
-		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
+		
+		// connect to TWS
+		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
 	}

@@ -103,6 +103,8 @@ public class MdServer {
 		m_mdConnMgr.startTimer();
 
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> onShutdown() ) );
+		
+		S.out( "***ready***");
 	}
 
 	private void onShutdown() {

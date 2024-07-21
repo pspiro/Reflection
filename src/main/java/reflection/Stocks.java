@@ -92,6 +92,8 @@ public class Stocks implements Iterable<Stock> {
 		
 		m_stocks.sort(null);
 		m_hotStocks.sort(null);
+		
+		S.out( "  done reading stocks");
 	}
 
 	/** @return map of conid -> ListEntry */
@@ -173,5 +175,11 @@ public class Stocks implements Iterable<Stock> {
 	/** receipt is a special stock token used to prove that the user paid for a margin order */
 	public StockToken getReceipt() throws Exception {
 		return m_receipt;
+	}
+
+	public void fakeInit() {
+		for (var stock : this) {
+			stock.prices().fakeInit();
+		}
 	}
 }

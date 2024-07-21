@@ -96,7 +96,10 @@ public class Config extends ConfigBase {
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
-
+	private double marginMaxLeverage;
+	private double marginMinSpend;
+	private double marginMaxSpend;
+	
 	// Fireblocks
 	private Web3Type web3Type;
 	private String admin1Addr;  // used for deployment and Monitor
@@ -259,6 +262,9 @@ public class Config extends ConfigBase {
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
 		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.chainId = m_tab.getRequiredInt( "chainId");
+		this.marginMaxLeverage = m_tab.getRequiredDouble("marginMaxLeverage");
+		this.marginMinSpend = m_tab.getRequiredDouble("marginMinSpend");
+		this.marginMaxSpend = m_tab.getRequiredDouble("marginMaxSpend");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -704,4 +710,17 @@ public class Config extends ConfigBase {
 	public Stablecoin getStablecoin(String currency) throws Exception {
 		return currency.equals( rusd().name() ) ? rusd() : busd(); 
 	}
+	
+	double marginMaxLeverage() {
+		return marginMaxLeverage;
+	}
+	
+	double marginMinSpend() {
+		return marginMinSpend;
+	}
+	
+	double marginMaxSpend() {
+		return marginMaxSpend;
+	}
+	
 }

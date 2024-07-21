@@ -142,7 +142,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		// used by frontend for Trading page 
 		else {
 			//out( "Returning prices  bid=%s  ask=%s  for conid %s", prices.anyBid(), prices.anyAsk(), conid);
-			respond( prices.toJson(conid) );
+			respond( prices.toJson(conid) ); // note conid is not returned
 		}
 	}
 

@@ -35,13 +35,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 	
 	public enum Status {
 		NeedPayment,		// waiting for blockchain payment transaction to complete; we may or may not have transaction hash
-		InitiatedPayment,		// submitted transaction; may or may not have trans hash and receipt
-		GotReceipt,
-		PlacedBuyOrder,
-		BuyOrderFilled,			// primary order has filled, we are now monitoring sell orders 
-		PlacedSellOrders,
-		Liquidation,
-		Completed,
+		InitiatedPayment,	// submitted transaction; may or may not have trans hash and receipt
+		GotReceipt,			// got trans hash and confirmed receipt 
+		PlacedBuyOrder,		// placed buy order
+		BuyOrderFilled,		// buy order has filled 
+		PlacedSellOrders,	// monitoring sell orders and/or for liquidation
+		Liquidation,		// position is being liquidated
+		Completed,			// 
 		Canceled;
 
 		boolean canCancel() {
@@ -427,6 +427,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			placeBuyOrder_();
 		}
 		catch (Exception e) {
+			out( e.getMessage() );
 			e.printStackTrace();
 		}
 	}
@@ -890,17 +891,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private double adjust(int traded) {
 		return traded >= roundedQty() ? desiredQty() : traded;
 	}
+
+	public synchronized void withdrawAll() {
+		
+	}
 }
 
-// need pagination at frontend, 
-// need status column on frontend
-//loan value is wrong
-//continue with testordernofill; it's not moving to the "placed buy order" status, where should that happen
 //auto-liq at COB regular hours if market is closed next day
-//you can allow cancel if there is a position, just not if there is a loan amount > 0
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
-//add the config items
 //enforce only one LIVE order per conid per wallet
+//implement "get info" from frontend
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
@@ -910,6 +910,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //bug  WXDTORZHIT Error: order is in Completed state but still has net position 1
 
 //later:
+//need pagination at frontend, 
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
 //now we need to cash out the user; they must initiate this
 //remove the margin order stock listener, when the order is removed from the store

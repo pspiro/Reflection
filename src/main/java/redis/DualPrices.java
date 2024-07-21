@@ -153,6 +153,7 @@ class DualPrices {
 		private long maxTime() {
 			return Math.max( m_bidTime, Math.max( m_askTime, m_lastTime) );
 		}
+
 	}
 
 	/** Return all prices; used by Monitor */

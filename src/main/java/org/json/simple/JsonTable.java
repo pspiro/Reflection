@@ -4,7 +4,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.function.Supplier;
 
-import org.json.simple.JsonTable.Abc;
 import org.json.simple.parser.JSONParser;
 
 import tw.util.S;
