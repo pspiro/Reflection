@@ -969,7 +969,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		try {
 			m_liqOrder.quantity( qty);
-			m_liqOrder.lmtPrice( prices().bid() * .9);
+			m_liqOrder.lmtPrice( prices().bid() * .98);
 			m_liqOrder.placeOrder( conid() );
 		} catch (Exception e) {
 			e.printStackTrace();
