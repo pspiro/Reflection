@@ -17,6 +17,8 @@ select
 	conid,
 	symbol,
 	price,
+	country,
+	ip_address,
 	tds,
 	rounded_quantity,
 	commission,

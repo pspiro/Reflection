@@ -137,7 +137,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() )
 				&& getCountryCode().equals( "IN")
 				
-				|| Util.equalsIgnore( userRecord.getString("kyc_status"), "VERIFIED", "completed"), // VERIFIED is obsolete and can be removed
+				|| Util.equalsIgnore( userRecord.getString("kyc_status"), "VERIFIED", "completed"),
 				
 				RefCode.NEED_KYC,
 				"Please verify your identity and then resubmit your order");

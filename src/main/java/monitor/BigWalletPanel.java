@@ -82,7 +82,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		vp.addHeader( "User details");
 		vp.add( "Name", m_name); 
 		vp.add( "Email", m_email);
-		vp.add( "KYC", m_kyc);
+		vp.add( "KYC status", m_kyc, new HtmlButton( "Set verified", e -> setVerified() ) );
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
 		vp.add( "Country", m_userCountry);
@@ -127,6 +127,21 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		
 		add( leftPanel, BorderLayout.WEST);
 		add( rightPanel);
+	}
+
+	private void setVerified() {
+		wrap( () -> {
+			Util.reqValidAddress( getWallet() );
+
+			if (Util.confirm( this, "Are you sure you want to set this user to VERIFIED?")) {
+				Monitor.m_config.sqlCommand( sql -> 
+					sql.execWithParams( "update users set kyc_status='VERIFIED' where wallet_public_key = '%s'", getWallet().toLowerCase() ) );
+				
+				m_kyc.setText( "VERIFIED");
+				
+				Util.inform( this, "Done");
+			}
+		});
 	}
 
 	private void onShowInPersona() {

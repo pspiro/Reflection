@@ -850,10 +850,10 @@ public class Util {
 		return String.format( "%s <%s>", name, email);
 	}
 
-	/** Return true if str1 equals any of the others */
-	public static boolean equals(String str1, String... others) {
-		for (String str2 : others) {
-			if (str2.equals( str1) ) {
+	/** Return true if obj2 equals any of the others */
+	public static <T> boolean equals(T obj1, T... others) {
+		for (T obj2 : others) {
+			if (obj2.equals( obj1) ) {
 				return true;
 			}
 		}
