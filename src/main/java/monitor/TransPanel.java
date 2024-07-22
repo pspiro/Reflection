@@ -17,7 +17,7 @@ select
 	conid,
 	symbol,
 	price,
-	country,
+	transactions.country,
 	ip_address,
 	tds,
 	rounded_quantity,
