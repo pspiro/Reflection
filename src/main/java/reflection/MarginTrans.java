@@ -162,7 +162,7 @@ public class MarginTrans extends MyTransaction {
 			
 			m_main.marginStore().startOrder( mo);
 			
-			respond( code, RefCode.OK, "orderId", mo.orderId() );
+			respond( code, RefCode.OK, "orderId", mo.orderId(), Message, "Your order was accepted");
 		});
 	}
 
@@ -209,7 +209,7 @@ public class MarginTrans extends MyTransaction {
 			
 			out( "liquidating order %s", order.orderId() ); // tie the cancel message to the original order
 
-			getOrder().userLiquidate();
+			order.userLiquidate();
 
 			respond( code, RefCode.OK, Message, 
 					"Liquidation has begun and your position is being closed out"); 
