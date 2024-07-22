@@ -36,13 +36,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 	public enum Status {
 		NeedPayment,			// initial state
 		InitiatedPayment,		// initiated blockchain transaction; may or may not have trans hash and receipt
-		GotReceipt,				// got blockchain hash and 
+		GotReceipt,				// got blockchain hash and receipt
 		PlacedBuyOrder,			// buy order was been placed; waiting for it to fill
 		BuyOrderFilled,			// buy order has filled; need to place sell orders, if any 
 		Monitoring,				// placed sell orders (if any); monitoring sell orders and for liquidation
 		Liquidation,			// in liquidation
 		Completed,				// we're done; nothing to monitor, no loan; there may be a position
-		Canceled,				// canceled by user or system; nothing to monitor 
+		Canceled,				// canceled by user or system; nothing to monitor
+		Withdrawing,			// withdrawing funds
 		Settled;				// funds and/or shares have been withdrawn; the order can be removed from the screen
 
 		private boolean is(Status... statuses) {
@@ -54,8 +55,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 			return false;
 		}
 
+		/** for system cancel only */
 		boolean canCancel() {
-			return is( Liquidation, Completed, Canceled);  
+			return is( NeedPayment, InitiatedPayment, GotReceipt, PlacedBuyOrder, BuyOrderFilled, Completed, Canceled);  
 		}  
 		
 		boolean canUpdateEntryPrice() {
@@ -65,6 +67,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 		boolean canUpdateBracketPrice() {
 			return is( NeedPayment, InitiatedPayment, GotReceipt, PlacedBuyOrder, BuyOrderFilled, Monitoring);		
 		}
+
+		boolean couldHaveLiveOrder() {
+			return is( PlacedBuyOrder, BuyOrderFilled, Monitoring, Liquidation);
+		}
+
+		boolean canWithdraw() {
+			return is( Completed, Canceled, Settled);
+		}		
 
 	}
 
@@ -160,8 +170,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "status", Status.NeedPayment);  // waiting for blockchain payment transaction
 		put( "placed", System.currentTimeMillis() );
 
-		prices().addListener( m_listener);
-		
 		postInit();
 	}			
 
@@ -211,32 +219,43 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** Called every time the connection is restored. Update the orders in the orderMap()
 	 *  and set the Order on the SingleOrders (first time only) */ 
-	public void onReconnected( HashMap<String,LiveOrder> orderRefMap) {
-		out( "onReconnected " + this);
+	public synchronized void onReconnected( HashMap<String,LiveOrder> orderRefMap) {
+		// order is completed?
+		if (status().is( Status.Completed, Status.Canceled, Status.Settled) ) {
+			return;
+		}
+		
+		out( "onReconnected margin order " + this);
+		
+		
 		
 		// fields of ordStatus are: permId, action, filled, avgPrice
 		
 		// update the saved live orders with the new set of live orders in case the status
 		// or filled amount changed during the restart
-		for (var liveOrder : orderRefMap.values() ) {
-			if (liveOrder.orderId().equals( orderId() ) ) {
-				Util.wrap( () -> updateOrderStatus( 
-						liveOrder.permId(), liveOrder.action(), liveOrder.filled(), liveOrder.avgPrice(), liveOrder.status() ) );
+		if (status().couldHaveLiveOrder() ) {
+			for (var liveOrder : orderRefMap.values() ) {
+				if (liveOrder.orderId().equals( orderId() ) ) {
+					Util.wrap( () -> updateOrderStatus( 
+							liveOrder.permId(), liveOrder.action(), liveOrder.filled(), liveOrder.avgPrice(), liveOrder.status() ) );
+				}
+			}
+			
+			m_buyOrder.rehydrate( orderRefMap);
+			
+			if (m_profitOrder != null) {
+				m_profitOrder.rehydrate( orderRefMap);
+			}
+			
+			if (m_profitOrder != null) {
+				m_stopOrder.rehydrate( orderRefMap);
 			}
 		}
-		
-		m_buyOrder.rehydrate( orderRefMap);
-		
-		if (m_profitOrder != null) {
-			m_profitOrder.rehydrate( orderRefMap);
-		}
-		
-		if (m_profitOrder != null) {
-			m_stopOrder.rehydrate( orderRefMap);
-		}
 
-		// check status first. pas
-		prices().addListener( m_listener);  // always?
+		// listen for mkt data updates
+		if (status() == Status.Monitoring) {
+			listen();
+		}
 
 		// you have to call onUpdated() in case order has filled more
 	}
@@ -298,33 +317,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 			case Settled:
 				// nothing to do
 				break;
-		}
-	}
-
-	void onUserUpdate( double entryPrice, double profitTakerPrice, double stopPrice) throws Exception {
-		if (entryPrice > 0 && Util.isNotEq( entryPrice, entryPrice(), .005) ) {
-			Main.require( status().canUpdateEntryPrice(), RefCode.INVALID_REQUEST, "The entry price cannot be updated; the buy order has already been filled or canceled.");
-
-			put( "entryPrice", entryPrice);
-			m_buyOrder.lmtPrice( entryPrice() );
-			m_buyOrder.resubmit();
-		}
-		
-		if (profitTakerPrice > 0 && Util.isNotEq( profitTakerPrice, profitTakerPrice(), .005) ) {
-			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
-			
-			put( "profitTakerPrice", profitTakerPrice);
-			m_profitOrder.lmtPrice( profitTakerPrice);
-			m_profitOrder.resubmit();
-		}
-		
-		if (stopPrice > 0 && Util.isNotEq( stopPrice, stopLossPrice(), .005) ) {
-			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The stop-loss price cannot be updated at this time; the order status is '%s'", status() );
-
-			put( "stopLossPrice", stopPrice);
-			m_stopOrder.stopPrice(stopPrice);
-			m_stopOrder.lmtPrice(stopPrice * .9);
-			m_profitOrder.resubmit();
 		}
 	}
 
@@ -393,26 +385,97 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 
 		out( "Confirmed receipt balance in %s seconds", retVal);
-		
+
 		// note that we got the receipt; use a status for this instead?
 		gotReceipt( true);
 		save();
-		
-		// if order has been canceled by user while we were waiting, bail out
-		if ( status() == Status.Canceled) {
-			out( "Order was canceled while waiting for hash or receipt");
-			return;
+			
+		synchronized( this) {
+			// if order has been canceled by user while we were waiting, bail out
+			if ( status() == Status.Canceled) {
+				out( "Order was canceled while waiting for hash or receipt");
+				return;
+			}
+			
+			status( Status.GotReceipt);
+
+			placeBuyOrder();
 		}
 		
-		status( Status.GotReceipt);
-		save();
-		
-		placeBuyOrder();
 		// NOTE: there is a window here. If RefAPI terminates before the blockchain transaction completes,
 		// when it restarts we won't know for sure if the transaction was successful or not;
 		// operator assistance would be required		
 	}
 	
+	/** Called in either acceptPayment thread or MarginStore timer thread. Access is synchronized */
+	private void placeBuyOrder() {
+		try {
+			placeBuyOrder_();
+		}
+		catch (Exception e) {
+			out( e.getMessage() );
+			e.printStackTrace();
+		}
+	}
+	
+	private void placeBuyOrder_() throws Exception {
+		
+		Util.require( status() == Status.GotReceipt, "Invalid status %s when placing buy order", status() );
+		
+		out( "***Placing margin entry orders");
+
+		// if we are restoring, and there is no live order, you have to subtract
+		// out the filled amount and place for the remaining size only
+		int remainingQty = roundedQty() - totalBought();
+
+		S.out( "modifying order margin=%s  dual=%s  day=%s  IB=%s", 
+				hashCode(), 
+				m_buyOrder.hashCode(), 
+				m_buyOrder.m_dayOrder.hashCode(), 
+				m_buyOrder.m_dayOrder.m_order.realhash() );
+
+		
+		m_buyOrder.quantity( remainingQty);
+		m_buyOrder.placeOrder( conid() );
+
+		status( Status.PlacedBuyOrder);
+
+		// now we wait for the buy order to be filled or canceled 
+	}
+
+	/** Calleded in the http processing thread */
+	synchronized void onUpdated( double entryPrice, double profitTakerPrice, double stopPrice) throws Exception {
+		if (entryPrice > 0 && Util.isNotEq( entryPrice, entryPrice(), .005) ) {
+			
+			Main.require( status().canUpdateEntryPrice(), RefCode.INVALID_REQUEST, "The entry price cannot be updated; the buy order has already been filled or canceled.");
+			
+			put( "entryPrice", entryPrice);
+			m_buyOrder.lmtPrice( entryPrice() );
+			
+			// update the IB order if it is live
+			if (status() == Status.PlacedBuyOrder) {
+				m_buyOrder.resubmit();
+			}
+		}
+		
+//		if (profitTakerPrice > 0 && Util.isNotEq( profitTakerPrice, profitTakerPrice(), .005) ) {
+//			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
+//			
+//			put( "profitTakerPrice", profitTakerPrice);
+//			m_profitOrder.lmtPrice( profitTakerPrice);
+//			m_profitOrder.resubmit();
+//		}
+//		
+//		if (stopPrice > 0 && Util.isNotEq( stopPrice, stopLossPrice(), .005) ) {
+//			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The stop-loss price cannot be updated at this time; the order status is '%s'", status() );
+//
+//			put( "stopLossPrice", stopPrice);
+//			m_stopOrder.stopPrice(stopPrice);
+//			m_stopOrder.lmtPrice(stopPrice * .9);
+//			m_profitOrder.resubmit();
+//		}
+	}
+
 	/** Buy orders should be working */
 	private void checkBuyOrder() {
 		int qtyToBuy = roundedQty() - totalBought();
@@ -464,34 +527,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 //	private void checkCompleted() {
 //	}
 
-	void placeBuyOrder() {
-		try {
-			placeBuyOrder_();
-		}
-		catch (Exception e) {
-			out( e.getMessage() );
-			e.printStackTrace();
-		}
-	}
-	
-	private void placeBuyOrder_() throws Exception {
-		
-		Util.require( status() == Status.GotReceipt, "Invalid status %s when placing buy order", status() );
-		
-		out( "***Placing margin entry orders");
-
-		// if we are restoring, and there is no live order, you have to subtract
-		// out the filled amount and place for the remaining size only
-		int remainingQty = roundedQty() - totalBought();
-
-		m_buyOrder.quantity( remainingQty);
-		m_buyOrder.placeOrder( conid() );
-
-		status( Status.PlacedBuyOrder);
-
-		// now we wait for the buy order to be filled or canceled 
-	}
-	
 	/** Called when an order is updated; note that it is called in the API processing thread;
 	 *  we could put it in the margin thread if desired */
 	@Override public synchronized void onStatusUpdated(
@@ -614,6 +649,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		if (someSell || loanAmt() > 0) {  // waiting for sell orders to fill or monitoring for liquidation
 			status( Status.Monitoring);
+			listen();
 		}
 		else {  // we're done
 			status( Status.Completed);
@@ -717,18 +753,49 @@ public class MarginOrder extends JsonObject implements DualParent {
 			}
 		}
 	}
-	
+
+	public synchronized void withdrawFunds() throws Exception {
+		require( status().canWithdraw(), RefCode.INVALID_REQUEST, "Funds cannot be withdrawn at this time");
+		
+		double stockPos = netAdjusted();
+		require( stockPos == 0, RefCode.INVALID_REQUEST, "Please liquidate your position before withdrawing the cash");
+
+		double cashBalance = cashBalance();
+		require( cashBalance > 0, RefCode.INVALID_REQUEST, "There is no cash balance to withdraw");
+
+		// check that the wallet is still holding the receipt
+		StockToken receipt = m_stocks.getReceipt();
+		require( Util.isEq( receipt.getPosition( wallet() ), amtToSpend(), .01),
+				RefCode.NO_RECEIPT, 
+				"The cash cannot be withdrawn because the wallet is no longer holding the receipt; please contact support");
+		
+		// initially, we took the users stablecoin and we minted amtToSpend Receipt into their wallet
+		// now we want to take out the receipt and put in money and/or more stock
+		Util.execute( () -> {
+			try {
+				m_config.rusd().sellStockForRusd( wallet(), cashBalance, receipt, amtToSpend() );
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
+
 	/** for liquidation calculation purposes, we have to use mark price which uses the bid
 	 *  price; for display purposes, we use the last price because we will frequently have
 	 *  a last price even if there is no bid */
 	private double stockValueMark() throws Exception {
-		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
+		double stockPos = netAdjusted();
 		return stockPos * prices().markPrice();
 	}
 	
 	private double stockValueLast() {
-		double stockPos = adjust( totalBought() ) - adjust( totalSold() );
+		double stockPos = netAdjusted();
 		return stockPos * prices().last();
+	}
+	
+	/** This current stock position, from the user's perspective */
+	private double netAdjusted() {
+		return adjust( totalBought() ) - adjust( totalSold() );
 	}
 	
 	/** value is stock plus cash */
@@ -798,11 +865,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 		S.out( orderId() + " " + format, params);
 	}
 	
+	/** Update status and start or stop listening */
 	private void status( Status status) {
+		if (status == Status.Monitoring) {
+			stopListening();
+		}
+
 		Object prev = put( "status", status);
-		out( "Set status to %s  (prev %s)", status, prev); 
+		out( "Set status  %s -> %s", prev, status); 
 		save();
-		// you could move "save()" here, it's called every time
+		
+		if (status == Status.Monitoring) {
+			listen();
+		}
 	}
 
 	/** maps permId to OrdStatus; 
@@ -888,9 +963,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		out( "***Liquidating");
 
 		cancelSellOrders();
-		
-		prices().removeListener( m_listener);
-		
+
 		int qty = OrderTransaction.positionTracker.buyOrSell( 
 				conid(), false, totalBought() - totalSold(), 1);
 		
@@ -905,7 +978,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 					String.format( "orderId=%s  sharesHeld=%s  loanAmt=%s", orderId(), sharesHeld(), loanAmt() ) );
 		}
 	}
-
 	/** map IB order permId (as string) to order state; to try to cast this to OrderMap with types, maybe create a wrapper;
 	    the map contains all live orders and all filled orders; unfilled canceled orders are removed */
 	private JsonObject orderMap() { 
@@ -940,28 +1012,34 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return traded >= roundedQty() ? desiredQty() : traded;
 	}
 
-	public synchronized void withdrawAll() {
-		
+	private void listen() {
+		out( "Listening for mkt data updates");
+		prices().addListener( m_listener);
+	}
+
+	private void stopListening() {
+		out( "Stop listening for mkt data updates");
+		prices().removeListener( m_listener);
 	}
 }
 
 //auto-liq at COB regular hours if market is closed next day
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
-//enforce only one LIVE order per conid per wallet
 //let orders be pruned after one week (configurable)
+//implement withdraw
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
-//don't use the Util thread to accept payment, need a separate thread for each request, or a better way to "wait"
 //you could charge a different fee for a lev order with leverage of 1, something more similar to the 
 //consider if you really want to collect a fee for an order that is never filled
-//implement "get info" from frontend
+//implement "get info" from frontend--or--send an email with the summary
+//support user-liquidate, maybe force that
+//purge the old margin orders
 
 //test if the live order comes with correct status, qty, and avgPrice
 //test single stop order
 //test dual stop orders
 //test canceling at all different states
 //test different good until values
-//bug  WXDTORZHIT Error: order is in Completed state but still has net position 1
-//need test scripts for 
+//test withdraw cash and all possible errors
 
 //later:
 //need pagination at frontend, 
@@ -984,6 +1062,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //you have to protect against file corruption because the maps could be modified while writing; maybe move the existing file away before writing the new one, and alway try to read it if the main one can't be read
 //review how you are waiting for blockchain transactions, e.g. acceptPayment
 //add some detection for an order that is continuously placed and canceled by IB
+//support withdrawing stock and money
 
 //	old notes from textpad
 //	

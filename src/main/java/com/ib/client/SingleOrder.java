@@ -31,7 +31,7 @@ public class SingleOrder implements IOrderHandler {
 	private final SingleParent m_parent;
 	
 	// order and order status; comes from LiveOrder
-	private Order m_order = new Order();  // could be replaced in placeOrder(); other than that, it does not change
+	public Order m_order = new Order();  // could be replaced in placeOrder(); other than that, it does not change
 	private Consumer<Prices> m_listener; // access to this must be synchronized
 	
 	/** Called for new order, not submitted yet. Id will be set when order is submitted.
@@ -102,7 +102,8 @@ public class SingleOrder implements IOrderHandler {
 
 	public synchronized void placeOrder() throws Exception {
 		//common.Util.require( m_order.status() == OrderStatus.Unknown, "SingleOrder should be inactive");
-	
+		S.out( "placing order %s %s %s", m_order.status(), m_order.orderId(), m_order.hashCode() );
+		
 		// simulate stop-limit orders on Overnight exchange (stop orders won't work as 
 		// market orders are not supported)
 		if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {  // technically, if the order triggered, we should send it in even if it is now untriggered. pas
@@ -127,6 +128,8 @@ public class SingleOrder implements IOrderHandler {
 
 	/** Called when the price is modified. Submit or resubmit the order */ 
 	public synchronized void resubmit() throws Exception {
+		S.out( "modifying order %s %s %s", m_order.status(), m_order.orderId(), m_order.hashCode() );
+
 		if (m_session == Type.Night && m_order.orderType() == OrderType.STP_LMT) {  // technically, if the order triggered, we should send it in even if it is now untriggered. pas
 			if (m_listener == null) {
 				out( "Simulating stop order");
@@ -143,7 +146,8 @@ public class SingleOrder implements IOrderHandler {
 			m_conn.modifyOrder( contract(), m_order, this);
 		}
 		else if (m_order.status() == OrderStatus.Unknown) {
-			m_conn.placeOrder( contract(), m_order, this);
+			common.Util.require( m_order.action() == Action.Buy, "Buy order should have been sbmitted already");
+			m_conn.placeOrder( contract(), m_order, this);  // we should not be coming here unless the original order had no stop/profit price
 		}
 	}
 

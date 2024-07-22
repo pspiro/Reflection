@@ -23,7 +23,7 @@ public class DualOrder implements SingleParent {
 	
 	private ApiController m_conn;
 	private final DualParent m_parent;
-	private final SingleOrder m_dayOrder;
+	public final SingleOrder m_dayOrder;
 	private final SingleOrder m_nightOrder;
 	private String m_name;  // for debug only; could change to an enum
 

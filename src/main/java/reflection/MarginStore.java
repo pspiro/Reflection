@@ -57,6 +57,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 		return ar;
 	}
 
+	/** wrong; this whole thing should be a map; or at least build a map after read it */
 	public synchronized MarginOrder getById(String orderId) {
 		for (MarginOrder order : this) {
 			if (order.orderId().equals( orderId) ) {

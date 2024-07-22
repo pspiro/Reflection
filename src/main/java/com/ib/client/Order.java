@@ -598,6 +598,10 @@ public class Order {
         // Use m_permId only due to the definition of equals.
         return (int) (m_permId ^ (m_permId >>> 32));
     }
+    
+    public int realhash() {
+		return super.hashCode();
+	}
 
 	public JsonObject getJsonLog(Contract contract) {
 		return common.Util.toJson(

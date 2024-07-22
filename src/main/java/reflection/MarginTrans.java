@@ -186,7 +186,7 @@ public class MarginTrans extends MyTransaction {
 			require( stopLossPrice < realEntry, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
 			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 			
-			order.onUserUpdate( entryPrice, profitTakerPrice, stopLossPrice);
+			order.onUpdated( entryPrice, profitTakerPrice, stopLossPrice);
 			respondSuccess();
 		});
 	}
@@ -250,9 +250,9 @@ public class MarginTrans extends MyTransaction {
 		wrap( () -> {
 			MarginOrder order = getOrder();
 			
-			out( "Withdrawing from order %s", order.orderId() ); // tie the cancel message to the original order
+			out( "Withdrawing funds from order %s", order.orderId() ); // tie the cancel message to the original order
 			
-			order.withdrawAll();
+			order.withdrawFunds();
 
 			respondSuccess();
 		});
