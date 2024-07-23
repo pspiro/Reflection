@@ -235,6 +235,7 @@ public class BackendTransaction extends MyTransaction {
 			m_config.sqlCommand(sql -> 
 				sql.insertOrUpdate("users", userRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
+			// BAIL OUT HERE if they failed the kyc
 			// this is unconventional in that we return 400 even though we updated the database
 			require( status.equals( "completed"),
 					RefCode.INVALID_REQUEST, "KYC failed with status '%s'", status);
@@ -581,7 +582,7 @@ public class BackendTransaction extends MyTransaction {
 					m_walletAddr.toLowerCase() );
 			
 			String status = ar.size() == 1 ? status = ar.get( 0).getString( "kyc_status") : null;
-			boolean verified = Util.equalsIgnore( status, "VERIFIED", "completed");  // VERIFIED is obsolete and should be removed
+			boolean verified = Util.equalsIgnore( status, "VERIFIED", "completed");
 			
 			respond( Util.toJson(
 					"verified", verified,

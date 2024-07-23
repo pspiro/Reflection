@@ -88,6 +88,14 @@ public class MyTestCase extends TestCase {
 		assertEquals( 200, cli.getResponseCode() );
 	}
 	
+	/** for use with messages that return 200 but no RefCode.OK, e.g. get-profile */
+	protected void assert200_() throws Exception {
+		if (cli.getResponseCode() != 200) {
+			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+		}
+		assertEquals( 200, cli.getResponseCode() );
+	}
+	
 	protected void assertNotEquals(String notExpected, String actual) {
 		assertTrue( 
 				String.format( "Got %s which was not expected", notExpected),

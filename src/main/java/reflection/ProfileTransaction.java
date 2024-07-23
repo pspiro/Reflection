@@ -83,12 +83,12 @@ public class ProfileTransaction extends MyTransaction {
 			String walletKey = m_walletAddr.toLowerCase();
 			
 			// if email has changed, they must submit a valid verification code from the validateEmail() message
-//			if (!profile.email().equalsIgnoreCase( getExistingEmail(walletKey) ) ) {
-//				require( profile.skip() && !m_config.isProduction() || m_map.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(walletKey) ),
-//						RefCode.INVALID_USER_PROFILE,
-//						"The email verification code is incorrect");
-//				mapWalletToCode.remove(walletKey); // remove only if there is a match so they can try again
-//			}
+			if (!profile.email().equalsIgnoreCase( getExistingEmail(walletKey) ) ) {
+				require( profile.skip() && !m_config.isProduction() || m_map.getString("email_confirmation").equalsIgnoreCase(mapWalletToCode.get(walletKey) ),
+						RefCode.INVALID_USER_PROFILE,
+						"The email verification code is incorrect");
+				mapWalletToCode.remove(walletKey); // remove only if there is a match so they can try again
+			}
 
 			// insert or update record in users table
 			m_config.sqlCommand( conn -> conn.insertOrUpdate("users", profile, "wallet_public_key = '%s'", walletKey) );
