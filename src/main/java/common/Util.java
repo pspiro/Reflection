@@ -845,7 +845,9 @@ public class Util {
 	 *  @return number of seconds, or -1 if it failed */
 	public static int waitFor( int sec, ExSupplier<Boolean> sup) throws Exception {
 		for (int i = 0; i < sec; i++) {
-			S.out( i);
+			if (i % 5 == 0) {
+				S.out( i);
+			}
 			if (sup.get() ) {
 				return i;
 			}

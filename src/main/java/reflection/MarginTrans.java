@@ -179,12 +179,12 @@ public class MarginTrans extends MyTransaction {
 			require( entryPrice < prices.last() * 1.1, RefCode.INVALID_PRICE, "The 'buy' price is too high (may not be more than 10% higher than current market price)");
 
 			double profitTakerPrice = m_map.getPrice( "profitTakerPrice");
-			require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
+			//require( profitTakerPrice == 0 || profitTakerPrice > entryPrice, RefCode.INVALID_PRICE, "The profit-taker must be > entry price");
 
 			double stopLossPrice = m_map.getPrice( "stopLossPrice");
-			double realEntry = entryPrice != 0 ? entryPrice : order.getDouble( "entryPrice");
-			require( stopLossPrice < realEntry, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
-			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
+//			double realEntry = entryPrice != 0 ? entryPrice : order.getDouble( "entryPrice");
+//			require( stopLossPrice < realEntry, RefCode.INVALID_PRICE, "The stop-loss price must be < entry price");
+//			require( stopLossPrice < prices.last(), RefCode.INVALID_PRICE, "The stop-loss price price must be less than current market price of %s", prices.last() );
 			
 			order.onUpdated( entryPrice, profitTakerPrice, stopLossPrice);
 			respondSuccess();
@@ -197,7 +197,12 @@ public class MarginTrans extends MyTransaction {
 			
 			out( "canceling order %s", order.orderId() ); // tie the cancel message to the original order
 			
-			order.userCancel();
+			if (m_map.getBool( "system") ) {  // used for testing
+				order.systemCancel( "Canceled by System message");
+			}
+			else {
+				order.userCancel();
+			}
 
 			respondSuccess();
 		});

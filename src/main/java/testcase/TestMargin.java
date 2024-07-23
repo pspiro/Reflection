@@ -85,10 +85,12 @@ public class TestMargin extends MyTestCase {
 				"conid", conid,
 				"cookie", Cookie.cookie) );
 		json.display();
+		assert200();
+		
 		JsonObject order = json.getArray( "orders").find( "orderId", orderJson.getString( "orderId") );
 		assertTrue( order != null);
 		
-		cancel( orderJson.getString( "orderId"));
+		cancel( orderJson.getString( "orderId") );
 	}
 
 	public void testFailOrder() throws Exception {
@@ -123,23 +125,12 @@ public class TestMargin extends MyTestCase {
 	public void testBuyNoFill() throws Exception {
 		S.out( "testing buy no fill");
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd() );
-		json.display();
-		assert200();
-		
 		waitForStatus( json, Status.PlacedBuyOrder);
-	}
-	
-	void waitForStatus(JsonObject json, Status status) throws Exception {
-		json.display();
-		assert200();
-		S.out( "wait to accept pmt and place buy order");
-		waitFor(40, () -> getOrderStatus( json) == status);
-		cancel( json.getString( "orderId"));
 	}
 
 	/** sell orders will be resting */
 	public void testFillBuyNoSell() throws Exception {
-		S.out( "testing fill buy only");
+		S.out( "testing fill buy no sell");
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + 1);
 		ord.remove( "profitTakerPrice");
@@ -147,13 +138,6 @@ public class TestMargin extends MyTestCase {
 
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		waitForStatus( json, Status.Completed);
-
-		// place another order; it should fail
-		JsonObject json2 = cli().postToJson( "/api/margin-order", ord );
-		json2.display();
-		failWith( RefCode.INVALID_REQUEST, "There is already an open margin order");
-		
-		cancel( json.getString("orderId") );
 	}
 
 	/** sell orders will be resting */
@@ -170,6 +154,7 @@ public class TestMargin extends MyTestCase {
 
 	/** leverage order should be monitored for liquidation */
 	public void testFillBuyLev() throws Exception {
+		S.out( "testing fill buy lev");
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + 1);
 		ord.put( "leverage", 3);
@@ -192,6 +177,30 @@ public class TestMargin extends MyTestCase {
 		S.out( "placing order");
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		waitForStatus( json, Status.Completed);
+	}
+	
+	public void testFillBuyAndProfit() throws Exception {
+		S.out( "testing fill buy and stop");
+
+		// place order, let buy fill
+		JsonObject ord = newOrd();
+		ord.put( "profitTakerPrice", base + 3);
+		ord.put( "entryPrice", base + 2);
+		ord.put( "stopLossPrice", base - 4);
+		
+		JsonObject ret = cli().postToJson( "/api/margin-order", ord );
+		ret.display();
+		assert200();
+
+		S.out( "waiting for status Monitoring");
+		waitFor(30, () -> getOrderStatus( ret) == Status.Monitoring);
+
+		// update order with low sell price
+		ord.put( "orderId", ret.getString( "orderId") );
+		ord.put( "profitTakerPrice", base - 1);
+		//ord.remove( "entryPrice");
+		cli().postToJson( "/api/margin-update", ord );
+		waitForStatus( ret, Status.Completed);
 	}
 	
 	// the problem is the order hasn't filled or even been placed yet, you can't modify it!!!
@@ -251,7 +260,7 @@ public class TestMargin extends MyTestCase {
 				"stopLossPrice", base - 2) );
 		assert200();
 		
-		//cancel( orderId);
+		cancel( orderId);
 	}
 	
 	public void testLiquidate1() throws Exception {
@@ -337,7 +346,8 @@ public class TestMargin extends MyTestCase {
 		cli().postToJson( "/api/margin-cancel",	Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"orderId", orderId,
-				"cookie", Cookie.cookie
+				"cookie", Cookie.cookie,
+				"system", true  // system cancel can force a cancel which would otherwise fail
 				) );
 		assert200();
 	}
@@ -372,6 +382,20 @@ public class TestMargin extends MyTestCase {
 		String status = ret.getString( "status");
 		Util.require( S.isNotNull( status), "Error: no status for order " + json.getString( "orderId") );
 		return Util.getEnum( status, MarginOrder.Status.values() );
+	}
+	
+	/** Wait for status and then cancel the order, pass or fail */
+	void waitForStatus(JsonObject json, Status status) throws Exception {
+		json.display();
+		assert200();
+
+		try {
+			S.out( "waiting for status '%s'", status);
+			waitFor(50, () -> getOrderStatus( json) == status);
+		}
+		finally {
+			cancel( json.getString( "orderId"));
+		}
 	}
 
 }

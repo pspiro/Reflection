@@ -126,7 +126,7 @@ public class SingleOrder implements IOrderHandler {
 		}
 	}
 
-	/** Called when the price is modified. Submit or resubmit the order */ 
+	/** Called when the price is modified by the user. Submit (sell only) or resubmit (buy or sell) the order */ 
 	public synchronized void resubmit() throws Exception {
 		S.out( "modifying order %s %s %s", m_order.status(), m_order.orderId(), m_order.hashCode() );
 
@@ -146,8 +146,11 @@ public class SingleOrder implements IOrderHandler {
 			m_conn.modifyOrder( contract(), m_order, this);
 		}
 		else if (m_order.status() == OrderStatus.Unknown) {
-			common.Util.require( m_order.action() == Action.Buy, "Buy order should have been sbmitted already");
-			m_conn.placeOrder( contract(), m_order, this);  // we should not be coming here unless the original order had no stop/profit price
+			common.Util.require( m_order.action() == Action.Sell, "Error: 'Buy' order should have been sbmitted already");
+
+			// if we come here, it means that the original order did not have a sell,
+			// and then one was added
+			m_conn.placeOrder( contract(), m_order, this);
 		}
 	}
 
