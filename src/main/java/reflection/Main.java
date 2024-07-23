@@ -459,7 +459,7 @@ public class Main implements ITradeReportHandler {
 					}
 				}
 				else {
-					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
+					//S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
 				}
 			});
 		}
