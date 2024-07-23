@@ -15,7 +15,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow.
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.sheets.v4.Sheets;
@@ -28,7 +28,7 @@ import tw.util.S;
 public class Auth {
 	private static final String applicationName ="Reflection"; // was Brisco
 	private static FileDataStoreFactory dataStoreFactory;
-	private static final JsonFactory jsonFactory = JacksonFactory.getDefaultInstance();
+	private static final JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 	private static HttpTransport httpTransport;
 	private static final String clientId = "1061634809648-vrnvk8f7ltagdn36442oa12a9hnubpr7.apps.googleusercontent.com";
 	private static final String secret = "3eTlljq0d9uSyAySFl2tELH6";
