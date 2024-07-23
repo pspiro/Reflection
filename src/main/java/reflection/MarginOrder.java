@@ -1062,13 +1062,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 //support user-liquidate, maybe force that
 //purge the old margin orders
 //you will run into issues with multiple users, you cannot have crossing orders for the same stock; cross them at the current mark price (bid/last/ask)
-
-//test if the live order comes with correct status, qty, and avgPrice
-//test single stop order
-//test dual stop orders
-//test canceling at all different states
-//test different good until values
+//must implement gooduntil and liquidation
 //test withdraw cash and all possible errors
+//test single stop order, sim. stop orders
+//test dual stop orders
 
 //later:
 //need pagination at frontend, 
