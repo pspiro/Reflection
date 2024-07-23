@@ -208,8 +208,31 @@ public class NewSheet {
 			private HashMap<String,Integer> m_map = new HashMap<String,Integer>(); // map column header to zero-based index
 			private Rows m_insEntries; // for bulk inserts
 			private Rows m_updEntries; // for bulk inserts
+			private int m_headerNum = 1;  // row number of header row (1-based)
 
 			String name() { return  m_name; }
+			
+			public JsonArray queryToJson() throws IOException, Exception {
+				JsonArray ar = new JsonArray();
+				
+				for (ListEntry row : fetchRows() ) {
+					ar.add( row.toJson() );
+				}
+				
+				return ar;
+			}
+			
+			public JsonArray queryToJson(String colsIn) throws IOException, Exception {
+				String[] cols = colsIn.split( ",");
+				
+				JsonArray ar = new JsonArray();
+				
+				for (ListEntry row : fetchRows() ) {
+					ar.add( row.toJson(cols) );
+				}
+				
+				return ar;
+			}
 			
 			public void restoreFrom(File file) throws FileNotFoundException {
 				IStream is = new IStream( file.getAbsolutePath() );
@@ -223,6 +246,10 @@ public class NewSheet {
 			Tab( Sheet sheet) throws Exception {
 				m_sheet = sheet;
 				m_name = sheet.getProperties().getTitle();
+				
+				if (m_name.equals( "Jotform")) {
+					m_headerNum  = 2;
+				}
 				
 				// build map of column header to zero-based index
 				// remove spaces in the header names
@@ -346,14 +373,14 @@ public class NewSheet {
 
 			public String[] getHeaderRow() throws Exception {
 				if (m_headerRow == null) {
-					List<List<Object>> rows = Book.this.getRows( m_name,  1, cols(), "FORMULA");
-					if (rows == null || rows.size() == 0) {
+					List<List<Object>> rows = Book.this.getRows( m_name, m_headerNum, cols(), "FORMULA");
+					if (rows == null || rows.size() < m_headerNum) {
 						S.out( "Warning: no header row on tab %s", m_name);
 						return new String[0];
 					}
 					
 					int i = 0;
-					List<Object> row = rows.get(0);
+					List<Object> row = rows.get( m_headerNum - 1);
 					String[] ar = new String[row.size()];
 					for (Object obj : row) {
 						ar[i++] = obj != null ? obj.toString() : "";
@@ -493,6 +520,27 @@ public class NewSheet {
 					List<List<Object>> rows = new ArrayList<List<Object>>();
 					rows.add( m_row);
 					return rows;
+				}
+				
+				/** Returns all columns;
+				 *  returns all strings; could be improved to return ints and doubles */
+				public JsonObject toJson() {
+					JsonObject obj = new JsonObject();
+					for (int i = 0; i < m_headerRow.length && i < m_row.size(); i++) {
+						obj.put( m_headerRow[i], m_row.get( i) );
+					}
+					return obj;
+				}
+
+				/** Returns requested columns;
+				 *  returns all strings; could be improved to return ints and doubles 
+				 * @throws MyException */
+				public JsonObject toJson(String[] tags) throws MyException {
+					JsonObject obj = new JsonObject();
+					for (String tag : tags) {
+						obj.put( tag, getString( tag) );
+					}
+					return obj;
 				}
 
 				public String getRange() {
