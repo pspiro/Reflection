@@ -8,9 +8,10 @@ import http.MyClient;
 import tw.util.S;
 import web3.StockToken;
 
-/** This test should be done in Dev or Prod only */
+/** This test should be done in Dev or Prod only. Why?
+ * 
+ *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	//String hook = "https://live.reflection.trading/hook";
 	static String hook = "http://localhost:8484/hook";
 	static String wallet = Util.createFakeAddress();
 
@@ -74,13 +75,16 @@ public class TestHookServer extends MyTestCase {
 	public void testNative() throws Exception {
 		double n = .0001;
 		
+		// create the wallet first so we know we get the event
+		MyClient.getJson( hook + "/get-wallet/" + wallet);
+
 		// send native token to wallet
 		S.out( "testing native transfer");
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				wallet,
 				n).displayHash();
-		
+
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
@@ -96,6 +100,11 @@ public class TestHookServer extends MyTestCase {
 
 		// let Owner approve RUSD to spend BUSD
 		S.out( "testing approve");
+
+		// create the wallet first so we know we get the event
+		MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() );
+
+		// let Owner approve RUSD to spend BUSD (no sig needed)
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
 				.displayHash();
 

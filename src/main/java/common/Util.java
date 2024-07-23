@@ -656,6 +656,7 @@ public class Util {
 		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
 	}
 
+	/** aka openUrl() openLink() */
 	public static void browse(String url) {
 		S.out( "Browsing " + url);
 		wrap( () -> Desktop.getDesktop().browse(new URI(url) ) );
@@ -854,6 +855,27 @@ public class Util {
 	public static String formatEmail( String name, String email) {
 		return String.format( "%s <%s>", name, email);
 	}
+
+	/** Return true if obj2 equals any of the others */
+	public static <T> boolean equals(T obj1, T... others) {
+		for (T obj2 : others) {
+			if (obj2.equals( obj1) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Return true if str1 equals any of the others */
+	public static boolean equalsIgnore(String str1, String... others) {
+		for (String str2 : others) {
+			if (str2.equalsIgnoreCase( str1) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	//	<T> T[] toArray( ArrayList<T> list) {
 	//		return (T[])list.toArray();

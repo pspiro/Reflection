@@ -96,6 +96,7 @@ public class Config extends ConfigBase {
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
+	private double autoReward; // automatically send users rewards
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -261,6 +262,7 @@ public class Config extends ConfigBase {
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
 		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.chainId = m_tab.getRequiredInt( "chainId");
+		this.autoReward = m_tab.getDouble("autoReward");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -694,5 +696,9 @@ public class Config extends ConfigBase {
 	
 	public NodeServer nodeServer() {
 		return m_nodeServer;
+	}
+	
+	public double autoReward() {
+		return autoReward;
 	}
 }

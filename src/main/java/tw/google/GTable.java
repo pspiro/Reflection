@@ -78,7 +78,8 @@ public class GTable extends HashMap<String,String> {
 	
 	public double getDouble(String tag) throws Exception {
 		try {
-			return Double.valueOf( get( tag) );
+			String val = get( tag);
+			return S.isNotNull( val) ? Double.valueOf( val) : 0;
 		}
 		catch( Exception e) {
 			throw new Ex( "Tag %s is not a number", tag);

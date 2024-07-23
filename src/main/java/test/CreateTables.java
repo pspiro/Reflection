@@ -162,6 +162,9 @@ public class CreateTables  {
 		);
 		""";
 		con.execute( sql);
+		
+		// locked field contains these tags:
+		// amount, lockedUntil (ms), required trades, rewarded (bool)
 	}
 }
 

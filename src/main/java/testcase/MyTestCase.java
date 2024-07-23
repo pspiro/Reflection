@@ -11,6 +11,7 @@ import http.MyClient;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
+import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
 
@@ -80,8 +81,17 @@ public class MyTestCase extends TestCase {
 	}
 
 	protected void assert200() throws Exception {
+		if (cli.getResponseCode() != 200 || cli.getRefCode() != RefCode.OK) {
+			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+		}
+		assertEquals( RefCode.OK, cli.getRefCode() );
+		assertEquals( 200, cli.getResponseCode() );
+	}
+	
+	/** for use with messages that return 200 but no RefCode.OK, e.g. get-profile */
+	protected void assert200_() throws Exception {
 		if (cli.getResponseCode() != 200) {
-			S.out( "%s - %s", cli.getRefCode(), cli.getMessage() );
+			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
 		}
 		assertEquals( 200, cli.getResponseCode() );
 	}
@@ -112,7 +122,7 @@ public class MyTestCase extends TestCase {
 	}
 	
 	public static void assertStartsWith(String expected, Object actual) {
-		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
+		assertEquals( expected, Util.left( actual.toString(), expected.length() ) );
 	}
 
 	/** Wait for HookServer to catch up Exception */

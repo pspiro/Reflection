@@ -21,11 +21,21 @@ public class CreateKey {
 	
 	public static void main(String[] args) throws Exception {
 		Config.ask();  // we need this 
-		createUserWallet();
-//		String privateKey = createPrivateKey();
-//		String address = Credentials.create( privateKey ).getAddress();
-//		S.out( privateKey);
-//		S.out( address);
+		createSystemWallets();
+	}
+
+	public static void createSystemWallets() throws Exception {
+		try( Scanner scanner = new Scanner( System.in) ) {
+			String pw1 = input( scanner, "Enter password: ");
+			String pw2 = input( scanner, "Re-enter password: ");
+			Util.require( pw1.equals( pw2), "Mismatch");
+
+			String hint = input( scanner, "Enter password hint: ");
+
+			createProdWallet( pw1, "admin", "admin", hint);
+			createProdWallet( pw1, "owner", "owner", hint);
+			createProdWallet( pw1, "refWallet", "refWallet", hint);
+		}
 	}
 
 	/** Input wallet params from command line and create wallet on Prod-wallets tab */
@@ -47,24 +57,8 @@ public class CreateKey {
 	public static void createProdWallet(String pw, String name, String description, String hint) throws Exception {
 		JsonObject json = getEncryptedPrivateKey( pw);
 
-		// write it to spreadsheet
-		Tab tab = NewSheet.getTab( NewSheet.Reflection, "Prod-wallets");
-		tab.insert( Util.toJson( 
-				"Name", name,
-				"Description", description,
-				"Address", json.getString( "address"),
-				"Key", json.toString(),
-				"Hint", hint) );
-				
-		// restore it and confirm
-		JsonObject json2 = tab.findRow("Name", name).getJsonObject( "Key");
-		String restoredKey = decryptFromJson( pw, json2); 
-		
-		Util.require( 
-				Credentials.create( restoredKey).getAddress().equals( json.getString( "address") ), 
-				"Failed, encrypted and decrypted values do not match");
-		
-		S.out( "Created prod wallet %s - %s", name, description);
+		S.out( "Blockchain - wallets\t%sAddr\t%s", name, json.getString( "address") );
+		S.out( "Blockchain - wallets\t%sKey\t%s", name, json);
 	}
 	
 	/** fields in json are address, salt, data, ivstr */ 
@@ -74,8 +68,13 @@ public class CreateKey {
 				Encrypt.getKeyFromPassword( pw, json.getString( "salt") ),
 				json.getString( "ivstr") );
 	}
-		
-	
+
+	/** returns
+	"Name", name,
+	"Description", description,
+	"Address", json.getString( "address"),
+	"Key", json.toString(),
+	"Hint", hint) ); */
 	public static JsonObject getEncryptedPrivateKey(String pw) throws Exception {
 		String privateKey = createPrivateKey();
 		String address = Credentials.create( privateKey ).getAddress();

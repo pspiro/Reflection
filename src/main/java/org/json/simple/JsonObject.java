@@ -214,8 +214,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Can return null; caller should check */
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
-		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
-		return (JsonObject)obj;
+		if (obj == null) {
+			return null;
+		}
+		if (obj instanceof JsonObject) {
+			return (JsonObject)obj;
+		}
+		if (obj instanceof String) {
+			return JsonObject.parse( (String)obj);
+		}
+		throw new Exception( String.format( "Not a json object  key=%s  val=%s", key, obj) );
 	}
 
 	/** Throws exception if not found */
