@@ -1066,6 +1066,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test withdraw cash and all possible errors
 //test single stop order, sim. stop orders
 //test dual stop orders
+//add a pnl field
+//just have one "cash/loan balance" column; you don't need separate columns
 
 //later:
 //need pagination at frontend, 
