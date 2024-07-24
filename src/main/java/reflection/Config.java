@@ -30,6 +30,7 @@ import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
+import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
 import web3.Busd.IBusd;
@@ -181,14 +182,14 @@ public class Config extends ConfigBase {
 
 	/** takes tab name from config.txt file */
 	public static Config read() throws Exception {
-		return readFrom( Util.readResource( Config.class, "config.txt") );
+		return readFrom( IStream.readLine( "config.txt") );
 	}
 
 	/** get tab name from args or config.txt file */
 	public static String getTabName(String[] args) throws Exception {
 		return args.length > 0 
 				? args[0] 
-				: Util.readResource( Config.class, "config.txt");
+				: IStream.readLine( "config.txt");
 	}
 
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
