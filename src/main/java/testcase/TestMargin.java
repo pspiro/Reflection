@@ -268,14 +268,16 @@ public class TestMargin extends MyTestCase {
 		
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + .5);
-		ord.remove( "profitTakerPrice");
-		ord.remove( "stopLossPrice");
 		
 		JsonObject json = cli().postToJson( "/api/margin-order", ord);
-		assert200();
+		waitForStatus( json, Status.Monitoring);
 		
-		S.out( "wait to accept pmt and place buy order");
-		waitFor(40, () -> getOrderStatus( json) == Status.Completed);
+		JsonObject param = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId") );
+		cli().postToJson( "/api/margin-liquidate", param).display();
+		waitForStatus( json, Status.Completed);
 	}
 
 	public void testAddFunds() {
@@ -302,7 +304,7 @@ public class TestMargin extends MyTestCase {
 		
 		waitForStatus( json, Status.Settled);
 
-		waitForBalance( Cookie.wallet, stocks.getReceipt().address(), recBal - json.getDouble( "amountToSpend"), true); 
+		waitForBalance( Cookie.wallet, stocks.getReceipt().address(), recBal - json.getDouble( "amountToSpend"), true);
 	}
 
 	public void testWithdrawTokens() {

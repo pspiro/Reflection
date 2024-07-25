@@ -77,6 +77,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 		boolean canPrune() {
 			return is( Settled);
+		}
+
+		boolean canLiquidate() {
+			return is( BuyOrderFilled, Monitoring, Completed, Canceled); 
 		}		
 
 	}
@@ -789,6 +793,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 					.waitForHash();
 
 				status( Status.Settled);
+				finishedAt( System.currentTimeMillis() );
 			} catch (Exception e) {
 				out( "Error while withdrawing cash - " + e.getMessage() );
 				e.printStackTrace();
@@ -962,8 +967,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 	 *  Note we don't care if there is a loan or not, we are going to sell at the bid. 
 	 * @throws Exception */
 	protected void userLiquidate() throws Exception {
-		require( status() != Status.Liquidation, RefCode.INVALID_REQUEST, "The order is already in liquidation");
-		
 		cancelSellOrders();
 		
 		double net = totalBought() - totalSold();
@@ -1053,9 +1056,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private long finishedAt() {
 		return getLong( "finishedAt");
 	}
+	
+	private void finishedAt( long time) {
+		put( "finishedAt", time);
+	}
 
 }
 
+//implement "get info" from frontend--or--send an email with the summary
 //auto-liq at COB regular hours if market is closed next day
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
 //let orders be pruned after one week (configurable)
@@ -1063,16 +1071,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
 //you could charge a different fee for a lev order with leverage of 1, something more similar to the 
 //consider if you really want to collect a fee for an order that is never filled
-//implement "get info" from frontend--or--send an email with the summary
 //support user-liquidate, maybe force that
-//purge the old margin orders
 //you will run into issues with multiple users, you cannot have crossing orders for the same stock; cross them at the current mark price (bid/last/ask)
 //must implement gooduntil and liquidation
+//add a pnl field
+//just have one "cash/loan balance" column; you don't need separate columns
 //test withdraw cash and all possible errors
 //test single stop order, sim. stop orders
 //test dual stop orders
-//add a pnl field
-//just have one "cash/loan balance" column; you don't need separate columns
+//test pruning
+
 
 //later:
 //need pagination at frontend, 

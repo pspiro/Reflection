@@ -117,16 +117,21 @@ class MarginStore extends TsonArray<MarginOrder> {
 			m_processingThread.executeEvery( 0, 10000, () -> 
 				forEach( order -> order.onProcess() ) );
 
-			m_processingThread.executeEvery( 0, Util.MINUTE * 10, () -> {
-				for (var iter = iterator(); iter.hasNext(); ) {
-					if (iter.next().shouldPrune( m_pruneInterval) ) {
-						iter.remove();
-					}
-				}
-			});
+			m_processingThread.executeEvery( 0, Util.MINUTE * 10, this::prune);
 		}
 	}
 
+	/** Called in processing thread every ten minutes */
+	private synchronized void prune() {
+		for (var iter = iterator(); iter.hasNext(); ) {
+			var order = iter.next();
+			if (order.shouldPrune( m_pruneInterval) ) {
+				S.out( "Pruning margin order " + order);
+				iter.remove();
+			}
+		}
+	}
+	
 	/** Build map of order ref to LiveOrder; order ref should be unique for each IB order */
 	public static HashMap<String, LiveOrder> getOrderRefMap(HashMap<Integer, LiveOrder> permIdMap) {
 		HashMap<String, LiveOrder> orderRefMap = new HashMap<>();

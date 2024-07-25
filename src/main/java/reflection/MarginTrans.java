@@ -10,6 +10,7 @@ import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import reflection.MarginOrder.Status;
 import reflection.TradingHours.Session;
 import web3.Stablecoin;
 
@@ -211,6 +212,8 @@ public class MarginTrans extends MyTransaction {
 	public void marginLiquidate() {
 		wrap( () -> {
 			MarginOrder order = getOrder();
+			require( order.status() != Status.Liquidation, RefCode.INVALID_REQUEST, "The order is already in liquidation");
+			require( order.status().canLiquidate(), RefCode.INVALID_REQUEST, "The position cannot be liquidated at this time");
 			
 			out( "liquidating order %s", order.orderId() ); // tie the cancel message to the original order
 
