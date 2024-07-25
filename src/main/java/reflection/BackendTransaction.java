@@ -232,6 +232,7 @@ public class BackendTransaction extends MyTransaction {
 			JsonObject userRec = new JsonObject();
 			userRec.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			userRec.put( "kyc_status", status);  // this is the exact "status" text from the json returned by Persona; used to be VERIFIED
+			userRec.put( "persona_response", personaStr);
 			m_config.sqlCommand(sql -> 
 				sql.insertOrUpdate("users", userRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
