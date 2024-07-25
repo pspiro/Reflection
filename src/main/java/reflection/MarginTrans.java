@@ -257,8 +257,8 @@ public class MarginTrans extends MyTransaction {
 	public void marginWithdrawFunds() {
 		wrap( () -> {
 			MarginOrder order = getOrder();
-			
-			out( "Withdrawing funds from order %s", order.orderId() ); // tie the cancel message to the original order
+
+			require( order.status().canWithdraw(), RefCode.INVALID_REQUEST, "Funds cannot be withdrawn at this time");
 			
 			order.withdrawFunds();
 

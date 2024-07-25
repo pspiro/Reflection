@@ -302,6 +302,10 @@ public class TestMargin extends MyTestCase {
 		cli().postToJson("/api/margin-withdraw", params);
 		assert200();
 		
+		// second time should fail 
+		cli().postToJson("/api/margin-withdraw", params);
+		failWith( RefCode.INVALID_REQUEST, "Funds cannot be withdrawn");
+
 		waitForStatus( json, Status.Settled);
 
 		waitForBalance( Cookie.wallet, stocks.getReceipt().address(), recBal - json.getDouble( "amountToSpend"), true);

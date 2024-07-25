@@ -72,7 +72,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 
 		boolean canWithdraw() {
-			return is( Completed, Canceled, Settled);
+			return is( Completed, Canceled);
 		}		
 
 		boolean canPrune() {
@@ -769,8 +769,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	public synchronized void withdrawFunds() throws Exception {
-		require( status().canWithdraw(), RefCode.INVALID_REQUEST, "Funds cannot be withdrawn at this time");
-		
 		double stockPos = netAdjusted();
 		require( stockPos == 0, RefCode.INVALID_REQUEST, "Please liquidate your position before withdrawing the cash");
 
@@ -783,11 +781,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 				RefCode.NO_RECEIPT, 
 				"The cash cannot be withdrawn because the wallet is no longer holding the receipt; please contact support");
 		
+		status( Status.Withdrawing);
+		out( "Withdrawing funds");
+
 		// initially, we took the users stablecoin and we minted amtToSpend Receipt into their wallet
 		// now we want to take out the receipt and put in money and/or more stock
 		Util.execute( () -> {
 			try {
-				status( Status.Withdrawing);
 				
 				m_config.rusd().sellStockForRusd( wallet(), cashBalance, receipt, amtToSpend() )
 					.waitForHash();
