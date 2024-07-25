@@ -282,8 +282,27 @@ public class TestMargin extends MyTestCase {
 		assertTrue( false);
 	}
 
-	public void testWithdrawFunds() {
-		assertTrue( false);
+	public void testWithdrawFunds() throws Exception {
+		JsonObject json = cli().postToJson( "/api/margin-order", newOrd().modify( 
+				"profitTakerPrice", 0,
+				"entryPrice", base + 1,
+				"stopLossPrice", 0
+				)
+		);
+		waitForStatus( json,  Status.Completed);
+		
+		double recBal = stocks.getReceipt().getPosition( Cookie.wallet);
+		
+		JsonObject params = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId") );
+		cli().postToJson("/api/margin-withdraw", params);
+		assert200();
+		
+		waitForStatus( json, Status.Settled);
+
+		waitForBalance( Cookie.wallet, stocks.getReceipt().address(), recBal - json.getDouble( "amountToSpend"), true); 
 	}
 
 	public void testWithdrawTokens() {

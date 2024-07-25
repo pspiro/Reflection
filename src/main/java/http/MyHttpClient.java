@@ -30,8 +30,9 @@ public class MyHttpClient {
 	}
 	
 	public void writeFile( String filename) throws Exception {
-		IStream is = new IStream( filename);
-		write( is.readAll() );
+		try (IStream is = new IStream( filename) ) {
+			write( is.readAll() );
+		}
 	}
 	
 	public void write( String str) throws Exception {

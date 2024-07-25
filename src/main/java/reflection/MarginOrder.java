@@ -41,7 +41,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		Monitoring,				// placed sell orders (if any); monitoring sell orders and for liquidation
 		Liquidation,			// in liquidation
 		Completed,				// we're done; nothing to monitor, no loan; there may be a position
-		Canceled,				// canceled by user or system; nothing to monitor
+		Canceled,				// canceled by user or system; nothing to monitor, could have shares, cash, or loan
 		Withdrawing,			// withdrawing funds
 		Settled;				// funds and/or shares have been withdrawn; the order can be removed from the screen
 
@@ -73,6 +73,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 		boolean canWithdraw() {
 			return is( Completed, Canceled, Settled);
+		}		
+
+		boolean canPrune() {
+			return is( Settled);
 		}		
 
 	}
@@ -112,6 +116,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //	sharesToBuy,  // done
 //	symbol,       // done
 //  placed
+//	finishedAt  time that order came to its final resting place
 	
 	// transient, non-serializeable 
 	private final ApiController m_conn;
@@ -219,20 +224,13 @@ public class MarginOrder extends JsonObject implements DualParent {
 	/** Called every time the connection is restored. Update the orders in the orderMap()
 	 *  and set the Order on the SingleOrders (first time only) */ 
 	public synchronized void onReconnected( HashMap<String,LiveOrder> orderRefMap) {
-		// order is completed?
-		if (status().is( Status.Completed, Status.Canceled, Status.Settled) ) {
-			return;
-		}
-		
-		out( "onReconnected margin order " + this);
-		
-		
-		
 		// fields of ordStatus are: permId, action, filled, avgPrice
 		
 		// update the saved live orders with the new set of live orders in case the status
 		// or filled amount changed during the restart
 		if (status().couldHaveLiveOrder() ) {
+			out( "onReconnected margin order " + this);
+
 			for (var liveOrder : orderRefMap.values() ) {
 				if (liveOrder.orderId().equals( orderId() ) ) {
 					Util.wrap( () -> updateOrderStatus( 
@@ -314,6 +312,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				
 			case Completed:
 			case Settled:
+			case Withdrawing:
 				// nothing to do
 				break;
 		}
@@ -438,19 +437,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// out the filled amount and place for the remaining size only
 		//int remainingQty = roundedQty() - totalBought();
 
-		S.out( "modifying order margin=%s  dual=%s  day=%s  IB=%s", 
-				hashCode(), 
-				m_buyOrder.hashCode(), 
-				m_buyOrder.m_dayOrder.hashCode(), 
-				m_buyOrder.m_dayOrder.m_order.realhash() );
-
-		
 		m_buyOrder.quantity( roundedQty() );
 		m_buyOrder.placeOrder( conid() );
 
-		status( Status.PlacedBuyOrder);
-
-		// now we wait for the buy order to be filled or canceled 
+		status( Status.PlacedBuyOrder);  // now we wait for the buy order to be filled or canceled
 	}
 
 	/** Calleded in the http processing thread */
@@ -621,7 +611,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 					
 					cancelLiqOrder();
 					
-					// we are dont
+					// we are done
 				}
 			}
 //			else {
@@ -742,6 +732,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			
 		case Completed:
 		case Settled:
+		case Withdrawing:
 			require( false, RefCode.CANT_CANCEL, "The order has already completed");
 			break;
 			
@@ -792,8 +783,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// now we want to take out the receipt and put in money and/or more stock
 		Util.execute( () -> {
 			try {
-				m_config.rusd().sellStockForRusd( wallet(), cashBalance, receipt, amtToSpend() );
+				status( Status.Withdrawing);
+				
+				m_config.rusd().sellStockForRusd( wallet(), cashBalance, receipt, amtToSpend() )
+					.waitForHash();
+
+				status( Status.Settled);
 			} catch (Exception e) {
+				out( "Error while withdrawing cash - " + e.getMessage() );
 				e.printStackTrace();
 			}
 		});
@@ -1047,6 +1044,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	public void require(boolean test, String text, Object... params) throws Exception {
 		Util.require( test, orderId() + " " + text, params);
+	}
+
+	public boolean shouldPrune(long pruneInterval) {
+		return status().canPrune() && finishedAt() > 0 && System.currentTimeMillis() - finishedAt() >= pruneInterval; 
+	}
+	
+	private long finishedAt() {
+		return getLong( "finishedAt");
 	}
 
 }

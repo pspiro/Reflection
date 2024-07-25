@@ -311,6 +311,16 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 		}
 		return ar;
 	}
+
+	/** Copy all tags from other to this object; null values are okay but not added */
+	public void copyFrom(TsonObject<T> other, String... tags) {
+		for (String tag : tags) {
+			if (other.get(tag) != null) {
+				put( tag, other.get(tag) );
+			}
+		}
+	}
+
 }
 /** NOTE: Timestamp objects are stored as
  *  

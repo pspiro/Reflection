@@ -1,5 +1,6 @@
 package reflection;
 
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.OutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -590,28 +591,26 @@ public class Main implements ITradeReportHandler {
 		return m_marginStore;
 	}
 	
-	/** Called at startup only. Read it from disk but do not start the order processing yet */
-	void restoreLiveOrders() {
+	/** Called at startup only. Read it from disk but do not start the order processing yet.
+	 *  If there is an error while reading the file, the program will terminate */ 
+	void restoreLiveOrders() throws FileNotFoundException, Exception {
 		String filename = "margin.store";
 		
-		try {
+		// we have to create the margin store before parsing the json
+		// because the store is used in the constructor to the MarginOrders
+		m_marginStore = new MarginStore( filename, apiController(), m_config.marginPrune() );
+		
+		if (S.fileExists( filename)) {
 			S.out( "Reading margin store");
-			
-			// we have to create the margin store before parsing the json
-			// because the store is used in the constructor to the MarginOrders
-			m_marginStore = new MarginStore( filename, apiController() );
-			
 			JsonArray.parse( 
 					new FileReader( filename),
 					m_marginStore,
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore)  // note that connection may not be established yet
 					);
-			
 			S.out( "  read %s records", m_marginStore.size() );
 		}
-		catch( Exception e) {
-			e.printStackTrace();
-			m_marginStore = new MarginStore( filename, apiController() );
+		else {
+			S.out( "WARNING: no order store read");
 		}
 		
 		m_marginStore.postInit();

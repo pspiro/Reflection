@@ -100,6 +100,7 @@ public class Config extends ConfigBase {
 	private double marginMaxLeverage;
 	private double marginMinSpend;
 	private double marginMaxSpend;
+	private long marginPrune; // prune completed or canceled margin orders after this much time in ms
 	
 	// Fireblocks
 	private Web3Type web3Type;
@@ -266,6 +267,7 @@ public class Config extends ConfigBase {
 		this.marginMaxLeverage = m_tab.getRequiredDouble("marginMaxLeverage");
 		this.marginMinSpend = m_tab.getRequiredDouble("marginMinSpend");
 		this.marginMaxSpend = m_tab.getRequiredDouble("marginMaxSpend");
+		this.marginPrune = m_tab.getRequiredInt("marginPrune");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -722,6 +724,10 @@ public class Config extends ConfigBase {
 	
 	double marginMaxSpend() {
 		return marginMaxSpend;
+	}
+	
+	long marginPrune() {
+		return marginPrune;
 	}
 	
 }

@@ -341,7 +341,7 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	}
 
 
-	/** Copy all tags from other to this object; null values are okay but not added */
+	/** Copy specified tags from other to this object; null values are okay but not added */
 	public void copyFrom(JsonObject other, String... tags) {
 		for (String tag : tags) {
 			if (other.get(tag) != null) {
@@ -349,6 +349,18 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 			}
 		}
 	}
+
+	/** Add or overwrite the values of this object with the ones passed in;
+	 *  null values are ignore */ 
+	public JsonObject modify( Object... objs) {
+		Util.toJson( objs).forEach( (key,val) -> {
+			if (val != null) {
+				put( key, val);
+			}
+		});
+		return this;
+	}
+	
 
 	/** Increment the key by val; stored value must be a Double */
 	public void increment(String key, double val) {

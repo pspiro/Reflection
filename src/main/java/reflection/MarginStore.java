@@ -11,6 +11,7 @@ import com.ib.controller.ApiController.LiveOrder;
 
 import common.Alerts;
 import common.NiceTimer;
+import common.Util;
 import reflection.MarginOrder.Status;
 import tw.util.S;
 
@@ -19,11 +20,13 @@ class MarginStore extends TsonArray<MarginOrder> {
 	private boolean m_started;
 	private ApiController m_conn;
 	private final NiceTimer m_processingThread = new NiceTimer( "MarginStore");  // check every ten sec
-	private final Runnable m_saver = () -> saveNow(); 
+	private final Runnable m_saver = () -> saveNow();
+	private final long m_pruneInterval;
 	
-	public MarginStore(String filename, ApiController conn) {
+	public MarginStore(String filename, ApiController conn, long pruneInterval) {
 		m_filename = filename;
 		m_conn = conn;
+		m_pruneInterval = pruneInterval;
 	}
 
 	/** Called after store is created or read from disk */
@@ -95,7 +98,8 @@ class MarginStore extends TsonArray<MarginOrder> {
 		}
 	}
 	
-	/** Called on reconnect */
+	/** Called on reconnect 
+	 *  @param pruneInterval completed orders should be removed after this much time */
 	private synchronized void onRecMap(HashMap<Integer, LiveOrder> permIdMap) {
 		// build map of order ref to live orders
 		HashMap<String, LiveOrder> orderRefMap = getOrderRefMap( permIdMap);  // map orderRef to LiveOrder; better would be map orderId to list of orders with with that orderId
@@ -112,6 +116,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 			
 			m_processingThread.executeEvery( 0, 10000, () -> 
 				forEach( order -> order.onProcess() ) );
+
+			m_processingThread.executeEvery( 0, Util.MINUTE * 10, () -> {
+				for (var iter = iterator(); iter.hasNext(); ) {
+					if (iter.next().shouldPrune( m_pruneInterval) ) {
+						iter.remove();
+					}
+				}
+			});
 		}
 	}
 
