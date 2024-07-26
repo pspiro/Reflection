@@ -11,54 +11,78 @@ import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 
 import common.Util;
-import reflection.Config;
-import tw.google.NewSheet;
-import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
 public class CreateKey {
 	static SecureRandom rnd = new SecureRandom();
 	
 	public static void main(String[] args) throws Exception {
-		Config.ask();  // we need this 
-		createSystemWallets();
+		//createWalletFromKey();
+		decrypt();
+		
+	}
+	
+	private static void decrypt() throws Exception {
+		try( Scanner scanner = new Scanner( System.in) ) {
+			String pk = decryptFromJson(
+					input( scanner, "Enter password: "),
+					JsonObject.parse( input( scanner, "Enter json: ") )	);
+			S.out( pk);
+		}
 	}
 
+	/** Create all three system wallets from a single password */
 	public static void createSystemWallets() throws Exception {
 		try( Scanner scanner = new Scanner( System.in) ) {
 			String pw1 = input( scanner, "Enter password: ");
 			String pw2 = input( scanner, "Re-enter password: ");
 			Util.require( pw1.equals( pw2), "Mismatch");
 
-			String hint = input( scanner, "Enter password hint: ");
-
-			createProdWallet( pw1, "admin", "admin", hint);
-			createProdWallet( pw1, "owner", "owner", hint);
-			createProdWallet( pw1, "refWallet", "refWallet", hint);
+			createAndShowJson( pw1, "admin");
+			createAndShowJson( pw1, "owner");
+			createAndShowJson( pw1, "refWallet");
 		}
 	}
 
-	/** Input wallet params from command line and create wallet on Prod-wallets tab */
-	public static void createUserWallet() throws Exception {
+	public static void createWalletFromKey() throws Exception {
+		try( Scanner scanner = new Scanner( System.in) ) {
+			String pw1 = input( scanner, "Enter password: ");
+			String pw2 = input( scanner, "Re-enter password: ");
+			Util.require( pw1.equals( pw2), "Mismatch");
+
+			for (int i = 0; i < 8; i++) {
+				String privateKey = input( scanner, "Enter private key: ");
+				
+				createAndShowJson( pw1, "" + i, privateKey);
+			}
+		}
+	}
+
+	/** Create a single wallet from name entered */
+	public static void createWalletGenKey() throws Exception {
 		try( Scanner scanner = new Scanner( System.in) ) {
 			String pw1 = input( scanner, "Enter password: ");
 			String pw2 = input( scanner, "Re-enter password: ");
 			Util.require( pw1.equals( pw2), "Mismatch");
 
 			String name = input( scanner, "Enter wallet name: ");
-			String description = input( scanner, "Enter description: ");
-			String hint = input( scanner, "Enter password hint: ");
-			
-			createProdWallet( pw1, name, description, hint);
+			createAndShowJson( pw1, name);
 		}
 	}
 	
-	/** Create the wallet and add it to the "Prod-wallets" tab */
-	public static void createProdWallet(String pw, String name, String description, String hint) throws Exception {
+	public static void createAndShowJson(String pw, String name, String privateKey) throws Exception {
+		JsonObject json = getEncryptedPrivateKey( pw, privateKey);
+		showWallet( json, name);
+	}
+	
+	public static void createAndShowJson(String pw, String name) throws Exception {
 		JsonObject json = getEncryptedPrivateKey( pw);
+		showWallet( json, name);
+	}
 
-		S.out( "Blockchain - wallets\t%sAddr\t%s", name, json.getString( "address") );
-		S.out( "Blockchain - wallets\t%sKey\t%s", name, json);
+	/** formatted for prod wallets tab */
+	public static void showWallet(JsonObject json, String name) throws Exception {
+		System.out.println( String.format( "%s\t%s\t%s", name, json.getString( "address"), json.toString() ) );
 	}
 	
 	/** fields in json are address, salt, data, ivstr */ 
@@ -71,12 +95,13 @@ public class CreateKey {
 
 	/** returns
 	"Name", name,
-	"Description", description,
 	"Address", json.getString( "address"),
-	"Key", json.toString(),
-	"Hint", hint) ); */
+	"Key", json.toString() */
 	public static JsonObject getEncryptedPrivateKey(String pw) throws Exception {
-		String privateKey = createPrivateKey();
+		return getEncryptedPrivateKey( pw, createPrivateKey());
+	}
+
+	public static JsonObject getEncryptedPrivateKey(String pw, String privateKey) throws Exception {
 		String address = Credentials.create( privateKey ).getAddress();
 		String salt = Util.uid( 8);
 		SecretKey secretKey = Encrypt.getKeyFromPassword(pw, salt);
@@ -90,6 +115,7 @@ public class CreateKey {
 				"salt", salt,
 				"ivstr", ivstr);
 	}
+
 
 	public static String input(Scanner scanner, String string) {
 		S.out( string);

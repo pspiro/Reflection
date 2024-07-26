@@ -100,6 +100,7 @@ public class Config extends ConfigBase {
 	// Fireblocks
 	private Web3Type web3Type;
 	private String admin1Addr;  // used for deployment and Monitor
+	private String admin1Key;   // used for signing transactions
 	private String ownerKey;  // for Fireblocks, this is "Owner"
 	private String ownerAddr;
 	private String refWalletKey;
@@ -252,9 +253,7 @@ public class Config extends ConfigBase {
 		this.baseUrl = m_tab.get("baseUrl");
 		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
 		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
-		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
-		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		
@@ -283,7 +282,10 @@ public class Config extends ConfigBase {
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
 			this.fbLookback = m_tab.getRequiredDouble("fbLookback");
-
+			this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+			this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
+			this.admin1Key = m_tab.getRequiredString("admin1Key"); // this is used only for deployment and doesn't need to be in the config file
+			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
 			if (fireblocksApiKey.startsWith("projects/") ) {
@@ -308,12 +310,16 @@ public class Config extends ConfigBase {
 			Refblocks.setChainId( 
 					chainId,
 					m_tab.getRequiredString( "rpcUrl") );
+			
+			this.ownerKey = m_tab.getRequiredString("ownerRefblocksKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+			this.refWalletKey = m_tab.getRequiredString("refWalletRefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
+			this.admin1Key = m_tab.getRequiredString("admin1RefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
 		}
 
 		m_rusd = new web3.Rusd(
 				m_tab.getRequiredString("rusdAddr").toLowerCase(),
 				m_tab.getRequiredInt("rusdDecimals"),
-				getKey( m_tab.getRequiredString( "admin1Key") ),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				this,
 				rusdCore);
 		
 		m_busd = new Busd( 
@@ -658,6 +664,10 @@ public class Config extends ConfigBase {
 	
 	public String ownerKey() throws Exception {  // private key or "Owner"
 		return getKey( ownerKey);
+	}
+
+	public String adminKey() throws Exception {
+		return getKey( admin1Key);
 	}
 
 	public String ownerAddr() {
