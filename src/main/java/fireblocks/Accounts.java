@@ -27,7 +27,10 @@ public class Accounts {
 	public static void main(String[] args) throws Exception {
 		Config.ask();
 		instance.read();
-		S.out( instance.m_accounts);
+		instance.m_accounts.forEach( acct -> {
+			S.out( "name: %s  id=%s", acct.getString( "name"), acct.getString( "id") );
+		});
+		//instance.getAccount( "Owner").display();
 	}
 	
 	public synchronized void read() throws Exception {

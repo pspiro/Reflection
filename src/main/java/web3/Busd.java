@@ -4,7 +4,7 @@ import common.Util;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;
-	private String m_anyKey; // private key or "Admin1" for FB
+	private String m_anyKey; // private key or "Admin1" for FB, not really needed
 
 	public Busd(String address, int decimals, String name, String anyKey, IBusd core) throws Exception {
 		super( address, decimals, name);
