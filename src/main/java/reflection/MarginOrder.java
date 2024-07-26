@@ -573,12 +573,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 			put( "value", cashBalance + stockValueLast() );
 			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.);
 
-			S.out( "-----> shares=%s  needed=%s  cash=%s  val=%s  loan=%s", 
-					sharesHeld(), sharesToBuy(), cashBalance, value(), loanAmt() );
-			S.out( this);
-			
+			// print status and full MarginOrder
 			out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
 					permId, dualOrd.name(), status, filled, roundedQty(), avgPrice);
+			out( toString() );
 	
 			if (status == Status.PlacedBuyOrder && dualOrd == m_buyOrder) {
 				if (totalBought() >= roundedQty() ) {
@@ -882,7 +880,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		});
 	}
 	
-	private void out( String format, Object... params) {
+	public void out( String format, Object... params) {
 		S.out( orderId() + " " + format, params);
 	}
 	
@@ -1066,8 +1064,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 //implement "get info" from frontend--or--send an email with the summary
 //auto-liq at COB regular hours if market is closed next day
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
-//let orders be pruned after one week (configurable)
-//implement withdraw
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
 //you could charge a different fee for a lev order with leverage of 1, something more similar to the 
 //consider if you really want to collect a fee for an order that is never filled
@@ -1082,7 +1078,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test pruning
 
 
+
 //later:
+//pass commission cost to user
 //need pagination at frontend, 
 //check, will filled or canceled orders ever be downloaded in the liveorders? test and consider that
 //now we need to cash out the user; they must initiate this

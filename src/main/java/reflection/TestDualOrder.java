@@ -2,6 +2,8 @@ package reflection;
 
 import com.ib.client.Contract;
 import com.ib.client.DualOrder;
+import com.ib.client.DualOrder.DualParent;
+import com.ib.client.OrderStatus;
 import com.ib.client.OrderType;
 import com.ib.client.SingleOrder;
 import com.ib.client.Types.Action;
@@ -46,11 +48,17 @@ public class TestDualOrder {
 				prices, 
 				"test",
 				"test " + i,
-				8314,
-				(order, status, permId, action, filled, avgFillPrice) -> {
-					S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
-							permId, action, filled, avgFillPrice, status);
-					m_permId = permId;
+				8314, 
+				new DualParent() {
+					@Override public void onStatusUpdated(DualOrder order, OrderStatus status, int permId, Action action,
+							int filled, double price) {
+						S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
+								permId, action, filled, price, status);
+						m_permId = permId;
+					}
+					@Override public void out(String string, Object... params) {
+						S.out( string, params);
+					}
 				});
 		
 		ord.action(Action.Buy);
@@ -97,10 +105,17 @@ public class TestDualOrder {
 					"test",
 					"test " + i,
 					8314,
-					(order, status, permId, action, filled, avgFillPrice) -> {
-						S.out( "child TWO updated  permId=%s  action=%s  filled=%s  price=%s",
-								permId, action, filled, avgFillPrice);
-					} );
+					new DualParent() {
+						@Override public void onStatusUpdated(DualOrder order, OrderStatus status, int permId, Action action,
+								int filled, double price) {
+							S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
+									permId, action, filled, price, status);
+							m_permId = permId;
+						}
+						@Override public void out(String string, Object... params) {
+							S.out( string, params);
+						}
+					});
 			
 			ord.placeOrder( 8314);
 			S.sleep( 1000);

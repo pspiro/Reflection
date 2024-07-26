@@ -348,7 +348,8 @@ public class Main implements ITradeReportHandler {
 			
 			if (
 					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
-					errorCode != 2106		// HMDS data farm connection is OK:ushmds
+					errorCode != 2106 &&	// HMDS data farm connection is OK:ushmds
+					errorCode != 202		// Order canceled; individual listeners will be notified
 			) {
 				S.out( "Received API message  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
 			}

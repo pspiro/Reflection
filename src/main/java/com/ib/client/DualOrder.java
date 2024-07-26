@@ -19,6 +19,7 @@ import tw.util.S;
 public class DualOrder implements SingleParent {
 	public interface DualParent {
 		void onStatusUpdated(DualOrder order, OrderStatus ibOrderStatus, int permId, Action action, int totalFilled, double avgPrice);
+		void out(String string, Object... params);
 	}
 	
 	private ApiController m_conn;
@@ -118,6 +119,7 @@ public class DualOrder implements SingleParent {
 		m_nightOrder.placeOrder();
 	}
 
+	/** never called */
 	public void display() {
 		S.out( "day order: " + m_dayOrder.toString() );
 		S.out( "night order: " + m_nightOrder.toString() );
@@ -128,7 +130,7 @@ public class DualOrder implements SingleParent {
 	 *  complete even if both children are still work, if the total fill size
 	 *  is sufficient */
 	@Override public void onStatusUpdated(SingleOrder single, OrderStatus status, int permId, Action action, int filled, double avgPrice) {
-		S.out( "DualOrder onStatus  name=%s  status=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
+		m_parent.out( "DualOrder onStatus  name=%s  status=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
 				single.name(), status, permId, action, filled, avgPrice);
 		
 		m_parent.onStatusUpdated( this, status, permId, action, filled, avgPrice); 
@@ -139,7 +141,5 @@ public class DualOrder implements SingleParent {
 		m_dayOrder.resubmit();
 		m_nightOrder.resubmit();
 	}
-
-
 
 }

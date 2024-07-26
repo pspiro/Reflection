@@ -165,7 +165,7 @@ public class TestMargin extends MyTestCase {
 		waitForStatus( json, Status.Monitoring);
 	}
 
-	public void testFillBuyAndStop() throws Exception {
+	public void testFillStop() throws Exception {
 		S.out( "testing fill buy and stop");
 		
 		JsonObject ord = newOrd();
@@ -179,28 +179,24 @@ public class TestMargin extends MyTestCase {
 		waitForStatus( json, Status.Completed);
 	}
 	
-	public void testFillBuyAndProfit() throws Exception {
+	public void testFillProfit() throws Exception {
 		S.out( "testing fill buy and stop");
 
-		// place order, let buy fill
+		// place order
 		JsonObject ord = newOrd();
 		ord.put( "profitTakerPrice", base + 3);
 		ord.put( "entryPrice", base + 2);
 		ord.put( "stopLossPrice", base - 4);
 		
-		JsonObject ret = cli().postToJson( "/api/margin-order", ord );
-		ret.display();
-		assert200();
+		// wait for buy order to fill
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		waitForStatus(json, Status.Monitoring, false);
 
-		S.out( "waiting for status Monitoring");
-		waitFor(30, () -> getOrderStatus( ret) == Status.Monitoring);
-
-		// update order with low sell price
-		ord.put( "orderId", ret.getString( "orderId") );
+		// update order with low sell price, wait for sell to fill
+		ord.put( "orderId", json.getString( "orderId") );
 		ord.put( "profitTakerPrice", base - 1);
-		//ord.remove( "entryPrice");
 		cli().postToJson( "/api/margin-update", ord );
-		waitForStatus( ret, Status.Completed);
+		waitForStatus( json, Status.Completed);
 	}
 	
 	// the problem is the order hasn't filled or even been placed yet, you can't modify it!!!
@@ -211,44 +207,44 @@ public class TestMargin extends MyTestCase {
 		assert200();
 		
 		String orderId = json.getString( "orderId");
-//
-//		// fail no wallet
-//		cli().postToJson( "/api/margin-update", Util.toJson(
-//				"cookie", Cookie.cookie,
-//				"orderId", orderId,
-//				"profitTakerPrice", base + 1,
-//				"entryPrice", base - 1,
-//				"stopLossPrice", base - 2) );
-//		failWith( RefCode.INVALID_REQUEST, "Wallet address is missing");
-//
-//		// fail wrong wallet
-//		cli().postToJson( "/api/margin-update", Util.toJson(
-//				"cookie", Cookie.cookie,
-//				"wallet_public_key", dead,
-//				"orderId", orderId,
-//				"profitTakerPrice", base + 1,
-//				"entryPrice", base - 1,
-//				"stopLossPrice", base - 2) );
-//		failWith( RefCode.VALIDATION_FAILED); // fails cookie validation, "Message wallet address");
-//
-//		// fail no cookie
-//		cli().postToJson( "/api/margin-update", Util.toJson(
-//				"wallet_public_key", Cookie.wallet,
-//				"orderId", orderId,
-//				"profitTakerPrice", base + 1,
-//				"entryPrice", base - 1,
-//				"stopLossPrice", base - 2) );
-//		failWith( RefCode.VALIDATION_FAILED);
-//
-//		// fail unknown order id
-//		cli().postToJson( "/api/margin-update", Util.toJson(
-//				"cookie", Cookie.cookie,
-//				"wallet_public_key", Cookie.wallet,
-//				"orderId", "lkjsdflksj",
-//				"profitTakerPrice", base + 1,
-//				"entryPrice", base - 1,
-//				"stopLossPrice", base - 2) );
-//		failWith( RefCode.INVALID_REQUEST, "No such order found");
+
+		// fail no wallet
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"orderId", orderId,
+				"profitTakerPrice", base + 1,
+				"entryPrice", base - 1,
+				"stopLossPrice", base - 2) );
+		failWith( RefCode.INVALID_REQUEST, "Wallet address is missing");
+
+		// fail wrong wallet
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"wallet_public_key", dead,
+				"orderId", orderId,
+				"profitTakerPrice", base + 1,
+				"entryPrice", base - 1,
+				"stopLossPrice", base - 2) );
+		failWith( RefCode.VALIDATION_FAILED); // fails cookie validation, "Message wallet address");
+
+		// fail no cookie
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"orderId", orderId,
+				"profitTakerPrice", base + 1,
+				"entryPrice", base - 1,
+				"stopLossPrice", base - 2) );
+		failWith( RefCode.VALIDATION_FAILED);
+
+		// fail unknown order id
+		cli().postToJson( "/api/margin-update", Util.toJson(
+				"cookie", Cookie.cookie,
+				"wallet_public_key", Cookie.wallet,
+				"orderId", "lkjsdflksj",
+				"profitTakerPrice", base + 1,
+				"entryPrice", base - 1,
+				"stopLossPrice", base - 2) );
+		failWith( RefCode.INVALID_REQUEST, "No such order found");
 
 		// succeed
 		cli().postToJson( "/api/margin-update", Util.toJson(
@@ -411,6 +407,10 @@ public class TestMargin extends MyTestCase {
 	
 	/** Wait for status and then cancel the order, pass or fail */
 	void waitForStatus(JsonObject json, Status status) throws Exception {
+		waitForStatus( json, status, true);
+	}
+	
+	void waitForStatus(JsonObject json, Status status, boolean cancel) throws Exception {
 		json.display();
 		assert200();
 
@@ -419,7 +419,9 @@ public class TestMargin extends MyTestCase {
 			waitFor(50, () -> getOrderStatus( json) == status);
 		}
 		finally {
-			cancel( json.getString( "orderId"));
+			if (cancel) {
+				cancel( json.getString( "orderId"));
+			}
 		}
 	}
 

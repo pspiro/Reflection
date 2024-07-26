@@ -180,8 +180,8 @@ public class SingleOrder implements IOrderHandler {
 		
 		m_order.status( status);
 
-		out( "SingleOrder name=%s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
-				m_name, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
+//		out( "SingleOrder name=%s  id=%s  status=%s  session=%s  filled=%s  remaining=%s  avgPrice=%s", 
+//				m_name, m_order.orderId(), status, m_session, filled, remaining, avgFillPrice);
 		
 		m_parent.onStatusUpdated( this, status, permId, m_order.action(), filled.toInt(), avgFillPrice);
 	}
