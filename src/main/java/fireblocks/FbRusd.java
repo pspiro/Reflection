@@ -38,7 +38,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 
 	/** Buy with either RUSD or FBusd; can also be used to burn RUSD
 	 * @return id */
-	@Override public RetVal buyStock(String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt,
+	@Override public RetVal buyStock(String notUsed, String userAddr, Stablecoin stablecoin, double stablecoinAmt,
 			StockToken stockToken, double stockTokenAmt) throws Exception {
 		
 		Util.isValidAddress(userAddr);
@@ -71,7 +71,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 	 *  and you must be approved (if buying with FBusd)
 	 *  
 	 *  Also used to mint RUSD */
-	@Override public RetVal sellStockForRusd(String adminKey, String userAddr, double rusdAmt, StockToken stockToken,
+	@Override public RetVal sellStockForRusd(String notUsed, String userAddr, double rusdAmt, StockToken stockToken,
 			double stockTokenAmt) throws Exception {
 
 		Util.isValidAddress(userAddr);
@@ -100,7 +100,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 
 	/** Burn RUSD from user wallet and transfer FBusd from RefWallet to user wallet
 	 *  Since we only pass one amount, RUSD must have same number of decimals as FBusd */
-	@Override public RetVal sellRusd(String adminKey, String userAddr, Busd busd, 
+	@Override public RetVal sellRusd(String notUsed, String userAddr, Busd busd, 
 			double amt) throws Exception {
 		
 		Util.isValidAddress(userAddr);
@@ -164,6 +164,7 @@ public class FbRusd extends FbErc20 implements IRusd {
 //    uint256 _amount
 
 
+	/** this won't work for FB because the owner is not passed correctly */
 	@Override public RetVal addOrRemoveAdmin(String owner, String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		Object[] params = { adminAddr, add ? 1 : 0 };
@@ -210,10 +211,12 @@ public class FbRusd extends FbErc20 implements IRusd {
 		return sellStockForRusd( null, address, amt, anyStockToken, 0.);
 	}
 
+	/** Won't work, owner key is incorrect */
 	@Override public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
-		return super.setOwner( Accounts.instance.getId( ownerKey), ownerAddr);
+		throw new Exception();
 	}
 
+	/** Won't work, owner key is incorrect */
 	@Override public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
 		throw new Exception();
 	}

@@ -15,6 +15,7 @@ import fireblocks.FbBusd;
 import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
+import http.MyClient;
 import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
@@ -349,14 +350,30 @@ public class Config extends ConfigBase {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
 	}
 	
-	/** json fields are address, salt, data, ivstr */
+	/** For Refblocks, return the private key encoded in the json.
+	 *  For Fireblocks, return the account name.
+	 *  json fields are address, salt, data, ivstr */
 	private String getKey(String key) throws Exception {
 		return JsonObject.isObject( key)
 				? CreateKey.decryptFromJson( 
-						Util.readResource( Config.class, "date.txt").trim(), 
+						fetchPw().trim(), 
 						JsonObject.parse( key) 
 						)
 				: key;
+	}
+	
+	private String fetchPw() throws Exception {
+		try {
+			return Util.readResource( Config.class, "name.txt"); // obsolete, remove this
+		} catch (Exception e) {
+		}
+		// get refblocks pw from pwserver
+		String pw = MyClient.postToJson( "http://localhost:1000/getpw", Util.toJson( "code", "lwjkefdj827").toString() )
+				.getString( "pw");
+		Util.require( S.isNotNull( pw), "null pw from pw server");
+		Util.require( !pw.equals( "wrong code"), "wrong code passed to pw server");
+
+		return pw;
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {
@@ -658,14 +675,17 @@ public class Config extends ConfigBase {
 		return refWalletAddr;
 	}
 	
+	/** returns private key or account name */
 	public String refWalletKey() throws Exception {
 		return getKey( refWalletKey);
 	}
 	
+	/** returns private key or account name */
 	public String ownerKey() throws Exception {  // private key or "Owner"
 		return getKey( ownerKey);
 	}
 
+	/** returns private key or account name */
 	public String adminKey() throws Exception {
 		return getKey( admin1Key);
 	}
@@ -690,8 +710,8 @@ public class Config extends ConfigBase {
 		return web3Type;
 	}
 
-	/** Let RefWallet approve RUSD to spend BUSD on its behalf 
-	 * @throws Exception */
+	/** Let RefWallet approve RUSD to spend BUSD on its behalf;
+	 *  Would be used only during migration, which is not needed anymore. */ 
 	public RetVal giveApproval() throws Exception {
 		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
 	}
