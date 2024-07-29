@@ -97,6 +97,7 @@ public class Config extends ConfigBase {
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
+	private String pwUrl;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -257,6 +258,7 @@ public class Config extends ConfigBase {
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
+		this.pwUrl = m_tab.get("pwUrl");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -368,7 +370,7 @@ public class Config extends ConfigBase {
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
-		String pw = MyClient.postToJson( "http://localhost:1000/getpw", Util.toJson( "code", "lwjkefdj827").toString() )
+		String pw = MyClient.postToJson( pwUrl, Util.toJson( "code", "lwjkefdj827").toString() )
 				.getString( "pw");
 		Util.require( S.isNotNull( pw), "null pw from pw server");
 		Util.require( !pw.equals( "wrong code"), "wrong code passed to pw server");

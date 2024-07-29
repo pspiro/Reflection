@@ -164,7 +164,6 @@ public class FbRusd extends FbErc20 implements IRusd {
 //    uint256 _amount
 
 
-	/** this won't work for FB because the owner is not passed correctly */
 	@Override public RetVal addOrRemoveAdmin(String owner, String adminAddr, boolean add) throws Exception {
 		String[] paramTypes = { "address", "uint256" };
 		Object[] params = { adminAddr, add ? 1 : 0 };
@@ -211,12 +210,10 @@ public class FbRusd extends FbErc20 implements IRusd {
 		return sellStockForRusd( null, address, amt, anyStockToken, 0.);
 	}
 
-	/** Won't work, owner key is incorrect */
 	@Override public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
 		throw new Exception();
 	}
 
-	/** Won't work, owner key is incorrect */
 	@Override public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
 		throw new Exception();
 	}
