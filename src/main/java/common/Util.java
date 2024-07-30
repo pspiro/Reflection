@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Credentials;
 
 import com.ib.client.Decimal;
 
@@ -874,4 +875,8 @@ public class Util {
 	//	<T> T[] toArray( ArrayList<T> list) {
 	//		return (T[])list.toArray();
 	//	}
+	
+	public static String getPublicKey( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
 }

@@ -17,9 +17,20 @@ public class CreateKey {
 	static SecureRandom rnd = new SecureRandom();
 	
 	public static void main(String[] args) throws Exception {
-		//createWalletFromKey();
+//		createWalletsFromKey();
 		decrypt();
+//		createSystemWallets();
+//		verifyKey();
 		
+	}
+	
+	static void verifyKey() throws Exception {
+		try( Scanner scanner = new Scanner( System.in) ) {
+			String pw = input( scanner, "Enter password: ");
+			JsonObject json = JsonObject.parse( input( scanner, "Enter json: ") );
+			String pk = decryptFromJson( pw, json);
+			S.out( Util.getPublicKey(pk).equalsIgnoreCase(json.getString( "address")));
+		}
 	}
 	
 	private static void decrypt() throws Exception {
@@ -38,13 +49,13 @@ public class CreateKey {
 			String pw2 = input( scanner, "Re-enter password: ");
 			Util.require( pw1.equals( pw2), "Mismatch");
 
-			createAndShowJson( pw1, "admin");
 			createAndShowJson( pw1, "owner");
 			createAndShowJson( pw1, "refWallet");
+			createAndShowJson( pw1, "admin1");
 		}
 	}
 
-	public static void createWalletFromKey() throws Exception {
+	public static void createWalletsFromKey() throws Exception {
 		try( Scanner scanner = new Scanner( System.in) ) {
 			String pw1 = input( scanner, "Enter password: ");
 			String pw2 = input( scanner, "Re-enter password: ");
@@ -52,6 +63,7 @@ public class CreateKey {
 
 			for (int i = 0; i < 8; i++) {
 				String privateKey = input( scanner, "Enter private key: ");
+				Util.require( Util.isValidKey(privateKey), "Invalid key");
 				
 				createAndShowJson( pw1, "" + i, privateKey);
 			}
@@ -85,12 +97,21 @@ public class CreateKey {
 		System.out.println( String.format( "%s\t%s\t%s", name, json.getString( "address"), json.toString() ) );
 	}
 	
-	/** fields in json are address, salt, data, ivstr */ 
+	/** fields in json are address, salt, data, ivstr;
+	 *  it verifies that the correct password is used */ 
 	public static String decryptFromJson( String pw, JsonObject json) throws Exception {
-		return Encrypt.decrypt( 
-				json.getString( "data"),
-				Encrypt.getKeyFromPassword( pw, json.getString( "salt") ),
-				json.getString( "ivstr") );
+		try {
+			String pk = Encrypt.decrypt( 
+					json.getString( "data"),
+					Encrypt.getKeyFromPassword( pw, json.getString( "salt") ),
+					json.getString( "ivstr") );
+			Util.require( Util.getPublicKey( pk).equalsIgnoreCase( json.getString( "address") ), "Password is incorrect");
+
+			return Util.right( pk, 64); // some private keys (prod only) were encrypted with 0x at the beginning, so shave it off
+		}
+		catch( javax.crypto.BadPaddingException e) {  // this happens when we use the wrong password
+			throw new Exception( "Password is incorrect");
+		}
 	}
 
 	/** returns
