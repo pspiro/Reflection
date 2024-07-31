@@ -10,6 +10,7 @@ import web3.RetVal;
 
 public class RbMatic extends Matic {
 
+	/** transfer native token */
 	@Override public RetVal transfer(String senderKey, String to, double amt) throws Exception {
 		return Refblocks.transfer( senderKey, to, amt);
 	}

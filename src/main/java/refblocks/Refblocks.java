@@ -113,10 +113,14 @@ public class Refblocks {
 		TransactionManager tm = null;
 		
 		try {
+			// for production
 			tm = getFasterTm( callerKey);
-			
 			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
 			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
+
+			// for debugging
+//			tm = getWaitingTm( callerKey);  // use this for debugging; 
+//			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
 
 			return new RbRetVal( receipt);
 		}
@@ -240,8 +244,7 @@ public class Refblocks {
 	    }
 	}
 	
-	/** taken from Transfer.sendFundsEIP1559() 
-	 * @throws Exception */
+	/** transfer native token; taken from Transfer.sendFundsEIP1559() */ 
 	static RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
 		S.out( "transferring %s matic from %s to %s",
 				amt,
