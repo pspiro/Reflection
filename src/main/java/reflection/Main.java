@@ -458,9 +458,9 @@ public class Main implements ITradeReportHandler {
 						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
 				}
-				else {
-					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
-				}
+//				else {
+//					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
+//				}
 			});
 		}
 		catch( Exception e) {
