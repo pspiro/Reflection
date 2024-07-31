@@ -113,10 +113,14 @@ public class Refblocks {
 		TransactionManager tm = null;
 		
 		try {
+			// production
 			tm = getFasterTm( callerKey);
-			
 			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
 			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
+
+			// for debugging
+//			tm = getNativeTm( callerKey);
+//			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
 
 			return new RbRetVal( receipt);
 		}
@@ -229,6 +233,8 @@ public class Refblocks {
     		Fees fees = Fees.fetch();
     		fees.showFees( gasUnits);
     		
+    		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
+    		// you may need to resolve first, in a loop, and try several times 
     		return sendEIP1559(
 	                chainId,
 	                ensResolver.resolve(toAddress),
