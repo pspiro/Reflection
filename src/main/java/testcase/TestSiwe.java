@@ -66,7 +66,7 @@ public class TestSiwe extends MyTestCase {
 	public void testFailSessionExpired() throws Exception {
 		// test siwe/init
 		cli().get("/siwe/init");
-		assert200();
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 
@@ -89,7 +89,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/init
 		cli = cli();
 		cli.get("/siwe/init");
-		assert200();
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
@@ -112,7 +112,7 @@ public class TestSiwe extends MyTestCase {
 	public void testFailSig() throws Exception {
 		// test siwe/init
 		cli().get("/siwe/init");
-		assert200();
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
@@ -134,7 +134,7 @@ public class TestSiwe extends MyTestCase {
 	public void testFailDup() throws Exception {
 		// test siwe/init
 		cli().get("/siwe/init");
-		assert200();
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		
 		// confirm nonce
@@ -150,7 +150,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		S.out( "failDup " + cli.readJsonObject() );
-		assert200();
+		assert200_();
 
 		// test siwe/signin again
 		cli = cli();
@@ -164,7 +164,7 @@ public class TestSiwe extends MyTestCase {
 			
 			// send siwe/init
 			cli().get("/siwe/init");
-			assert200();
+			assert200_();
 			String nonce = cli.readJsonObject().getString("nonce");
 			assertEquals( 20, nonce.length() );
 	
@@ -176,19 +176,20 @@ public class TestSiwe extends MyTestCase {
 	
 			// send siwe/signin
 			cli().post("/siwe/signin", signedMsgSent.toString() );
-			assert200();
+			assert200_();
 			String cookie = cli.getHeaders().get("set-cookie");
 			
 			S.sleep(1000);
 
 			// send siwe/me
 			cli().addHeader("Cookie", cookie).get("/siwe/me");
-			assert200();
+			assert200_();
 	
 			S.sleep(2500);
 			
 			// fail siwe/me
 			cli().addHeader("Cookie", cookie).get("/siwe/me");
+			assert200_();
 			S.out( cli.readJsonObject() );
 			assertEquals( 400, cli.getResponseCode() );
 			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
@@ -199,6 +200,7 @@ public class TestSiwe extends MyTestCase {
 	public void testSiweSignout() throws Exception {
 		// siwe/init, get nonce
 		String nonce = cli().get("/siwe/init").readJsonObject().getString("nonce");
+		assert200_();
 		
 		SiweMessage siweMsg = TestSiwe.createSiweMsg(nonce, Instant.now() );
 		
@@ -223,7 +225,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/init
 		cli = cli();
 		cli.get("/siwe/init");
-		assert200();
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
 		
@@ -236,7 +238,7 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli = cli();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
-		assert200();
+		assert200_();
 		String cookie = cli.getHeaders().get("set-cookie");
 		assertTrue( cookie != null && cookie.split("=").length >= 2);
 		
@@ -252,7 +254,7 @@ public class TestSiwe extends MyTestCase {
 		cli.addHeader("Cookie", "mycookie=abcde; " + cookie)  // add an unrelated cookie for fun
 			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
-		assert200();
+		assert200_();
 		JsonObject meResponseMsg = cli.readJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
 		JsonObject meSiweMsg = meResponseMsg.getObject("message");
@@ -266,7 +268,7 @@ public class TestSiwe extends MyTestCase {
 		cli = cli();
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
 		S.out( "me " + cli.readString() );
-		assert200();
+		assert200_();
 		meResponseMsg = cli.readJsonObject();
 		assertTrue( meResponseMsg.getBool("loggedIn") );
 		meSiweMsg = meResponseMsg.getObject("message");
@@ -295,6 +297,7 @@ public class TestSiwe extends MyTestCase {
 	public void testFailCookie() throws Exception {
 		// test siwe/init
 		cli().get("/siwe/init");
+		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
 
@@ -351,7 +354,7 @@ public class TestSiwe extends MyTestCase {
 		S.sleep(500);
 		cli = cli();
 		cli.addHeader("Cookie", cookie).get("/siwe/me");
-		assert200();
+		assert200_();
 	}
 	
 }
