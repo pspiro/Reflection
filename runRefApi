@@ -1,0 +1,4 @@
+cmd="java -cp target/Reflection-0.0.2-jar-with-dependencies.jar reflection.Main Fantom-config"
+pkill -f "$cmd"
+$cmd > refapi.log 2>&1 &
+
