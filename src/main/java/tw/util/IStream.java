@@ -1,12 +1,13 @@
 package tw.util;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-public class IStream {
+public class IStream implements Closeable {
 	private BufferedReader m_br;
 	private String m_peek;
 	
@@ -121,14 +122,14 @@ public class IStream {
 		}
 	}
 
-	public static void main(String[] args) {
-		try {
-			IStream is = new IStream( "c:\\temp\\test3.csv");
-			is.processAsCsv( s -> {
-				S.out( s);
-			});
-		} catch (Exception e) {
-			e.printStackTrace();
+	public static void main(String[] args) throws Exception {
+		S.out( readLine( "c:/work/reflection/config.txt"));
+	}
+
+	/** Return the first line of the file as a string */
+	public static String readLine(String filename) throws Exception {
+		try (IStream is = new IStream( filename) ) {
+			return is.readln();
 		}
 	}
 }

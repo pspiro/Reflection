@@ -12,9 +12,10 @@ public class Deploy {
 	
 	// deploy RUSD, fake BUSD (for test system), and all stock tokens
 	
-	// NOTE you must have gas in the admin1, owner, and refWallet
+	// NOTE - CREATE THE REFWALLET FIRST AND GIVE IT SOME GAS
+	// you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask("Dev");
+		Config config = Config.ask("Fantom");
 		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");
 		
 		String rusdAddress = config.rusd().address();
@@ -39,14 +40,15 @@ public class Deploy {
 			S.out( "deployed rusd to " + rusdAddress);
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
 
-			// let RefWallet approve RUSD to transfer BUSD; RefWallet needs gas for this
+			// transfer some gas to RefWallet if needed
 			//config.matic().transfer( config.ownerKey(), config.refWalletAddr(), .005);
 
-			// THIS IS BROKEN AND MUST BE FIXED
-			
-			// must call it on BUSD, not RUSD
-//			new RbRusd( busdAddress, config.busd().decimals(), config.busd().name() )
-//				.approve( config.refWalletKey(), rusdAddress, 1000000000); // $1B
+			// let RefWallet approve RUSD to spend BUSD;
+			// we use the Rusd contract to call a method (approve) on the Busd contract which is fine
+			// because the method signature is the same
+			// this works as of 7/29/24
+			new RbRusd( config.busd().address(), config.busd().decimals() )
+				.approve( config.refWalletKey(), rusdAddress, 1000000); // $1M
 
 			// add a second admin
 //			rusd.addOrRemoveAdmin(

@@ -72,12 +72,14 @@ public class SiweTransaction extends MyTransaction {
 	/** Frontend requests nonce to build SIWE message.
 	 *  Generate the nonce, save it, and return it */
 	public void handleSiweInit() {
-		String nonce = Utils.generateNonce();
-		
-		// save the nonce; only saved nonces are valid in the signin message, and only once 
-		validNonces.add( nonce);
-		
-		respond( "nonce", nonce );   // how to tie this to the nonce received below?
+		wrap( () -> {
+			String nonce = Utils.generateNonce();
+			
+			// save the nonce; only saved nonces are valid in the signin message, and only once 
+			validNonces.add( nonce);
+			
+			respond( "nonce", nonce );   // how to tie this to the nonce received below?
+		});
 	}
 	
 	/** Frontend sends POST msg with siwe message and signature; we should verify

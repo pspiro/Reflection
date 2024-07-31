@@ -1,10 +1,15 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+
+import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
+import tw.util.HtmlButton;
 import tw.util.MyTable;
+import tw.util.S;
 
 
 public class LiveOrdersPanel extends JsonPanel {
@@ -13,13 +18,25 @@ public class LiveOrdersPanel extends JsonPanel {
 
 	LiveOrdersPanel() {
 		super( new BorderLayout(), allNames);
-		
+
+		add( new HtmlButton( "Clear All", this::clearAll), BorderLayout.NORTH);
 		add( new MyTable(m_model).scroll() );
+	}
+	
+	void clearAll(ActionEvent e) {
+		try {
+			JsonObject json = MyClient.getJson(Monitor.refApiBaseUrl() + "/api/clear-live-orders");
+			json.display();
+			refresh();
+			Util.inform( this, "%s %s", json.getString( "code"), json.getString( "message") );
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 	}
 	
 	@Override protected Object format(String key, Object value) {
 		return switch (key) {
-		case "ceatedAt" -> value instanceof Long ? Util.yToS.format( (long)value) : value; 
+		case "createdAt" -> value != null && S.isNotNull( value.toString() ) ? Util.yToS.format( value) : value; 
 		default -> value;
 		};
 	}

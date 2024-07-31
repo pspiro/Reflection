@@ -218,9 +218,9 @@ public class FbRusd extends FbErc20 implements IRusd {
 		throw new Exception();
 	}
 
-//	@Override public RetVal approve(String ownerKey, String spender, double amt) throws Exception {
-//		throw new Exception( "not implemented");
-//	}
+	@Override public RetVal approve(String ownerKey, String spender, double amt) throws Exception {
+		throw new Exception( "not implemented");
+	}
 
 	/** RUSD has no mint function, so we sell zero shares of stock */
 //	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {

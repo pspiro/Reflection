@@ -52,6 +52,7 @@ public class Wallet {
 				int decimals = token.getInt("decimals");
 				
 				// this was a bug that they fixed so should not happen anymore
+				// (it still seems to happen with spam tokens as of 7/30/24)
 				if (decimals == 0) {
 					S.out( "Error: Moralis query failed to return number of decimals for %s; defaulting to 18", addr);
 					decimals = 18;
