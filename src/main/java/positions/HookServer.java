@@ -92,23 +92,35 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() ); // respond 200 here, I don't want to spook the Moralis client
 		});
 
-		// listen for ERC20 transfers and native transfers 
-		m_transferStreamId = Streams.createStream(
+		// listen for ERC20 transfers and native transfers
+		try {
+			m_transferStreamId = Streams.createStream(
 						Streams.erc20Transfers, 
 						"transfer-" + m_config.getHookNameSuffix(), 
 						m_config.hookServerUrl(),
 						chain() ); 
-
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			S.out( "WARNING: TRANSFER STREAM IS NOT ACTIVE");
+		}
+		
 		// listen for "approve" transactions
 		// you could pass BUSD, RUSD, or the user addresses
 		// it would be ideal if there were a way to combine these two streams into one,
 		// then it could just work off the user address, same as the transfer stream
-		Streams.createStream(
+		try {
+			Streams.createStream(
 						Streams.approval, 
 						"approval-" + m_config.getHookNameSuffix(), 
 						m_config.hookServerUrl(), 
 						chain(),
 						m_config.rusd().address() );
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			S.out( "WARNING: APPROVAL STREAM IS NOT ACTIVE");
+		}
 		
 		S.out( "**ready**");
 	}
