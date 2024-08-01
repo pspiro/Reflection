@@ -209,7 +209,7 @@ public class Main implements ITradeReportHandler {
 		
 		// check market data every minute (production only)
 		if (!Main.m_config.autoFill()) {
-			Util.executeEvery( Util.MINUTE, MINUTE, this::checkMktData);
+			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
 		}
 	}
 
