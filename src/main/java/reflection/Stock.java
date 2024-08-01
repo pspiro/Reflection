@@ -122,4 +122,9 @@ public class Stock extends JsonObject {
 	public String getMdExchange() {
 		return getType().equals("Crypto") ? "PAXOS" : "SMART";
 	}
+
+	/** Time of last price */
+	public long lastTime() {
+		return m_prices != null ? m_prices.time() : 0;
+	}
 }

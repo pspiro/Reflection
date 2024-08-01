@@ -149,7 +149,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		double orderPrice = Util.round( prePrice);  // round to two decimals
 				
 		// check trading hours
-		Session session = m_main.m_tradingHours.insideAnyHours( 
+		Session session = m_main.m_tradingHours.getTradingSession( 
 						m_stock.is24Hour(), 
 						m_map.get("simtime") );
 		require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);

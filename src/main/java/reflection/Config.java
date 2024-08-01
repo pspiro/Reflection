@@ -61,6 +61,7 @@ public class Config extends ConfigBase {
 	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
+	private int twsOrderClientId;  // connect to TWS w/ this client ID; must be the same each time so we get the right orders
 	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
@@ -140,6 +141,7 @@ public class Config extends ConfigBase {
 
 	public String twsOrderHost() { return twsOrderHost; }
 	public int twsOrderPort() { return twsOrderPort; }
+	public int twsOrderClientId() { return twsOrderClientId; }
 
 	//public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
@@ -214,6 +216,7 @@ public class Config extends ConfigBase {
 		// TWS connection
 		this.twsOrderHost = m_tab.get( "twsOrderHost");
 		this.twsOrderPort = m_tab.getRequiredInt( "twsOrderPort");
+		this.twsOrderClientId = m_tab.getInt( "twsOrderClientId");  // if not found, use a random one; okay for Monitor, testing
 		this.reconnectInterval = m_tab.getRequiredInt( "reconnectInterval");
 		this.orderTimeout = m_tab.getRequiredInt( "orderTimeout");
 		this.timeout = m_tab.getRequiredInt( "timeout");

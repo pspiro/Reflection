@@ -151,4 +151,13 @@ public class Stocks implements Iterable<Stock> {
 		}
 		return m_allAddresses;
 	}
+
+	/** Return time of most recent last price in ms */
+	public long getLatest() {
+		long time = 0;
+		for (var stock : this) {
+			time = Math.max( time, stock.lastTime() );
+		}
+		return time;
+	}
 }
