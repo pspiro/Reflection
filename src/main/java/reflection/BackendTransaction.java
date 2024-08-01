@@ -110,7 +110,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
 			
-			Session session = m_main.m_tradingHours.insideAnyHours( stock.is24Hour(), null);
+			Session session = m_main.m_tradingHours.getTradingSession( stock.is24Hour(), null);
 			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);

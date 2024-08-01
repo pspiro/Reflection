@@ -119,9 +119,10 @@ public class TradingHours {
     }
     
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
-	 *  check IBEOS and change the exchange on the contract passed in to IBEOS
+	 *  check IBEOS and change the exchange on the contract passed in to IBEOS;
+	 *  Exact duplicate of the below.
 	 *  @param run gets executed if we want to swtich to IBEOS */
-	Session insideAnyHours( boolean is24Hour, String simTime) throws Exception {
+	Session getTradingSession( boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
 		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
@@ -130,7 +131,7 @@ public class TradingHours {
 		
 		Date now = getNow(simTime);
 
-		if (insideHours( "SMART", now) ) {
+		if (insideHours( MdServer.Smart, now) ) {
 			return Session.Smart;
 		}
 			
@@ -139,6 +140,18 @@ public class TradingHours {
 		}
 		
 		return Session.None;
+	}
+
+	/** We can update this to be more specific and consider conid if necessary;
+	 *  exact duplicate of the above */
+	public Session getSession(Stock stock) throws Exception {
+		Date now = new Date();
+		
+		return insideHours( "SMART", now)
+				? Session.Smart
+				: stock.is24Hour() && insideHours( MdServer.Overnight, now) 
+					? Session.Overnight 
+					: Session.None;
 	}
 
 	/** Return true if now is inside trading hours OR liquid hours. */
@@ -152,17 +165,6 @@ public class TradingHours {
 	/** Return true if now is inside the specified hours */
 	static boolean inside(ContractDetails deets, String hours, Date now) throws Exception {
 		return Util.inside( now, deets.conid(), hours, deets.timeZoneId() );
-	}
-
-	/** We can update this to be more specific and consider conid if necessary */
-	public Session getSession(Stock stock) throws Exception {
-		Date now = new Date();
-		
-		return insideHours( "SMART", now)
-				? Session.Smart
-				: stock.is24Hour() && insideHours( MdServer.Overnight, now) 
-					? Session.Overnight 
-					: Session.None;
 	}
 
 	public JsonObject getHours() {
