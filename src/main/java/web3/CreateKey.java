@@ -11,6 +11,7 @@ import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 
 import common.Util;
+import tw.util.IStream;
 import tw.util.S;
 
 public class CreateKey {
@@ -18,12 +19,32 @@ public class CreateKey {
 	
 	public static void main(String[] args) throws Exception {
 //		createWalletsFromKey();
-		decrypt();
+//		decrypt();
 //		createSystemWallets();
 //		verifyKey();
-		
+		showPks();
 	}
 	
+	private static void showPks() throws Exception {
+		;
+
+		try(	Scanner scanner = new Scanner( System.in);
+				IStream is = new IStream( "c:/temp/f.t") 
+				) {
+			
+			String pw = input( scanner, "Enter password: ");
+			
+			String ln = is.readln();
+			while (ln != null) {
+				JsonObject obj = JsonObject.parse( ln);
+				S.out( decryptFromJson(pw, obj));
+				ln = is.readln();
+			}
+		}
+	}
+
+
+
 	static void verifyKey() throws Exception {
 		try( Scanner scanner = new Scanner( System.in) ) {
 			String pw = input( scanner, "Enter password: ");
