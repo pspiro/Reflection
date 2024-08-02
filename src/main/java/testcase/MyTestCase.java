@@ -183,7 +183,7 @@ public class MyTestCase extends TestCase {
 	}
 
 	public static void mintBusd(String wallet, double amt) throws Exception {
-		m_config.busd().mint( wallet, amt)
+		m_config.mintBusd( wallet, amt)
 				.waitForHash();
 		waitForBalance(wallet, m_config.busd().address(), amt, false); // make sure the new balance will register with the RefAPI
 	}
