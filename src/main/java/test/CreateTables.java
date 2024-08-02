@@ -92,7 +92,6 @@ public class CreateTables  {
 				+ "tds double precision,"				
 				+ "currency varchar(32),"
 				+ "ip_address varchar(32),"   // big enough to store v6 IP format
-				+ "city varchar(32),"
 				+ "country varchar(32)"
 				+ "ref_code varchar(32)"
 				+ ")";
