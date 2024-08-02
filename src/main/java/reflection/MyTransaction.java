@@ -126,7 +126,7 @@ public abstract class MyTransaction extends BaseTransaction {
 //		if (cookie == null) {  // we could pull from the cookie header if desired, but then you have to look for the one with the matching address because there could be multiple __Auth cookies
 //			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 //		}
-		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message", caller);
+		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
 		return SiweTransaction.validateCookie( cookie, m_walletAddr);
 	}

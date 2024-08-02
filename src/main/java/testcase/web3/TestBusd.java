@@ -24,7 +24,7 @@ public class TestBusd extends MyTestCase {
 	public void testMint() throws Exception {
 		try {
 			S.out( "minting 200 BUSD into %s", bobAddr);
-			m_config.busd().mint( bobAddr, 200).displayHash();
+			m_config.mintBusd( bobAddr, 200).displayHash();
 	
 			S.out( m_config.busd().getPosition( bobAddr) );
 			waitForBalance( bobAddr, m_config.busd().address(), 200, false);

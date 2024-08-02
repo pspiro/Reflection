@@ -321,6 +321,8 @@ public class Config extends ConfigBase {
 			this.ownerKey = m_tab.getRequiredString("ownerRefblocksKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 			this.refWalletKey = m_tab.getRequiredString("refWalletRefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
 			this.admin1Key = m_tab.getRequiredString("admin1RefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
+
+			checkPassword(); // confirm we have access to password
 		}
 
 		m_rusd = new web3.Rusd(
@@ -333,7 +335,6 @@ public class Config extends ConfigBase {
 				m_tab.getRequiredString("busdAddr").toLowerCase(),
 				m_tab.getRequiredInt("busdDecimals"),
 				m_tab.getRequiredString ("busdName"),
-				ownerKey(),
 				busdCore);
 
 		// update Moralis chain
@@ -355,10 +356,32 @@ public class Config extends ConfigBase {
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
 	}
-	
+
+	/** confirm we have access to the password 
+	 * @throws Exception */
+	private void checkPassword() throws Exception {
+		// try first from file
+		try {
+			String str = Util.readResource( Config.class, "name.txt");
+			if (str.length() > 0) {
+				S.out( "Found password in file");
+			}
+			return;
+		} catch (Exception e) {
+		}
+		
+		// try next from pwserver
+		require( S.isNotNull( pwUrl), "pwserver");
+		Util.require( pwUrl.endsWith( "getpw"), "pwurl is invalid");
+		Util.require( JsonObject.isObject( MyClient.getString( pwUrl) ), 
+				"pwserver did not return json");
+		S.out( "pwserver ok");
+	}
+
 	/** For Refblocks, return the private key encoded in the json.
 	 *  For Fireblocks, return the account name.
-	 *  json fields are address, salt, data, ivstr */
+	 *  json fields are address, salt, data, ivstr.
+	 *  Don't store the password in memory; fetch it every time */
 	private String getKey(String key) throws Exception {
 		return JsonObject.isObject( key)
 				? CreateKey.decryptFromJson( 
@@ -701,7 +724,7 @@ public class Config extends ConfigBase {
 	}
 	
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
-		return busd().mint( wallet, amt);
+		return busd().mint( ownerKey(), wallet, amt);
 	}
 	
 	public Matic matic() {
