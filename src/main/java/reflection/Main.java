@@ -16,6 +16,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Alerts;
 import common.ConnectionMgrBase;
 import common.Util;
 import http.BaseTransaction;
@@ -23,6 +24,7 @@ import http.MyClient;
 import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
+import reflection.TradingHours.Session;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -37,7 +39,11 @@ public class Main implements ITradeReportHandler {
 		Connected, Disconnected
 	};
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
-	
+
+	// no ticks in this time and we have a problem
+	private static final long SmartInterval = Util.MINUTE * 2; 
+	private static final long OvernightInterval = Util.MINUTE * 10; 
+
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
 	static final Config m_config = new RefApiConfig();
@@ -56,6 +62,7 @@ public class Main implements ITradeReportHandler {
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
+	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
 
 	
 	Stocks stocks() { return m_stocks; }
@@ -190,7 +197,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
-		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
+		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );
 		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 
 
 		// connect to TWS
@@ -198,7 +205,12 @@ public class Main implements ITradeReportHandler {
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
 		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
+		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
+		
+		// check market data every minute (production only)
+		if (!Main.m_config.autoFill()) {
+			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
+		}
 	}
 
 	void shutdown() {
@@ -294,9 +306,15 @@ public class Main implements ITradeReportHandler {
 
 	/** Manage the connection from this client to TWS. */
 	class ConnectionMgr extends ConnectionMgrBase {
+		private static int clientId(int clientId) {
+			return clientId == 0 
+					? rnd.nextInt( Integer.MAX_VALUE) + 1
+					: clientId;
+		}
 
-		ConnectionMgr(String host, int port) {
-			super( host, port, rnd.nextInt( Integer.MAX_VALUE) + 1, m_config.reconnectInterval() ); 
+		/** If clientId is zero, pick a random one */
+		ConnectionMgr(String host, int port, int clientId) {
+			super( host, port, clientId( clientId), m_config.reconnectInterval() ); 
 
 			m_controller.handleExecutions( Main.this);
 		}
@@ -458,9 +476,9 @@ public class Main implements ITradeReportHandler {
 						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
 				}
-				else {
-					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
-				}
+//				else {
+//					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
+//				}
 			});
 		}
 		catch( Exception e) {
@@ -507,6 +525,28 @@ public class Main implements ITradeReportHandler {
 		String str = m_blacklist.get(walletAddr);
 		return Util.getEnum(str, Allow.values(), Allow.All).allow(side);
 	}
+
+	/** called every one minute in the Util thread to check for stale market data*/
+	private void checkMktData() {
+		Util.wrap( () -> {
+			if (stale() != m_staleMktData) {
+				m_staleMktData = !m_staleMktData;
+				
+				Alerts.alert("RefAPI", "STALE MARKET DATA: " + m_staleMktData, "");
+			}
+		});
+	}
+
+	/** return true if all stocks are stale, indicating lack of market data 
+	 * @throws Exception */ 
+	boolean stale() throws Exception {
+		long latest = m_stocks.getLatest();
+		long interval = System.currentTimeMillis() - latest ;
+		Session session = m_tradingHours.getTradingSession( true, "");
+		return session == Session.Smart && interval > SmartInterval ||
+			   session == Session.Overnight && interval > OvernightInterval;
+	}
+
 
 	/** This class processes database queries in a separate thread so as not
 	 *  to hold up other threads. It waits for the first query and then processes
