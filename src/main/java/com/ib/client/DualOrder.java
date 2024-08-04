@@ -18,8 +18,9 @@ import tw.util.S;
  *  one on SMART and one on OVERNIGHT. */
 public class DualOrder implements SingleParent {
 	public interface DualParent {
-		void onStatusUpdated(DualOrder order, OrderStatus ibOrderStatus, int permId, Action action, int totalFilled, double avgPrice);
+		void onStatusUpdated(DualOrder order, String name, OrderStatus ibOrderStatus, int permId, Action action, int totalFilled, double avgPrice);
 		void out(String string, Object... params);
+		void simFill(DualOrder order);
 	}
 	
 	private ApiController m_conn;
@@ -94,8 +95,11 @@ public class DualOrder implements SingleParent {
 		both( order -> order.o().stopPrice( stopPrice) );
 	}
 
+	/** This is called every few seconds */ 
 	public void checkOrder( int quantity) {
 		both( order -> order.checkOrder( quantity) );
+		
+		m_parent.simFill( this );
 	}
 	
 	public void checkCanceled() {
@@ -130,10 +134,7 @@ public class DualOrder implements SingleParent {
 	 *  complete even if both children are still work, if the total fill size
 	 *  is sufficient */
 	@Override public void onStatusUpdated(SingleOrder single, OrderStatus status, int permId, Action action, int filled, double avgPrice) {
-		m_parent.out( "DualOrder onStatus  name=%s  status=%s  permId=%s  action=%s  filled=%s  avgPrice=%s",
-				single.name(), status, permId, action, filled, avgPrice);
-		
-		m_parent.onStatusUpdated( this, status, permId, action, filled, avgPrice); 
+		m_parent.onStatusUpdated( this, single.name(), status, permId, action, filled, avgPrice); 
 	}
 
 	/** Called when the user updates the order price */
@@ -142,4 +143,7 @@ public class DualOrder implements SingleParent {
 		m_nightOrder.resubmit();
 	}
 
+	public SingleOrder dayOrder() {
+		return m_dayOrder;
+	}
 }

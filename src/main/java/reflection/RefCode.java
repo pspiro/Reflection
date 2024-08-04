@@ -12,8 +12,9 @@ public enum RefCode {
 	INSUFFICIENT_STOCK_TOKEN, 
 	INVALID_NONCE,
 	INVALID_PRICE,		// price too high or too low 
-	INVALID_REQUEST,	// the request itself is invalid; should never happen 
+	INVALID_REQUEST,	// the request itself is invalid; should never happen
 	INVALID_USER_PROFILE,  // missing user record or some required field from user table
+	OPEN_MARGIN_ORDER,
 	MISSING_ENV_VAR,
 	NEED_KYC,			// order is above non-KYC max order size
 	NOT_CONNECTED,		// not connected to TWS or TWS is not connected to server

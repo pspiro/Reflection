@@ -373,6 +373,12 @@ public class MdServer {
 					JsonObject stockPrices = new JsonObject();
 					stockPrices.put( "conid", dual.stock().conid() );
 					dual.update(stockPrices, session);
+
+					if (m_config.simulateBidAsk() ) {
+						double last = stockPrices.getDouble( "last");
+						stockPrices.put( "bid", last - .05);
+						stockPrices.put( "ask", last + .05);
+					}
 					
 					ret.add( stockPrices);
 				}

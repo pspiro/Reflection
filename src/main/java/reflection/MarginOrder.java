@@ -24,14 +24,6 @@ import web3.Stablecoin;
 import web3.StockToken;
 
 public class MarginOrder extends JsonObject implements DualParent {
-	double feePct;
-	double lastBuffer;  // as percent, try 
-	double bidBuffer;
-	double maxLeverage;
-	double minUserAmt = 100;
-	double maxUserAmt = 200;
-	double maxLtv = 1.02;
-	
 	public enum Status {
 		NeedPayment,			// initial state
 		InitiatedPayment,		// initiated blockchain transaction; may or may not have trans hash and receipt
@@ -167,8 +159,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "currency", currency);
 		put( "symbol", stock().symbol() );
 		
-		double feePct = .01; // fix this. pas
-		double totalSpend = amtToSpend() * leverage() * (1. - feePct);
+		double totalSpend = amtToSpend() * leverage() * (1. - m_config.marginFeePct() );
 		put( "desiredQty", totalSpend / entryPrice() );  // note that entryPrice cannot be zero
 		put( "roundedQty", OrderTransaction.positionTracker.buyOrSell( conid(), true, desiredQty(), 1) );
 		put( "sharesHeld", 0);
@@ -443,11 +434,44 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 		m_buyOrder.quantity( roundedQty() );
 		m_buyOrder.placeOrder( conid() );
-
+		
 		status( Status.PlacedBuyOrder);  // now we wait for the buy order to be filled or canceled
 	}
 
-	/** Calleded in the http processing thread */
+	/** Check if we should sim-fill the order. Used for testing on weekends. */
+	@Override public void simFill(DualOrder dual) {
+		if (!m_config.autoFill() ) {
+			return;
+		}
+	
+		boolean simFill;
+		var price = stock().prices().last();
+		
+		switch( status() ) {
+			case PlacedBuyOrder:
+				simFill = dual == m_buyOrder && price <= entryPrice();
+				break;
+			case Monitoring:
+				simFill = dual == m_stopOrder && price <= entryPrice() ||					
+						  dual == m_profitOrder && price >= entryPrice();
+				break;
+			case Liquidation:
+				simFill = dual == m_liqOrder;
+				break;
+			default:
+				simFill = false;
+		}
+		
+		if (simFill) {
+			Util.executeIn( 500, () -> {
+				out( "SIMULATING FILL for %s", dual.name() );
+				var o = dual.dayOrder().o();
+				onStatusUpdated(dual, dual.name(), OrderStatus.Filled, o.permId(), o.action(), roundedQty(), price); 
+			});
+		}
+	}
+	
+	/** Calleded in the http processing thread when user updates order via Frontend */
 	synchronized void onUpdated( double entryPrice, double profitTakerPrice, double stopPrice) throws Exception {
 		if (entryPrice > 0 && Util.isNotEq( entryPrice, entryPrice(), .005) ) {
 			
@@ -465,8 +489,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 		if (profitTakerPrice > 0 && Util.isNotEq( profitTakerPrice, profitTakerPrice(), .005) ) {
 			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
 
-			double oldPrice = getDouble( "profitTakerPrice");
-			
 			put( "profitTakerPrice", profitTakerPrice);
 			m_profitOrder.lmtPrice( profitTakerPrice);
 			
@@ -545,6 +567,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	 *  we could put it in the margin thread if desired */
 	@Override public synchronized void onStatusUpdated(
 			DualOrder dualOrd,
+			String name,
 			OrderStatus ibOrderStatus,
 			int permId, 
 			Action action, 
@@ -559,7 +582,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				updateOrderStatus( permId, action, filled, avgPrice, ibOrderStatus);  // we could add OrderStatus here if desired. pas
 			}
 			else {
-				orderMap().remove( "" + permId);
+				removeFromOrderMap( permId);
 			}
 			
 			final Status status = status();
@@ -574,13 +597,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.);
 
 			// print status and full MarginOrder
-			out( "MarginOrder received status  id=%s  name=%s  status=%s  filled=%s/%s  avgPrice=%s", 
-					permId, dualOrd.name(), status, filled, roundedQty(), avgPrice);
+			out( "MarginOrder received status  name=%s  permId=%s  status=%s  ibStatus=%s  filled=%s/%s  avgPrice=%s", 
+					name, permId, status, ibOrderStatus, filled, roundedQty(), avgPrice);
 			out( toString() );
-	
+
+			double totalBought = totalBought();
+
 			if (status == Status.PlacedBuyOrder && dualOrd == m_buyOrder) {
-				if (totalBought() >= roundedQty() ) {
-					out( "  entry order has filled");
+				if (totalBought >= roundedQty() ) {
+					out( "  entry order has filled  filled=%s  totalBought=%s  roundedQty=%s",
+							filled, totalBought, roundedQty() );
 					
 					status( Status.BuyOrderFilled);
 					
@@ -591,8 +617,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 				}
 			}
 			else if (status == Status.Monitoring && (dualOrd == m_profitOrder || dualOrd == m_stopOrder) ) {
-				if (totalSold() >= totalBought() ) {
-					out( "  sell orders have filled");
+				double totalSold = totalSold();
+				
+				if (totalSold >= totalBought) {
+					out( "  sell orders have filled  totalBought=%s  totalSold=%s", totalBought, totalSold);
 					
 					status( Status.Completed);
 
@@ -622,6 +650,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 		});
 	}
 
+	/** There's no point keeping canceled orders with no fill in the order map,
+	 *  but we can't remove them in auto-fill mode becaused then the totalBought()
+	 *  or sold goes back to zero 
+	 *  
+	 *  This illustrates that auto-fill is not done the best way. The IB order 
+	 *  processing should be abstracted and the fake fills should come from that
+	 *  layer, with OrderStatus messages properly simulated, not from MarginOrder */
+	private void removeFromOrderMap(int permId) {
+		if (!m_config.autoFill() ) {
+			orderMap().remove( "" + permId);
+		}
+	}
+	
 	/** Place new sell orders. Called in API or margin thread */
 	private synchronized void placeSellOrders() {
 		try {
@@ -947,7 +988,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			if (loanVal > 0) {     // loan value and liq. is wrong; 
 				try {
 					double stockVal = stockValueMark();
-					if (stockVal < loanVal * maxLtv) {
+					if (stockVal < loanVal * m_config.marginMinValToLoan() ) {
 						out( "LIQUIDATING! Stock value of %s cannot support loan amount of %s", stockVal, loanVal);
 						liquidate();
 					}
@@ -1076,7 +1117,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test single stop order, sim. stop orders
 //test dual stop orders
 //test pruning
-
+//bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
 
 
 //later:

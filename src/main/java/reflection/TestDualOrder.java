@@ -50,7 +50,7 @@ public class TestDualOrder {
 				"test " + i,
 				8314, 
 				new DualParent() {
-					@Override public void onStatusUpdated(DualOrder order, OrderStatus status, int permId, Action action,
+					@Override public void onStatusUpdated(DualOrder order, String name, OrderStatus status, int permId, Action action,
 							int filled, double price) {
 						S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
 								permId, action, filled, price, status);
@@ -58,6 +58,11 @@ public class TestDualOrder {
 					}
 					@Override public void out(String string, Object... params) {
 						S.out( string, params);
+					}
+					@Override
+					public void simFill(DualOrder order) {
+						// TODO Auto-generated method stub
+						
 					}
 				});
 		
@@ -106,7 +111,7 @@ public class TestDualOrder {
 					"test " + i,
 					8314,
 					new DualParent() {
-						@Override public void onStatusUpdated(DualOrder order, OrderStatus status, int permId, Action action,
+						@Override public void onStatusUpdated(DualOrder order, String name, OrderStatus status, int permId, Action action,
 								int filled, double price) {
 							S.out( "child ONE updated  permId=%s  action=%s  filled=%s  price=%s  status=%s",
 									permId, action, filled, price, status);
@@ -114,6 +119,11 @@ public class TestDualOrder {
 						}
 						@Override public void out(String string, Object... params) {
 							S.out( string, params);
+						}
+						@Override
+						public void simFill(DualOrder order) {
+							// TODO Auto-generated method stub
+							
 						}
 					});
 			

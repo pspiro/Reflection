@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.json.simple.JsonArray;
@@ -65,6 +66,15 @@ public class MyClient {
 
 	MyClient( Builder builder) {
 		m_builder = builder;
+	}
+
+	/** each header is in this format:   tag:val */
+	public MyClient addHeaders(ArrayList<String> headers) {
+		for (var str : headers) {
+			var split = str.split( ":");
+			header( split[0], split[1]);
+		}
+		return this;
 	}
 
 	public MyClient header( String tag, String val) {

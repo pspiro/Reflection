@@ -49,7 +49,7 @@ public abstract class Cookie extends MyTestCase {
 	public static String signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);
 		
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		MyHttpClient cli = new MyHttpClient();
 		
 		// send siwe/init
 		cli.get("/siwe/init");
@@ -72,7 +72,7 @@ public abstract class Cookie extends MyTestCase {
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
 		// send siwe/signin
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient();
 		cli.post("/siwe/signin", signedMsgSent.toString() );
 		assertEquals( 200, cli.getResponseCode() );
 		

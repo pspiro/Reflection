@@ -187,7 +187,7 @@ class DualPrices {
 	 *  prices during overnight session in live system, you will
 	 *  have to keep the overnight prices and start using them again */
 	public void update(JsonObject stockPrices, Session session) {
-		// no we just always use smart
+		// now we just always use smart
 		getPrices(Session.Smart).update(stockPrices);
 
 		// we used to take the prices from the correct session depending on what time it is

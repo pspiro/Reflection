@@ -30,6 +30,9 @@ public class TestMargin extends MyTestCase {
 				m_config.rusd().mintRusd(Cookie.wallet, 100000, stocks.getAnyStockToken() )
 					.displayHash();
 			}
+			
+			S.out( "wallet_public_key=%s", Cookie.wallet);
+			S.out( "cookie=%s", Cookie.cookie);
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
@@ -130,7 +133,7 @@ public class TestMargin extends MyTestCase {
 
 	/** sell orders will be resting */
 	public void testFillBuyNoSell() throws Exception {
-		S.out( "testing fill buy no sell");
+		S.out( "testing fill buy no sell orders");
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + 1);
 		ord.remove( "profitTakerPrice");
@@ -180,7 +183,7 @@ public class TestMargin extends MyTestCase {
 	}
 	
 	public void testFillProfit() throws Exception {
-		S.out( "testing fill buy and stop");
+		S.out( "testing fill buy and profit requires price update");
 
 		// place order
 		JsonObject ord = newOrd();
@@ -189,7 +192,7 @@ public class TestMargin extends MyTestCase {
 		ord.put( "stopLossPrice", base - 4);
 		
 		// wait for buy order to fill
-		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		JsonObject json = cli().postToJson( "/api/margin-order", ord ); // it's skipping over this and going right to completed; how is that?
 		waitForStatus(json, Status.Monitoring, false);
 
 		// update order with low sell price, wait for sell to fill
@@ -295,7 +298,7 @@ public class TestMargin extends MyTestCase {
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
 				"orderId", json.getString( "orderId") );
-		cli().postToJson("/api/margin-withdraw", params);
+		cli().postToJson("/api/margin-withdraw-funds", params);
 		assert200();
 		
 		// second time should fail 
@@ -416,7 +419,7 @@ public class TestMargin extends MyTestCase {
 
 		try {
 			S.out( "waiting for status '%s'", status);
-			waitFor(50, () -> getOrderStatus( json) == status);
+			waitFor(5000, () -> getOrderStatus( json) == status);
 		}
 		finally {
 			if (cancel) {

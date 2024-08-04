@@ -91,7 +91,7 @@ public class MarginTrans extends MyTransaction {
 			int conid = m_map.getRequiredInt("conid");
 			Stock stock = m_main.getStock(conid);
 			require( stock != null, RefCode.INVALID_REQUEST, "Invalid conid");
-			require( m_main.marginStore().canPlace( m_walletAddr, conid), RefCode.INVALID_REQUEST, 
+			require( m_main.marginStore().canPlace( m_walletAddr, conid), RefCode.OPEN_MARGIN_ORDER, 
 					"There is already an open margin order for this stock");  
 			
 			double amtToSpend = m_map.getRequiredDouble( "amountToSpend");

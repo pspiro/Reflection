@@ -13,13 +13,14 @@ import web3.StockToken;
 
 public class TestOrder extends MyTestCase {
 	static double curPrice;
-	static int conid = 3691937; //265598;
+	//static int conid = 3691937;
+	static int conid = 265598;
 	
 //	static double approved;
 	
 	static {
 		try {
-			JsonObject json = new MyHttpClient("localhost", 8383) 
+			JsonObject json = new MyHttpClient() 
 					.get( "/api/get-price/" + conid)
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;

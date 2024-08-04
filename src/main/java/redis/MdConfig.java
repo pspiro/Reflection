@@ -13,6 +13,7 @@ public class MdConfig extends ConfigBase {
 	private int redisBatchTime; // in ms
 	private int mdsPort;
 	private boolean twsDelayed;
+	private boolean simulateBidAsk;
 
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
@@ -33,6 +34,7 @@ public class MdConfig extends ConfigBase {
 		this.twsMdClientId = tab.getRequiredInt( "twsMdClientId");
 		this.mdsPort = tab.getRequiredInt("mdsPort");
 		this.twsDelayed = tab.getBoolean("twsDelayed");
+		this.simulateBidAsk = tab.getBoolean("simulateBidAsk");
 		
 		this.redisBatchTime = tab.getRequiredInt( "redisBatchTime");
 		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");
@@ -52,6 +54,9 @@ public class MdConfig extends ConfigBase {
 	/** Batch time in ms. */
 	public int redisBatchTime() {
 		return redisBatchTime;
+	}
+	public boolean simulateBidAsk() {
+		return simulateBidAsk;
 	}
 
 }
