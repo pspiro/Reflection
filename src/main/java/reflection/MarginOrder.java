@@ -1,6 +1,7 @@
 package reflection;
 
 import static reflection.Main.m_config;
+import static reflection.Main.require;
 
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -808,17 +809,21 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	public synchronized void withdrawFunds() throws Exception {
+		require( status().canWithdraw(), RefCode.CANT_WITHDRAW, "Funds cannot be withdrawn while order is in state '%s'", status() );
+
 		double stockPos = netAdjusted();
-		require( stockPos == 0, RefCode.INVALID_REQUEST, "Please liquidate your position before withdrawing the cash");
+		require( stockPos == 0, RefCode.CANT_WITHDRAW, "Please liquidate your position before withdrawing the cash");
 
 		double cashBalance = cashBalance();
-		require( cashBalance > 0, RefCode.INVALID_REQUEST, "There is no cash balance to withdraw");
+		require( cashBalance > 0, RefCode.CANT_WITHDRAW, "There is no cash balance to withdraw");
 
 		// check that the wallet is still holding the receipt
-		StockToken receipt = m_stocks.getReceipt();
-		require( Util.isEq( receipt.getPosition( wallet() ), amtToSpend(), .01),
+		double receiptBal = m_stocks.getReceipt().getPosition( wallet() );
+		require( Util.isGtEq( receiptBal , amtToSpend() ),
 				RefCode.NO_RECEIPT, 
-				"The cash cannot be withdrawn because the wallet is no longer holding the receipt; please contact support");
+				"The funds cannot be withdrawn because the receipt balance is less than required.\n"
+				+ "(balance=%s  required=%s)\n\n"
+				+ "Please contact support.", receiptBal, amtToSpend() );  
 		
 		status( Status.Withdrawing);
 		out( "Withdrawing funds");
@@ -828,7 +833,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		Util.execute( () -> {
 			try {
 				
-				m_config.rusd().sellStockForRusd( wallet(), cashBalance, receipt, amtToSpend() )
+				m_config.rusd().sellStockForRusd( wallet(), cashBalance, m_stocks.getReceipt(), amtToSpend() )
 					.waitForHash();
 
 				status( Status.Settled);

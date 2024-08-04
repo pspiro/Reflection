@@ -55,6 +55,7 @@ public abstract class Cookie extends MyTestCase {
 		cli.get("/siwe/init");
 		assertEquals( 200, cli.getResponseCode() );
 		String nonce = cli.readJsonObject().getString("nonce");
+		S.out( "  nonce is " + nonce);
 
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 

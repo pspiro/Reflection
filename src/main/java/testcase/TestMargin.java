@@ -141,6 +141,15 @@ public class TestMargin extends MyTestCase {
 
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		waitForStatus( json, Status.Completed);
+		
+		// fail withdraw, please liquidate first
+		S.out( "  fail withdrawal");
+		JsonObject params = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId") );
+		cli().postToJson("/api/margin-withdraw-funds", params);
+		failWith( RefCode.CANT_WITHDRAW);
 	}
 
 	/** sell orders will be resting */
@@ -182,7 +191,7 @@ public class TestMargin extends MyTestCase {
 		waitForStatus( json, Status.Completed);
 	}
 	
-	public void testFillProfit() throws Exception {
+	public void testFillProfitAndWithdraw() throws Exception {
 		S.out( "testing fill buy and profit requires price update");
 
 		// place order
@@ -192,14 +201,28 @@ public class TestMargin extends MyTestCase {
 		ord.put( "stopLossPrice", base - 4);
 		
 		// wait for buy order to fill
+		S.out( "  waiting for buy order to fill");
 		JsonObject json = cli().postToJson( "/api/margin-order", ord ); // it's skipping over this and going right to completed; how is that?
 		waitForStatus(json, Status.Monitoring, false);
+
+		// fail withdraw, wrong order status
+		S.out( "  fail withdrawal");
+		JsonObject params = Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"orderId", json.getString( "orderId") );
+		cli().postToJson("/api/margin-withdraw-funds", params);
+		failWith( RefCode.CANT_WITHDRAW);
 
 		// update order with low sell price, wait for sell to fill
 		ord.put( "orderId", json.getString( "orderId") );
 		ord.put( "profitTakerPrice", base - 1);
 		cli().postToJson( "/api/margin-update", ord );
 		waitForStatus( json, Status.Completed);
+
+		// withdraw successfully
+		cli().postToJson("/api/margin-withdraw-funds", params);
+		assert200();
 	}
 	
 	// the problem is the order hasn't filled or even been placed yet, you can't modify it!!!
@@ -283,6 +306,7 @@ public class TestMargin extends MyTestCase {
 		assertTrue( false);
 	}
 
+	/** fails with Please liquidate your position before withdrawing the cash */
 	public void testWithdrawFunds() throws Exception {
 		JsonObject json = cli().postToJson( "/api/margin-order", newOrd().modify( 
 				"profitTakerPrice", 0,
@@ -422,7 +446,7 @@ public class TestMargin extends MyTestCase {
 			waitFor(5000, () -> getOrderStatus( json) == status);
 		}
 		finally {
-			if (cancel) {
+			if (cancel && status != Status.Completed) {
 				cancel( json.getString( "orderId"));
 			}
 		}

@@ -258,8 +258,6 @@ public class MarginTrans extends MyTransaction {
 		wrap( () -> {
 			MarginOrder order = getOrder();
 
-			require( order.status().canWithdraw(), RefCode.INVALID_REQUEST, "Funds cannot be withdrawn at this time");
-			
 			order.withdrawFunds();
 
 			respondSuccess();
