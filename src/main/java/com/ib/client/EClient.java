@@ -2166,7 +2166,7 @@ public abstract class EClient {
            }
 
            closeAndSend(b);
-           S.out( "Placed order " + order.getJsonLog(contract));
+           S.out( "EClient placed order " + order.getJsonLog(contract));
         }
         catch(EClientException e) {
             error(id, e.error(), e.text());

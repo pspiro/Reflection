@@ -159,7 +159,7 @@ public class FbServer {
 				if (!trans.sent() ) {
 					
 					// update RefAPI with new or changed status
-					MyHttpClient client = new MyHttpClient("localhost", m_config.refApiPort() );
+					MyHttpClient client = new MyHttpClient();
 					client.get( String.format( "/api/fireblocks/?id=%s&status=%s%s",	
 							trans.id(),
 							trans.status(),

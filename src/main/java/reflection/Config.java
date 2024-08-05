@@ -101,7 +101,9 @@ public class Config extends ConfigBase {
 	private double marginMinSpend;
 	private double marginMaxSpend;
 	private long marginPrune; // prune completed or canceled margin orders after this much time in ms
-	
+	private double marginFeePct;
+	private double marginMinValToLoan;
+
 	// Fireblocks
 	private Web3Type web3Type;
 	private String admin1Addr;  // used for deployment and Monitor
@@ -121,6 +123,7 @@ public class Config extends ConfigBase {
 
 	private double bidLiqBuffer = 1.01;
 	private double markLiqBuffer = 1.02;
+
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -268,6 +271,8 @@ public class Config extends ConfigBase {
 		this.marginMinSpend = m_tab.getRequiredDouble("marginMinSpend");
 		this.marginMaxSpend = m_tab.getRequiredDouble("marginMaxSpend");
 		this.marginPrune = m_tab.getRequiredInt("marginPrune");
+		this.marginFeePct = m_tab.getRequiredDouble("marginFeePct");
+		this.marginMinValToLoan = m_tab.getRequiredDouble("marginMinValToLoan");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -728,6 +733,12 @@ public class Config extends ConfigBase {
 	
 	long marginPrune() {
 		return marginPrune;
+	}
+	public double marginFeePct() {
+		return marginFeePct;
+	}
+	public double marginMinValToLoan() {
+		return marginMinValToLoan;
 	}
 	
 }

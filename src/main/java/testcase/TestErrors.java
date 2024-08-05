@@ -16,7 +16,7 @@ public class TestErrors extends MyTestCase {
 	
 	/** This version does not include the cookie */
 	public static JsonObject sendData( String data) throws Exception {
-		MyHttpClient cli = new MyHttpClient( host, 8383);
+		MyHttpClient cli = new MyHttpClient();
 		cli.post( "/api", Util.easyJson( data) );
 		return cli.readJsonObject();
 	}

@@ -34,12 +34,8 @@ public class MyTestCase extends TestCase {
 		}
 	}
 	
-	public static void main(String[] args) {
-		S.out( "lkj");
-	}
-	
 	MyHttpClient cli() throws Exception {
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient();
 		cli.addHeader("X-Country-Code", "IN");
 		return cli;
 	}
