@@ -11,6 +11,7 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
@@ -591,14 +592,23 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Called by anyone who wants to view the signup report as html in a browser */
 	public void handleSagHtml() {
 		wrap( () -> {
-			respondFull( 
-					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
-					200,
-					null,
-					"text/html");
-			
+			Util.execute( () -> {  // don't tie up HTTP thread
+				wrap( () -> {
+					m_config.sqlCommand( sql -> {
+						int days = 3;  
+						try {  // number of days to look back might be passed as last token in URI
+							days = Integer.valueOf( getLastToken() ); 
+						}
+						catch( Exception e) {}
+
+						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						respondFull( ar, 200, null, "text/html");						
+					});
+				}); 
+			});
 		});
 	}
 

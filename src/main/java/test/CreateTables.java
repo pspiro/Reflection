@@ -72,29 +72,32 @@ public class CreateTables  {
 	
 	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createTransactions() throws Exception {
-		String sql ="create table transactions ("
-				+ "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "uid varchar(8) primary key," 
-				+ "fireblocks_id varchar(36) unique,"
-				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
-				+ "blockchain_hash varchar(66),"
-				+ "status varchar(32),"       // value from LiveOrderStatus
-				
-				+ "symbol varchar(32),"
-				+ "conid int check (conid > 0),"
-				+ "action varchar(10),"
-				+ "quantity double precision check (quantity > 0),"
-				+ "rounded_quantity int," // could be zero
-				+ "price double precision check (price > 0),"
-				+ "order_id int,"  // could be zero
-				+ "perm_id int,"  // could be zero
-				+ "commission double precision,"  // change this to comm_charged
-				+ "tds double precision,"				
-				+ "currency varchar(32),"
-				+ "ip_address varchar(32),"   // big enough to store v6 IP format
-				+ "country varchar(32)"
-				+ "ref_code varchar(32)"
-				+ ")";
+		String sql = """
+				create table transactions (
+					created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+					uid varchar(8) primary key, 
+					fireblocks_id varchar(36) unique,
+					wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
+					blockchain_hash varchar(66),
+					status varchar(32),       -- value from LiveOrderStatus
+
+					symbol varchar(32),
+					conid int check (conid > 0),
+					action varchar(10),
+					quantity double precision check (quantity > 0),
+					rounded_quantity int, -- could be zero
+					price double precision check (price > 0),
+					order_id int,  -- could be zero
+					perm_id int,  -- could be zero
+					commission double precision,  -- change this to comm_charged
+					tds double precision,				
+					currency varchar(32),
+					ip_address varchar(32),   -- big enough to store v6 IP format
+					country varchar(32)
+					ref_code varchar(32),
+					
+					INDEX idx_wallet_public_key (wallet_public_key)
+				);""";
 		con.execute( sql);
 	}
 
