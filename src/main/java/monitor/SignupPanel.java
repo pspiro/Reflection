@@ -19,7 +19,8 @@ class SignupPanel extends JsonPanel {
 	}
 	
 	@Override protected void refresh() throws Exception {
-		bar.setMaximum(100);  // estimate
+		bar.setValue( 0);
+		bar.setMaximum(130);  // estimate
 		
 		Util.execute( () -> {
 			try {

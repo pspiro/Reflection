@@ -20,6 +20,12 @@ public class SignupReport {
 		int DaysLookback = days;
 
 		MyTimer t = new MyTimer();
+		
+		// build trans-count table
+		HashMap<String,Integer> transMap = new HashMap<>();
+		for (var rec : sql.queryToJson( "select wallet_public_key, count(*) from transactions group by wallet_public_key") ) {
+			transMap.put( rec.getString( "wallet_public_key"), rec.getInt( "count") );
+		}
 
 		// build jotmap
 		t.next( "building jotmap");
@@ -74,14 +80,12 @@ public class SignupReport {
 				
 				var wallet = user.getString( "wallet_public_key");
 				
-				// improve this way more be doing a single query to get back the number of transactions for each wallet
-				t.next( "querying transactions");
-				var rec = sql.querySingleRecord( "select count(*) from transactions where wallet_public_key = '%s'", wallet);
-				if (rec != null && rec.getInt( "count") > 0) {
-					signup.put( "transactions", rec.getInt( "count") );
+				Integer transCount = transMap.get( wallet);
+				if (transCount != null && transCount > 0) {
+					signup.put( "transactions", transCount);
 				}
 
-				t.next( "querying RUSD balance");
+				t.next( "querying RUSD balance");  // could you send a single query for all?
 				double rusdBal = rusd.getPosition( wallet);
 				signup.put( "rusd", rusdBal);
 				t.done();
