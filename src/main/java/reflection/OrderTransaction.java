@@ -27,6 +27,7 @@ import http.MyClient;
 import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
+import telegram.Telegram;
 import tw.util.S;
 import util.LogType;
 import web3.RetVal;
@@ -609,6 +610,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				else {
 					out( "Error: cannot send email confirmation due to invalid email"); // should never happen
 				}
+			}
+			
+			if (m_config.sendTelegram() ) {
+				String str = String.format( "Wallet %s just %s [%s %s stock tokens!](%s)",
+						m_walletAddr, isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash) ); 
+				Telegram.post( str);
 			}
 		}
 	}

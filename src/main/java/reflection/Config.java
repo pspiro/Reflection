@@ -100,6 +100,7 @@ public class Config extends ConfigBase {
 	private int chainId;
 	private double autoReward; // automatically send users rewards
 	private String pwUrl;
+	private boolean sendTelegram;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -263,6 +264,7 @@ public class Config extends ConfigBase {
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
+		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -362,7 +364,7 @@ public class Config extends ConfigBase {
 	private void checkPassword() throws Exception {
 		// try first from file
 		try {
-			String str = Util.readResource( Config.class, "name.txt");
+			String str = IStream.readLine("name.txt");
 			if (str.length() > 0) {
 				S.out( "Found password in file");
 			}
@@ -393,7 +395,8 @@ public class Config extends ConfigBase {
 	
 	private String fetchPw() throws Exception {
 		try {
-			return Util.readResource( Config.class, "name.txt"); // obsolete, remove this
+			String str = IStream.readLine("name.txt");
+			if (str.length() > 0) return str;
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
@@ -747,5 +750,9 @@ public class Config extends ConfigBase {
 	
 	public double autoReward() {
 		return autoReward;
+	}
+	
+	public boolean sendTelegram() {
+		return sendTelegram;
 	}
 }
