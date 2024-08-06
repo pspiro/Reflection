@@ -97,6 +97,15 @@ public class MarginPanel extends MonPanel {
 				});
 			});
 
+			HtmlButton clearAll = new HtmlButton( "Clear All", event -> {
+				wrap( () -> {
+					if (Util.confirm( this, "Are you sure?") ) {
+						MyClient.getJson( String.format( "%s/api/margin-system-clear-all", 
+								Monitor.refApiBaseUrl() ) );
+					}
+				});
+			});
+
 			HtmlButton cancel = new HtmlButton( "Cancel", event -> {
 				wrap( () -> MyClient.getJson( String.format( "%s/api/margin-system-cancel/%s",
 						Monitor.refApiBaseUrl(), m_orderPanel.orderId() ) ).show( this) );
@@ -141,8 +150,17 @@ public class MarginPanel extends MonPanel {
 					addOne( "orderId", "orderId");
 					addOne( "status", "status", "completedHow");
 					addOne( "trans hash/gotReceipt", "transHash", "gotReceipt");
-					addOne( "shares (held/toBuy)", "sharesHeld", "sharesToBuy");
-					addOne( "loan/value", "loanAmt", "value");
+					addOne( "pct bot/sld", "boughtPct", "soldPct");
+					addOne( "shares (held/toBuy)", "sharesHeld", "sharesToBuy");  // obsolete
+					addOne( "loan/liq", "loanAmt", "liqPrice");
+					addOne( "val/pnl", "value", "pnl");
+					
+//					desiredQty
+//					finishedAt  time that order came to its final resting place
+//					placed
+//					pnl
+//					roundedQty
+					
 
 					add( "map", new HtmlPanel( json.getObject( "orderMap").toArray() ) );
 				}

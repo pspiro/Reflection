@@ -822,6 +822,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	}
 
+	/** Called by Monitor in test system only, never production 
+	 * @throws Exception */
+	public synchronized void systemClear() throws Exception {
+		require( !m_config.isProduction(), "Cannot clear orders in production");
+		
+		out( "System-clearing order");
+		
+		cancelBuyOrders();  // buy orders can always be canceled
+		cancelSellOrders();
+		prices().removeListener(m_listener);
+	}
+
 	public synchronized void withdrawFunds() throws Exception {
 		require( status().canWithdraw(), RefCode.CANT_WITHDRAW, "Funds cannot be withdrawn while order is in state '%s'", status() );
 
@@ -1101,7 +1113,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	public void require(boolean test, RefCode refCode, String text, Object... params) throws RefException {
-		Main.require( test, refCode, orderId() + " " + text, params);
+		Main.require( test, refCode, text + " - " + orderId(), params);
 	}
 
 	public void require(boolean test, String text, Object... params) throws Exception {
@@ -1155,6 +1167,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test pruning
 //bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
 //must recalculate liqPrice if buy lmt price changes before fill
+//don't log all the countless "postrequest"
 
 //later:
 //pass commission cost to user

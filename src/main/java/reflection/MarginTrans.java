@@ -302,6 +302,15 @@ public class MarginTrans extends MyTransaction {
 		});
 	}
 
+	public void systemClearAll() {
+		wrap( () -> {
+			require( !m_config.isProduction(), RefCode.INVALID_REQUEST, "Cannot clear orders in production");
+			
+			m_main.marginStore().clearAll();
+			respondOk();
+		});
+	}
+
 	private void respondSuccess() {
 		respond( code, RefCode.OK, Message, "Success"); 
 	}

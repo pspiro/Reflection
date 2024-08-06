@@ -152,6 +152,18 @@ class MarginStore extends TsonArray<MarginOrder> {
 		});
 	}
 
+	/** cancel and clear out all margin order; for testing only, never in production */
+	public void clearAll() {
+		m_processingThread.execute( () -> {
+			S.out( "Clearing all margin orders");
+			forEach( order -> {
+				order.systemClear();
+				S.sleep( 10);  // don't break TWS pacing
+			});
+			clear();
+		});
+	}
+
 	/** Return false if there is an open order for the same wallet and conid */
 	public boolean canPlace(String walletAddr, int conid) {
 		for (MarginOrder order : this) {
