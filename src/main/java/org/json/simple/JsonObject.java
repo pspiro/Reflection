@@ -389,7 +389,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 	
 	/** Don't add \n's because it break JOptionPane in Util.inform */ 
-	public String toHtml() {
+	public String toHtml(boolean fancy) {
 		StringBuilder b = new StringBuilder();
 		forEach( (key,value) -> {
 			Util.appendHtml( b, "tr", () -> {

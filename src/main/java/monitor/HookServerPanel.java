@@ -88,7 +88,7 @@ class HookServerPanel extends JsonPanel {
 			for (var pos : positions) { 
 				pos.put( "description", Monitor.getDescription( pos.getString( "address") ) );
 			}
-			m_htmlPane.setText( positions.toHtml() );
+			m_htmlPane.setText( positions.toHtml(true) );
 		});
 	}
 

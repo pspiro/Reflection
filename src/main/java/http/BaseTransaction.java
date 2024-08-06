@@ -96,13 +96,15 @@ public class BaseTransaction {
 				}
 			}
 			
-			String data = contentType.equals( "text/html") ? response.toHtml() : response.toString();
+			String data = contentType.equals( "text/html") ? response.toHtml(true) : response.toString();
 			byte[] bytes = data.getBytes();
 			m_exchange.sendResponseHeaders( responseCode, bytes.length);
 			outputStream.write( bytes);
 
 			if (m_timer != null) {
-				out( "  responded in %s ms %s", m_timer.time(), Util.left(data, 200) );
+				// print to standard out
+				String output = contentType.equals( "text/html") ? "" : Util.left(data, 200); // don't print html to log file 
+				out( "  responded in %s ms %s", m_timer.time(), output);
 			}
 			else if (responseCode != 200) {
 				// if m_timer is null, it means we didn't print out the URI because it's a

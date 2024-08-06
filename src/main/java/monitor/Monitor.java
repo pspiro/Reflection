@@ -201,21 +201,6 @@ public class Monitor {
 		}
 	}
 	
-	static class SignupPanel extends QueryPanel {
-
-		SignupPanel() {
-			super( 	"signup", 
-					"created_at,email,first,last,country,referer,ip,utm_source",
-					String.format( 
-							"select * from signup where created_at >= '%s' order by created_at", 
-							Util.yToS.format( System.currentTimeMillis() - 7 * Util.DAY) ) );
-		}
-		
-		@Override protected Object format(String key, Object value) {
-			return key.equals("referer") ? Util.unescHtml(value.toString()) : value;
-		}
-	}
-
 	/** Or you could let HookServer return the names which might be more user-friendly */
 	public static String getDescription(String address) throws Exception {
 		if (address.equalsIgnoreCase( m_config.rusdAddr())) {

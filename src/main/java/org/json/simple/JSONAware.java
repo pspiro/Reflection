@@ -9,5 +9,12 @@ public interface JSONAware {
 	 * @return JSON text
 	 */
 	String toJSONString();
-	String toHtml();
+	
+	/** use this for browser and JEditorPane */
+	String toHtml( boolean fancy);
+	
+	/** use this one for tooltips which can't handle the css */
+	default String toHtml() {
+		return toHtml( false);
+	}
 }
