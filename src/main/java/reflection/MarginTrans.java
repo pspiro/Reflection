@@ -119,7 +119,7 @@ public class MarginTrans extends MyTransaction {
 
 			GoodUntil goodUntil = m_map.getEnumParam( "goodUntil", GoodUntil.values() );
 			
-			String currency = m_map.getRequiredString( "currency");
+			String currency = m_map.getRequiredString( "currency").toUpperCase();
 			require( currency.equals( m_config.rusd().name() ) || currency.equals( m_config.busd().name() ),
 					RefCode.INVALID_REQUEST,
 					"currency is invalid");
