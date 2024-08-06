@@ -824,8 +824,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** Called by Monitor in test system only, never production 
 	 * @throws Exception */
-	public synchronized void systemClear() throws Exception {
-		require( !m_config.isProduction(), "Cannot clear orders in production");
+	public synchronized void systemClear() {
+		if (m_config.isProduction() ) {
+			S.out( "Error: Cannot clear orders in production");
+			return;
+		}
 		
 		out( "System-clearing order");
 		
