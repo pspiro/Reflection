@@ -13,8 +13,8 @@ import web3.StockToken;
 
 public class TestOrder extends MyTestCase {
 	static double curPrice;
-	//static int conid = 3691937;
-	static int conid = 265598;
+	static int conid = 3691937;  // amazon
+//	static int conid = 265598;
 	
 //	static double approved;
 	

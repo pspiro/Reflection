@@ -3,7 +3,6 @@ package reflection;
 import java.io.IOException;
 import java.util.HashMap;
 
-import org.json.simple.JsonArray;
 import org.json.simple.TsonArray;
 
 import com.ib.controller.ApiController;
@@ -48,8 +47,8 @@ class MarginStore extends TsonArray<MarginOrder> {
 	}
 	
 	/** Return orders for the specified wallet address */
-	public synchronized JsonArray getOrders(String walletAddr) {
-		JsonArray ar = new JsonArray();
+	public synchronized TsonArray<MarginOrder> getOrders(String walletAddr) {
+		var ar = new TsonArray<MarginOrder>();
 		
 		for (MarginOrder order : this) {
 			if (order.wallet().equalsIgnoreCase( walletAddr) ) {

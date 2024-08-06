@@ -1,7 +1,6 @@
 package reflection;
 
 import static reflection.Main.m_config;
-import static reflection.Main.require;
 
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -94,26 +93,37 @@ public class MarginOrder extends JsonObject implements DualParent {
 	Status status() { return getEnum( "status", Status.values(), Status.NeedPayment); } // status fields set by us; these will be sent to Frontend and must be ignored
 	boolean gotReceipt() { return getBool( "gotReceipt"); }
 
-	// order state fields:
-	// orderId
-	// action
-	// filled
-	// avgPrice
-	
-	
-	// other fields:
-//	transHash
-//	receipt
-//	loanAmt, 
-//	liquidationPrice, 
-//	value (of position + cash)   
-//	bidPrice,		// done 
-//	askPrice, 		// done
-//	sharesHeld,   // done
-//	sharesToBuy,  // done
-//	symbol,       // done
-//  placed
+//	entered by user:
+//	wallet_public_key
+//	conid
+//	action
+//	amountToSpend
+//	leverage
+//	entryPrice
+//	profitTakerPrice
+//	stopLossPrice
+//	goodUntil
+//	currency
+//	symbol
+
+//	calculated:
+//	boughtPct
+//	desiredQty
 //	finishedAt  time that order came to its final resting place
+//	liqPrice
+//	loanAmt
+//	orderId
+//	orderMap
+//	placed
+//	pnl
+//	roundedQty
+//	sharesHeld		// obsolete, remove
+//	sharesToBuy		// obsolete, remove
+//	soldPct
+//	status
+//	value
+	
+	
 	
 	// transient, non-serializeable 
 	private final ApiController m_conn;
@@ -169,6 +179,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "orderMap", new JsonObject() );
 		put( "status", Status.NeedPayment);  // waiting for blockchain payment transaction
 		put( "placed", System.currentTimeMillis() );
+		put( "liqPrice", calcLiqPrice() );  // zero of leverage is 1
 
 		postInit();
 	}			
@@ -590,8 +601,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 			// update attributes which must be sent to Frontend
 			double bought = adjust( totalBought() );
-			put( "sharesHeld", bought - adjust( totalSold() ));
-			put( "sharesToBuy", desiredQty() - bought);
+			double sold = adjust( totalSold() );
+			put( "sharesHeld", bought - sold); // still used? pas
+			put( "sharesToBuy", desiredQty() - bought);  // still used? pas
+			put( "boughtPct", bought / desiredQty() );
+			put( "soldPct", sold / desiredQty() );
 
 			double cashBalance = cashBalance();
 			put( "value", cashBalance + stockValueLast() );
@@ -1064,6 +1078,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return getDouble( "loanAmt");
 	}
 
+	/** not sent to Frontend, should be calculated */
 	private double value() {
 		return getDouble( "value");
 	}
@@ -1104,7 +1119,23 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private void finishedAt( long time) {
 		put( "finishedAt", time);
 	}
+	
+	public double liqPrice() {
+		return getDouble( "liqPrice");
+	}
 
+	/** This is an estimate; assumes order is completely filled at the buy limit price; improve it to use the 
+	 *  real buy fill price and shares filled */
+	private double calcLiqPrice() {
+		double loanAmt = amtToSpend() * (leverage() - 1);
+		double shares = amtToSpend() / entryPrice();
+		return m_config.marginMinValToLoan() * loanAmt / shares; 
+	}
+
+	/** called when the order is returned to the Frontend for display */
+	public double calcPnl() {
+		return value() - amtToSpend();
+	}
 }
 
 //implement "get info" from frontend--or--send an email with the summary
@@ -1123,7 +1154,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //test dual stop orders
 //test pruning
 //bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
-
+//must recalculate liqPrice if buy lmt price changes before fill
 
 //later:
 //pass commission cost to user

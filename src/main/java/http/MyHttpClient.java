@@ -15,6 +15,7 @@ import tw.util.S;
 /** @deprecated, use MyClient
  *  Good for testing, don't use this in production, there are many things not handled. */
 public class MyHttpClient {
+//	static String host = "https://margin.reflection.trading";
 	static String host = "http://localhost:8383";
 
 	private ArrayList<String> m_reqHeaders = new ArrayList<String>();

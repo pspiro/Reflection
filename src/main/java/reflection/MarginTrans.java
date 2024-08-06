@@ -3,8 +3,8 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.json.simple.TsonArray;
 
 import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
@@ -159,6 +159,10 @@ public class MarginTrans extends MyTransaction {
 					currency
 					);
 			
+			// must come after MarginOrder is created
+			require( stopLossPrice == 0 || stopLossPrice > mo.liqPrice(), RefCode.INVALID_PRICE, 
+					"Stop-loss price must be greater than or equal to the liquidation price of %s", mo.liqPrice() );  
+
 			out( "Received valid margin order " + mo);
 			
 			m_main.marginStore().startOrder( mo);
@@ -317,18 +321,19 @@ public class MarginTrans extends MyTransaction {
 	}
 	
 	/** Return orders for one wallet */
-	private JsonArray getOrders() throws Exception {
-		JsonArray ar = m_main.marginStore().getOrders( m_walletAddr);
+	private TsonArray<MarginOrder> getOrders() throws Exception {
+		var orders = m_main.marginStore().getOrders( m_walletAddr);
 		
-		Util.forEach( ar, order -> {
+		Util.forEach( orders, order -> {
 			Stock stock = m_main.getStock( order.getInt( "conid") );
 			Util.require( stock != null, "order id %s has invalid conid %s", order.getString( "orderId"), order.getInt( "conid") );
 
 			Prices prices = stock.prices();
 			order.put( "bidPrice", prices.bid() );
 			order.put( "askPrice", prices.ask() );
+			order.put( "pnl", order.calcPnl() );
 		});
 			
-		return ar;
+		return orders;
 	}
 }
