@@ -1143,7 +1143,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	 *  real buy fill price and shares filled */
 	private double calcLiqPrice() {
 		double loanAmt = amtToSpend() * (leverage() - 1);
-		double shares = amtToSpend() / entryPrice();
+		double shares = amtToSpend() * leverage() / entryPrice();
 		return m_config.marginMinValToLoan() * loanAmt / shares; 
 	}
 

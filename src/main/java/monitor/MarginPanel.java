@@ -111,7 +111,7 @@ public class MarginPanel extends MonPanel {
 						Monitor.refApiBaseUrl(), m_orderPanel.orderId() ) ).show( this) );
 			});
 
-			add( new HorzPanel( 15, 4, cancelAll, cancel), BorderLayout.NORTH);
+			add( new HorzPanel( 15, 4, cancelAll, cancel, clearAll), BorderLayout.NORTH);
 			add( m_orderPanel);
 		}
 
