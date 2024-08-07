@@ -153,9 +153,9 @@ public class CreateTables  {
 			city varchar(50),
 			state varchar(100),
 			zip varchar(20),
-			country varchar(50),
+			country varchar(50),  -- country entered by user
+			geo_code varying(2),  -- based on geo-location
 			telegram varying(50),
-			geo_code varying(2),
 			persona_response varchar,
 			pan_number varchar(10),
 			aadhaar varchar(12),
