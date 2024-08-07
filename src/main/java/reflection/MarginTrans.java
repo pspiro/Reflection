@@ -96,7 +96,7 @@ public class MarginTrans extends MyTransaction {
 			
 			double amtToSpend = m_map.getRequiredDouble( "amountToSpend");
 			require( amtToSpend >= m_config.marginMinSpend(), RefCode.INVALID_REQUEST, "The amount to spend must be at least %s", m_config.marginMinSpend() );
-			require( amtToSpend >= 0 && amtToSpend <= m_config.marginMaxSpend(), RefCode.INVALID_REQUEST, "The amount to spend cannot be greater than %s", m_config.marginMaxSpend() );
+			require( amtToSpend <= m_config.marginMaxSpend(), RefCode.INVALID_REQUEST, "The amount to spend cannot be greater than %s", m_config.marginMaxSpend() );
 
 			double leverage = m_map.getRequiredDouble( "leverage");
 			require( leverage >= 1, RefCode.INVALID_REQUEST, "Leverage must be greater than or equal to one");
@@ -292,6 +292,14 @@ public class MarginTrans extends MyTransaction {
 			order.systemCancel( "Canceled by Monitor");
 
 			respondOk();
+		});
+	}
+
+	public void marginSummary() {
+		wrap( () -> {
+			MarginOrder order = getOrder();
+
+			respond( order.getSummary() );
 		});
 	}
 

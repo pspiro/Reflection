@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.json.simple.JsonObject;
+import org.json.simple.TsonArray;
 
 import com.ib.client.DualOrder;
 import com.ib.client.DualOrder.DualParent;
@@ -457,7 +458,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 	
 		boolean simFill;
-		var price = stock().prices().last();
+		var price = lastPrice();
 		
 		switch( status() ) {
 			case PlacedBuyOrder:
@@ -602,14 +603,14 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// update attributes which must be sent to Frontend
 			double bought = adjust( totalBought() );
 			double sold = adjust( totalSold() );
-			put( "sharesHeld", bought - sold); // still used? pas
-			put( "sharesToBuy", desiredQty() - bought);  // still used? pas
+			put( "sharesHeld", bought - sold); // not sent to user, could be used by Monitor
+			put( "sharesToBuy", desiredQty() - bought);  // same as above
 			put( "boughtPct", bought / desiredQty() );
 			put( "soldPct", sold / desiredQty() );
 
 			double cashBalance = cashBalance();
-			put( "value", cashBalance + stockValueLast() );
-			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.);
+			put( "value", cashBalance + stockValueLast() ); // recalculated with every tick; alternative would be to calculate when sent to user
+			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.); // not sent to user, seem by Monitor
 
 			// print status and full MarginOrder
 			out( "MarginOrder received status  name=%s  permId=%s  status=%s  ibStatus=%s  filled=%s/%s  avgPrice=%s", 
@@ -865,6 +866,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				m_config.rusd().sellStockForRusd( wallet(), cashBalance, m_stocks.getReceipt(), amtToSpend() )
 					.waitForHash();
 
+				increment( "userWithdrew", cashBalance);
 				status( Status.Settled);
 				finishedAt( System.currentTimeMillis() );
 			} catch (Exception e) {
@@ -873,18 +875,16 @@ public class MarginOrder extends JsonObject implements DualParent {
 			}
 		});
 	}
-
+	
 	/** for liquidation calculation purposes, we have to use mark price which uses the bid
 	 *  price; for display purposes, we use the last price because we will frequently have
 	 *  a last price even if there is no bid */
 	private double stockValueMark() throws Exception {
-		double stockPos = netAdjusted();
-		return stockPos * prices().markPrice();
+		return netAdjusted() * prices().markPrice();
 	}
 	
 	private double stockValueLast() {
-		double stockPos = netAdjusted();
-		return stockPos * prices().last();
+		return netAdjusted() * lastPrice();
 	}
 	
 	/** This current stock position, from the user's perspective */
@@ -895,7 +895,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	/** value is stock plus cash */
 	private double cashBalance() {
 		return 
-			amtToSpend() + // the user may contribute more money later which we have to add in here  
+			netDeposits() + // the user may contribute more money later which we have to add in here  
 			adjust( totalSold() ) * avgSellPrice() -
 			adjust( totalBought() ) * avgBuyPrice() -
 			fees();
@@ -904,7 +904,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	// this should be IB commissions plus the 1% fee
 	private double fees() {
-		return .01 * amtToSpend() * leverage();
+		return .001 * amtToSpend() + .01 * loanAmt();  // we should add in IB commissions
 	}
 	
 	private int totalBought() {
@@ -1093,7 +1093,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return getDouble( "loanAmt");
 	}
 
-	/** not sent to Frontend, should be calculated */
+	/** sent to Frontend, could be calculated at that time */
 	private double value() {
 		return getDouble( "value");
 	}
@@ -1139,6 +1139,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return getDouble( "liqPrice");
 	}
 
+	private double userWithdrew() {
+		return getDouble( "userWithdrew");
+	}
+
 	/** This is an estimate; assumes order is completely filled at the buy limit price; improve it to use the 
 	 *  real buy fill price and shares filled */
 	private double calcLiqPrice() {
@@ -1147,9 +1151,104 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return m_config.marginMinValToLoan() * loanAmt / shares; 
 	}
 
-	/** called when the order is returned to the Frontend for display */
+	/** called when the order is returned to the Frontend for display on Summary window */
 	public double calcPnl() {
-		return value() - amtToSpend();
+		return value() - netDeposits();
+	}
+
+	/** amount user deposited initiall less the amount of cash withdrawn */
+	private double netDeposits() {
+		return amtToSpend() - userWithdrew();
+	}
+
+	static class SumLine extends JsonObject {
+		public SumLine(String label, double amount) {
+			this( label, S.fmt2( amount) );
+		}
+
+		public SumLine(String label, String val) {
+			put( "label", label);
+			put( "value", val);
+		}
+	}
+	
+	static class Summary extends TsonArray<SumLine> {
+		double total;
+		
+		public void addLine(String label, double value) {
+			add( new SumLine( label, value) );
+			total += value;
+		}
+
+		public void addTotal() {
+			SumLine line = new SumLine( "Total value", total);
+			line.put( "highlight", true);
+			add( line);
+		}
+
+		public double total() {
+			return total;
+		}
+	}
+	
+	public JsonObject getSummary() {
+		Summary summary = new Summary();
+		summary.addLine( "User contributed", amtToSpend() );
+		
+		// bought
+		double totalBought = adjust( totalBought() );
+		if (totalBought > 0) {
+			double avgBuy = avgBuyPrice();
+			String bought = S.format( "Bought %s shares @ %s", totalBought, avgBuy); 
+			summary.addLine( bought, -totalBought * avgBuy);
+		}
+		
+		// sold
+		double totalSold = adjust( totalSold() );
+		if (totalSold > 0) {
+			double avgSell = avgSellPrice();
+			String sold = S.format( "Bought %s shares @ %s", totalSold, avgSell); 
+			summary.addLine( sold, totalSold * avgSell);
+		}
+		
+		// stock value
+		double bal = totalBought - totalSold;
+		if (bal > .001) {
+			String label = S.format( "Stock value (%s shares @ %s)", bal, lastPrice() ); 
+			summary.addLine( label, bal * lastPrice() );
+		}
+		
+		// fees, user withdrew, total
+		summary.addLine( "Fee", fees() );
+		
+		if (userWithdrew() > 0) {
+			summary.addLine( "User withdrew", userWithdrew() );
+		}
+		
+		summary.addTotal();
+		
+		// pnl
+		double pnl = calcPnl();
+		if (!Util.isEq(pnl, calcPnl(), .005) ) { // sanity check
+			out( "ERROR: pnl %s does not match %s", pnl, calcPnl() );
+		}
+		summary.addLine( "PNL", pnl);  // wrong, does not match. pas
+		
+		// roi
+		summary.add( new SumLine( "ROI", S.fmtPct( pnl / amtToSpend() ) ) );
+		
+		Summary bottom = new Summary();
+		bottom.addLine( "Loan amount", loanAmt() );
+		
+		JsonObject obj = new JsonObject();
+		obj.put( "top", summary);
+		obj.put( "bottom", bottom);
+		
+		return obj;
+	}
+	
+	double lastPrice() {
+		return prices().last();
 	}
 }
 
@@ -1171,6 +1270,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
 //must recalculate liqPrice if buy lmt price changes before fill
 //don't log all the countless "postrequest"
+//fees is wrong; it just use maxLoanAmt(), not current loan amount
+//create config items for the two fee amounts
 
 //later:
 //pass commission cost to user

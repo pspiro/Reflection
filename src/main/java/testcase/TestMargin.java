@@ -13,17 +13,6 @@ public class TestMargin extends MyTestCase {
 	static double base = TestOrder.curPrice;
 	static String conid = "" + TestOrder.conid;
 	
-//	server.createContext("/api/margin-order", exch -> new MarginTrans(this, exch, true).marginOrder() );
-//	server.createContext("/api/margin-cancel", exch -> new MarginTrans(this, exch, true).marginCancel() );
-//	server.createContext("/api/margin-update", exch -> new MarginTrans(this, exch, true).marginUpdate() );
-//	server.createContext("/api/margin-get-order", exch -> new MarginTrans(this, exch, true).marginGetOrder() );
-//	server.createContext("/api/margin-get-all", exch -> new MarginTrans(this, exch, true).marginGetAll() );
-//	server.createContext("/api/margin-liquidate", exch -> new MarginTrans(this, exch, true).marginLiquidate() );
-//	server.createContext("/api/margin-add-funds", exch -> new MarginTrans(this, exch, true).marginAddFunds() );
-//	server.createContext("/api/margin-withdraw-funds", exch -> new MarginTrans(this, exch, true).marginWithdrawFunds() );
-//	server.createContext("/api/margin-withdraw-tokens", exch -> new MarginTrans(this, exch, true).marginWithdrawTokens() );
-//	server.createContext("/api/margin-info", exch -> new MarginTrans(this, exch, true).marginInfo() );
-	
 	static {
 		try {
 			if (m_config.rusd().getPosition(Cookie.wallet) < 1000) {
@@ -450,6 +439,35 @@ public class TestMargin extends MyTestCase {
 				cancel( json.getString( "orderId"));
 			}
 		}
+	}
+	
+	/** very close, but pnl is off */
+	public void testSummary() throws Exception {
+		S.out( "testing summary");
+		
+		JsonObject ord = newOrd();
+		ord.put( "entryPrice", base + 2);
+		ord.put( "profitTakerPrice", base + 3);
+		ord.put( "stopLossPrice", base + 1);
+		ord.put( "test", true);  // this overrides the normal restriction that stop-loss price must be < market price
+		
+		S.out( "placing order");
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		waitForStatus( json, Status.Monitoring, false);
+		
+		JsonObject sum = cli().postToJson( "/api/margin-summary", Util.toJson( 
+						"wallet_public_key", Cookie.wallet,
+						"cookie", Cookie.cookie,
+						"orderId", json.getString( "orderId")
+						) );
+		assert200();
+		
+		sum.display();
+		
+		sum.getArray( "top").print();
+		sum.getArray( "bottom").print();
+
+
 	}
 
 }

@@ -142,6 +142,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/margin-withdraw-funds", exch -> new MarginTrans(this, exch, true).marginWithdrawFunds() );
 			server.createContext("/api/margin-withdraw-tokens", exch -> new MarginTrans(this, exch, true).marginWithdrawTokens() );
 			server.createContext("/api/margin-info", exch -> new MarginTrans(this, exch, true).marginInfo() );
+			server.createContext("/api/margin-summary", exch -> new MarginTrans(this, exch, true).marginSummary() );
 
 
 			// orders and live orders
