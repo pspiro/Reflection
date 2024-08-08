@@ -122,7 +122,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //	sharesToBuy		// obsolete, remove
 //	soldPct
 //	status
-//	value
+//	value			// only set when sending to user; not kept up to date
 	
 	
 	
@@ -609,7 +609,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 			put( "soldPct", sold / desiredQty() );
 
 			double cashBalance = cashBalance();
-			put( "value", cashBalance + stockValueLast() ); // recalculated with every tick; alternative would be to calculate when sent to user
 			put( "loanAmt",  cashBalance < 0. ? -cashBalance : 0.); // not sent to user, seem by Monitor
 
 			// print status and full MarginOrder
@@ -1013,8 +1012,6 @@ public class MarginOrder extends JsonObject implements DualParent {
 		put( "bidPrice", prices.bid() );
 		put( "askPrice", prices.ask() );
 		
-		put( "value", cashBalance() + stockValueLast() );
-		
 		if (status() == Status.Monitoring) {
 		//if (status() != Status.PlacedBuyOrder || status() == Status.BuyOrderFilled) {
 			double loanVal = loanAmt();
@@ -1093,9 +1090,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 		return getDouble( "loanAmt");
 	}
 
-	/** sent to Frontend, could be calculated at that time */
-	private double value() {
-		return getDouble( "value");
+	/** sent to Frontend */
+	double calcValue() {
+		return cashBalance() + stockValueLast();
 	}
 
 	/** If there is a partial fill, return that amount; if we are 
@@ -1153,7 +1150,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** called when the order is returned to the Frontend for display on Summary window */
 	public double calcPnl() {
-		return value() - netDeposits();
+		return calcValue() - netDeposits();
 	}
 
 	/** amount user deposited initiall less the amount of cash withdrawn */
@@ -1219,7 +1216,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 		}
 		
 		// fees, user withdrew, total
-		summary.addLine( "Fee", fees() );
+		summary.addLine( "Fee", -fees() );
 		
 		if (userWithdrew() > 0) {
 			summary.addLine( "User withdrew", userWithdrew() );
@@ -1227,14 +1224,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 		
 		summary.addTotal();
 		
-		// pnl
 		double pnl = calcPnl();
-		if (!Util.isEq(pnl, calcPnl(), .005) ) { // sanity check
-			out( "ERROR: pnl %s does not match %s", pnl, calcPnl() );
-		}
 		summary.addLine( "PNL", pnl);  // wrong, does not match. pas
-		
-		// roi
 		summary.add( new SumLine( "ROI", S.fmtPct( pnl / amtToSpend() ) ) );
 		
 		Summary bottom = new Summary();

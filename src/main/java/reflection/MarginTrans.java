@@ -349,6 +349,7 @@ public class MarginTrans extends MyTransaction {
 			order.put( "bidPrice", prices.bid() );
 			order.put( "askPrice", prices.ask() );
 			order.put( "pnl", order.calcPnl() );
+			order.put( "value", order.calcValue() );
 		});
 			
 		return orders;
