@@ -370,7 +370,7 @@ public class Config extends ConfigBase {
 	private void checkPassword() throws Exception {
 		// try first from file
 		try {
-			String str = Util.readResource( Config.class, "name.txt");
+			String str = IStream.readLine("name.txt");
 			if (str.length() > 0) {
 				S.out( "Found password in file");
 			}
@@ -401,7 +401,7 @@ public class Config extends ConfigBase {
 	
 	private String fetchPw() throws Exception {
 		try {
-			return Util.readResource( Config.class, "name.txt"); // obsolete, remove this
+			return IStream.readLine( "name.txt"); // obsolete, remove this
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
