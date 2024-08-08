@@ -151,7 +151,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		busd.mint( bobAddr, 2000).waitForHash();
+		m_config.mintBusd( bobAddr, 2000).waitForHash();
 		waitForBalance( bobAddr, m_config.busd().address(), 2000, false);
 		
 		gasUpBob();

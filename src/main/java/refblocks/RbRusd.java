@@ -139,17 +139,17 @@ public class RbRusd extends Erc20 implements IRusd {
 		throw new Exception(); // not implemented yet
 	}
 
-//	@Override public RetVal approve(String holderKey, String spenderAddr, double amt) throws Exception {
-//		Util.reqValidKey(holderKey);
-//		Util.reqValidAddress(spenderAddr);
-//
-//		S.out( "RUSD %s allows spending of %s RUSD by %s",
-//				holderKey,
-//				amt,
-//				spenderAddr);
-//		
-//		return Refblocks.exec( holderKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
-//	}
+	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
+		Util.reqValidKey(approverKey);
+		Util.reqValidAddress(spenderAddr);
+
+		S.out( "RUSD %s allows spending of %s RUSD by %s",
+				approverKey,
+				amt,
+				spenderAddr);
+		
+		return Refblocks.exec( approverKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
+	}
 
 }
 // this won't work. you either need to create a new RUSD and set it on all the stock tokens,

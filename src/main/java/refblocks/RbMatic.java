@@ -10,6 +10,7 @@ import web3.RetVal;
 
 public class RbMatic extends Matic {
 
+	/** transfer native token */
 	@Override public RetVal transfer(String senderKey, String to, double amt) throws Exception {
 		return Refblocks.transfer( senderKey, to, amt);
 	}
@@ -20,7 +21,7 @@ public class RbMatic extends Matic {
 		return Credentials.create( key ).getAddress();
 	}
 	
-	public void createSystemWallets() throws Exception {
+	@Override public void createSystemWallets() throws Exception {
 		try (MyScanner scanner = new MyScanner() ) {
 			String pw1 = scanner.input( "Enter password: ");
 			String pw2 = scanner.input( "Re-enter password: ");
@@ -37,13 +38,12 @@ public class RbMatic extends Matic {
 	}
 
 	private static void createWallet(String pw, String hint, String name) throws Exception {
-		CreateKey.createProdWallet( 
-				pw, 
-				name, 
-				String.format( 
-						"%s wallet created on %s",
-						name,
-						Util.yToS.format( System.currentTimeMillis() ) ),
-				hint);
+//		CreateKey.createProdWallet( 
+//				pw, 
+//				name, 
+//				String.format( 
+//						"%s wallet created on %s",
+//						name,
+//						Util.yToS.format( System.currentTimeMillis() ) ));
 	}
 }

@@ -17,7 +17,6 @@ import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
-import refblocks.Refblocks;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
@@ -34,25 +33,28 @@ import tw.util.S;
  *  
  *  You can use grok to create a tcp/ip tunnel to receive the webhook messages 
  */
-public class HookServer {
+public class DummyHookServer {
 	static double ten18 = Math.pow(10, 18);
 	final static double small = .0001;    // positions less than this will not be reported
 	final Config m_config;
 	final Stocks stocks = new Stocks();
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
-	String m_transferStreamId;
+	String m_transferStreamId1;
+	String m_transferStreamId2;
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
-	String chain() { return Util.toHex( m_config.chainId() ); }
+
+	String chain1() { return Util.toHex( 137); }
+	String chain2() { return Util.toHex( 250); }
 	
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("Hook");
 			S.out( "Starting HookServer");
 			
-			new HookServer(args).run();
+			new DummyHookServer(args).run();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -60,7 +62,7 @@ public class HookServer {
 		}
 	}
 	
-	HookServer(String[] args) throws Exception {
+	DummyHookServer(String[] args) throws Exception {
 		m_config = Config.read( args);
 	}
 	
@@ -73,7 +75,7 @@ public class HookServer {
 		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
-		m_allContracts = list.toArray( new String[list.size()]); 
+		m_allContracts = list.toArray( new String[list.size()]);
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
@@ -95,32 +97,27 @@ public class HookServer {
 
 		// listen for ERC20 transfers and native transfers
 		try {
-			m_transferStreamId = Streams.createStream(
-						Streams.erc20Transfers, 
-						"transfer-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(),
-						chain() ); 
+			m_transferStreamId1 = Streams.createStream(
+					Streams.erc20Transfers, 
+					"test-polygon", 
+					m_config.hookServerUrl(),
+					chain1() ); 
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			S.out( "WARNING: TRANSFER STREAM IS NOT ACTIVE");
+			S.out( "WARNING: TRANSFER STREAM1 IS NOT ACTIVE");
 		}
-		
-		// listen for "approve" transactions
-		// you could pass BUSD, RUSD, or the user addresses
-		// it would be ideal if there were a way to combine these two streams into one,
-		// then it could just work off the user address, same as the transfer stream
+
 		try {
-			Streams.createStream(
-						Streams.approval, 
-						"approval-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain(),
-						m_config.rusd().address() );
+			m_transferStreamId2 = Streams.createStream(
+					Streams.erc20Transfers, 
+					"test-fantom", 
+					m_config.hookServerUrl(),
+					chain2() ); 
 		}
 		catch( Exception e) {
 			e.printStackTrace();
-			S.out( "WARNING: APPROVAL STREAM IS NOT ACTIVE");
+			S.out( "WARNING: TRANSFER STREAM2 IS NOT ACTIVE");
 		}
 		
 		S.out( "**ready**");
@@ -234,7 +231,9 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
+//			if (BaseTransaction.debug() ) {
+				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);
+//			}
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
@@ -323,7 +322,7 @@ public class HookServer {
 		}
 		
 		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed, m_config.nodeServer() ) );
+			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
 			
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in
@@ -338,15 +337,15 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = Refblocks.reqPositionsMap( walletAddr, m_allContracts, 0);
+			HashMap<String, Double> positions = new Wallet( walletAddr)
+					.reqPositionsMap(m_allContracts);
 			
-			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = m_config.nodeServer().getNativeBalance( walletAddr);
-			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
-			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+			Streams.addAddressToStream( m_transferStreamId1, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			Streams.addAddressToStream( m_transferStreamId2, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			
 			t.done();
 			

@@ -4,20 +4,18 @@ import common.Util;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;
-	private String m_anyKey; // private key or "Admin1" for FB
 
-	public Busd(String address, int decimals, String name, String anyKey, IBusd core) throws Exception {
+	public Busd(String address, int decimals, String name, IBusd core) throws Exception {
 		super( address, decimals, name);
 
 		Util.require( core != null, "null core");
 		
-		m_anyKey = anyKey;
 		m_core = core;
 	}
 
 	/** For testing only; anyone can call this but they must have some gas */
-	public RetVal mint( String address, double amount) throws Exception {
-		return m_core.mint( m_anyKey, address, amount);
+	public RetVal mint( String callerKey, String address, double amount) throws Exception {
+		return m_core.mint( callerKey, address, amount);
 	}
 
 	/** For testing only; currently only Frontend calls approve in production */ 

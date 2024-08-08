@@ -11,6 +11,7 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
@@ -108,7 +109,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
 			
-			Session session = m_main.m_tradingHours.insideAnyHours( stock.is24Hour(), null);
+			Session session = m_main.m_tradingHours.getTradingSession( stock.is24Hour(), null);
 			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
@@ -230,6 +231,7 @@ public class BackendTransaction extends MyTransaction {
 			JsonObject userRec = new JsonObject();
 			userRec.put( "wallet_public_key", m_walletAddr.toLowerCase() );
 			userRec.put( "kyc_status", status);  // this is the exact "status" text from the json returned by Persona; used to be VERIFIED
+			userRec.put( "persona_response", personaStr);
 			m_config.sqlCommand(sql -> 
 				sql.insertOrUpdate("users", userRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
 
@@ -585,14 +587,23 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Called by anyone who wants to view the signup report as html in a browser */
 	public void handleSagHtml() {
 		wrap( () -> {
-			respondFull( 
-					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
-					200,
-					null,
-					"text/html");
-			
+			Util.execute( () -> {  // don't tie up HTTP thread
+				wrap( () -> {
+					m_config.sqlCommand( sql -> {
+						int days = 3;  
+						try {  // number of days to look back might be passed as last token in URI
+							days = Integer.valueOf( getLastToken() ); 
+						}
+						catch( Exception e) {}
+
+						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						respondFull( ar, 200, null, "text/html");						
+					});
+				}); 
+			});
 		});
 	}
 

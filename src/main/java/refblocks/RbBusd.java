@@ -59,6 +59,7 @@ public class RbBusd extends Erc20 implements IBusd {
 				.mint( address, toBlockchain( amt) ) );
 	}
 
+	/** transfer ERC-20 token */
 	@Override public RetVal transfer(String fromKey, String toAddr, double amt) throws Exception {
 		Util.reqValidKey(fromKey);
 		Util.reqValidAddress(toAddr);
@@ -66,7 +67,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "transferring %s %s from %s to %s",
 				amt, m_name, Refblocks.getAddressPk( fromKey), toAddr);
 
-		return Refblocks.exec( fromKey, tm -> load( tm, 40000)
+		return Refblocks.exec( fromKey, tm -> load( tm, 100000) // actual is around 50000
 			.transfer( toAddr, toBlockchain( amt) ) );
 	}
 }

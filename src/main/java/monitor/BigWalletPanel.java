@@ -155,18 +155,18 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 
 	public String getWallet() {
-		return m_wallet.getText();
+		return m_wallet.getText().trim().toLowerCase();
 	}
 	
 	private void award() {
 		m_parent.wrap( () -> {
 			long lockUntil = System.currentTimeMillis() + m_lockFor.getLong() * Util.DAY;
 			double amt = m_awardAmt.getDouble();
-			String wallet = m_wallet.getText().toLowerCase();
+			String wallet = getWallet();
 			
 			// mint and lock?
 			if ( amt > 0) {
-				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, m_wallet.getText() ) ) {
+				if (Util.confirm(this, "Awarding %s RUSD for %s", amt, getWallet() ) ) {
 					if (amt > 500 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
 						Util.inform( this, "The password was invalid");
 						return;
@@ -202,7 +202,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 
 	public void refresh(JsonArray blockRows) throws Exception {
-		String walletAddr = m_wallet.getText().toLowerCase();
+		String walletAddr = getWallet();
 		S.out( "Refreshing Wallet panel with wallet %s", walletAddr);
 
 		S.out( "Clearing values");
@@ -242,7 +242,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 				m_personaResp = json.getObject( "persona_response");
 				if (m_personaResp != null) {
 					m_personaData.setText( "<hover for tooltip>");
-					m_personaData.setToolTipText( m_personaResp.getObject( "fields").toHtml() );
+					m_personaData.setToolTipText( getFullPersona( m_personaResp).toHtml() );
 				}
 				
 				JsonObject obj = json.getObject("locked");
@@ -296,13 +296,29 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		posModel.fireTableDataChanged();
 	}
 	
+	public static JsonObject getFullPersona(JsonObject personaResp) throws Exception {
+		JsonObject resp = new JsonObject();
+		resp.copyFrom( personaResp, "inquiryId", "status");
+		
+		personaResp.getObject( "fields").forEach( (key,val) -> {
+			try {
+				JsonObject valObj = JsonObject.parse( val.toString() );
+				resp.putIf( key, valObj.getString( "value"));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		
+		return resp; 
+	}
+
 	private void giveMatic() {
 		if (Util.confirm( this, 
-					"Are you sure you want to transfer .01 MATIC from Owner to " + m_wallet.getText() ) ) {
+					"Are you sure you want to transfer .01 MATIC from Owner to " + getWallet() ) ) {
 			wrap( () -> {
 				config().matic().transfer(
 						config().ownerKey(),
-						m_wallet.getText(), 
+						getWallet(), 
 						.01); 
 			});
 		}
@@ -310,14 +326,14 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 
 	/** Open wallet in blockchain explorer */
 	private void explore() {
-		Util.browse( config().blockchainAddress( m_wallet.getText() ) );
+		Util.browse( config().blockchainAddress( getWallet() ) );
 	}
 
 	private void createUser() {
 		wrap( () -> {
 			config().sqlCommand( sql -> sql.insertJson( "users",
 					Util.toJson( 
-							"wallet_public_key", m_wallet.getText().toLowerCase(),
+							"wallet_public_key", getWallet(),
 							"first_name", m_firstName.getText() ) ) );
 			UI.flash("Done");
 		});
@@ -326,7 +342,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private void mint() {
 		wrap( () -> {
 			double amt = m_mintAmt.getDouble();
-			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, m_wallet.getText() ) ) {
+			if ( amt > 0 && Util.confirm(this, "Minting %s RUSD for %s", amt, getWallet() ) ) {
 				if (amt > 100 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
 					Util.inform( this, "The password was invalid");
 					return;
@@ -338,14 +354,14 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 	
 	private void mint(double amt) throws Exception {
-			Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+			Util.require( Util.isValidAddress(getWallet()), "Invalid wallet address");
 
 			String hash = config().rusd().mintRusd( 
-					m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+					getWallet(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 			
 			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.MINT,
-					"wallet_public_key", m_wallet.getText().toLowerCase(),
+					"wallet_public_key", getWallet(),
 					"data", Util.toJson( "amt", amt) ) ) );
 
 			UI.flash(hash);
@@ -358,20 +374,20 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	}
 	
 	private void burnAllRusd() {
-		wrap( () -> burn( config().rusd().getPosition(m_wallet.getText() ) ) );
+		S.out( "not implemented");
 	}
 
 	private void burn(double amt) {
-		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, m_wallet.getText() ) ) {
+		if ( amt > 0 && Util.confirm(this, "Burning %s RUSD from %s", amt, getWallet() ) ) {
 			wrap( () -> {
-					Util.require( Util.isValidAddress(m_wallet.getText()), "Invalid wallet address");
+					Util.require( Util.isValidAddress(getWallet()), "Invalid wallet address");
 			
 				String hash = config().rusd().burnRusd( 
-						m_wallet.getText(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+						getWallet(), amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
 				
 				config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 						"type", LogType.BURN,
-						"wallet_public_key", m_wallet.getText().toLowerCase(),
+						"wallet_public_key", getWallet(),
 						"data", Util.toJson( "amt", amt) ) ) );
 				
 				UI.flash(hash);
@@ -395,7 +411,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			
 			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.EMAIL,
-					"wallet_public_key", m_wallet.getText().toLowerCase(),
+					"wallet_public_key", getWallet(),
 					"data", data) ) );
 			
 			UI.flash( "Message sent");
@@ -441,7 +457,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		String symbol = rec.getString("Symbol");
 		double amt = rec.getDouble( "Balance");
 		StockToken tok = rec.getStock( "stock").getToken();
-		String wallet = m_wallet.getText().toLowerCase();
+		String wallet = getWallet();
 		
 		Util.reqValidAddress(wallet);
 		

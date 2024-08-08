@@ -880,4 +880,9 @@ public class Util {
 	//	<T> T[] toArray( ArrayList<T> list) {
 	//		return (T[])list.toArray();
 	//	}
+	
+	/** Works with or without 0x at start */
+	public static String getPublicKey( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
 }

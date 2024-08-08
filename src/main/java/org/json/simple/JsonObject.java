@@ -214,7 +214,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Can return null; caller should check */
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
-		if (obj == null) {
+		if (obj == null || obj.equals( "") ) {
 			return null;
 		}
 		if (obj instanceof JsonObject) {
@@ -389,7 +389,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 	
 	/** Don't add \n's because it break JOptionPane in Util.inform */ 
-	public String toHtml() {
+	public String toHtml(boolean fancy) {
 		StringBuilder b = new StringBuilder();
 		forEach( (key,value) -> {
 			Util.appendHtml( b, "tr", () -> {

@@ -15,6 +15,7 @@ import fireblocks.FbBusd;
 import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
+import http.MyClient;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -29,6 +30,7 @@ import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.google.Secret;
+import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
 import web3.Busd.IBusd;
@@ -60,6 +62,7 @@ public class Config extends ConfigBase {
 	private double nonKycMaxOrderSize;
 	private String twsOrderHost;  // TWS is listening on this host
 	private int twsOrderPort;  // TWS is listening on this port
+	private int twsOrderClientId;  // connect to TWS w/ this client ID; must be the same each time so we get the right orders
 	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
 	private long timeout = 7000;  // all other messages timeout 
@@ -97,10 +100,12 @@ public class Config extends ConfigBase {
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
+	private String pwUrl;
 
 	// Fireblocks
 	private Web3Type web3Type;
 	private String admin1Addr;  // used for deployment and Monitor
+	private String admin1Key;   // used for signing transactions
 	private String ownerKey;  // for Fireblocks, this is "Owner"
 	private String ownerAddr;
 	private String refWalletKey;
@@ -138,6 +143,7 @@ public class Config extends ConfigBase {
 
 	public String twsOrderHost() { return twsOrderHost; }
 	public int twsOrderPort() { return twsOrderPort; }
+	public int twsOrderClientId() { return twsOrderClientId; }
 
 	//public String refApiHost() { return refApiHost; }
 	public int refApiPort() { return refApiPort; }
@@ -172,6 +178,11 @@ public class Config extends ConfigBase {
 		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
 	}
 
+	/** takes tab name from config.txt file */
+	public static Config read() throws Exception {
+		return readFrom( getTabName( new String[0]) );
+	}
+
 	/** takes full tab name */
 	public static Config readFrom(String tab) throws Exception {
 		Config config = new Config();
@@ -179,16 +190,11 @@ public class Config extends ConfigBase {
 		return config;
 	}
 
-	/** takes tab name from config.txt file */
-	public static Config read() throws Exception {
-		return readFrom( Util.readResource( Config.class, "config.txt") );
-	}
-
 	/** get tab name from args or config.txt file */
 	public static String getTabName(String[] args) throws Exception {
 		return args.length > 0 
 				? args[0] 
-				: Util.readResource( Config.class, "config.txt");
+				: IStream.readLine( "config.txt");
 	}
 
 	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
@@ -216,6 +222,7 @@ public class Config extends ConfigBase {
 		// TWS connection
 		this.twsOrderHost = m_tab.get( "twsOrderHost");
 		this.twsOrderPort = m_tab.getRequiredInt( "twsOrderPort");
+		this.twsOrderClientId = m_tab.getInt( "twsOrderClientId");  // if not found, use a random one; okay for Monitor, testing
 		this.reconnectInterval = m_tab.getRequiredInt( "reconnectInterval");
 		this.orderTimeout = m_tab.getRequiredInt( "orderTimeout");
 		this.timeout = m_tab.getRequiredInt( "timeout");
@@ -258,11 +265,10 @@ public class Config extends ConfigBase {
 		this.baseUrl = m_tab.get("baseUrl");
 		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
 		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
-		this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
 		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
-		this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
+		this.pwUrl = m_tab.get("pwUrl");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -289,7 +295,10 @@ public class Config extends ConfigBase {
 			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
 			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
 			this.fbLookback = m_tab.getRequiredDouble("fbLookback");
-
+			this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+			this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
+			this.admin1Key = m_tab.getRequiredString("admin1Key"); // this is used only for deployment and doesn't need to be in the config file
+			
 			// the fireblocks keys could contain the actual keys, or they could
 			// contain the paths to the google secrets containing the keys
 			if (fireblocksApiKey.startsWith("projects/") ) {
@@ -314,19 +323,24 @@ public class Config extends ConfigBase {
 			Refblocks.setChainId( 
 					chainId,
 					m_tab.getRequiredString( "rpcUrl") );
+			
+			this.ownerKey = m_tab.getRequiredString("ownerRefblocksKey"); // this is used only for deployment and testing and doesn't need to be in the config file
+			this.refWalletKey = m_tab.getRequiredString("refWalletRefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
+			this.admin1Key = m_tab.getRequiredString("admin1RefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
+
+			checkPassword(); // confirm we have access to password
 		}
 
 		m_rusd = new web3.Rusd(
 				m_tab.getRequiredString("rusdAddr").toLowerCase(),
 				m_tab.getRequiredInt("rusdDecimals"),
-				getKey( m_tab.getRequiredString( "admin1Key") ),  // need to pass all FB related stuff here OR set it on the Fireblocks object
+				this,
 				rusdCore);
 		
 		m_busd = new Busd( 
 				m_tab.getRequiredString("busdAddr").toLowerCase(),
 				m_tab.getRequiredInt("busdDecimals"),
 				m_tab.getRequiredString ("busdName"),
-				ownerKey(),
 				busdCore);
 
 		// update Moralis chain
@@ -350,15 +364,53 @@ public class Config extends ConfigBase {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
 		require( hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
-	
-	/** json fields are address, salt, data, ivstr */
+
+	/** confirm we have access to the password 
+	 * @throws Exception */
+	private void checkPassword() throws Exception {
+		// try first from file
+		try {
+			String str = Util.readResource( Config.class, "name.txt");
+			if (str.length() > 0) {
+				S.out( "Found password in file");
+			}
+			return;
+		} catch (Exception e) {
+		}
+		
+		// try next from pwserver
+		require( S.isNotNull( pwUrl), "pwserver");
+		Util.require( pwUrl.endsWith( "getpw"), "pwurl is invalid");
+		Util.require( JsonObject.isObject( MyClient.getString( pwUrl) ), 
+				"pwserver did not return json");
+		S.out( "pwserver ok");
+	}
+
+	/** For Refblocks, return the private key encoded in the json.
+	 *  For Fireblocks, return the account name.
+	 *  json fields are address, salt, data, ivstr.
+	 *  Don't store the password in memory; fetch it every time */
 	private String getKey(String key) throws Exception {
 		return JsonObject.isObject( key)
 				? CreateKey.decryptFromJson( 
-						Util.readResource( Config.class, "date.txt").trim(), 
+						fetchPw().trim(), 
 						JsonObject.parse( key) 
 						)
 				: key;
+	}
+	
+	private String fetchPw() throws Exception {
+		try {
+			return Util.readResource( Config.class, "name.txt"); // obsolete, remove this
+		} catch (Exception e) {
+		}
+		// get refblocks pw from pwserver
+		String pw = MyClient.postToJson( pwUrl, Util.toJson( "code", "lwjkefdj827").toString() )
+				.getString( "pw");
+		Util.require( S.isNotNull( pw), "null pw from pw server");
+		Util.require( !pw.equals( "wrong code"), "wrong code passed to pw server");
+
+		return pw;
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {
@@ -660,12 +712,19 @@ public class Config extends ConfigBase {
 		return refWalletAddr;
 	}
 	
+	/** returns private key or account name */
 	public String refWalletKey() throws Exception {
 		return getKey( refWalletKey);
 	}
 	
+	/** returns private key or account name */
 	public String ownerKey() throws Exception {  // private key or "Owner"
 		return getKey( ownerKey);
+	}
+
+	/** returns private key or account name */
+	public String admin1Key() throws Exception {
+		return getKey( admin1Key);
 	}
 
 	public String ownerAddr() {
@@ -673,7 +732,7 @@ public class Config extends ConfigBase {
 	}
 	
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
-		return busd().mint( wallet, amt);
+		return busd().mint( ownerKey(), wallet, amt);
 	}
 	
 	public Matic matic() {
@@ -688,8 +747,8 @@ public class Config extends ConfigBase {
 		return web3Type;
 	}
 
-	/** Let RefWallet approve RUSD to spend BUSD on its behalf 
-	 * @throws Exception */
+	/** Let RefWallet approve RUSD to spend BUSD on its behalf;
+	 *  Would be used only during migration, which is not needed anymore. */ 
 	public RetVal giveApproval() throws Exception {
 		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
 	}
