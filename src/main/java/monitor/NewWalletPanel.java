@@ -329,7 +329,7 @@ public class NewWalletPanel extends MonPanel {
 		private UpperField m_awardAmt = new UpperField( 27);
 		private UpperField m_lockFor = new UpperField( 7);
 		private UpperField m_requiredTrades = new UpperField( 5);
-		private UpperField m_subject = new UpperField( 27);
+		private JTextField m_subject = new JTextField( 27);
 		private JTextArea m_emailText = new JTextArea( 10, 50);
 	
 		CryptoPanel() {
