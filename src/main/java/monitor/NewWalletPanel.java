@@ -94,18 +94,19 @@ public class NewWalletPanel extends MonPanel {
 
 	@Override protected void refresh() throws Exception {
 		wrap( () -> {
+			dataPanel.clear();
+			blockchainPanel.clear();
+			transPanel.clear();
+			cryptoPanel.clear();
+			tokPanel.clear();
+			logPanel.clear();
+
 			m_wallet = m_walField.getText().trim().toLowerCase();
 			Util.require( S.isNull( m_wallet) || Util.isValidAddress(m_wallet), "Invalid wallet address");
 	
 			if (Util.isValidAddress( m_wallet) ) {
-				Monitor.m_config.sqlCommand( sql -> {
-					dataPanel.refresh( sql, m_wallet);
-					blockchainPanel.clear();
-					transPanel.clear();
-					cryptoPanel.clear();
-					tokPanel.clear();
-					logPanel.clear();
-				});
+				m_tabs.resetActivated();
+				m_tabs.reactivateCurrent();  // this will trigger call to activated() on the current tab
 			}
 		});
 	}
@@ -137,33 +138,31 @@ public class NewWalletPanel extends MonPanel {
 		}
 
 		@Override protected void clear() {
+			usersPane.setText( null);
+			personaPane.setText( null);
 		}
 		
 		@Override public void activated() {
-		}
-
-		void refresh( MySqlConnection sql, String wallet) throws Exception {
-			var users = sql.queryToJson("select * from users where wallet_public_key = '%s'", m_wallet);
-			if (users.size() > 0) {
-				var user = users.get( 0).removeEntry( "persona_responsa");
-				String html = user.toHtml( true, usersFields.split( ","));
-				S.out( html);
-				usersPane.setText( html);
-
-				personaResp = user.getObjectNN( "persona_response");
-				
-				var pers = BigWalletPanel.getFullPersona( personaResp);
-				personaPane.setText( pers.toHtml( true) );
-				
-				m_emailAddr = user.getString( "email"); // needed to send emails
-			}
-			else {
-				usersPane.setText( null);
-				personaPane.setText( null);
-			}
-
-			m_tabs.resetActivated();
-			m_tabs.select( "User Data");  // this will trigger call to activated()
+			wrap( () -> {
+				var users = Monitor.m_config.sqlQuery("select * from users where wallet_public_key = '%s'", m_wallet);
+				if (users.size() > 0) {
+					var user = users.get( 0).removeEntry( "persona_responsa");
+					String html = user.toHtml( true, usersFields.split( ","));
+					S.out( html);
+					usersPane.setText( html);
+	
+					personaResp = user.getObjectNN( "persona_response");
+					
+					var pers = BigWalletPanel.getFullPersona( personaResp);
+					personaPane.setText( pers.toHtml( true) );
+					
+					m_emailAddr = user.getString( "email"); // needed to send emails
+				}
+				else {
+					usersPane.setText( null);
+					personaPane.setText( null);
+				}
+			});
 		}
 		
 		private void onShowInPersona() {
@@ -473,8 +472,13 @@ public class NewWalletPanel extends MonPanel {
 
 		private void burnAllRusd() {
 			wrap( () -> { 
-				double amt = new Wallet( m_wallet ).getBalance( config().rusdAddr() );
-				burn( amt);
+				double amt = config().rusd().getPosition( m_wallet);
+				if (amt > 0) {
+					burn( amt);
+				}
+				else {
+					Util.inform( this, "No RUSD to burn");
+				}
 			});
 		}
 

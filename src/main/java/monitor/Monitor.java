@@ -124,7 +124,7 @@ public class Monitor {
 				"Reflection System Monitor - %s - %s", 
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
-		m_frame.setSize( 1300, 800);
+		m_frame.setSize( 1300, 810);
 		m_frame.setVisible(true);
 		
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

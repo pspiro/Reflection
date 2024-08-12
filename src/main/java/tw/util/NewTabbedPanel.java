@@ -344,5 +344,11 @@ public class NewTabbedPanel extends JPanel {
 	public void resetActivated() {
 		m_map.values().forEach( tab -> tab.m_activated = false);		
 	}
+
+	public void reactivateCurrent() {
+		if (m_current instanceof INewTab) {
+			((INewTab)m_current).activated();
+		}
+	}
 	
 }

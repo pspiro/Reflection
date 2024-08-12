@@ -397,20 +397,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		StringBuilder b = new StringBuilder();
 		
 		if (fancy) {
-			Util.wrapHtml( b, "style", """
-		        table {
-		            border-collapse: collapse;
-		            width: 100%;
-		        }
-
-		        table, th, td {
-		            border: 1px solid black;
-		        }
-
-		        th, td {
-		            padding: 8px;
-		            text-align: left;
-		        }""");
+			Util.wrapHtml( b, "style", fancyTable); 
 		}
 		
 		Util.appendHtml( b, "table", () -> {
@@ -496,6 +483,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		remove( tag);
 		return this;
 	}
+	
+
 }
 /** NOTE: Timestamp objects are stored as
  *  
