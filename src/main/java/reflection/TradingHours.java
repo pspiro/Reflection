@@ -27,9 +27,10 @@ public class TradingHours {
 		String hours;
 	}
 
-	static final int interval = 60 * 60 * 1000; // 1 hour
-    static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
-	static final int ibm = 8314;    // IBM
+	private static final int interval = 60 * 60 * 1000; // 1 hour
+	private static final DateFormat dateAndTime = new SimpleDateFormat( "MM/dd/yy HH:mm"); 
+    private static final int ibm = 8314;    // IBM
+	private static long dummyTime;
 
     private ApiController m_controller;
 	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours; there will be two entries, one for SMART, and one for OVERNIGHT
@@ -185,13 +186,19 @@ public class TradingHours {
 	 *  the day before the market is closed anyway 
 	 * @throws Exception */
 	public boolean mustLiquidate( int minutesBeforeClose) throws Exception {
-		return closedTomorrow() && !insideHours( "SMART", new Date( System.currentTimeMillis() + Util.MINUTE * minutesBeforeClose) );
+		long now = System.currentTimeMillis();
+		
+		if (dummyTime > 0) {
+			S.out( "using dummyTime %s", Util.yToS.format( dummyTime) );
+			now = dummyTime; 
+		}
+		return closedTomorrow( now) && !insideHours( "SMART", new Date( now + Util.MINUTE * minutesBeforeClose) );
 	}
 
 	/** checks SMART only, we don't care if overnight is open or not */
-	private boolean closedTomorrow() throws Exception {
+	private boolean closedTomorrow(long now) throws Exception {
 		String tomorrow = Util.yToS
-				.format( new Date( System.currentTimeMillis() + Util.HOUR * 24) )
+				.format( new Date( now + Util.HOUR * 24) )
 				.replaceAll( "-", "")  // get yyyymmdd format 
 				.substring(0, 8);
 		return isClosed( m_map.get( "SMART").liquidHours(), tomorrow);
@@ -207,5 +214,9 @@ public class TradingHours {
 			}
 		}
 		throw new Exception( "Could not find trading hours for tomorrow " + date);
+	}
+
+	public static void setDummyTime(long time) {
+		dummyTime = time;
 	}
 }

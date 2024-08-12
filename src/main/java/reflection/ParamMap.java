@@ -75,6 +75,15 @@ public class ParamMap {
 		}
 	}
 
+	long getLong(String tag) throws RefException {
+		try {
+			return Long.valueOf( getString( tag) );
+		}
+		catch( NumberFormatException e) {
+			return 0;
+		}
+	}
+
 	double getRequiredDouble(String tag) throws RefException {
 		try {
 			return Double.valueOf( getRequiredString( tag) );

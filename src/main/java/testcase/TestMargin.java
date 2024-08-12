@@ -150,8 +150,80 @@ public class TestMargin extends MyTestCase {
 		ord.put( "stopLossPrice", base - 1);
 
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
-		waitForStatus( json, Status.Monitoring);
+		waitForStatus( json, Status.Completed);
 	}
+
+	/** start with no profit, fill buy, add profit, fill profit */
+	public void testModProfitFromZero() throws Exception {
+		S.out( "testing modify profit from zero");
+		JsonObject ord = newOrd();
+		ord.put( "leverage", 1.1);
+		ord.put( "entryPrice", base + .5);
+		ord.remove( "profitTakerPrice");
+		ord.remove( "stopLossPrice");
+
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		waitForStatus( json, Status.Monitoring, false);
+
+		// modify profit price to fill
+		ord.remove( "entryPrice");
+		ord.put( "orderId", json.getString( "orderId") );
+		ord.put( "profitTakerPrice", base -1);
+		ord.put( "stopLossPrice", base - 2);
+		ord.put( "test", true);
+		
+		cli().postToJson( "/api/margin-update", ord );
+		waitForStatus( json, Status.Completed);
+	}
+
+	/** start w/ no profit, add a profit before filling buy, then fill buy */
+	public void testModProfitEarlyFromZero() throws Exception {
+		S.out( "testing modify profit early from zero");
+		JsonObject ord = newOrd();
+		ord.remove( "profitTakerPrice");
+		ord.remove( "stopLossPrice");
+
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		waitForStatus( json, Status.PlacedBuyOrder, false);
+
+		// add a profit price
+		ord.remove( "entryPrice");
+		ord.put( "orderId", json.getString( "orderId") );
+		ord.put( "profitTakerPrice", base + 1);
+		cli().postToJson( "/api/margin-update", ord );
+		assert200();
+		
+		// modify entry price to fill
+		ord.put( "entryPrice", base + .25);
+		ord.put( "orderId", json.getString( "orderId") );
+		ord.remove( "profitTakerPrice");
+		cli().postToJson( "/api/margin-update", ord );
+		waitForStatus( json, Status.Monitoring, true);
+	}
+
+	/** start w/ no stop, fill buy, then add a stop, let it fill */
+	public void testModStopFromZero() throws Exception {
+		S.out( "testing modify stop from zero");
+		JsonObject ord = newOrd();
+		ord.put( "leverage", 1.1);
+		ord.put( "entryPrice", base + .5);
+		ord.remove( "profitTakerPrice");
+		ord.remove( "stopLossPrice");
+
+		JsonObject json = cli().postToJson( "/api/margin-order", ord );
+		waitForStatus( json, Status.Monitoring, false);
+
+		// modify stop price to fill
+		ord.remove( "entryPrice");
+		ord.put( "orderId", json.getString( "orderId") );
+		ord.put( "profitTakerPrice", base + 2);
+		ord.put( "stopLossPrice", base + 1);
+		ord.put( "test", true);
+		
+		cli().postToJson( "/api/margin-update", ord );
+		waitForStatus( json, Status.Completed);
+	}
+
 
 	/** leverage order should be monitored for liquidation */
 	public void testFillBuyLev() throws Exception {
@@ -274,14 +346,16 @@ public class TestMargin extends MyTestCase {
 		cancel( orderId);
 	}
 	
-	public void testLiquidate1() throws Exception {
-		S.out( "testing liquidate1");
+	/** user-initiated liquidation */
+	public void testUserLiq() throws Exception {
+		S.out( "testing user liquidation");
 		
 		JsonObject ord = newOrd();
 		ord.put( "entryPrice", base + .5);
+		ord.put( "leverage", 2);
 		
 		JsonObject json = cli().postToJson( "/api/margin-order", ord);
-		waitForStatus( json, Status.Monitoring);
+		waitForStatus( json, Status.Monitoring, false);
 		
 		JsonObject param = Util.toJson(
 				"wallet_public_key", Cookie.wallet,
@@ -289,6 +363,47 @@ public class TestMargin extends MyTestCase {
 				"orderId", json.getString( "orderId") );
 		cli().postToJson( "/api/margin-liquidate", param).display();
 		waitForStatus( json, Status.Completed);
+	}
+
+
+	/** sim tomorrow's close; before running this, check the trading hours:
+	 *  /api/?msg=getTradingHours
+	 *  and make sure the next closed day is showing up there  */
+	public void testLiquidate1() throws Exception {
+		S.out( "testing liquidate1");
+		
+		JsonObject ord = newOrd();
+		ord.put( "entryPrice", base + .5);
+		ord.put( "leverage", 2);
+		
+		JsonObject json = cli().postToJson( "/api/margin-order", ord);
+		waitForStatus( json, Status.Monitoring, false);
+
+		S.out( "simulating day before close");
+		long time = System.currentTimeMillis() + Util.DAY * 2;  // set this to be the day before the market is closed
+		cli().get( "/api/?msg=simulate&item=time&time=" + time);
+		waitForStatus( json, Status.Completed);
+	}
+
+	/** sim price drop*/
+	public void testLiqPriceDrop() throws Exception {
+		S.out( "testing liquidate1");
+		
+		JsonObject ord = newOrd();
+		ord.put( "entryPrice", base + .5);
+		ord.put( "leverage", 10);
+		
+		JsonObject json = cli().postToJson( "/api/margin-order", ord);
+		waitForStatus( json, Status.Monitoring, false);
+		
+		S.out( "got to Monitoring phase; simulating price drop");
+		cli().get( String.format( "/api/?msg=simulate&item=price&conid=%s&price=%s", TestOrder.conid, base * .85) );
+		assert200();
+		
+		waitForStatus( json, Status.Completed);
+		S.out( "status should go to completed for %s", json.getString( "orderId"));
+		
+		assertTrue( false);
 	}
 
 	public void testAddFunds() {

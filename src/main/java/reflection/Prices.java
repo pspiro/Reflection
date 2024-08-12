@@ -41,7 +41,11 @@ public class Prices {
 	public Prices() {
 	}
 
-	public void update(JsonObject obj) {
+	public void simulate(JsonObject obj) {
+		update( obj);
+	}
+	
+	public synchronized void update(JsonObject obj) {
 		m_bid = obj.getDouble("bid");
 		m_ask = obj.getDouble("ask");
 		m_last = obj.getDouble("last");
@@ -154,7 +158,7 @@ public class Prices {
 		Util.require( validBid() && validAsk(), "No valid prices for mark price");
 		return validLast() ? S.between( m_last, m_bid, m_ask) : (m_bid + m_ask) / 2.;
 	}
-
+	
 	/** for debug and S.out() only */
 	@Override public String toString() {
 		return S.format( "bid=%s  ask=%s  last=%s  time=%s",

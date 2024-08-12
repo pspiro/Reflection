@@ -15,6 +15,7 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -33,7 +34,8 @@ public class OldStyleTransaction extends MyTransaction {
 		refreshConfig,
 		terminate,
 		testAlert,
-		checkForSignups
+		checkForSignups,
+		simulate
 		;
 	}
 
@@ -92,7 +94,37 @@ public class OldStyleTransaction extends MyTransaction {
 			case checkForSignups:
 				onCheckForSignups();
 				break;
+			case simulate:
+				onSimulate();
+				break;
 		}
+	}
+
+	/** these are used for testing margin orders */
+	private void onSimulate() throws Exception {
+		Util.require( !Main.m_config.isProduction(), "can't simulate in production");
+		
+		String item = m_map.getString( "item");
+		if (item.equals( "time")) {
+			TradingHours.setDummyTime( m_map.getLong( "time") );
+		}
+		else if (item.equals( "price")) {
+			int conid = m_map.getRequiredInt( "conid");
+			double price = m_map.getRequiredPrice( "price");
+
+			Stock stock = m_main.stocks().getStockByConid( conid);
+			Util.require( stock != null, "stock not found");
+
+			// update prices and send a notification to all listeners
+			out( "Simulating prices %s for %s", price, stock.symbol() );
+			stock.prices().simulate( Util.toJson(
+					"bid", price - .01, 
+					"ask", price + .01,
+					"last", price,
+					"time", System.currentTimeMillis()
+					) );
+		}
+		respondOk();
 	}
 
 	private void onCheckForSignups() throws Exception {

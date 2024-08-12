@@ -25,6 +25,8 @@ import web3.Stablecoin;
 import web3.StockToken;
 
 public class MarginOrder extends JsonObject implements DualParent {
+	static long dummyTime; // used for testing
+	
 	public enum Status {
 		NeedPayment,			// initial state
 		InitiatedPayment,		// initiated blockchain transaction; may or may not have trans hash and receipt
@@ -205,22 +207,18 @@ public class MarginOrder extends JsonObject implements DualParent {
 		m_buyOrder.lmtPrice( entryPrice() );
 		m_buyOrder.outsideRth( true);
 
-		if (profitTakerPrice() > 0) {
-			m_profitOrder = new DualOrder( m_conn, null, "PROFIT", orderId() + " profit", conid(), this);
-			m_profitOrder.action( Action.Sell);
-			m_profitOrder.orderType( OrderType.LMT);
-			m_profitOrder.lmtPrice( profitTakerPrice() );
-			m_profitOrder.outsideRth( true);
-		}
-		
-		if (stopLossPrice() > 0) {
-			m_stopOrder = new DualOrder( m_conn, stock().prices(), "STOP", orderId() + " stop", conid(), this);
-			m_stopOrder.action( Action.Sell);
-			m_stopOrder.orderType( OrderType.STP_LMT);  // use STOP_LMT  because STOP cannot be set to trigger outside RTH
-			m_stopOrder.lmtPrice( stopLossPrice() * .95);
-			m_stopOrder.stopPrice( stopLossPrice() );
-			m_stopOrder.outsideRth( true);
-		}
+		m_profitOrder = new DualOrder( m_conn, null, "PROFIT", orderId() + " profit", conid(), this);
+		m_profitOrder.action( Action.Sell);
+		m_profitOrder.orderType( OrderType.LMT);
+		m_profitOrder.lmtPrice( profitTakerPrice() );
+		m_profitOrder.outsideRth( true);
+	
+		m_stopOrder = new DualOrder( m_conn, stock().prices(), "STOP", orderId() + " stop", conid(), this);
+		m_stopOrder.action( Action.Sell);
+		m_stopOrder.orderType( OrderType.STP_LMT);  // use STOP_LMT  because STOP cannot be set to trigger outside RTH
+		m_stopOrder.lmtPrice( stopLossPrice() * .95);
+		m_stopOrder.stopPrice( stopLossPrice() );
+		m_stopOrder.outsideRth( true);
 
 		m_liqOrder = new DualOrder( m_conn, null, "LIQUIDATION", orderId() + " liquidation", conid(), this);
 		m_liqOrder.action( Action.Sell);
@@ -248,11 +246,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 			
 			m_buyOrder.rehydrate( orderRefMap);
 			
-			if (m_profitOrder != null) {
+			if (profitTakerPrice() > 0) {
 				m_profitOrder.rehydrate( orderRefMap);
 			}
 			
-			if (m_profitOrder != null) {
+			if (stopLossPrice() > 0) {
 				m_stopOrder.rehydrate( orderRefMap);
 			}
 		}
@@ -452,7 +450,10 @@ public class MarginOrder extends JsonObject implements DualParent {
 		status( Status.PlacedBuyOrder);  // now we wait for the buy order to be filled or canceled
 	}
 
-	/** Check if we should sim-fill the order. Used for testing on weekends. */
+	/** Check if we should sim-fill the order. Used for testing on weekends.
+	 *  We sim-fill based on the last price even if it never ticks.
+	 *  Note you could also use the old-style simulate message to tick any
+	 *  price you want. */
 	@Override public void simFill(DualOrder dual) {
 		if (!m_config.autoFill() ) {
 			return;
@@ -521,7 +522,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 			// update the IB order if it is live
 			if (status() == Status.Monitoring) {
-				m_profitOrder.resubmit();
+				m_stopOrder.resubmit();
 			}
 		}
 	}
@@ -552,11 +553,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		int qtyToSell = totalBought() - totalSold();
 		
 		if (qtyToSell > 0) {
-			if (m_profitOrder != null) {
+			if (profitTakerPrice() > 0) {
 				m_profitOrder.checkOrder( qtyToSell);
 			}
 			
-			if (m_stopOrder != null) {
+			if (stopLossPrice() > 0) {
 				m_stopOrder.checkOrder( qtyToSell);
 			}
 		}
@@ -714,24 +715,25 @@ public class MarginOrder extends JsonObject implements DualParent {
 		boolean someSell = false;
 		int quantity = roundedQty() - totalSold();
 		
+		// update the quantity even if we don't have size yet, because user could modify
+		// order and set size later
+		m_profitOrder.quantity( quantity);
+		m_stopOrder.quantity( quantity);
+
 		if (profitTakerPrice() > 0) {
-			out( "***Placing margin profit-taker orders");
-			m_profitOrder.quantity( quantity);
+			out( "***Placing margin profit-taker order");
 			m_profitOrder.placeOrder( conid() );
 			someSell = true;
 		}
 
-		// we must set our own stop loss price which is >= theirs
 		if (stopLossPrice() > 0) {
-			out( "***Placing margin stop-loss orders");
-			m_stopOrder.quantity( quantity);
+			out( "***Placing margin stop-loss order");
 			m_stopOrder.placeOrder( conid() );
 			someSell = true;
 		}
 		
 		if (someSell || loanAmt() > 0) {  // waiting for sell orders to fill or monitoring for liquidation
-			status( Status.Monitoring);
-			listen();
+			status( Status.Monitoring);  // starts listening
 		}
 		else {  // we're done
 			status( Status.Completed);
@@ -746,12 +748,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 
 	/** called in API or margin thread */
 	private void cancelSellOrders() {
-		if (m_profitOrder != null) {
+		if (profitTakerPrice() > 0) {
 			out( "canceling profit order");
 			m_profitOrder.cancel();
 		}
 		
-		if (m_stopOrder != null) {
+		if (stopLossPrice() > 0) {
 			out( "canceling stop orders");
 			m_stopOrder.cancel();
 		}
@@ -1257,27 +1259,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
-//bug: modify sell price from zero to non-zero causes exception, m_profit is null
-//auto-liq at COB regular hours if market is closed next day
-//check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
+//must implement gooduntil
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
-//you could charge a different fee for a lev order with leverage of 1, something more similar to the 
-//consider if you really want to collect a fee for an order that is never filled
-//support user-liquidate, maybe force that
-//you will run into issues with multiple users, you cannot have crossing orders for the same stock; cross them at the current mark price (bid/last/ask)
-//must implement gooduntil and liquidation
-//add a pnl field
-//just have one "cash/loan balance" column; you don't need separate columns
-//test withdraw cash and all possible errors
-//test single stop order, sim. stop orders
-//test dual stop orders
-//test pruning
-//bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
 //must recalculate liqPrice if buy lmt price changes before fill
-//don't log all the countless "postrequest"
-//fees is wrong; it just use maxLoanAmt(), not current loan amount
+//fees is wrong; it must use maxLoanAmt(), not current loan amount
+//consider if you really want to collect a fee for an order that is never filled
 //create config items for the two fee amounts
+//you will run into issues with multiple users, you cannot have crossing orders for the same stock; cross them yourself? or just place your orders very close to bid/ask so they don't cross other orders
+//test withdraw cash
+//bug: w/ no tws conn, margin order stayed in GotReceipt status which should not be possible
+//don't log all the countless "postrequest"
 //think about what emails you want to send out; what sounds you want to make, what you will highlight at frontend
+//check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
+//if stocks are re-read, the "Prices" that we are listening to will be all wrong
 
 //later:
 //pass commission cost to user
@@ -1304,18 +1298,8 @@ public class MarginOrder extends JsonObject implements DualParent {
 //support withdrawing stock and money
 //you have to think: does 0 price on a mod mean remove it, or ignore it; don't allow zero after orig has price
 //price check on updates has been disabled; reconsider it
-
-//	old notes from textpad
-//	
-//	margin order
-//	give a receipt
-//	you have to transfer to a separate wallet because the stablecoin held in there is not yours
-//	if the main order is partially filled, we won't place the bracket orders until it is fully filled or canceled
-//	it's possible an order could fill and disappear while RefAPI is not running; you won't know if it filled; you will have to look for trade reports; or, maybe there is a way to download completed orders to refapi
-//	Overnight sell stop TIF is DAY; you have to simulate GTC as well
-//	since overnight must be day, what happens to the oca-connected Day order when the overnight order is canceled by the system; you may need to simulate oca group without the "cancel" connection
-//	when placing the order, you must set a timer/timeout to respond for the blockchain 
-//	don't store orders in the db; it's messing up the tags
-//	test the night order trigger which should place a lmt order
-//	if stocks are re-read, the "Prices" that we are listening to will be all wrong
-//	you have to account for partial fills when creating the child orders
+//when placing the order, you must set a timer/timeout to respond for the blockchain 
+//you have to transfer to a separate wallet because the stablecoin held in there is not yours
+//it's possible an order could fill and disappear while RefAPI is not running; you won't know if it filled; you will have to look for trade reports; or, maybe there is a way to download completed orders to refapi
+//test the night order trigger which should place a lmt order
+//you have to account for partial fills when creating the child orders (at least profit-taker)

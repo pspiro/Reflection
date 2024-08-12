@@ -45,7 +45,9 @@ public class DualOrder implements SingleParent {
 		m_name = name;
 	}
 	
+	/** Restore the orders from current live orders, if any */
 	public void rehydrate(HashMap<String, LiveOrder> orderRefMap) {
+		// remember, each order could have at most one live order open at a time 
 		m_dayOrder.rehydrate( orderRefMap);
 		m_nightOrder.rehydrate( orderRefMap);
 	}
