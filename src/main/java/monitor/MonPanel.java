@@ -10,6 +10,7 @@ import common.Util;
 import common.Util.ExRunnable;
 import reflection.Config;
 import tw.util.NewTabbedPanel.INewTab;
+import tw.util.S;
 import tw.util.UI;
 
 /** Monitor panel, base class for all top-level Monitor panels */
@@ -19,12 +20,14 @@ public abstract class MonPanel extends JPanel implements INewTab {
 	}
 
 	@Override public void activated() {
+		S.out( "activated");
 		refreshTop();
 	}
 
 	/** Display hourglass and refresh, catch and display exceptions */
 	protected final void refreshTop() {
-		wrap( () -> UI.watch( Monitor.m_frame, () -> refresh() ) );
+		S.out( "refreshTop");
+		wrap( () -> refresh() );
 	}
 	
 	/** Display the message in a popup */

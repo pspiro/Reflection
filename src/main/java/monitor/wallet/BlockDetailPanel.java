@@ -46,7 +46,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 		});
 	}
 
-	void refresh( String walletAddr) throws Exception {
+	public void refresh( String walletAddr) throws Exception {
 		m_model.ar().clear();
 		
 		if (Util.isValidAddress(walletAddr) ) {
@@ -75,7 +75,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 	}
 	
 	/** These rows are used to feed into the consolidated blockchain panel */
-	JsonArray rows() {
+	public JsonArray rows() {
 		return m_model.ar();
 	}
 

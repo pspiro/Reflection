@@ -7,7 +7,7 @@ import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
 public class MonitorConfig extends Config {
-	private String mdBaseUrl;
+	private String mdBaseUrl;	// does not end with /
 	private String fbBaseUrl;
 	private String hookBaseUrl;
 
