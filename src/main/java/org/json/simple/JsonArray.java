@@ -248,7 +248,7 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			});
 		});
 		
-		return b.toString();
+		return Util.wrapHtml("html", b.toString() );
 	}
 
 	/** Return sorted set of all keys of all JsonObjects in this array */

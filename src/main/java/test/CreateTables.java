@@ -55,18 +55,21 @@ public class CreateTables  {
 		con.execute(sql);
 
 		// create unique index on lower(email)
-		con.execute( "create unique index signup_email on user (lower(email))");
+		//con.execute( "create unique index signup_email_key on user (lower(email))");
 	}
 
 	void createLogTable() throws Exception {
-		String sql = "create table log ("
-			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "type varchar(32),"
-			    + "uid varchar(8),"
-				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
-			    + "data jsonb"  // see TestLog for how to read this back into a JsonObject
+		String sql = """
+				create table log (
+					created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+					type varchar(32),
+					uid varchar(8),
+					wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
+					data jsonb, -- see TestLog for how to read this back into a JsonObject
 
-				+ ")";
+					INDEX log_wallet_key (wallet_public_key)
+					);""";		
+
 		con.execute(sql);
 	}
 	
@@ -96,7 +99,7 @@ public class CreateTables  {
 					country varchar(32)
 					ref_code varchar(32),
 					
-					INDEX idx_wallet_public_key (wallet_public_key)
+					INDEX trans_wallet_key (wallet_public_key)
 				);""";
 		con.execute( sql);
 	}
@@ -135,6 +138,19 @@ public class CreateTables  {
 				+ ")";
 		con.execute( sql);
 	}
+	
+	void createEmail() throws Exception {
+		String sql = """
+		CREATE TABLE email (
+			created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+			email varchar(100),
+			subject varchar(100),
+			text text
+		);
+		""";
+		con.execute( sql);
+	}		
+		
 	
 	/** This has never been run and probably doesn't work */
 	void createUsers() throws Exception {

@@ -42,7 +42,7 @@ public class Main implements ITradeReportHandler {
 
 	// no ticks in this time and we have a problem
 	private static final long SmartInterval = Util.MINUTE * 2; 
-	private static final long OvernightInterval = Util.MINUTE * 10; 
+	private static final long OvernightInterval = Util.MINUTE * 15; 
 
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );

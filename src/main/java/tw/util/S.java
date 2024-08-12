@@ -270,15 +270,24 @@ public class S {
         return cal.getTimeInMillis();
     }
 
-    /** Returns true for all spaces. */
+    /** All whitespace is considered null.
+     *  Adding separate versions for Object to avoid mistakes */
+	public static boolean isNullObj( Object obj) {
+		return obj == null || obj.toString().trim().equals( "");
+	}
+	
+    /** All whitespace is considered null.
+    *  Adding separate versions for Object to avoid mistakes */
+	public static boolean isNotNullObj( Object obj) {
+		return !isNullObj( obj);
+	}
+	
+    /** All whitespace is considered null. */
 	public static boolean isNull( String str) {
 		return str == null || str.trim().equals( "");
 	}
 	
-	public static boolean isNull( Object obj) {
-		return obj == null || obj.toString().trim().equals( "");
-	}
-	
+    /** All whitespace is considered null. */
 	public static boolean isNotNull( String str) {
 		return !isNull( str);
 	}
@@ -581,10 +590,6 @@ public class S {
 			list.add( string);
 		}
 		return list;
-	}
-
-	public static boolean isNotNull(double val) {
-		return val != Double.MAX_VALUE;
 	}
 
     /** return true if a file or directory with the specified name exists */

@@ -390,20 +390,50 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	
 	/** Don't add \n's because it break JOptionPane in Util.inform */ 
 	public String toHtml(boolean fancy) {
+		return toHtml( fancy, keySet().toArray() );
+	}
+	
+	public String toHtml( boolean fancy, Object[] keys) {
 		StringBuilder b = new StringBuilder();
-		forEach( (key,value) -> {
-			Util.appendHtml( b, "tr", () -> {
-				Util.wrapHtml( b, "td", key);
+		
+		if (fancy) {
+			Util.wrapHtml( b, "style", """
+		        table {
+		            border-collapse: collapse;
+		            width: 100%;
+		        }
 
-				if (value instanceof JsonArray) {
-					Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+		        table, th, td {
+		            border: 1px solid black;
+		        }
+
+		        th, td {
+		            padding: 8px;
+		            text-align: left;
+		        }""");
+		}
+		
+		Util.appendHtml( b, "table", () -> {
+			for (var keyObj : keys) {
+				String key = (String)keyObj;
+				Object value = get( key);
+				
+				if (S.isNotNullObj( value) ) {
+					Util.appendHtml( b, "tr", () -> {
+						Util.wrapHtml( b, "td", key);
+		
+						if (value instanceof JsonArray) {
+							Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+						}
+						else {
+							Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
+						}
+					});
 				}
-				else {
-					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
-				}
-			});
+			}
 		});
-		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
+		
+		return Util.wrapHtml( "html", b.toString() );
 	}
 
 
@@ -459,6 +489,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 				iter.remove();
 			}
 		}
+	}
+	
+	/** good for chaining */
+	public JsonObject removeEntry( String tag) {
+		remove( tag);
+		return this;
 	}
 }
 /** NOTE: Timestamp objects are stored as
