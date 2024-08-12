@@ -120,9 +120,7 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
-
-	private double bidLiqBuffer = 1.01;
-	private double markLiqBuffer = 1.02;
+	private int marginLiqTime;  // RefAPI will liquidate position when there is this much time remaining on the day before market close
 
 
 	public long recentPrice() { return recentPrice; }
@@ -273,6 +271,7 @@ public class Config extends ConfigBase {
 		this.marginPrune = m_tab.getRequiredInt("marginPrune");
 		this.marginFeePct = m_tab.getRequiredDouble("marginFeePct");
 		this.marginMinValToLoan = m_tab.getRequiredDouble("marginMinValToLoan");
+		this.marginLiqTime = m_tab.getRequiredInt("marginLiqTime");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -666,13 +665,6 @@ public class Config extends ConfigBase {
 		return hookNameSuffix;
 	}
 
-	public double bidLiqBuffer() {
-		return bidLiqBuffer;
-	}
-	public double markLiqBuffer() {
-		return markLiqBuffer;
-	}
-	
 	public String admin1Addr() {
 		return admin1Addr;
 	}
@@ -739,6 +731,9 @@ public class Config extends ConfigBase {
 	}
 	public double marginMinValToLoan() {
 		return marginMinValToLoan;
+	}
+	public int marginLiqTime() {
+		return marginLiqTime;
 	}
 	
 }

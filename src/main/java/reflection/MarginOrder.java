@@ -265,10 +265,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 		// you have to call onUpdated() in case order has filled more
 	}
 	
-	/** called on a timer every few seconds; make sure the margin order is in sync with the IB order */ 
+	/** called on a timer every few seconds; make sure the margin order is in sync with the IB order 
+	 * @param tradingHours */ 
 	// no good, we can't be calling this and methods like placeBuyOrder in different threads
 	// you either have to only call them in this thread, or only call this after reconnect
-	synchronized void onProcess() {
+	synchronized void onProcess(TradingHours tradingHours) {
 		switch( status() ) {
 			case NeedPayment:
 				acceptPayment();
@@ -307,7 +308,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 				break;
 
 			case Monitoring:
-				checkMonitoring();
+				checkMonitoring( tradingHours);
 				break;
 			
 			case Liquidation:
@@ -544,8 +545,9 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 
 	/** check sell orders; no need to check for liquidation; 
-	 *  that occurs in the onTick() method */
-	private void checkMonitoring() {
+	 *  that occurs in the onTick() method 
+	 * @param tradingHours */
+	private void checkMonitoring(TradingHours tradingHours) {
 		// sell orders should be working
 		int qtyToSell = totalBought() - totalSold();
 		
@@ -558,7 +560,19 @@ public class MarginOrder extends JsonObject implements DualParent {
 				m_stopOrder.checkOrder( qtyToSell);
 			}
 		}
+		
 		// we could also be monitoring for liquidation 
+
+		try {
+			if (loanAmt() > 0 && tradingHours.mustLiquidate( m_config.marginLiqTime() ) ) {
+				liquidate();
+			}
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			Alerts.alert( "RefAPI", "CANNOT GET EXCHANGE HOURS FOR LIQUIDATION ORDER",
+					wallet() + " " + orderId() );
+		}
 	}
 
 	private void checkLiquidation() {
@@ -1243,7 +1257,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
-//implement "get info" from frontend--or--send an email with the summary
+//bug: modify sell price from zero to non-zero causes exception, m_profit is null
 //auto-liq at COB regular hours if market is closed next day
 //check for fill during reset, i.e. live savedOrder that is not restored; query completed orders
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
@@ -1263,6 +1277,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 //don't log all the countless "postrequest"
 //fees is wrong; it just use maxLoanAmt(), not current loan amount
 //create config items for the two fee amounts
+//think about what emails you want to send out; what sounds you want to make, what you will highlight at frontend
 
 //later:
 //pass commission cost to user

@@ -180,4 +180,32 @@ public class TradingHours {
 		return obj;
 
 	}
+
+	/** checks SMART only; we will liquidate before extended hours closes; there are no overnight hours
+	 *  the day before the market is closed anyway 
+	 * @throws Exception */
+	public boolean mustLiquidate( int minutesBeforeClose) throws Exception {
+		return closedTomorrow() && !insideHours( "SMART", new Date( System.currentTimeMillis() + Util.MINUTE * minutesBeforeClose) );
+	}
+
+	/** checks SMART only, we don't care if overnight is open or not */
+	private boolean closedTomorrow() throws Exception {
+		String tomorrow = Util.yToS
+				.format( new Date( System.currentTimeMillis() + Util.HOUR * 24) )
+				.replaceAll( "-", "")  // get yyyymmdd format 
+				.substring(0, 8);
+		return isClosed( m_map.get( "SMART").liquidHours(), tomorrow);
+	}
+	
+	/** @param date yyyymmdd format 
+	 * @throws Exception */
+	private boolean isClosed( String hours, String date) throws Exception {	
+		for (String wholeDay : hours.split( ";") ) {
+			String[] split = wholeDay.split( ":");
+			if (split[0].equals( date) ) {
+				return split[1].equalsIgnoreCase( "CLOSED");
+			}
+		}
+		throw new Exception( "Could not find trading hours for tomorrow " + date);
+	}
 }

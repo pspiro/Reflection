@@ -20,12 +20,14 @@ class MarginStore extends TsonArray<MarginOrder> {
 	private ApiController m_conn;
 	private final NiceTimer m_processingThread = new NiceTimer( "MarginStore");  // check every ten sec
 	private final Runnable m_saver = () -> saveNow();
-	private final long m_pruneInterval;
+	private final long m_pruneInterval;  // in ms
+	private final TradingHours m_tradingHours;
 	
-	public MarginStore(String filename, ApiController conn, long pruneInterval) {
+	public MarginStore(String filename, ApiController conn, long pruneInterval, TradingHours tradingHours) {
 		m_filename = filename;
 		m_conn = conn;
 		m_pruneInterval = pruneInterval;
+		m_tradingHours = tradingHours;
 	}
 
 	/** Called after store is created or read from disk */
@@ -114,7 +116,7 @@ class MarginStore extends TsonArray<MarginOrder> {
 			m_started = true;
 			
 			m_processingThread.executeEvery( 0, 10000, () -> 
-				forEach( order -> order.onProcess() ) );
+				forEach( order -> order.onProcess( m_tradingHours) ) );
 
 			m_processingThread.executeEvery( 0, Util.MINUTE * 10, this::prune);
 		}

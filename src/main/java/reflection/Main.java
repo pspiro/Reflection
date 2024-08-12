@@ -38,7 +38,8 @@ public class Main implements ITradeReportHandler {
 		Connected, Disconnected
 	};
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
-	
+	static String marginFile = "margin.store";
+
 	// static
 	static final Config m_config = new RefApiConfig();
 
@@ -56,7 +57,7 @@ public class Main implements ITradeReportHandler {
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
-	private MarginStore m_marginStore;
+	private final MarginStore m_marginStore;
 
 	
 	Stocks stocks() { return m_stocks; }
@@ -210,16 +211,18 @@ public class Main implements ITradeReportHandler {
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr 
-
+		
 		// restore margin store and live orders (must come before connecting to TWS)
-		timer.next( "Restoring margin orders");
+		timer.next( "Restoring live orders");
+		m_marginStore = new MarginStore( marginFile, apiController(), m_config.marginPrune(), m_tradingHours);
 		restoreLiveOrders();
-		timer.done();
 		
 		// connect to TWS
+		timer.next( "Starting tws connection timer");
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
+		timer.done();
 	}
 
 	void shutdown() {
@@ -596,17 +599,11 @@ public class Main implements ITradeReportHandler {
 	
 	/** Called at startup only. Read it from disk but do not start the order processing yet.
 	 *  If there is an error while reading the file, the program will terminate */ 
-	void restoreLiveOrders() throws FileNotFoundException, Exception {
-		String filename = "margin.store";
-		
-		// we have to create the margin store before parsing the json
-		// because the store is used in the constructor to the MarginOrders
-		m_marginStore = new MarginStore( filename, apiController(), m_config.marginPrune() );
-		
-		if (S.fileExists( filename)) {
+	void restoreLiveOrders() throws FileNotFoundException, Exception {		
+		if (S.fileExists( marginFile)) {
 			S.out( "Reading margin store");
 			JsonArray.parse( 
-					new FileReader( filename),
+					new FileReader( marginFile),
 					m_marginStore,
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore)  // note that connection may not be established yet
 					);

@@ -117,7 +117,7 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 				S.out( "You can't get market data in your paper account while logged into your production account");
 				break;
 			case 502:
-				S.out( "Received 502. It may be that EITHER another client is connected with the same client ID OR TWS is not accepting connections from this IP address");
+				S.out( "Received 502. It may be that EITHER another client is connected with the same client ID OR TWS is not accepting connections from this IP address OR you have not acknowledged the paper-trading popup at TWS");
 		}
 	}
 }
