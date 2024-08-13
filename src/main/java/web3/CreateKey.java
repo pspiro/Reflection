@@ -131,7 +131,7 @@ public class CreateKey {
 			return Util.right( pk, 64); // some private keys (prod only) were encrypted with 0x at the beginning, so shave it off
 		}
 		catch( javax.crypto.BadPaddingException e) {  // this happens when we use the wrong password
-			throw new Exception( "Password is incorrect");
+			throw new Exception( "Private key encryption password is incorrect");
 		}
 	}
 
