@@ -9,7 +9,7 @@ import web3.Erc20;
 import web3.RetVal;
 
 /** Implements the Busd contract methods that are writable, and deploy() */
-public class RbBusd extends Erc20 implements IBusd {
+public class RbBusd extends RbTok implements IBusd {
 	public RbBusd( String address, int decimals, String name) {
 		super( address, decimals, name);
 	}
@@ -32,19 +32,6 @@ public class RbBusd extends Erc20 implements IBusd {
 				tm, 
 				Refblocks.getGp( gas)
 				);
-	}
-
-	/** For testing only 
-	 * @throws Exception */
-	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
-		Util.reqValidKey(approverKey);
-		Util.reqValidAddress(spenderAddr);
-		
-		S.out( "%s approving %s to spend %s %s", 
-				Refblocks.getAddressPk(approverKey), spenderAddr, amt, m_name);
-		
-		return Refblocks.exec( approverKey, tm -> load( tm, 100000)
-				.approve( spenderAddr, toBlockchain( amt) ) );
 	}
 		
 	/** For testing only; anyone can call this but they must have some gas */

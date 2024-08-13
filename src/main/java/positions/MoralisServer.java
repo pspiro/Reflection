@@ -290,12 +290,30 @@ public class MoralisServer {
 	
 	public static JsonObject getQueuedTrans( String from) throws Exception {
 		String body = """
-				{
-				"jsonrpc": "2.0",
-				"id": 1,
-				"method": "txpool_content"
-				}""";
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "txpool_content"
+			}""";
 		return nodeQuery( body);  // result -> pending and result -> queued
+	}
+	
+	public static long getBalance( String contractAddr, String walletAddr) throws Exception {
+		String templ = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1
+			"method": "eth_call",
+			"params": [
+				{
+				"to": "%s",
+				"data": "0x70a08231000000000000000000000000%s"
+				},
+				"latest"
+			],
+			}""";
+		String body = String.format( templ, contractAddr, walletAddr);
+		return nodeQuery( body).getLong( "result");
 	}
 	
 	public static void main(String[] args) throws Exception {

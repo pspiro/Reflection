@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 import common.Util;
 import positions.MoralisServer;
-import positions.Wallet;
+import refblocks.Refblocks;
 import tw.util.S;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
@@ -61,8 +61,9 @@ public class Erc20 {
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
-		Util.reqValidAddress(walletAddr);
-		return new Wallet(walletAddr).getBalance(m_address); 
+//		Util.reqValidAddress(walletAddr);
+//		return new Wallet(walletAddr).getBalance(m_address);
+		return Refblocks.getPosition( m_address, walletAddr);
 	}
 
 	/** return the balances of all wallets holding this token

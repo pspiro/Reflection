@@ -326,6 +326,10 @@ public class Refblocks {
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
 		return new DelayedTrp().reallyWait( receipt);
 	}
+
+	public static double getPosition(String contractAddr, String walletAddr) {
+		return 0;
+	}
 }
 
 // MUST we wait for the transaction receipt from first call before sending second call???

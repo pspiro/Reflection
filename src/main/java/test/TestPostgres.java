@@ -1,5 +1,6 @@
 package test;
 
+import positions.MoralisServer;
 import reflection.Config;
 import tw.util.S;
 
@@ -9,21 +10,14 @@ public class TestPostgres {
 
 	static {
 		try {
-			c = Config.read();
+			c = Config.ask();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-//		c.matic().transfer(
-//				c.ownerKey(), 
-//				Util.createFakeAddress(),
-//				.001).waitForHash();
-//		c.busd().approve( c.ownerKey(),
-//				"0x1cd8cd7607d1dd32915614bafc95834c5f2db3dc", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0xda2c28af9cbfad9956333aba0fc3b482bc0aed13", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0x7285420d377e98219ece3f004dd1d5fa33e9bbd9", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( c.ownerAddr(), c.rusdAddr() ) );
+		long pos = MoralisServer.getBalance( "0x2703161D6DD37301CEd98ff717795E14427a462B", "0x455759A3F9124Bf2576dA81fb9ae8e76B27fF2D6");
+		S.out( pos);
 	}
 }

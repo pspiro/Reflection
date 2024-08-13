@@ -12,7 +12,7 @@ import web3.Stablecoin;
 import web3.StockToken;
 
 /** Implements the Rusd contract methods that are writable */
-public class RbRusd extends Erc20 implements IRusd {
+public class RbRusd extends RbTok implements IRusd {
 	static String rpc = "https://polygon-rpc.com/";
 	static long gas = 40000; // make this big enough for all transactions
 	
@@ -32,12 +32,12 @@ public class RbRusd extends Erc20 implements IRusd {
 
 	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain
 	 *  note that we no longer need to have tm passed in because we can get it from Refblocks */
-	public Rusd load(TransactionManager tm) throws Exception {
+	public Rusd load(TransactionManager tm, long gas) throws Exception {
 		return Rusd.load( 
 				address(), 
 				Refblocks.web3j, 
 				tm, 
-				Refblocks.getGp( 500000)  // this is good for everything except deployment
+				Refblocks.getGp( gas)  // this is good for everything except deployment
 				);
 	}
 
@@ -54,7 +54,7 @@ public class RbRusd extends Erc20 implements IRusd {
 				stablecoin.name(),
 				userAddr);
 		
-		return Refblocks.exec( adminKey, tm -> load( tm).buyStock(
+		return Refblocks.exec( adminKey, tm -> load( tm, 500000).buyStock(
 				userAddr, 
 				stablecoin.address(), 
 				stockToken.address(), 
@@ -75,7 +75,7 @@ public class RbRusd extends Erc20 implements IRusd {
 				rusdAmt,
 				userAddr);
 
-		return Refblocks.exec( adminKey, tm -> load( tm).sellStock( 
+		return Refblocks.exec( adminKey, tm -> load( tm, 500000).sellStock( 
 				userAddr,
 				address(), 
 				stockToken.address(), 
@@ -98,7 +98,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		
 		//S.out( "  the allowance is %s", )
 
-		return Refblocks.exec( adminKey, tm -> load( tm).sellRusd(
+		return Refblocks.exec( adminKey, tm -> load( tm, 500000).sellRusd(
 				userAddr,
 				busd.address(),
 				busd.toBlockchain( amt),
@@ -117,7 +117,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		
 		S.out( "RUSD setting RefWallet to %s", refWalletAddr);
 		
-		return Refblocks.exec( ownerKey, tm -> load( tm).setRefWalletAddress(
+		return Refblocks.exec( ownerKey, tm -> load( tm, 500000).setRefWalletAddress(
 				refWalletAddr) );
 	}
 
@@ -130,7 +130,7 @@ public class RbRusd extends Erc20 implements IRusd {
 				add ? "adding" : "removing",
 				address);
 				
-		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( 
+		return Refblocks.exec( ownerKey, tm -> load( tm, 500000).addOrRemoveAdmin( 
 				address, 
 				add) );
 	}
@@ -139,17 +139,6 @@ public class RbRusd extends Erc20 implements IRusd {
 		throw new Exception(); // not implemented yet
 	}
 
-	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
-		Util.reqValidKey(approverKey);
-		Util.reqValidAddress(spenderAddr);
-
-		S.out( "RUSD %s allows spending of %s RUSD by %s",
-				approverKey,
-				amt,
-				spenderAddr);
-		
-		return Refblocks.exec( approverKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
-	}
 
 }
 // this won't work. you either need to create a new RUSD and set it on all the stock tokens,
