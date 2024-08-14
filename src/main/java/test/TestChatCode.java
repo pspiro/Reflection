@@ -1,12 +1,10 @@
 package test;
 
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthCall;
-import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
-import org.web3j.protocol.http.HttpService;
-import org.web3j.tx.ReadonlyTransactionManager;
-import org.web3j.tx.TransactionManager;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
@@ -14,12 +12,12 @@ import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Uint256;
-import org.web3j.utils.Numeric;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.ReadonlyTransactionManager;
+import org.web3j.tx.TransactionManager;
 
 public class TestChatCode {
     private static final String INFURA_URL = "https://polygon-rpc.com/";

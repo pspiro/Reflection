@@ -21,13 +21,6 @@ public class Wallet {
 		return m_walletAddr;
 	}
 
-	/** Sends a request every time
-	 *  @deprecated use Erc20.getPosition() instead
-	 *  @param token is token address */
-	public double getBalance(String token) throws Exception {
-		return getBalance( reqPositionsMap(m_walletAddr, token), token);
-	}
-
 	/** Look up the value in the map and convert to decimal;
 	 *  Use this one if you want more than one token balance */
 	public static double getBalance(HashMap<String,Double> map, String token) throws Exception {
@@ -91,11 +84,7 @@ public class Wallet {
 //		return map;
 //	}
 
-	/** Sends a new query every time */
-	public static double getBalance(String wallet, String tokenAddr) throws Exception {
-		return new Wallet(wallet).getBalance(tokenAddr);
-	}
-	
+	/** @deprecated */
 	public double getNativeBalance() throws Exception {
 		return MoralisServer.getNativeBalance(m_walletAddr);
 	}

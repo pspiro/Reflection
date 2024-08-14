@@ -45,16 +45,17 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = new Wallet(m_walletAddr).getBalance( contract);
-			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
-				// this should only occur if we missed the unconfirmed event, i.e. if
-				// the HookServer was started after the event came in or if the
-				// event came in after the new position was returned in the position query;
-				// we should see this infrequently; if we see it frequently, it means
-				// I don't understand something
-				S.out( "Warning: updated %s / %s to %s", m_walletAddr, contract, bal);
-				m_map.put( contract, bal);
-			}
+			throw new Exception( "!!!!!!!!!!!! fix this or find a new solution !!!!!!!!!!");
+//			double bal = MoralisServer.getBalance( contract, m_walletAddr);
+//			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
+//				// this should only occur if we missed the unconfirmed event, i.e. if
+//				// the HookServer was started after the event came in or if the
+//				// event came in after the new position was returned in the position query;
+//				// we should see this infrequently; if we see it frequently, it means
+//				// I don't understand something
+//				S.out( "Warning: updated %s / %s to %s", m_walletAddr, contract, bal);
+//				m_map.put( contract, bal);
+//			}
 		}
 	}
 	

@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.require;
-
 import java.util.Iterator;
 import java.util.List;
 

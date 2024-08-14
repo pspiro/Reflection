@@ -16,7 +16,6 @@ import org.json.simple.JsonArray;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
-import monitor.wallet.WalletPanel;
 import redis.MyRedis;
 import reflection.Stock;
 import reflection.Stocks;
