@@ -57,4 +57,8 @@ $limit""";  // you must order by desc to get the latest entries
 					super.onDouble(tag, val);
 			}
 		}
-	}
+
+		public void setWallet(String walletAddr) {
+			where.setText( String.format("where wallet_public_key = '%s'", walletAddr.toLowerCase() ) );
+		}
+}

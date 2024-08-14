@@ -243,6 +243,9 @@ public class BackendTransaction extends MyTransaction {
 			String message = "";
 			double autoRewarded = 0;
 			
+			// this is turned off for now; there was a case where a wallet got double-funded
+			// in < one second; how is that possible since we create a database entry?
+			
 			// auto-reward the user?
 			if (m_config.autoReward() > 0) {
 				// get existing locked rec, or create

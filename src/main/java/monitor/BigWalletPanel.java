@@ -35,7 +35,7 @@ import util.LogType;
 import web3.StockToken;
 
 public class BigWalletPanel extends JPanel {  // you can safely make this a MonPanel if desired
-	private static final double minBalance = .0001;
+	static final double minBalance = .0001;
 	
 	private final WalletPanel m_parent;
 	private final JTextField m_wallet = new JTextField(27); 
@@ -44,7 +44,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 	private final JLabel m_approved = new MyLabel(); 
 	private final JLabel m_matic = new MyLabel(); 
 	private final JLabel m_name = new MyLabel(); 
-	private final JLabel m_email = new MyLabel(); 
+	private final JLabel m_emailAddr = new MyLabel(); 
 	private final JLabel m_kyc = new MyLabel(); 
 	private final JLabel m_pan = new MyLabel(); 
 	private final JLabel m_aadhaar = new MyLabel(); 
@@ -76,11 +76,10 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		VerticalPanel vp = new VerticalPanel();
 		vp.setBorder( new TitledBorder( "Balances") );
 		vp.add( "Wallet", m_wallet);
-		vp.add( "Explore", new HtmlButton("View on blockchain explorer", e -> explore() ) );
 		
 		vp.addHeader( "User details");
 		vp.add( "Name", m_name); 
-		vp.add( "Email", m_email);
+		vp.add( "Email", m_emailAddr);
 		vp.add( "KYC status", m_kyc, new HtmlButton( "Set verified", e -> setVerified() ) );
 		vp.add( "PAN", m_pan);
 		vp.add( "Aadhaar", m_aadhaar);
@@ -214,7 +213,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		m_approved.setText(null);
 		m_matic.setText(null);
 		m_name.setText(null);
-		m_email.setText(null);
+		m_emailAddr.setText(null);
 		m_kyc.setText(null);
 		m_pan.setText(null);
 		m_aadhaar.setText(null);
@@ -233,7 +232,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			if (users.size() == 1) {
 				JsonObject json = users.get(0);
 				m_name.setText( json.getString("first_name") + " " + json.getString("last_name") );
-				m_email.setText( json.getString("email"));
+				m_emailAddr.setText( json.getString("email"));
 				m_kyc.setText( json.getString("kyc_status"));
 				m_pan.setText( Util.isValidPan(json.getString("pan_number") ) ? "VALID" : null); 
 				m_aadhaar.setText( Util.isValidAadhaar( json.getString("aadhaar") ) ? "VALID": null);
@@ -278,12 +277,11 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 			}
 
 			// refresh transactions panel
-			String where = String.format("where wallet_public_key = '%s'", walletAddr);
-			transPanel.where.setText( where);
+			transPanel.setWallet( walletAddr);
 			transPanel.refresh();
 			
 			// refresh redemptions panel
-			redemPanel.where.setText( where);
+			redemPanel.setWallet( walletAddr);
 			redemPanel.refresh();
 			
 			// refresh block summary panel
@@ -300,7 +298,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 		JsonObject resp = new JsonObject();
 		resp.copyFrom( personaResp, "inquiryId", "status");
 		
-		personaResp.getObject( "fields").forEach( (key,val) -> {
+		personaResp.getObjectNN( "fields").forEach( (key,val) -> {
 			try {
 				JsonObject valObj = JsonObject.parse( val.toString() );
 				resp.putIf( key, valObj.getString( "value"));
@@ -405,7 +403,7 @@ public class BigWalletPanel extends JPanel {  // you can safely make this a MonP
 					"text", m_emailText.getText() );
 			
 			config().sendEmail(
-					m_email.getText(),
+					m_emailAddr.getText(),
 					m_subject.getText(),
 					m_emailText.getText() );
 			

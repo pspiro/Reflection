@@ -143,7 +143,7 @@ public class NewTabbedPanel extends JPanel {
 	public interface INewTab {
 		void activated(); // called when the tab is first visited
 		void closed();    // called when the tab is closed
-		void switchTo();
+		void switchTo();  // called when we switch to the tab, not the first time
 	}
 	
 	private static class Tab {
@@ -339,5 +339,16 @@ public class NewTabbedPanel extends JPanel {
         f.setVisible( true);
         f.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE);
     }
+
+	/** Set activated to false for each tab */
+	public void resetActivated() {
+		m_map.values().forEach( tab -> tab.m_activated = false);		
+	}
+
+	public void reactivateCurrent() {
+		if (m_current instanceof INewTab) {
+			((INewTab)m_current).activated();
+		}
+	}
 	
 }

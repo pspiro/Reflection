@@ -154,6 +154,7 @@ public class UI {
 	public static void watch( JFrame frame, ExRunnable runnable) throws Exception {
 		Hourglass glass = new Hourglass( frame);
 		try {
+			S.out( "running hourglass"); // for timing, don't commit
 			runnable.run();
 		}
 		finally {

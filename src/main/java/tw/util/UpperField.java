@@ -8,6 +8,7 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
+/** Sets all text to upper case and can retrieve numbers */
 public class UpperField extends JTextField {
 	public UpperField() {
 		this( null);

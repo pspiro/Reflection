@@ -14,19 +14,17 @@ import common.Util;
 import http.MyClient;
 import positions.Streams;
 import tw.util.HtmlButton;
+import tw.util.HtmlPane;
 import tw.util.S;
 import tw.util.UI;
 
 class HookServerPanel extends JsonPanel {
 	private JTextField m_wallet = new JTextField(30);
-	private JEditorPane m_htmlPane = new JEditorPane();
+	private JEditorPane m_htmlPane = new HtmlPane();
 	
 	HookServerPanel() throws Exception {
 		super( new BorderLayout(), String.format( 
 				"wallet,native,approved,positions", Monitor.m_config.busd().name(), Monitor.m_config.nativeTokName() ) );
-		
-        m_htmlPane.setContentType("text/html");
-        m_htmlPane.setEditable(false); // Make the editor pane read-only
 		
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
