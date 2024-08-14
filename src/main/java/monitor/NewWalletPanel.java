@@ -23,7 +23,6 @@ import http.MyClient;
 import monitor.wallet.BlockDetailPanel;
 import monitor.wallet.BlockSummaryPanel;
 import positions.Wallet;
-import reflection.MySqlConnection;
 import reflection.Stock;
 import test.MyTimer;
 import tw.util.DualPanel;
@@ -38,6 +37,7 @@ import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
 import web3.StockToken;
+import static monitor.Monitor.m_config;
 
 public class NewWalletPanel extends MonPanel {
 	static String usersFields = "first_name,last_name,wallet_public_key,kyc_status,created_at,address,address_1,address_2,city,state,zip,country,geo_code,email,telegram,phone,pan_number,aadhaar,locked";
@@ -255,9 +255,21 @@ public class NewWalletPanel extends MonPanel {
 
 	class TokPanel extends MiniTab {
 		private final JsonModel posModel = new PosModel();
+		UpperField m_rusd = new UpperField();
+		UpperField m_stock = new UpperField();
+		UpperField m_total = new UpperField();
 		
 		TokPanel() {
 			super( new BorderLayout() );
+			
+			VerticalPanel p = new VerticalPanel();
+			p.add( "RUSD balance", m_rusd);
+			p.add( "Stock value", m_stock);
+			p.addVSpace( 10);
+			p.add( "Total", m_total);
+			p.addVSpace( 20);
+			
+			add( p, BorderLayout.NORTH);
 			add( posModel.createTable() );
 		}
 
@@ -273,6 +285,9 @@ public class NewWalletPanel extends MonPanel {
 		}
 
 		public void clear() {
+			m_rusd.setText(null);
+			m_stock.setText(null);
+			m_total.setText(null);
 			posModel.ar().clear();
 			posModel.fireTableDataChanged();
 		}
@@ -283,6 +298,8 @@ public class NewWalletPanel extends MonPanel {
 				
 				Wallet wallet = new Wallet( m_wallet);
 				HashMap<String, Double> posMap = wallet.reqPositionsMap();
+				
+				double stockBal = 0;
 				
 				for (Stock stock : Monitor.stocks) {
 					double bal = Util.toDouble( posMap.get( stock.getSmartContractId().toLowerCase() ) );
@@ -295,12 +312,21 @@ public class NewWalletPanel extends MonPanel {
 						var price = getPrice( prices, stock.conid() );
 						if (price != null) {
 							obj.put( "Price", fmt( price.getDouble( "last") ) );
-							obj.put( "Value", fmt( price.getDouble( "last") * bal) );
+							
+							double val = price.getDouble( "last") * bal;
+							obj.put( "Value", fmt( val) );
+							
+							stockBal += val;
 						}
 						posModel.ar().add(obj);
 					}
 				}
 				posModel.fireTableDataChanged();
+				
+				double rusdBal = m_config.rusd().getPosition( m_wallet);
+				m_rusd.setText( fmt( rusdBal) );
+				m_stock.setText( fmt( stockBal) );
+				m_total.setText( fmt( rusdBal + stockBal) );
 			});
 		}
 
