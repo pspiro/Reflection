@@ -1,7 +1,6 @@
 package testcase.web3;
 
 import common.Util;
-import positions.Wallet;
 import test.MyTimer;
 import testcase.MyTestCase;
 import tw.util.S;
@@ -127,10 +126,6 @@ public class TestRusd extends MyTestCase {
 		// buy a stock token - fail
 //		rusd.buyStockWithRusd(dead, 1, st, 1)
 //			.waitForStatus("FAILED");
-	public void testshow() throws Exception {
-		S.out( new Wallet( "0xafd9ecf37ed1530bf62341af28e0e4c51b48a75e")
-				.getBalance( "0xf000b01e40ffeef7d6b6c6a1365a8a9885027ece") );
-	}
 		
 }
 // this is a mystery: how can I call buyStock and pass the address of a

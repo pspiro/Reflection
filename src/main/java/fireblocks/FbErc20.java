@@ -66,7 +66,7 @@ public class FbErc20 extends Erc20 {
 		S.out( "Deploying contract from %s", filename);
 		
 		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-		String bytecode = JsonObject.parse( new IStream(filename).readAll() )
+		String bytecode = JsonObject.parse( IStream.readAll(filename) )
 				.getString("bytecode");
 		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
 //		String bytecode = new IStream(filename).readln();

@@ -1,5 +1,7 @@
 package monitor;
 
+import static monitor.Monitor.m_config;
+
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
@@ -144,7 +146,7 @@ public class NewWalletPanel extends MonPanel {
 		
 		@Override public void activated() {
 			wrap( () -> {
-				var users = Monitor.m_config.sqlQuery("select * from users where wallet_public_key = '%s'", m_wallet);
+				var users = m_config.sqlQuery("select * from users where wallet_public_key = '%s'", m_wallet);
 				if (users.size() > 0) {
 					var user = users.get( 0).removeEntry( "persona_responsa");
 					String html = user.toHtml( true, usersFields.split( ","));
@@ -153,7 +155,7 @@ public class NewWalletPanel extends MonPanel {
 	
 					personaResp = user.getObjectNN( "persona_response");
 					
-					var pers = BigWalletPanel.getFullPersona( personaResp);
+					var pers = NewWalletPanel.getFullPersona( personaResp);
 					personaPane.setText( pers.toHtml( true) );
 					
 					m_emailAddr = user.getString( "email"); // needed to send emails
@@ -235,7 +237,7 @@ public class NewWalletPanel extends MonPanel {
 			wrap( () -> {
 				MyTimer t = new MyTimer();
 				t.next( "connecting to db");
-				Monitor.m_config.sqlCommand( sql -> {
+				m_config.sqlCommand( sql -> {
 					t.next( "refreshing trans panel");
 					transPanel.setWallet( m_wallet);
 					transPanel.refresh( sql);
@@ -254,6 +256,7 @@ public class NewWalletPanel extends MonPanel {
 	}
 
 	class TokPanel extends MiniTab {
+		private static final double minBalance = .0001;
 		private final JsonModel posModel = new PosModel();
 		UpperField m_rusd = new UpperField();
 		UpperField m_stock = new UpperField();
@@ -294,7 +297,7 @@ public class NewWalletPanel extends MonPanel {
 
 		@Override public void activated() {
 			wrap( () -> {
-				var prices = MyClient.getArray( Monitor.m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
+				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
 				Wallet wallet = new Wallet( m_wallet);
 				HashMap<String, Double> posMap = wallet.reqPositionsMap();
@@ -303,7 +306,7 @@ public class NewWalletPanel extends MonPanel {
 				
 				for (Stock stock : Monitor.stocks) {
 					double bal = Util.toDouble( posMap.get( stock.getSmartContractId().toLowerCase() ) );
-					if (bal > BigWalletPanel.minBalance) {
+					if (bal > minBalance) {
 						JsonObject obj = new JsonObject();
 						obj.put( "Symbol", stock.symbol() );
 						obj.put( "Balance", bal);
@@ -423,7 +426,7 @@ public class NewWalletPanel extends MonPanel {
 				Util.reqValidAddress( m_wallet );
 
 				if (Util.confirm( this, "Are you sure you want to set this user to VERIFIED?")) {
-					Monitor.m_config.sqlCommand( sql -> 
+					m_config.sqlCommand( sql -> 
 					sql.execWithParams( "update users set kyc_status='VERIFIED' where wallet_public_key = '%s'", m_wallet.toLowerCase() ) );
 
 					Util.inform( this, "Done");
@@ -580,7 +583,7 @@ public class NewWalletPanel extends MonPanel {
 		
 		@Override public void activated() {
 			wrap( () -> {
-				var ar = Monitor.m_config.sqlQuery( "select * from log where wallet_public_key = '%s'", m_wallet);
+				var ar = m_config.sqlQuery( "select * from log where wallet_public_key = '%s'", m_wallet);
 				model.setRows( ar);
 				model.fireTableDataChanged();
 			});
@@ -644,6 +647,22 @@ public class NewWalletPanel extends MonPanel {
 
 		@Override public void switchTo() {
 		}
+	}
+
+	public static JsonObject getFullPersona(JsonObject personaResp) throws Exception {
+		JsonObject resp = new JsonObject();
+		resp.copyFrom( personaResp, "inquiryId", "status");
+		
+		personaResp.getObjectNN( "fields").forEach( (key,val) -> {
+			try {
+				JsonObject valObj = JsonObject.parse( val.toString() );
+				resp.putIf( key, valObj.getString( "value"));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+		
+		return resp; 
 	}
 }
 

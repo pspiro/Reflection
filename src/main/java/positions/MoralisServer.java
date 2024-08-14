@@ -11,6 +11,7 @@ import org.web3j.crypto.Keys;
 import common.Util;
 import http.MyClient;
 import reflection.Config;
+import tw.util.MyException;
 import tw.util.S;
 import web3.Erc20;
 
@@ -127,13 +128,13 @@ public class MoralisServer {
 		return queryObject( url);
 	}
 	
-	public static double getNativeBalance(String address) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
-		return Erc20.fromBlockchain(
-				JsonObject.parse( querySync(url) ).getString("balance"),
-				18);
-	}
+//	public static double getNativeBalance(String address) throws Exception {
+//		Util.require(chain != null, "Set the Moralis chain");
+//		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
+//		return Erc20.fromBlockchain(
+//				JsonObject.parse( querySync(url) ).getString("balance"),
+//				18);
+//	}
 
 //	/** Seems useless; returns e.g.
 //	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
@@ -230,7 +231,9 @@ public class MoralisServer {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
 
-	public static void setChain(String chainIn, String rpcUrlIn) {
+	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
+	public static void setChain(String chainIn, String rpcUrlIn) throws Exception {
+		S.out( "Setting moralis chain=%s  rpcUrl=%s", chainIn, rpcUrlIn);
 		chain = chainIn;
 		rpcUrl = rpcUrlIn;
 	}
@@ -241,10 +244,16 @@ public class MoralisServer {
 	static JsonObject nodeQuery(String body) throws Exception {
 		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
 
-		return MyClient.create( rpcUrl, body)
+		JsonObject obj = MyClient.create( rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
 				.queryToJson();
+		
+		JsonObject err = obj.getObject( "error");
+		if (err != null) {
+			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
+		}
+		return obj;
 	}
 
 
@@ -287,7 +296,8 @@ public class MoralisServer {
 			}""";
 		return nodeQuery( body);
 	}
-	
+
+	/** wrong */
 	public static JsonObject getQueuedTrans( String from) throws Exception {
 		String body = """
 			{
@@ -298,11 +308,14 @@ public class MoralisServer {
 		return nodeQuery( body);  // result -> pending and result -> queued
 	}
 	
-	public static long getBalance( String contractAddr, String walletAddr) throws Exception {
-		String templ = """
+	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
+		Util.reqValidAddress( contractAddr);
+		Util.reqValidAddress( walletAddr);
+		
+		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
-			"id": 1
+			"id": 1,
 			"method": "eth_call",
 			"params": [
 				{
@@ -310,10 +323,62 @@ public class MoralisServer {
 				"data": "0x70a08231000000000000000000000000%s"
 				},
 				"latest"
-			],
-			}""";
-		String body = String.format( templ, contractAddr, walletAddr);
-		return nodeQuery( body).getLong( "result");
+			]
+			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
+		
+		S.out( "fetching balance contract=%s  wallet=%s  decimals=%s", contractAddr, walletAddr, decimals);
+
+		JsonObject obj = nodeQuery( body);
+		obj.display();
+		
+		if (obj.getString( "result").equals( "0x") ) {
+			throw new MyException( "Could not get balance; contractAddr %s may be invalid", contractAddr);
+		}
+		
+		return Erc20.fromBlockchain( obj.getString( "result"), decimals);
+	}
+	
+	/** note w/ moralis you can also get the token balance by wallet 
+	 * @param m_address */
+	public static double queryTotalSupply(String contractAddr, int decimals) throws Exception {
+		Util.reqValidAddress( contractAddr);
+		
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_call",
+			"params": [
+				{
+				"to": "%s",
+				"data": "0x18160ddd"
+				},
+				"latest"
+			]
+			}""", contractAddr);
+		
+		JsonObject obj = nodeQuery( body);
+		obj.display();
+		
+		if (obj.getString( "result").equals( "0x") ) {
+			throw new MyException( "Could not get total supply; contractAddr %s may be invalid", contractAddr);
+		}
+		
+		return Erc20.fromBlockchain( obj.getString( "result"), decimals);
+	}
+	
+	public static double getNativeBalance( String walletAddr) throws Exception {
+		Util.reqValidAddress( walletAddr);
+		
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getBalance",
+			"params": [ "%s", "latest" ]
+			}""", walletAddr);
+		
+		return Erc20.fromBlockchain( nodeQuery( body).getString( "result"), 18);
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -332,6 +397,7 @@ public class MoralisServer {
 	static void show( JsonObject obj, String addr) throws Exception {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
 	}
+
 		
 }
 // for getapproved or allocated use Erc20.getAllowance()

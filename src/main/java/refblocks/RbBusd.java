@@ -5,7 +5,6 @@ import org.web3j.tx.TransactionManager;
 import common.Util;
 import tw.util.S;
 import web3.Busd.IBusd;
-import web3.Erc20;
 import web3.RetVal;
 
 /** Implements the Busd contract methods that are writable, and deploy() */

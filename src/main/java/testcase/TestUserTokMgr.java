@@ -3,8 +3,6 @@ package testcase;
 import static testcase.TestOrder.curPrice;
 
 import reflection.RefCode;
-import reflection.Stock;
-import reflection.Stocks;
 import tw.util.S;
 
 public class TestUserTokMgr extends MyTestCase {

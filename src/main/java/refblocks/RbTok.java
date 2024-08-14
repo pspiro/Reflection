@@ -1,6 +1,5 @@
 package refblocks;
 
-import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
