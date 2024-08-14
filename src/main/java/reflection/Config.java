@@ -120,7 +120,6 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
-	private NodeServer m_nodeServer;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -347,8 +346,8 @@ public class Config extends ConfigBase {
 
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
-		m_nodeServer = new NodeServer( m_tab.getRequiredString( "rpcUrl") );
+		MoralisServer.setChain( moralisPlatform);
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -754,10 +753,6 @@ public class Config extends ConfigBase {
 	 *  Would be used only during migration, which is not needed anymore. */ 
 	public RetVal giveApproval() throws Exception {
 		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
-	}
-	
-	public NodeServer nodeServer() {
-		return m_nodeServer;
 	}
 	
 	public double autoReward() {

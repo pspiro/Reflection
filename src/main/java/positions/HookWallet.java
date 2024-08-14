@@ -47,7 +47,7 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = Refblocks.getERC20Balance(m_walletAddr, contract, 0);
+			double bal = NodeServer.getBalance( contract, m_walletAddr, 0);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
 				// this should only occur if we missed the unconfirmed event, i.e. if
 				// the HookServer was started after the event came in or if the
@@ -60,13 +60,13 @@ class HookWallet {
 		}
 	}
 	
-	public void adjustNative( double amt, boolean confirmed, NodeServer nodeServer) throws Exception {
+	public void adjustNative( double amt, boolean confirmed) throws Exception {
 		if (!confirmed) {
 			m_nativeBal += amt;
 			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
 		}
 		else {
-			double bal = nodeServer.getNativeBalance(m_walletAddr);
+			double bal = NodeServer.getNativeBalance(m_walletAddr);
 			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
 				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
 				m_nativeBal = bal;

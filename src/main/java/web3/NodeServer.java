@@ -1,6 +1,5 @@
 package web3;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 
 import org.json.simple.JsonObject;
@@ -9,33 +8,43 @@ import org.web3j.crypto.Keys;
 import common.Util;
 import http.MyClient;
 import reflection.Config;
+import tw.util.MyException;
 import tw.util.S;
 
 public class NodeServer {
+	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
-	static NodeServer pulse = new NodeServer( pulseRpc);
-	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
+	/** you could make this a member var */
+	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	
-	private String m_rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
-	
-	public NodeServer( String rpc) {
-		m_rpcUrl = rpc;
+	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
+	public static void setChain( String rpcUrlIn) throws Exception {
+		S.out( "Setting node server rpcUrl=%s", rpcUrlIn);
+		rpcUrl = rpcUrlIn;
 	}
 
 	/** This can be a node created for you on Moralis, which you pay for, or a free node.
 	 *  Currently using the free node; if you hit pacing limits, switch to the Moralis node.
-	 *  The Moralis node requires auth data */
-	JsonObject nodeQuery(String body) throws Exception {
-		Util.require( m_rpcUrl != null, "Set the node rpcUrl");
+	 *  The Moralis node requires auth data 
+	 *  
+	 * note that we sometimes pass rpcUrl with trailing / and sometimes not */
+	static JsonObject nodeQuery(String body) throws Exception {
+		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
 
-		return MyClient.create( m_rpcUrl, body)
+		JsonObject obj = MyClient.create( rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
 				.queryToJson();
+		
+		JsonObject err = obj.getObject( "error");
+		if (err != null) {
+			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
+		}
+		return obj;
 	}
 
-	public long getBlockNumber() throws Exception {
+	public static long getBlockNumber() throws Exception {
 		String body = """
 			{
 			"jsonrpc": "2.0",
@@ -44,10 +53,10 @@ public class NodeServer {
 			}""";
 		return nodeQuery( body).getLong( "result");
 	}
-
+	
 	/** Get the n latest blocks and for each return the gas price that covers
 	 *  pct percent of the transactions */
-	public JsonObject getFeeHistory(int blocks, int pct) throws Exception {
+	public static JsonObject getFeeHistory(int blocks, int pct) throws Exception {
 		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
@@ -57,20 +66,9 @@ public class NodeServer {
 			}""", blocks, pct); 
 		return nodeQuery( body);
 	}
-	
-	public JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
-	}
-	
-	public JsonObject getQueuedTrans( String from) throws Exception {
+
+	/** never used */
+	public static JsonObject getQueuedTrans() throws Exception {
 		String body = """
 				{
 				"jsonrpc": "2.0",
@@ -80,7 +78,7 @@ public class NodeServer {
 		return nodeQuery( body);  // result -> pending and result -> queued
 	}
 
-	public double getNativeBalance(String walletAddr) throws Exception {
+	public static double getNativeBalance(String walletAddr) throws Exception {
 		String body = String.format( """
 				{
 				"jsonrpc": "2.0",
@@ -92,7 +90,7 @@ public class NodeServer {
 		return Erc20.fromBlockchain( nodeQuery( body).getString( "result"), 18);
 	}
 
-	public Fees queryFees() throws Exception {
+	public static Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
 		JsonObject json = getFeeHistory(5, 60).getObject( "result");
 		json.display();
@@ -110,14 +108,9 @@ public class NodeServer {
 		return new Fees( baseFee * 1.2, sum / 5.);
 	}
 	
-	public static void main(String[] args) throws Exception {
-		S.out( pulse.getNativeBalance( prod) );
-		pulse.queryFees().showFees( BigInteger.valueOf( 21000L));
-	}
-	
-	public void showTrans() throws Exception {
+	public static void showTrans() throws Exception {
 		Config c = Config.ask( "Dt2");
-		JsonObject result = getQueuedTrans("").getObject("result");
+		JsonObject result = getQueuedTrans().getObject("result");
 
 		S.out( "Pending");
 		show( result.getObject( "pending"), c.ownerAddr() );
@@ -126,25 +119,82 @@ public class NodeServer {
 		S.out( "Queued");
 		show( result.getObject( "queued"), c.ownerAddr() );
 	}
+	
 	// I think the issue is that you have pending trans that will never get picked up
 	// and they are blocking next trans; they have to be removed
 	static void show( JsonObject obj, String addr) throws Exception {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
 	}
+
+	public static JsonObject getLatestBlock() throws Exception {
+		// the boolean says if it gets the "full" block or not
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getBlockByNumber",
+			"params": [	"latest", false ]
+			}""";
+		return nodeQuery( body);
+	}
+
+	/** get ERC-20 token balance; see also getNativeBalance() */
+	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
+		Util.reqValidAddress( contractAddr);
+		Util.reqValidAddress( walletAddr);
 		
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_call",
+			"params": [
+				{
+				"to": "%s",
+				"data": "0x70a08231000000000000000000000000%s"
+				},
+				"latest"
+			]
+			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
+		
+		S.out( "fetching balance contract=%s  wallet=%s  decimals=%s", contractAddr, walletAddr, decimals);
+
+		JsonObject obj = nodeQuery( body);
+		obj.display();
+		
+		if (obj.getString( "result").equals( "0x") ) {
+			throw new MyException( "Could not get balance; contractAddr %s may be invalid", contractAddr);
+		}
+		
+		return Erc20.fromBlockchain( obj.getString( "result"), decimals);
+	}
 	
-    /** webj3 version generated by chat; it can do this all using web3j if you prefer */
-//public BigDecimal getNativeBalance(String walletAddress) throws Exception {
-//  // Connect to the blockchain
-//  Web3j web3 = Web3j.build(new HttpService(rpcUrl));
-//
-//  // Request the balance
-//  EthGetBalance ethGetBalance = web3.ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST).send();
-//
-//  // Convert Wei to Ether
-//  return new BigDecimal(ethGetBalance.getBalance()).divide(new BigDecimal("1000000000000000000"));
-//
-//  // Return the balance in Ether
-//  return balanceInEther;
-//}
+	/** note w/ moralis you can also get the token balance by wallet 
+	 * @param m_address */
+	public static double queryTotalSupply(String contractAddr, int decimals) throws Exception {
+		Util.reqValidAddress( contractAddr);
+		
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_call",
+			"params": [
+				{
+				"to": "%s",
+				"data": "0x18160ddd"
+				},
+				"latest"
+			]
+			}""", contractAddr);
+		
+		JsonObject obj = nodeQuery( body);
+		obj.display();
+		
+		if (obj.getString( "result").equals( "0x") ) {
+			throw new MyException( "Could not get total supply; contractAddr %s may be invalid", contractAddr);
+		}
+		
+		return Erc20.fromBlockchain( obj.getString( "result"), decimals);
+	}
 }

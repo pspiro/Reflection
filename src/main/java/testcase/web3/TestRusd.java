@@ -123,6 +123,9 @@ public class TestRusd extends MyTestCase {
 //		
 //		t.done();
 	}
+		// buy a stock token - fail
+//		rusd.buyStockWithRusd(dead, 1, st, 1)
+//			.waitForStatus("FAILED");
 		
 }
 // this is a mystery: how can I call buyStock and pass the address of a

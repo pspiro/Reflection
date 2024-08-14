@@ -23,6 +23,7 @@ import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
+import web3.NodeServer;
 
 
 /** HookServer tracks the balances for all contract, including both stock
@@ -323,7 +324,7 @@ public class HookServer {
 		}
 		
 		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed, m_config.nodeServer() ) );
+			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
 			
 			// if no hookWallet found, it means we are not yet tracking the positions
 			// for this wallet, and we would query all positions if a request comes in
@@ -344,7 +345,7 @@ public class HookServer {
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = m_config.nodeServer().getNativeBalance( walletAddr);
+			double nativeBal = NodeServer.getNativeBalance( walletAddr);
 			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
 			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			

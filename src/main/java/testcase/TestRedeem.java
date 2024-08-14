@@ -3,7 +3,7 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.BigWalletPanel;
+import monitor.NewWalletPanel;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -64,7 +64,7 @@ public class TestRedeem extends MyTestCase {
 	
 	private void lock(int amt, long lockUntil, int requiredTrades) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject lockObj = BigWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
+		JsonObject lockObj = NewWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 

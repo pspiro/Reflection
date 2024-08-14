@@ -46,7 +46,6 @@ public class Refblocks {
 	static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	public static Web3j web3j;
-	static NodeServer nodeServer;
 	static long chainId;  // set from Config
 	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
@@ -56,7 +55,6 @@ public class Refblocks {
 		S.out( "Refblocks  chainId=%s  rpcUrl=%s", id, rpcUrl);
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
-		nodeServer = new NodeServer( rpcUrl);
 	}
 
 	/** returns same fees that are displayed here: https://polygonscan.com/gastracker */
@@ -212,7 +210,7 @@ public class Refblocks {
 	public static StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = nodeServer.queryFees();
+		Fees fees = NodeServer.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider( // fails with this
@@ -247,7 +245,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 40000);
     		
-    		Fees fees = nodeServer.queryFees();
+    		Fees fees = NodeServer.queryFees();
     		fees.showFees( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
@@ -389,42 +387,17 @@ public class Refblocks {
 			getTokenDecimals( contractAddr.toLowerCase() ) );
 	}
 	
-	/** Pass zero for decimals to look it up; first time sends a query; if you know it, pass it */
-	static public double getERC20Balance(String walletAddr, String contractAddr, int decimals) throws Exception {
-		Util.reqValidAddress(walletAddr);
-		Util.reqValidAddress(contractAddr);
-
-		Function function = new Function(
-				"balanceOf",
-				Arrays.asList(new Address(walletAddr)),
-				Arrays.asList(new TypeReference<Uint256>() {})
-				);
-
-		EthCall response = web3j.ethCall(
-				Transaction.createEthCallTransaction(walletAddr, contractAddr, FunctionEncoder.encode(function) ),
-				org.web3j.protocol.core.DefaultBlockParameterName.LATEST
-				).sendAsync().get();
-
-		return Erc20.fromBlockchain( 
-				response.getValue(), 
-				decimals == 0 ? getDecimals( contractAddr) : decimals);
-	}
-
 	/** Makes a separate call for each one */
 	static public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		HashMap<String, Double> positionsMap = new HashMap<>();
 
 		for (String contractAddr : contracts) {
-			positionsMap.put( contractAddr, getERC20Balance(walletAddr, contractAddr, decimals) );
+			positionsMap.put( contractAddr, NodeServer.getBalance( contractAddr, walletAddr, decimals) );
 		}
 
 		return positionsMap;
 	}
 
-	public static void main(String[] args) throws Exception {
-		Config.read();
-		testPulseGas();
-	}
 	public static void testPulseGas() throws IOException {
 			// Fetch the current gas price
 			EthGasPrice ethGasPrice = web3j.ethGasPrice().send();
@@ -437,17 +410,3 @@ public class Refblocks {
 	}
 
 }
-
-
-// MUST we wait for the transaction receipt from first call before sending second call???
-
-// error.getData() is null so toString() fails and you don't get to see the real error
-// need to fix or override
-// you get get address from private key using Credentials
-// TransactionReceiptProcessor is involved
-// uses PollingTransactionReceiptProcessor, use a custom ctor
-// QueuingTransactionReceiptProcessor this one returns asap and then queries in the background 
-// it polls only every 15 sec; that's too slow  JsonRpc2_0Web3j.DEFAULT_BLOCK_TIME = 15 * 1000;
-// consider FastRawTransactionManager to have multiple trans per block, I assume per caller
-// use RevertReasonExtractor.extractRevertReason() to get error text
-// use FunctionEncoder.encode(function) to get data

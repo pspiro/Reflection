@@ -4,7 +4,6 @@ import org.web3j.crypto.Credentials;
 
 import common.MyScanner;
 import common.Util;
-import web3.CreateKey;
 import web3.Matic;
 import web3.RetVal;
 

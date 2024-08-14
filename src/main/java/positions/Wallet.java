@@ -8,7 +8,6 @@ import common.Util;
 import tw.util.S;
 import web3.Erc20;
 import web3.MoralisServer;
-import web3.NodeServer;
 
 /** Get token positions; will only send one query
  * @deprecated  */
@@ -23,6 +22,12 @@ public class Wallet {
 	public String walletAddr() {
 		return m_walletAddr;
 	}
+
+	/** Look up the value in the map and convert to decimal;
+	 *  Use this one if you want more than one token balance */
+//	public static double getBalance(HashMap<String,Double> map, String token) throws Exception {
+//		return Util.toDouble( map.get(token.toLowerCase() ) );
+//	} // used? pas
 
 	/** Returns a map of contract address (lower case) -> position (Double).
 	 *  This version retrieves the map from Moralis is is having issues of

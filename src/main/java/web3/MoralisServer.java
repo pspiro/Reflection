@@ -6,9 +6,11 @@ import java.util.function.Consumer;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
@@ -123,13 +125,13 @@ public class MoralisServer {
 		return queryObject( url);
 	}
 	
-	public static double getNativeBalance(String address) throws Exception {
-		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
-		return Erc20.fromBlockchain(
-				JsonObject.parse( querySync(url) ).getString("balance"),
-				18);
-	}
+//	public static double getNativeBalance(String address) throws Exception {
+//		Util.require(chain != null, "Set the Moralis chain");
+//		String url = String.format("%s/%s/balance?chain=%s", moralis, address, chain);
+//		return Erc20.fromBlockchain(
+//				JsonObject.parse( querySync(url) ).getString("balance"),
+//				18);
+//	}
 
 //	/** Seems useless; returns e.g.
 //	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
@@ -226,9 +228,16 @@ public class MoralisServer {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}
 
-	public static void setChain(String chainIn, String rpcUrlIn) {
+	public static void setChain(String chainIn) throws Exception {
+		S.out( "Setting moralis chain=", chainIn);
 		chain = chainIn;
 	}
-	
+
+	// I think the issue is that you have pending trans that will never get picked up
+	// and they are blocking next trans; they have to be removed
+	static void show( JsonObject obj, String addr) throws Exception {
+		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
+	}
+		
 }
 // for getapproved or allocated use Erc20.getAllowance()

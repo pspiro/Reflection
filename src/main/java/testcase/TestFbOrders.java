@@ -11,7 +11,7 @@ import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 import web3.Busd;
-import web3.MoralisServer;
+import web3.NodeServer;
 import web3.Rusd;
 import web3.StockToken;
 
@@ -281,7 +281,7 @@ public class TestFbOrders extends MyTestCase {
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
-		if (MoralisServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+		if (NodeServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
 			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
 					.waitForHash();
 		}

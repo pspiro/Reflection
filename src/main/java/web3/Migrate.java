@@ -81,6 +81,6 @@ public class Migrate {
 			.waitForHash();
 
 		// wait for balance to register or the next transaction will fail due to insufficient gas
-		MyTestCase.waitFor(60, () -> MoralisServer.getNativeBalance( destAddr) > 0);
+		MyTestCase.waitFor(60, () -> NodeServer.getNativeBalance( destAddr) > 0);
 	}
 }

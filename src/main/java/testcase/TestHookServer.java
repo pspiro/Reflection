@@ -6,6 +6,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import http.MyClient;
 import tw.util.S;
+import web3.NodeServer;
 import web3.StockToken;
 
 /** This test should be done in Dev or Prod only. Why?
@@ -90,7 +91,7 @@ public class TestHookServer extends MyTestCase {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
 			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
-					n, pos, m_config.nodeServer().getNativeBalance( wallet) ) );
+					n, pos, NodeServer.getNativeBalance( wallet) ) );
 			return Util.isEq( pos, n, .00001);
 		});
 	}

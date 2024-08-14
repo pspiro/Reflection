@@ -19,6 +19,7 @@ import refblocks.Refblocks;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
+import web3.NodeServer;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -324,7 +325,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", m_config.nodeServer().getNativeBalance( m_walletAddr) );
+			base.put( "balance", NodeServer.getNativeBalance( m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();

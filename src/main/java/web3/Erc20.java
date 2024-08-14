@@ -4,9 +4,9 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 
+import org.web3j.utils.Numeric;
+
 import common.Util;
-import positions.Wallet;
-import refblocks.Refblocks;
 import tw.util.S;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
@@ -43,14 +43,17 @@ public class Erc20 {
 	
 	/** Can take decimal or hex */
 	public static double fromBlockchain(String amt, int power) {
-		if (S.isNull(amt) ) {
-			return 0.;
+		try {
+			return S.isNotNull(amt)
+					? new BigDecimal( Numeric.decodeQuantity(amt) )
+							.divide( ten.pow(power) )
+							.doubleValue()
+					: 0.0;
 		}
-		
-		BigInteger bigint = amt.startsWith( "0x") ? new BigInteger( amt.substring( 2), 16) : new BigInteger( amt);
-		return new BigDecimal( bigint)
-				.divide( ten.pow(power) )
-				.doubleValue();
+		catch( Exception e) {
+			S.out( "Cannot decode " + amt);
+			throw e;
+		}
 	}
 	
 	public BigInteger toBlockchain(double amt) {
@@ -67,7 +70,7 @@ public class Erc20 {
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
-		return Refblocks.getERC20Balance( walletAddr, m_address, m_decimals); 
+		return NodeServer.getBalance( m_address, walletAddr, m_decimals);
 	}
 
 	/** return the balances of all wallets holding this token
@@ -104,11 +107,12 @@ public class Erc20 {
 	
 	/** note w/ moralis you can also get the token balance by wallet */
 	public double queryTotalSupply() throws Exception {
-		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
-		Util.require( supply != null, "Moralis total supply returned null for " + m_address);
-		return fromBlockchain(
-				supply.replaceAll("\"", ""), // strip quotes
-				m_decimals);
+		return NodeServer.queryTotalSupply( m_address, m_decimals);
+//		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
+//		Util.require( supply != null, "Moralis total supply returned null for " + m_address);
+//		return fromBlockchain(
+//				supply.replaceAll("\"", ""), // strip quotes
+//				m_decimals);
 	}
 
 	/** Sends a query to Moralis */
