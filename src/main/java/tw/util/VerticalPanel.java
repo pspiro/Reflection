@@ -8,6 +8,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -169,5 +170,10 @@ public class VerticalPanel extends JPanel {
 
 	public void addHeader(String string) {
 		add( new Header(string) );
+	}
+
+	public void addVSpace(int size) {
+		add( Box.createVerticalStrut(size));
+		// or call add( comp, -1)
 	}
 }
