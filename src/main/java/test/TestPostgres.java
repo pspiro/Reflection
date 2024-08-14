@@ -1,5 +1,8 @@
 package test;
 
+import java.util.concurrent.Executor;
+
+import common.Util;
 import reflection.Config;
 import tw.util.S;
 
@@ -9,21 +12,30 @@ public class TestPostgres {
 
 	static {
 		try {
-			c = Config.read();
+			//c = Config.read();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	
+	static class ESerial implements Executor {
+		@Override public void execute(Runnable run) {
+			Util.executeEvery(0, 0, run);
+		}
+	}
+
+	static class ENow implements Executor {
+		@Override public void execute(Runnable run) {
+			run.run();
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
-//		c.matic().transfer(
-//				c.ownerKey(), 
-//				Util.createFakeAddress(),
-//				.001).waitForHash();
-//		c.busd().approve( c.ownerKey(),
-//				"0x1cd8cd7607d1dd32915614bafc95834c5f2db3dc", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0xda2c28af9cbfad9956333aba0fc3b482bc0aed13", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0x7285420d377e98219ece3f004dd1d5fa33e9bbd9", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( c.ownerAddr(), c.rusdAddr() ) );
+		Executor e = new ESerial();
+		
+		for (int i = 0; i < 3; i++) {
+			Util.execute( () -> e.execute( () -> S.out( "a")) ); 
+		}
 	}
 }

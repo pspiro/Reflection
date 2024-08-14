@@ -5,8 +5,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 
 import common.Util;
-import positions.MoralisServer;
-import positions.Wallet;
+import refblocks.Refblocks;
 import tw.util.S;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
@@ -36,15 +35,41 @@ public class Erc20 {
 		return m_name;
 	}
 
-	/** Takes decimal string */
-	public double fromBlockchain(String amt) {
+	/** Takes decimal string 
+	 * @throws Exception */
+	public double fromBlockchain(String amt) throws Exception {
 		return fromBlockchain( amt, m_decimals);
 	}
 	
-	public static double fromBlockchain(String amt, int power) {
-		return S.isNotNull(amt)
-				? new BigDecimal( amt).divide( ten.pow(power) ).doubleValue()
-				: 0.0;
+	/** Can take hex or decimal. '0x' is invalid, returns error.
+	 *  You could create another version that allows empty string or pass param
+	 * @throws Exception */
+    public static BigInteger decodeQuantity(String value) throws Exception {
+    	try {
+	    	return value.startsWith( "0x")
+	    		? new BigInteger( value.substring( 2), 16)
+	    		: new BigInteger( value);
+    	}
+    	catch( Exception e) {
+            S.out( "Could not parse number '%s'", value);
+            throw e;
+    	}
+    }
+
+	/** Can take decimal or hex; should really throw an exception 
+	 * @throws Exception */
+	public static double fromBlockchain(String amt, int power) throws Exception {
+		try {
+			return S.isNotNull(amt)
+					? new BigDecimal( decodeQuantity(amt) )
+							.divide( ten.pow(power) )
+							.doubleValue()
+					: 0.0;
+		}
+		catch( Exception e) {
+			S.out( "Error: cannot decode " + amt);
+			throw e;
+		}
 	}
 	
 	public BigInteger toBlockchain(double amt) {
@@ -61,20 +86,23 @@ public class Erc20 {
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
-		Util.reqValidAddress(walletAddr);
-		return new Wallet(walletAddr).getBalance(m_address); 
+		return NodeServer.getBalance( m_address, walletAddr, m_decimals);
 	}
 
-	/** return the balances of all wallets holding this token
+	/** return the balances of all wallets holding this token;
+	 *  Used by Monitor and ProofOfReserves only, not any core apps
+	 *  
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
 
 		// get all transactions in batches and build the map
 		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				double value = fromBlockchain( obj.getString("value") );  // could use value_decimal here
-				inc( map, obj.getString("from_address"), -value);
-				inc( map, obj.getString("to_address"), value);
+				Util.wrap( () -> {
+					double value = fromBlockchain( obj.getString("value") );
+					inc( map, obj.getString("from_address"), -value);
+					inc( map, obj.getString("to_address"), value);
+				});
 		} ) );
 		
 		return map;
@@ -99,16 +127,11 @@ public class Erc20 {
 	
 	/** note w/ moralis you can also get the token balance by wallet */
 	public double queryTotalSupply() throws Exception {
-		String supply = MoralisServer.contractCall( m_address, "totalSupply", totalSupplyAbi);		
-		Util.require( supply != null, "Moralis total supply returned null for " + m_address);
-		return fromBlockchain(
-				supply.replaceAll("\"", ""), // strip quotes
-				m_decimals);
+		return NodeServer.getTotalSupply( m_address, m_decimals);
 	}
 
 	/** Sends a query to Moralis */
-	public double getAllowance(String wallet, String spender) throws Exception {
-		Util.reqValidAddress(wallet);
-		return fromBlockchain( MoralisServer.reqAllowance(m_address, wallet, spender).getString("allowance") );
+	public double getAllowance(String approverAddr, String spender) throws Exception {
+		return NodeServer.getAllowance( m_address, approverAddr, spender, m_decimals);
 	}
 }

@@ -16,7 +16,6 @@ import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
 import http.MyClient;
-import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -37,6 +36,8 @@ import web3.Busd;
 import web3.Busd.IBusd;
 import web3.CreateKey;
 import web3.Matic;
+import web3.MoralisServer;
+import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
 import web3.Rusd.IRusd;
@@ -94,7 +95,7 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	private String hookServerUrl;
+	private String hookServerUrl; // webhook url passed to Moralis
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
@@ -151,6 +152,10 @@ public class Config extends ConfigBase {
 	/** @return RUSD address lower case */
 	public String rusdAddr() { 
 		return m_rusd.address(); 
+	}
+
+	public String busdAddr() { 
+		return m_busd.address(); 
 	}
 	
 	public double minTokenPosition() { return minTokenPosition; }
@@ -341,7 +346,8 @@ public class Config extends ConfigBase {
 
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
+		MoralisServer.setChain( moralisPlatform);
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -357,6 +363,7 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
+		require( hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
 
 	/** confirm we have access to the password 

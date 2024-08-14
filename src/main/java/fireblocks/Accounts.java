@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import positions.Wallet;
 import reflection.Config;
 import tw.util.S;
 
@@ -55,10 +54,6 @@ public class Accounts {
 			}
 		}
 		throw new Exception( "No such account: " + name);
-	}
-	
-	public Wallet getWallet(String accountName) throws Exception {
-		return new Wallet(getAddress(accountName));
 	}
 	
 	/** Returns the wallet address of the platform native token (mixed case).

@@ -720,6 +720,11 @@ public class Util {
 		return CreateKey.createPrivateKey();
 	}
 	
+	public static String getAddress( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
+
+	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
 	 *

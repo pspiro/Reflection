@@ -6,6 +6,13 @@ import org.json.simple.JsonObject;
 import tw.util.S;
 
 public class TestPartialFill extends MyTestCase {
+	static {
+		try {
+			TestOrder.createValidUser();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 
 	// IMPORTANT TEST because it tests that transactions are added to the database properly
@@ -20,7 +27,7 @@ public class TestPartialFill extends MyTestCase {
 		S.sleep(1000);
 
 		confirmLog( "select * from log where uid = '%s' and type = 'PARTIAL_FILL'", uid );
-		confirmLog( "select * from log where uid = '%s' and type = 'ORDER_COMPLETED'", uid );
+		confirmLog( "select * from log where uid = '%s' and type = 'ORDER_COMPLETED'", uid );  // fails because we don't wait long enough
 		
 		JsonObject t = m_config.sqlQuery( query -> query.queryToJson("select * from transactions where uid = '%s'", uid ) ).get(0);
 		t.display();
@@ -31,13 +38,15 @@ public class TestPartialFill extends MyTestCase {
 	}
 	// test rounding up and down
 	
-	/** This order fails because it is below the 10% threshold */
+	/** This order fails because it is below the 10% threshold 
+	 * 
+	 *  This test fails because we no longer have a minimum threshold */
 	public void testLess() throws Exception {
 		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", 11, 3);
 		obj.put("simPartial", 1);
 		
 		String uid = postOrderToId(obj);
-		assert200();
+		assert200_();
 		
 		S.sleep(1000);
 		confirmLog( "select * from log where uid = '%s' and type = 'PARTIAL_FILL'", uid);

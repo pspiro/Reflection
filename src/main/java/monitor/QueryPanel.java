@@ -15,7 +15,6 @@ import org.json.simple.JsonObject;
 import common.JsonModel;
 import common.Util;
 import reflection.MySqlConnection;
-import reflection.MySqlConnection.SqlCommand;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.UI;

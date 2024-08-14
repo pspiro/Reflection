@@ -3,8 +3,7 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.BigWalletPanel;
-import positions.Wallet;
+import monitor.NewWalletPanel;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -22,7 +21,7 @@ public class TestRedeem extends MyTestCase {
 			e.printStackTrace();
 		}
 	}
-	
+	// FAILING WITH NONCE ERROR!!!!!!!!!!!!!!!
 	public void testLocked() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
 		
@@ -65,7 +64,7 @@ public class TestRedeem extends MyTestCase {
 	
 	private void lock(int amt, long lockUntil, int requiredTrades) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject lockObj = BigWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
+		JsonObject lockObj = NewWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
@@ -116,7 +115,7 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testCheckBalance() throws Exception {
-		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
+		S.out( "Balance: " + m_config.rusd().getPosition(Cookie.wallet) );
 	}
 		
 	/** can't use waitFor() here because we want to stop when there is any non-null status */

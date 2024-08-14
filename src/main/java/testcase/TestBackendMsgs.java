@@ -41,7 +41,7 @@ public class TestBackendMsgs extends MyTestCase {
 	public void testGetStockWithPrice() throws Exception {
 		cli().get("/api/get-stock-with-price/265598");
 		JsonObject obj = cli.readJsonObject();
-		assert200();
+		assert200_();
 		
 		double bid = Double.valueOf( obj.getString("bid") );		
 		double ask = Double.valueOf( obj.getString("ask") );		
@@ -51,34 +51,35 @@ public class TestBackendMsgs extends MyTestCase {
 		assertEquals( "265598", obj.getString("conid") );
 		assertEquals( "open", obj.getString("exchangeStatus") );
 		assertEquals( "NASDAQ:AAPL", obj.getString("tradingView") );
-		assertTrue( bid > 100 && bid < 200);
-		assertTrue( ask > 100 && bid < 200);
+		assertTrue( bid > 150 && bid < 300);
+		assertTrue( ask > 150 && ask < 300);
 	}
 	
 	public void testGetPrice() throws Exception {
 		cli().get("/api/get-price/265598");
 		JsonObject obj = cli.readJsonObject();
-		assert200();
+		assert200_();
 		
 		double bid = Double.valueOf( obj.getString("bid") );		
 		double ask = Double.valueOf( obj.getString("ask") );		
-		assertTrue( bid > 100 && bid < 200);
-		assertTrue( ask > 100 && bid < 200);
+		assertTrue( bid > 150 && bid < 300);
+		assertTrue( ask > 150 && ask < 300);
 	}
 	
+	/** client doesn't send this anymore */
 	public void testGetCryptos() throws Exception {
 		cli().get("/api/crypto-transactions");
 		JsonArray ar = cli.readJsonArray();
 		S.out( "all crypto");
 		S.out( ar.getJsonObj(0) );
-		assert200();
+		assert200_();
 		assertTrue( ar.size() > 1);
 	}
 	
 	public void testGetCryptosByAddr() throws Exception {
 		cli().get("/api/crypto-transactions/?wallet_public_key=" + Cookie.wallet);
 		JsonArray ar = cli.readJsonArray();
-		assert200();
+		assert200_();
 		assertTrue( ar.size() > 1);
 	}
 	
@@ -86,6 +87,6 @@ public class TestBackendMsgs extends MyTestCase {
 		cli().postToJson( "http://localhost:8383/api/onramp", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
 				"orderId", 333).toString() ).display();
-		assert200();
+		assert200_();
 	}
 }

@@ -17,11 +17,13 @@ import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
+import refblocks.Refblocks;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
+import web3.NodeServer;
 
 
 /** HookServer tracks the balances for all contract, including both stock
@@ -233,9 +235,7 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-//			if (BaseTransaction.debug() ) {
-				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);
-//			}
+			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
@@ -339,14 +339,13 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = new Wallet( walletAddr)
-					.reqPositionsMap(m_allContracts);
+			HashMap<String, Double> positions = NodeServer.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
+			double nativeBal = NodeServer.getNativeBalance( walletAddr);
 			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
 			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			

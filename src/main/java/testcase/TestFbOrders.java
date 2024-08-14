@@ -5,13 +5,13 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import positions.MoralisServer;
 import reflection.Config.Web3Type;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 import web3.Busd;
+import web3.NodeServer;
 import web3.Rusd;
 import web3.StockToken;
 
@@ -211,7 +211,9 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
-	/** There must be a valid profile for Bob for this to work */
+	/** There must be a valid profile for Bob for this to work
+	 * 
+	 *  This only works when run by itself; don't know why */
 	public void testFillRusd() throws Exception {  // always fails the second time!!!
 		// set wallet
 		S.out( "-----testFillRusd");
@@ -237,7 +239,7 @@ public class TestFbOrders extends MyTestCase {
 		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, rusd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
-		assert200();
+		assert200_();
 
 		// show uid
 		String uid = map.getString("id");  // 5-digit code
@@ -281,19 +283,18 @@ public class TestFbOrders extends MyTestCase {
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
-		if (MoralisServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+		if (NodeServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
 			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
 					.waitForHash();
 		}
 	}
 
 	static void showAmounts(String str) throws Exception {
-		S.out( "%s  approved=%s  USDC=%s  RUSD=%s  StockToken=%s",
+		S.out( "%s  approved=%s  USDC=%s  RUSD=%s",
 				str,
 				m_config.busd().getAllowance(bobAddr, m_config.rusdAddr() ),
 				m_config.busd().getPosition(bobAddr),
-				m_config.rusd().getPosition(bobAddr),
-				new StockToken("0x5195729466e481de3c63860034fc89efa5fbbb8f").getPosition(bobAddr) );
+				m_config.rusd().getPosition(bobAddr) );
 	}
 	
 	public void testTotalSupply() throws Exception {

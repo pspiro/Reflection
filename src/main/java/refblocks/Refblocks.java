@@ -3,12 +3,21 @@ package refblocks;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 
+import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Function;
+import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
+import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthCall;
+import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -26,6 +35,8 @@ import org.web3j.utils.Numeric;
 import common.Util;
 import tw.util.S;
 import web3.Erc20;
+import web3.Fees;
+import web3.NodeServer;
 
 /** Support code for Web3j library */
 public class Refblocks {
@@ -33,13 +44,14 @@ public class Refblocks {
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
 	static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
-	static Web3j web3j;
+	public static Web3j web3j;
 	static long chainId;  // set from Config
 	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
 
 	/** Called when Config is read */
 	public static void setChainId( long id, String rpcUrl) {
+		S.out( "Refblocks  chainId=%s  rpcUrl=%s", id, rpcUrl);
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
 	}
@@ -64,7 +76,7 @@ public class Refblocks {
 	}
 	
 	/** Can take hex or decimal */
-	private static BigInteger decodeQuantity(String hex) {
+	public static BigInteger decodeQuantity(String hex) {
 		try {
 			return Numeric.decodeQuantity( hex);
 		}
@@ -139,7 +151,7 @@ public class Refblocks {
 	 * @param address
 	 * @throws Exception 
 	 */
-	static void cancelStuckTransaction(String address) throws Exception {
+	public static void cancelStuckTransaction(String address) throws Exception {
 		// start by showing all nonces and figuring out which one or ones
 		// need to be canceled
 		showAllNonces(address);
@@ -148,14 +160,14 @@ public class Refblocks {
 		// create a RawTransactionManager that will create a transaction what that nonce
 	}
 
-	/** for debugging 
+	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
-	public static void showAllNonces(String address) throws Exception {
+	public static void showAllNonces(String walletAddr) throws Exception {
 		S.out( "%s nonce  finalized=%s  latest=%s  pending=%s",
-        		address,
-        		getNonce( address, DefaultBlockParameterName.FINALIZED),
-        		getNonce( address, DefaultBlockParameterName.LATEST),
-        		getNonce( address, DefaultBlockParameterName.PENDING)
+        		walletAddr,
+        		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
+        		getNonce( walletAddr, DefaultBlockParameterName.LATEST),
+        		getNonce( walletAddr, DefaultBlockParameterName.PENDING)
         		);
 	}
 	
@@ -176,6 +188,8 @@ public class Refblocks {
 
 	/** This is only used for deployment and minting stock tokens.
 	 *  Should not be used in production because nonce will get mixed up with FasterTm
+	 *  
+	 *  It polls for receipt every 15 sec.
 	 * 
 	 *  This transaction manager queries for the nonce and waits for the transaction 
 	 *  receipt. If there is an error, it queries for the real error text from the contract.
@@ -195,7 +209,7 @@ public class Refblocks {
 	public static StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = Fees.fetch();
+		Fees fees = NodeServer.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider( // fails with this
@@ -230,7 +244,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 40000);
     		
-    		Fees fees = Fees.fetch();
+    		Fees fees = NodeServer.queryFees();
     		fees.showFees( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
@@ -326,17 +340,5 @@ public class Refblocks {
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
 		return new DelayedTrp().reallyWait( receipt);
 	}
+
 }
-
-// MUST we wait for the transaction receipt from first call before sending second call???
-
-// error.getData() is null so toString() fails and you don't get to see the real error
-// need to fix or override
-// you get get address from private key using Credentials
-// TransactionReceiptProcessor is involved
-// uses PollingTransactionReceiptProcessor, use a custom ctor
-// QueuingTransactionReceiptProcessor this one returns asap and then queries in the background 
-// it polls only every 15 sec; that's too slow  JsonRpc2_0Web3j.DEFAULT_BLOCK_TIME = 15 * 1000;
-// consider FastRawTransactionManager to have multiple trans per block, I assume per caller
-// use RevertReasonExtractor.extractRevertReason() to get error text
-// use FunctionEncoder.encode(function) to get data
