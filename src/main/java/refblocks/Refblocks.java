@@ -3,21 +3,12 @@ package refblocks;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
 
-import org.web3j.abi.FunctionEncoder;
-import org.web3j.abi.TypeReference;
-import org.web3j.abi.datatypes.Function;
-import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
-import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.protocol.core.methods.request.Transaction;
-import org.web3j.protocol.core.methods.response.EthCall;
-import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -292,7 +283,7 @@ public class Refblocks {
 
 	
 	/** This transaction manager increments the nonce for each call but
-	 *  queries for the nonce after one minute to reset it in case we get
+	 *  queries for the nonce after 30 sec to reset it in case we get
 	 *  out of sync */
 	static class FasterTm extends FastRawTransactionManager {
 		/** re-query for nonce after one minute to reset it in case we get out of sync;
@@ -305,10 +296,10 @@ public class Refblocks {
 		 *  
 		 *  Two alternatives would be:
 		 *  a) create a nonce server that all applications use to retrieve the next nonce, or
-		 *  b) don't allow two applications to access the same account, e.g. let
-		 *  RefAPI use admin1 and Monitor use admin2 
+		 *  b) don't allow two applications to access the same account, e.g. let;
+		 *     RefAPI use admin1 and Monitor use admin2 
 		 */
-		static int Interval = 60000;
+		static int Interval = 30000;
 		
 
 		private String m_key;  // for debugonly

@@ -1,5 +1,6 @@
 package http;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -78,9 +79,9 @@ public class MyClient {
 	
 	/** query and return response */
 	public HttpResponse<String> query() throws Exception {
-		try {
-			HttpRequest request = m_builder.build();
+		HttpRequest request = m_builder.build();
 
+		try {
 			HttpResponse<String> response = client.send( request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
@@ -89,6 +90,9 @@ public class MyClient {
 			}
 			
 			return response;
+		}
+		catch( ConnectException ce) {
+			throw new ConnectException( "Could not connect to " + request.uri() );
 		}
 		catch( Throwable e) {
 			throw ( Util.toException( e) ); // check the type. pas 

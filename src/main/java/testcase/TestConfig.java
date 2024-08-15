@@ -4,7 +4,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import reflection.Config;
 import tw.util.S;
 
 public class TestConfig extends MyTestCase {

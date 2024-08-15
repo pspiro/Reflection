@@ -7,13 +7,13 @@ import common.Util;
 import common.Util.ExRunnable;
 import common.Util.ExSupplier;
 import fireblocks.Accounts;
-import http.MyClient;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
+import web3.NodeServer;
 
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
@@ -133,10 +133,11 @@ public class MyTestCase extends TestCase {
 	/** Wait for HookServer to catch up Exception */
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
 		waitFor( 120, () -> {
+			double balance = NodeServer.getBalance( tokenAddr, walletAddr, 0);
 			
-			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
-					.getObjectNN( "positions")
-					.getDouble( tokenAddr.toLowerCase() );
+//			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
+//					.getObjectNN( "positions")
+//					.getDouble( tokenAddr.toLowerCase() );
 			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", bal);
 			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});

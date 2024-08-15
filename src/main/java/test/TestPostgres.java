@@ -3,8 +3,8 @@ package test;
 import java.util.concurrent.Executor;
 
 import common.Util;
+import http.MyClient;
 import reflection.Config;
-import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -31,11 +31,18 @@ public class TestPostgres {
 		}
 	}
 	
-	public static void main(String[] args) throws Exception {
-		Executor e = new ESerial();
+	Executor e = new ESerial();
+	
+	void execute( Runnable r) {
+		e.execute( r);
+	}
 		
-		for (int i = 0; i < 3; i++) {
-			Util.execute( () -> e.execute( () -> S.out( "a")) ); 
-		}
+		
+		
+	
+	public static void main(String[] args) throws Exception {
+		double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/abc")
+				.getObjectNN( "positions")
+				.getDouble( "a");
 	}
 }

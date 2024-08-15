@@ -164,8 +164,8 @@ public class Main implements ITradeReportHandler {
 
 			// get stocks and prices
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
-			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );  // obsolete, could be removed, just needs testing
+			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );  // watch list and dropdown
 			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 

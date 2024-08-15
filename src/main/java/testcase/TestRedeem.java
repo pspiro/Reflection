@@ -24,6 +24,7 @@ public class TestRedeem extends MyTestCase {
 	// FAILING WITH NONCE ERROR!!!!!!!!!!!!!!!
 	public void testLocked() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
+		S.out( "***testLocked");
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
@@ -54,6 +55,8 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testLockedInPast() throws Exception {
+		S.out( "***testLockedInPast");
+		
 		// lock it all, but in the past; should succeed
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 5);
@@ -70,6 +73,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void testRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
+		S.out( "***testRedeem");
 
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
@@ -103,6 +107,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void testExceedMaxAutoRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
+		S.out( "***testExceedMax");
 
 		// create new wallet with more than the allowed amount of RUSD
 		Cookie.setNewFakeAddress(true);
@@ -114,10 +119,6 @@ public class TestRedeem extends MyTestCase {
 		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
 	}
 	
-	public void testCheckBalance() throws Exception {
-		S.out( "Balance: " + m_config.rusd().getPosition(Cookie.wallet) );
-	}
-		
 	/** can't use waitFor() here because we want to stop when there is any non-null status */
 	private void waitForRedeem(String wallet) throws Exception {
 		S.out( "waiting for redeem via live order system");
@@ -137,6 +138,8 @@ public class TestRedeem extends MyTestCase {
 	}
 
 	public void testFailAddress() throws Exception {
+		S.out( "***testFailAddr");
+
 		// invalid address (wrong length)
 		cli().addHeader("Cookie", Cookie.cookie)
 			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
@@ -152,12 +155,15 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testFailNoCookie() throws Exception {
+		S.out( "***testFailNoCookie");
 		cli().get("/api/redemptions/redeem/" + Cookie.wallet);
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
 	}
 
-	public void test() throws Exception {
+	public void testAppr() throws Exception {
+		S.out( "***testAppr");
+		
 		m_config.busd().approve( 
 				m_config.refWalletKey(),
 				m_config.rusdAddr(), // approving

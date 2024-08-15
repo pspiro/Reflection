@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 
 import common.Util;
-import refblocks.Refblocks;
 import tw.util.S;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */

@@ -1,11 +1,12 @@
 package testcase;
 
+import static org.junit.Assert.assertEquals;
+
 import java.math.BigInteger;
 
 import fireblocks.Fireblocks;
-import junit.framework.TestCase;
 
-public class TestFireblocks extends TestCase {
+public class TestFireblocks {
 	
 	String ge =       "0x7abc82771a6afa4d0d56045cf09cb1deaedb3cc2";
 	String userAddr = "0xAb52e8f017fBD6C7708c7C90C0204966690e7Fc8"; // Testnet Test1 account (id=1)	
@@ -25,7 +26,7 @@ public class TestFireblocks extends TestCase {
 				"0000000000000000000000000000000000000000000000000000000000000080000000000000000000000000b016711702D3302ceF6cEb62419abBeF5c44450e00000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000568656c6c6f000000000000000000000000000000000000000000000000000000",
 				Fireblocks.encodeParameters( types, vals) );
 	}
-	
+
 	public void testStringToBytes() {
 		assertEquals( "414243", Fireblocks.stringToBytes("ABC") );		
 	}

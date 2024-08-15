@@ -110,7 +110,7 @@ public class Stock extends JsonObject {
 		return Util.getEnum( getString("allow"), Allow.values(), Allow.All);
 	}
 	
-	public StockToken getToken() throws Exception {
+	public StockToken getToken() {
 		return new StockToken(getSmartContractId());
 	}
 

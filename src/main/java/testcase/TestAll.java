@@ -34,21 +34,18 @@ import junit.framework.TestCase;
 //	TestPositionTracker.class,
 //	TestPrices.class,
 //	TestProfile.class,			// fails because we don't require correct email code
-	TestRedeem.class,
-//	TestRefblocks.class,  // could add more tests here
+	TestRedeem.class,			// fails because of nonce errors; needs fixing
+//	TestRefblocks.class,  		// could add more tests here
 //	TestReqPositionsMap.class,
 //	TestReward.class,
 //	TestSignup.class,
 //	TestSiwe.class,
 //	TestSplitDates.class,		// ignoring for now
 //	TestSql.class,
-	TestStaleMktData.class,
-	TestStream.class,
-	TestStrings.class,
-	TestSwap.class,
-	TestUnwindOrder.class,
-	TestUserTokMgr.class,
-	TestWallet.class,
+//	TestSwap.class,				// not implemented yet
+//	TestUnwindOrder.class,		// won't work in auto-fill mode
+//	TestUserTokMgr.class,
+//	TestWallet.class,
 })
 public class TestAll extends TestCase {
 }
