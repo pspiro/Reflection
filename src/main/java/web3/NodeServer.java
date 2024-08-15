@@ -27,8 +27,8 @@ public class NodeServer {
 	
 	/** Send a query and expect "result" to contain a hex value.
 	 *  A value of '0x' is invalid and will throw an exception */
-	private static String queryHexResult( String body, String text, String contractAddr) throws Exception {
-		S.out( "Querying %s for '%s'", text, contractAddr);
+	private static String queryHexResult( String body, String text, String contractAddr, String walletAddr) throws Exception {
+		S.out( "Querying %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
 		String result = nodeQuery( body).getString( "result");
 		
 		if (result.equals( "0x") ) {
@@ -153,7 +153,9 @@ public class NodeServer {
 		return nodeQuery( body);
 	}
 
-	/** get ERC-20 token balance; see also getNativeBalance() */
+	/** get ERC-20 token balance; see also getNativeBalance()
+	 *  @param decimals can be zero; if so, we will look it up in the map;
+	 *  if not found, we will query for the value */
 	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
 		Util.reqValidAddress( contractAddr);
 		Util.reqValidAddress( walletAddr);
@@ -177,7 +179,7 @@ public class NodeServer {
 			]
 			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
 		
-		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr), decimals);
+		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
 	}
 	
 	/** note w/ moralis you can also get the token balance by wallet 
@@ -199,7 +201,7 @@ public class NodeServer {
 			]
 			}""", contractAddr);
 		
-		return Erc20.fromBlockchain( queryHexResult( body, "totalSupply", contractAddr), decimals);
+		return Erc20.fromBlockchain( queryHexResult( body, "totalSupply", contractAddr, "n/a"), decimals);
 	}
 	
 	public static double getAllowance( String contractAddr, String approverAddr, String spenderAddr, int decimals) throws Exception {
@@ -221,7 +223,7 @@ public class NodeServer {
 			]
 			}""", contractAddr, approverAddr.substring(2), spenderAddr.substring(2) );
 		
-		return Erc20.fromBlockchain( queryHexResult( body, "allocance", contractAddr), decimals);
+		return Erc20.fromBlockchain( queryHexResult( body, "allowance", contractAddr, approverAddr), decimals);
 	}
 	
 	/** map contract address (lower case) to number of Decimals, so we only query it once;
@@ -235,6 +237,20 @@ public class NodeServer {
 	public synchronized static int getDecimals(String contractAddr) throws Exception {
 		return Util.getOrCreateEx( decMap, contractAddr.toLowerCase(), () ->
 			getTokenDecimals( contractAddr.toLowerCase() ) );
+	}
+
+	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
+	public static void setDecimals(Erc20 token) {
+		setDecimals( token.decimals(), Util.toArray(token.address() ) ); 
+	}
+
+	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
+	public static void setDecimals(int decimals, String[] addresses) {
+		S.out( "Pre-filling decimals map  decimals=%s  count=%s", decimals, addresses.length);
+		
+		for (var address : addresses) {
+			decMap.put( address.toLowerCase(), decimals);
+		}
 	}
 	
 	private static int getTokenDecimals(String contractAddr) throws Exception {
@@ -255,8 +271,7 @@ public class NodeServer {
 			}
 			""", contractAddr);
 		
-		S.out( "Querying token decimals for %s", contractAddr);
-		return Erc20.decodeQuantity( queryHexResult( body, "decimals", contractAddr)).intValue();
+		return Erc20.decodeQuantity( queryHexResult( body, "decimals", contractAddr, "n/a")).intValue();
     }
 	
 	/** Makes a separate call for each one */  // this could return TsonObject

@@ -22,6 +22,7 @@ import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
+import web3.Erc20;
 import web3.NodeServer;
 
 
@@ -223,7 +224,7 @@ public class HookServer {
 		void handleWebhook() {
 			wrap( () -> {
 				if (m_exchange.getRequestBody().available() == 0) {
-					S.out( "  (no data)");
+					out( "  (no data)");
 				}
 				else {
 					handleHookWithData();
@@ -238,7 +239,7 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
+			out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
@@ -248,7 +249,7 @@ public class HookServer {
 					String from = trans.getString("fromAddress").toLowerCase(); 
 					String to = trans.getString("toAddress").toLowerCase();
 
-					S.out( "  %s %s was transferred from %s to %s", 
+					out( "  %s %s was transferred from %s to %s", 
 							amt, m_config.nativeTokName(), from, to);
 
 					adjustNativeBalance( from, -amt, confirmed);
@@ -267,7 +268,7 @@ public class HookServer {
 					double amt = trans.getDouble("valueWithDecimals");
 
 					Util.lookup( m_hookMap.get(owner), hookWallet -> {
-						S.out( "  %s can spend %s %s on behalf of %s",
+						out( "  %s can spend %s %s on behalf of %s",
 								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
 						hookWallet.approved( amt);	
 					});
@@ -276,14 +277,14 @@ public class HookServer {
 			
 			// process ERC20 transfers
 			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
-				double amt = trans.getDouble("valueWithDecimals");
+				String contract = trans.getString("contract").toLowerCase();
+				double amt = Erc20.fromBlockchain( trans.getString("value"), NodeServer.getDecimals(contract) );
 
 				if (amt != 0) {
-					String contract = trans.getString("contract").toLowerCase();
 					String from = trans.getString("from").toLowerCase(); 
 					String to = trans.getString("to").toLowerCase();
 
-					S.out( "  %s %s was transferred from %s to %s",
+					out( "  %s %s was transferred from %s to %s",
 							amt, contract, from, to);
 
 					// "confirmed" is our signal that something changed recently,
@@ -303,7 +304,7 @@ public class HookServer {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
 				m_hookMap.remove( walletAddr.toLowerCase() );
-				S.out( "Removed %s from map");
+				out( "Removed %s from map");
 				respondOk();
 			});
 		}
@@ -314,7 +315,7 @@ public class HookServer {
 		public void handleResetAll() {
 			wrap( () -> {
 				m_hookMap.clear();
-				S.out( "Cleared map");
+				out( "Cleared map");
 				respondOk();
 			});
 		}
@@ -335,7 +336,8 @@ public class HookServer {
 	}
 	
 	/** Note that the entire call is synced on m_hookMap, which means it will
-	 *  block other calls while it creates the wallet */
+	 *  block other calls while it creates the wallet
+	 *  @param walletAddr is lower case */
 	private HookWallet getOrCreateHookWallet(String walletAddr) throws Exception {
 		return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {
 			MyTimer t = new MyTimer();

@@ -350,6 +350,8 @@ public class Config extends ConfigBase {
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
 		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
+		NodeServer.setDecimals( m_rusd);
+		NodeServer.setDecimals( m_busd);
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -568,6 +570,10 @@ public class Config extends ConfigBase {
 
 	public boolean isProduction() {
 		return "polygon".equals(moralisPlatform);  
+	}
+	
+	public String moralisPlatform() {
+		return moralisPlatform;
 	}
 	
 	public double buySpread() {

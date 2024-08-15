@@ -66,10 +66,10 @@ public class Refblocks {
 				);
 	}
 	
-	/** Can take hex or decimal */
+	/** empty string returns zero */
 	public static BigInteger decodeQuantity(String hex) {
 		try {
-			return Numeric.decodeQuantity( hex);
+			return Erc20.decodeQuantity( hex);
 		}
 		catch( Exception e) {
 			return BigInteger.ZERO;

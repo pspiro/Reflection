@@ -42,7 +42,9 @@ public class Erc20 {
 	
 	/** Can take hex or decimal. '0x' is invalid, returns error.
 	 *  You could create another version that allows empty string or pass param
-	 * @throws Exception */
+	 *  
+	 * Do NOT attempt to use Numeric.decodeQuantity(); it has limitations
+	 * owing to using long for the conversion */
     public static BigInteger decodeQuantity(String value) throws Exception {
     	try {
 	    	return value.startsWith( "0x")

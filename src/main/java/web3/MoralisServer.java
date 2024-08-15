@@ -263,7 +263,7 @@ public class MoralisServer {
 	}
 
 	public static void setChain(String chainIn) throws Exception {
-		S.out( "Setting moralis chain=", chainIn);
+		S.out( "Setting moralis chain=%s", chainIn);
 		chain = chainIn;
 	}
 
