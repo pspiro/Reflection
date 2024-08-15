@@ -102,6 +102,7 @@ public class Config extends ConfigBase {
 	private double autoReward; // automatically send users rewards
 	private String pwUrl;
 	private boolean sendTelegram;
+	private boolean noStreams;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -270,6 +271,7 @@ public class Config extends ConfigBase {
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
+		this.noStreams = m_tab.getBoolean( "noStreams");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -363,7 +365,7 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
-		require( hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
+		require( noStreams || hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
 
 	/** confirm we have access to the password 
@@ -761,5 +763,9 @@ public class Config extends ConfigBase {
 	
 	public boolean sendTelegram() {
 		return sendTelegram;
+	}
+	
+	public boolean noStreams() {
+		return noStreams;
 	}
 }

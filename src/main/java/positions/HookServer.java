@@ -93,37 +93,41 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() ); // respond 200 here, I don't want to spook the Moralis client
 		});
 
-		// listen for ERC20 transfers and native transfers
-		try {
-			m_transferStreamId = Streams.createStream(
-						Streams.erc20Transfers, 
-						"transfer-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(),
-						chain() ); 
+		if (streaming() ) {
+			// listen for ERC20 transfers and native transfers
+			try {
+				m_transferStreamId = Streams.createStream(
+							Streams.erc20Transfers, 
+							"transfer-" + m_config.getHookNameSuffix(), 
+							m_config.hookServerUrl(),
+							chain() ); 
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				S.out( "WARNING: TRANSFER STREAM IS NOT ACTIVE");
+			}
+			
+			// listen for "approve" transactions
+			// you could pass BUSD, RUSD, or the user addresses
+			// it would be ideal if there were a way to combine these two streams into one,
+			// then it could just work off the user address, same as the transfer stream
+			try {
+				Streams.createStream(
+							Streams.approval, 
+							"approval-" + m_config.getHookNameSuffix(), 
+							m_config.hookServerUrl(), 
+							chain(),
+							m_config.rusd().address() );
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				S.out( "WARNING: APPROVAL STREAM IS NOT ACTIVE");
+			}
+			S.out( "**ready**");
 		}
-		catch( Exception e) {
-			e.printStackTrace();
-			S.out( "WARNING: TRANSFER STREAM IS NOT ACTIVE");
+		else { 
+			S.out( "***NOT USING HOOK SERVER");
 		}
-		
-		// listen for "approve" transactions
-		// you could pass BUSD, RUSD, or the user addresses
-		// it would be ideal if there were a way to combine these two streams into one,
-		// then it could just work off the user address, same as the transfer stream
-		try {
-			Streams.createStream(
-						Streams.approval, 
-						"approval-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain(),
-						m_config.rusd().address() );
-		}
-		catch( Exception e) {
-			e.printStackTrace();
-			S.out( "WARNING: APPROVAL STREAM IS NOT ACTIVE");
-		}
-		
-		S.out( "**ready**");
 	}
 
 	class Trans extends BaseTransaction {
@@ -345,13 +349,20 @@ public class HookServer {
 			
 			// query native balance
 			double nativeBal = NodeServer.getNativeBalance( walletAddr);
-			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
-			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			
+			if (streaming() ) {
+				Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
+				Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			}
 			
 			t.done();
 			
 			return new HookWallet( walletAddr, positions, approved, nativeBal);
 		});
+	}
+
+	private boolean streaming() {
+		return !m_config.noStreams();
 	}
 
 }
