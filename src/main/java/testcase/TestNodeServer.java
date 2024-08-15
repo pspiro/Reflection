@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import tw.util.S;
 import web3.NodeServer;
 
@@ -56,5 +57,6 @@ public class TestNodeServer extends MyTestCase {
 				stocks.getAllContractsAddresses(),
 				18);
 		new JsonObject( map).display();
+		assertTrue( map.size() == stocks.stocks().size() );
 	}
 }

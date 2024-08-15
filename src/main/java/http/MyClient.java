@@ -8,6 +8,7 @@ import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.util.Date;
 
+import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -75,6 +76,10 @@ public class MyClient {
 	
 	public JsonObject queryToJson() throws Exception {
 		return JsonObject.parse( query().body() );
+	}
+	
+	public JSONAware queryToAnyJson () throws Exception {
+		return JSONAware.parse( query().body() );
 	}
 	
 	/** query and return response */

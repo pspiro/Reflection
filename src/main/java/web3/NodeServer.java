@@ -3,6 +3,8 @@ package web3;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.json.simple.JSONAware;
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.web3j.crypto.Keys;
 
@@ -12,6 +14,8 @@ import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
 
+/** id sent will be returned on response; you could batch all different query types
+ *  when it gets busy */
 public class NodeServer {
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String pulseRpc = "https://rpc.pulsechain.com/";
@@ -44,18 +48,36 @@ public class NodeServer {
 	 *  
 	 * note that we sometimes pass rpcUrl with trailing / and sometimes not */
 	private static JsonObject nodeQuery(String body) throws Exception {
-		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
-
-		JsonObject obj = MyClient.create( rpcUrl, body)
-				.header( "accept", "application/json")
-				.header( "content-type", "application/json")
-				.queryToJson();
+		JsonObject obj = (JsonObject)nodeQueryAll( body);
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
 			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
 		}
 		return obj;
+	}
+	
+	private static JsonArray batchQuery( String body) throws Exception {
+		var anyJson = nodeQueryAll( body);
+		
+		if (anyJson instanceof JsonArray) {
+			return (JsonArray)anyJson;
+		}
+
+		S.out( "ERROR: query did not return an array, it returned:");
+		var obj = (JsonObject)anyJson;
+		obj.display();
+		JsonObject err = obj.getObjectNN( "error");  // this is just a guess, I've never seen it return this
+		throw new MyException( "nodeQuery batch error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
+	}
+	
+	private static JSONAware nodeQueryAll(String body) throws Exception {
+		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
+
+		return MyClient.create( rpcUrl, body)
+				.header( "accept", "application/json")
+				.header( "content-type", "application/json")
+				.queryToAnyJson();
 	}
 
 	/** see also getLatestBlock() */
@@ -152,35 +174,6 @@ public class NodeServer {
 			}""";
 		return nodeQuery( body);
 	}
-
-	/** get ERC-20 token balance; see also getNativeBalance()
-	 *  @param decimals can be zero; if so, we will look it up in the map;
-	 *  if not found, we will query for the value */
-	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
-		Util.reqValidAddress( contractAddr);
-		Util.reqValidAddress( walletAddr);
-		
-		// query or look up number of decimals if needed
-		if (decimals == 0) {
-			decimals = getDecimals( contractAddr);
-		}
-		
-		String body = String.format( """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_call",
-			"params": [
-				{
-				"to": "%s",
-				"data": "0x70a08231000000000000000000000000%s"
-				},
-				"latest"
-			]
-			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
-		
-		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
-	}
 	
 	/** note w/ moralis you can also get the token balance by wallet 
 	 * @param m_address */
@@ -252,7 +245,7 @@ public class NodeServer {
 			decMap.put( address.toLowerCase(), decimals);
 		}
 	}
-	
+
 	private static int getTokenDecimals(String contractAddr) throws Exception {
 		Util.reqValidAddress( contractAddr);
 
@@ -273,18 +266,88 @@ public class NodeServer {
 		
 		return Erc20.decodeQuantity( queryHexResult( body, "decimals", contractAddr, "n/a")).intValue();
     }
+
+	static class Req extends JsonObject {
+		Req( String method, int id) {
+			put( "jsonrpc", "2.0");
+			put( "method", method);
+			put( "id", id);
+		}
+	}
 	
+	static class BalReq extends Req {
+		BalReq( int id, String contract, String wallet) {
+			super( "eth_call", id);
+			
+			var param1 = Util.toJson(
+					"to", contract,
+					"data", "0x70a08231000000000000000000000000" + wallet.substring(2)
+					);
+
+			Object[] params = new Object[2];
+			params[0] = param1;
+			params[1] = "latest";
+			
+			put( "params", params);
+		}
+	}
+
 	/** Makes a separate call for each one */  // this could return TsonObject
 	static public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		Util.reqValidAddress( walletAddr);
 
+		// build an array of balance requests
+		JsonArray ar = new JsonArray();
+		for (int i = 0; i < contracts.length; i++) {
+			ar.add( new BalReq( i, contracts[i], walletAddr) );
+		}
+
 		HashMap<String, Double> positionsMap = new HashMap<>();
 
-		for (String contractAddr : contracts) {
-			positionsMap.put( contractAddr, getBalance( contractAddr, walletAddr, decimals) );
+		// submit the query and map the results
+		for (var single : batchQuery( ar.toString() ) ) {
+			String addr = contracts[single.getInt( "id")];
+			String balance = single.getString( "result");
+			
+			if (balance.equals( "0x")) {
+				S.out( "Could not get balance; contractAddr '%s' may be invalid", addr);
+			}
+			else {
+				positionsMap.put( addr.toLowerCase(), Erc20.fromBlockchain( balance, decimals) );
+			}
 		}
 
 		return positionsMap;
 	}
-
+	
+	/** get ERC-20 token balance; see also getNativeBalance()
+	 *  @param decimals can be zero; if so, we will look it up in the map;
+	 *  if not found, we will query for the value */
+	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
+		Util.reqValidAddress( contractAddr);
+		Util.reqValidAddress( walletAddr);
+		
+		// query or look up number of decimals if needed
+		if (decimals == 0) {
+			decimals = getDecimals( contractAddr);
+		}
+		
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_call",
+			"params": [
+				{
+				"to": "%s",
+				"data": "0x70a08231000000000000000000000000%s"
+				},
+				"latest"
+			]
+			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
+		
+		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
+	}
 }
+
+
