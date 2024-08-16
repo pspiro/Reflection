@@ -59,11 +59,13 @@ public class Erc20 {
 
 	/** Can take decimal or hex; should really throw an exception 
 	 * @throws Exception */
-	public static double fromBlockchain(String amt, int power) throws Exception {
+	public static double fromBlockchain(String amt, int decimals) throws Exception {
+		Util.require( decimals > 0, "decimals cannot be zero");
+		
 		try {
 			return S.isNotNull(amt)
 					? new BigDecimal( decodeQuantity(amt) )
-							.divide( ten.pow(power) )
+							.divide( ten.pow(decimals) )
 							.doubleValue()
 					: 0.0;
 		}
@@ -73,14 +75,17 @@ public class Erc20 {
 		}
 	}
 	
-	public BigInteger toBlockchain(double amt) {
+	public BigInteger toBlockchain(double amt) throws Exception {
 		return toBlockchain( amt, m_decimals); 
 	}
 
-	/** Return amt rounded to four decimals * 10^power */
-	public static BigInteger toBlockchain(double amt, int power) {
+	/** Return amt rounded to four decimals * 10^power 
+	 * @throws Exception */
+	public static BigInteger toBlockchain(double amt, int decimals) throws Exception {
+		Util.require( decimals > 0, "decimals cannot be zero");
+
 		return new BigDecimal( S.fmt4( amt) )
-				.multiply( ten.pow( power) )
+				.multiply( ten.pow( decimals) )
 				.toBigInteger();
 	}
 	

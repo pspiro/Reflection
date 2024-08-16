@@ -465,7 +465,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return (Stock)get( tag);
 	}
 
-	public BigInteger getBlockchain(String key, int decimals) {
+	public BigInteger getBlockchain(String key, int decimals) throws Exception {
 		return Erc20.toBlockchain( getDouble( key), decimals);
 	}
 

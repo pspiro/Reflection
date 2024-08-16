@@ -122,4 +122,32 @@ public class TestHookServer extends MyTestCase {
 		});
 	}
 	
+	/** test that hookserver is using correct decimals 
+	 * @throws Exception */
+	public void testBalances() throws Exception {
+		var tok = stocks.getAnyStockToken();
+		String wallet = Util.createFakeAddress();
+//		m_config.rusd().mintRusd( wallet, 5, tok).waitForHash();
+//		m_config.busd().mint( m_config.ownerKey(), wallet, 6).waitForHash();
+//		m_config.rusd().mintStockToken(wallet, tok, 7).waitForHash();
+
+		m_config.rusd().mintRusd( wallet, 5, tok);
+		m_config.busd().mint( m_config.ownerKey(), wallet, 6);
+		m_config.rusd().mintStockToken(wallet, tok, 7);
+		
+		waitForBalance(wallet, m_config.rusdAddr(), 5, false);
+		waitForBalance(wallet, m_config.busdAddr(), 6, false);
+		waitForBalance(wallet, tok.address(), 7, false);
+		
+		var ret = MyClient.getJson( hook + "/get-wallet-map/" + wallet);
+		ret.display();
+		
+		var balances = ret.getObject( "positions");
+		
+		assertEquals( 6, balances.getDouble( m_config.busdAddr() ) );
+		assertEquals( 7, balances.getDouble( tok.address() ) );
+		assertEquals( 5, balances.getDouble( m_config.rusdAddr() ) );
+		
+	}
+	
 }
