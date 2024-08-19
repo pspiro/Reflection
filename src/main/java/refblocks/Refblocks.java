@@ -122,7 +122,7 @@ public class Refblocks {
 			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
 
 			// for debugging
-//			tm = getNativeTm( callerKey);
+//			tm = getWaitingTm( callerKey);
 //			TransactionReceipt receipt = function.getCall( tm).send();
 
 			return new RbRetVal( receipt);
@@ -140,15 +140,37 @@ public class Refblocks {
 	 *  with same nonce and sufficient gas. You must consider if you want the subsequent
 	 *  transactions to go through or not and either cancel them first or not
 	 * @param address
+	 * @return 
 	 * @throws Exception 
 	 */
-	public static void cancelStuckTransaction(String address) throws Exception {
+	public static TransactionReceipt cancelStuckTransaction(String pk, int nonce) throws Exception {
 		// start by showing all nonces and figuring out which one or ones
 		// need to be canceled
-		showAllNonces(address);
+		//showAllNonces(address);
 		
-		// get the nonce to cancel
-		// create a RawTransactionManager that will create a transaction what that nonce
+		
+		String addr = Util.getAddress( pk);
+		
+		S.out( "Attemping to cancel transaction for %s with nonce %s", addr, nonce);
+		
+		var latest = getNonce( Util.getAddress( pk), DefaultBlockParameterName.LATEST );
+		S.out( "  latest nonce is %s", latest);
+		
+		if (latest.intValue() > nonce) {
+			S.out( "  more transactions to cancel");
+		}
+
+		// create a tm that allows us to specify the nonce
+		StuckTm tm = new StuckTm( web3j, Credentials.create( pk), nonce);
+		
+		// perform the transaction with normal gas and same nonce;
+		// if this doesn't work, try even higher gas
+		TransactionReceipt receipt = new MyTransfer( tm)
+				.send( Util.getAddress( pk), BigDecimal.ZERO);
+
+		S.out( "  receipt: " + receipt);
+		
+		return receipt;
 	}
 
 	/** for debugging, show three types of nonces for one account (wallet address)
@@ -327,6 +349,22 @@ public class Refblocks {
 		}
 	}
 
+	/** Use custom nonce to un-stick a transaction. Uses a polling receipt processor */
+	static class StuckTm extends RawTransactionManager {
+		private int m_nonce;
+
+		public StuckTm(Web3j web3j, Credentials credentials, int nonce) {
+			super(web3j, credentials, chainId);
+			m_nonce = nonce;
+		}
+
+		@Override protected synchronized BigInteger getNonce() throws IOException {
+			return BigInteger.valueOf( m_nonce);
+		}
+	}
+
+	
+	
 	/** wait for the transaction receipt with polling */
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
 		return new DelayedTrp().reallyWait( receipt);

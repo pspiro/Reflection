@@ -122,8 +122,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
-						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  wallet=%s  requested=%s  have=%s  need=%s",
-						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos) );
+						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  wallet=%s  requested=%s  have=%s  need=%s  maxAuto=%s",
+						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos), Main.m_config.maxAutoRedeem() );
 				alert( "USER SUBMITTED RUSD REDEMPTION REQUEST", str);
 				
 				// report error back to user
@@ -131,7 +131,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// redeem it  try/catch here?
-			RetVal retVal = rusd.sellRusd(m_walletAddr, busd, m_quantity);  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+			RetVal retVal = rusd.sellRusd(m_walletAddr, busd, m_quantity); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+			out( "receipt: " + retVal);
 
 			olog( LogType.REDEEMED, "amount", m_quantity);
 
