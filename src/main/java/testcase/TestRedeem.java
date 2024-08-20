@@ -71,7 +71,7 @@ public class TestRedeem extends MyTestCase {
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
-	public void testRedeem() throws Exception {
+	public void testInsufAndRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
 		S.out( "***testRedeem");
 
@@ -84,15 +84,35 @@ public class TestRedeem extends MyTestCase {
 		// mint an amount of RUSD that should work--high 
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 9);
-		
+
+		// this doesn't work; for some reason, it's 
+//		// clear approved amount
+//		S.out( "clearing allowance");
+//		m_config.busd().approve(
+//				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
+//
+//		// redeem RUSD, fail due to allowance
+//		S.out( "sending redemption request to fail");
+//		redeem();
+//		assertTrue( cli.getResponseCode() == 400);
+//
+//		// restore approved amount
+//		S.out( "restoring allowance");
+//		m_config.busd().approve(
+//				m_config.refWalletKey(), m_config.rusdAddr(), 1000000).waitForHash(); // $1M
+//		
+//		// wait for it to solidify
+//		S.out( "waiting 10 sec");
+//		S.sleep( 10000);
+
 		// redeem RUSD, pass
-		S.out( "sending redemption request");
+		S.out( "sending redemption request to succeed");
 		redeem();
 		assert200();
 
 		// second one should fail w/ REDEMPTION_PENDING
 		S.sleep(200);
-		S.out( "sending dup redemption request");
+		S.out( "sending dup redemption request to fail");
 		redeem();
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 

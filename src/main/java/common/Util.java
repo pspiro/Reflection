@@ -512,11 +512,12 @@ public class Util {
 		}
 	}
 
-	/** Truncate n to a number of decimal digits */
+	/** Truncate n to a number of decimal digits. this keeps precision
+	 *  to the 8th decimal place and loses precision at the ninth */
 	public static double truncate(double n, int digits) throws Exception {
 		require( n >= 0, "Cannot truncate negative numbers"); // you could fix this if needed
 		double mult = Math.pow(10, digits);
-		return Math.floor( n * mult) / mult;
+		return Math.floor( n * mult + .00001) / mult;
 	}
 
 	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");

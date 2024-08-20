@@ -1,5 +1,6 @@
 package web3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -336,7 +337,8 @@ public class NodeServer {
 		return positionsMap;
 	}
 	
-	/** get ERC-20 token balance; see also getNativeBalance()
+	/** get ERC-20 token balance; see also getNativeBalance();
+	 *  see also getPositionMap()
 	 *  @param decimals can be zero; if so, we will look it up in the map;
 	 *  if not found, we will query for the value */
 	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
@@ -363,7 +365,5 @@ public class NodeServer {
 			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
 		
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
-	}
+	}	
 }
-
-
