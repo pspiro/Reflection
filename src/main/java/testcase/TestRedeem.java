@@ -71,6 +71,26 @@ public class TestRedeem extends MyTestCase {
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
+//	public void testRedeem() throws Exception {
+//		String wal = "0xcb6c2EDBb986ef14B66E094787245350b69EA5Ec";
+//		Cookie.setWalletAddr(wal);
+//		S.out( "**approved=%s", m_config.getApprovedAmt() );
+//		S.out( "**rusdBal=%s", m_config.rusd().getPosition(wal));
+//		S.out( "**busdBal=%s", m_config.busd().getPosition(m_config.refWalletAddr()));
+//		
+//		S.out( "sending redemption request to succeed");
+//		m_config.rusd().sellRusd(wal, m_config.busd(), 3)
+//			.displayHash();
+////		redeem();
+//		//assert200();
+//	}
+
+	/** This test is failing in dev3 and you couldn't figure it out.
+	 *  to fix it, show it to Jitin, or re-write the busd class to print out
+	 *  more infomation in the error message, or put BUSD and RUSD code all into chat
+	 *  
+	 * @throws Exception
+	 */
 	public void testInsufAndRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
 		S.out( "***testRedeem");
@@ -86,7 +106,7 @@ public class TestRedeem extends MyTestCase {
 		mintRusd(Cookie.wallet, 9);
 
 		// this doesn't work; for some reason, it's 
-//		// clear approved amount
+		// clear approved amount
 //		S.out( "clearing allowance");
 //		m_config.busd().approve(
 //				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
@@ -97,13 +117,13 @@ public class TestRedeem extends MyTestCase {
 //		assertTrue( cli.getResponseCode() == 400);
 //
 //		// restore approved amount
-//		S.out( "restoring allowance");
-//		m_config.busd().approve(
-//				m_config.refWalletKey(), m_config.rusdAddr(), 1000000).waitForHash(); // $1M
+		S.out( "restoring allowance");
+		m_config.busd().approve(
+				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
 //		
 //		// wait for it to solidify
 //		S.out( "waiting 10 sec");
-//		S.sleep( 10000);
+//		S.sleep( 30000);
 
 		// redeem RUSD, pass
 		S.out( "sending redemption request to succeed");
