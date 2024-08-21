@@ -18,9 +18,9 @@ public class RedemptionPanel extends QueryPanel {
 
 	RedemptionPanel() {
 		super(	"redemptions",
-				"created_at,uid,wallet_public_key,first_name,last_name,status,amount",
+				"created_at,uid,wallet_public_key,first_name,last_name,status,amount,fireblocks_id",
 				"""
-				select redemptions.created_at,redemptions.uid,redemptions.wallet_public_key,first_name,last_name,status,amount
+				select redemptions.created_at,redemptions.uid,redemptions.wallet_public_key,first_name,last_name,status,amount,fireblocks_id
 				from redemptions
 				left join users using (wallet_public_key)
 				$where

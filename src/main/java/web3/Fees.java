@@ -36,7 +36,7 @@ public class Fees {
 	}
 
 	public void showFees(BigInteger gasUnits) {
-		S.out( "  baseGas=%s gw  priority=%s gw  effectiveGas=%s  maxCost=$%s",  
+		S.out( "  baseGas=%s wei  priority=%s wei  effectiveGas=%s wei  maxCost=%s native tokens",  
 				baseFee.doubleValue(),
 				priorityFee.doubleValue(),
 				baseFee.add( priorityFee).doubleValue(),

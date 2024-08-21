@@ -125,7 +125,7 @@ public class NewSheet {
 					return new Tab( tab);
 				}
 			}
-			throw new MyException( "Error: no tab %s in book %s", name, m_name);
+			throw new MyException( "Error: no tab '%s' in book %s", name, m_name);
 		}
  		
 		/** Does not return empty rows at the bottom. */

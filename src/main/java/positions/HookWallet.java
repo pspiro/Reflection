@@ -122,8 +122,10 @@ class HookWallet {
 		return m_nativeBal;
 	}
 
+	/** remove the parameters. pas */
 	public double getAllowance(Busd busd, String walletAddr, String rusdAddr) throws Exception {
-		return busd.getAllowance(walletAddr, rusdAddr);
+		//return busd.getAllowance(walletAddr, rusdAddr);
+		return m_approved;
 	}
 
 	public void approved(double amt) {

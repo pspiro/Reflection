@@ -774,4 +774,8 @@ public class Config extends ConfigBase {
 	public boolean noStreams() {
 		return noStreams;
 	}
+
+	public double getApprovedAmt() throws Exception {
+		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
+	}
 }

@@ -76,7 +76,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// save email to send alerts later
 			m_email = profile.email(); 
 
-			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here 
+			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here
 			m_quantity = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
 			require( m_quantity > .004, RefCode.NO_RUSD_TO_REDEEM, "No RUSD in user wallet to redeem");
 			
@@ -115,15 +115,17 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// insufficient BUSD in RefWallet?
-			double busdPos = busd.getPosition( m_config.refWalletAddr() );
-			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() ) {
+			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
+			double allowance = Main.m_config.getApprovedAmt(); // sends query
+			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
-						"Insufficient stablecoin in RefWallet or maxAutoRedeem amount exceeded for RUSD redemption  wallet=%s  requested=%s  have=%s  need=%s",
-						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos) );
+						"Insufficient stablecoin in RefWallet OR maxAutoRedeem amount exceeded for RUSD redemption OR insufficient allowance\n"
+						+ "wallet=%s  requested=%s  have=%s  need=%s  maxAuto=%s  allowance=%s",
+						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos), Main.m_config.maxAutoRedeem(), allowance);
 				alert( "USER SUBMITTED RUSD REDEMPTION REQUEST", str);
 				
 				// report error back to user
@@ -131,17 +133,17 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// redeem it  try/catch here?
-			RetVal retVal = rusd.sellRusd(m_walletAddr, busd, m_quantity);  // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+			String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 			olog( LogType.REDEEMED, "amount", m_quantity);
 
-			insertRedemption( busd, m_quantity, retVal.id(), LiveStatus.Working); // informational only, don't throw an exception
+			insertRedemption( busd, m_quantity, hash, LiveStatus.Working); // informational only, don't throw an exception
 
 			respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 				
 			// redemption is working on the blockchain and will now be tracked by the live order system
 			liveRedemptions.put( m_walletAddr.toLowerCase(), this);
-			allLiveTransactions.put( retVal.id(), this);
+			allLiveTransactions.put( hash, this);
 		});
 	}
 

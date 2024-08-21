@@ -1,5 +1,6 @@
 package web3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -292,7 +293,9 @@ public class NodeServer {
 		}
 	}
 
-	/** Makes a separate call for each one */  // this could return TsonObject
+	/** Makes a separate call for each one. If decimals is zero, it's possible that
+	 *  contracts have different number of decimals.
+	 *  @param decimals if zero we will look it up from the map or query for it */
 	static public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		Util.reqValidAddress( walletAddr);
 
@@ -301,26 +304,41 @@ public class NodeServer {
 		for (int i = 0; i < contracts.length; i++) {
 			ar.add( new BalReq( i, contracts[i], walletAddr) );
 		}
-
+		
+		// submit the query
+		S.out( "Querying %s positions for %s", contracts.length, walletAddr);
+		var batchResult = batchQuery( ar.toString() );
+		
 		HashMap<String, Double> positionsMap = new HashMap<>();
 
-		// submit the query and map the results
-		for (var single : batchQuery( ar.toString() ) ) {
-			String addr = contracts[single.getInt( "id")];
-			String balance = single.getString( "result");
+		// build a map of contract -> position (for non-zero positions only)
+		for (var single : batchResult) {
+			// get index
+			int index = single.getInt( "id");
+			Util.require( index < contracts.length, "Index %s is out of range", index);
 			
-			if (balance.equals( "0x")) {
-				S.out( "Could not get balance; contractAddr '%s' may be invalid", addr);
+			String contractAddr = contracts[index];
+			String result = single.getString( "result");
+			
+			if (result.equals( "0x")) {
+				S.out( "Could not get balance; contractAddr '%s' may be invalid", contractAddr);
 			}
 			else {
-				positionsMap.put( addr.toLowerCase(), Erc20.fromBlockchain( balance, decimals) );
+				double balance = Erc20.fromBlockchain( 
+						result, 
+						decimals != 0 ? decimals : getDecimals( contractAddr) ); // look up or query for decimals if needed
+				
+				if (balance > 0) {
+					positionsMap.put( contractAddr.toLowerCase(), balance);
+				}
 			}
 		}
 
 		return positionsMap;
 	}
 	
-	/** get ERC-20 token balance; see also getNativeBalance()
+	/** get ERC-20 token balance; see also getNativeBalance();
+	 *  see also getPositionMap()
 	 *  @param decimals can be zero; if so, we will look it up in the map;
 	 *  if not found, we will query for the value */
 	public static double getBalance( String contractAddr, String walletAddr, int decimals) throws Exception {
@@ -347,7 +365,5 @@ public class NodeServer {
 			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
 		
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
-	}
+	}	
 }
-
-

@@ -31,9 +31,7 @@ public class BackendTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-	/** Used by the My Reflection (portfolio) section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions;
-	 *  This is obsolete and should be removed, and replaced with handleReqPositionsNew() */
+	/** obsolete, remove */
 	public void handleReqPositions() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)

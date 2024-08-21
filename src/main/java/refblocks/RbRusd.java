@@ -1,5 +1,7 @@
 package refblocks;
 
+import java.math.BigInteger;
+
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
@@ -91,8 +93,8 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidAddress(userAddr);
 
 		S.out( "RUSD redeeming %s RUSD receive %s %s for user %s",
-				amt,
-				amt,
+				S.fmt6( amt),
+				S.fmt6( amt),
 				busd.name(),
 				userAddr);
 		
