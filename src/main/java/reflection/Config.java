@@ -276,7 +276,7 @@ public class Config extends ConfigBase {
 		
 		Alerts.setEmail( this.alertEmail);
 		
-		// Fireblocks
+		// Web3
 		this.platformBase = m_tab.getRequiredString("platformBase");
 		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
 		

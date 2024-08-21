@@ -218,7 +218,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		""";
 	
 	/** no exceptions, no delay */
-	private void insertRedemption(Busd busd, double rusdPos, String fbId, LiveStatus status) {
+	private void insertRedemption(Busd busd, double rusdPos, String hash, LiveStatus status) {
 		Util.wrap( () -> {
 			S.out( "inserting or updating record into redemption table with status %s", m_status);
 
@@ -229,7 +229,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			obj.put( "stablecoin", busd.name() );
 			obj.put( "amount", rusdPos);
 			obj.put( "status", status);
-			obj.putIf( "fireblocks_id", fbId);
+			obj.putIf( "blockchain_hash", hash);
 
 			// only allow one "working" redemption at a time
 			m_config.sqlCommand( conn -> conn.insertOrUpdate(
