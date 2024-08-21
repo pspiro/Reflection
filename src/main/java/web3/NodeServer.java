@@ -57,11 +57,44 @@ public class NodeServer {
 		}
 		return obj;
 	}
+
+	/** different nodes have different batch sizes; you can probably get bigger size
+	 * with a paid node e.g. Moralis */
+	static int batchSize = 10; // should be configurable
 	
-	private static JsonArray batchQuery( String body) throws Exception {
+	private static JsonArray batchQuery( JsonArray requests) throws Exception {
+		int i = 0;
+		var results = new JsonArray();
+		
+		while (i < requests.size() ) {
+			var batch = new JsonArray();
+			
+			for (int j = 0; j < batchSize && i < requests.size(); j++) {
+				batch.add( requests.get( i++) );
+			}
+			
+			smallBatchQuery( batch.toString() )
+				.forEach( item -> results.add( item) );
+		}
+		
+		return results;
+	}
+
+	/** query size must be <= maxBatchSize */
+	private static JsonArray smallBatchQuery( String body) throws Exception {
 		var anyJson = nodeQueryAll( body);
 		
 		if (anyJson instanceof JsonArray) {
+			var ar = (JsonArray)anyJson;
+			Util.require( ar.size() > 0, "ERROR: query returned no results"); // this might be okay, not sure
+
+			if (ar.size() > 0) {
+				var error = ar.get( 0).getObject( "error");
+				if (error != null) {
+					throw new Exception( "ERROR: batch query returned error: " + error);
+				}
+			}
+			
 			return (JsonArray)anyJson;
 		}
 
@@ -307,7 +340,8 @@ public class NodeServer {
 		
 		// submit the query
 		S.out( "Querying %s positions for %s", contracts.length, walletAddr);
-		var batchResult = batchQuery( ar.toString() );
+		var batchResult = batchQuery( ar);
+		S.out( "  returned %s items", batchResult.size() );
 		
 		HashMap<String, Double> positionsMap = new HashMap<>();
 
