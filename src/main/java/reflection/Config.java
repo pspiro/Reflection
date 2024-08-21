@@ -271,6 +271,7 @@ public class Config extends ConfigBase {
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
+		S.out( "read sendTelegram=%s", sendTelegram);
 		this.noStreams = m_tab.getBoolean( "noStreams");
 		
 		Alerts.setEmail( this.alertEmail);
