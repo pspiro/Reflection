@@ -4,7 +4,6 @@ import java.util.Map;
 
 import org.json.simple.JsonObject;
 
-import common.Util;
 import tw.util.S;
 import web3.NodeServer;
 

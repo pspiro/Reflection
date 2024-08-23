@@ -14,7 +14,6 @@ import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
 import util.LogType;
 import web3.Busd;
-import web3.RetVal;
 import web3.Rusd;
 
 public class RedeemTransaction extends MyTransaction implements LiveTransaction {

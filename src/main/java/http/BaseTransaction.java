@@ -292,4 +292,8 @@ public class BaseTransaction {
 	public String getLastToken() {
 		return Util.getLastToken(m_exchange.getRequestURI().toString(), "/");
 	}
+
+	public HttpExchange exchange() {
+		return m_exchange;
+	}
 }

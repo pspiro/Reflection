@@ -1,11 +1,6 @@
 package test;
 
-import java.util.concurrent.Executor;
-
-import common.Util;
-import http.MyClient;
 import reflection.Config;
-import testcase.Cookie;
 import tw.util.S;
 
 /** Just test that you can connect to the database. */
