@@ -1,7 +1,5 @@
 package refblocks;
 
-import java.math.BigInteger;
-
 import org.web3j.tx.TransactionManager;
 
 import common.Util;
