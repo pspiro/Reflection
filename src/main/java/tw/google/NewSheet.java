@@ -300,6 +300,7 @@ public class NewSheet {
 				if (m_insEntries != null || m_updEntries != null) {
 					throw new MyException( "Transaction already started in %s", m_name);
 				}
+				S.out( "starting tab transaction");
 				m_insEntries = new Rows();
 				m_updEntries = new Rows();
 			}
@@ -308,6 +309,8 @@ public class NewSheet {
 				if (m_insEntries == null && m_updEntries == null) {
 					throw new MyException( "Error: no transaction started in %s", m_name);
 				}
+				
+				S.out( "committing tab transaction");
 				
 				if (m_insEntries.size() > 0) {
 					S.out( "Inserting into %s", m_name);
