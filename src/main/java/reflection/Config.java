@@ -513,6 +513,7 @@ public class Config extends ConfigBase {
 	/** You could move refapi specific things into here if desired */
 	static class RefApiConfig extends Config {
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
+			super.readFromSpreadsheet(tab);
 		}
 	}
 	
