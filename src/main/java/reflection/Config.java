@@ -95,14 +95,12 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	private String hookServerUrl; // webhook url passed to Moralis
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
 	private String pwUrl;
 	private boolean sendTelegram;
-	private boolean noStreams;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -198,15 +196,16 @@ public class Config extends ConfigBase {
 				: IStream.readLine( "config.txt");
 	}
 
-	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
+	public final void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}
 
-	public void readFromSpreadsheet(String tabName) throws Exception {
+	public final void readFromSpreadsheet(String tabName) throws Exception {
 		S.out( "Using config tab %s", tabName);
 		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
 	}
 	
+	/** Override this version */
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		m_tab = new GTable( tab, "Tag", "Value", true);
 		
@@ -261,7 +260,6 @@ public class Config extends ConfigBase {
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.hookServerPort = m_tab.getInt("hookServerPort");
-		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
@@ -271,8 +269,6 @@ public class Config extends ConfigBase {
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
-		S.out( "read sendTelegram=%s", sendTelegram);
-		this.noStreams = m_tab.getBoolean( "noStreams");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -368,7 +364,6 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
-		require( noStreams || hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
 
 	/** confirm we have access to the password 
@@ -517,9 +512,7 @@ public class Config extends ConfigBase {
 
 	/** You could move refapi specific things into here if desired */
 	static class RefApiConfig extends Config {
-		
-		public void readFromSpreadsheet(String tabName) throws Exception {
-			super.readFromSpreadsheet(tabName);
+		protected void readFromSpreadsheet(Tab tab) throws Exception {
 		}
 	}
 	
@@ -694,11 +687,7 @@ public class Config extends ConfigBase {
 	public int hookServerPort() {
 		return hookServerPort;
 	}
-	
-	public String hookServerUrl() {
-		return hookServerUrl;
-	}
-	
+		
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
@@ -772,11 +761,8 @@ public class Config extends ConfigBase {
 		return sendTelegram;
 	}
 	
-	public boolean noStreams() {
-		return noStreams;
-	}
-
 	public double getApprovedAmt() throws Exception {
 		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
 	}
+	
 }

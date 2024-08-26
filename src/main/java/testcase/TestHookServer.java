@@ -13,7 +13,7 @@ import web3.StockToken;
  * 
  *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	static String hook = "http://localhost:8484/hook";
+	static String hook = "http://localhost:8080/hook";
 	static String wallet = Util.createFakeAddress();
 
 	static {
@@ -94,7 +94,7 @@ public class TestHookServer extends MyTestCase {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
 			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
-					n, pos, NodeServer.getNativeBalance( wallet) ) );
+					n, S.fmt4(pos), S.fmt4(NodeServer.getNativeBalance( wallet) ) ) );
 			return Util.isEq( pos, n, .00001);
 		});
 	}
@@ -144,9 +144,9 @@ public class TestHookServer extends MyTestCase {
 		
 		var balances = ret.getObject( "positions");
 		
-		assertEquals( 6, balances.getDouble( m_config.busdAddr() ) );
-		assertEquals( 7, balances.getDouble( tok.address() ) );
-		assertEquals( 5, balances.getDouble( m_config.rusdAddr() ) );
+		assertEquals( 5., balances.getDouble( m_config.rusdAddr() ) );
+		assertEquals( 6., balances.getDouble( m_config.busdAddr() ) );
+		assertEquals( 7., balances.getDouble( tok.address() ) );
 		
 	}
 	

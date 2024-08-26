@@ -6,7 +6,7 @@ import javax.swing.JTextField;
 
 import common.Util;
 import http.MyClient;
-import positions.Streams;
+import positions.MoralisStreams;
 import reflection.Config.Web3Type;
 import tw.util.S;
 import tw.util.VerticalPanel;
@@ -106,7 +106,7 @@ class StatusPanel extends MonPanel {
 		wrap( () -> {
 			String name = prefix + Monitor.m_config.getHookNameSuffix();
 			fullName.setText( name);
-			status.setText( Streams.getStreamStatus( name) );
+			status.setText( MoralisStreams.getStreamStatus( name) );
 		});
 	}
 }
