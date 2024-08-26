@@ -7,6 +7,7 @@ import javax.swing.SwingUtilities;
 
 import common.SignupReport;
 import common.Util;
+import tw.util.S;
 
 class SignupPanel extends JsonPanel {
 	JProgressBar bar = new JProgressBar();
@@ -25,12 +26,14 @@ class SignupPanel extends JsonPanel {
 		Util.execute( () -> {
 			try {
 				Monitor.m_config.sqlCommand( sql -> {
+					S.out( "creating report");
 					var ar = SignupReport.create( 3, sql, Monitor.m_config.rusd(), () -> {
 						SwingUtilities.invokeLater( () -> {
 							bar.setValue( bar.getValue() + 1);
 							bar.repaint();
 						});
 					});
+					S.out( "  done");
 					setRows( ar);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 				});

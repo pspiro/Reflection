@@ -21,12 +21,14 @@ public class Telegram {
 		Util.wrap( () -> send( reflectionChatId, message) );
 	}
 	
+	/** send message with web preview disabled */
 	static JsonObject send( String chatId, String message) throws Exception {
 		S.out( "Posting to Telegram: " + message);
 		
 		JsonObject params = Util.toJson( 
 				"chat_id", chatId,
 				"text", message,
+				"disable_web_page_preview", true,
 				"parse_mode", "Markdown");  // or "HTML"
 		S.out( params);
 

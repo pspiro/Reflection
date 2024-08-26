@@ -847,7 +847,7 @@ public class Util {
 		return new String[] { "", "" };
 	}
 
-	/** take full format with display name, return email only */
+	/** take full format with display name, return email only lower case */
 	public static String parseEmailOnly( String email) {
 		return parseEmail( email)[1];
 	}
