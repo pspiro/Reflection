@@ -1,5 +1,7 @@
 package http;
 
+import static java.util.Objects.requireNonNull;
+
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -45,6 +47,14 @@ public class MyClient {
 	public static MyClient create( String url, String body) {
 		write( url + " POST");
 		return new MyClient( reqBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
+	}
+
+	/** build PATCH request; call this directly to add headers */
+	public static MyClient createPatch( String url, String body) {
+		write( url + " PATCH");
+		return new MyClient( reqBuilder( url).method( 
+				"PATCH", 
+				HttpRequest.BodyPublishers.ofString( body) ) );
 	}
 
 	/** Create PUT */
@@ -216,6 +226,16 @@ public class MyClient {
 	 *  Note that this will NOT keep the program alive */
 	public static void postToJson( String url, String body, ExConsumer<JsonObject> ret) {
 		create( url, body).query( resp -> ret.accept( JsonObject.parse( resp.body() ) ) );
+	}
+
+	public JsonObject queryAlchemy() throws Exception {
+		String str = this
+				.header( "accept", "application/json")
+				.header( "content-type", "application/json")
+				.header( "X-Alchemy-Token", "K9VYjc0AdzyVJjCb5dpaybSiEDlLKV5h")
+				.query()
+				.body();
+		return JsonObject.parse( str);
 	}
 
 	
