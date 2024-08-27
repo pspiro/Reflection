@@ -99,7 +99,8 @@ public class Config extends ConfigBase {
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
-	private String pwUrl;
+	private String pwUrl; // url of pw server
+	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
 
 	// Fireblocks
@@ -268,6 +269,7 @@ public class Config extends ConfigBase {
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
+		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		
 		Alerts.setEmail( this.alertEmail);
@@ -381,8 +383,7 @@ public class Config extends ConfigBase {
 		
 		// try next from pwserver
 		require( S.isNotNull( pwUrl), "pwserver");
-		Util.require( pwUrl.endsWith( "getpw"), "pwurl is invalid");
-		Util.require( JsonObject.isObject( MyClient.getString( pwUrl) ), 
+		Util.require( JsonObject.isObject( MyClient.getString( pwUrl + "/getpw") ), 
 				"pwserver did not return json");
 		S.out( "pwserver ok");
 	}
@@ -407,11 +408,17 @@ public class Config extends ConfigBase {
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
-		String pw = MyClient.postToJson( pwUrl, Util.toJson( "code", "lwjkefdj827").toString() )
-				.getString( "pw");
+		var json = Util.toJson( 
+				"code", "lwjkefdj827",
+				"name", this.pwName);
+		
+		var ret = MyClient.postToJson( pwUrl + "/getpw", json.toString() );
+		String error = ret.getString( "error");
+		Util.require( S.isNull( error), "pw server returned error " + error);
+		
+		String pw = ret.getString( "pw");
 		Util.require( S.isNotNull( pw), "null pw from pw server");
-		Util.require( !pw.equals( "wrong code"), "wrong code passed to pw server");
-
+		
 		return pw;
 	}
 	

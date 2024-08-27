@@ -3,6 +3,8 @@ package testcase;
 import common.Util;
 import http.MyClient;
 import junit.framework.TestCase;
+import reflection.Config;
+import tw.util.S;
 
 public class TestPwServer extends TestCase {
 	
@@ -30,5 +32,10 @@ public class TestPwServer extends TestCase {
 				"code", "prodcode"
 				).toString() );
 		assertEquals( "mypw", json.getString( "pw") );
+	}
+	
+	public void testPulse() throws Exception {
+		Config c = Config.ask( "pulse");
+		c.ownerKey();
 	}
 }
