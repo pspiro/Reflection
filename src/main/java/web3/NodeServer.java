@@ -208,7 +208,8 @@ public class NodeServer {
 		return nodeQuery( body);
 	}
 	
-	/** note w/ moralis you can also get the token balance by wallet 
+	/** note w/ moralis you can also get the token balance by wallet
+	 * I'm assuming that "data" is the parameters encoded the same was as in Fireblocks module 
 	 * @param m_address */
 	public static double getTotalSupply(String contractAddr, int decimals) throws Exception {
 		Util.reqValidAddress( contractAddr);
@@ -398,5 +399,55 @@ public class NodeServer {
 			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
 		
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
-	}	
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config.ask();
+		getReceipt( "0xa301f3a437a636a4a492b81ff2f23a355a1d44577ed02ff277addb1a7bcd30e5");
+	}
+	
+	/** must handle the no receipt or not ready yet state */
+	public static String getReceipt( String transHash) throws Exception {
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getTransactionReceipt",
+			"params": [
+				"%s"
+			]
+			}""", transHash);
+		
+		// no result is no "result" tag, just id
+		var result = nodeQuery( body);//.getObjectNN( "result").removeEntry( "logs"); // long and boring
+//		boolean success = result.getString( "status").equals( "0x1");
+		result.display();
+		return "";
+	}
+	
+	// to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
+	// this simulates the call as if it were executed at the end of the specified block
+//	{
+//		  "jsonrpc": "2.0",
+//		  "method": "eth_call",
+//		  "params": [
+//		    {
+//		      "from": "0xYourFromAddress",
+//		      "to": "0xYourContractAddress",
+//		      "data": "0xYourEncodedFunctionCallData",
+//		      "value": "0xYourWeiValue"
+//		    },
+//		    "0xYourBlockNumber"
+//		  ],
+//		  "id": 1
+//		}
+
+	
+	
 }
+
+// notes
+// you can use eth_call to get revert reason for a past block AND ALSO to see what would
+// happen if you called the transaction now, on the current block
+// probably you should do that before each call, then you don't need to check all
+// the dif params, and 
