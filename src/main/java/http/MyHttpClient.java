@@ -26,9 +26,11 @@ public class MyHttpClient {
 	public MyHttpClient() throws Exception {
 	}
 
-	public MyHttpClient get(String string) throws Exception {
-		m_data = MyClient.getString( string);
-		return this;
+	public MyHttpClient get(String uri) throws Exception {
+		return process( MyClient.create( host + uri)
+				.addHeaders( m_reqHeaders)
+				.query()
+				);
 	}
 	
 	public MyHttpClient post( String uri, String data) throws Exception {

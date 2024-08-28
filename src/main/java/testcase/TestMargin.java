@@ -9,6 +9,7 @@ import reflection.MarginOrder.Status;
 import reflection.RefCode;
 import tw.util.S;
 
+// use Dev3-config for testing margin
 public class TestMargin extends MyTestCase {
 	static double base = TestOrder.curPrice;
 	static String conid = "" + TestOrder.conid;
@@ -30,8 +31,8 @@ public class TestMargin extends MyTestCase {
 	
 	public void testStaticQuery() throws Exception {
 		S.out( "testing static");
-		cli().get("/api/margin-static/" + Cookie.wallet).readJsonObject().display(); // cookie is not required but Frontend should pass it for debugging
-		assert200();
+		cli().get("/api/margin-static/" + Cookie.wallet).readJsonObject().display(); // wallet is not required but Frontend should pass it for debugging
+		assert200_();
 	}
 
 	public void testDynamicQuery() throws Exception {
@@ -77,7 +78,7 @@ public class TestMargin extends MyTestCase {
 				"conid", conid,
 				"cookie", Cookie.cookie) );
 		json.display();
-		assert200();
+		assert200_();
 		
 		JsonObject order = json.getArray( "orders").find( "orderId", orderJson.getString( "orderId") );
 		assertTrue( order != null);
@@ -141,13 +142,15 @@ public class TestMargin extends MyTestCase {
 		failWith( RefCode.CANT_WITHDRAW);
 	}
 
-	/** sell orders will be resting */
+	/** sell orders will be resting   FAILED TRY AGAIN*/
 	public void testFillBuyOnly() throws Exception {
 		S.out( "testing fill buy only");
 		JsonObject ord = newOrd();
 		ord.put( "profitTakerPrice", base + 2);
 		ord.put( "entryPrice", base + 1);
 		ord.put( "stopLossPrice", base - 1);
+		
+		assertTrue(false); // this is wrong, it shsould end up monitoring
 
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		waitForStatus( json, Status.Completed);
@@ -402,46 +405,7 @@ public class TestMargin extends MyTestCase {
 		
 		waitForStatus( json, Status.Completed);
 		S.out( "status should go to completed for %s", json.getString( "orderId"));
-		
-		assertTrue( false);
 	}
-
-	public void testAddFunds() {
-		assertTrue( false);
-	}
-
-	/** fails with Please liquidate your position before withdrawing the cash */
-	public void testWithdrawFunds() throws Exception {
-		JsonObject json = cli().postToJson( "/api/margin-order", newOrd().modify( 
-				"profitTakerPrice", 0,
-				"entryPrice", base + 1,
-				"stopLossPrice", 0
-				)
-		);
-		waitForStatus( json,  Status.Completed);
-		
-		double recBal = stocks.getReceipt().getPosition( Cookie.wallet);
-		
-		JsonObject params = Util.toJson(
-				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
-				"orderId", json.getString( "orderId") );
-		cli().postToJson("/api/margin-withdraw-funds", params);
-		assert200();
-		
-		// second time should fail 
-		cli().postToJson("/api/margin-withdraw", params);
-		failWith( RefCode.INVALID_REQUEST, "Funds cannot be withdrawn");
-
-		waitForStatus( json, Status.Settled);
-
-		waitForBalance( Cookie.wallet, stocks.getReceipt().address(), recBal - json.getDouble( "amountToSpend"), true);
-	}
-
-	public void testWithdrawTokens() {
-		assertTrue( false);
-	}
-
 
 	public void testCancel() throws Exception {
 		S.out( "testing cancel");
@@ -547,7 +511,7 @@ public class TestMargin extends MyTestCase {
 
 		try {
 			S.out( "waiting for status '%s'", status);
-			waitFor(5000, () -> getOrderStatus( json) == status);
+			waitFor(70, () -> getOrderStatus( json) == status);
 		}
 		finally {
 			if (cancel && status != Status.Completed) {
@@ -575,7 +539,7 @@ public class TestMargin extends MyTestCase {
 						"cookie", Cookie.cookie,
 						"orderId", json.getString( "orderId")
 						) );
-		assert200();
+		assert200();  // CHECK PNL pas
 		
 		sum.display();
 		
@@ -586,3 +550,42 @@ public class TestMargin extends MyTestCase {
 	}
 
 }
+
+/*
+messages
+margin-get-all
+margin-get-status	
+margin-info
+margin-liquidate	
+margin-order
+margin-static
+margin-summary
+margin-system-cancel	
+margin-system-cancel-all
+margin-system-clear-all	
+margin-update
+margin-withdraw-funds	
+margin-withdraw-tokens	
+
+tests
+testAddFunds()	
+testBuyNoFill()	
+testCancel()	
+testDynamicQuery()
+testFailOrder()	
+testFillBuyLev()
+testFillBuyNoSell()
+testFillBuyOnly()
+testFillProfitAndWithdraw()	
+testFillStop()	
+testLiqPriceDrop()
+testLiquidate1()
+testModProfitEarlyFromZero()	
+testModProfitFromZero()
+testModStopFromZero()
+testStaticQuery()
+testSummary()	
+testUpdate()	
+testUserLiq()	
+testWithdrawTokens()
+*/

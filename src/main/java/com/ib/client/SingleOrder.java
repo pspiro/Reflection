@@ -95,7 +95,7 @@ public class SingleOrder implements IOrderHandler {
 
 	public void checkCanceled() {
 		if (m_order.status().isActive() ) {
-			out( "WARNING: SingleOrder state is %s when it should be canceled");
+			out( "WARNING: SingleOrder state is %s when it should be canceled", m_order.status() );
 			cancel();
 		}
 	}

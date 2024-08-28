@@ -299,3 +299,8 @@ public class TsonArray<T extends JsonObject> extends ArrayList<T> implements JSO
 		return null;
 	}
 }
+
+/** Two use cases:
+	1. All elements are JsonObject; use JsonArray
+	2. All elements are a subclass of JsonObject; use TsonArray<Type>
+*/

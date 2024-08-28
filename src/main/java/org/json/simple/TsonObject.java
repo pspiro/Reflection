@@ -326,6 +326,7 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 	}
 
 }
-/** NOTE: Timestamp objects are stored as
- *  
+/** Keys are strings. Maps key to T. Two use cases:
+ *  1. All values are the same type; use TsonObject<Type>
+ *  2. Values may be different types; use JsonObject
  */

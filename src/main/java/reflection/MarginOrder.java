@@ -481,6 +481,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			Util.executeIn( 500, () -> {
 				out( "SIMULATING FILL for %s", dual.name() );
 				var o = dual.dayOrder().o();
+				
+				// we need a perm id to add it to the order map; we might not have one
+				// if TWS didn't provide one yet
+				if (o.permId() == 0) {
+					o.permId( Util.rnd.nextInt( 0, 10000));
+				}
 				onStatusUpdated(dual, dual.name(), OrderStatus.Filled, o.permId(), o.action(), roundedQty(), price); 
 			});
 		}
@@ -607,10 +613,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// add or update order map if there was a fill; we don't care what state we are in
 			// but we might give a warning if not in an expected state
 			if (filled > 0 || ibOrderStatus != OrderStatus.Cancelled) {
+				Util.require( permId != 0, "Order is missing permId, can't add to orderMap");
 				updateOrderStatus( permId, action, filled, avgPrice, ibOrderStatus);  // we could add OrderStatus here if desired. pas
 			}
 			else {
-				removeFromOrderMap( permId);
+				removeFromOrderMap( permId); // cancelled, unfilled order; remove from map
 			}
 			
 			final Status status = status();
@@ -629,7 +636,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 			// print status and full MarginOrder
 			out( "MarginOrder received status  name=%s  permId=%s  status=%s  ibStatus=%s  filled=%s/%s  avgPrice=%s", 
 					name, permId, status, ibOrderStatus, filled, roundedQty(), avgPrice);
-			out( toString() );
+			out( toString() ); // print out full order, should be changed to debug only mode. pas
 
 			double totalBought = totalBought();
 
@@ -1259,6 +1266,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	}
 }
 
+//put frequent most margin updates to a separate file
 //must implement gooduntil
 //entry price higher is okay, you just need to adjust down the order quantities, and check status
 //must recalculate liqPrice if buy lmt price changes before fill

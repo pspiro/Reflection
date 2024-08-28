@@ -275,12 +275,12 @@ public class Util {
 		new Thread(runnable).start();
 	}
 	
-	/** Execute the runnable in a new thread after waiting ms. */
+	/** Execute the runnable in the timer thread after waiting ms. */
 	public static void executeIn( int ms, Runnable runnable) {
-		new Thread( () -> {
-			S.sleep( ms);
-			runnable.run();   // we should catch the exception here and log to our datelogger
-		}).start();
+		if (m_timer == null) {
+			m_timer = new NiceTimer("Util");  //remove name. pas
+		}
+		m_timer.executeEvery( ms, 0, runnable);
 	}
 
 	static NiceTimer m_timer; // for one Timer, all tasks execute serially in a single Thread, so don't tie up the thread

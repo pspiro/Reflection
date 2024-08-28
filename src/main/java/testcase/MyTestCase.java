@@ -134,7 +134,7 @@ public class MyTestCase extends TestCase {
 
 	/** Wait for HookServer to catch up Exception */
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
-		waitFor( 120, () -> {
+		waitFor( 60, () -> {
 			double balance = NodeServer.getBalance( tokenAddr, walletAddr, 0);
 			
 //			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
