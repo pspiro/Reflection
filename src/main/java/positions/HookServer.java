@@ -102,7 +102,7 @@ public class HookServer {
 		if (streaming() ) {
 			// for Alchemy, the hooks don't have names, so we can only run one see of 
 			// hooks per chain (or we could remember the set of ID's and delete by id)
-			if (m_config.hookType() == HookType.Alchemy) {
+			if (m_config.hookType() == HookType.Alchemy) {  // improve this to delete the chains better
 				new AlchemyStreamMgr().deleteAllForChain( m_config.alchemyChain() ); 
 			}			
 			
@@ -231,6 +231,7 @@ public class HookServer {
 				}
 				else {
 					JsonObject obj = parseToObject();
+					S.out( "Received webhook: " + obj);
 					sm.handleHookWithData( obj, HookServer.this);
 				}
 				respondOk();
@@ -340,7 +341,7 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
+//			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
