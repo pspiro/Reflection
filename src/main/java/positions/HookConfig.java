@@ -39,7 +39,10 @@ public class HookConfig extends Config {
 		super.readFromSpreadsheet(tab);
 		
 		this.hookType = Util.getEnum( m_tab.getRequiredString( "hookType"), HookType.values(), HookType.None);
+		
 		this.hookServerUrlBase = m_tab.getRequiredString("hookServerUrlBase");
+		require( hookServerUrlBase.startsWith( "https://"), "hookServerUrlBase");
+
 		this.noStreams = m_tab.getBoolean( "noStreams");
 		
 		if (hookType == HookType.Alchemy) {

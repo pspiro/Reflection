@@ -102,7 +102,7 @@ public class HookServer {
 		if (streaming() ) {
 			// for Alchemy, the hooks don't have names, so we can only run one see of 
 			// hooks per chain (or we could remember the set of ID's and delete by id)
-			if (m_config.hookType() == HookType.Alchemy) {
+			if (m_config.hookType() == HookType.Alchemy) {  // improve this to delete the chains better
 				new AlchemyStreamMgr().deleteAllForChain( m_config.alchemyChain() ); 
 			}			
 			
