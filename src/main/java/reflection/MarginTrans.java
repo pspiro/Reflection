@@ -3,6 +3,8 @@ package reflection;
 import static reflection.Main.m_config;
 import static reflection.Main.require;
 
+import java.util.Date;
+
 import org.json.simple.JsonObject;
 import org.json.simple.TsonArray;
 
@@ -11,7 +13,6 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import reflection.MarginOrder.Status;
-import reflection.TradingHours.Session;
 import web3.Stablecoin;
 
 
@@ -128,14 +129,14 @@ public class MarginTrans extends MyTransaction {
 			Stablecoin stablecoin = m_config.getStablecoin( currency);
 			require( Util.isGtEq( stablecoin.getPosition( m_walletAddr), amtToSpend), RefCode.INSUFFICIENT_STABLECOIN, "You don't have enough stablecoin in your wallet for this transaction");
 			
-			// for leveraged orders, if the exchange is open, we must have bid/ask prices
+			// for leveraged orders, if the exchange is open, we must have bid/ask prices;
 			// if the exchange is closed, we don't care because the Buy order will not fill;
 			// we can accept orders at any time; if we are in an overnight session, it means that the
 			// market is open the next day so there would be no issue liquidating
 			if (leverage > 1) {
-				Session session = m_main.m_tradingHours.insideAnyHours( 
-						stock.is24Hour(), m_map.get("simtime") );
-				require( session == Session.None || prices.validBid() && prices.validAsk(), 
+				boolean open = m_main.m_tradingHours.insideAnyHours(  
+						stock.is24Hour(), new Date() );
+				require( !open || prices.validBid() && prices.validAsk(), 
 						RefCode.NO_PRICES, "The exchange is open but there are no bid/ask prices available.");
 			}
 

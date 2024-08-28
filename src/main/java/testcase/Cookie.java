@@ -11,6 +11,8 @@ import http.MyHttpClient;
 import reflection.SiweUtil;
 import tw.util.S;
 
+/** NOTE: if you use Cookie, you must be using config.txt; you cannot use Config.ask()
+ *  because Cookie and testcase infra. will re-read Config from config.txt */
 public abstract class Cookie extends MyTestCase {
 	//public static String wallet = "0x6117A8a8df7db51662e9555080Ab8DeF0E11c4d3";
 	//public static String wallet = "0xb016711702D3302ceF6cEb62419abBeF5c44450e";

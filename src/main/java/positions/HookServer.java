@@ -17,11 +17,14 @@ import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
+import positions.HookConfig.HookType;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
+import web3.Erc20;
+import web3.NodeServer;
 
 
 /** HookServer tracks the balances for all contract, including both stock
@@ -34,17 +37,20 @@ import tw.util.S;
  *  You can use grok to create a tcp/ip tunnel to receive the webhook messages 
  */
 public class HookServer {
-	static double ten18 = Math.pow(10, 18);
-	final static double small = .0001;    // positions less than this will not be reported
-	final Config m_config;
-	final Stocks stocks = new Stocks();
+	// constants
+	static final double ten18 = Math.pow(10, 18);
+	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
+	static final double small = .0001;    // positions less than this will not be reported
+	
+	static final HookConfig m_config = new HookConfig();
+	static String chain() { return Util.toHex( m_config.chainId() ); }
+	final Stocks stocks;
+	final StreamMgr sm;
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
-	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
-	String chain() { return Util.toHex( m_config.chainId() ); }
 	
 	public static void main(String[] args) {
 		try {
@@ -60,13 +66,13 @@ public class HookServer {
 	}
 	
 	HookServer(String[] args) throws Exception {
-		m_config = Config.read( args);
+		m_config.readFromSpreadsheet( Config.getTabName( args) );
+		stocks = m_config.readStocks();
+		sm = m_config.hookType().create();
 	}
 	
 	void run() throws Exception {
 		MyClient.filename = "hookserver.http.log";
-		stocks.readFromSheet( m_config);
-		BaseTransaction.setDebug( true);  // just temporary
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
@@ -93,25 +99,39 @@ public class HookServer {
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() ); // respond 200 here, I don't want to spook the Moralis client
 		});
 
-		// listen for ERC20 transfers and native transfers 
-		m_transferStreamId = Streams.createStream(
-						Streams.erc20Transfers, 
-						"transfer-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(),
-						chain() ); 
-
-		// listen for "approve" transactions
-		// you could pass BUSD, RUSD, or the user addresses
-		// it would be ideal if there were a way to combine these two streams into one,
-		// then it could just work off the user address, same as the transfer stream
-		Streams.createStream(
-						Streams.approval, 
-						"approval-" + m_config.getHookNameSuffix(), 
-						m_config.hookServerUrl(), 
-						chain(),
-						m_config.rusd().address() );
-		
-		S.out( "**ready**");
+		if (streaming() ) {
+			// for Alchemy, the hooks don't have names, so we can only run one see of 
+			// hooks per chain (or we could remember the set of ID's and delete by id)
+			if (m_config.hookType() == HookType.Alchemy) {  // improve this to delete the chains better
+				new AlchemyStreamMgr().deleteAllForChain( m_config.alchemyChain() ); 
+			}			
+			
+			// listen for ERC20 transfers and native transfers
+			try {
+				m_transferStreamId = sm.createTransfersStream(); 
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				S.out( "WARNING: TRANSFER STREAM IS NOT ACTIVE");
+			}
+			
+			// listen for "approve" transactions
+			// you could pass BUSD, RUSD, or the user addresses
+			// it would be ideal if there were a way to combine these two streams into one,
+			// then it could just work off the user address, same as the transfer stream
+			// listen for RUSD because there are so many BUSD approvals
+			try {
+				sm.createApprovalStream( m_config.rusdAddr() );
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				S.out( "WARNING: APPROVAL STREAM IS NOT ACTIVE");
+			}
+			S.out( "**ready**");
+		}
+		else { 
+			S.out( "***NOT USING STREAMS");
+		}
 	}
 
 	class Trans extends BaseTransaction {
@@ -207,81 +227,17 @@ public class HookServer {
 		void handleWebhook() {
 			wrap( () -> {
 				if (m_exchange.getRequestBody().available() == 0) {
-					S.out( "  (no data)");
+					out( "  (no data)");
 				}
 				else {
-					handleHookWithData();
+					JsonObject obj = parseToObject();
+					S.out( "Received webhook: " + obj);
+					sm.handleHookWithData( obj, HookServer.this);
 				}
 				respondOk();
 			});
 		}
 		
-		private void handleHookWithData() throws Exception {
-			JsonObject obj = parseToObject();
-
-			String tag = obj.getString("tag");
-			boolean confirmed = obj.getBool("confirmed");
-
-			if (BaseTransaction.debug() ) {
-				S.out( "Received hook [%s - %s] %s", tag, confirmed, obj);  // change this to debug mode only
-			}
-			
-			// process native transactions
-			for (JsonObject trans : obj.getArray("txs" ) ) {
-				double amt = trans.getDouble("value") / ten18;
-
-				if (amt != 0) {
-					String from = trans.getString("fromAddress").toLowerCase(); 
-					String to = trans.getString("toAddress").toLowerCase();
-
-					S.out( "  %s %s was transferred from %s to %s", 
-							amt, m_config.nativeTokName(), from, to);
-
-					adjustNativeBalance( from, -amt, confirmed);
-					adjustNativeBalance( to, amt, confirmed);
-				}
-			}
-			
-			// process approvals
-			// NOTE: we get ALL approvals for USDT--and there are many, like every second
-			for (JsonObject trans : obj.getArray("erc20Approvals") ) {
-				String contract = trans.getString("contract");
-				
-				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
-					String owner = trans.getString("owner");
-					String spender = trans.getString("spender");
-					double amt = trans.getDouble("valueWithDecimals");
-
-					Util.lookup( m_hookMap.get(owner), hookWallet -> {
-						S.out( "  %s can spend %s %s on behalf of %s",
-								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
-						hookWallet.approved( amt);	
-					});
-				}
-			}
-			
-			// process ERC20 transfers
-			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
-				double amt = trans.getDouble("valueWithDecimals");
-
-				if (amt != 0) {
-					String contract = trans.getString("contract").toLowerCase();
-					String from = trans.getString("from").toLowerCase(); 
-					String to = trans.getString("to").toLowerCase();
-
-					S.out( "  %s %s was transferred from %s to %s",
-							amt, contract, from, to);
-
-					// "confirmed" is our signal that something changed recently,
-					// it is completely done and we should re-query;
-					// one loophole is if two transactions are entered before the
-					// first one is confirmed
-					adjustTokenBalance( from, contract, -amt, confirmed);
-					adjustTokenBalance( to, contract, amt, confirmed);
-				}
-			};
-		}
-
 		/** Reset one wallet; this will cause HookServer to re-query for all 
 		 *  wallet values next time a request comes in for that wallet;
 		 *  called by Monitor; should be called if a wrong value is being reported */
@@ -289,7 +245,7 @@ public class HookServer {
 			wrap( () -> {
 				String walletAddr = getWalletFromUri();
 				m_hookMap.remove( walletAddr.toLowerCase() );
-				S.out( "Removed %s from map");
+				out( "Removed %s from map");
 				respondOk();
 			});
 		}
@@ -300,49 +256,151 @@ public class HookServer {
 		public void handleResetAll() {
 			wrap( () -> {
 				m_hookMap.clear();
-				S.out( "Cleared map");
+				out( "Cleared map");
 				respondOk();
 			});
 		}
+	}
 
-		private void adjustTokenBalance(String wallet, String contract, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustERC20( contract, amt, confirmed) );
+	void adjustTokenBalance(String wallet, String contract, double amt, boolean confirmed) throws Exception {
+		Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustERC20( contract, amt, confirmed) );
 
-			// if no hookWallet found, it means we are not yet tracking the positions
-			// for this wallet, and we would query all positions if a request comes in
-		}
+		// if no hookWallet found, it means we are not yet tracking the positions
+		// for this wallet, and we would query all positions if a request comes in
+	}
+	
+	void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
+		Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
 		
-		private void adjustNativeBalance( String wallet, double amt, boolean confirmed) throws Exception {
-			Util.lookup( m_hookMap.get(wallet), hookWallet -> hookWallet.adjustNative( amt, confirmed) );
-			
-			// if no hookWallet found, it means we are not yet tracking the positions
-			// for this wallet, and we would query all positions if a request comes in
-		}
+		// if no hookWallet found, it means we are not yet tracking the positions
+		// for this wallet, and we would query all positions if a request comes in
 	}
 	
 	/** Note that the entire call is synced on m_hookMap, which means it will
-	 *  block other calls while it creates the wallet */
+	 *  block other calls while it creates the wallet
+	 *  @param walletAddr is lower case */
 	private HookWallet getOrCreateHookWallet(String walletAddr) throws Exception {
 		return Util.getOrCreateEx(m_hookMap, walletAddr, () -> {
 			MyTimer t = new MyTimer();
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = new Wallet( walletAddr)
-					.reqPositionsMap(m_allContracts);
+			HashMap<String, Double> positions = NodeServer.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = MoralisServer.getNativeBalance( walletAddr);
-			Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
-			Streams.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			double nativeBal = NodeServer.getNativeBalance( walletAddr);
+			
+			if (streaming() ) {
+				Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
+				sm.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
+			}
 			
 			t.done();
 			
 			return new HookWallet( walletAddr, positions, approved, nativeBal);
 		});
+	}
+
+	private boolean streaming() {
+		return !m_config.noStreams();
+	}
+	
+	static abstract class StreamMgr {
+		protected abstract String createTransfersStream() throws Exception;
+		protected abstract String createApprovalStream( String address) throws Exception;
+		protected abstract void addAddressToStream(String id, String address) throws Exception;
+		protected abstract void handleHookWithData(JsonObject obj, HookServer hookServer) throws Exception;
+	}
+	
+	static class MoralisStreamMgr extends StreamMgr {
+		@Override public String createTransfersStream() throws Exception {
+			return MoralisStreams.createStream(
+					MoralisStreams.erc20Transfers, 
+					"transfer-" + m_config.getHookNameSuffix(), 
+					m_config.hookServerUrlBase() + "/hook/webhook",
+					chain() ); 
+		}
+		
+		@Override public String createApprovalStream( String address) throws Exception {
+			return MoralisStreams.createStream(
+					MoralisStreams.approval, 
+					"approval-" + m_config.getHookNameSuffix(), 
+					m_config.hookServerUrlBase() + "/hook/webhook", 
+					chain(),
+					address);
+		}
+
+		@Override public void addAddressToStream(String id, String address) throws Exception {
+			MoralisStreams.addAddressToStream(id, address);
+		}
+		
+		@Override protected void handleHookWithData(JsonObject obj, HookServer hookServer) throws Exception {
+			String tag = obj.getString("tag");
+			boolean confirmed = obj.getBool("confirmed");
+
+//			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
+			
+			// process native transactions
+			for (JsonObject trans : obj.getArray("txs" ) ) {
+				//double amt = trans.getDouble("value") / ten18;
+				double amt = Erc20.fromBlockchain( trans.getString("value"), 18);
+
+				if (amt != 0) {
+					String from = trans.getString("fromAddress").toLowerCase(); 
+					String to = trans.getString("toAddress").toLowerCase();
+
+					S.out( "MORALIS NATIVE TRANSFER  %s %s was transferred from %s to %s", 
+							amt, m_config.nativeTokName(), from, to);
+
+					hookServer.adjustNativeBalance( from, -amt, confirmed);
+					hookServer.adjustNativeBalance( to, amt, confirmed);
+				}
+			}
+			
+			// process approvals;
+			// this code is the same as for Moralis and could be shared, but
+			// they are separate in case one changes and not the other
+			for (JsonObject trans : obj.getArray("erc20Approvals") ) {
+				String contract = trans.getString("contract");
+				
+				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
+					String owner = trans.getString("owner");
+					String spender = trans.getString("spender");
+					double amt = trans.getDouble("valueWithDecimals");
+
+					Util.lookup( hookServer.m_hookMap.get(owner), hookWallet -> {
+						S.out( "MORALIS APPROVAL  %s can spend %s %s on behalf of %s",
+								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
+						hookWallet.approved( amt);	
+					});
+				}
+			}
+			
+			// process ERC20 transfers
+			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
+				String contract = trans.getString("contract").toLowerCase();
+				double amt = Erc20.fromBlockchain( trans.getString("value"), NodeServer.getDecimals(contract) ); // note this can send a query to get decimals
+
+				if (amt != 0) {
+					String from = trans.getString("from").toLowerCase(); 
+					String to = trans.getString("to").toLowerCase();
+
+					S.out( "MORALIS ERC20 TRANSFER  %s %s was transferred from %s to %s",
+							amt, contract, from, to);
+
+					// "confirmed" is our signal that something changed recently,
+					// it is completely done and we should re-query;
+					// one loophole is if two transactions are entered before the
+					// first one is confirmed
+					hookServer.adjustTokenBalance( from, contract, -amt, confirmed);
+					hookServer.adjustTokenBalance( to, contract, amt, confirmed);
+				}
+			};
+		}
+
 	}
 
 }

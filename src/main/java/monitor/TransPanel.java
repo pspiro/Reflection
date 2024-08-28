@@ -3,7 +3,7 @@ package monitor;
 import org.json.simple.JsonObject;
 
 class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,amount,price,currency,symbol,conid,tds,rounded_quantity,commission";
+		static String names = "created_at,wallet_public_key,name,uid,status,ref_code,action,quantity,amount,price,currency,symbol,conid,tds,rounded_quantity,commission,country,ip_address";
 		static String sql = """
 select 
 	transactions.created_at,
@@ -17,6 +17,8 @@ select
 	conid,
 	symbol,
 	price,
+	transactions.country as country,
+	ip_address,
 	tds,
 	rounded_quantity,
 	commission,
@@ -55,4 +57,8 @@ $limit""";  // you must order by desc to get the latest entries
 					super.onDouble(tag, val);
 			}
 		}
-	}
+
+		public void setWallet(String walletAddr) {
+			where.setText( String.format("where wallet_public_key = '%s'", walletAddr.toLowerCase() ) );
+		}
+}

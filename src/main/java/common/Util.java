@@ -4,8 +4,6 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -31,6 +29,7 @@ import java.util.function.Supplier;
 import javax.swing.JOptionPane;
 
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Credentials;
 
 import com.ib.client.Decimal;
 
@@ -217,10 +216,17 @@ public class Util {
 		return Math.round( price * 100) / 100.0;		
 	}
 
-	public static String readResource(Class cls, String filename) throws IOException {
-        InputStream is = cls.getClassLoader().getResourceAsStream(filename);
-        byte[] data = new byte[100];
-        return new String( data, 0, is.read(data, 0, data.length) );
+	/** Currently has a limitation of 5k; increase it if necessary */
+	public static String readResource(Class cls, String filename) throws Exception {
+		int max = 5*1024;
+		
+        byte[] data = new byte[max];
+        int len = cls.getClassLoader()
+        		.getResourceAsStream(filename)
+        		.read(data, 0, data.length);
+        require( len < max, "readResource buffer too small"); 
+        
+        return new String( data, 0, len);
 	}
 	
 	/** Convert hex to integer to decimal and then apply # of decimal digits.
@@ -282,7 +288,7 @@ public class Util {
 	/** Execute the runnable in a new thread now and every period in ms forever. */
 	public static synchronized void executeEvery( String name, int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
-			m_timer = new NiceTimer(name);
+			m_timer = new NiceTimer("Util");  //remove name. pas
 		}
 		m_timer.executeEvery( wait, period, runnable);
 	}
@@ -504,11 +510,12 @@ public class Util {
 		}
 	}
 
-	/** Truncate n to a number of decimal digits */
+	/** Truncate n to a number of decimal digits. this keeps precision
+	 *  to the 8th decimal place and loses precision at the ninth */
 	public static double truncate(double n, int digits) throws Exception {
 		require( n >= 0, "Cannot truncate negative numbers"); // you could fix this if needed
 		double mult = Math.pow(10, digits);
-		return Math.floor( n * mult) / mult;
+		return Math.floor( n * mult + .00001) / mult;
 	}
 
 	static SimpleDateFormat fmt = new SimpleDateFormat( "yyyy/MM/dd kk:mm:ss");
@@ -648,6 +655,7 @@ public class Util {
 		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
 	}
 
+	/** aka openUrl() openLink() */
 	public static void browse(String url) {
 		S.out( "Browsing " + url);
 		wrap( () -> Desktop.getDesktop().browse(new URI(url) ) );
@@ -710,6 +718,11 @@ public class Util {
 	public static String createPrivateKey() {
 		return CreateKey.createPrivateKey();
 	}
+	
+	public static String getAddress( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
+
 	
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
@@ -823,9 +836,14 @@ public class Util {
 						: Long.parseLong( str)
 				: 0;
 	}
+		
+	/** Return portion up to first ? */
+	public static String urlFromUri( String str) {
+		return S.isNull( str) ? "" : str.split("\\?")[0];
+	}
 
 	/** @param email is in this format: 'name <email>'
-	    @return array first name, then email */
+    @return array first name, then email */
 	public static String[] parseEmail( String email) {
 		String[] parts = email.replace( '<', '>').split( "\\>");
 		if (parts.length >= 2) {
@@ -834,6 +852,11 @@ public class Util {
 			return parts;
 		}
 		return new String[] { "", "" };
+	}
+
+	/** take full format with display name, return email only lower case */
+	public static String parseEmailOnly( String email) {
+		return parseEmail( email)[1];
 	}
 
 	/** Return full email address w/ name and email */
@@ -907,4 +930,33 @@ public class Util {
 		S.out( "done");
 	}
 			
+	/** Return true if obj2 equals any of the others */
+	public static <T> boolean equals(T obj1, T... others) {
+		for (T obj2 : others) {
+			if (obj2.equals( obj1) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Return true if str1 equals any of the others */
+	public static boolean equalsIgnore(String str1, String... others) {
+		for (String str2 : others) {
+			if (str2.equalsIgnoreCase( str1) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	//	<T> T[] toArray( ArrayList<T> list) {
+	//		return (T[])list.toArray();
+	//	}
+	
+	/** Works with or without 0x at start */
+	public static String getPublicKey( String privateKey) {
+		return Credentials.create( privateKey ).getAddress();
+	}
 }

@@ -198,6 +198,7 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	}	
 	
 	/** reader with types */
+	@SuppressWarnings("unchecked")
 	public static <T extends JsonObject> T parse( Reader reader, T topLevel) throws Exception {
 		return (T) new JSONParser().parseObject( reader, topLevel);
 	}	
@@ -223,8 +224,16 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	/** Can return null; caller should check */
 	public JsonObject getObject(String key) throws Exception {
 		Object obj = get(key);
-		Util.require( obj == null || obj instanceof JsonObject, "Not a json object  key=%s  val=%s", key, obj);
-		return (JsonObject)obj;
+		if (obj == null || obj.equals( "") ) {
+			return null;
+		}
+		if (obj instanceof JsonObject) {
+			return (JsonObject)obj;
+		}
+		if (obj instanceof String) {
+			return JsonObject.parse( (String)obj);
+		}
+		throw new Exception( String.format( "Not a json object  key=%s  val=%s", key, obj) );
 	}
 
 	/** Throws exception if not found */
@@ -323,21 +332,38 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	}
 	
 	/** Don't add \n's because it break JOptionPane in Util.inform */ 
-	public String toHtml() {
+	public String toHtml(boolean fancy) {
+		return toHtml( fancy, keySet().toArray() );
+	}
+	
+	public String toHtml( boolean fancy, Object[] keys) {
 		StringBuilder b = new StringBuilder();
-		forEach( (key,value) -> {
-			Util.appendHtml( b, "tr", () -> {
-				Util.wrapHtml( b, "td", key);
-
-				if (value instanceof TsonArray) {
-					Util.wrapHtml( b, "td", ((TsonArray)value).toHtml() );
+		
+		if (fancy) {
+			Util.wrapHtml( b, "style", fancyTable); 
+		}
+		
+		Util.appendHtml( b, "table", () -> {
+			for (var keyObj : keys) {
+				String key = (String)keyObj;
+				Object value = get( key);
+				
+				if (S.isNotNullObj( value) ) {
+					Util.appendHtml( b, "tr", () -> {
+						Util.wrapHtml( b, "td", key);
+		
+						if (value instanceof JsonArray) {
+							Util.wrapHtml( b, "td", ((JsonArray)value).toHtml() );
+						}
+						else {
+							Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
+						}
+					});
 				}
-				else {
-					Util.wrapHtml( b, "td", Util.left(Util.toString(value), 100) );  // trim it too 100 because Cookies are really long
-				}
-			});
+			}
 		});
-		return Util.wrapHtml( "html", Util.wrapHtml( "table", b.toString() ) );
+		
+		return Util.wrapHtml( "html", b.toString() );
 	}
 
 
@@ -368,6 +394,7 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	}
 	
 	/** Will convert a string to enum; may return null; use method below for no exceptions */
+	@SuppressWarnings("unchecked")
 	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
 		Object val = get(key);
 		return val instanceof Enum ? (T)val : Util.getEnum(val.toString(), values);
@@ -376,6 +403,7 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 	/** Will convert a string to enum. Defaults to def. Note that this will not
 	 *  report an error if the string is invalid; the caller must be assured that
 	 *  the string is null or one of the valid values. */
+	@SuppressWarnings("unchecked")
 	public <T extends Enum<T>> T getEnum( String key, T[] values, T def) {
 		try {
 			Object val = get(key);
@@ -400,7 +428,7 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 		return (Stock)get( tag);
 	}
 
-	public BigInteger getBlockchain(String key, int decimals) {
+	public BigInteger getBlockchain(String key, int decimals) throws Exception {
 		return Erc20.toBlockchain( getDouble( key), decimals);
 	}
 
@@ -410,6 +438,13 @@ public class JsonObject extends TsonObject<Object> implements Comparable<JsonObj
 		display( this, 0, false);
 		System.out.println();
 	}
+	
+	/** good for chaining */
+	public JsonObject removeEntry( String tag) {
+		remove( tag);
+		return this;
+	}
+	
 
 }
 /** NOTE: Timestamp objects are stored as

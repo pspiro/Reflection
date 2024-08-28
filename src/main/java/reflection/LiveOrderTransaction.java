@@ -1,7 +1,5 @@
 package reflection;
 
-import static reflection.Main.require;
-
 import java.util.Iterator;
 import java.util.List;
 
@@ -26,7 +24,8 @@ public class LiveOrderTransaction extends MyTransaction {
 	/** Could be used to clear live orders off the screen without restarting RefAPI */
 	public void clearLiveOrders() {
 		wrap( () -> {
-			require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");
+			//require( !Main.m_config.isProduction(), RefCode.INVALID_REQUEST, "Dev only");
+			// we should auto-clear live orders after a while, but for now allow manual clearing from Monitor
 			liveOrders.clear();
 			allLiveTransactions.clear();
 			respondOk();

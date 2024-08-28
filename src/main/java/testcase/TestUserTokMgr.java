@@ -5,6 +5,7 @@ import static testcase.TestOrder.curPrice;
 import reflection.RefCode;
 import tw.util.S;
 
+/** You need bid/ask prices for these tests to pass */
 public class TestUserTokMgr extends MyTestCase {
 	
 	public void test() throws Exception {
@@ -32,15 +33,17 @@ public class TestUserTokMgr extends MyTestCase {
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
 
-		// wait for apple balance
-		waitForBalance(Cookie.wallet, "0xda0984159f86dfa0fd82177a7d4ada226b7b0910", 2, false);
+		// wait for apple balance to go to 2
+		waitForBalance(	Cookie.wallet, 
+				stocks.getStockByConid( TestOrder.conid).getSmartContractId(),
+				2, false);
 
-		// first order - should pass
+		// first sell order - should pass
 		double sellPrice = curPrice * .9;
 		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, "RUSD") );
 		assert200();
 
-		// second order - should pass
+		// second sell order - should pass
 		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, "RUSD") );
 		assert200();
 		
@@ -48,6 +51,15 @@ public class TestUserTokMgr extends MyTestCase {
 		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, "RUSD") );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INSUFFICIENT_STOCK_TOKEN, cli.getRefCode() );
+		
+		// clear it out
+		cli().get( "/api/reset-user-token-mgr");
+		assert200();
+		
+		// repost - should succeed initially and then fail the blockchain
+		postOrderToObj( TestOrder.createOrder3( "SELL", 1, sellPrice, "RUSD") );
+		assert200();
+		
 		
 		// you might want to create log entries for the updates to the UserTokMgr
 		

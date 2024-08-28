@@ -1,36 +1,37 @@
 package web3;
 
 import common.Util;
+import reflection.Config;
 
 /** The Rusd class used by clients. Created by Config which knows which 
  *  type of core to pass in */
 public class Rusd extends Stablecoin {
 	private IRusd m_core;
-	private String m_adminKey; // for Fireblocks, this is the name; for Refblocks, this is private key
+	private Config m_config;
 	
-	public Rusd( String rusdAddr, int rusdDecimals, String adminKey, IRusd core) throws Exception {
+	public Rusd( String rusdAddr, int rusdDecimals, Config config, IRusd core) throws Exception {
 		super( rusdAddr, rusdDecimals, "RUSD");
 		
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
 		Util.require( core != null, "null core");
 
-		m_adminKey = adminKey;
+		m_config = config;
 		m_core = core;
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal buyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.buyStock( m_adminKey, userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
+		return m_core.buyStock( m_config.admin1Key(), userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.sellStockForRusd( m_adminKey, userAddr, rusdAmt, stockToken, stockTokenAmt);
+		return m_core.sellStockForRusd( m_config.admin1Key(), userAddr, rusdAmt, stockToken, stockTokenAmt);
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
-		return m_core.sellRusd( m_adminKey, userAddr, busd, amt);
+		return m_core.sellRusd( m_config.admin1Key(), userAddr, busd, amt);
 	}
 
 	public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
@@ -49,9 +50,9 @@ public class Rusd extends Stablecoin {
 		return m_core.setRefWallet( ownerKey, refWalletAddr); 
 	}
 
-//	public RetVal approve( String ownerKey, String spender, double amt) throws Exception {
-//		return m_core.approve( ownerKey, spender, amt);
-//	}
+	public RetVal approve( String ownerKey, String spender, double amt) throws Exception {
+		return m_core.approve( ownerKey, spender, amt);
+	}
 
 	// real methods are implemented here
 
@@ -93,6 +94,7 @@ public class Rusd extends Stablecoin {
 		RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception;
 		RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception;
 		RetVal setOwner( String ownerKey, String ownerAddr) throws Exception;
-		RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception;;
+		RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception;
+		RetVal approve(String ownerKey, String spender, double amt) throws Exception;
 	}
 }

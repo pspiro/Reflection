@@ -37,7 +37,7 @@ public class RbRusd extends Erc20 implements IRusd {
 				address(), 
 				Refblocks.web3j, 
 				tm, 
-				Refblocks.getGp( 1000000)  // this is good for everything except deployment
+				Refblocks.getGp( 500000)  // this is good for everything except deployment
 				);
 	}
 
@@ -90,9 +90,9 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(adminKey);
 		Util.reqValidAddress(userAddr);
 
-		S.out( "RB-RUSD redeeming %s RUSD receive %s %s for user %s",
-				amt,
-				amt,
+		S.out( "RUSD redeeming %s RUSD receive %s %s for user %s",
+				S.fmt6( amt),
+				S.fmt6( amt),
 				busd.name(),
 				userAddr);
 		
@@ -139,17 +139,17 @@ public class RbRusd extends Erc20 implements IRusd {
 		throw new Exception(); // not implemented yet
 	}
 
-//	@Override public RetVal approve(String holderKey, String spenderAddr, double amt) throws Exception {
-//		Util.reqValidKey(holderKey);
-//		Util.reqValidAddress(spenderAddr);
-//
-//		S.out( "RB-RUSD %s allows spending of %s RUSD by %s",
-//				holderKey,
-//				amt,
-//				spenderAddr);
-//		
-//		return Refblocks.exec( holderKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
-//	}
+	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
+		Util.reqValidKey(approverKey);
+		Util.reqValidAddress(spenderAddr);
+
+		S.out( "RUSD %s allows spending of %s RUSD by %s",
+				approverKey,
+				amt,
+				spenderAddr);
+		
+		return Refblocks.exec( approverKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
+	}
 
 }
 // this won't work. you either need to create a new RUSD and set it on all the stock tokens,

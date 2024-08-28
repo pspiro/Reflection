@@ -16,8 +16,8 @@ import org.json.simple.JsonArray;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
-import monitor.wallet.WalletPanel;
 import redis.MyRedis;
+import reflection.Stock;
 import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.NewLookAndFeel;
@@ -35,7 +35,7 @@ public class Monitor {
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
-	static WalletPanel m_walletPanel;
+	static NewWalletPanel m_walletPanel;
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
@@ -60,7 +60,7 @@ public class Monitor {
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-		m_walletPanel = new WalletPanel();
+		m_walletPanel = new NewWalletPanel();
 		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();
@@ -110,6 +110,7 @@ public class Monitor {
 		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
+		m_tabs.addTab( "Email", new EmailPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -120,7 +121,7 @@ public class Monitor {
 				"Reflection System Monitor - %s - %s", 
 				m_config.getTabName(), 
 				refApiBaseUrl() ) );
-		m_frame.setSize( 1300, 800);
+		m_frame.setSize( 1300, 810);
 		m_frame.setVisible(true);
 		
 		m_frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -197,18 +198,16 @@ public class Monitor {
 		}
 	}
 	
-	static class SignupPanel extends QueryPanel {
-
-		SignupPanel() {
-			super( 	"signup", 
-					"created_at,email,first,last,country,referer,ip,utm_source",
-					String.format( 
-							"select * from signup where created_at >= '%s' order by created_at", 
-							Util.yToS.format( System.currentTimeMillis() - 7 * Util.DAY) ) );
+	/** Or you could let HookServer return the names which might be more user-friendly */
+	public static String getDescription(String address) throws Exception {
+		if (address.equalsIgnoreCase( m_config.rusdAddr())) {
+			return m_config.rusd().name();
 		}
-		
-		@Override protected Object format(String key, Object value) {
-			return key.equals("referer") ? Util.unescHtml(value.toString()) : value;
+		if (address.equalsIgnoreCase( m_config.busd().address())) {
+			return m_config.busd().name();
 		}
+		Stock stock = stocks.getStockByTokenAddr(address);
+		return stock != null ? stock.symbol() : "Unknown";
 	}
+
 }

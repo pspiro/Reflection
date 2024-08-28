@@ -13,3 +13,7 @@ StoredCredential
 /siwe.dat
 /margin.store
 /config.txt
+<<<<<<< HEAD
+=======
+/name.txt
+>>>>>>> master

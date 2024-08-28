@@ -8,13 +8,13 @@ import javax.swing.SwingUtilities;
 
 import common.Util;
 import http.MyClient;
-import positions.Wallet;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
+import web3.NodeServer;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {
@@ -146,25 +146,23 @@ public class CryptoPanel extends MonPanel {
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
-		Wallet refWallet = new Wallet( config().refWalletAddr() );
-		m_refAddress.setText( refWallet.walletAddr() );
+		m_refAddress.setText( config().refWalletAddr() );
 
 		double busd = config().busd().getPosition( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
-		double nativeBal = refWallet.getNativeBalance();
+		double nativeBal = NodeServer.getNativeBalance( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
-		Wallet owner = new Wallet( config().ownerAddr() );
-		double ownerMatic = owner.getNativeBalance();
+		double ownerMatic = NodeServer.getNativeBalance( config().ownerAddr() );
 		double ownerBusd = config().busd().getPosition( config().ownerAddr() );
 		SwingUtilities.invokeLater( () -> {
-			m_ownerAddress.setText( owner.walletAddr() );
+			m_ownerAddress.setText( config().ownerAddr() );
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = new Wallet( config().admin1Addr() ).getNativeBalance();
+		double admin1Bal = NodeServer.getNativeBalance( config().admin1Addr() );
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
 //		double admin2Bal = new Wallet( config().admin2Addr()").getNativeBalance();

@@ -4,7 +4,7 @@ package web3;
 public class StockToken extends Erc20 {
 	public static final int stockTokenDecimals = 18;
 
-	public StockToken(String address) throws Exception {
+	public StockToken(String address) {
 		super( address, stockTokenDecimals, "StockToken");
 	}
 }

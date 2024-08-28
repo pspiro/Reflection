@@ -1,7 +1,5 @@
 package telegram;
 
-import java.util.HashSet;
-
 public class ExtractNames {
 	static String text = """
 			Hello, %s, this is Radar from Reflection, the stock token trading platform, writing to you on behalf of the Reflection team. 
@@ -16,9 +14,9 @@ public class ExtractNames {
 
 
 	public static void main(String[] args) throws Exception {
-		HashSet<String> ids = new HashSet<>();
+//		HashSet<String> ids = new HashSet<>();
 		
-		send( "Peter Spiro", "user5053437013");
+//		send( "Peter Spiro", "user5053437013");
 		
 //		JsonObject.readFromFile( "c://temp//result.json")
 //				.getArray( "messages").forEach( item -> {

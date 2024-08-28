@@ -3,6 +3,8 @@ package reflection;
 import static common.Util.round;
 import static reflection.Main.require;
 
+import java.util.HashSet;
+
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -26,7 +28,7 @@ public class OldStyleTransaction extends MyTransaction {
 		disconnect,
 		dump,
 		getAllPrices,
-		getTradingHours(),
+		getTradingHours,
 		getDescription,
 		getPositions,
 		getPrice,
@@ -128,6 +130,8 @@ public class OldStyleTransaction extends MyTransaction {
 	}
 
 	private void onCheckForSignups() throws Exception {
+		String WalletPub = "wallet_public_key"; // make a constant
+		
 		Tab tab = NewSheet.getTab( NewSheet.Prefinery, "Sign-ups from Pete");
 		
 		GTable emails = new GTable( tab, "email", null, false);
@@ -147,10 +151,34 @@ public class OldStyleTransaction extends MyTransaction {
 		}
 		
 		tab.commit();
+
+		//--------------------------------
+		
+		tab = NewSheet.getTab( NewSheet.Prefinery, "KYC");
+
+		// build set of wallets on KYC page
+		HashSet<String> set = new HashSet<>();
+		for (var user : tab.queryToJson( WalletPub) ) {
+			set.add( user.getString( WalletPub) ); 
+		}
+		
+		tab.startTransaction();
+		
+		for (var user : Main.m_config.sqlQuery(
+				"select wallet_public_key, email, first_name, last_name, kyc_status, persona_response " +
+				"from users where kyc_status = 'VERIFIED' or kyc_status = 'completed'") ) {
+			
+			if (!set.contains( user.getString( WalletPub) ) ) {
+				S.out( "inserting into kyc: " + user);
+				tab.insert( user);
+			}
+		}
+		
+		tab.commit();
 		
 		respond( code, RefCode.OK, "added", numAdded);
 	}
-
+	
 	private void getTradingHours() {
 		respond( m_main.m_tradingHours.getHours() );
 	}

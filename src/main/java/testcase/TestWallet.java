@@ -3,28 +3,28 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import positions.Wallet;
+import web3.NodeServer;
 
 public class TestWallet extends MyTestCase {
 	static String empty = "0x3695889Ef1b0aC4F8d0479BCdb29fC5369C219ad";
 	
 	public void testBadWallet() throws Exception {
-		Wallet wallet = new Wallet(empty);
-		assertEquals( 0., wallet.getBalance( m_config.rusdAddr() ) );
+		assertEquals( 0., m_config.rusd().getPosition( empty));
 	}
 	
 	public void testBadToken() throws Exception {
-		Wallet wallet = new Wallet(Cookie.wallet);
-		assertEquals( 0., wallet.getBalance( empty) );
+		try {
+			NodeServer.getBalance( empty, Cookie.wallet, 22);
+		}
+		catch( Exception e) {
+			return; // should come here
+		}
+		assertTrue(false);
 	}
 	
 	public void testPosQuery() throws Exception {
-		Wallet wallet = new Wallet(Cookie.wallet);
-		assertTrue( wallet.getBalance(m_config.rusd().address() ) > 0);
-		assertTrue( wallet.getBalance(m_config.busd().address() ) > 0);
-		
-		assertEquals( wallet.getBalance(m_config.rusdAddr() ), m_config.rusd().getPosition(Cookie.wallet) );
-		assertEquals( wallet.getBalance(m_config.busd().address() ), m_config.busd().getPosition(Cookie.wallet) );
+		assertTrue( m_config.rusd().getPosition( Cookie.wallet) > 0);
+		assertTrue( m_config.busd().getPosition( Cookie.wallet) > 0);
 	}
 
 	public void testMyWallet() throws Exception {

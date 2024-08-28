@@ -12,7 +12,7 @@ import tw.util.S;
 import tw.util.UI;
 
 class UsersPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,first_name,last_name,persona_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,persona_id,address,city,country,id,persona_response";
+	static String names = "created_at,wallet_public_key,first_name,last_name,persona_name,locked_until,email,kyc_status,phone,aadhaar,pan_number,persona_id,address,city,country,geo_code,id,persona_response";
 	static String sql = "select * from users $where";
 	
 	UsersPanel() {
@@ -111,25 +111,34 @@ class UsersPanel extends QueryPanel {
 	static class PersonaPanel extends QueryPanel {
 		PersonaPanel() {
 			super( "users", 
-				   "wallet_public_key,first_name,last_name,email,persona_name,persona_id,birthdate,country",
+				   "wallet_public_key,first_name,last_name,kyc_status,persona_status,email,persona_name,persona_id,birthdate,country",
 				   "select * from users $where");
 			where.setText( "where persona_response <> ''");
 		}
 
-		@Override
-		protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
-			// TODO Auto-generated method stub
-			super.buildMenu(menu, record, tag, val);
+		@Override protected void buildMenu(JPopupMenu menu, JsonObject rec, String tag, Object val) {
+			menu.add( JsonModel.menuItem("Show in Persona", ev -> {
+				wrap( () -> {
+					Util.iff( rec.getObject( "persona_response"), persona -> {
+						Util.iff( persona.getString( "inquiryId"), id -> {
+							Util.browse( "https://app.withpersona.com/dashboard/inquiries/" + id);
+						});
+					});
+				});
+			}));
 		}
 		
 		@Override public void adjust(JsonObject obj) {
 			obj.update( "first_name", name -> Util.initialCap( name.toString() ) );
 			obj.update( "last_name", name -> Util.initialCap( name.toString() ) );
 			
+			// add fields from the persona response
 			Util.wrap( () -> {
-				String persona = obj.getString( "persona_response");
-				if (JsonObject.isObject( persona) ) {
-					JsonObject fields = JsonObject.parse( persona).getObject("fields");
+				JsonObject persona = obj.getObject( "persona_response");
+				if (persona != null) {
+					obj.put( "persona_status", persona.getString( "status") ); // status from persona response
+					
+					JsonObject fields = persona.getObject("fields");
 					obj.put( "persona_name", String.format( "%s %s", getVal( fields, "name-first"), getVal( fields, "name-last") ));
 					obj.put( "birthdate", getVal( fields, "birthdate") );
 					obj.put( "country", getVal( fields, "address-country-code") );

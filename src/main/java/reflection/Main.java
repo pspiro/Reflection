@@ -17,6 +17,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Alerts;
 import common.ConnectionMgrBase;
 import common.Util;
 import http.BaseTransaction;
@@ -24,6 +25,7 @@ import http.MyClient;
 import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
+import reflection.TradingHours.Session;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -40,6 +42,10 @@ public class Main implements ITradeReportHandler {
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 	static String marginFile = "margin.store";
 
+	// no ticks in this time and we have a problem
+	private static final long SmartInterval = Util.MINUTE * 2;
+	private static final long OvernightInterval = Util.MINUTE * 15;
+
 	// static
 	static final Config m_config = new RefApiConfig();
 
@@ -50,16 +56,17 @@ public class Main implements ITradeReportHandler {
 	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private String m_faqs;
-	private String m_type1Config; 
+	private String m_type1Config;
 	private JsonObject m_type2Config;
-	final TradingHours m_tradingHours; 
+	final TradingHours m_tradingHours;
 	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	private final MarginStore m_marginStore;
+	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
 
-	
+
 	Stocks stocks() { return m_stocks; }
 
 
@@ -67,7 +74,7 @@ public class Main implements ITradeReportHandler {
 		try {
 			Thread.currentThread().setName("RefAPI");
 			S.out( "Starting RefAPI - log times are NY time");
-			
+
 			new Main( args);
 		}
 		catch (Exception e) {
@@ -79,19 +86,19 @@ public class Main implements ITradeReportHandler {
 	public Main(String[] args) throws Exception {
 		m_tabName = Config.getTabName( args);
 		MyClient.filename = "refapi.http.log";
-		
+
 		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet; this must go first since other items depend on it
 		timer.next("Reading from google spreadsheet %s", m_tabName, NewSheet.Reflection);
 		readSpreadsheet(true);
 		timer.done();
-		
+
 		// must come after reading config and before writing to log
 		Util.execute( "DBQ", () -> m_dbQueue.runDbQueue() );
-		
+
 		// create log entry
-		jlog( LogType.RESTART, null, null, Util.toJson( 
+		jlog( LogType.RESTART, null, null, Util.toJson(
 				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
 
 		// APPROVE-ALL SETTING IS DANGEROUS and not normal
@@ -99,11 +106,11 @@ public class Main implements ITradeReportHandler {
 		if (m_config.autoFill() ) {
 			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
 		}
-		
+
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
-		
+
 		// add new fields
 		m_config.sqlCommand( sql -> {
 		});
@@ -111,7 +118,7 @@ public class Main implements ITradeReportHandler {
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( "MdServerQuery", 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
-		
+
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
@@ -126,7 +133,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
 			server.createContext("/api/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-			
+
 			// margin
 			server.createContext("/api/margin-static", exch -> new MarginTrans(this, exch, true).marginStatic() );
 			server.createContext("/api/margin-dynamic", exch -> new MarginTrans(this, exch, false).marginDynamic() );
@@ -159,9 +166,9 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-profile", exch -> new ProfileTransaction(this, exch).handleGetProfile() );
 			server.createContext("/api/update-profile", exch -> new ProfileTransaction(this, exch).handleUpdateProfile() );
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
-			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() );
+			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc/persona completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
-			
+
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
@@ -169,21 +176,23 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 
 			// dashboard panels
-			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
+			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
+			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
-			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // for My Reflection panel
+			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
 			server.createContext("/api/positions-new", exch -> new BackendTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
-			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );  // obsolete, could be removed, just needs testing
+			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );  // watch list and dropdown
 			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() );
+			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
@@ -209,20 +218,25 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
-		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort() );
-		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr 
-		
+		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );
+		m_tradingHours = new TradingHours(apiController(), m_config); // must come after ConnectionMgr
+
 		// restore margin store and live orders (must come before connecting to TWS)
 		timer.next( "Restoring live orders");
 		m_marginStore = new MarginStore( marginFile, apiController(), m_config.marginPrune(), m_tradingHours);
 		restoreLiveOrders();
-		
+
 		// connect to TWS
 		timer.next( "Starting tws connection timer");
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
-		
-		Runtime.getRuntime().addShutdownHook(new Thread( () -> shutdown() ) );
-		timer.done();
+
+		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
+
+		// check market data every minute (production only)
+		if (!Main.m_config.autoFill()) {
+			S.out( "checking for stale mkt data every minute");
+			Util.executeEvery( "", Util.MINUTE, Util.MINUTE, this::checkMktData);
+		}
 	}
 
 	void shutdown() {
@@ -231,7 +245,7 @@ public class Main implements ITradeReportHandler {
 
 	void readSpreadsheet(boolean readStocks) throws Exception {
 		Book book = NewSheet.getBook(NewSheet.Reflection);
-		
+
 		// read RefAPI config
 		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
 
@@ -244,7 +258,7 @@ public class Main implements ITradeReportHandler {
 		m_failCodes = S.isNotNull( m_config.errorCodesTab() )
 			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
-		
+
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
@@ -256,7 +270,7 @@ public class Main implements ITradeReportHandler {
 
 	/** as of 5/10/24 Frontend no longer needs buy_spread and sell_spread; the spreads
 	 *  are now incorporated into the prices we send on the dynamic trading page query;
-	 *  these tags can/should be removed after frontend is promoted to prod */ 
+	 *  these tags can/should be removed after frontend is promoted to prod */
 	private String readType1Config(Book book) throws Exception {
 		JsonObject obj = new JsonObject();
 		for (String key : "min_order_size,max_order_size,non_kyc_max_order_size,price_refresh_interval,commission,buy_spread,sell_spread".split(",") ) {
@@ -265,8 +279,8 @@ public class Main implements ITradeReportHandler {
 		return obj.toString();
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config 
-	 * @param book */ 
+	/** You could shave 300 ms by sharing the same Book as Config
+	 * @param book */
 	void readFaqsFromSheet(Book book) throws Exception {
 		S.out( "Reading FAQs");
 		JsonArray ar = new JsonArray();
@@ -282,21 +296,21 @@ public class Main implements ITradeReportHandler {
 		m_faqs = ar.toString();
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config 
-	 * @param book */ 
+	/** You could shave 300 ms by sharing the same Book as Config
+	 * @param book */
 	JsonObject readConfig(Book book, int type) throws Exception {   // remove the type parameter after 9/9/23 and read all entries and delete type-1 entries from Jitin-config
 		JsonObject obj = new JsonObject();
 		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {
 			if (row.getInt("Type") == type) {
-				obj.put( 
-						row.getString("Tag"),  // type-1 entries are all double 
+				obj.put(
+						row.getString("Tag"),  // type-1 entries are all double
 						type == 1 ? row.getDouble("Value") : row.getString("Value") );  // type-2 are all string
 			}
 		}
 		require( obj.size() > 0, RefCode.CONFIG_ERROR, "Type-%s config settings are missing", type);
 		return obj;
 	}
-	
+
 	// let it fall back to read from a flatfile if this fails. pas
 
 	String getExchange( int conid) throws RefException {
@@ -318,10 +332,15 @@ public class Main implements ITradeReportHandler {
 
 	/** Manage the connection from this client to TWS. */
 	class ConnectionMgr extends ConnectionMgrBase {
+		private static int clientId(int clientId) {
+			return clientId == 0
+					? Util.rnd.nextInt( Integer.MAX_VALUE) + 1
+					: clientId;
+		}
 
-		ConnectionMgr(String host, int port) {
-			// must MUST always use same client ID or we won't get updates on live margin orders
-			super( host, port, 877, m_config.reconnectInterval() ); 
+		/** If clientId is zero, pick a random one */
+		ConnectionMgr(String host, int port, int clientId) {
+			super( host, port, clientId( clientId), m_config.reconnectInterval() );
 
 			m_controller.handleExecutions( Main.this);
 		}
@@ -330,7 +349,7 @@ public class Main implements ITradeReportHandler {
 		@Override public void onConnected() {
 			super.onConnected();  // stop the connection timer
 			log( LogType.TWS_CONNECTION, "connected");
-			
+
 			m_tradingHours.startQuery();
 		}
 
@@ -350,9 +369,9 @@ public class Main implements ITradeReportHandler {
 
 		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 			super.message( id, errorCode, errorMsg, advancedOrderRejectJson);
-			
+
 			if (
-					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
+					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)
 					errorCode != 2106 &&	// HMDS data farm connection is OK:ushmds
 					errorCode != 202		// Order canceled; individual listeners will be notified
 			) {
@@ -391,7 +410,7 @@ public class Main implements ITradeReportHandler {
 	/** Writes entry to log table in database; must not throw exception */
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
 		S.out( "%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
-		
+
 		JsonObject log = Util.toJson(
 				"type", type,
 				"uid", uid,
@@ -402,11 +421,11 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
 		JsonObject obj = new JsonObject();
-		obj.putIf( "time", exec.time() );         
-		obj.putIf( "order_id", exec.orderId() );    
-		obj.putIf( "perm_id", exec.permId() );    
+		obj.putIf( "time", exec.time() );
+		obj.putIf( "order_id", exec.orderId() );
+		obj.putIf( "perm_id", exec.permId() );
 		obj.putIf( "side", exec.side() );
-		obj.putIf( "quantity", exec.shares().toDouble() ); 
+		obj.putIf( "quantity", exec.shares().toDouble() );
 		obj.putIf( "symbol", contract.symbol() );
 		obj.putIf( "price", exec.price() );
 		obj.putIf( "cumfill", exec.cumQty().toDouble() );
@@ -419,16 +438,16 @@ public class Main implements ITradeReportHandler {
 		// insert trade into trades and log tables; it's not urgent, this
 		// table is never read, we can delay it
 		queueSql( conn -> conn.insertJson( "trades", obj) );
-		
+
 //		try {
 //			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
 
-		jlog( LogType.TRADE, 
-				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
-				null, obj);  
+		jlog( LogType.TRADE,
+				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind"
+				null, obj);
 	}
 
 	/** Ignore this. */
@@ -437,12 +456,12 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
 		try {
-			jlog( LogType.COMMISSION, null, null, Util.toJson( 
-					"execId", rpt.execId(), 
-					"commission", rpt.commission(), 
+			jlog( LogType.COMMISSION, null, null, Util.toJson(
+					"execId", rpt.execId(),
+					"commission", rpt.commission(),
 					"tradeKey", tradeKey) );
 
-			JsonObject obj = Util.toJson( 
+			JsonObject obj = Util.toJson(
 					"tradekey", tradeKey,
 					"comm_paid", rpt.commission() );
 
@@ -468,7 +487,7 @@ public class Main implements ITradeReportHandler {
 	void dump() {
 		S.out( "-----Dumping Stocks-----");
 		JsonObject.display( m_stocks.stocks(), 0, false);
-		
+
 		S.out( "Dumping config");
 		m_config.dump();
 	}
@@ -479,18 +498,18 @@ public class Main implements ITradeReportHandler {
 				Stock stock = m_stocks.getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( prices);
-				
+
 					// we never delete a valid last price
 					double last = prices.getDouble("last");
 					if (last > 0) {
 						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
 					}
 				}
-				else {
-					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
-				}
+//				else {
+//					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
+//				}
 			});
-			
+
 			//MarginTransaction.mgr.tick();
 		}
 		catch( Exception e) {
@@ -507,7 +526,7 @@ public class Main implements ITradeReportHandler {
 	 *  @param data must be in json format */
 	private void quickResponse(HttpExchange exch, String data, int code) {
 		//new BaseTransaction(exch, true); // don't print out uri
-		
+
 		try (OutputStream outputStream = exch.getResponseBody() ) {
 			exch.getResponseHeaders().add( "Content-Type", "application/json");
 			exch.sendResponseHeaders( code, data.length() );
@@ -523,7 +542,7 @@ public class Main implements ITradeReportHandler {
 	static double round(double val) {
 		return Math.round( val * 100) / 100.;
 	}
-	
+
 	JsonObject type2Config() {
 		return m_type2Config;
 	}
@@ -538,6 +557,28 @@ public class Main implements ITradeReportHandler {
 		return Util.getEnum(str, Allow.values(), Allow.All).allow(side);
 	}
 
+	/** called every one minute in the Util thread to check for stale market data*/
+	private void checkMktData() {
+		Util.wrap( () -> {
+			if (stale() != m_staleMktData) {
+				m_staleMktData = !m_staleMktData;
+
+				Alerts.alert("RefAPI", "STALE MARKET DATA: " + m_staleMktData, "");
+			}
+		});
+	}
+
+	/** return true if all stocks are stale, indicating lack of market data
+	 * @throws Exception */
+	boolean stale() throws Exception {
+		long latest = m_stocks.getLatest();
+		long interval = System.currentTimeMillis() - latest ;
+		Session session = m_tradingHours.getTradingSession( true, "");
+		return session == Session.Smart && interval > SmartInterval ||
+			   session == Session.Overnight && interval > OvernightInterval;
+	}
+
+
 	/** This class processes database queries in a separate thread so as not
 	 *  to hold up other threads. It waits for the first query and then processes
 	 *  as many as possible, then waits again. */
@@ -547,7 +588,7 @@ public class Main implements ITradeReportHandler {
 		void add(SqlCommand command) {
 			m_queue.add(command);
 		}
-		
+
 		// if this is still too slow, you can keep a connection open, like for redis
 
 		/** Runs in a separate thread to execute database commands without holding
@@ -575,7 +616,7 @@ public class Main implements ITradeReportHandler {
 							}
 							com = next();
 						}
-					} 
+					}
 					catch (Exception e) {
 						S.err( "Error while connecting to database", e);
 						e.printStackTrace();  // this could be an error connecting to the database; ideally we would put the command, which didn't execute, back in the queue
@@ -587,22 +628,22 @@ public class Main implements ITradeReportHandler {
 				e.printStackTrace();
 			}
 		}
-		
+
 		private SqlCommand next() {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
-	
+
 	public MarginStore marginStore() {
 		return m_marginStore;
 	}
-	
+
 	/** Called at startup only. Read it from disk but do not start the order processing yet.
-	 *  If there is an error while reading the file, the program will terminate */ 
-	void restoreLiveOrders() throws FileNotFoundException, Exception {		
+	 *  If there is an error while reading the file, the program will terminate */
+	void restoreLiveOrders() throws FileNotFoundException, Exception {
 		if (S.fileExists( marginFile)) {
 			S.out( "Reading margin store");
-			JsonArray.parse( 
+			JsonArray.parse(
 					new FileReader( marginFile),
 					m_marginStore,
 					() -> new MarginOrder( apiController(), m_stocks, m_marginStore)  // note that connection may not be established yet
@@ -612,7 +653,7 @@ public class Main implements ITradeReportHandler {
 		else {
 			S.out( "WARNING: no order store read");
 		}
-		
+
 		m_marginStore.postInit();
 	}
 }

@@ -64,7 +64,7 @@ public class MySqlConnection implements AutoCloseable {
 		return ar;
 	}
 	
-	/** Convert Postgres object to json object 
+	/** Convert Postgres object to json object; note that Users.persona_response is string, not json 
 	 * @throws Exception */
 	private Object getJsonObj(Object obj) throws Exception {
 		return obj instanceof PGobject && ((PGobject)obj).getType().equals("jsonb")
@@ -112,11 +112,21 @@ public class MySqlConnection implements AutoCloseable {
 	
 	/** Try update first, if it failes, do an insert
 	 *  Do not include the word 'where' in the where clause
-	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON */
-	public void insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
+	 *  MAKE SURE THE FIELD FROM THE WHERE CLAUSE IS INCLUDED IN THE JSON
+	 *  
+	 *  WARNING: any table with an auto-generated ID column, the update will throw
+	 *  an exception if there is no existing record (e.g. users table)
+	 *  
+	 *  @return true for insert, false for update */
+	public boolean insertOrUpdate( String table, JsonObject json, String where, Object... params) throws Exception {
+		boolean inserted = false;
+		
 		if (updateJson( table, json, where, params) == 0) {
 			insertJson( table, json);
+			inserted = true;
 		}
+		
+		return inserted;
 	}
 	
 	/** This can be used for insert, update, or delete */

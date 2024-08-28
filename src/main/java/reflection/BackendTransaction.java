@@ -11,13 +11,14 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
-import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
+import web3.NodeServer;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -30,9 +31,7 @@ public class BackendTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-	/** Used by the My Reflection (portfolio) section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions;
-	 *  This is obsolete and should be removed, and replaced with handleReqPositionsNew() */
+	/** obsolete, remove */
 	public void handleReqPositions() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -43,9 +42,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonArray retVal = new JsonArray();
 			
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			Util.forEach( wallet.reqPositionsMap(m_main.stocks().getAllContractsAddresses() ).entrySet(), entry -> {
+			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
 				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
@@ -69,7 +66,7 @@ public class BackendTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", Main.m_config.hookServerPort(), m_walletAddr.toLowerCase() );
+			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", m_config.hookServerPort(), m_walletAddr.toLowerCase() );
 
 			JsonArray retVal = new JsonArray();
 
@@ -110,7 +107,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
 			
-			Session session = m_main.m_tradingHours.insideAnyHours( stock.is24Hour(), null);
+			Session session = m_main.m_tradingHours.getTradingSession( stock.is24Hour(), null);
 			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
@@ -218,38 +215,85 @@ public class BackendTransaction extends MyTransaction {
 
 			validateCookie("register");
 			
-			require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
-			require( S.isNotNull( m_map.get("persona_response") ), RefCode.INVALID_REQUEST, "null persona_response");
-
-			// create record
-			JsonObject obj = new JsonObject();
-			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
-			obj.copyFrom( m_map.obj(), "kyc_status", "persona_response");
-
-			// insert or update record in users table with KYC info
-			Main.m_config.sqlCommand(sql -> 
-				sql.insertOrUpdate("users", obj, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
-
-			respondOk();
+			// we don't look at kyc_status anymore; Frontend should stop sending it
+			//require( S.isNotNull( m_map.get("kyc_status") ), RefCode.INVALID_REQUEST, "null kyc_status");
 			
-			alert("KYC COMPLETED", m_walletAddr);
+			String personaStr = m_map.getString("persona_response");
+			require( S.isNotNull( personaStr), RefCode.INVALID_REQUEST, "null persona_response");
+			require( JsonObject.isObject(personaStr), RefCode.INVALID_REQUEST, "persona_response is not a valid json object");
+			
+			JsonObject persona = JsonObject.parse( personaStr);
+			String status = persona.getString( "status");
+			
+			// insert or update record in users table with KYC info
+			JsonObject userRec = new JsonObject();
+			userRec.put( "wallet_public_key", m_walletAddr.toLowerCase() );
+			userRec.put( "kyc_status", status);  // this is the exact "status" text from the json returned by Persona; used to be VERIFIED
+			userRec.put( "persona_response", personaStr);
+			m_config.sqlCommand(sql -> 
+				sql.insertOrUpdate("users", userRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+
+			// BAIL OUT HERE if they failed the kyc
+			// this is unconventional in that we return 400 even though we updated the database
+			require( status.equals( "completed"),
+					RefCode.INVALID_REQUEST, "KYC failed with status '%s'", status);
+			
+			String message = "";
+			double autoRewarded = 0;
+			
+			// this is turned off for now; there was a case where a wallet got double-funded
+			// in < one second; how is that possible since we create a database entry?
+			
+			// auto-reward the user?
+			if (m_config.autoReward() > 0) {
+				// get existing locked rec, or create
+				var locked = getorCreateUser().getObjectNN( "locked");
+	
+				double rusdBalance = m_config.rusd().getPosition( m_walletAddr);
+				out( "  alreadyRewarded=%s  rusdBalance=%s", locked.getBool( "rewarded"), rusdBalance);
+				
+				// check for not rewarded and zero RUSD balance
+				if (!locked.getBool( "rewarded") && rusdBalance == 0) { // sends a query
+					// set rewarded to true in the db
+					locked.put( "rewarded", true);
+					
+					// update users table with locked
+					JsonObject lockRec = Util.toJson(
+							"wallet_public_key", m_walletAddr.toLowerCase(),
+							"locked", locked); 
+					m_config.sqlCommand(sql -> 
+						sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+					
+					// mint $500 for the user
+					out( "Minting $%s RUSD reward for %s", m_config.autoReward(), m_walletAddr);
+					message = S.format( "$%s RUSD is being minted into your wallet and will appear shortly", (int)m_config.autoReward() );
+					autoRewarded = m_config.autoReward();
+					Util.executeAndWrap( () -> {
+						m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() );
+					});
+				}
+				else {
+					out( "WARNING: user KYC'ed but not receiving reward, check locked->rewarded and RUSD balance for wallet %s", m_walletAddr);  
+				}
+			}			
+
+			respond( code, RefCode.OK, Message, message);
+			alert("KYC COMPLETED", String.format( "wallet=%s  autoReward=%s", m_walletAddr, autoRewarded) );
 		});
 	}
 
+	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			HashMap<String, Double> map = wallet.reqPositionsMap( 
-					m_config.rusdAddr(), 
-					m_config.busd().address() ); 
+			double rusdBal = m_config.rusd().getPosition( m_walletAddr);
+			double busdBal = m_config.rusd().getPosition( m_walletAddr);
 			
 			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
-			rusd.put( "balance", Wallet.getBalance(map, m_config.rusdAddr() ) );
+			rusd.put( "balance", rusdBal);
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
@@ -271,7 +315,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", Wallet.getBalance( map, m_config.busd().address() ) );
+			busd.put( "balance", busdBal);
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);
@@ -279,7 +323,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", wallet.getNativeBalance() );
+			base.put( "balance", NodeServer.getNativeBalance( m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();
@@ -323,7 +367,7 @@ public class BackendTransaction extends MyTransaction {
 				obj.put( "email", email);
 				obj.putIf( "first", first);
 				obj.putIf( "last", last);
-				obj.putIf( "referer", referer);
+				obj.putIf( "referer", Util.urlFromUri( referer) );
 				obj.putIf( "country", getCountryCode() );
 				obj.putIf( "ip", getUserIpAddress() );
 				obj.putIf( "utm_source", getUtmVal("utm_source") );
@@ -331,20 +375,32 @@ public class BackendTransaction extends MyTransaction {
 				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
 				obj.putIf( "utm_term", getUtmVal("utm_term") );
 				obj.putIf( "utm_content", getUtmVal("utm_content") );
+				obj.putIf( "user_agent", getUtmVal("user_agent") );  // contains device type, OS, etc
 			
 				out( "Adding to signup table: " + obj.toString() );
-				m_main.queueSql( sql -> sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) );
+				m_main.queueSql( sql -> {
+					if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) ) {
+						
+						out( "Sending email to %s", email);
+						
+						String text = Util.readResource( this.getClass(), "signup_email.txt")
+								.replaceAll( "\\{name\\}", Util.initialCap( first) );
+						
+						m_config.sendEmail(email, "Welcome to Reflection", text);
+					}
+				});
 			}
 		});
 	}
-	
-/** frontend might pass "null" */
+
+	/** frontend might pass "null" */
 	private String getUtmVal(String tag) {
 		String val = m_map.getUnescapedString( tag);
 		return "null".equals( val) ? "" : val;
 	}
 
-	public void handleContact() {  // obsolete
+	/** Called when the user sends a message from the signup page */
+	public void handleContact() {
 		wrap( () -> {
 			parseMsg();
 			
@@ -435,7 +491,7 @@ public class BackendTransaction extends MyTransaction {
 			Stock stock = m_main.getStock( conid);
 			
 			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
-					Main.m_config.hookServerPort(), 
+					m_config.hookServerPort(), 
 					m_walletAddr.toLowerCase() );
 
 			// query for wallet positions (map style)
@@ -462,6 +518,14 @@ public class BackendTransaction extends MyTransaction {
 	/** used by Monitor */
 	public void handleUserTokenMgr() {
 		wrap( () -> respond( UserTokenMgr.getJson() ) );
+	}
+
+	/** used by Monitor */
+	public void resetUserTokenMgr() {
+		wrap( () -> {
+			UserTokenMgr.reset();
+			respondOk();
+		});
 	}
 
 	public void handleOnramp() {
@@ -513,10 +577,11 @@ public class BackendTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress();
 			validateCookie("checkIdentity");
 			
-			JsonArray ar = Main.m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",
+			JsonArray ar = m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",
 					m_walletAddr.toLowerCase() );
 			
-			boolean verified = ar.size() == 1 && ar.get( 0).getString( "kyc_status").equals( "VERIFIED");
+			String status = ar.size() == 1 ? status = ar.get( 0).getString( "kyc_status") : null;
+			boolean verified = Util.equalsIgnore( status, "VERIFIED", "completed");
 			
 			respond( Util.toJson(
 					"verified", verified,
@@ -524,14 +589,23 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Called by anyone who wants to view the signup report as html in a browser */
 	public void handleSagHtml() {
 		wrap( () -> {
-			respondFull( 
-					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
-					200,
-					null,
-					"text/html");
-			
+			Util.execute( () -> {  // don't tie up HTTP thread
+				wrap( () -> {
+					m_config.sqlCommand( sql -> {
+						int days = 3;  
+						try {  // number of days to look back might be passed as last token in URI
+							days = Integer.valueOf( getLastToken() ); 
+						}
+						catch( Exception e) {}
+
+						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						respondFull( ar, 200, null, "text/html");						
+					});
+				}); 
+			});
 		});
 	}
 

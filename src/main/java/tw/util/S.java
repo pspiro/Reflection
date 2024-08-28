@@ -42,6 +42,7 @@ public class S {
 	public static Format FMT2D = new DecimalFormat( "0.00");  // two dec.
 	public static Format FMT3 = new DecimalFormat( "0.0##");  // 1-3 dec
 	public static Format FMT4 = new DecimalFormat( "0.0###");  // 1-4 dec
+	public static Format FMT6 = new DecimalFormat( "0.0#####");  // 1-6 dec
 	public static Format FMT2DC = new DecimalFormat( "#,##0.00");  // two dec. plus comma
 	public static Format FMT0 = new DecimalFormat( "#,##0");
 	public static Format FMTPCT = new DecimalFormat( "0.0%");
@@ -270,15 +271,24 @@ public class S {
         return cal.getTimeInMillis();
     }
 
-    /** Returns true for all spaces. */
+    /** All whitespace is considered null.
+     *  Adding separate versions for Object to avoid mistakes */
+	public static boolean isNullObj( Object obj) {
+		return obj == null || obj.toString().trim().equals( "");
+	}
+	
+    /** All whitespace is considered null.
+    *  Adding separate versions for Object to avoid mistakes */
+	public static boolean isNotNullObj( Object obj) {
+		return !isNullObj( obj);
+	}
+	
+    /** All whitespace is considered null. */
 	public static boolean isNull( String str) {
 		return str == null || str.trim().equals( "");
 	}
 	
-	public static boolean isNull( Object obj) {
-		return obj == null || obj.toString().trim().equals( "");
-	}
-	
+    /** All whitespace is considered null. */
 	public static boolean isNotNull( String str) {
 		return !isNull( str);
 	}
@@ -365,6 +375,11 @@ public class S {
 		return FMT4.format( v);   // faster than String.format("%.3f")
 	}
 	
+	/** Format with 1-6 decimals, no comma */
+	public static String fmt6( double v) { 
+		return FMT6.format( v);   // faster than String.format("%.3f")
+	}
+	
 	/** Format with two decimals, no comma. */
 	public static String fmt2d( double v) { 
 		return FMT2D.format( v); 
@@ -401,10 +416,6 @@ public class S {
 //		}
 //		return m_tempDir;
 		return "c:\\temp";
-	}
-
-	public static boolean equals(String str1, String str2) {
-		return str1 != null && str1.equals( str2);
 	}
 
 	/** This can handle strings formatted with commas and/or dollar signs.
@@ -589,10 +600,6 @@ public class S {
 			list.add( string);
 		}
 		return list;
-	}
-
-	public static boolean isNotNull(double val) {
-		return val != Double.MAX_VALUE;
 	}
 
     /** return true if a file or directory with the specified name exists */

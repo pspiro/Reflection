@@ -7,17 +7,18 @@ import common.Util;
 import common.Util.ExRunnable;
 import common.Util.ExSupplier;
 import fireblocks.Accounts;
-import http.MyClient;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
+import web3.NodeServer;
 
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
-
+	public static String prodWallet = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
+	
 	static protected Config m_config;
 	static protected Accounts accounts = Accounts.instance;
 	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
@@ -26,7 +27,7 @@ public class MyTestCase extends TestCase {
 	
 	static {
 		try {
-			m_config = Config.read();
+			m_config = Config.read();  // pull from config.txt
 			assertTrue( !m_config.isProduction() );  // don't even think about it!
 			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
@@ -76,10 +77,17 @@ public class MyTestCase extends TestCase {
 	}
 
 	protected void assert200() throws Exception {
+		if (cli.getResponseCode() != 200 || cli.getRefCode() != RefCode.OK) {
+			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+		}
+		assertEquals( RefCode.OK, cli.getRefCode() );
+		assertEquals( 200, cli.getResponseCode() );
+	}
+	
+	/** for use with messages that return 200 but no RefCode.OK, e.g. get-profile */
+	protected void assert200_() throws Exception {
 		if (cli.getResponseCode() != 200) {
-			S.out( "%s - %s", cli.getRefCode(), cli.getMessage() );
-			assertEquals( RefCode.OK, cli.getRefCode() );
-			assertEquals( 200, cli.getResponseCode() );
+			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
 		}
 	}
 	
@@ -116,7 +124,7 @@ public class MyTestCase extends TestCase {
 	}
 	
 	public static void assertStartsWith(String expected, Object actual) {
-		assertEquals( expected, actual.toString().substring( 0, expected.length() ) );
+		assertEquals( expected, Util.left( actual.toString(), expected.length() ) );
 	}
 
 	/** Wait for HookServer to catch up Exception */
@@ -127,10 +135,11 @@ public class MyTestCase extends TestCase {
 	/** Wait for HookServer to catch up Exception */
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
 		waitFor( 120, () -> {
+			double balance = NodeServer.getBalance( tokenAddr, walletAddr, 0);
 			
-			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
-					.getObjectNN( "positions")
-					.getDouble( tokenAddr.toLowerCase() );
+//			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
+//					.getObjectNN( "positions")
+//					.getDouble( tokenAddr.toLowerCase() );
 			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", bal);
 			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});
@@ -176,7 +185,7 @@ public class MyTestCase extends TestCase {
 	}
 
 	public static void mintBusd(String wallet, double amt) throws Exception {
-		m_config.busd().mint( wallet, amt)
+		m_config.mintBusd( wallet, amt)
 				.waitForHash();
 		waitForBalance(wallet, m_config.busd().address(), amt, false); // make sure the new balance will register with the RefAPI
 	}

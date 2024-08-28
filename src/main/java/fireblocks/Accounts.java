@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import positions.Wallet;
 import reflection.Config;
 import tw.util.S;
 
@@ -27,7 +26,10 @@ public class Accounts {
 	public static void main(String[] args) throws Exception {
 		Config.ask();
 		instance.read();
-		S.out( instance.m_accounts);
+		instance.m_accounts.forEach( acct -> {
+			S.out( "name: %s  id=%s", acct.getString( "name"), acct.getString( "id") );
+		});
+		//instance.getAccount( "Owner").display();
 	}
 	
 	public synchronized void read() throws Exception {
@@ -52,10 +54,6 @@ public class Accounts {
 			}
 		}
 		throw new Exception( "No such account: " + name);
-	}
-	
-	public Wallet getWallet(String accountName) throws Exception {
-		return new Wallet(getAddress(accountName));
 	}
 	
 	/** Returns the wallet address of the platform native token (mixed case).

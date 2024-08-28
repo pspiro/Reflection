@@ -13,9 +13,6 @@ public class Transactions {
 
 	public static void main(String[] args) throws Exception {
 		Config.ask();
-		getLastTransactions(5).print();
-		S.sleep(5000);
-		//getTransaction("a0ad82f8-810b-4a54-8273-49f25658e853").display();
 
 		Transactions.getSince( System.currentTimeMillis() - 60000 * 3).display();
 	}
@@ -26,7 +23,8 @@ public class Transactions {
 
 	/** This queries based on the createdAt timestamp; doesn't matter when it was updated */
 	public static JsonArray getSince(long start) throws Exception {
-		return Fireblocks.fetchArray( "/v1/transactions/?after=" + start);
+		String url = String.format( "/v1/transactions/?after=%slimit=%s", start, 200);
+		return Fireblocks.fetchArray( url);
 	}
 
 	public static JsonObject getTransaction(String id) throws Exception {

@@ -23,4 +23,11 @@ public class TestOnramp extends MyTestCase {
 		assertEquals( RefCode.ONRAMP_FAILED, cli.getRefCode() ); 
 		assertEquals( 400, cli.getResponseCode() );
 	}
+	
+	public void testOnramp() throws Exception {
+		cli().postToJson( "http://localhost:8383/api/onramp", Util.toJson( 
+				"wallet_public_key", Cookie.wallet,
+				"orderId", 333).toString() ).display();
+		assert200_();
+	}
 }

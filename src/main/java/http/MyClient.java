@@ -1,5 +1,6 @@
 package http;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -8,6 +9,7 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -44,6 +46,14 @@ public class MyClient {
 	public static MyClient create( String url, String body) {
 		write( url + " POST");
 		return new MyClient( reqBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
+	}
+
+	/** build PATCH request; call this directly to add headers */
+	public static MyClient createPatch( String url, String body) {
+		write( url + " PATCH");
+		return new MyClient( reqBuilder( url).method( 
+				"PATCH", 
+				HttpRequest.BodyPublishers.ofString( body) ) );
 	}
 
 	/** Create PUT */
@@ -86,11 +96,15 @@ public class MyClient {
 		return JsonObject.parse( query().body() );
 	}
 	
+	public JSONAware queryToAnyJson () throws Exception {
+		return JSONAware.parse( query().body() );
+	}
+	
 	/** query and return response */
 	public HttpResponse<String> query() throws Exception {
-		try {
-			HttpRequest request = m_builder.build();
+		HttpRequest request = m_builder.build();
 
+		try {
 			HttpResponse<String> response = client.send( request, HttpResponse.BodyHandlers.ofString());
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
@@ -99,6 +113,9 @@ public class MyClient {
 			}
 			
 			return response;
+		}
+		catch( ConnectException ce) {
+			throw new ConnectException( "Could not connect to " + request.uri() );
 		}
 		catch( Throwable e) {
 			throw ( Util.toException( e) ); // check the type. pas 
@@ -217,6 +234,16 @@ public class MyClient {
 	 *  Note that this will NOT keep the program alive */
 	public static void postToJson( String url, String body, ExConsumer<JsonObject> ret) {
 		create( url, body).query( resp -> ret.accept( JsonObject.parse( resp.body() ) ) );
+	}
+
+	public JsonObject queryAlchemy() throws Exception {
+		String str = this
+				.header( "accept", "application/json")
+				.header( "content-type", "application/json")
+				.header( "X-Alchemy-Token", "K9VYjc0AdzyVJjCb5dpaybSiEDlLKV5h")
+				.query()
+				.body();
+		return JsonObject.parse( str);
 	}
 
 	

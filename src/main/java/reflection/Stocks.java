@@ -12,6 +12,7 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
+import web3.NodeServer;
 import web3.StockToken;
 
 public class Stocks implements Iterable<Stock> {
@@ -21,7 +22,7 @@ public class Stocks implements Iterable<Stock> {
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	private final JsonArray m_marginStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	private StockToken m_receipt;  // used as receipt for margin orders
-	
+
 	public void readFromSheet(ConfigBase config) throws Exception {
 		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);
 	}
@@ -29,32 +30,32 @@ public class Stocks implements Iterable<Stock> {
 	/** Use this version for better performance when reading multiple tabs from same sheet */
 	public void readFromSheet(Book book, ConfigBase config) throws Exception {
 		S.out( "Reading stocks from %s", config.symbolsTab() );
-		
+
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();
 		m_conidMap.clear();
 		m_hotStocks.clear();
 		m_marginStocks.clear();
 		m_allAddresses = null;
-		
+
 		// read master list of symbols and map conid to entry
 		HashMap<Integer,ListEntry> masterList = readMasterSymbols(book);
-		
+
 		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
 			Stock stock = new Stock();
 			int conid = Integer.valueOf( row.getInt("Conid") );
 			String address = row.getString("TokenAddress");
-			
+
 			// special case: conid 1 is receipt for margin orders
 			if (conid == 1 && Util.isValidAddress(address) ) {
-				m_receipt = new StockToken( address); 
+				m_receipt = new StockToken( address);
 			}
-			
+
 			if ("Y".equals( row.getString( "Active") ) ) {
 
 				stock.put( "conid", String.valueOf( conid) );
-				
-				// read fields from from specific tab 
+
+				// read fields from from specific tab
 				Util.require( Util.isValidAddress(address), "stock address is invalid: " + address);
 				stock.put( "smartcontractid", address);
 				stock.put( "startDate", row.getString("Start Date") );
@@ -65,7 +66,7 @@ public class Stocks implements Iterable<Stock> {
 				stock.put( "tokenSymbol", row.getString("Token Symbol"));
 				stock.put( "isHot", row.getBool("Hot") );
 				stock.put( "canMargin", row.getBool("Margin") );
-				
+
 				// read fields from Master tab
 				ListEntry masterRow = masterList.get(conid);
 				Util.require( masterRow != null, "No entry in Master-symbols for conid " + conid);
@@ -89,11 +90,16 @@ public class Stocks implements Iterable<Stock> {
 				}
 			}
 		}
-		
+
 		m_stocks.sort(null);
 		m_hotStocks.sort(null);
-		
+
 		S.out( "  done reading stocks");
+
+		// pre-fill decimals map to avoid unnecessary queries
+		// really only HookServer needs this because the other apps know how
+		// many decimals there are
+		NodeServer.setDecimals( 18, getAllContractsAddresses() );
 	}
 
 	/** @return map of conid -> ListEntry */
@@ -108,15 +114,15 @@ public class Stocks implements Iterable<Stock> {
 	public JsonArray stocks() {
 		return m_stocks;
 	}
-	
+
 	public HashMap<Integer, Stock> stockMap() {
 		return m_conidMap;
 	}
-	
+
 	public Collection<Stock> stockSet() {
 		return m_conidMap.values();
 	}
-	
+
 	public JsonArray hotStocks() {
 		return m_hotStocks;
 	}
@@ -125,7 +131,7 @@ public class Stocks implements Iterable<Stock> {
 		return stockSet().iterator();
 	}
 
-	/** Return smart contract address of any stock 
+	/** Return smart contract address of any stock
 	 * @throws Exception */
 	public StockToken getAnyStockToken() throws Exception {
 		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
@@ -136,7 +142,7 @@ public class Stocks implements Iterable<Stock> {
 		return m_conidMap.get(conid);
 	}
 
-	/** takes the token symbol from the release-specific tab */ 
+	/** takes the Token Symbol from the release-specific tab, e.g. AAPL.r */
 	public Stock getStockBySymbol(String tokenSymbol) throws Exception {
 		for (Stock stock : this) {
 			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {
@@ -147,19 +153,19 @@ public class Stocks implements Iterable<Stock> {
 	}
 
 	/** Takes the token symbol from the release-specific tab;
-	 *  could return null */ 
+	 *  could return null */
 	public Stock getStockByTokenAddr(String address) throws Exception {
 		return m_tokenAddrMap.get( address.toLowerCase() );
 	}
 
 	/** Used for querying for stock positions */
 	private String[] m_allAddresses;
-	
+
 	/** Return array of all stock contract addresses */
 	public String[] getAllContractsAddresses() {
 		if (m_allAddresses == null) {
 			m_allAddresses = new String[m_conidMap.size()];
-			
+
 			int i = 0;
 			for (Stock stock : m_conidMap.values() ) {
 				m_allAddresses[i++] = stock.getSmartContractId();
@@ -181,5 +187,14 @@ public class Stocks implements Iterable<Stock> {
 		for (var stock : this) {
 			stock.prices().fakeInit();
 		}
+	}
+
+	/** Return time of most recent last price in ms */
+	public long getLatest() {
+		long time = 0;
+		for (var stock : this) {
+			time = Math.max( time, stock.lastTime() );
+		}
+		return time;
 	}
 }

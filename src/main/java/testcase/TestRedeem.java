@@ -3,8 +3,7 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.BigWalletPanel;
-import positions.Wallet;
+import monitor.NewWalletPanel;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -22,9 +21,10 @@ public class TestRedeem extends MyTestCase {
 			e.printStackTrace();
 		}
 	}
-	
+	// FAILING WITH NONCE ERROR!!!!!!!!!!!!!!!
 	public void testLocked() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
+		S.out( "***testLocked");
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
@@ -55,6 +55,8 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testLockedInPast() throws Exception {
+		S.out( "***testLockedInPast");
+		
 		// lock it all, but in the past; should succeed
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 5);
@@ -65,12 +67,33 @@ public class TestRedeem extends MyTestCase {
 	
 	private void lock(int amt, long lockUntil, int requiredTrades) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject lockObj = BigWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
+		JsonObject lockObj = NewWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
-	public void testRedeem() throws Exception {
+//	public void testRedeem() throws Exception {
+//		String wal = "0xcb6c2EDBb986ef14B66E094787245350b69EA5Ec";
+//		Cookie.setWalletAddr(wal);
+//		S.out( "**approved=%s", m_config.getApprovedAmt() );
+//		S.out( "**rusdBal=%s", m_config.rusd().getPosition(wal));
+//		S.out( "**busdBal=%s", m_config.busd().getPosition(m_config.refWalletAddr()));
+//		
+//		S.out( "sending redemption request to succeed");
+//		m_config.rusd().sellRusd(wal, m_config.busd(), 3)
+//			.displayHash();
+////		redeem();
+//		//assert200();
+//	}
+
+	/** This test is failing in dev3 and you couldn't figure it out.
+	 *  to fix it, show it to Jitin, or re-write the busd class to print out
+	 *  more infomation in the error message, or put BUSD and RUSD code all into chat
+	 *  
+	 * @throws Exception
+	 */
+	public void testInsufAndRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
+		S.out( "***testRedeem");
 
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
@@ -81,15 +104,35 @@ public class TestRedeem extends MyTestCase {
 		// mint an amount of RUSD that should work--high 
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 9);
-		
+
+		// this doesn't work; for some reason, it's 
+		// clear approved amount
+//		S.out( "clearing allowance");
+//		m_config.busd().approve(
+//				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
+//
+//		// redeem RUSD, fail due to allowance
+//		S.out( "sending redemption request to fail");
+//		redeem();
+//		assertTrue( cli.getResponseCode() == 400);
+//
+//		// restore approved amount
+		S.out( "restoring allowance");
+		m_config.busd().approve(
+				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
+//		
+//		// wait for it to solidify
+//		S.out( "waiting 10 sec");
+//		S.sleep( 30000);
+
 		// redeem RUSD, pass
-		S.out( "sending redemption request");
+		S.out( "sending redemption request to succeed");
 		redeem();
 		assert200();
 
 		// second one should fail w/ REDEMPTION_PENDING
 		S.sleep(200);
-		S.out( "sending dup redemption request");
+		S.out( "sending dup redemption request to fail");
 		redeem();
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 
@@ -104,6 +147,7 @@ public class TestRedeem extends MyTestCase {
 
 	public void testExceedMaxAutoRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
+		S.out( "***testExceedMax");
 
 		// create new wallet with more than the allowed amount of RUSD
 		Cookie.setNewFakeAddress(true);
@@ -115,10 +159,6 @@ public class TestRedeem extends MyTestCase {
 		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
 	}
 	
-	public void testCheckBalance() throws Exception {
-		S.out( "Balance: " + Wallet.getBalance(Cookie.wallet, m_config.rusdAddr() ) );
-	}
-		
 	/** can't use waitFor() here because we want to stop when there is any non-null status */
 	private void waitForRedeem(String wallet) throws Exception {
 		S.out( "waiting for redeem via live order system");
@@ -138,6 +178,8 @@ public class TestRedeem extends MyTestCase {
 	}
 
 	public void testFailAddress() throws Exception {
+		S.out( "***testFailAddr");
+
 		// invalid address (wrong length)
 		cli().addHeader("Cookie", Cookie.cookie)
 			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
@@ -153,12 +195,15 @@ public class TestRedeem extends MyTestCase {
 	}
 	
 	public void testFailNoCookie() throws Exception {
+		S.out( "***testFailNoCookie");
 		cli().get("/api/redemptions/redeem/" + Cookie.wallet);
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
 	}
 
-	public void test() throws Exception {
+	public void testAppr() throws Exception {
+		S.out( "***testAppr");
+		
 		m_config.busd().approve( 
 				m_config.refWalletKey(),
 				m_config.rusdAddr(), // approving

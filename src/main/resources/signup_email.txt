@@ -1,0 +1,21 @@
+<p style="margin: 0px 0px 1em;">Hi {name},</p>
+<p style="margin: 0px 0px 1em;">Thank you for registering for Reflection, your crypto gateway to the world of stock trading! We are thrilled to have you on board.</p>
+<p style="margin: 0px 0px 1em;">With Reflection, you can trade stock tokens that are 100% backed by shares of real stock from top companies like Google, Amazon, Microsoft, and Nvidia.</p>
+<p style="margin: 0px 0px 1em;">On the site, you can:</p>
+<ul style="padding: 0px 0px 0px 16px; margin: 1em 0px 1em 24px; list-style-type: disc; text-align: left;">
+<li style="line-height: normal; margin-bottom: 0.5em;"><strong>Explore Stock Tokens:</strong>&nbsp;Check out the latest stocks, charts and trading insights</li>
+<li style="line-height: normal; margin-bottom: 0.5em;"><strong>Start Trading:</strong>&nbsp;Buy and sell stock tokens seamlessly on our secure platform</li>
+<li style="line-height: normal; margin-bottom: 0.5em;"><strong>Get Support:</strong>&nbsp;Our support team is always here to help you<br /><br /></li>
+</ul>
+<p style="margin: 0px 0px 1em;"><strong>Next Steps:</strong></p>
+<p style="margin: 0px 0px 1em;"><a href="https://form.jotform.com/241346246982159" target="_blank" rel="noopener noreferrer">Fill out the form</a>&nbsp;and select a prize.</p>
+<p style="margin: 0px 0px 1em;">Join our&nbsp;<a href="https://t.me/ReflectionTrading" target="_blank" rel="noopener noreferrer">Telegram community</a>&nbsp;and follow us on&nbsp;<a href="https://twitter.com/reflection_toks" target="_blank" rel="noopener noreferrer">Twitter</a></p>
+<p style="margin: 0px 0px 1em;">Go to&nbsp;<a href="https://reflection.trading" target="_blank" rel="noopener noreferrer">reflection.trading</a>&nbsp;and connect your wallet</p>
+<p style="margin: 0px 0px 1em;">If you selected&nbsp;<strong>Receive up to $500 for trading,</strong>&nbsp;you must KYC to collect your prize. Select&nbsp;<strong>Verify Identity</strong>&nbsp;from the wallet menu near the top of the Dashboard.</p>
+<p style="margin: 0px 0px 1em;">If you selected&nbsp;<strong>Receive up to $100 for trading,</strong>&nbsp;you must buy $10 worth of stock token. You'll need <strong>USDT on Polygon</strong>&nbsp;for this. You can get it on Binance, or you can use the fiat onramp on our Dashboard.</p>
+<p style="margin: 0px 0px 1em;"><strong>Need Help?</strong></p>
+<p style="margin: 0px 0px 1em;">Email our support team at&nbsp;<a class="mailto-link" style="word-break: break-word; text-decoration: underline; color: var(--indigo-600);" href="mailto:support@reflection.trading;" target="_blank" rel="noopener noreferrer">support@reflection.trading</a>&nbsp;or&nbsp;<a href="https://t.me/josh_reflection" target="_blank" rel="noopener noreferrer">reach us on Telegram.</a></span></p>
+<p style="margin: 0px 0px 1em;">We are always here to help you!</span></p>
+<p style="margin: 0px 0px 1em;">&nbsp;</p>
+<p style="margin: 0px 0px 1em;">Yours truly,</span></p>
+<p style="margin: 0px 0px 1em;">&nbsp; The Reflection Team</span></p>

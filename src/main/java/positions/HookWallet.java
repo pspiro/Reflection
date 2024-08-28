@@ -9,6 +9,7 @@ import common.Util;
 import tw.util.S;
 import web3.Busd;
 import web3.Erc20;
+import web3.NodeServer;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case
@@ -45,7 +46,7 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = new Wallet(m_walletAddr).getBalance( contract);
+			double bal = NodeServer.getBalance( contract, m_walletAddr, 0);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
 				// this should only occur if we missed the unconfirmed event, i.e. if
 				// the HookServer was started after the event came in or if the
@@ -64,7 +65,7 @@ class HookWallet {
 			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
 		}
 		else {
-			double bal = MoralisServer.getNativeBalance(m_walletAddr);
+			double bal = NodeServer.getNativeBalance(m_walletAddr);
 			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
 				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
 				m_nativeBal = bal;
@@ -121,8 +122,10 @@ class HookWallet {
 		return m_nativeBal;
 	}
 
+	/** remove the parameters. pas */
 	public double getAllowance(Busd busd, String walletAddr, String rusdAddr) throws Exception {
-		return busd.getAllowance(walletAddr, rusdAddr);
+		//return busd.getAllowance(walletAddr, rusdAddr);
+		return m_approved;
 	}
 
 	public void approved(double amt) {

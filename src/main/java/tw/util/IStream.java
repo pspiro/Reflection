@@ -55,23 +55,21 @@ public class IStream implements Closeable {
 	}
 
 	/** Reads the whole file into a single string and close the stream. */
-	public String readAll() {
-		try {
+
+	public static String readAll(String filename) {
+		try (IStream is = new IStream( filename) ) {
 			StringBuilder sb = new StringBuilder();
 
-			int c = m_br.read();
+			int c = is.m_br.read();
 			while( c != -1) {
 				sb.append( (char)c);
-				c = m_br.read();
+				c = is.m_br.read();
 			}
 			return sb.toString();
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			return null;
-		}
-		finally {
-			close();
 		}
 	}
 
@@ -123,11 +121,10 @@ public class IStream implements Closeable {
 	}
 
 	public static void main(String[] args) throws Exception {
-		S.out( readLine( "c:/work/reflection/config.txtt"));
+		S.out( readLine( "c:/work/reflection/config.txt"));
 	}
 
-	/** Return the first line of the file or empty string 
-	 * @throws FileNotFoundException */
+	/** Return the first line of the file as a string */
 	public static String readLine(String filename) throws Exception {
 		try (IStream is = new IStream( filename) ) {
 			return is.readln();

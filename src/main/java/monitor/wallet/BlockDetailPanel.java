@@ -7,8 +7,8 @@ import org.json.simple.JsonArray;
 import common.JsonModel;
 import common.Util;
 import monitor.Monitor;
-import positions.MoralisServer;
 import tw.util.S;
+import web3.MoralisServer;
 
 /** Panel to display all blockchain transactions for the tokens we care about */
 public class BlockDetailPanel extends BlockPanelBase {
@@ -46,7 +46,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 		});
 	}
 
-	void refresh( String walletAddr) throws Exception {
+	public void refresh( String walletAddr) throws Exception {
 		m_model.ar().clear();
 		
 		if (Util.isValidAddress(walletAddr) ) {
@@ -75,7 +75,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 	}
 	
 	/** These rows are used to feed into the consolidated blockchain panel */
-	JsonArray rows() {
+	public JsonArray rows() {
 		return m_model.ar();
 	}
 

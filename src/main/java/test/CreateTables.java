@@ -6,7 +6,7 @@ import reflection.MySqlConnection;
 import tw.util.S;
 
 /** Create trades and commissions tables
- * 
+ *
  *  NOTE: According to chart, varchar is as-efficient as varchar(#)
  *  NOTE: if you don't set the timezone here for the created_at, it uses
  *  some other inconsistent timezone; data is always returned in the time
@@ -14,8 +14,8 @@ import tw.util.S;
  */
 public class CreateTables {
 	static MySqlConnection con;
-	static final int tradeKeyLen = 64; 
-	
+	static final int tradeKeyLen = 64;
+
 
 	public static void main(String[] args) {
 		try {
@@ -53,7 +53,7 @@ public class CreateTables {
 			)""";
 		con.execute(sql);
 	}
-	
+
 	void createCommTable() throws Exception {
 		String sql = "create table commissions ("
 			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
@@ -62,7 +62,7 @@ public class CreateTables {
 				+ ")";
 		con.execute(sql);
 	}
-	
+
 	void createSignupTable() throws Exception {
 		String sql = """
 				create table signup (
@@ -83,47 +83,52 @@ public class CreateTables {
 		con.execute(sql);
 
 		// create unique index on lower(email)
-		con.execute( "create unique index signup_email on user (lower(email))");
+		//con.execute( "create unique index signup_email_key on user (lower(email))");
 	}
 
 	void createLogTable() throws Exception {
-		String sql = "create table log ("
-			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "type varchar(32),"
-			    + "uid varchar(8),"
-				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
-			    + "data jsonb"  // see TestLog for how to read this back into a JsonObject
+		String sql = """
+				create table log (
+					created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+					type varchar(32),
+					uid varchar(8),
+					wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
+					data jsonb, -- see TestLog for how to read this back into a JsonObject
 
-				+ ")";
+					INDEX log_wallet_key (wallet_public_key)
+					);""";
+
 		con.execute(sql);
 	}
-	
+
 	/** Note that first six are/must be same as transactions table because of the updates from the live order system */
 	void createTransactions() throws Exception {
-		String sql ="create table transactions ("
-				+ "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "uid varchar(8) primary key," 
-				+ "fireblocks_id varchar(36) unique,"
-				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
-				+ "blockchain_hash varchar(66),"
-				+ "status varchar(32),"       // value from LiveOrderStatus
-				
-				+ "symbol varchar(32),"
-				+ "conid int check (conid > 0),"
-				+ "action varchar(10),"
-				+ "quantity double precision check (quantity > 0),"
-				+ "rounded_quantity int," // could be zero
-				+ "price double precision check (price > 0),"
-				+ "order_id int,"  // could be zero
-				+ "perm_id int,"  // could be zero
-				+ "commission double precision,"  // change this to comm_charged
-				+ "tds double precision,"				
-				+ "currency varchar(32),"
-				+ "ip_address varchar(32),"   // big enough to store v6 IP format
-				+ "city varchar(32),"
-				+ "country varchar(32),"
-				+ "ref_code varchar(32)"
-				+ ")";
+		String sql = """
+				create table transactions (
+					created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+					uid varchar(8) primary key,
+					fireblocks_id varchar(36) unique,
+					wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),
+					blockchain_hash varchar(66),
+					status varchar(32),       -- value from LiveOrderStatus
+
+					symbol varchar(32),
+					conid int check (conid > 0),
+					action varchar(10),
+					quantity double precision check (quantity > 0),
+					rounded_quantity int, -- could be zero
+					price double precision check (price > 0),
+					order_id int,  -- could be zero
+					perm_id int,  -- could be zero
+					commission double precision,  -- change this to comm_charged
+					tds double precision,
+					currency varchar(32),
+					ip_address varchar(32),   -- big enough to store v6 IP format
+					country varchar(32)
+					ref_code varchar(32),
+
+					INDEX trans_wallet_key (wallet_public_key)
+				);""";
 		con.execute( sql);
 	}
 
@@ -131,7 +136,7 @@ public class CreateTables {
 	void createRedemptions() throws Exception {
 		String sql ="create table redemptions ("
 				+ "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "uid varchar(8) primary key," 
+				+ "uid varchar(8) primary key,"
 				+ "fireblocks_id varchar(36) unique,"
 				+ "wallet_public_key varchar(42) check (wallet_public_key = LOWER(wallet_public_key)),"
 				+ "blockchain_hash varchar(66),"
@@ -141,7 +146,7 @@ public class CreateTables {
 				+ ")";
 		con.execute( sql);
 	}
-	
+
 	void createTrades() throws Exception {
 		String sql = "create table trades ("  // you could add uid here, but you would have to create a map of orderid or permid to uid or OrderTransaction
 			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
@@ -161,7 +166,20 @@ public class CreateTables {
 				+ ")";
 		con.execute( sql);
 	}
-	
+
+	void createEmail() throws Exception {
+		String sql = """
+		CREATE TABLE email (
+			created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),
+			email varchar(100),
+			subject varchar(100),
+			text text
+		);
+		""";
+		con.execute( sql);
+	}
+
+
 	/** This has never been run and probably doesn't work */
 	void createUsers() throws Exception {
 		String sql = """
@@ -179,9 +197,9 @@ public class CreateTables {
 			city varchar(50),
 			state varchar(100),
 			zip varchar(20),
-			country varchar(50),
+			country varchar(50),  -- country entered by user
+			geo_code varying(2),  -- based on geo-location
 			telegram varying(50),
-			geo_code varying(2),
 			persona_response varchar,
 			pan_number varchar(10),
 			aadhaar varchar(12),
@@ -190,6 +208,9 @@ public class CreateTables {
 		);
 		""";
 		con.execute( sql);
+
+		// locked field contains these tags:
+		// amount, lockedUntil (ms), required trades, rewarded (bool)
 	}
 }
 

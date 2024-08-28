@@ -11,6 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.json.simple.parser.ParseException;
 
@@ -106,7 +107,8 @@ public abstract class MyTransaction extends BaseTransaction {
 	/** don't throw an exception here, it should not disrupt any other process */
 	protected static void alert(String subject, String body) {
 		if (Main.m_config.isProduction() ) {
-			Alerts.alert( "RefAPI", subject, body);
+			String text = String.format( "blockchain: %s\n\n%s", Main.m_config.moralisPlatform(), body);
+			Alerts.alert( "RefAPI", subject, text);
 		}
 		else {
 			S.out( "Alert %s - %s", subject, body);
@@ -124,7 +126,7 @@ public abstract class MyTransaction extends BaseTransaction {
 //		if (cookie == null) {  // we could pull from the cookie header if desired, but then you have to look for the one with the matching address because there could be multiple __Auth cookies
 //			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
 //		}
-		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message", caller);
+		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
 		return SiweTransaction.validateCookie( cookie, m_walletAddr);
 	}
@@ -179,5 +181,17 @@ public abstract class MyTransaction extends BaseTransaction {
 	
 	protected String getUserIpAddress() throws Exception {
 		return Util.left( getFirstHeader( "X-Real-IP"), 15);
+	}
+
+	/** create a User object for this */
+	protected JsonObject getUser() throws Exception {
+		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		return ar.size() == 0 ? null : ar.get( 0);
+	}
+
+	/** create a User object for this */
+	protected JsonObject getorCreateUser() throws Exception {
+		var user = getUser();
+		return user != null ? user : new JsonObject();
 	}
 }

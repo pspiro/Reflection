@@ -69,7 +69,7 @@ public class Prices {
 	}
 
 	public String getFormattedTime() {
-		return S.isNull( m_time)
+		return m_time == 0 || m_time == Double.MAX_VALUE
 				? ""
 				: timeFmt.format( new Date( Long.valueOf( m_time) ) );
 	}

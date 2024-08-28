@@ -320,6 +320,10 @@ public class TsonObject<T> extends HashMap<String,T> implements JSONAware, JSONS
 			}
 		}
 	}
+	
+	@Override public String toHtml(boolean fancy) {
+		return null;
+	}
 
 }
 /** NOTE: Timestamp objects are stored as

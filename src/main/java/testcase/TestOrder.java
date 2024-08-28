@@ -14,23 +14,23 @@ import web3.StockToken;
 public class TestOrder extends MyTestCase {
 	static double curPrice;
 	static int conid = 3691937;  // amazon
-//	static int conid = 265598;
-	
+//	static int conid = 265598;   // apple
+
 //	static double approved;
-	
+
 	static {
 		try {
-			JsonObject json = new MyHttpClient() 
+			JsonObject json = new MyHttpClient()
 					.get( "/api/get-price/" + conid)
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
 			S.out( "TestOrder: Current AMZN price is %s", curPrice);
 			Util.require( curPrice > 0, "Zero price");
-	
+
 			createValidUser();
 
 			//	approved = config.busd().getAllowance(Cookie.wallet, config.rusdAddr() );
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(0);
@@ -41,15 +41,15 @@ public class TestOrder extends MyTestCase {
 	static void createValidUser() throws Exception {
 		JsonObject json = TestProfile.createProfileNC();
 		json.put( "kyc_status", "VERIFIED");
-		
+
 		m_config.sqlCommand( conn -> conn.insertOrUpdate(
-				"users", 
-				json, 
+				"users",
+				json,
 				"wallet_public_key = '%s'",
 				Cookie.wallet.toLowerCase() ) );
 	}
 
-	
+
 
 
 	// test missing user rec; profile fields are tested in testProfile
@@ -63,7 +63,7 @@ public class TestOrder extends MyTestCase {
 
 		createValidUser();
 	}
-	
+
 	// missing walletId
 	public void testMissingWallet() throws Exception {
 		JsonObject obj = createOrderWithOffset("BUY", 10, 2);
@@ -74,7 +74,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 		assertEquals( text, "Param 'wallet_public_key' is missing");
 	}
-	
+
 	// reject order; price too low
 	public void testBuyTooLow() throws Exception {
 		JsonObject obj = createOrderWithOffset( "BUY", 10, -1);
@@ -86,7 +86,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
 		assertEquals( Prices.TOO_LOW, text);
 	}
-	
+
 	// sell order price to high
 	public void testSellTooHigh() throws Exception {
 		JsonObject obj = createOrderWithOffset( "SELL", 10, 1);
@@ -97,7 +97,7 @@ public class TestOrder extends MyTestCase {
 		assertEquals( RefCode.INVALID_PRICE.toString(), code);
 		assertEquals( Prices.TOO_HIGH, text);
 	}
-	
+
 	public void testTransTableEntry() throws Exception {
 		JsonObject obj = createOrderWithOffset( "BUY", 10, -1);
 		JsonObject map = postOrderToObj(obj);
@@ -111,20 +111,20 @@ public class TestOrder extends MyTestCase {
 	/** Test that order fails if the siwe session has timed out */
 	public void testSessionTimeout() throws Exception {
 		Cookie.init = true;  // force signin
-		
+
 		modifySetting( "sessionTimeout", "500", () -> {
 			S.out( "sleeping");
 			S.sleep(1000);
-			
+
 			postOrderToObj( createOrderWithOffset( "BUY", 10, 3) );
-			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() ); 
+			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		});
 	}
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
 		StockToken stockToken = stocks.getStockByConid(conid).getToken();
-		
+
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
 		// buy 10
@@ -137,15 +137,15 @@ public class TestOrder extends MyTestCase {
 		// wait for refapi to return status filled which comes from FbServer in Fireblocks mode
 		String text = waitForFilled( cli.getUId() );
 		startsWith( "Bought 10", text);
-		
+
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
 		// wait for the position to register (tests HookServer)
-		waitForBalance( 
-				Cookie.wallet, 
-				stockToken.address(), 
-				10, 
-				false);  
+		waitForBalance(
+				Cookie.wallet,
+				stockToken.address(),
+				10,
+				false);
 
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
@@ -153,17 +153,17 @@ public class TestOrder extends MyTestCase {
 		postOrderToObj( createOrderWithOffset( "sell", 2, -3) );
 		assert200();
 		assertEquals(RefCode.OK, cli.getRefCode() );
-		
+
 		// wait for refapi to return status filled which comes from FbServer in Fireblocks mode
 		text = waitForFilled( cli.getUId() );
 		startsWith( "Sold 2", text);
-		
+
 		// wait for the position to register (tests HookServer)
-		waitForBalance( 
-				Cookie.wallet, 
-				stockToken.address(), 
-				10, 
-				false);  
+		waitForBalance(
+				Cookie.wallet,
+				stockToken.address(),
+				10,
+				false);
 	}
 
 	/** When the IB order is filled, we get a message back saying
@@ -172,7 +172,7 @@ public class TestOrder extends MyTestCase {
 		JsonObject ord = createOrderWithOffset( "BUY", 1, 3);
 		postOrderToObj( ord );  // try again w/ autofill off
 		assert200();
-		
+
 		S.sleep(50);
 		JsonObject ret = getLiveMessage( cli.getUId() );
 		assertEquals( "message", ret.getString("type") );
@@ -182,14 +182,14 @@ public class TestOrder extends MyTestCase {
 	public void testNullCookie() throws Exception {
 		JsonObject obj = createOrderWithOffset( "BUY", 10, 3);
 		obj.remove("cookie");
-		
+
 		MyHttpClient cli = postOrder(obj);
 		JsonObject map = cli.readJsonObject();
 		String text = map.getString("message");
 		assertEquals( 400, cli.getResponseCode() );
 		startsWith( "Null cookie", text);
 	}
-	
+
 	// user must have passed KYC for this to pass
 	public void testMinOrderSize() throws Exception {
 		// fail buy
@@ -211,7 +211,7 @@ public class TestOrder extends MyTestCase {
 		map = placeOrder( "sell", m_config.minOrderSize() + .1, curPrice * .9);
 		assert200();
 	}
-	
+
 	// user must have passed KYC for this to pass
 	public void testMaxAmt()  throws Exception {
 		// mint some if needed
@@ -231,35 +231,35 @@ public class TestOrder extends MyTestCase {
 		map = placeOrder( "buy", m_config.maxOrderSize() - 1, curPrice * 1.1);
 		assert200();
 	}
-	
+
 	private JsonObject placeOrder( String side, double amt, double price) throws Exception {
 		S.out( "%s %s at %s total %s", side, amt / price, price, amt);
 		return postOrderToObj( createOrderWithPrice(side, amt / price, price) );
 	}
 
 	public void testFracShares()  throws Exception {
-		JsonObject obj = createOrderWithOffset("BUY", 1.6, 2); 
+		JsonObject obj = createOrderWithOffset("BUY", 1.6, 2);
 		JsonObject map = postOrderToObj(obj);
 		S.out( "testFracShares " + map);
 		assert200();
-		
+
 		String text = waitForFilled( map.getString("id") );
 		startsWith( "Bought 1.6", text);
 	}
 
 	// failing
 	public void testSmallOrder()  throws Exception {  // no order should be submitted to exchange
-		JsonObject obj = createOrderWithOffset("BUY", .4, 2); 
+		JsonObject obj = createOrderWithOffset("BUY", .4, 2);
 		JsonObject map = postOrderToObj(obj);
 		assert200();
-		
+
 		String text = waitForFilled( map.getString("id") );
 		S.out( text);
 		startsWith( "Bought 0.4", text);
 	}
 
 	public void testZeroShares()  throws Exception {
-		JsonObject obj = createOrder4("{ 'msg': 'order', 'conid': '" + conid + "', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", "RUSD"); 
+		JsonObject obj = createOrder4("{ 'msg': 'order', 'conid': '" + conid + "', 'action': 'buy', 'quantity': '0', 'tokenPrice': '138' }", "RUSD");
 		JsonObject map = postOrderToObj(obj);
 		String ret = map.getString( "code");
 		String text = map.getString("message");
@@ -267,17 +267,17 @@ public class TestOrder extends MyTestCase {
 		assertEquals( "Quantity must be positive", text);
 		assertEquals( RefCode.INVALID_REQUEST.toString(), ret);
 	}
-	
+
 	/** This only works after hours and with a contract that hasn't traded for five minutes */
 //	public void testNotRecent() throws Exception {
-//		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }"); 
+//		JsonObject obj = createOrder3("{ 'msg': 'order', 'conid': '265768', 'action': 'buy', 'quantity': '.1', 'tokenPrice': '600' }");
 //		JsonObject map = postOrderToObj(obj);
 //		assertEquals( 200, cli.getResponseCode() );
-//		S.sleep(100); 
+//		S.sleep(100);
 //		JsonObject resp = getLiveMessage2(map.getString("id"));
 //		assertEquals( RefCode.STALE_DATA.toString(), resp.getString("errorCode") );
 //	}
-	
+
 	static JsonObject createOrderWithOffset(String side, double qty, double offset) throws Exception {
 		return createOrder3( side, qty, curPrice + offset, "RUSD");
 	}
@@ -285,13 +285,13 @@ public class TestOrder extends MyTestCase {
 	static JsonObject createOrderWithPrice(String side, double qty, double price) throws Exception {
 		return createOrder3( side, qty, price, "RUSD");
 	}
-	
+
 	static JsonObject createOrder3(String side, double qty, double price, String currency) throws Exception {
-		String json = String.format( "{ 'conid': '" + conid + "', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
-				side, qty, price);
+		String json = String.format( "{ 'conid': '%s', 'action': '%s', 'quantity': %s, 'tokenPrice': '%s' }",
+				conid, side, qty, price);
 		return createOrder4(json, currency);
 	}
-	
+
 	static JsonObject createOrder4(String json, String currency) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.easyJson(json) );
 		obj.put("cookie", Cookie.cookie);
@@ -303,17 +303,17 @@ public class TestOrder extends MyTestCase {
 		double qty = obj.getDouble("quantity");
 		double amt = price * qty;
 		boolean buy = obj.getString("action").equalsIgnoreCase("BUY");
-		
+
 		double tds = buy
 				? 0
 				: (amt - m_config.commission() ) * .01;
 		obj.put("tds", tds);
-		
+
 		double extra = m_config.commission() + tds;
-		
+
 		double total = buy ? amt + extra : amt - extra;
 		obj.put("amount", total);
-		
+
 		return obj;
 	}
 }

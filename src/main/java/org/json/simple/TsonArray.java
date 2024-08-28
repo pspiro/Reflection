@@ -294,4 +294,8 @@ public class TsonArray<T extends JsonObject> extends ArrayList<T> implements JSO
 	public void removeNulls() {
 		forEach( rec -> rec.removeNulls() );
 	}
+
+	@Override public String toHtml(boolean fancy) {
+		return null;
+	}
 }

@@ -25,22 +25,12 @@ public class MyHttpClient {
 	
 	public MyHttpClient() throws Exception {
 	}
-	
-	/** @param uri may or not start with / 
-	 * @return */
-	public MyHttpClient get( String uri) throws Exception {
-		if (!uri.startsWith("/") ) {
-			uri = "/" + uri;
-		}
-		
-		String url = String.format( "%s%s", host, uri);
 
-		return process( MyClient.create( url)
-			.addHeaders( m_reqHeaders)
-			.query()
-			);
+	public MyHttpClient get(String string) throws Exception {
+		m_data = MyClient.getString( string);
+		return this;
 	}
-
+	
 	public MyHttpClient post( String uri, String data) throws Exception {
 		String url = String.format( "%s%s", host, uri);
 

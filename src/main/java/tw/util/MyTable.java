@@ -41,7 +41,6 @@ public class MyTable extends JTable { // nicole
 					getModel().onRightClick(e, row, col);
 				}
 				else if (e.getClickCount() == 2) {
-					int coll = MyTable.this.getTableHeader().columnAtPoint( e.getPoint() );  // why table header???
 					getModel().onDoubleClick(row, col);
 				}
 				else if (SwingUtilities.isLeftMouseButton(e)) {
