@@ -123,7 +123,7 @@ class AlchemyStreamMgr extends StreamMgr {
 	}
 
 	@Override protected void handleHookWithData(JsonObject hook, HookServer hookServer) throws Exception {
-		S.out( "received Alchemy hook: " + hook);
+//		S.out( "received Alchemy hook: " + hook);
 
 		JsonObject event = hook.getObject( "event");
 		if (event != null) {

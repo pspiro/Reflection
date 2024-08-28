@@ -5,6 +5,7 @@ import positions.HookServer.MoralisStreamMgr;
 import positions.HookServer.StreamMgr;
 import reflection.Config;
 import tw.google.NewSheet.Book.Tab;
+import tw.util.S;
 
 public class HookConfig extends Config {
 	public enum HookType { 
@@ -15,11 +16,13 @@ public class HookConfig extends Config {
 		},
 		Moralis {
 			StreamMgr create() throws Exception {
+				S.out( "Using Moralis streams");
 				return new MoralisStreamMgr();
 			}
 		},			
 		Alchemy {
 			StreamMgr create() throws Exception {
+				S.out( "Using Alchemy streams");
 				return new AlchemyStreamMgr();
 			}
 		};

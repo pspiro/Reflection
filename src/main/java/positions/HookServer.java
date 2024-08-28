@@ -231,6 +231,7 @@ public class HookServer {
 				}
 				else {
 					JsonObject obj = parseToObject();
+					S.out( "Received webhook: " + obj);
 					sm.handleHookWithData( obj, HookServer.this);
 				}
 				respondOk();
@@ -340,7 +341,7 @@ public class HookServer {
 			String tag = obj.getString("tag");
 			boolean confirmed = obj.getBool("confirmed");
 
-			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
+//			S.out( "Received webhook [%s - %s] %s", tag, confirmed, BaseTransaction.debug() ? obj : "");
 			
 			// process native transactions
 			for (JsonObject trans : obj.getArray("txs" ) ) {
