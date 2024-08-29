@@ -329,7 +329,7 @@ public class MarginTrans extends MyTransaction {
 		
 		m_walletAddr = m_map.getWalletAddress();
 		
-		validateCookie( "margin-static");
+		validateCookie( "margin-get-order");
 
 		MarginOrder order = m_main.marginStore().getById( m_map.getRequiredString("orderId") );
 		require( order != null, RefCode.INVALID_REQUEST, "No such order found");

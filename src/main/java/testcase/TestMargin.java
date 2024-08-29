@@ -156,7 +156,8 @@ public class TestMargin extends MyTestCase {
 		waitForStatus( json, Status.Completed);
 	}
 
-	/** start with no profit, fill buy, add profit, fill profit */
+	/** start with no profit, fill buy, add profit, fill profit
+	 *  also test fail updates */
 	public void testModProfitFromZero() throws Exception {
 		S.out( "testing modify profit from zero");
 		JsonObject ord = newOrd();
@@ -168,6 +169,11 @@ public class TestMargin extends MyTestCase {
 		JsonObject json = cli().postToJson( "/api/margin-order", ord );
 		waitForStatus( json, Status.Monitoring, false);
 
+		// can't update an order with no change being made
+		ord.put( "orderId", json.getString( "orderId") );
+		cli().postToJson( "/api/margin-update", ord);
+		failWith( RefCode.CANT_UPDATE); 
+
 		// modify profit price to fill
 		ord.remove( "entryPrice");
 		ord.put( "orderId", json.getString( "orderId") );
@@ -177,6 +183,11 @@ public class TestMargin extends MyTestCase {
 		
 		cli().postToJson( "/api/margin-update", ord );
 		waitForStatus( json, Status.Completed);
+		
+		// can't update a completed order
+		ord.put( "profitTakerPrice", base + 1);
+		cli().postToJson( "/api/margin-update", ord);
+		failWith( RefCode.CANT_UPDATE); 
 	}
 
 	/** start w/ no profit, add a profit before filling buy, then fill buy */
@@ -385,6 +396,25 @@ public class TestMargin extends MyTestCase {
 		S.out( "simulating day before close");
 		long time = System.currentTimeMillis() + Util.DAY * 2;  // set this to be the day before the market is closed
 		cli().get( "/api/?msg=simulate&item=time&time=" + time);
+		waitForStatus( json, Status.Completed);
+	}
+
+	/** sim tomorrow's close; before running this, check the trading hours:
+	 *  /api/?msg=getTradingHours
+	 *  and make sure the next closed day is showing up there  */
+	public void testLiqByUser() throws Exception {
+		S.out( "testing liqByUser");
+		
+		JsonObject ord = newOrd();
+		ord.put( "entryPrice", base + .5);
+		ord.put( "leverage", 2);
+		
+		JsonObject json = cli().postToJson( "/api/margin-order", ord);
+		waitForStatus( json, Status.Monitoring, false);
+		
+		cli().postToJson( "/api/margin-liquidate", ord);
+		assert200();
+
 		waitForStatus( json, Status.Completed);
 	}
 

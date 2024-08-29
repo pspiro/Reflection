@@ -139,7 +139,7 @@ public class MarginOrder extends JsonObject implements DualParent {
 	private DualOrder m_buyOrder;
 	private DualOrder m_profitOrder;
 	private DualOrder m_stopOrder;
-	private DualOrder m_liqOrder;
+	private DualOrder m_liqOrder;  // theoretically, we could use the profit order for liquidating
 
 	/** Called when order is received from Frontend */
 	MarginOrder(
@@ -494,9 +494,11 @@ public class MarginOrder extends JsonObject implements DualParent {
 	
 	/** Calleded in the http processing thread when user updates order via Frontend */
 	synchronized void onUpdated( double entryPrice, double profitTakerPrice, double stopPrice) throws Exception {
+		boolean updated = false;
+		
 		if (entryPrice > 0 && Util.isNotEq( entryPrice, entryPrice(), .005) ) {
 			
-			Main.require( status().canUpdateEntryPrice(), RefCode.INVALID_REQUEST, "The entry price cannot be updated; the buy order has already been filled or canceled.");
+			Main.require( status().canUpdateEntryPrice(), RefCode.CANT_UPDATE, "The entry price cannot be updated; the buy order has already been filled or canceled.");
 			
 			put( "entryPrice", entryPrice);
 			m_buyOrder.lmtPrice( entryPrice() );
@@ -505,10 +507,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			if (status() == Status.PlacedBuyOrder) {
 				m_buyOrder.resubmit();
 			}
+			
+			updated = true;
 		}
 		
 		if (profitTakerPrice > 0 && Util.isNotEq( profitTakerPrice, profitTakerPrice(), .005) ) {
-			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
+			Main.require( status().canUpdateBracketPrice(), RefCode.CANT_UPDATE, "The profit-taker price cannot be updated at this time; the order status is '%s'", status() );
 
 			put( "profitTakerPrice", profitTakerPrice);
 			m_profitOrder.lmtPrice( profitTakerPrice);
@@ -517,10 +521,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			if (status() == Status.Monitoring) {
 				m_profitOrder.resubmit();
 			}
+			
+			updated = true;
 		}
 		
 		if (stopPrice > 0 && Util.isNotEq( stopPrice, stopLossPrice(), .005) ) {
-			Main.require( status().canUpdateBracketPrice(), RefCode.INVALID_REQUEST, "The stop-loss price cannot be updated at this time; the order status is '%s'", status() );
+			Main.require( status().canUpdateBracketPrice(), RefCode.CANT_UPDATE, "The stop-loss price cannot be updated at this time; the order status is '%s'", status() );
 
 			put( "stopLossPrice", stopPrice);
 			m_stopOrder.stopPrice(stopPrice);
@@ -530,7 +536,12 @@ public class MarginOrder extends JsonObject implements DualParent {
 			if (status() == Status.Monitoring) {
 				m_stopOrder.resubmit();
 			}
+			
+			updated = true;
 		}
+		
+		// let's make it an error to send an update with no change
+		require( updated, RefCode.CANT_UPDATE, "Nothing was changed");
 	}
 
 	/** Buy orders should be working */
