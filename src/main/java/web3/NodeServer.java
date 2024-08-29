@@ -20,13 +20,22 @@ public class NodeServer {
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
+	/** different nodes have different batch sizes; you can probably get bigger size
+	 * with a paid node e.g. Moralis */
+	static int maxBatchSize = 20; // should be configurable; it may be that different MESSAGE have dif. max batch size. but I saw large sizes > 100 on all chains for small message
+
 	/** you could make this a member var */
 	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
-	public static void setChain( String rpcUrlIn) throws Exception {
-		S.out( "Setting node server rpcUrl=%s", rpcUrlIn);
+	public static void setChain( String rpcUrlIn, int maxBatchSizeIn) throws Exception {
 		rpcUrl = rpcUrlIn;
+		
+		if (maxBatchSizeIn > 0) {
+			maxBatchSize = maxBatchSizeIn;
+		}
+
+		S.out( "Setting node server  rpcUrl=%s  maxBatchSize=%s", rpcUrlIn, maxBatchSize);
 	}
 	
 	/** Send a query and expect "result" to contain a hex value.
@@ -57,18 +66,14 @@ public class NodeServer {
 		return obj;
 	}
 
-	/** different nodes have different batch sizes; you can probably get bigger size
-	 * with a paid node e.g. Moralis */
-	static int batchSize = 10; // should be configurable
-	
-	private static JsonArray batchQuery( JsonArray requests) throws Exception {
+	public static JsonArray batchQuery( JsonArray requests) throws Exception {
 		int i = 0;
 		var results = new JsonArray();
 		
 		while (i < requests.size() ) {
 			var batch = new JsonArray();
 			
-			for (int j = 0; j < batchSize && i < requests.size(); j++) {
+			for (int j = 0; j < maxBatchSize && i < requests.size(); j++) {
 				batch.add( requests.get( i++) );
 			}
 			

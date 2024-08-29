@@ -2,6 +2,7 @@ package testcase;
 
 import java.util.Map;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import tw.util.S;
@@ -57,5 +58,24 @@ public class TestNodeServer extends MyTestCase {
 				18);
 		new JsonObject( map).display();
 		assertTrue( map.size() == stocks.stocks().size() );
+	}
+	
+	/** fail w/ batch too large 
+	 * @throws Exception */
+	public void testBatchFail() throws Exception {
+		String body = """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "eth_getBlockByNumber",
+				"params": [	"latest", false ]
+				}""";
+		var json = JsonObject.parse( body);
+		var ar = new JsonArray();
+		for (int i = 0; i < 3; i++) {
+			json.put( "id", i);
+			ar.add( json);
+		}
+		NodeServer.batchQuery( ar).display();
 	}
 }

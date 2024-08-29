@@ -348,7 +348,7 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
 		NodeServer.setDecimals( m_rusd);
 		NodeServer.setDecimals( m_busd);
 
@@ -772,5 +772,4 @@ public class Config extends ConfigBase {
 	public double getApprovedAmt() throws Exception {
 		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
 	}
-	
 }
