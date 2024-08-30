@@ -6,6 +6,7 @@ import common.Util;
 import monitor.NewWalletPanel;
 import reflection.RefCode;
 import tw.util.S;
+import web3.NodeServer;
 
 /** You must have some RUSD for these tests to pass */
 public class TestRedeem extends MyTestCase {
@@ -139,7 +140,7 @@ public class TestRedeem extends MyTestCase {
 		waitForRedeem(Cookie.wallet);
 		waitForRusdBalance(Cookie.wallet, .0001, true);
 	}
-	
+
 	private void redeem() throws Exception {
 		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();

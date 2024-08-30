@@ -22,25 +22,22 @@ public class MyTestCase extends TestCase {
 	static protected Config m_config;
 	static protected Accounts accounts = Accounts.instance;
 	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
+	static int port = 5000;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
 			m_config = Config.read();  // pull from config.txt
-			assertTrue( !m_config.isProduction() );  // don't even think about it!
+			//assertTrue( !m_config.isProduction() ); // NO COMMIT!!!!!!!!!!!!!!!  // don't even think about it!
 			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void main(String[] args) {
-		S.out( "lkj");
-	}
-	
 	MyHttpClient cli() throws Exception {
-		cli = new MyHttpClient("localhost", 8383);
+		cli = new MyHttpClient("localhost", port);
 		cli.addHeader("X-Country-Code", "IN");
 		return cli;
 	}

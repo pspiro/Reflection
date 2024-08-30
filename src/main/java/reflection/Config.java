@@ -414,7 +414,7 @@ public class Config extends ConfigBase {
 		
 		var ret = MyClient.postToJson( pwUrl + "/getpw", json.toString() );
 		String error = ret.getString( "error");
-		Util.require( S.isNull( error), "pw server returned error " + error);
+		Util.require( S.isNull( error), "pw server returned error- " + error);
 		
 		String pw = ret.getString( "pw");
 		Util.require( S.isNotNull( pw), "null pw from pw server");

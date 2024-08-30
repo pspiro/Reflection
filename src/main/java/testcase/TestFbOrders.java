@@ -142,7 +142,7 @@ public class TestFbOrders extends MyTestCase {
 		// give bob a valid user profile
 		JsonObject json = TestProfile.createValidProfile();
 		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
-		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		MyClient.postToJson( "http://localhost:" + port + "/api/update-profile", json.toString() );
 		
 		// let it pass KYC
 		m_config.sqlCommand( sql -> sql.execWithParams( 
@@ -223,7 +223,7 @@ public class TestFbOrders extends MyTestCase {
 		// give bob a valid user profile
 		JsonObject json = TestProfile.createValidProfile();
 		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
-		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		MyClient.postToJson( "http://localhost:" + port + "/api/update-profile", json.toString() );
 		
 		// let it pass KYC
 		m_config.sqlCommand( sql -> sql.execWithParams( 

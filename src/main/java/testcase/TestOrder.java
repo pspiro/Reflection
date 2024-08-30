@@ -18,7 +18,7 @@ public class TestOrder extends MyTestCase {
 	
 	static {
 		try {
-			JsonObject json = new MyHttpClient("localhost", 8383) 
+			JsonObject json = new MyHttpClient("localhost", port) 
 					.get( "/api/get-price/265598")
 					.readJsonObject();
 			curPrice = (json.getDouble("bid") + json.getDouble("ask") ) / 2;
