@@ -1,7 +1,5 @@
 package testcase;
 
-import java.io.IOException;
-
 import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;

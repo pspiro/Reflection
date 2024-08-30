@@ -6,7 +6,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 
 import org.web3j.crypto.Credentials;
-import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;

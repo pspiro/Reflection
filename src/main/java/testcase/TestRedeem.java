@@ -6,7 +6,6 @@ import common.Util;
 import monitor.NewWalletPanel;
 import reflection.RefCode;
 import tw.util.S;
-import web3.NodeServer;
 
 /** You must have some RUSD for these tests to pass */
 public class TestRedeem extends MyTestCase {

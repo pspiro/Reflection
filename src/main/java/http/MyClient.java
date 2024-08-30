@@ -1,7 +1,5 @@
 package http;
 
-import static java.util.Objects.requireNonNull;
-
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
