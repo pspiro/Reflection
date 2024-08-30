@@ -55,15 +55,17 @@ public class CryptoPanel extends MonPanel {
 		leftPanel.add( "Address", m_rusdAddress);
 		leftPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
+		String busd = config().busd().name();
+		
 		leftPanel.addHeader( "RefWallet");
 		leftPanel.add( "Address", m_refAddress);
-		leftPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
-		leftPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
+		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, emptyRefWallet);
+		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
 		leftPanel.add( "RefWallet MATIC", m_refWalletMatic);
 		
 		leftPanel.addHeader( "Owner Wallet");
 		leftPanel.add( "Address", m_ownerAddress);
-		leftPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
+		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
 		leftPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
 		
 		leftPanel.addHeader( "Admin Accounts");
@@ -132,7 +134,7 @@ public class CryptoPanel extends MonPanel {
 
 	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
-		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
+		if (Util.confirm(this, "Are you sure you want to transfer this amount (-1) " + config().busd().name() + " from RefWallet to Owner?") ) {
 			wrap( () -> {
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
 

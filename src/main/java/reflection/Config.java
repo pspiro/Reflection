@@ -492,13 +492,11 @@ public class Config extends ConfigBase {
 	
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
-	public Rusd rusd() throws Exception {
-		Util.require( m_rusd != null, "Fireblocks not set");
+	public Rusd rusd() {
 		return m_rusd;
 	}
 
-	public Busd busd() throws Exception {
-		Util.require( m_busd != null, "Fireblocks not set");
+	public Busd busd() {
 		return m_busd;
 	}
 
@@ -571,7 +569,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform);  
+		return "polygon".equals(moralisPlatform) || "pulsechain".equals(moralisPlatform);  
 	}
 	
 	public String moralisPlatform() {
