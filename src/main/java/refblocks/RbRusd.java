@@ -32,11 +32,11 @@ public class RbRusd extends Erc20 implements IRusd {
 
 	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain
 	 *  note that we no longer need to have tm passed in because we can get it from Refblocks */
-	public Rusd load(TransactionManager tm) throws Exception {
+	public Rusd load(String callerKey) throws Exception {
 		return Rusd.load( 
 				address(), 
 				Refblocks.web3j, 
-				tm, 
+				Refblocks.getFasterTm( callerKey), 
 				Refblocks.getGp( 500000)  // this is good for everything except deployment
 				);
 	}
@@ -54,7 +54,8 @@ public class RbRusd extends Erc20 implements IRusd {
 				stablecoin.name(),
 				userAddr);
 		
-		return Refblocks.exec( adminKey, tm -> load( tm).buyStock(
+		var contract = load( adminKey);
+		return contract.exec2( () -> contract.buyStock(
 				userAddr, 
 				stablecoin.address(), 
 				stockToken.address(), 
@@ -75,7 +76,8 @@ public class RbRusd extends Erc20 implements IRusd {
 				rusdAmt,
 				userAddr);
 
-		return Refblocks.exec( adminKey, tm -> load( tm).sellStock( 
+		var contract = load( adminKey);
+		return contract.exec( () -> contract.sellStock( 
 				userAddr,
 				address(), 
 				stockToken.address(), 
@@ -98,7 +100,8 @@ public class RbRusd extends Erc20 implements IRusd {
 		
 		//S.out( "  the allowance is %s", )
 
-		return Refblocks.exec( adminKey, tm -> load( tm).sellRusd(
+		var contract = load( adminKey);
+		return contract.exec( () -> contract.sellRusd(
 				userAddr,
 				busd.address(),
 				busd.toBlockchain( amt),
@@ -117,8 +120,8 @@ public class RbRusd extends Erc20 implements IRusd {
 		
 		S.out( "RB-RUSD setting RefWallet to %s", refWalletAddr);
 		
-		return Refblocks.exec( ownerKey, tm -> load( tm).setRefWalletAddress(
-				refWalletAddr) );
+		var contract = load( ownerKey);
+		return contract.exec( () -> contract.setRefWalletAddress( refWalletAddr) );
 	}
 
 	@Override public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
@@ -130,9 +133,8 @@ public class RbRusd extends Erc20 implements IRusd {
 				add ? "adding" : "removing",
 				address);
 				
-		return Refblocks.exec( ownerKey, tm -> load( tm).addOrRemoveAdmin( 
-				address, 
-				add) );
+		var contract = load( ownerKey);
+		return contract.exec( () -> contract.addOrRemoveAdmin( address,	add) );
 	}
 
 	@Override public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
@@ -148,7 +150,8 @@ public class RbRusd extends Erc20 implements IRusd {
 				amt,
 				spenderAddr);
 		
-		return Refblocks.exec( approverKey, tm -> load( tm).approve(spenderAddr, toBlockchain( amt) ) );
+		var contract = load( approverKey);
+		return contract.exec( () -> contract.approve(spenderAddr, toBlockchain( amt) ) );
 	}
 
 }

@@ -1,8 +1,11 @@
 package refblocks;
 
-import org.web3j.tx.TransactionManager;
+import java.util.function.Supplier;
+
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 import common.Util;
+import common.Util.ExSupplier;
 import tw.util.S;
 import web3.Busd.IBusd;
 import web3.Erc20;
@@ -25,12 +28,12 @@ public class RbBusd extends Erc20 implements IBusd {
 	}
 
 	/** load generated Busd that we can use to call smart contract methods that write to the blockchain */
-	public Busd load(TransactionManager tm, int gas) throws Exception {
+	public Busd load(String callerKey, int gas) throws Exception {
 		return Busd.load( 
 				address(), 
 				Refblocks.web3j, 
-				tm, 
-				Refblocks.getGp( gas)
+				Refblocks.getFasterTm( callerKey), 
+				Refblocks.getGp( gas)  // sends a query
 				);
 	}
 
@@ -42,8 +45,8 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "%s approving %s to spend %s %s", 
 				Refblocks.getAddressPk(approverKey), spenderAddr, amt, m_name);
 		
-		return Refblocks.exec( approverKey, tm -> load( tm, 100000)
-				.approve( spenderAddr, toBlockchain( amt) ) );
+		var contract = load( approverKey, 100000);
+		return contract.exec( () -> contract.approve( spenderAddr, toBlockchain( amt) ) );
 	}
 		
 	/** For testing only; anyone can call this but they must have some gas */
@@ -54,10 +57,11 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "%s minting %s %s for %s", 
 				Refblocks.getAddressPk(callerKey), amt, m_name, address);
 
-		return Refblocks.exec( callerKey, tm -> load( tm, 100000)
-				.mint( address, toBlockchain( amt) ) );
+		var contract = load( callerKey, 100000);
+		return contract.exec( () -> contract.mint( address, toBlockchain( amt) ) );
 	}
 
+	
 	/** transfer ERC-20 token */
 	@Override public RetVal transfer(String fromKey, String toAddr, double amt) throws Exception {
 		Util.reqValidKey(fromKey);
@@ -66,7 +70,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "transferring %s %s from %s to %s",
 				amt, m_name, Refblocks.getAddressPk( fromKey), toAddr);
 
-		return Refblocks.exec( fromKey, tm -> load( tm, 100000) // actual is around 50000
-			.transfer( toAddr, toBlockchain( amt) ) );
+		var contract = load( fromKey, 100000);
+		return contract.exec( () -> contract.transfer( toAddr, toBlockchain( amt) ) );
 	}
 }

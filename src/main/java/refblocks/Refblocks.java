@@ -230,7 +230,7 @@ public class Refblocks {
 		Fees fees = NodeServer.queryFees();
 		fees.showFees(units);
 
-		return new StaticEIP1559GasProvider( // fails with this
+		return new StaticEIP1559GasProvider(
 				chainId,
 				fees.totalFee(),
 				fees.priorityFee(),
