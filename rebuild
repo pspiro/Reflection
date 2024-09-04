@@ -4,7 +4,7 @@ git pull
 echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
-mvn package | tee > build.out
+mvn package | tee build.out
 
 if ! grep -q "BUILD SUCCESS" build.out; then
   echo failure

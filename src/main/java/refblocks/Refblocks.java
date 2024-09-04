@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Sign;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
@@ -370,4 +371,22 @@ public class Refblocks {
 		return new DelayedTrp().reallyWait( receipt);
 	}
 
+	/** sign any random text; compare with https://app.mycrypto.com/sign-message */
+    static void getSignature(String message, String key) {
+        Credentials credentials = Credentials.create( key);
+
+        // Sign the message hash
+        Sign.SignatureData signature = Sign.signPrefixedMessage(message.getBytes(), credentials.getEcKeyPair());
+
+        byte[] retval = new byte[65];
+        System.arraycopy(signature.getR(), 0, retval, 0, 32);
+        System.arraycopy(signature.getS(), 0, retval, 32, 32);
+        System.arraycopy(signature.getV(), 0, retval, 64, 1);
+        String hash = Numeric.toHexString(retval);
+
+        Util.toJson( 
+        		"address", Util.getAddress( key),
+        		"msg", message,
+        		"sig", hash).display();
+    }
 }

@@ -110,8 +110,10 @@ public class Main implements ITradeReportHandler {
 		m_config.sqlCommand( conn -> {} );
 		
 		// add new fields
-		m_config.sqlCommand( sql -> {
-		});
+//		m_config.sqlCommand( sql -> {
+//		});
+		// confirm we can access private keys
+		m_config.admin1Key();
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");

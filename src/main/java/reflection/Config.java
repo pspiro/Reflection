@@ -348,7 +348,7 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
 		NodeServer.setDecimals( m_rusd);
 		NodeServer.setDecimals( m_busd);
 
@@ -414,7 +414,7 @@ public class Config extends ConfigBase {
 		
 		var ret = MyClient.postToJson( pwUrl + "/getpw", json.toString() );
 		String error = ret.getString( "error");
-		Util.require( S.isNull( error), "pw server returned error " + error);
+		Util.require( S.isNull( error), "pw server returned error- " + error);
 		
 		String pw = ret.getString( "pw");
 		Util.require( S.isNotNull( pw), "null pw from pw server");
@@ -492,13 +492,11 @@ public class Config extends ConfigBase {
 	
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
-	public Rusd rusd() throws Exception {
-		Util.require( m_rusd != null, "Fireblocks not set");
+	public Rusd rusd() {
 		return m_rusd;
 	}
 
-	public Busd busd() throws Exception {
-		Util.require( m_busd != null, "Fireblocks not set");
+	public Busd busd() {
 		return m_busd;
 	}
 
@@ -571,7 +569,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform);  
+		return "polygon".equals(moralisPlatform) || "pulsechain".equals(moralisPlatform);  
 	}
 	
 	public String moralisPlatform() {
@@ -772,5 +770,4 @@ public class Config extends ConfigBase {
 	public double getApprovedAmt() throws Exception {
 		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
 	}
-	
 }

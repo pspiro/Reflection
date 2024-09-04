@@ -51,7 +51,7 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	protected boolean isUsdt(JsonObject obj) {
-		return obj.getString( tokenSymbol).equals( "USDT");
+		return obj.getString( tokenSymbol).equals( Monitor.m_config.busd().name() );
 	}
 
 	protected boolean isStock(JsonObject obj) {

@@ -139,7 +139,7 @@ public class TestRedeem extends MyTestCase {
 		waitForRedeem(Cookie.wallet);
 		waitForRusdBalance(Cookie.wallet, .0001, true);
 	}
-	
+
 	private void redeem() throws Exception {
 		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
 			.display();

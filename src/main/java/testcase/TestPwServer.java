@@ -4,7 +4,6 @@ import common.Util;
 import http.MyClient;
 import junit.framework.TestCase;
 import reflection.Config;
-import tw.util.S;
 
 public class TestPwServer extends TestCase {
 	

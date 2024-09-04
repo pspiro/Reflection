@@ -1,7 +1,12 @@
 package test;
 
+import common.Util;
+import http.MyClient;
 import reflection.Config;
-import tw.util.S;
+import testcase.Cookie;
+import web3.NodeServer;
+
+
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
@@ -16,15 +21,11 @@ public class TestPostgres {
 	}
 
 	public static void main(String[] args) throws Exception {
-		String wal = "0xcb6c2EDBb986ef14B66E094787245350b69EA5Ec";
-		S.out( "**approved=%s", m_config.getApprovedAmt() );
-		S.out( "**rusdBal=%s", m_config.rusd().getPosition(wal));
-		S.out( "**busdBal=%s", m_config.busd().getPosition(m_config.refWalletAddr()));
-		
-		S.out( "sending redemption request to succeed");
-		m_config.rusd().sellRusd(wal, m_config.busd(), 3)
-			.displayHash();
-//		redeem();
-		//assert200();
+		Cookie.setWalletAddr( NodeServer.prod);
+
+		MyClient.postToJson("http://localhost:5000/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
+		.display();
+
 	}
+
 }
