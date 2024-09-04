@@ -1,13 +1,10 @@
 #!/bin/bash
 
-# this file gets modified when we run the program, but we don't want to keep the changes
-git restore .googfiles/StoredCredential
-
 git pull
 echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
-mvn package > build.out
+mvn package | tee > build.out
 
 if ! grep -q "BUILD SUCCESS" build.out; then
   echo failure
