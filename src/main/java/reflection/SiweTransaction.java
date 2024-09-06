@@ -157,7 +157,9 @@ public class SiweTransaction extends MyTransaction {
 	 *  This is a keep-alive; we should verify that the timer has not expired */
 	public void handleSiweMe() {
 		wrap( () -> {
+			out( "received siwe/me from %s", getUserIpAddress() );  // log the ip to see if we get multiple messages from the same user 
 			ArrayList<String> cookies = authCookies();
+			
 			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
 			if (cookies.size() > 1) {

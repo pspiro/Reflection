@@ -285,6 +285,8 @@ public class BackendTransaction extends MyTransaction {
 	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
+			out( "warning: mywallet requests should route to HookServer");
+			
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 

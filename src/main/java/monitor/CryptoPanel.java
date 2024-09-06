@@ -49,6 +49,7 @@ public class CryptoPanel extends MonPanel {
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
+		HtmlButton refSendMatic = new HtmlButton( "Send", ev -> refSendMatic() );
 
 		VerticalPanel leftPanel = new VerticalPanel();
 		leftPanel.addHeader( "RUSD");
@@ -61,16 +62,16 @@ public class CryptoPanel extends MonPanel {
 		leftPanel.add( "Address", m_refAddress);
 		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, emptyRefWallet);
 		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
-		leftPanel.add( "RefWallet MATIC", m_refWalletMatic);
+		leftPanel.add( "RefWallet " + config().nativeTokName(), m_refWalletMatic, refSendMatic);
 		
 		leftPanel.addHeader( "Owner Wallet");
 		leftPanel.add( "Address", m_ownerAddress);
 		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		leftPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
+		leftPanel.add( "Owner " + config().nativeTokName(), m_ownerMatic, ownerSendMatic);
 		
 		leftPanel.addHeader( "Admin Accounts");
-		leftPanel.add( "Admin1 MATIC", m_admin1Matic);
-		leftPanel.add( "Admin2 MATIC", m_admin2Matic);
+		leftPanel.add( "Admin1 " + config().nativeTokName(), m_admin1Matic);
+		leftPanel.add( "Admin2 " + config().nativeTokName(), m_admin2Matic);
 
 		leftPanel.addHeader( "Brokerage (IB)");
 		leftPanel.add( "Cash in brokerage", m_cash);
@@ -122,14 +123,20 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	private void ownerSendMatic() {
-		wrap( () -> {
-			config().matic().transfer( 
-					config().ownerKey(),
-					Util.ask("Enter dest wallet address"),
-					Double.parseDouble( Util.ask( "Enter amount"))
-					);
-			Util.inform(this, "Done");
-		});
+		wrap( () -> sendMatic( config().ownerKey() ) );
+	}
+
+	private void refSendMatic() {
+		wrap( () -> sendMatic( config().refWalletKey() ) );
+	}
+
+	private void sendMatic(String senderKey) throws NumberFormatException, Exception {
+		config().matic().transfer( 
+				senderKey,
+				Util.ask("Enter dest wallet address"),
+				Double.parseDouble( Util.ask( "Enter amount"))
+				);
+		Util.inform(this, "Done");
 	}
 
 	/** Send all from RefWallet to owner */
