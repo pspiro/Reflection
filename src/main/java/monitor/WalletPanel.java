@@ -40,7 +40,7 @@ import util.LogType;
 import web3.MoralisServer;
 import web3.StockToken;
 
-public class NewWalletPanel extends MonPanel {
+public class WalletPanel extends MonPanel {
 	static String usersFields = "first_name,last_name,wallet_public_key,kyc_status,created_at,address,address_1,address_2,city,state,zip,country,geo_code,email,telegram,phone,pan_number,aadhaar,locked";
 
 	private JTextField m_walField = new JTextField(28);
@@ -55,7 +55,7 @@ public class NewWalletPanel extends MonPanel {
 
 	private final NewTabbedPanel m_tabs = new NewTabbedPanel(true);
 
-	public NewWalletPanel() {
+	public WalletPanel() {
 		super( new BorderLayout() );
 		MyTimer t = new MyTimer();
 		t.next( "NewWallet ctor");
