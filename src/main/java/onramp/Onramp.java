@@ -45,6 +45,114 @@ public class Onramp {
 //		JsonObject prices = getPrices();
 //		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
 //			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
+		getQuote().display();
+	}
+
+	static String wl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel/onramp";
+	static String kyc = "https://api-test.onramp.money/onramp/api/v2/whiteLabel/kyconramp";
+	
+	
+	public static void onramp(String refWalletAddr, double fromAmt) throws Exception {
+		double rate = getQuote().getDouble( "rate");
+
+		var resp = whiteLab( "/onramp/createTransaction", Util.toJson( 
+				"depositAddress", refWalletAddr,
+				"customerId", "custid",  // Unique id received from /kyc/url
+				"fromAmount", fromAmt,
+				"toAmount", fromAmt * rate,
+				"rate", rate
+				) );
+		resp.display();
+	}
+	
+	private static JsonObject getQuote() throws Exception {
+		return whiteLab( "/onramp/quote", Util.toJson( 
+				"fromCurrency", "INR",
+				"toCurrency", "USDT",
+				"fromAmount", "1.",
+				"chain", "MATIC20",
+				"paymentMethodType", "UPI"
+				) );
+	}
+	
+	
+	public static void getTransaction() throws Exception {
+		var resp = whiteLab( "/onramp/transaction", Util.toJson(
+				"transactionId", "",
+				"customerId", ""
+				));
+		resp.display();
+	}
+	
+	public static void getUserTransactions( String custId) throws Exception {
+		var resp = whiteLab( "/onramp/allUserTransaction", Util.toJson(
+				"page", 1,
+				"customerId", custId,
+				"pageSize", "500") );
+		resp.display();
+	}
+		
+	// used by Monitor?
+	public static void getAllTransactions( String custId) throws Exception {
+		var resp = whiteLab( "/onramp/allTransaction", Util.toJson(
+				"page", 1,
+				"pageSize", "500") );
+		resp.display();
+	}
+		
+//		
+//		{
+//		    "status": 1,
+//		    "code": 200,
+//		    "data": {
+//		        "transactionId": "635",
+//		        "createdAt": "2023-12-08 00:31:44",
+//		        "fiatAmount": "1741",
+//		        "fiatPaymentInstructions": {
+//		            "type": "IMPS",
+//		            "bank": {
+//		                "name": "",
+//		                "accountNumber": "",
+//		                "ifsc": "",
+//		                "type": "",
+//		                "branch": "",
+//		                "bank": ""
+//		            },
+//		            "bankNotes": [
+//		                {
+//		                    "type": -1,
+//		                    "msg": "NEFT not allowed for this account."
+//		                },
+//		                {
+//		                    "type": 1,
+//		                    "msg": "Bank transfers from UPI Apps like gPay, PhonePe, Paytm are working."
+//		                },
+//		                {
+//		                    "type": 1,
+//		                    "msg": "UPI bank transfers, IMPS is allowed for this account."
+//		                }
+//		            ],
+//		            "otp": "3217"
+//		        }
+//		    }
+//		}
+
+	
+	private static JsonObject whiteLab(String uri, JsonObject json) throws Exception {
+		Util.require( uri.startsWith( "/"), "start with /");
+		return query( wl + uri, json);
+	}
+	
+	private static JsonObject getKycUrl() throws Exception {
+		return whiteLab( "kyc/url",  Util.toJson(
+				"customerId", "abc",
+				"email", "abc",
+				"phoneNumber*", "123",
+				"clientCustomerId*", "abc",
+				"type", "INDIVIDUAL",  		// individual or business
+				"kycRedirectUrl", "https://reflection.trading",  // user is redirected here after kyc
+				"closeAfterLogin", true
+				) );
 	}
 
 	public static void buildMap() throws Exception {
@@ -172,3 +280,37 @@ public class Onramp {
 		return JsonObject.parse( str);
 	}
 }
+
+// questions:
+// clientId vs clientCustomerId
+// how to call for first time?
+// process is: 
+// call kycUrl, redirect to url, user kycs,
+// when user KYC's is that when they enter their account information as well?
+// then how do they change it?
+// i need prod and testapi keys
+// must I implement a webhook, or can i use a 
+
+/*
+ * 
+ * 
+	 ______________________________________________
+	/Convert Fiat to Crypto / Transaction History /
+    |                       ---------------------/
+	
+	<Enter or change account info>
+	
+	Display redacted account info if we have it
+	
+ 	Enter fiat amount ___________  <Check rate>
+ 	
+ 	Rate: _______
+ 	
+ 	You will receive __________ RUSD on PulseChain  <GO>
+ 	
+ 	
+ 
+  
+ 
+ 
+*/
