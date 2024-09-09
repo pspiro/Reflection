@@ -351,6 +351,11 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			put(key, val);
 		}
 	}
+	
+	public JsonObject append( String key, Object val) {
+		put( key, val);
+		return this;
+	}
 
 
 	/** Update the value for one specific key;

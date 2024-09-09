@@ -144,6 +144,9 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	}
 
 	/** Return the item in the array that has tag=value (where value is a string) */
+	// you could create more generic version that takes a method that takes
+	// a value object and returns true or false?
+	// Function<Object,Boolean>
 	public JsonObject find(String tag, String value) throws Exception {
 		for (JsonObject item : this) {
 			if (value.equals( item.getString(tag) ) ) {
