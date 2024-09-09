@@ -14,6 +14,7 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
+import reflection.MySqlConnection;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.UI;
@@ -105,6 +106,10 @@ public class QueryPanel extends JsonPanel {
 	}
 	
 	@Override protected void refresh() throws Exception {
+		Monitor.m_config.sqlCommand( sql -> wrap( () -> refresh( sql) ) );
+	}
+	
+	protected void refresh(MySqlConnection sql) throws Exception {
 		S.out( "Refreshing QueryModel %s table", m_table);
 		m_list.push(where.getText());
 		
@@ -119,7 +124,7 @@ public class QueryPanel extends JsonPanel {
 				.replaceAll( "\\$where", whereText )
 				.replaceAll( "wallet ", "wallet_public_key " + Monitor.num() );
 		
-		setRows( Monitor.m_config.sqlQuery( str) );
+		setRows( sql.queryToJson( str) );
 		rows().forEach( obj -> adjust(obj) );  // or override format() to keep the object intact
 		
 		UI.flash( "Refreshed");

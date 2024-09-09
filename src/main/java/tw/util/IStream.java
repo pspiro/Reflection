@@ -55,23 +55,21 @@ public class IStream implements Closeable {
 	}
 
 	/** Reads the whole file into a single string and close the stream. */
-	public String readAll() {
-		try {
+
+	public static String readAll(String filename) {
+		try (IStream is = new IStream( filename) ) {
 			StringBuilder sb = new StringBuilder();
 
-			int c = m_br.read();
+			int c = is.m_br.read();
 			while( c != -1) {
 				sb.append( (char)c);
-				c = m_br.read();
+				c = is.m_br.read();
 			}
 			return sb.toString();
 		}
 		catch( Exception e) {
 			e.printStackTrace();
 			return null;
-		}
-		finally {
-			close();
 		}
 	}
 

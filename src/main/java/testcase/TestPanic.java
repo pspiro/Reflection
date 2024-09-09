@@ -13,7 +13,7 @@ public class TestPanic extends MyTestCase {
 	public void testGlobalPanic() throws Exception {
 		//cli().get("/?msg=seedprices");
 
-		GTable tab = new GTable(NewSheet.Reflection, "Dt-config", "Tag", "Value");
+		GTable tab = new GTable(NewSheet.Reflection, m_config.getTabName(), "Tag", "Value");
 		
 		tab.put( "allowTrading", Allow.Sell.toString() );
 		cli().get("/api/?msg=refreshconfig");
@@ -60,7 +60,9 @@ public class TestPanic extends MyTestCase {
 		73128548	Buy
 		317467468	Sell
 		6604766		All
-		6842		None    
+		6842		None
+		
+		fails due to "no such stock"
 	 * @throws Exception */
 	public void testPauseStock() throws Exception {
 		JsonObject obj;
@@ -109,11 +111,14 @@ public class TestPanic extends MyTestCase {
 	
 	/** Test blacklisting a wallet. Note that the test results do not depend
 	 *  on the cookie being set properly because they fail before the cookie
-	 *  validation */
+	 *  validation 
+	 *  
+	 *  fails due to no user profile */
 	public void testBlacklist() throws Exception {
 		JsonObject obj;
 		JsonObject map;
-		
+
+		Cookie.setWalletAddr(buy);
 		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", buy);
 		map = postOrderToObj(obj);
@@ -124,6 +129,7 @@ public class TestPanic extends MyTestCase {
 		map = postOrderToObj(obj);
 		assertEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
+		Cookie.setWalletAddr(sell);
 		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", sell);
 		map = postOrderToObj(obj);
@@ -134,6 +140,7 @@ public class TestPanic extends MyTestCase {
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
+		Cookie.setWalletAddr(all);
 		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", all);
 		map = postOrderToObj(obj);
@@ -144,6 +151,7 @@ public class TestPanic extends MyTestCase {
 		map = postOrderToObj(obj);
 		assertNotEquals( RefCode.ACCESS_DENIED.toString(), map.getString( "code") );
 		
+		Cookie.setWalletAddr(none);
 		obj = TestOrder.createOrderWithOffset("BUY", 10, 2);
 		obj.put("wallet_public_key", none);
 		map = postOrderToObj(obj);

@@ -202,25 +202,16 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		update( key, value -> Double.valueOf( value.toString() ) );
 	}
 	
-	public String toHtml() {
+	/** @param fancy true for browser and JEditorPane; false for tooltips */ 
+	public String toHtml(boolean fancy) {
 		StringBuilder b = new StringBuilder();
 		
 		String[] keys = getKeys().toArray(new String[0] );
 		
-//		Util.wrapHtml( b, "style", """
-//		        table {
-//		            border-collapse: collapse;
-//		            width: 100%;
-//		        }
-//
-//		        table, th, td {
-//		            border: 1px solid black;
-//		        }
-//
-//		        th, td {
-//		            padding: 8px;
-//		            text-align: left;
-//		        }""");
+		// add borders?
+		if (fancy) {
+			Util.wrapHtml( b, "style", fancyTable);  
+		}
 		
 		Util.appendHtml( b, "table", () -> {
 			// add header row
@@ -244,7 +235,7 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 			});
 		});
 		
-		return b.toString();
+		return Util.wrapHtml("html", b.toString() );
 	}
 
 	/** Return sorted set of all keys of all JsonObjects in this array */

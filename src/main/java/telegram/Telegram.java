@@ -9,15 +9,27 @@ import tw.util.S;
 public class Telegram {
 	static final String reflectionChatId = "-1001262398926"; // community chat
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
-	static final String part1 = "https://api.telegram.org/" + botKey; 
+	static final String part1 = "https://api.telegram.org/" + botKey;
+	
+	public static void main(String[] args) throws Exception {
+		//post( "Visit <a href=\"https://reflection.trading\">Reflection</a>");
+		post( "Visit *it* [Reflection](https://reflection.trading)");
+	}
 
+	/** post to Reflection channel; format for links is [text](link) */
+	public static void post( String message) {
+		Util.wrap( () -> send( reflectionChatId, message) );
+	}
+	
+	/** send message with web preview disabled */
 	static JsonObject send( String chatId, String message) throws Exception {
-		S.out( "Sending to " + chatId);
-		S.out( "Posting message " + message);
+		S.out( "Posting to Telegram: " + message);
 		
 		JsonObject params = Util.toJson( 
 				"chat_id", chatId,
-				"text", message);
+				"text", message,
+				"disable_web_page_preview", true,
+				"parse_mode", "Markdown");  // or "HTML"
 		S.out( params);
 
 		return MyClient.create(part1 + "/sendmessage", params.toString() )

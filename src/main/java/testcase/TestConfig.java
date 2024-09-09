@@ -4,7 +4,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import reflection.Config;
 import tw.util.S;
 
 public class TestConfig extends MyTestCase {
@@ -42,7 +41,7 @@ public class TestConfig extends MyTestCase {
 	}
 	
 	public void testSendEmail() throws Exception {
-		Config.readFrom("Dt-config").sendEmail("peteraspiro@gmail.com", "abc", "def");		
+		m_config.sendEmail("peteraspiro@gmail.com", "abc", "def");		
 	}
 	
 	

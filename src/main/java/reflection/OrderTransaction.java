@@ -23,12 +23,13 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
-import http.MyClient;
 import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
+import telegram.Telegram;
 import tw.util.S;
 import util.LogType;
+import web3.Erc20;
 import web3.RetVal;
 import web3.Stablecoin;
 import web3.StockToken;
@@ -135,7 +136,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// validate KYC fields
 		require( 
 				Util.isLtEq(preCommAmt, m_config.nonKycMaxOrderSize() )
-				&& getCountryCode().equals( "IN")
+//				&& getCountryCode().equals( "IN")
 				
 				|| Util.equalsIgnore( userRecord.getString("kyc_status"), "VERIFIED", "completed"),
 				
@@ -610,6 +611,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					out( "Error: cannot send email confirmation due to invalid email"); // should never happen
 				}
 			}
+			
+			if (m_config.sendTelegram() ) {
+				out( "sending telegram");
+				String str = String.format( "Wallet %s just %s [%s %s stock tokens!](%s)",
+						m_walletAddr, isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash) ); 
+				Telegram.post( str);
+			}
+			else {
+				out( "not sending telegram");
+			}
 		}
 	}
 
@@ -686,23 +697,28 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// get the position; if not available, let the order proceed; if the blockchain order fails, so be it
 		JsonObject positionsMap;  // keys are native, approved, positions, wallet (addr)
 
-		try {
-			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s",
-					m_config.hookServerPort(), m_walletAddr );
-			positionsMap = MyClient.getJson( url).getObject( "positions");
-			Util.require( positionsMap != null, "Null positions map returned from hook server for wallet %s", m_walletAddr);
-		}
-		catch( Exception e) {
-			out( "Error getting positions map; the hookserver may be down - " + e);
-			alert( "HOOK SERVER NOT RESPONDING", e.toString() );
-			return;
-		}
-		
-		String sourceTokenAddr = getSourceTokenAddress();
-		double balance = positionsMap.getDouble( sourceTokenAddr.toLowerCase() );   // current balance of source token
+		// get current balance of source token from HookServer
+//		try {
+//			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s",
+//					m_config.hookServerPort(), m_walletAddr );
+//			positionsMap = MyClient.getJson( url).getObject( "positions");
+//			Util.require( positionsMap != null, "Null positions map returned from hook server for wallet %s", m_walletAddr);
+//		}
+//		catch( Exception e) {
+//			out( "Error getting positions map; the hookserver may be down - " + e);
+//			alert( "HOOK SERVER NOT RESPONDING", e.toString() );
+//			return;
+//		}
+//		
+//		String sourceTokenAddr = getSourceTokenAddress();
+//		double balance = positionsMap.getDouble( sourceTokenAddr.toLowerCase() );   // current balance of source token
+
+		// get current balance of source token from RPC node
+		var sourceToken = getSourceToken();
+		double balance = sourceToken.getPosition( m_walletAddr);  // sends query
 
 		if (before) {
-			UserToken userToken = UserTokenMgr.getUserToken( m_walletAddr, sourceTokenAddr);
+			UserToken userToken = UserTokenMgr.getUserToken( m_walletAddr, sourceToken.address() );
 	
 			double needed = m_order.isBuy() ? m_stablecoinAmt : m_desiredQuantity;  // neeeded qty of source token 
 			out( "Checking balance prior to order:  balance=%s  offset=%s  net=%s  needed=%s", 
@@ -726,8 +742,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 	}
 	
-	private String getSourceTokenAddress() {
-		return m_order.isBuy() ? m_stablecoin.address() : m_stock.getSmartContractId();
+	private Erc20 getSourceToken() {
+		return m_order.isBuy() ? m_stablecoin : m_stock.getToken();
 	}
 
 	private void requireSufficientApproval() throws Exception {
@@ -928,8 +944,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	 *  the order was added to the UserTokenMgr. It may/will be called multiple times, it's fine */
 	private synchronized void removeFromUserTokenMgr() {
 		if (m_sourceTokenQty > 0) {
-			out( "Removing order from userTokenMgr %s %s %s", m_walletAddr, getSourceTokenAddress(), m_sourceTokenQty);
-			UserTokenMgr.getUserToken( m_walletAddr, getSourceTokenAddress() ).decrement(m_sourceTokenQty);
+			var srcTokAddress = getSourceToken().address();
+			out( "Removing order from userTokenMgr %s %s %s", m_walletAddr, srcTokAddress, m_sourceTokenQty);
+			UserTokenMgr.getUserToken( m_walletAddr, srcTokAddress).decrement(m_sourceTokenQty);
 			m_sourceTokenQty = 0;
 		}
 	}

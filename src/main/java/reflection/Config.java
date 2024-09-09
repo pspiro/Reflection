@@ -16,7 +16,6 @@ import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
 import http.MyClient;
-import positions.MoralisServer;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -37,6 +36,8 @@ import web3.Busd;
 import web3.Busd.IBusd;
 import web3.CreateKey;
 import web3.Matic;
+import web3.MoralisServer;
+import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
 import web3.Rusd.IRusd;
@@ -94,12 +95,14 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	private String hookServerUrl;
+	private String hookServerUrl; // webhook url passed to Moralis
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
 	private String pwUrl;
+	private boolean sendTelegram;
+	private boolean noStreams;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -150,6 +153,10 @@ public class Config extends ConfigBase {
 	/** @return RUSD address lower case */
 	public String rusdAddr() { 
 		return m_rusd.address(); 
+	}
+
+	public String busdAddr() { 
+		return m_busd.address(); 
 	}
 	
 	public double minTokenPosition() { return minTokenPosition; }
@@ -263,10 +270,13 @@ public class Config extends ConfigBase {
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
+		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
+		S.out( "read sendTelegram=%s", sendTelegram);
+		this.noStreams = m_tab.getBoolean( "noStreams");
 		
 		Alerts.setEmail( this.alertEmail);
 		
-		// Fireblocks
+		// Web3
 		this.platformBase = m_tab.getRequiredString("platformBase");
 		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
 		
@@ -339,7 +349,10 @@ public class Config extends ConfigBase {
 
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-		MoralisServer.setChain( moralisPlatform, m_tab.getRequiredString( "rpcUrl") );
+		MoralisServer.setChain( moralisPlatform);
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
+		NodeServer.setDecimals( m_rusd);
+		NodeServer.setDecimals( m_busd);
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -355,6 +368,7 @@ public class Config extends ConfigBase {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
+		require( noStreams || hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
 	}
 
 	/** confirm we have access to the password 
@@ -362,7 +376,7 @@ public class Config extends ConfigBase {
 	private void checkPassword() throws Exception {
 		// try first from file
 		try {
-			String str = Util.readResource( Config.class, "name.txt");
+			String str = IStream.readLine("name.txt");
 			if (str.length() > 0) {
 				S.out( "Found password in file");
 			}
@@ -393,7 +407,8 @@ public class Config extends ConfigBase {
 	
 	private String fetchPw() throws Exception {
 		try {
-			return Util.readResource( Config.class, "name.txt"); // obsolete, remove this
+			String str = IStream.readLine("name.txt");
+			if (str.length() > 0) return str;
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
@@ -556,6 +571,10 @@ public class Config extends ConfigBase {
 
 	public boolean isProduction() {
 		return "polygon".equals(moralisPlatform);  
+	}
+	
+	public String moralisPlatform() {
+		return moralisPlatform;
 	}
 	
 	public double buySpread() {
@@ -747,5 +766,17 @@ public class Config extends ConfigBase {
 	
 	public double autoReward() {
 		return autoReward;
+	}
+	
+	public boolean sendTelegram() {
+		return sendTelegram;
+	}
+	
+	public boolean noStreams() {
+		return noStreams;
+	}
+
+	public double getApprovedAmt() throws Exception {
+		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
 	}
 }

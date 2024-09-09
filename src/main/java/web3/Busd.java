@@ -32,4 +32,8 @@ public class Busd extends Stablecoin {
 		RetVal approve( String approverKey, String spenderAddr, double amt) throws Exception;
 		RetVal transfer(String fromKey, String toAddr, double amt) throws Exception;
 	}
+
+	public double getApprovedAmt(String approverAddr, String spenderAddr) throws Exception {
+		return NodeServer.getAllowance( m_address, approverAddr, spenderAddr, m_decimals);
+	}
 }

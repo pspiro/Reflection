@@ -3,12 +3,12 @@ package fireblocks;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import positions.MoralisServer;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.IStream;
 import tw.util.S;
 import web3.Erc20;
+import web3.MoralisServer;
 import web3.RetVal;
 
 public class FbErc20 extends Erc20 {
@@ -66,7 +66,7 @@ public class FbErc20 extends Erc20 {
 		S.out( "Deploying contract from %s", filename);
 		
 		// very strange, sometimes we get just the bytecode, sometimes we get a json object
-		String bytecode = JsonObject.parse( new IStream(filename).readAll() )
+		String bytecode = JsonObject.parse( IStream.readAll(filename) )
 				.getString("bytecode");
 		Util.require( S.isNotNull(bytecode) && bytecode.toLowerCase().startsWith("0x"), "Invalid bytecode" );
 //		String bytecode = new IStream(filename).readln();

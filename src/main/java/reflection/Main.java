@@ -42,7 +42,7 @@ public class Main implements ITradeReportHandler {
 
 	// no ticks in this time and we have a problem
 	private static final long SmartInterval = Util.MINUTE * 2; 
-	private static final long OvernightInterval = Util.MINUTE * 10; 
+	private static final long OvernightInterval = Util.MINUTE * 15; 
 
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
@@ -158,14 +158,14 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
 			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
-			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // for My Reflection panel
+			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
 			server.createContext("/api/positions-new", exch -> new BackendTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
-			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );
-			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );
+			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );  // obsolete, could be removed, just needs testing
+			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );  // watch list and dropdown
 			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
@@ -209,6 +209,7 @@ public class Main implements ITradeReportHandler {
 		
 		// check market data every minute (production only)
 		if (!Main.m_config.autoFill()) {
+			S.out( "checking for stale mkt data every minute");
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
 		}
 	}

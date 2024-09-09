@@ -10,7 +10,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import positions.Wallet;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
@@ -405,10 +404,6 @@ public class Fireblocks {
 	static void initMap() {
 	}
 	
-	public static Wallet getWallet(String account) throws Exception {
-		return Accounts.instance.getWallet(account);
-	}
-
 	/** Return true for goerli network */
 	public static boolean isDev() {
 		return platformBase == null || platformBase.startsWith( "ETH_TEST");

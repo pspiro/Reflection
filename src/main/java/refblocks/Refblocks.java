@@ -26,6 +26,8 @@ import org.web3j.utils.Numeric;
 import common.Util;
 import tw.util.S;
 import web3.Erc20;
+import web3.Fees;
+import web3.NodeServer;
 
 /** Support code for Web3j library */
 public class Refblocks {
@@ -33,13 +35,14 @@ public class Refblocks {
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
 	static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
-	static Web3j web3j;
+	public static Web3j web3j;
 	static long chainId;  // set from Config
 	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
 	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
 
 	/** Called when Config is read */
 	public static void setChainId( long id, String rpcUrl) {
+		S.out( "Refblocks  chainId=%s  rpcUrl=%s", id, rpcUrl);
 		chainId = id;
 		web3j = Web3j.build( new HttpService( rpcUrl) );
 	}
@@ -63,10 +66,10 @@ public class Refblocks {
 				);
 	}
 	
-	/** Can take hex or decimal */
-	private static BigInteger decodeQuantity(String hex) {
+	/** empty string returns zero */
+	public static BigInteger decodeQuantity(String hex) {
 		try {
-			return Numeric.decodeQuantity( hex);
+			return Erc20.decodeQuantity( hex);
 		}
 		catch( Exception e) {
 			return BigInteger.ZERO;
@@ -119,7 +122,7 @@ public class Refblocks {
 			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
 
 			// for debugging
-//			tm = getNativeTm( callerKey);
+//			tm = getWaitingTm( callerKey);
 //			TransactionReceipt receipt = function.getCall( tm).send();
 
 			return new RbRetVal( receipt);
@@ -137,25 +140,47 @@ public class Refblocks {
 	 *  with same nonce and sufficient gas. You must consider if you want the subsequent
 	 *  transactions to go through or not and either cancel them first or not
 	 * @param address
+	 * @return 
 	 * @throws Exception 
 	 */
-	static void cancelStuckTransaction(String address) throws Exception {
+	public static TransactionReceipt cancelStuckTransaction(String pk, int nonce) throws Exception {
 		// start by showing all nonces and figuring out which one or ones
 		// need to be canceled
-		showAllNonces(address);
+		//showAllNonces(address);
 		
-		// get the nonce to cancel
-		// create a RawTransactionManager that will create a transaction what that nonce
+		
+		String addr = Util.getAddress( pk);
+		
+		S.out( "Attemping to cancel transaction for %s with nonce %s", addr, nonce);
+		
+		var latest = getNonce( Util.getAddress( pk), DefaultBlockParameterName.LATEST );
+		S.out( "  latest nonce is %s", latest);
+		
+		if (latest.intValue() > nonce) {
+			S.out( "  more transactions to cancel");
+		}
+
+		// create a tm that allows us to specify the nonce
+		StuckTm tm = new StuckTm( web3j, Credentials.create( pk), nonce);
+		
+		// perform the transaction with normal gas and same nonce;
+		// if this doesn't work, try even higher gas
+		TransactionReceipt receipt = new MyTransfer( tm)
+				.send( Util.getAddress( pk), BigDecimal.ZERO);
+
+		S.out( "  receipt: " + receipt);
+		
+		return receipt;
 	}
 
-	/** for debugging 
+	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
-	public static void showAllNonces(String address) throws Exception {
+	public static void showAllNonces(String walletAddr) throws Exception {
 		S.out( "%s nonce  finalized=%s  latest=%s  pending=%s",
-        		address,
-        		getNonce( address, DefaultBlockParameterName.FINALIZED),
-        		getNonce( address, DefaultBlockParameterName.LATEST),
-        		getNonce( address, DefaultBlockParameterName.PENDING)
+        		walletAddr,
+        		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
+        		getNonce( walletAddr, DefaultBlockParameterName.LATEST),
+        		getNonce( walletAddr, DefaultBlockParameterName.PENDING)
         		);
 	}
 	
@@ -176,6 +201,8 @@ public class Refblocks {
 
 	/** This is only used for deployment and minting stock tokens.
 	 *  Should not be used in production because nonce will get mixed up with FasterTm
+	 *  
+	 *  It polls for receipt every 15 sec.
 	 * 
 	 *  This transaction manager queries for the nonce and waits for the transaction 
 	 *  receipt. If there is an error, it queries for the real error text from the contract.
@@ -195,7 +222,7 @@ public class Refblocks {
 	public static StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = Fees.fetch();
+		Fees fees = NodeServer.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider( // fails with this
@@ -230,7 +257,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 40000);
     		
-    		Fees fees = Fees.fetch();
+    		Fees fees = NodeServer.queryFees();
     		fees.showFees( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
@@ -278,7 +305,7 @@ public class Refblocks {
 
 	
 	/** This transaction manager increments the nonce for each call but
-	 *  queries for the nonce after one minute to reset it in case we get
+	 *  queries for the nonce after 30 sec to reset it in case we get
 	 *  out of sync */
 	static class FasterTm extends FastRawTransactionManager {
 		/** re-query for nonce after one minute to reset it in case we get out of sync;
@@ -291,10 +318,10 @@ public class Refblocks {
 		 *  
 		 *  Two alternatives would be:
 		 *  a) create a nonce server that all applications use to retrieve the next nonce, or
-		 *  b) don't allow two applications to access the same account, e.g. let
-		 *  RefAPI use admin1 and Monitor use admin2 
+		 *  b) don't allow two applications to access the same account, e.g. let;
+		 *     RefAPI use admin1 and Monitor use admin2 
 		 */
-		static int Interval = 60000;
+		static int Interval = 30000;
 		
 
 		private String m_key;  // for debugonly
@@ -322,21 +349,25 @@ public class Refblocks {
 		}
 	}
 
+	/** Use custom nonce to un-stick a transaction. Uses a polling receipt processor */
+	static class StuckTm extends RawTransactionManager {
+		private int m_nonce;
+
+		public StuckTm(Web3j web3j, Credentials credentials, int nonce) {
+			super(web3j, credentials, chainId);
+			m_nonce = nonce;
+		}
+
+		@Override protected synchronized BigInteger getNonce() throws IOException {
+			return BigInteger.valueOf( m_nonce);
+		}
+	}
+
+	
+	
 	/** wait for the transaction receipt with polling */
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
 		return new DelayedTrp().reallyWait( receipt);
 	}
+
 }
-
-// MUST we wait for the transaction receipt from first call before sending second call???
-
-// error.getData() is null so toString() fails and you don't get to see the real error
-// need to fix or override
-// you get get address from private key using Credentials
-// TransactionReceiptProcessor is involved
-// uses PollingTransactionReceiptProcessor, use a custom ctor
-// QueuingTransactionReceiptProcessor this one returns asap and then queries in the background 
-// it polls only every 15 sec; that's too slow  JsonRpc2_0Web3j.DEFAULT_BLOCK_TIME = 15 * 1000;
-// consider FastRawTransactionManager to have multiple trans per block, I assume per caller
-// use RevertReasonExtractor.extractRevertReason() to get error text
-// use FunctionEncoder.encode(function) to get data

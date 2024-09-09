@@ -3,14 +3,14 @@ package refblocks;
 import reflection.Config;
 import tw.util.S;
 
+/** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		Config c = Config.ask( "Dt2");
-//		Refblocks.showNonce( c.ownerAddr(), DefaultBlockParameterName.FINALIZED);
-//		Refblocks.showNonce( c.ownerAddr(), DefaultBlockParameterName.LATEST);
-//		Refblocks.showNonce( c.ownerAddr(), DefaultBlockParameterName.PENDING);
-//		Refblocks.showNonce( c.ownerAddr(), DefaultBlockParameterName.SAFE);
-		
+		Config c = Config.ask();
+
+		String pk = "";
+		Refblocks.cancelStuckTransaction( pk, 0);
+
 		S.out( c.ownerAddr() );
 		
 	}

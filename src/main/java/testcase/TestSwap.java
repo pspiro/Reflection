@@ -3,7 +3,6 @@ package testcase;
 import java.util.Iterator;
 
 import common.Util;
-import positions.Wallet;
 import reflection.Stock;
 import web3.StockToken;
 
@@ -24,8 +23,8 @@ public class TestSwap extends MyTestCase {
 		m_config.rusd().swap( wallet, stock1, stock2, 3, 4).waitForHash();
 		
 		waitFor( 60, () -> 
-			Wallet.getBalance(wallet, stock1.address() ) == 5 &&
-			Wallet.getBalance(wallet, stock2.address() ) == 4
+			stock1.getPosition( wallet) == 5 &&
+			stock2.getPosition( wallet) == 4
 		);
 	}
 	

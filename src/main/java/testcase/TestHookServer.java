@@ -6,18 +6,25 @@ import org.json.simple.JsonObject;
 import common.Util;
 import http.MyClient;
 import tw.util.S;
+import web3.NodeServer;
 import web3.StockToken;
 
 /** This test should be done in Dev or Prod only. Why?
  * 
  *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	String hook = "https://live.reflection.trading/hook";  // this WORKS
-	//String hook = "http://localhost:8484/hook";          // this FAILS--why???
+	static String hook = "http://localhost:8484/hook";
 	static String wallet = Util.createFakeAddress();
 
 	static {
 		S.out( "testing with wallet %s", wallet);
+
+		// create the wallet first so we know we are getting values from the events
+		try {
+			MyClient.getJson( hook + "/get-wallet/" + wallet);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	void runn() throws Exception {
@@ -70,30 +77,36 @@ public class TestHookServer extends MyTestCase {
 	}
 
 	public void testNative() throws Exception {
+		double n = .0001;
+		
+		// create the wallet first so we know we get the event
 		MyClient.getJson( hook + "/get-wallet/" + wallet);
 
 		// send native token to wallet
+		S.out( "testing native transfer");
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				wallet,
-				.001).displayHash();
-		
+				n).displayHash();
+
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
 					.getDouble( "native");
-			S.out( "pos " + pos);
-			return Util.isEq( pos, .001, .00001);
+			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
+					n, pos, NodeServer.getNativeBalance( wallet) ) );
+			return Util.isEq( pos, n, .00001);
 		});
 	}
 	
 	public void testApprove() throws Exception {
 		int n = Util.rnd.nextInt( 10000) + 10;
 
+		// let Owner approve RUSD to spend BUSD
+		S.out( "testing approve");
+
 		// create the wallet first so we know we get the event
-		double prev = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
-				.getDouble( "approved");
-		S.out( "prev=%s", prev);
+		MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() );
 
 		// let Owner approve RUSD to spend BUSD (no sig needed)
 		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
@@ -107,6 +120,34 @@ public class TestHookServer extends MyTestCase {
 					n, pos, m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
 			return pos == n; 
 		});
+	}
+	
+	/** test that hookserver is using correct decimals 
+	 * @throws Exception */
+	public void testBalances() throws Exception {
+		var tok = stocks.getAnyStockToken();
+		String wallet = Util.createFakeAddress();
+//		m_config.rusd().mintRusd( wallet, 5, tok).waitForHash();
+//		m_config.busd().mint( m_config.ownerKey(), wallet, 6).waitForHash();
+//		m_config.rusd().mintStockToken(wallet, tok, 7).waitForHash();
+
+		m_config.rusd().mintRusd( wallet, 5, tok);
+		m_config.busd().mint( m_config.ownerKey(), wallet, 6);
+		m_config.rusd().mintStockToken(wallet, tok, 7);
+		
+		waitForBalance(wallet, m_config.rusdAddr(), 5, false);
+		waitForBalance(wallet, m_config.busdAddr(), 6, false);
+		waitForBalance(wallet, tok.address(), 7, false);
+		
+		var ret = MyClient.getJson( hook + "/get-wallet-map/" + wallet);
+		ret.display();
+		
+		var balances = ret.getObject( "positions");
+		
+		assertEquals( 6, balances.getDouble( m_config.busdAddr() ) );
+		assertEquals( 7, balances.getDouble( tok.address() ) );
+		assertEquals( 5, balances.getDouble( m_config.rusdAddr() ) );
+		
 	}
 	
 }

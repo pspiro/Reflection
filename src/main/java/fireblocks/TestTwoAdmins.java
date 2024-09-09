@@ -1,7 +1,6 @@
 package fireblocks;
 
 import common.Util;
-import positions.Wallet;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
@@ -21,14 +20,14 @@ public class TestTwoAdmins {
 		Stocks stocks = config.readStocks();
 		StockToken token = stocks.getStockByConid(265598).getToken();
 		
-		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
-		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		S.out( "user1 balance: %s", rusd.getPosition( user1) );
+		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 
 		rusd.burnRusd( user1, 4, token).waitForCompleted();  // change this to 1!!!
 		rusd.burnRusd( user2, 3, token).waitForCompleted();  // change this to 1!!!
 		
-		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
-		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		S.out( "user1 balance: %s", rusd.getPosition( user1) );
+		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 		
 	}
 	public static void mainn(String[] args) throws Exception {
@@ -39,8 +38,8 @@ public class TestTwoAdmins {
 		StockToken token = stocks.getStockByConid(265598).getToken();
 
 		
-		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
-		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		S.out( "user1 balance: %s", rusd.getPosition( user1) );
+		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 
 		Util.executeAndWrap( () -> {
 			rusd.mintRusd( user1, 1, token).waitForCompleted();
@@ -56,8 +55,8 @@ public class TestTwoAdmins {
 			rusd.burnRusd( user2, 1, token).waitForCompleted();  // change this to 1!!!
 		});
 		
-		S.out( "user1 balance: %s", new Wallet(user1).getBalance(rusd.address()));
-		S.out( "user2 balance: %s", new Wallet(user2).getBalance(rusd.address()));
+		S.out( "user1 balance: %s", rusd.getPosition( user1) );
+		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 		
 	}
 }

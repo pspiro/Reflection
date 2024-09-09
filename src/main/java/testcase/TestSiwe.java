@@ -189,7 +189,6 @@ public class TestSiwe extends MyTestCase {
 			
 			// fail siwe/me
 			cli().addHeader("Cookie", cookie).get("/siwe/me");
-			assert200_();
 			S.out( cli.readJsonObject() );
 			assertEquals( 400, cli.getResponseCode() );
 			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );

@@ -15,7 +15,7 @@ public class Deploy {
 	// NOTE - CREATE THE REFWALLET FIRST AND GIVE IT SOME GAS
 	// you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask("Fantom");
+		Config config = Config.ask();
 		Util.require(config.web3Type() == Web3Type.Refblocks, "Turn on Refblocks");
 		
 		String rusdAddress = config.rusd().address();
@@ -47,7 +47,7 @@ public class Deploy {
 			// we use the Rusd contract to call a method (approve) on the Busd contract which is fine
 			// because the method signature is the same
 			// this works as of 7/29/24
-			new RbRusd( config.busd().address(), config.busd().decimals() )
+			new RbBusd( busdAddress, config.busd().decimals(), config.busd().name() )
 				.approve( config.refWalletKey(), rusdAddress, 1000000); // $1M
 
 			// add a second admin

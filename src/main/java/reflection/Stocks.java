@@ -12,6 +12,7 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
+import web3.NodeServer;
 import web3.StockToken;
 
 public class Stocks implements Iterable<Stock> {
@@ -78,6 +79,11 @@ public class Stocks implements Iterable<Stock> {
 		
 		m_stocks.sort(null);
 		m_hotStocks.sort(null);
+		
+		// pre-fill decimals map to avoid unnecessary queries
+		// really only HookServer needs this because the other apps know how
+		// many decimals there are
+		NodeServer.setDecimals( 18, getAllContractsAddresses() );
 	}
 
 	/** @return map of conid -> ListEntry */
@@ -120,7 +126,7 @@ public class Stocks implements Iterable<Stock> {
 		return m_conidMap.get(conid);
 	}
 
-	/** takes the token symbol from the release-specific tab */ 
+	/** takes the Token Symbol from the release-specific tab, e.g. AAPL.r */ 
 	public Stock getStockBySymbol(String tokenSymbol) throws Exception {
 		for (Stock stock : this) {
 			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {

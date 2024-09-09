@@ -34,8 +34,7 @@ public class RbBusd extends Erc20 implements IBusd {
 				);
 	}
 
-	/** For testing only 
-	 * @throws Exception */
+	/** Used during deployment and whenever RefWallet or Busd changes */ 
 	@Override public RetVal approve(String approverKey, String spenderAddr, double amt) throws Exception {
 		Util.reqValidKey(approverKey);
 		Util.reqValidAddress(spenderAddr);

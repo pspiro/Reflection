@@ -11,13 +11,14 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
-import positions.Wallet;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
+import web3.NodeServer;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -30,9 +31,7 @@ public class BackendTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-	/** Used by the My Reflection (portfolio) section on the dashboard
-	 *  We're returning the token positions from the blockchain, not IB positions;
-	 *  This is obsolete and should be removed, and replaced with handleReqPositionsNew() */
+	/** obsolete, remove */
 	public void handleReqPositions() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
@@ -43,9 +42,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonArray retVal = new JsonArray();
 			
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			Util.forEach( wallet.reqPositionsMap(m_main.stocks().getAllContractsAddresses() ).entrySet(), entry -> {
+			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
 				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
 
 				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
@@ -244,6 +241,9 @@ public class BackendTransaction extends MyTransaction {
 			String message = "";
 			double autoRewarded = 0;
 			
+			// this is turned off for now; there was a case where a wallet got double-funded
+			// in < one second; how is that possible since we create a database entry?
+			
 			// auto-reward the user?
 			if (m_config.autoReward() > 0) {
 				// get existing locked rec, or create
@@ -282,20 +282,18 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			Wallet wallet = new Wallet(m_walletAddr);
-			
-			HashMap<String, Double> map = wallet.reqPositionsMap( 
-					m_config.rusdAddr(), 
-					m_config.busd().address() ); 
+			double rusdBal = m_config.rusd().getPosition( m_walletAddr);
+			double busdBal = m_config.rusd().getPosition( m_walletAddr);
 			
 			JsonObject rusd = new JsonObject();
 			rusd.put( "name", "RUSD");
-			rusd.put( "balance", Wallet.getBalance(map, m_config.rusdAddr() ) );
+			rusd.put( "balance", rusdBal);
 			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
 			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
 			
@@ -317,7 +315,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject busd = new JsonObject();
 			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", Wallet.getBalance( map, m_config.busd().address() ) );
+			busd.put( "balance", busdBal);
 			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
 			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
 			busd.put( "approvedBalance", approved);
@@ -325,7 +323,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", wallet.getNativeBalance() );
+			base.put( "balance", NodeServer.getNativeBalance( m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();
@@ -591,14 +589,23 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** Called by anyone who wants to view the signup report as html in a browser */
 	public void handleSagHtml() {
 		wrap( () -> {
-			respondFull( 
-					m_config.sqlQuery("select * from signup order by created_at desc limit 100"),
-					200,
-					null,
-					"text/html");
-			
+			Util.execute( () -> {  // don't tie up HTTP thread
+				wrap( () -> {
+					m_config.sqlCommand( sql -> {
+						int days = 3;  
+						try {  // number of days to look back might be passed as last token in URI
+							days = Integer.valueOf( getLastToken() ); 
+						}
+						catch( Exception e) {}
+
+						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						respondFull( ar, 200, null, "text/html");						
+					});
+				}); 
+			});
 		});
 	}
 

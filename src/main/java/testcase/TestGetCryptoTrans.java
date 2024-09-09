@@ -15,6 +15,6 @@ public class TestGetCryptoTrans extends MyTestCase {
 		JsonArray ar = cli().post( "/api/crypto-transactions", Util.toJson("wallet_public_key", prodWallet).toString() )
 				.readJsonArray();
 		ar.display();
-		assertEquals(0, ar.size() );
+		assertTrue( ar.size() > 0);
 	}
 }

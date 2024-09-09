@@ -5,25 +5,26 @@ import tw.util.S;
 
 /** Just test that you can connect to the database. */
 public class TestPostgres {
-	static Config c;
+	static Config m_config;
 
 	static {
 		try {
-			c = Config.read();
+			m_config = Config.read();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-//		c.matic().transfer(
-//				c.ownerKey(), 
-//				Util.createFakeAddress(),
-//				.001).waitForHash();
-//		c.busd().approve( c.ownerKey(),
-//				"0x1cd8cd7607d1dd32915614bafc95834c5f2db3dc", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0xda2c28af9cbfad9956333aba0fc3b482bc0aed13", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( "0x7285420d377e98219ece3f004dd1d5fa33e9bbd9", c.rusdAddr() ) );
-		S.out( c.busd().getAllowance( c.ownerAddr(), c.rusdAddr() ) );
+		String wal = "0xcb6c2EDBb986ef14B66E094787245350b69EA5Ec";
+		S.out( "**approved=%s", m_config.getApprovedAmt() );
+		S.out( "**rusdBal=%s", m_config.rusd().getPosition(wal));
+		S.out( "**busdBal=%s", m_config.busd().getPosition(m_config.refWalletAddr()));
+		
+		S.out( "sending redemption request to succeed");
+		m_config.rusd().sellRusd(wal, m_config.busd(), 3)
+			.displayHash();
+//		redeem();
+		//assert200();
 	}
 }

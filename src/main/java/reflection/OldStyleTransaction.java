@@ -27,7 +27,7 @@ public class OldStyleTransaction extends MyTransaction {
 		disconnect,
 		dump,
 		getAllPrices,
-		getTradingHours(),
+		getTradingHours,
 		getDescription,
 		getPositions,
 		getPrice,
