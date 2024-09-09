@@ -408,7 +408,7 @@ public class NodeServer {
 	
 	public static void main(String[] args) throws Exception {
 		Config.ask();
-		getReceipt( "0xa301f3a437a636a4a492b81ff2f23a355a1d44577ed02ff277addb1a7bcd30e5");
+		S.out( isKnownTransaction( "0x66ae1980873d7dfb18886bf5852db6427ad0cb4933f8701d3c89f05e93c3b5a2") );
 	}
 	
 	/** must handle the no receipt or not ready yet state */
@@ -430,6 +430,26 @@ public class NodeServer {
 		return "";
 	}
 	
+	public static boolean isKnownTransaction(String transHash) throws Exception {
+		return getTransByHash( transHash).getObject( "result") != null;
+	}
+	
+	public static JsonObject getTransByHash( String transHash) throws Exception {
+		String body = String.format( """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "eth_getTransactionByHash",
+				"params": [
+					"%s"
+				]
+				}""", transHash);
+			
+		return nodeQuery( body);
+	}
+}
+
+	
 	// to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
 	// this simulates the call as if it were executed at the end of the specified block
 //	{
@@ -448,9 +468,6 @@ public class NodeServer {
 //		}
 
 	
-	
-}
-
 // notes
 // you can use eth_call to get revert reason for a past block AND ALSO to see what would
 // happen if you called the transaction now, on the current block

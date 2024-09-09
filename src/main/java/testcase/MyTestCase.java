@@ -135,7 +135,7 @@ public class MyTestCase extends TestCase {
 //			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
 //					.getObjectNN( "positions")
 //					.getDouble( tokenAddr.toLowerCase() );
-			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<" : ">", bal);
+			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<=" : ">=", bal);
 			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});
 	}

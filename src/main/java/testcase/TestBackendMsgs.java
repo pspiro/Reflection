@@ -82,7 +82,8 @@ public class TestBackendMsgs extends MyTestCase {
 		assert200_();
 		assertTrue( ar.size() > 1);
 	}
-	
+
+	/** always fails, there is no onramp order with that id */
 	public void testOnramp() throws Exception {
 		cli().postToJson( "/api/onramp", Util.toJson( 
 				"wallet_public_key", Cookie.wallet,

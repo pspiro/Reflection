@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Date;
 
 import org.json.simple.JSONAware;
@@ -20,9 +21,14 @@ import tw.util.S;
 /** Client for all HttpRequests
  *  Call MyClient.create() then header() to add headers  */
 public class MyClient {
+	private static final long ConnectTimeout = 10;  // default timeout for connections, in seconds
+	private static final long ReadTimeout = 20;  // default timeout for reads, in seconds
+
 	public static String filename = "http.log";
 	
-	static HttpClient client = HttpClient.newHttpClient();
+	static HttpClient client = HttpClient.newBuilder()
+			.connectTimeout( Duration.ofSeconds( ConnectTimeout) )
+			.build();
 
 	private Builder m_builder;
 	
@@ -35,22 +41,22 @@ public class MyClient {
 		}
 	}
 	
-	/** build GET request; call this directly to add headers */
+	/** build GET request; call this directly to add headers, then call query() */
 	public static MyClient create( String url) {
 		write( url + " GET");
-		return new MyClient( reqBuilder( url).GET() );
+		return new MyClient( newBuilder( url).GET() );
 	}
 		
-	/** build POST request; call this directly to add headers */
+	/** build POST request; call this directly to add headers, then call query() */
 	public static MyClient create( String url, String body) {
 		write( url + " POST");
-		return new MyClient( reqBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
+		return new MyClient( newBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
 	}
 
 	/** build PATCH request; call this directly to add headers */
 	public static MyClient createPatch( String url, String body) {
 		write( url + " PATCH");
-		return new MyClient( reqBuilder( url).method( 
+		return new MyClient( newBuilder( url).method( 
 				"PATCH", 
 				HttpRequest.BodyPublishers.ofString( body) ) );
 	}
@@ -58,19 +64,21 @@ public class MyClient {
 	/** Create PUT */
 	public static MyClient createPut( String url, String body) {
 		write( url + " PUT");
-		return new MyClient( reqBuilder( url)
+		return new MyClient( newBuilder( url)
 				.PUT( HttpRequest.BodyPublishers.ofString( body)));
 	}
 
 	/** Create DELETE */
 	public static MyClient createDelete( String url) {
 		write( url + " DELETE");
-		return new MyClient( reqBuilder( url).DELETE() );
+		return new MyClient( newBuilder( url).DELETE() );
 	}
 
-	/** Create Builder with URL */
-	private static Builder reqBuilder( String url) {
-		return HttpRequest.newBuilder().uri( URI.create( url) );
+	/** Create Builder with URL and timeout of one minute */
+	private static Builder newBuilder( String url) {
+		return HttpRequest.newBuilder()
+				.uri( URI.create( url) )
+				.timeout( Duration.ofSeconds( ReadTimeout));
 	}
 
 	MyClient( Builder builder) {
