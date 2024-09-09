@@ -45,7 +45,10 @@ public class Onramp {
 //		JsonObject prices = getPrices();
 //		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
 //			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
-		getQuote().display();
+//		coinLimits(1).display();
+		//getQuote().display();
+		queryOrderStatus(33);
+		
 	}
 
 	static String wl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel/onramp";
@@ -138,9 +141,39 @@ public class Onramp {
 //		}
 
 	
-	private static JsonObject whiteLab(String uri, JsonObject json) throws Exception {
+	private static JsonObject whiteLab(String uri, JsonObject bodyJson) throws Exception {
 		Util.require( uri.startsWith( "/"), "start with /");
-		return query( wl + uri, json);
+		String url = wl + uri;
+		
+		String body = bodyJson.toString();
+
+		JsonObject payload = Util.toJson( 
+				"timestamp", System.currentTimeMillis(),
+				"body", body);
+
+		String encodedPayload = Encrypt.encode( payload.toString() ); 
+
+		// create the signature
+		SecretKeySpec keySpec   = new SecretKeySpec(secretKey.getBytes(), "HmacSHA512");  // Create HMAC SHA256 key from secret
+		Mac mac = Mac.getInstance("HmacSHA512");
+		mac.init(keySpec);
+		byte[] result = mac.doFinal( encodedPayload.getBytes() );
+		String signature = Encrypt.bytesToHex(result);
+
+		S.out( "body: " + body.toString() );
+		S.out( "payload: " + payload);
+		S.out( "encoded payload: " + encodedPayload);
+		S.out( "signature: " + signature);
+
+		String str = MyClient.create(url, body.toString() )
+//				.header("Accept", "application/json")
+//				.header("Content-Type", "application/json;charset=UTF-8")
+				.header("apikey", apiKey)
+				.header("payload", encodedPayload)
+				.header("signature", signature)
+				.query().body();
+
+		return JsonObject.parse( str);
 	}
 	
 	private static JsonObject getKycUrl() throws Exception {
@@ -257,9 +290,8 @@ public class Onramp {
 
 		String encodedPayload = Encrypt.encode( payload.toString() ); 
 
-		SecretKeySpec keySpec   = new SecretKeySpec(secretKey.getBytes(), "HmacSHA512");  // Create HMAC SHA256 key from secret
-
 		// create the signature
+		SecretKeySpec keySpec   = new SecretKeySpec(secretKey.getBytes(), "HmacSHA512");  // Create HMAC SHA256 key from secret
 		Mac mac = Mac.getInstance("HmacSHA512");
 		mac.init(keySpec);
 		byte[] result = mac.doFinal( encodedPayload.getBytes() );
@@ -270,12 +302,13 @@ public class Onramp {
 		S.out( "encoded payload: " + encodedPayload);
 		S.out( "signature: " + signature);
 
-		String str = MyClient.create(url, body.toString() )
+		String str = MyClient.create(url, body)
 				.header("Accept", "application/json")
 				.header("Content-Type", "application/json;charset=UTF-8")
 				.header("X-ONRAMP-APIKEY", apiKey)
 				.header("X-ONRAMP-PAYLOAD", encodedPayload)
-				.header("X-ONRAMP-SIGNATURE", signature).query().body();
+				.header("X-ONRAMP-SIGNATURE", signature)
+				.query().body();
 
 		return JsonObject.parse( str);
 	}
