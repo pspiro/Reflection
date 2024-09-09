@@ -33,6 +33,7 @@ import org.web3j.crypto.Credentials;
 
 import com.ib.client.Decimal;
 
+import http.MyClient;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -886,4 +887,11 @@ public class Util {
 	public static String getPublicKey( String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
 	}
+
+	/** return url of ngrok running on local device; used for testing */
+	public static String getNgrokUrl() throws Exception {
+		return MyClient.getJson( "http://127.0.0.1:4040/api/tunnels")
+				.getArray( "tunnels").get( 0)
+				.getString( "public_url");
+	}			
 }

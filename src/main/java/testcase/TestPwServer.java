@@ -1,13 +1,16 @@
 package testcase;
 
+import static org.junit.Assert.assertEquals;
+
 import common.Util;
 import http.MyClient;
 import junit.framework.TestCase;
 import reflection.Config;
+import tw.util.S;
 
 public class TestPwServer extends TestCase {
 	
-	public void test() throws Exception  {
+	public void testLocal() throws Exception  {
 		var json = MyClient.postToJson( "http://localhost:888/getpw", Util.toJson( 
 				"name", "pro", 
 				"code", "prodco"
@@ -33,8 +36,8 @@ public class TestPwServer extends TestCase {
 		assertEquals( "mypw", json.getString( "pw") );
 	}
 	
-	public void testPulse() throws Exception {
-		Config c = Config.ask( "pulse");
-		c.ownerKey();
+	public void testProd() throws Exception {
+		Config.ask( "prod");
+		S.out( "look for testpassword"); 
 	}
 }

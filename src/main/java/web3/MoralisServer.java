@@ -208,6 +208,7 @@ public class MoralisServer {
 	}
 	
 	/** returns one page of transactions for a specific token
+	 *  relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
 	 *  @address is ERC20 token address */
 	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
@@ -257,7 +258,9 @@ public class MoralisServer {
 //		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 //	}
 
-	/** returns all transactions for a specific token */
+	/** returns all transactions for a specific token
+	 * relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
+	 */
 	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 	}

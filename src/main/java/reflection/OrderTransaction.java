@@ -200,6 +200,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// check that user has sufficient crypto to buy or sell
 		// must come after m_stablecoin is set
+		// NOTE that this may revise m_stablecoinAmt
 		requireSufficientCrypto( true);
 		
 		respond( code, RefCode.OK, "id", m_uid); // Frontend will display a message which is hard-coded in Frontend
@@ -697,26 +698,11 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// get the position; if not available, let the order proceed; if the blockchain order fails, so be it
 		JsonObject positionsMap;  // keys are native, approved, positions, wallet (addr)
 
-		// get current balance of source token from HookServer
-//		try {
-//			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s",
-//					m_config.hookServerPort(), m_walletAddr );
-//			positionsMap = MyClient.getJson( url).getObject( "positions");
-//			Util.require( positionsMap != null, "Null positions map returned from hook server for wallet %s", m_walletAddr);
-//		}
-//		catch( Exception e) {
-//			out( "Error getting positions map; the hookserver may be down - " + e);
-//			alert( "HOOK SERVER NOT RESPONDING", e.toString() );
-//			return;
-//		}
-//		
-//		String sourceTokenAddr = getSourceTokenAddress();
-//		double balance = positionsMap.getDouble( sourceTokenAddr.toLowerCase() );   // current balance of source token
-
-		// get current balance of source token from RPC node
+		// get current balance of source token from RPC node (we could also get it from HookServer)
 		var sourceToken = getSourceToken();
 		double balance = sourceToken.getPosition( m_walletAddr);  // sends query
 
+		// adjust the balance to consider live orders
 		if (before) {
 			UserToken userToken = UserTokenMgr.getUserToken( m_walletAddr, sourceToken.address() );
 	
@@ -726,6 +712,17 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	
 			balance -= userToken.increment( needed);
 			m_sourceTokenQty = needed;
+			
+			// check for sufficient crypto balance but cut them some slack to account for rounding errors 
+			// at frontend; if they are short by a little, reduce the stablecoin amount to match the balance;
+			// saw this in production for RUSD but not for stock tokens
+			if (m_order.isBuy() ) {
+				if (m_stablecoinAmt > balance && m_stablecoinAmt - balance < .02) {
+					out( "Adjusting stablecoin amount from %s to %s", 
+							S.fmt6( m_stablecoinAmt), S.fmt6( balance) );
+					m_stablecoinAmt = balance;
+				}
+			}
 		}
 
 		if (m_order.isBuy() ) {

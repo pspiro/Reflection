@@ -22,14 +22,14 @@ public class MyTestCase extends TestCase {
 	static protected Config m_config;
 	static protected Accounts accounts = Accounts.instance;
 	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
-	static int port = 5000;
+	static int port = 8383;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
 			m_config = Config.read();  // pull from config.txt
-			//assertTrue( !m_config.isProduction() ); // NO COMMIT!!!!!!!!!!!!!!!  // don't even think about it!
+			assertTrue( !m_config.isProduction() ); // don't even think about it!
 			stocks.readFromSheet(m_config);
 		} catch (Exception e) {
 			e.printStackTrace();

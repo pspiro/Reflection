@@ -104,11 +104,19 @@ public class HookServer {
 			// hooks per chain (or we could remember the set of ID's and delete by id)
 			if (m_config.hookType() == HookType.Alchemy) {  // improve this to delete the chains better
 				new AlchemyStreamMgr().deleteAllForChain( m_config.alchemyChain() ); 
-			}			
+			}
+
+			String urlBase = m_config.hookServerUrlBase();
+			
+			// special case: are we using ngrok?
+			if (urlBase.equals( "ngrok")) {
+				urlBase = Util.getNgrokUrl();
+				S.out( "HookServer is using ngrok url: %s", urlBase);
+			}
 			
 			// listen for ERC20 transfers and native transfers
 			try {
-				m_transferStreamId = sm.createTransfersStream(); 
+				m_transferStreamId = sm.createTransfersStream( urlBase); 
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -121,7 +129,7 @@ public class HookServer {
 			// then it could just work off the user address, same as the transfer stream
 			// listen for RUSD because there are so many BUSD approvals
 			try {
-				sm.createApprovalStream( m_config.rusdAddr() );
+				sm.createApprovalStream( urlBase, m_config.rusdAddr() );
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -309,26 +317,26 @@ public class HookServer {
 	}
 	
 	static abstract class StreamMgr {
-		protected abstract String createTransfersStream() throws Exception;
-		protected abstract String createApprovalStream( String address) throws Exception;
+		protected abstract String createTransfersStream(String urlBase) throws Exception;
+		protected abstract String createApprovalStream(String urlBase, String address) throws Exception;
 		protected abstract void addAddressToStream(String id, String address) throws Exception;
 		protected abstract void handleHookWithData(JsonObject obj, HookServer hookServer) throws Exception;
 	}
 	
 	static class MoralisStreamMgr extends StreamMgr {
-		@Override public String createTransfersStream() throws Exception {
+		@Override public String createTransfersStream( String urlBase) throws Exception {
 			return MoralisStreams.createStream(
 					MoralisStreams.erc20Transfers, 
 					"transfer-" + m_config.getHookNameSuffix(), 
-					m_config.hookServerUrlBase() + "/hook/webhook",
+					urlBase + "/hook/webhook",
 					chain() ); 
 		}
 		
-		@Override public String createApprovalStream( String address) throws Exception {
+		@Override public String createApprovalStream( String urlBase, String address) throws Exception {
 			return MoralisStreams.createStream(
 					MoralisStreams.approval, 
 					"approval-" + m_config.getHookNameSuffix(), 
-					m_config.hookServerUrlBase() + "/hook/webhook", 
+					urlBase + "/hook/webhook", 
 					chain(),
 					address);
 		}

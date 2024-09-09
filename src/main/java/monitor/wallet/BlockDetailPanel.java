@@ -51,6 +51,8 @@ public class BlockDetailPanel extends BlockPanelBase {
 		
 		if (Util.isValidAddress(walletAddr) ) {
 
+			// fields returned are: from_address, to_address, address, value_decimal, token_decimals, value,
+
 			MoralisServer.getAllWalletTransfers( walletAddr, ar -> {
 				m_model.ar().addAll( ar);
 				ar.print();
@@ -59,13 +61,25 @@ public class BlockDetailPanel extends BlockPanelBase {
 			// sometimes the decimals and value_decimal are null so it show as zero size
 			
 			// filter and update rows
+			
+			// keep only rows that we care about
 			m_model.ar().filter( obj -> obj.getDouble("value") != 0 && weCare( obj) );  // remove rows with value zero
+			
+			// adjust timestamp
 			m_model.ar().update( timestamp, val -> val.toString().replace( "T", "  ").replace( "Z", "") );
-			m_model.ar().update( valueDecimal, val -> S.fmt2( Util.toDouble( val) ) );
+			
+			// round value to two places
+			//m_model.ar().update( valueDecimal, val -> S.fmt2( Util.toDouble( val) ) );
+			
+			// add "Mint" and "Burn"
 			m_model.ar().update( fromAddress, val -> val.equals( nullAddr) ? "Mint" : val);
 			m_model.ar().update( toAddress, val -> val.equals( nullAddr) ? "Burn" : val);
+			
+			// label selected wallet with "***"
 			m_model.ar().update( fromAddress, val -> ((String)val).equalsIgnoreCase( walletAddr) ? Me : val);  // it not efficient to loop twice
 			m_model.ar().update( toAddress, val -> ((String)val).equalsIgnoreCase( walletAddr) ? Me : val);
+			
+			// replace system wallet address with wallet name, e.g. RefWallet
 			m_model.ar().update( fromAddress, val -> Util.valOr( commonMap.get( (String)val), (String)val) );
 			m_model.ar().update( toAddress, val -> Util.valOr( commonMap.get( (String)val), (String)val) );
 		};

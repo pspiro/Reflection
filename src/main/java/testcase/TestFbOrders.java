@@ -280,6 +280,30 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
+	/** we can be short RUSD up to .02 and the RefAPI will allow it; see code 
+	 *  in OrderTransaction.requireSufficientCrypto()  */ 
+	public void testALitleShort() throws Exception {
+		S.out( "-----testaLittleShort  price=%s", TestOrder.curPrice);
+
+		// set wallet
+		Cookie.setNewFakeAddress(true);
+		
+		// create order
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, rusd.name() );
+		double amount = obj.getDouble( "amount");
+
+		// mint a little less RUSD than needed
+		S.out( "**minting 100");
+		rusd.mintRusd( Cookie.wallet, amount - .01, stocks.getAnyStockToken() ).waitForHash();
+		waitForRusdBalance( Cookie.wallet, amount - .01, false);
+
+		// submit order
+		S.out( "**Submitting: " + obj);
+		postOrderToObj(obj);
+		assert200_();
+	}
+	
+	
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?

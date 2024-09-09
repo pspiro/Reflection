@@ -32,11 +32,11 @@ class AlchemyStreamMgr extends StreamMgr {
 	/** create transfer stream for native and ERC-20
 	 * 
 	 * @return webhook id */
-	@Override public String createTransfersStream() throws Exception {
+	@Override public String createTransfersStream(String urlBase) throws Exception {
 		JsonObject body = Util.toJson(
 				"network", HookServer.m_config.alchemyChain(),  
 				"webhook_type", "ADDRESS_ACTIVITY",
-				"webhook_url", HookServer.m_config.hookServerUrlBase() + "/hook/webhook",
+				"webhook_url", urlBase + "/hook/webhook",
 				"addresses", new String[0]
 				);
 
@@ -47,11 +47,11 @@ class AlchemyStreamMgr extends StreamMgr {
 	/** create webhook to monitor for approval events
 	 * 
 	 *  @return webhook id */
-	@Override public String createApprovalStream( String address) throws Exception {
+	@Override public String createApprovalStream( String urlBase, String address) throws Exception {
 		JsonObject body = Util.toJson(
 				"network", HookServer.m_config.alchemyChain(),  
 				"webhook_type", "ADDRESS_ACTIVITY",
-				"webhook_url", HookServer.m_config.hookServerUrlBase() + "/hook/webhook",
+				"webhook_url", urlBase + "/hook/webhook",
 				"topics", Util.toArray( "0x8c5be1e5ebec7d5bd14f71443fa28e55bc75e4bba6c7d3e62bd1bcbf2c7c5f4a"),
 				"addresses", Util.toArray( address)
 				);

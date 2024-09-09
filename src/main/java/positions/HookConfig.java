@@ -41,7 +41,9 @@ public class HookConfig extends Config {
 		this.hookType = Util.getEnum( m_tab.getRequiredString( "hookType"), HookType.values(), HookType.None);
 		
 		this.hookServerUrlBase = m_tab.getRequiredString("hookServerUrlBase");
-		require( hookServerUrlBase.startsWith( "https://"), "hookServerUrlBase");
+		require( 
+				hookServerUrlBase.equals( "ngrok") || 
+				hookServerUrlBase.startsWith( "https://"), "hookServerUrlBase");
 
 		this.noStreams = m_tab.getBoolean( "noStreams");
 		
