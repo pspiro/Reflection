@@ -369,9 +369,14 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		}
 	}
 
-	/** Return true if val is not null */
-	public boolean has(String key) {
-		return S.isNotNull( getString(key) );
+	/** Return true if any of the keys are missing or have no value */
+	public boolean has(String... keys) {
+		for (var key : keys) {
+			if (S.isNull( getString( key) ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override public int compareTo(JsonObject o) {

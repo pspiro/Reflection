@@ -47,9 +47,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "---------------");
 		json = Onramp.getKycUrl( wallet, phone);
 		json.display();
-		assertTrue( json.has( "url"));
-		assertTrue( json.has( custId));
-		assertTrue( json.has( "status"));
+		assertTrue( json.has( "url", custId, "status"));
 		
 		S.out( "---------------");
 		var json2 = Onramp.getKycUrl( json.getString( custId), wallet, phone);
@@ -68,9 +66,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "-------- part 1 --------");
 		json = Onramp.getKycUrl( wallet, phone);
 		json.display();
-		assertTrue( json.has( "url"));
-		assertTrue( json.has( custId));
-		assertTrue( json.has( "status"));
+		assertTrue( json.has( "url", custId, "status"));
 		
 		S.out( "-------part 2--------");
 		// changing the phone is okay; it just creates a new cust id
@@ -96,9 +92,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "-------- part 1 --------");
 		json = Onramp.getKycUrl( wallet, phone);
 		json.display();
-		assertTrue( json.has( "url"));
-		assertTrue( json.has( custId));
-		assertTrue( json.has( "status"));
+		assertTrue( json.has( "url", custId, "status"));
 		
 		// this is a bug in the onramp api; you can pass any value except 
 		// for null for the wallet the second time
@@ -129,9 +123,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "-------- part 1 --------");
 		json = Onramp.getKycUrl( wallet, phone);
 		json.display();
-		assertTrue( json.has( "url"));
-		assertTrue( json.has( custId));
-		assertTrue( json.has( "status"));
+		assertTrue( json.has( "url", custId, "status") );
 
 		// change cust id
 		S.out( "---------------");
@@ -152,31 +144,54 @@ public class TestOnramp extends MyTestCase {
 		catch( Exception e) {}
 	}
 	
-	public void testGetQuoteApi() throws Exception {
-		var data = Util.toJson( "currency", "INR", "buyAmt", 10000);
-		var json = cli().post("/api/onramp-get-quote", data).readJsonObject();
-		assertTrue( json.getDouble( "recAmt") > 0);
-	}
-	
 	public void testApi() throws Exception {
 		Cookie.setNewFakeAddress(false);
 		
 		var data = Util.toJson( 
-				"wallet_public_key", Cookie.wallet, 
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
 				"currency", "INR", 
-				"buyAmt", 10000);
+				"buyAmt", 10000,
+				"recAmt", 1000
+				);
 		
 		cli().post("/api/onramp-convert", data).readJsonObject();
-		assertEquals( 400, cli.getResponseCode() ); // should fail due to no phone number
+		assert400(); // should fail due to no phone number
 		
-		data.put( "wallet_public_key", Cookie.wallet);
-
 		Cookie.setNewFakeAddress(true);
-		var json = cli().post("/api/onramp-convert", data).readJsonObject();
+		
+		// get quote
+		var quote = cli().post( "/api/onramp-get-quote", Util.toJson( 
+				"currency", "INR", 
+				"buyAmt", 10000
+				)).readJsonObject();
+		assertTrue( quote.getDouble( "recAmt") > 0);
+
+		// get kyc info (first time customerId will be created)
+		var json = cli().post("/api/onramp-get-kyc-info", Util.toJson(
+					"wallet_public_key", Cookie.wallet,
+					"cookie", Cookie.cookie
+					)).readJsonObject();
+		assert200_();
+		assertTrue( json.has( "status", "url", "customerId") );
+
+		// make sure second time works as well (customerId will be retrieved)
+		cli().post("/api/onramp-get-kyc-info", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie
+				)).readJsonObject();
 		assert200_();
 		
-		assertTrue( json.has( "status") );
-		assertTrue( json.has( "url") );
+		cli().post( "/api/onramp-convert", Util.toJson(
+					"wallet_public_key", Cookie.wallet,
+					"cookie", Cookie.cookie,
+					"currency", "INR", 
+					"buyAmt", 10000,
+					"recAmt", quote.getDouble( "recAmt")
+					)).readJsonObject();
+		assert400();
+		
+		// for status, use getUserTransactions(), don't make the frontend remember the transactionId; but you should log it in the log table
 	}
 	
 }

@@ -33,28 +33,20 @@ public class OnrampTransaction extends MyTransaction {
 		});
 	}
 
-	public void handleConvert() {
+	/** return KYC status and URL */
+	public void handleGetKycInfo() {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookie("order");
+			validateCookie("onramp-kyc");
 			
-			String currency = m_map.getRequiredString("currency");
-			require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
-			
-			double amount = m_map.getRequiredDouble( "buyAmt");
-			require( amount > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
-			
-			double receiveAmt = m_map.getRequiredDouble( "recAmt");
-			require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
-
 			var user = getorCreateUser();
 
 			String phone = fixPhone( user.getString( "phone") );
 			
 			require( isValidPhone( phone), RefCode.INVALID_REQUEST, 
 					"Please update your user profile to include a valid phone number.\n"
-					+ "The required format is: '+CC-123456789' where cc is the country code");
+					+ "The required format is: '+##-123456789' where ## is the country code, e.g. '+91-8374827'");
 			
 			String onrampId = user.getString( "onramp_id");
 			JsonObject json;
@@ -63,7 +55,7 @@ public class OnrampTransaction extends MyTransaction {
 			if (S.isNull( onrampId) ) {
 				json = Onramp.getKycUrl( m_walletAddr, phone);
 				String newOnrampId = json.getString( "customerId");
-				Util.require( S.isNotNull( onrampId), "No on-ramp ID was assigned");
+				Util.require( S.isNotNull( newOnrampId), "No on-ramp ID was assigned");
 				
 				m_config.sqlCommand( sql -> sql.insertOrUpdate(
 						"users",
@@ -74,12 +66,44 @@ public class OnrampTransaction extends MyTransaction {
 						m_walletAddr.toLowerCase() ) );
 			}
 			else {
-				json = Onramp.getKycUrl( m_walletAddr, phone);
+				json = Onramp.getKycUrl( onrampId, m_walletAddr, phone);
 				Util.require( json.getString( "customerId").equals( onrampId), "The on-ramp ID has changed" );  //onramp id should not change
 				Onramp.getKycUrl( onrampId, m_walletAddr, phone);
 			}
 				
 			respond( json);  // fields are url customerId and status
+		});
+	}
+
+	public void handleConvert() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("onramp-convert");
+			
+			String currency = m_map.getRequiredString("currency");
+			require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
+			
+			double amount = m_map.getRequiredDouble( "buyAmt");
+			require( amount > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
+			
+			double receiveAmt = m_map.getRequiredDouble( "recAmt");
+			require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
+
+			String onrampId = getorCreateUser().getString( "onramp_id");
+			require( S.isNotNull( onrampId), RefCode.INVALID_REQUEST, "No on-ramp id found");
+			
+			var resp = Onramp.transact( 
+					onrampId,
+					amount,
+					currency,
+					m_config.refWalletAddr(),
+					receiveAmt);
+			
+			require( resp.getInt( "code") == 200, RefCode.ONRAMP_FAILED,
+				"An error occurred - " + resp.getString( "error") );
+
+			respond( Util.toJson( code, 200, Message, "The transaction was accepted") );
 		});
 	}
 

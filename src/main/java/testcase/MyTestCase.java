@@ -93,6 +93,11 @@ public class MyTestCase extends TestCase {
 		assertEquals( 200, cli.getResponseCode() );
 	}
 	
+	protected void assert400() throws Exception {
+		S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+		assertEquals( 400, cli.getResponseCode() );
+	}
+	
 	protected void assertNotEquals(String notExpected, String actual) {
 		assertTrue( 
 				String.format( "Got %s which was not expected", notExpected),

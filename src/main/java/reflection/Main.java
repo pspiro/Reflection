@@ -126,6 +126,7 @@ public class Main implements ITradeReportHandler {
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
+			server.createContext("/api/onramp-get-kyc-info", exch -> new OnrampTransaction( this, exch).handleGetKycInfo() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
 			// SIWE signin

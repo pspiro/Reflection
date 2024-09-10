@@ -1,5 +1,7 @@
 package onramp;
 
+import java.util.HashMap;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -18,7 +20,8 @@ public class Onramp {
 	static String appId = "950410";  // used by Frontend only
 
 //	static JsonObject mapIdToFiat = new JsonObject();
-	static JsonObject mapFiatToId;
+	//static JsonObject mapFiatToId; // not used
+	static HashMap<String,Double> mapFiatToRate = new HashMap<>();
 	static JsonObject mapFiatToPaymentType = getPaymentTypeMap();
 	
 	// add this to frontend
@@ -37,7 +40,9 @@ public class Onramp {
 //		queryLimits().display();
 //		coinLimits().display();
 //		getAllTransactions();
-//		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();		
+//		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
+//		getPrices().display();
+		S.out( getQuote( "INR", 10000) );
 
 //
 //		JsonObject prices = getPrices();
@@ -45,41 +50,55 @@ public class Onramp {
 //			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
 	}
 
-	static String wl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
-	static String kyc = "https://api-test.onramp.money/onramp/api/v2/whiteLabel/kyconramp";
+	private static String wl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
 	
-//	public static void onramp(String refWalletAddr, double fromAmt) throws Exception {
-//		double rate = getQuote("", 3).getDouble( "rate");
-//
-//		var resp = whiteLab( "/onramp/createTransaction", Util.toJson( 
-//				"depositAddress", refWalletAddr,
-//				"customerId", "custid",  // Unique id received from /kyc/url
-//				"fromAmount", fromAmt,
-//				"toAmount", fromAmt * rate,
-//				"rate", rate
-//				) );
-//		resp.display();
-//	}
+	public static JsonObject transact(
+			String fromCustomerId,
+			double amount,
+			String currency,
+			String toWalletAddr,
+			double recAmt
+			) throws Exception {
+		
+		Util.require( isValidCurrency( currency), "invalid currency");
+		
+		var body = Util.toJson(
+				"fromCurrency", currency,
+				"toCurrency", "USDT",
+				"chain", "MATIC20",
+				"paymentMethodType", mapFiatToPaymentType.get( currency),
+				"depositAddress", toWalletAddr,
+				"customerId", fromCustomerId,
+				"fromAmt", amount,
+				"toAmount", recAmt,
+				"rate", mapFiatToRate.get( currency)
+				);
+		
+		S.out( "sending onramp transaction: " + body);
+
+		var resp = whiteLab( "/onramp/createTransaction", body);
+		S.out( "  response: " + resp);
+		return resp;
+	}
 	
-	
-	
-	public static void getTransaction() throws Exception {
+	public static void getTransaction( String customerId, String transactionId) throws Exception {
 		var resp = whiteLab( "/onramp/transaction", Util.toJson(
-				"transactionId", "",
-				"customerId", ""
+				"customerId", customerId,
+				"transactionId", transactionId
 				));
 		resp.display();
 	}
 	
-	public static void getUserTransactions( String custId) throws Exception {
+	public static void getUserTransactions( String customerId) throws Exception {
 		var resp = whiteLab( "/onramp/allUserTransaction", Util.toJson(
+				"customerId", customerId,
 				"page", 1,
-				"customerId", custId,
-				"pageSize", "500") );
+				"pageSize", "500"
+				) );
 		resp.display();
 	}
 		
-	// used by Monitor?
+	// should be used by Monitor?
 	public static void getAllTransactions() throws Exception {
 		var resp = whiteLab( "/onramp/allTransaction", Util.toJson(
 				"page", 1,
@@ -133,6 +152,8 @@ public class Onramp {
 	/** why do I need the chain and payment method to get a quote? 
 	 *  are there different prices on different chains and methods? */
 	public static double getQuote( String currency, double fromAmt) throws Exception {
+		S.out( "querying onramp quote  currency=%s  fromAmt=%s", currency, fromAmt);
+		
 		var json = whiteLab( "/onramp/quote", Util.toJson( 
 				"fromCurrency", currency,
 				"toCurrency", "USDT",
@@ -141,13 +162,18 @@ public class Onramp {
 				"chain", "MATIC20"
 				) );
 
-		double toAmt = json.getObjectNN( "data").getDouble( "toAmount");
-		
+		S.out( "  onramp quote: " + json);
+
+		var data = json.getObjectNN( "data");
+		double toAmt = data.getDouble( "toAmount");
+
 		if (toAmt <= 0) {
-			json.display();
 			throw new MyException( "Error: could not get onramp quote  current=%s  fromAmt=%s",
 					currency, fromAmt);
 		}
+		
+		// save the rate; we'll use it later when creating the order
+		mapFiatToRate.put( currency, data.getDouble( "rate"));
 		
 		return toAmt;
 	}
@@ -166,7 +192,6 @@ public class Onramp {
 		return json.has( "customerId") 
 				? json.getString( "customerId")  // if it's a subsequent time
 				: json.getObjectNN( "data").getString( "customerId");  // if it's the first time
-		
 	}
 	
 	/** first call; customer id will be assigned 
@@ -206,7 +231,6 @@ public class Onramp {
 				"status", getKycStatus( custId)
 				);
 	}
-	
 
 	/** 'data' could be json containing the status, or a string containing 'LOGIN_REQUIRED' */
 	private static String getKycStatus( String customerId) throws Exception {
@@ -217,12 +241,12 @@ public class Onramp {
 
 	/** build maps of currency name to currency id */
 	public static void buildMaps() throws Exception {
-		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/allConfigMapping";
+//		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/allConfigMapping";
 		
-		var data = query( url).getObject( "data");
+//		var data = query( url).getObject( "data");
 //		data.display();
 		
-		mapFiatToId = data.getObject("fiatSymbolMapping");
+//		mapFiatToId = data.getObject("fiatSymbolMapping");
 
 //		mapFiatToId.getObject( "data").getObject( "coinSymbolMapping").forEach( (key,val) -> 
 //			mapIdToFiat.put( val.toString(), key) );
