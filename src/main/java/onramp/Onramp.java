@@ -74,7 +74,7 @@ public class Onramp {
 				"paymentMethodType", mapFiatToPaymentType.get( currency),
 				"depositAddress", toWalletAddr,
 				"customerId", fromCustomerId,
-				"fromAmt", amount,
+				"fromAmount", amount,
 				"toAmount", recAmt,
 				"rate", mapFiatToRate.get( currency)
 				);
