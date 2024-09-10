@@ -40,7 +40,8 @@ public class OnrampTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("onramp-kyc");
 			
-			respond( getOrCreateOnrampUser() );
+			respond( getOrCreateOnrampUser()
+					.append( Message, "this is a message") ); // fields are url customerId and status );
 		});
 	}
 
@@ -78,7 +79,7 @@ public class OnrampTransaction extends MyTransaction {
 			Onramp.getKycUrl( onrampId, m_walletAddr, phone);
 		}
 
-		return json.append( Message, "this is a message"); // fields are url customerId and status
+		return json;
 	}
 
 	/** user sends: currency, amount, receive-amount 
@@ -91,7 +92,7 @@ public class OnrampTransaction extends MyTransaction {
 			
 			var json = getOrCreateOnrampUser();  // get url, customerId, and status
 			
-			if (json.getString( "status").equals( "READY") ) {
+			if (json.getString( "status").equals( "EDD_COMPLETED") ) {
 				String currency = m_map.getRequiredString("currency");
 				require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 				
