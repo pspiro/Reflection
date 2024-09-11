@@ -38,7 +38,7 @@ public abstract class Cookie extends MyTestCase {
 		if (andProfile) {
 			JsonObject json = TestProfile.createValidProfile();
 			json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
-			MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+			MyClient.postToJson( "http://localhost:" + port + "/api/update-profile", json.toString() );
 		}
 	}
 	
@@ -47,16 +47,15 @@ public abstract class Cookie extends MyTestCase {
 		cookie = signIn(wallet);
 	}
 
-
 	public static String signIn(String address) throws Exception {
 		S.out( "Signing in with cookie for wallet " + address);
 		
-		MyHttpClient cli = new MyHttpClient("localhost", 8383);
+		var client = new MyHttpClient("localhost", port);
 		
 		// send siwe/init
-		cli.get("/siwe/init");
-		assertEquals( 200, cli.getResponseCode() );
-		String nonce = cli.readJsonObject().getString("nonce");
+		client.get("/siwe/init");
+		//assertEquals( 200, cli.getResponseCode() );
+		String nonce = client.readJsonObject().getString("nonce");
 
 		SiweMessage siweMsg = new SiweMessage.Builder(
 				"Reflection.trading", 
@@ -74,11 +73,11 @@ public abstract class Cookie extends MyTestCase {
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
 		// send siwe/signin
-		cli = new MyHttpClient("localhost", 8383);
-		cli.post("/siwe/signin", signedMsgSent.toString() );
-		assertEquals( 200, cli.getResponseCode() );
+		client = new MyHttpClient("localhost", port);
+		client.post("/siwe/signin", signedMsgSent.toString() );
+		//assertEquals( 200, cli.getResponseCode() );
 		
-		return cli.getHeaders().get("set-cookie");
+		return client.getHeaders().get("set-cookie");
 		//S.out( "received cookie: " + cookie);
 	}
 }

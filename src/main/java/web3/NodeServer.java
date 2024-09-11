@@ -20,13 +20,22 @@ public class NodeServer {
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
+	/** different nodes have different batch sizes; you can probably get bigger size
+	 * with a paid node e.g. Moralis */
+	static int maxBatchSize = 20; // should be configurable; it may be that different MESSAGE have dif. max batch size. but I saw large sizes > 100 on all chains for small message
+
 	/** you could make this a member var */
 	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
-	public static void setChain( String rpcUrlIn) throws Exception {
-		S.out( "Setting node server rpcUrl=%s", rpcUrlIn);
+	public static void setChain( String rpcUrlIn, int maxBatchSizeIn) throws Exception {
 		rpcUrl = rpcUrlIn;
+		
+		if (maxBatchSizeIn > 0) {
+			maxBatchSize = maxBatchSizeIn;
+		}
+
+		S.out( "Setting node server  rpcUrl=%s  maxBatchSize=%s", rpcUrlIn, maxBatchSize);
 	}
 	
 	/** Send a query and expect "result" to contain a hex value.
@@ -57,18 +66,14 @@ public class NodeServer {
 		return obj;
 	}
 
-	/** different nodes have different batch sizes; you can probably get bigger size
-	 * with a paid node e.g. Moralis */
-	static int batchSize = 10; // should be configurable
-	
-	private static JsonArray batchQuery( JsonArray requests) throws Exception {
+	public static JsonArray batchQuery( JsonArray requests) throws Exception {
 		int i = 0;
 		var results = new JsonArray();
 		
 		while (i < requests.size() ) {
 			var batch = new JsonArray();
 			
-			for (int j = 0; j < batchSize && i < requests.size(); j++) {
+			for (int j = 0; j < maxBatchSize && i < requests.size(); j++) {
 				batch.add( requests.get( i++) );
 			}
 			
@@ -208,7 +213,8 @@ public class NodeServer {
 		return nodeQuery( body);
 	}
 	
-	/** note w/ moralis you can also get the token balance by wallet 
+	/** note w/ moralis you can also get the token balance by wallet
+	 * I'm assuming that "data" is the parameters encoded the same was as in Fireblocks module 
 	 * @param m_address */
 	public static double getTotalSupply(String contractAddr, int decimals) throws Exception {
 		Util.reqValidAddress( contractAddr);
@@ -398,5 +404,72 @@ public class NodeServer {
 			}""", contractAddr, walletAddr.substring( 2) );  // strip the 0x
 		
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
-	}	
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config.ask();
+		S.out( isKnownTransaction( "0x66ae1980873d7dfb18886bf5852db6427ad0cb4933f8701d3c89f05e93c3b5a2") );
+	}
+	
+	/** must handle the no receipt or not ready yet state */
+	public static String getReceipt( String transHash) throws Exception {
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getTransactionReceipt",
+			"params": [
+				"%s"
+			]
+			}""", transHash);
+		
+		// no result is no "result" tag, just id
+		var result = nodeQuery( body);//.getObjectNN( "result").removeEntry( "logs"); // long and boring
+//		boolean success = result.getString( "status").equals( "0x1");
+		result.display();
+		return "";
+	}
+	
+	public static boolean isKnownTransaction(String transHash) throws Exception {
+		return getTransByHash( transHash).getObject( "result") != null;
+	}
+	
+	public static JsonObject getTransByHash( String transHash) throws Exception {
+		String body = String.format( """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "eth_getTransactionByHash",
+				"params": [
+					"%s"
+				]
+				}""", transHash);
+			
+		return nodeQuery( body);
+	}
 }
+
+	
+	// to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
+	// this simulates the call as if it were executed at the end of the specified block
+//	{
+//		  "jsonrpc": "2.0",
+//		  "method": "eth_call",
+//		  "params": [
+//		    {
+//		      "from": "0xYourFromAddress",
+//		      "to": "0xYourContractAddress",
+//		      "data": "0xYourEncodedFunctionCallData",
+//		      "value": "0xYourWeiValue"
+//		    },
+//		    "0xYourBlockNumber"
+//		  ],
+//		  "id": 1
+//		}
+
+	
+// notes
+// you can use eth_call to get revert reason for a past block AND ALSO to see what would
+// happen if you called the transaction now, on the current block
+// probably you should do that before each call, then you don't need to check all
+// the dif params, and 

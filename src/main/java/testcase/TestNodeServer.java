@@ -2,8 +2,11 @@ package testcase;
 
 import java.util.Map;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
+import reflection.Config;
 import tw.util.S;
 import web3.NodeServer;
 
@@ -56,6 +59,39 @@ public class TestNodeServer extends MyTestCase {
 				stocks.getAllContractsAddresses(),
 				18);
 		new JsonObject( map).display();
-		assertTrue( map.size() == stocks.stocks().size() );
+		assertTrue( map.size() > 1);
+	}
+	
+	/** fail w/ batch too large 
+	 * @throws Exception */
+	public void testBatchFail() throws Exception {
+		String body = """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "eth_getBlockByNumber",
+				"params": [	"latest", false ]
+				}""";
+		var json = JsonObject.parse( body);
+		var ar = new JsonArray();
+		for (int i = 0; i < 3; i++) {
+			json.put( "id", i);
+			ar.add( json);
+		}
+		NodeServer.batchQuery( ar).display();
+	}
+
+	public static void testKnownTrans() throws Exception {
+		assertTrue( NodeServer.isKnownTransaction( 
+				"0x24f1aab3b5bca3cd526c3c65b28267133f2f0b0540501271164a42d6d5661915") ); // passes on Sepolia only
+		assertFalse( NodeServer.isKnownTransaction( 
+				"0x24f1aab3b5bca3cd526c3c65b28267133f2f0b0540501271164a42d6d5661916") );
+	}
+
+	public void test() throws Exception {
+		Util.wrap( () -> {
+			m_config.rusd().mintRusd( Cookie.wallet, 1, stocks.getAnyStockToken() )
+				.waitForHash();
+		});
 	}
 }

@@ -11,7 +11,7 @@ import web3.MoralisServer;
 // Q: does JsonObject translate // back and forth to \/\/?
 // Q my question is, if allAddresses is set to false, how do I specify which contract it listens to?
 
-public class Streams {
+public class MoralisStreams {
 
 	public static void main(String[] args) throws Exception {
 		displayStreams();

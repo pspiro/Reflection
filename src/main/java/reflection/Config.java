@@ -16,6 +16,7 @@ import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
 import http.MyClient;
+import onramp.Onramp;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -95,14 +96,14 @@ public class Config extends ConfigBase {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private int hookServerPort;
-	private String hookServerUrl; // webhook url passed to Moralis
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private int chainId;
 	private double autoReward; // automatically send users rewards
-	private String pwUrl;
+	private String pwUrl; // url of pw server
+	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
-	private boolean noStreams;
+	private String onrampUrl;  // white label url
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -198,15 +199,16 @@ public class Config extends ConfigBase {
 				: IStream.readLine( "config.txt");
 	}
 
-	public void readFromSpreadsheet(Book book, String tabName) throws Exception {
+	public final void readFromSpreadsheet(Book book, String tabName) throws Exception {
 		readFromSpreadsheet( book.getTab(tabName) );
 	}
 
-	public void readFromSpreadsheet(String tabName) throws Exception {
+	public final void readFromSpreadsheet(String tabName) throws Exception {
 		S.out( "Using config tab %s", tabName);
 		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
 	}
 	
+	/** Override this version */
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		m_tab = new GTable( tab, "Tag", "Value", true);
 		
@@ -261,7 +263,6 @@ public class Config extends ConfigBase {
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.hookServerPort = m_tab.getInt("hookServerPort");
-		this.hookServerUrl = m_tab.getRequiredString("hookServerUrl");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
@@ -270,9 +271,9 @@ public class Config extends ConfigBase {
 		this.chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
+		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
-		S.out( "read sendTelegram=%s", sendTelegram);
-		this.noStreams = m_tab.getBoolean( "noStreams");
+		this.onrampUrl = m_tab.get( "onrampUrl");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -347,10 +348,15 @@ public class Config extends ConfigBase {
 				m_tab.getRequiredString ("busdName"),
 				busdCore);
 
+		// update onramp url?
+		if (S.isNotNull( onrampUrl)) {
+			Onramp.setWhiteLabel( onrampUrl);
+		}
+		
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl") );
+		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
 		NodeServer.setDecimals( m_rusd);
 		NodeServer.setDecimals( m_busd);
 
@@ -366,9 +372,9 @@ public class Config extends ConfigBase {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 60000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
-		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
-		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
-		require( noStreams || hookServerUrl.endsWith( "/hook/webhook"), "hookServerUrl");
+		require( S.isNotNull( backendConfigTab), "backendConfigTab" );
+		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
+		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 	}
 
 	/** confirm we have access to the password 
@@ -386,8 +392,7 @@ public class Config extends ConfigBase {
 		
 		// try next from pwserver
 		require( S.isNotNull( pwUrl), "pwserver");
-		Util.require( pwUrl.endsWith( "getpw"), "pwurl is invalid");
-		Util.require( JsonObject.isObject( MyClient.getString( pwUrl) ), 
+		Util.require( JsonObject.isObject( MyClient.getString( pwUrl + "/getpw") ), 
 				"pwserver did not return json");
 		S.out( "pwserver ok");
 	}
@@ -412,11 +417,17 @@ public class Config extends ConfigBase {
 		} catch (Exception e) {
 		}
 		// get refblocks pw from pwserver
-		String pw = MyClient.postToJson( pwUrl, Util.toJson( "code", "lwjkefdj827").toString() )
-				.getString( "pw");
+		var json = Util.toJson( 
+				"code", "lwjkefdj827",
+				"name", this.pwName);
+		
+		var ret = MyClient.postToJson( pwUrl + "/getpw", json.toString() );
+		String error = ret.getString( "error");
+		Util.require( S.isNull( error), "pw server returned error- " + error);
+		
+		String pw = ret.getString( "pw");
 		Util.require( S.isNotNull( pw), "null pw from pw server");
-		Util.require( !pw.equals( "wrong code"), "wrong code passed to pw server");
-
+		
 		return pw;
 	}
 	
@@ -490,13 +501,11 @@ public class Config extends ConfigBase {
 	
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
-	public Rusd rusd() throws Exception {
-		Util.require( m_rusd != null, "Fireblocks not set");
+	public Rusd rusd() {
 		return m_rusd;
 	}
 
-	public Busd busd() throws Exception {
-		Util.require( m_busd != null, "Fireblocks not set");
+	public Busd busd() {
 		return m_busd;
 	}
 
@@ -517,9 +526,8 @@ public class Config extends ConfigBase {
 
 	/** You could move refapi specific things into here if desired */
 	static class RefApiConfig extends Config {
-		
-		public void readFromSpreadsheet(String tabName) throws Exception {
-			super.readFromSpreadsheet(tabName);
+		protected void readFromSpreadsheet(Tab tab) throws Exception {
+			super.readFromSpreadsheet(tab);
 		}
 	}
 	
@@ -570,7 +578,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform);  
+		return "polygon".equals(moralisPlatform) || "pulsechain".equals(moralisPlatform);  
 	}
 	
 	public String moralisPlatform() {
@@ -694,11 +702,7 @@ public class Config extends ConfigBase {
 	public int hookServerPort() {
 		return hookServerPort;
 	}
-	
-	public String hookServerUrl() {
-		return hookServerUrl;
-	}
-	
+		
 	public String blockchainTx(String hash) {
 		return String.format( "%s/tx/%s", blockchainExplorer, hash);
 	}
@@ -772,11 +776,11 @@ public class Config extends ConfigBase {
 		return sendTelegram;
 	}
 	
-	public boolean noStreams() {
-		return noStreams;
-	}
-
 	public double getApprovedAmt() throws Exception {
 		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
+	}
+	
+	public String onrampUrl() {
+		return onrampUrl;
 	}
 }

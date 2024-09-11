@@ -14,6 +14,7 @@ import web3.Rusd;
 /** chared by monitor and RefApi */
 public class SignupReport {
 	/** create a report combining sign-ups, jotform, connections, and transactions
+	 *  used to generate the "/api/sag" report
 	 * @param progressBar could be null */
 	public static JsonArray create( int days, MySqlConnection sql, Rusd rusd, Runnable progressBar) throws Exception {
 		//super.refresh();

@@ -3,12 +3,17 @@ package refblocks;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.Hash;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.Sign;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.protocol.http.HttpService;
@@ -16,6 +21,7 @@ import org.web3j.tx.FastRawTransactionManager;
 import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.TransactionManager;
+import org.web3j.tx.exceptions.TxHashMismatchException;
 import org.web3j.tx.gas.StaticEIP1559GasProvider;
 import org.web3j.tx.response.EmptyTransactionReceipt;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
@@ -301,6 +307,17 @@ public class Refblocks {
 			S.out( "  using nonce %s for %s", nonce, m_key);
 			return nonce;
 		}
+		
+		/** For whatever reason, the call to signAndSend() can timeout, even if it is successful;
+	        if it times out, let's check if it was successful */
+		@Override public EthSendTransaction signAndSend(RawTransaction rawTransaction) throws IOException {
+			try {
+				return super.signAndSend( rawTransaction);
+			}
+			catch( SocketTimeoutException e) {
+				return handleTmTimeout( this, rawTransaction, e);
+			}
+		}			
 	}
 
 	
@@ -340,13 +357,35 @@ public class Refblocks {
 				setNonce( BigInteger.valueOf( -1) );
 			}
 			
-			BigInteger nonce = super.getNonce();
+			BigInteger nonce;
+			
+			try {
+				// try once
+				nonce = super.getNonce();  // this can timeout; we should try again
+			}
+			catch( SocketTimeoutException e) {
+				// try twice; second time throws an exception
+				S.out( "WARNING: getNonce() timed out; trying again");
+				nonce = super.getNonce();
+			}
+			
 			S.out( "  using nonce %s for %s", nonce, m_key);
 
 			m_lastTime = System.currentTimeMillis();
 
 			return nonce;
 		}
+		
+		/** For whatever reason, the call to signAndSend() can timeout, even if it is successful;
+        if it times out, let's check if it was successful */
+		@Override public EthSendTransaction signAndSend(RawTransaction rawTransaction) throws IOException {
+			try {
+				return super.signAndSend( rawTransaction);
+			}
+			catch( SocketTimeoutException e) {
+				return handleTmTimeout( this, rawTransaction, e);
+			}
+		}			
 	}
 
 	/** Use custom nonce to un-stick a transaction. Uses a polling receipt processor */
@@ -362,12 +401,65 @@ public class Refblocks {
 			return BigInteger.valueOf( m_nonce);
 		}
 	}
-
 	
 	
-	/** wait for the transaction receipt with polling */
+	/** wait for the transaction receipt with polling;
+	 *  this can timeout; try twice */
 	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
-		return new DelayedTrp().reallyWait( receipt);
+		try {
+			// try once
+			return new DelayedTrp().reallyWait( receipt);
+		}
+		catch( SocketTimeoutException e) {
+			// try twice; second failing throws the exception
+			S.out( "WARNING: waiting for receipt http call timed out; trying again"); // not the same as the whole wait-for-receipt process timing out
+			return new DelayedTrp().reallyWait( receipt);
+		}
 	}
 
+	/** sign any random text; compare with https://app.mycrypto.com/sign-message */
+    static void getSignature(String message, String key) {
+        Credentials credentials = Credentials.create( key);
+
+        // Sign the message hash
+        Sign.SignatureData signature = Sign.signPrefixedMessage(message.getBytes(), credentials.getEcKeyPair());
+
+        byte[] retval = new byte[65];
+        System.arraycopy(signature.getR(), 0, retval, 0, 32);
+        System.arraycopy(signature.getS(), 0, retval, 32, 32);
+        System.arraycopy(signature.getV(), 0, retval, 64, 1);
+        String hash = Numeric.toHexString(retval);
+
+        Util.toJson( 
+        		"address", Util.getAddress( key),
+        		"msg", message,
+        		"sig", hash).display();
+    }
+    
+	/** For whatever reason, the call to signAndSend() can timeout, even if it is successful;
+	    if it times out, let's check if it was successful
+	    You can move this code into FasterTm class after you get rid of SlowerTm class 
+	 * @param e */
+    static EthSendTransaction handleTmTimeout(RawTransactionManager tm, RawTransaction rawTransaction, SocketTimeoutException e) throws IOException {
+        String transHash = Hash.sha3( tm.sign(rawTransaction) );
+        
+        try {
+			if (NodeServer.isKnownTransaction( transHash) ) {
+		        S.out( "Warning: transaction %s timed out but it was still broadcast; we will wait for the receipt", transHash);
+				var retVal = new EthSendTransaction();
+				retVal.setResult( transHash);
+				return retVal;
+			}
+		} 
+        catch (Exception e1) {
+        	S.out( "  error while trying to get trans info - " + e.getMessage() );
+		}
+
+        // throw the original exception
+        S.out( "Error: transaction %s timed out. We could not determine if it was broadcast or not; you should check", 
+        		transHash);
+        throw e;
+    }    	
 }
+
+// the whole Java Web3j has almost outlives its usefulness

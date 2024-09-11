@@ -38,7 +38,7 @@ public class Monitor {
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
-	static NewWalletPanel m_walletPanel;
+	static WalletPanel m_walletPanel;
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
@@ -63,7 +63,7 @@ public class Monitor {
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-		m_walletPanel = new NewWalletPanel();
+		m_walletPanel = new WalletPanel();
 		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();

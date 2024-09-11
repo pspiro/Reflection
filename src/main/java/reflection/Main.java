@@ -110,8 +110,10 @@ public class Main implements ITradeReportHandler {
 		m_config.sqlCommand( conn -> {} );
 		
 		// add new fields
-		m_config.sqlCommand( sql -> {
-		});
+//		m_config.sqlCommand( sql -> {
+//		});
+		// confirm we can access private keys
+		m_config.admin1Key();
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
@@ -121,6 +123,12 @@ public class Main implements ITradeReportHandler {
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 
+			// onramp
+			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
+			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
+			server.createContext("/api/onramp-get-kyc-info", exch -> new OnrampTransaction( this, exch).handleGetKycInfo() );
+			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
+			
 			// SIWE signin
 			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
@@ -139,7 +147,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
 			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );
-			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 
 			// get/update profile
 			server.createContext("/api/get-profile", exch -> new ProfileTransaction(this, exch).handleGetProfile() );

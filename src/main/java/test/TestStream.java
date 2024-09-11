@@ -7,22 +7,24 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
-import positions.Streams;
+import positions.HookConfig;
+import positions.MoralisStreams;
 import reflection.Config;
 import tw.util.S;
 
 public class TestStream {
 	public static void main(String[] args) throws Exception {
-		Config c = Config.read();
+		HookConfig c = new HookConfig();
+		c.readFromSpreadsheet( Config.getTabName(args) );
 
 		MyServer.listen( c.hookServerPort(), 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
 		});
 
-		Streams.createStream(
-				Streams.approval, 
+		MoralisStreams.createStream(
+				MoralisStreams.approval, 
 				"junk1", 
-				c.hookServerUrl(), 
+				c.hookServerUrlBase() + "/hook/webhook", 
 				Util.toHex( c.chainId() ),
 				c.rusdAddr() );
 

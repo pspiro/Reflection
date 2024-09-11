@@ -1,11 +1,6 @@
 package test;
 
-import java.math.BigInteger;
-
-import refblocks.Refblocks;
 import reflection.Config;
-import tw.util.S;
-import web3.NodeServer;
 
 /** Just test that you can connect to the database. */
 public class Try {

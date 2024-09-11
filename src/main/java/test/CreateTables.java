@@ -176,7 +176,8 @@ public class CreateTables  {
 			pan_number varchar(10),
 			aadhaar varchar(12),
 			locked jsonb,
-			ip varchar(15)
+			ip varchar(15),
+			onramp_id
 		);
 		""";
 		con.execute( sql);
@@ -189,5 +190,6 @@ public class CreateTables  {
 // add an id field to a table (assigns an id to all records)
 //dev=> alter table users add column id INT GENERATED ALWAYS AS IDENTITY unique;
 //dev=> alter table signup add column id INT GENERATED ALWAYS AS IDENTITY unique;
+// dev=> alter table users add column onramp_id varchar(64);
 
 // dev=> alter table users add column locked jsonb;

@@ -82,6 +82,16 @@ public class TestFbOrders extends MyTestCase {
 //			return false;
 //		});
 	}
+	
+	/** this test fails? and we must fix it */
+//	public void testApproval() throws Exception {
+//		gasUpBob();
+//		busd.approve( bobKey, rusd.address(), 1).waitForCompleted();
+//		S.sleep(1000);
+//		S.out( m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) );
+//		assertEquals( 1.0, m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) );
+//		waitFor( 15, () -> m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) == 1);
+//	}
 
 	/** This test will fail. To get it to pass, update LiveOrder.updateFrom() to check for 
 	 *  insufficient crypto or insufficient approved amount. It's only worthwhile
@@ -92,7 +102,7 @@ public class TestFbOrders extends MyTestCase {
 		Cookie.setWalletAddr(bobAddr);
 		showAmounts("starting non-approval");
 
-		// mint BUSD for user Bob
+		// mint 2000 BUSD for user Bob
 		S.out( "**minting 2000");
 		m_config.mintBusd( bobAddr, 2000)
 			.waitForHash();
@@ -100,13 +110,10 @@ public class TestFbOrders extends MyTestCase {
 		
 		gasUpBob();
 		
-		// let bob approve BUSD spending by RUSD
+		// let bob approve .49 BUSD spending by RUSD
 		S.out( "**approving .49");
-		busd.approve(
-				bobKey,
-				rusd.address(),
-				.49).waitForCompleted();
-		
+		busd.approve( bobKey, rusd.address(), .49).waitForCompleted();
+		waitFor( 30, () -> m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) > .48);
 		showAmounts("updated amounts");
 		
 		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() ) ).getString("id");
@@ -117,6 +124,8 @@ public class TestFbOrders extends MyTestCase {
 		//assertEquals( RefCode.INSUFFICIENT_ALLOWANCE, cli.getRefCode() );
 
 		// note we will get back some messages and then the error
+		// waiting for live order to fail
+		S.out( "waiting for status of order " + id);
 		waitFor( 30, () -> {
 			JsonObject ret = getLiveMessage(id);
 			if (ret != null) {
@@ -142,7 +151,7 @@ public class TestFbOrders extends MyTestCase {
 		// give bob a valid user profile
 		JsonObject json = TestProfile.createValidProfile();
 		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
-		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		MyClient.postToJson( "http://localhost:" + port + "/api/update-profile", json.toString() );
 		
 		// let it pass KYC
 		m_config.sqlCommand( sql -> sql.execWithParams( 
@@ -223,7 +232,7 @@ public class TestFbOrders extends MyTestCase {
 		// give bob a valid user profile
 		JsonObject json = TestProfile.createValidProfile();
 		json.put( "email", "test@test.com"); // recognized by RefAPI, non-production only
-		MyClient.postToJson( "http://localhost:8383/api/update-profile", json.toString() );
+		MyClient.postToJson( "http://localhost:" + port + "/api/update-profile", json.toString() );
 		
 		// let it pass KYC
 		m_config.sqlCommand( sql -> sql.execWithParams( 
@@ -280,10 +289,35 @@ public class TestFbOrders extends MyTestCase {
 		assertEquals( 1.0, rec.getDouble("quantity") );
 	}
 	
+	/** we can be short RUSD up to .02 and the RefAPI will allow it; see code 
+	 *  in OrderTransaction.requireSufficientCrypto()  */ 
+	public void testALitleShort() throws Exception {
+		S.out( "-----testaLittleShort  price=%s", TestOrder.curPrice);
+
+		// set wallet
+		Cookie.setNewFakeAddress(true);
+		
+		// create order
+		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, rusd.name() );
+		double amount = obj.getDouble( "amount");
+
+		// mint a little less RUSD than needed
+		S.out( "**minting 100");
+		rusd.mintRusd( Cookie.wallet, amount - .01, stocks.getAnyStockToken() ).waitForHash();
+		waitForRusdBalance( Cookie.wallet, amount - .01, false);
+
+		// submit order
+		S.out( "**Submitting: " + obj);
+		postOrderToObj(obj);
+		assert200_();
+	}
+	
+	
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
 		if (NodeServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+			S.out( "gassing up bob");
 			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
 					.waitForHash();
 		}

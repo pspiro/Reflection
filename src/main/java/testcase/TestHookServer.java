@@ -13,15 +13,15 @@ import web3.StockToken;
  * 
  *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	static String hook = "http://localhost:8484/hook";
-	static String wallet = Util.createFakeAddress();
+	static String hook = "http://localhost:8080/hook";
+	static String newWallet = Util.createFakeAddress();
 
 	static {
-		S.out( "testing with wallet %s", wallet);
+		S.out( "testing with wallet %s", newWallet);
 
 		// create the wallet first so we know we are getting values from the events
 		try {
-			MyClient.getJson( hook + "/get-wallet/" + wallet);
+			MyClient.getJson( hook + "/get-wallet/" + newWallet);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -39,32 +39,29 @@ public class TestHookServer extends MyTestCase {
 	}
 		
 	public void testTransfers() throws Exception {
-//		// let the HookServer start monitoring for this wallet
-		MyClient.getJson( hook + "/get-wallet/" + wallet);
-		
 		StockToken tok = stocks.getAnyStockToken();
 
 		// mint RUSD
-		S.out( "minting 10 rusd into %s", wallet);
-		m_config.rusd().mintRusd(wallet, 10, stocks.getAnyStockToken() )
+		S.out( "minting 10 rusd into %s", newWallet);
+		m_config.rusd().mintRusd(newWallet, 10, stocks.getAnyStockToken() )
 				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
-			JsonObject obj = MyClient.getJson( hook + "/get-wallet/" + wallet)
+			JsonObject obj = MyClient.getJson( hook + "/get-wallet/" + newWallet)
 					.getArray("positions")
 					.find( "address", m_config.rusdAddr() );
 			return obj != null ? obj.getDouble("position") == 10 : false; 
 		});
 
 		// buy stock token - wait for changes in RUSD and stock token
-		S.out( "buying 1 stock token %s for %s", tok.address(), wallet);
-		m_config.rusd().buyStockWithRusd(wallet, 1, tok, 2)
+		S.out( "buying 1 stock token %s for %s", tok.address(), newWallet);
+		m_config.rusd().buyStockWithRusd(newWallet, 1, tok, 2)
 				.displayHash();
 
 		S.out( "waiting for position");
 		waitFor( 60, () -> {
-			JsonObject obj2 = MyClient.getJson( hook + "/get-wallet/" + wallet);
+			JsonObject obj2 = MyClient.getJson( hook + "/get-wallet/" + newWallet);
 			JsonArray ar = obj2.getArray("positions");
 			JsonObject rusd = ar.find( "address", m_config.rusdAddr() );
 			JsonObject stk = ar.find( "address", tok.address() );
@@ -79,22 +76,19 @@ public class TestHookServer extends MyTestCase {
 	public void testNative() throws Exception {
 		double n = .0001;
 		
-		// create the wallet first so we know we get the event
-		MyClient.getJson( hook + "/get-wallet/" + wallet);
-
 		// send native token to wallet
 		S.out( "testing native transfer");
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
-				wallet,
+				newWallet,
 				n).displayHash();
 
 		// wait for it to appear
 		waitFor( 60, () -> {
-			double pos = MyClient.getJson( hook + "/get-wallet/" + wallet)
+			double pos = MyClient.getJson( hook + "/get-wallet/" + newWallet)
 					.getDouble( "native");
 			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
-					n, pos, NodeServer.getNativeBalance( wallet) ) );
+					n, S.fmt4(pos), S.fmt4(NodeServer.getNativeBalance( newWallet) ) ) );
 			return Util.isEq( pos, n, .00001);
 		});
 	}
@@ -105,7 +99,7 @@ public class TestHookServer extends MyTestCase {
 		// let Owner approve RUSD to spend BUSD
 		S.out( "testing approve");
 
-		// create the wallet first so we know we get the event
+		// create the owner wallet first so we know we get the event
 		MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() );
 
 		// let Owner approve RUSD to spend BUSD (no sig needed)
@@ -127,9 +121,6 @@ public class TestHookServer extends MyTestCase {
 	public void testBalances() throws Exception {
 		var tok = stocks.getAnyStockToken();
 		String wallet = Util.createFakeAddress();
-//		m_config.rusd().mintRusd( wallet, 5, tok).waitForHash();
-//		m_config.busd().mint( m_config.ownerKey(), wallet, 6).waitForHash();
-//		m_config.rusd().mintStockToken(wallet, tok, 7).waitForHash();
 
 		m_config.rusd().mintRusd( wallet, 5, tok);
 		m_config.busd().mint( m_config.ownerKey(), wallet, 6);
@@ -144,9 +135,9 @@ public class TestHookServer extends MyTestCase {
 		
 		var balances = ret.getObject( "positions");
 		
-		assertEquals( 6, balances.getDouble( m_config.busdAddr() ) );
-		assertEquals( 7, balances.getDouble( tok.address() ) );
-		assertEquals( 5, balances.getDouble( m_config.rusdAddr() ) );
+		assertEquals( 5., balances.getDouble( m_config.rusdAddr() ) );
+		assertEquals( 6., balances.getDouble( m_config.busdAddr() ) );
+		assertEquals( 7., balances.getDouble( tok.address() ) );
 		
 	}
 	

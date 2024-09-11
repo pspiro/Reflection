@@ -11,7 +11,8 @@ import reflection.Config;
 
 public class BlockPanelBase extends JPanel {
 	static final String Me = "***";
-	static final String RefWallet = "RefWallet";
+	static final String RefWallet = "RefWallet";  // remove this. pas
+	static final String address = "address";
 	static final String toAddress = "to_address";
 	static final String fromAddress = "from_address";
 	static final String valueDecimal = "value_decimal";
@@ -47,13 +48,14 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	protected boolean isRusd(JsonObject obj) {
-		return obj.getString( tokenSymbol).equals( "RUSD");
+		return obj.getString( address).equalsIgnoreCase( config().rusdAddr() ); 
 	}
 
 	protected boolean isUsdt(JsonObject obj) {
-		return obj.getString( tokenSymbol).equals( "USDT");
+		return obj.getString( address).equalsIgnoreCase( config().busdAddr() );
 	}
 
+	/** this is not reliable; you need to check the token address */
 	protected boolean isStock(JsonObject obj) {
 		return obj.getString( tokenSymbol).endsWith( ".r");
 	}

@@ -40,7 +40,7 @@ import util.LogType;
 import web3.MoralisServer;
 import web3.StockToken;
 
-public class NewWalletPanel extends MonPanel {
+public class WalletPanel extends MonPanel {
 	static String usersFields = "first_name,last_name,wallet_public_key,kyc_status,created_at,address,address_1,address_2,city,state,zip,country,geo_code,email,telegram,phone,pan_number,aadhaar,locked";
 
 	private JTextField m_walField = new JTextField(28);
@@ -55,7 +55,7 @@ public class NewWalletPanel extends MonPanel {
 
 	private final NewTabbedPanel m_tabs = new NewTabbedPanel(true);
 
-	public NewWalletPanel() {
+	public WalletPanel() {
 		super( new BorderLayout() );
 		MyTimer t = new MyTimer();
 		t.next( "NewWallet ctor");
@@ -145,6 +145,15 @@ public class NewWalletPanel extends MonPanel {
 		
 		@Override public void activated() {
 			wrap( () -> {
+				if (S.isNull( m_wallet) ) {
+					return;
+				}
+				
+				if (!Util.isValidAddress(m_wallet)) {
+					Util.inform( this, "Wallet address is invalid");
+					return;
+				}
+				
 				var users = m_config.sqlQuery("select * from users where wallet_public_key = '%s'", m_wallet);
 				if (users.size() > 0) {
 					var user = users.get( 0).removeEntry( "persona_responsa");
@@ -160,6 +169,7 @@ public class NewWalletPanel extends MonPanel {
 					m_emailAddr = user.getString( "email"); // needed to send emails
 				}
 				else {
+					Util.inform( this, "No entry in users table for this wallet");
 					usersPane.setText( null);
 					personaPane.setText( null);
 				}
@@ -180,33 +190,33 @@ public class NewWalletPanel extends MonPanel {
 	}
 
 	class BlockchainPanel extends MiniTab {
-		BlockSummaryPanel sumPanel = new BlockSummaryPanel();
-		BlockDetailPanel detPanel = new BlockDetailPanel();
+		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
+		BlockDetailPanel m_allTransPanel = new BlockDetailPanel();
 
 		BlockchainPanel() {
 			super( new BorderLayout() );
 
-			sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
-			detPanel.setBorder( new TitledBorder( "All Transactions"));
+			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
+			m_allTransPanel.setBorder( new TitledBorder( "All Transactions"));
 
 			DualPanel dualPanel = new DualPanel();
-			dualPanel.add( sumPanel, "1");
-			dualPanel.add( detPanel, "2");
+			dualPanel.add( m_sumPanel, "1");
+			dualPanel.add( m_allTransPanel, "2");
 
 			add( dualPanel);
 		}
 
 		@Override public void activated() {
 			wrap( () -> {
-				detPanel.refresh( m_wallet);
-				sumPanel.refresh( m_wallet, detPanel.rows() );
+				m_allTransPanel.refresh( m_wallet);
+				m_sumPanel.refresh( m_wallet, m_allTransPanel.rows() );
 			});
 		}
 
 		protected void clear() {
 			try {
-				detPanel.refresh( "");
-				sumPanel.refresh( "", new JsonArray() );
+				m_allTransPanel.refresh( "");
+				m_sumPanel.refresh( "", new JsonArray() );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
