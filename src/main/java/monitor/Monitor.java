@@ -113,6 +113,7 @@ public class Monitor {
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		m_tabs.addTab( "Email", new EmailPanel() );
+		//m_tabs.addTab( "OnRamp", new OnRampPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);

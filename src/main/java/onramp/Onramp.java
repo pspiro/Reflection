@@ -24,7 +24,9 @@ public class Onramp {
 	static HashMap<String,Double> mapFiatToRate = new HashMap<>();
 	static JsonObject mapFiatToPaymentType = getPaymentTypeMap();
 	
-	private static String wlUrl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
+	static String prod = "https://api.onramp.money/onramp/api/v2/whiteLabel";
+	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
+	static String wlUrl = dev; 
 	
 	public static void setWhiteLabel( String url) {
 		S.out( "Setting onramp white label url to " + url);
@@ -47,9 +49,11 @@ public class Onramp {
 //		queryLimits().display();
 //		coinLimits().display();
 //		getAllTransactions();
+//		getTransaction( "B16FKl1rnw_29994", "1040394");
 //		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
+		S.out( getKycUrl("qFpJQsYRKT_30054", "0xaecd5a9e92dfc6dda75d9666ab9fe97d1bea63a8", "+91-8810484514" ) );
 //		getPrices().display();
-		S.out( getQuote( "INR", 10000) );
+//		S.out( getQuote( "INR", 10000) );
 
 //
 //		JsonObject prices = getPrices();
@@ -175,8 +179,7 @@ public class Onramp {
 				"clientCustomerId", wallet.toLowerCase(),
 				"phoneNumber", phone,
 				"type", "INDIVIDUAL",  		// individual or business
-				"kycRedirectUrl", "https://reflection.trading",  // user is redirected here after kyc
-				"closeAfterLogin", true);
+				"kycRedirectUrl", "https://pulse.reflection.trading");  // user is redirected here after kyc
 	}
 
 	public static String getCustomerId( String wallet, String phone) throws Exception {
@@ -202,7 +205,6 @@ public class Onramp {
 	public static JsonObject getKycUrl( JsonObject req) throws Exception {
 		// try first w/out customerId
 		var json = whiteLab( "/kyc/url", req);
-		json.display();
 		
 		if (json.has( "error")) {
 			throw new Exception( "Could not get KYC URL - " + json.getString( "error") ); 

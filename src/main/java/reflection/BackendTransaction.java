@@ -412,6 +412,8 @@ public class BackendTransaction extends MyTransaction {
 			String text = String.format( "name: %s<br>email: %s<br>%s",
 					m_map.getString("name"), m_map.getString("email"), m_map.getString("msg") );
 			
+			text = Util.unescHtml(text, true); 
+			
 			m_config.sendEmail("info@reflection.trading", "MESSAGE FROM USER", text); 
 		});
 	}
