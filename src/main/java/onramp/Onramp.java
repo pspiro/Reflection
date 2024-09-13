@@ -174,31 +174,24 @@ public class Onramp {
 		return toAmt;
 	}
 	
-	private static JsonObject getCustReq( String wallet, String phone) {
+	private static JsonObject getCustReq( String wallet, String phone, String redirectUrl) {
 		return Util.toJson(
 				"clientCustomerId", wallet.toLowerCase(),
 				"phoneNumber", phone,
 				"type", "INDIVIDUAL",  		// individual or business
-				"kycRedirectUrl", "https://pulse.reflection.trading");  // user is redirected here after kyc
+				"kycRedirectUrl", redirectUrl);  // user is redirected here after kyc
 	}
 
-	public static String getCustomerId( String wallet, String phone) throws Exception {
-		var json = whiteLab( "/kyc/url", getCustReq( wallet, phone) );
-		return json.has( "customerId") 
-				? json.getString( "customerId")  // if it's a subsequent time
-				: json.getObjectNN( "data").getString( "customerId");  // if it's the first time
-	}
-	
 	/** first call; customer id will be assigned 
 	 *  fields are url customerId and status*/
-	public static JsonObject getKycUrl( String wallet, String phone) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone) );
+	public static JsonObject getKycUrl( String wallet, String phone, String redirectUrl) throws Exception {
+		return getKycUrl( getCustReq( wallet, phone, redirectUrl) );
 	}
 
 	/** subsequent call; wallet and phone can change
 	 * fields are url customerId and status */
-	public static JsonObject getKycUrl( String custId, String wallet, String phone) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone).append( "customerId", custId) );
+	public static JsonObject getKycUrl( String custId, String wallet, String phone, String redirectUrl) throws Exception {
+		return getKycUrl( getCustReq( wallet, phone, redirectUrl).append( "customerId", custId) );
 	}
 
 	/** all calls */

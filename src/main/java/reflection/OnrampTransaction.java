@@ -61,7 +61,7 @@ public class OnrampTransaction extends MyTransaction {
 		
 		// first time?
 		if (S.isNull( onrampId) ) {
-			json = Onramp.getKycUrl( m_walletAddr, phone);
+			json = Onramp.getKycUrl( m_walletAddr, phone, m_config.baseUrl() );
 			String newOnrampId = json.getString( "customerId");
 			Util.require( S.isNotNull( newOnrampId), "No on-ramp ID was assigned");
 			
@@ -74,7 +74,7 @@ public class OnrampTransaction extends MyTransaction {
 					m_walletAddr.toLowerCase() ) );
 		}
 		else {
-			json = Onramp.getKycUrl( onrampId, m_walletAddr, phone);
+			json = Onramp.getKycUrl( onrampId, m_walletAddr, phone, m_config.baseUrl() );
 			Util.require( json.getString( "customerId").equals( onrampId), "The on-ramp ID has changed" );  //onramp id should not change
 			Onramp.getKycUrl( onrampId, m_walletAddr, phone);
 		}
