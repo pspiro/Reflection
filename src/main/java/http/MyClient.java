@@ -149,7 +149,7 @@ public class MyClient {
 	}
 	
 	/** Really we want to at least catch 404 and 502 */
-	private static boolean niceCode( int statusCode) {
+	private static boolean niceCode( int statusCode) {  // a better way would be to check for json vs html
 		return statusCode == 200 || statusCode == 400 || statusCode == 403; // 400 is returned by RefAPI along w/ an error message, 403 is returned by onramp
 	}
 	
