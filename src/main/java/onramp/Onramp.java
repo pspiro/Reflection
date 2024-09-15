@@ -24,6 +24,15 @@ public class Onramp {
 	static HashMap<String,Double> mapFiatToRate = new HashMap<>();
 	static JsonObject mapFiatToPaymentType = getPaymentTypeMap();
 	
+	static String prod = "https://api.onramp.money/onramp/api/v2/whiteLabel";
+	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
+	static String wlUrl = dev; 
+	
+	public static void setWhiteLabel( String url) {
+		S.out( "Setting onramp white label url to " + url);
+		wlUrl = url;
+	}
+
 	// add this to frontend
 	// const currencies = [ "MXN","ARS","CLP","ZAR","INR","VND","THB","AUD","GHS","GBP","IDR","PHP","TRY","AED","RWF","EUR","COP","USD","MYR","EGP","NGN","PEN","KES","XAF","BRL" ];
 	
@@ -40,17 +49,17 @@ public class Onramp {
 //		queryLimits().display();
 //		coinLimits().display();
 //		getAllTransactions();
+//		getTransaction( "B16FKl1rnw_29994", "1040394");
 //		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
+		S.out( getKycUrl("qFpJQsYRKT_30054", "0xaecd5a9e92dfc6dda75d9666ab9fe97d1bea63a8", "+91-8810484514" ) );
 //		getPrices().display();
-		S.out( getQuote( "INR", 10000) );
+//		S.out( getQuote( "INR", 10000) );
 
 //
 //		JsonObject prices = getPrices();
 //		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
 //			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
 	}
-
-	private static String wl = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
 	
 	public static JsonObject transact(
 			String fromCustomerId,
@@ -69,16 +78,12 @@ public class Onramp {
 				"paymentMethodType", mapFiatToPaymentType.get( currency),
 				"depositAddress", toWalletAddr,
 				"customerId", fromCustomerId,
-				"fromAmt", amount,
+				"fromAmount", amount,
 				"toAmount", recAmt,
 				"rate", mapFiatToRate.get( currency)
 				);
 		
-		S.out( "sending onramp transaction: " + body);
-
-		var resp = whiteLab( "/onramp/createTransaction", body);
-		S.out( "  response: " + resp);
-		return resp;
+		return whiteLab( "/onramp/createTransaction", body);
 	}
 	
 	public static void getTransaction( String customerId, String transactionId) throws Exception {
@@ -144,16 +149,9 @@ public class Onramp {
 //		}
 
 	
-	private static JsonObject whiteLab(String uri, JsonObject json) throws Exception {
-		Util.require( uri.startsWith( "/"), "start with /");
-		return query( wl + uri, json);
-	}
-	
 	/** why do I need the chain and payment method to get a quote? 
 	 *  are there different prices on different chains and methods? */
 	public static double getQuote( String currency, double fromAmt) throws Exception {
-		S.out( "querying onramp quote  currency=%s  fromAmt=%s", currency, fromAmt);
-		
 		var json = whiteLab( "/onramp/quote", Util.toJson( 
 				"fromCurrency", currency,
 				"toCurrency", "USDT",
@@ -161,8 +159,6 @@ public class Onramp {
 				"paymentMethodType", mapFiatToPaymentType.getString( currency),
 				"chain", "MATIC20"
 				) );
-
-		S.out( "  onramp quote: " + json);
 
 		var data = json.getObjectNN( "data");
 		double toAmt = data.getDouble( "toAmount");
@@ -178,39 +174,30 @@ public class Onramp {
 		return toAmt;
 	}
 	
-	private static JsonObject getCustReq( String wallet, String phone) {
+	private static JsonObject getCustReq( String wallet, String phone, String redirectUrl) {
 		return Util.toJson(
 				"clientCustomerId", wallet.toLowerCase(),
 				"phoneNumber", phone,
 				"type", "INDIVIDUAL",  		// individual or business
-				"kycRedirectUrl", "https://reflection.trading",  // user is redirected here after kyc
-				"closeAfterLogin", true);
+				"kycRedirectUrl", redirectUrl);  // user is redirected here after kyc
 	}
 
-	public static String getCustomerId( String wallet, String phone) throws Exception {
-		var json = whiteLab( "/kyc/url", getCustReq( wallet, phone) );
-		return json.has( "customerId") 
-				? json.getString( "customerId")  // if it's a subsequent time
-				: json.getObjectNN( "data").getString( "customerId");  // if it's the first time
-	}
-	
 	/** first call; customer id will be assigned 
 	 *  fields are url customerId and status*/
-	public static JsonObject getKycUrl( String wallet, String phone) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone) );
+	public static JsonObject getKycUrl( String wallet, String phone, String redirectUrl) throws Exception {
+		return getKycUrl( getCustReq( wallet, phone, redirectUrl) );
 	}
 
 	/** subsequent call; wallet and phone can change
 	 * fields are url customerId and status */
-	public static JsonObject getKycUrl( String custId, String wallet, String phone) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone).append( "customerId", custId) );
+	public static JsonObject getKycUrl( String custId, String wallet, String phone, String redirectUrl) throws Exception {
+		return getKycUrl( getCustReq( wallet, phone, redirectUrl).append( "customerId", custId) );
 	}
 
 	/** all calls */
 	public static JsonObject getKycUrl( JsonObject req) throws Exception {
 		// try first w/out customerId
 		var json = whiteLab( "/kyc/url", req);
-		json.display();
 		
 		if (json.has( "error")) {
 			throw new Exception( "Could not get KYC URL - " + json.getString( "error") ); 
@@ -281,7 +268,6 @@ public class Onramp {
 
 	public static void queryFees() throws Exception {
 		String url = "https://api.onramp.money/onramp/api/v1/public/allGasFee";
-		S.out( "querying for fees");
 		MyClient.getJson( url).display();
 	}
 	public static void queryHistory() throws Exception {
@@ -293,7 +279,6 @@ public class Onramp {
 				"pageSize", 50   // Min: 1, Max: 500, Default: 50
 				//				"since", "2022-10-07T22:29:52.000Z"
 				);
-		S.out( "querying for history");
 		query( url, query).display();
 	}
 
@@ -335,8 +320,12 @@ public class Onramp {
 				"orderId", orderId,
 				"type", 1);
 
-		S.out( "querying for order id %s", orderId);
 		return query( url, query);
+	}
+	
+	private static JsonObject whiteLab(String uri, JsonObject json) throws Exception {
+		Util.require( uri.startsWith( "/"), "start with /");
+		return query( wlUrl + uri, json);
 	}
 	
 	private static JsonObject query( String url) throws Exception {
@@ -357,8 +346,9 @@ public class Onramp {
 		byte[] result = mac.doFinal( encodedPayload.getBytes() );
 		String signature = Encrypt.bytesToHex(result);
 
-		S.out( "url: " + url);
-		S.out( "sending body: " + body);
+		S.out( "Sending onramp request");
+		S.out( "  onramp url: " + url);
+		S.out( "  onramp body: " + body);
 //		S.out( "payload: " + payload);
 //		S.out( "encoded payload: " + encodedPayload);
 //		S.out( "signature: " + signature);
@@ -370,6 +360,8 @@ public class Onramp {
 				.header("X-ONRAMP-PAYLOAD", encodedPayload)
 				.header("X-ONRAMP-SIGNATURE", signature)
 				.query().body();
+		
+		S.out( "  onramp response: " + str);
 
 		return JsonObject.parse( str);
 	}

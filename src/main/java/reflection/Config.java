@@ -16,6 +16,7 @@ import fireblocks.FbMatic;
 import fireblocks.FbRusd;
 import fireblocks.Fireblocks;
 import http.MyClient;
+import onramp.Onramp;
 import redis.ConfigBase;
 import refblocks.RbBusd;
 import refblocks.RbMatic;
@@ -102,6 +103,7 @@ public class Config extends ConfigBase {
 	private String pwUrl; // url of pw server
 	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
+	private String onrampUrl;  // white label url
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -271,6 +273,7 @@ public class Config extends ConfigBase {
 		this.pwUrl = m_tab.get("pwUrl");
 		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
+		this.onrampUrl = m_tab.get( "onrampUrl");
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -345,6 +348,11 @@ public class Config extends ConfigBase {
 				m_tab.getRequiredString ("busdName"),
 				busdCore);
 
+		// update onramp url?
+		if (S.isNotNull( onrampUrl)) {
+			Onramp.setWhiteLabel( onrampUrl);
+		}
+		
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
@@ -364,8 +372,9 @@ public class Config extends ConfigBase {
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
 		require( orderTimeout >= 1000 && orderTimeout <= 60000, "orderTimeout");
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
-		require( S.isNotNull( backendConfigTab), "backendConfigTab config is missing" );
-		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF is invalid");
+		require( S.isNotNull( backendConfigTab), "backendConfigTab" );
+		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
+		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 	}
 
 	/** confirm we have access to the password 
@@ -769,5 +778,9 @@ public class Config extends ConfigBase {
 	
 	public double getApprovedAmt() throws Exception {
 		return m_busd.getApprovedAmt( refWalletAddr(), rusdAddr() );
+	}
+	
+	public String onrampUrl() {
+		return onrampUrl;
 	}
 }

@@ -796,10 +796,12 @@ public class Util {
 		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
 	}
 	
-	public static String unescHtml(String html) {
+	/** @param useBr controls %0a */
+	public static String unescHtml(String html, boolean useBr) {
 		return html
 				.replaceAll( "%20", " ")
 				.replaceAll( "%22", "\"")
+				.replaceAll( "%0a", useBr ? "<br>" : "\n")
 				.replaceAll( "%2[cC]", ",")
 				.replaceAll( "%2[fF]", "/")
 				.replaceAll( "%3[aA]", ":")
