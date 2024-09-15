@@ -45,7 +45,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "---------------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
@@ -64,7 +64,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
@@ -90,14 +90,14 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
 		// this is a bug in the onramp api; you can pass any value except 
 		// for null for the wallet the second time
 		try {
-			var json2 = Onramp.getKycUrl( json.getString(custId), "abc", phone);
+			var json2 = Onramp.getKycUrl( json.getString(custId), "abc", phone, "");
 			json2.display();
 			assertEquals( json.getString(custId), json2.getString(custId) ); 
 			assertEquals( json.getString("status"), json2.getString("status") );
@@ -107,7 +107,7 @@ public class TestOnramp extends MyTestCase {
 
 		// no wallet
 		try {
-			var json2 = Onramp.getKycUrl( json.getString( custId), phone);
+			var json2 = Onramp.getKycUrl( json.getString( custId), phone, "");
 			json2.display();
 			assertTrue( false);
 		}
@@ -121,14 +121,14 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status") );
 
 		// change cust id
 		S.out( "---------------");
 		try {
-			var json2 = Onramp.getKycUrl( "Z" + json.getString( custId), wallet, phone);
+			var json2 = Onramp.getKycUrl( "Z" + json.getString( custId), wallet, phone, "");
 			json2.display();
 			assertTrue( false);
 		}
@@ -137,7 +137,7 @@ public class TestOnramp extends MyTestCase {
 		// remove cust id
 		S.out( "---------------");
 		try {
-			var json2 = Onramp.getKycUrl( "", wallet, phone);
+			var json2 = Onramp.getKycUrl( "", wallet, phone, "");
 			json2.display();
 			assertTrue( false);
 		}
