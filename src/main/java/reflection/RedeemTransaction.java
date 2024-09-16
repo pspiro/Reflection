@@ -73,11 +73,28 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			profile.validate();
 			
 			// save email to send alerts later
-			m_email = profile.email(); 
-
+			m_email = profile.email();
+			
+			m_quantity = m_map.getDoubleParam( "quantity");
+			
 			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here
-			m_quantity = Util.truncate( rusd.getPosition(m_walletAddr), 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
-			require( m_quantity > .004, RefCode.NO_RUSD_TO_REDEEM, "No RUSD in user wallet to redeem");
+			double pos = rusd.getPosition(m_walletAddr);
+			require( pos > .004, RefCode.NO_RUSD_TO_REDEEM, "No RUSD in user wallet to redeem");
+
+			// if no quantity specified, if > pos, or w/in .03 of pos, set it to pos
+			if (m_quantity == 0 || m_quantity > pos - .03) {
+				Util.truncate( pos, 4); // some parts only handle 4 dec, should be changed to 6... 
+			}
+			
+			m_quantity = Util.truncate( m_quantity, 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
+
+			// don't let them enter very small amounts
+			if (pos >= 5) {
+				require( m_quantity >= 5, RefCode.INVALID_REQUEST, "Please redeem at least $5.00");
+			}
+			else {
+				require( m_quantity >= pos, RefCode.INVALID_REQUEST, "Please redeem the full amount");
+			}
 			
 			// confirm no Working redemptions
 			require( Main.m_config.sqlQuery( 
@@ -132,6 +149,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// redeem it  try/catch here?
+			// no good; if this fails, we'll never make an entry in the database
 			String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 			olog( LogType.REDEEMED, "amount", m_quantity);

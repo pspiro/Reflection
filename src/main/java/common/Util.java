@@ -484,6 +484,10 @@ public class Util {
 	    T get() throws Exception;
 	}
 
+	public interface ExFunction<T,R> {
+		R apply(T t) throws Exception;
+	}
+
 	/** get or create; create can throw an exception */
 	public static <Tag,Val> Val getOrCreateEx(Map<Tag,Val> map, Tag tag, ExSupplier<Val> creator) throws Exception {
 		synchronized(map) {
