@@ -24,6 +24,7 @@ import common.Util;
 import http.MyClient;
 import monitor.wallet.BlockDetailPanel;
 import monitor.wallet.BlockSummaryPanel;
+import onramp.Onramp;
 import reflection.Stock;
 import test.MyTimer;
 import tw.util.DualPanel;
@@ -51,6 +52,7 @@ public class WalletPanel extends MonPanel {
 	private CryptoPanel cryptoPanel = new CryptoPanel();
 	private TokPanel tokPanel = new TokPanel();
 	private LogPanel logPanel = new LogPanel();
+	private OnrampPanel onrampPanel = new OnrampPanel();
 	private String m_emailAddr;
 
 	private final NewTabbedPanel m_tabs = new NewTabbedPanel(true);
@@ -80,6 +82,7 @@ public class WalletPanel extends MonPanel {
 		m_tabs.addTab( "Crypto", cryptoPanel); 
 		m_tabs.addTab( "Tokens", tokPanel); 
 		m_tabs.addTab( "Log", logPanel);
+		m_tabs.addTab( "OnRamp", onrampPanel);
 
 		add( top, BorderLayout.NORTH);
 		add( m_tabs);
@@ -598,6 +601,37 @@ public class WalletPanel extends MonPanel {
 		}
 		
 	}
+	
+	class OnrampPanel extends MiniTab {
+		JTextField id = new JTextField( 10);
+		JsonModel model = new JsonModel( "a,b");
+		
+		OnrampPanel() {
+			super( new BorderLayout() );
+			
+			VerticalPanel p = new VerticalPanel();
+			p.add( "OnRamp ID", id);
+			
+			
+			add( p, BorderLayout.NORTH);
+			add( model.createTable() );
+		}
+		
+		@Override protected void clear() {
+		}
+
+		@Override public void activated() {
+			wrap( () -> {
+				var users = m_config.sqlQuery("select onramp_id from users where wallet_public_key = '%s'", m_wallet);
+				if (users.size() > 0) {
+					String onrampId = users.get( 0).getString( "onramp_id");
+					model.setRows( Onramp.getUserTransactions( onrampId) );
+					model.fireTableDataChanged();
+				}
+			});
+		}
+	}
+	
 
 	/** Used by TestCase as well as Monitor */
 	public static JsonObject createLockObject( String wallet, double amt, long lockUntil, int requiredTrades) throws Exception {

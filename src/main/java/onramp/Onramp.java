@@ -5,6 +5,7 @@ import java.util.HashMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
@@ -99,13 +100,12 @@ public class Onramp {
 		resp.display();
 	}
 	
-	public static void getUserTransactions( String customerId) throws Exception {
-		var resp = whiteLab( "/onramp/allUserTransaction", Util.toJson(
+	public static JsonArray getUserTransactions( String customerId) throws Exception {
+		return whiteLab( "/onramp/allUserTransaction", Util.toJson(
 				"customerId", customerId,
 				"page", 1,
 				"pageSize", "500"
-				) );
-		resp.display();
+				) ).getArray("data");
 	}
 		
 	// should be used by Monitor?
