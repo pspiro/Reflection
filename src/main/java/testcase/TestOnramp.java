@@ -45,7 +45,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "---------------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
@@ -64,7 +64,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
@@ -90,7 +90,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status"));
 		
@@ -107,7 +107,7 @@ public class TestOnramp extends MyTestCase {
 
 		// no wallet
 		try {
-			var json2 = Onramp.getKycUrl( json.getString( custId), phone);
+			var json2 = Onramp.getKycUrl( json.getString( custId), phone, "");
 			json2.display();
 			assertTrue( false);
 		}
@@ -121,7 +121,7 @@ public class TestOnramp extends MyTestCase {
 		JsonObject json;
 		
 		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone);
+		json = Onramp.getKycUrl( wallet, phone, "");
 		json.display();
 		assertTrue( json.has( "url", custId, "status") );
 

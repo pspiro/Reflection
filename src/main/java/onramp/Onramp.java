@@ -51,9 +51,14 @@ public class Onramp {
 //		getAllTransactions();
 //		getTransaction( "B16FKl1rnw_29994", "1040394");
 //		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
-		S.out( getKycUrl("qFpJQsYRKT_30054", "0xaecd5a9e92dfc6dda75d9666ab9fe97d1bea63a8", "+91-8810484514" ) );
+//		S.out( getKycUrl("qFpJQsYRKT_30054", "0xaecd5a9e92dfc6dda75d9666ab9fe97d1bea63a8", "+91-8810484514" ) );
 //		getPrices().display();
-//		S.out( getQuote( "INR", 10000) );
+		S.out( getQuote( "EUR", 1000) );
+		S.out( getQuote( "EUR", 10000) );
+		S.out( getQuote( "EUR", 100000) );
+		S.out( getQuote( "EUR", 12000) );
+		S.out( getQuote( "EUR", 120000) );
+		S.out( getQuote( "EUR", 1200000) );
 
 //
 //		JsonObject prices = getPrices();
@@ -160,11 +165,13 @@ public class Onramp {
 				"chain", "MATIC20"
 				) );
 
+		json.display();
+		
 		var data = json.getObjectNN( "data");
 		double toAmt = data.getDouble( "toAmount");
 
 		if (toAmt <= 0) {
-			throw new MyException( "Error: could not get onramp quote  current=%s  fromAmt=%s",
+			throw new MyException( "Error: could not get onramp quote  currency=%s  fromAmt=%s",
 					currency, fromAmt);
 		}
 		
