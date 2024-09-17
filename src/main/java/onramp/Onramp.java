@@ -183,29 +183,31 @@ public class Onramp {
 		return toAmt;
 	}
 	
-	private static JsonObject getCustReq( String wallet, String phone, String redirectUrl) {
-		return Util.toJson(
+	/** first call; customer id will be assigned 
+	 *  fields are url customerId and status
+	 *  WARNING: if you get 'Please provide a valid phone number string, it may
+	 *  mean that your wallet is already associated with a different phone number */ 
+	public static JsonObject getKycUrlFirst( String wallet, String phone, String redirectUrl) throws Exception {
+		var req = Util.toJson(
 				"clientCustomerId", wallet.toLowerCase(),
 				"phoneNumber", phone,
 				"type", "INDIVIDUAL",  		// individual or business
 				"kycRedirectUrl", redirectUrl);  // user is redirected here after kyc
-	}
-
-	/** first call; customer id will be assigned 
-	 *  fields are url customerId and status*/
-	public static JsonObject getKycUrl( String wallet, String phone, String redirectUrl) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone, redirectUrl) );
+		return getKycUrl( req);
 	}
 
 	/** subsequent call; wallet and phone can change
 	 * fields are url customerId and status */
-	public static JsonObject getKycUrl( String custId, String wallet, String phone, String redirectUrl) throws Exception {
-		return getKycUrl( getCustReq( wallet, phone, redirectUrl).append( "customerId", custId) );
+	public static JsonObject getKycUrlNext( String custId, String redirectUrl) throws Exception {
+		var req = Util.toJson(
+				"customerId", custId,
+				"type", "INDIVIDUAL",  		// individual or business
+				"kycRedirectUrl", redirectUrl);  // user is redirected here after kyc
+		return getKycUrl( req);
 	}
 
 	/** all calls */
 	public static JsonObject getKycUrl( JsonObject req) throws Exception {
-		// try first w/out customerId
 		var json = whiteLab( "/kyc/url", req);
 		
 		if (json.has( "error")) {
@@ -220,11 +222,12 @@ public class Onramp {
 		
 		var custId = data.getString( "customerId");
 		Util.require( S.isNotNull( custId), "Error: no customer ID returned");
+		Util.require( !req.has( "customerId") || req.getString( "customerId").equals( custId), "Error: mismatched customer ID");  // cust id should not change
 			
 		return Util.toJson( 
 				"url", url, 
 				"customerId", custId, 
-				"status", getKycStatus( custId)
+				"status", getKycStatus( custId)  // not sure if this is being used
 				);
 	}
 

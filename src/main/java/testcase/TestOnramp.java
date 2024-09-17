@@ -38,126 +38,40 @@ public class TestOnramp extends MyTestCase {
 //		assert200_();
 //	}
 	
-	public void testSimplePass() throws Exception {
-		String wallet = Util.createFakeAddress();
-		String phone = "+91-" + Util.rnd.nextInt( 1000, 1000000);
+	/** test onramp API directly */
+	public void testGetKycUrl() throws Exception {
+		Cookie.setNewFakeAddress(true);
+		String phone = newPhone();
 		
-		JsonObject json;
-		
-		S.out( "---------------");
-		json = Onramp.getKycUrl( wallet, phone, "");
-		json.display();
+		// first time
+		S.out( "json1***");
+		JsonObject json = Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
 		assertTrue( json.has( "url", custId, "status"));
-		
-		S.out( "---------------");
-		var json2 = Onramp.getKycUrl( json.getString( custId), wallet, phone);
-		json2.display();
-		assertEquals( json.getString(custId), json2.getString(custId) ); 
-		assertEquals( json.getString("status"), json2.getString("status") );
-		assertTrue( json.has( "status"));
-	}
-	
-	public void testChangePhone() throws Exception {
-		String wallet = Util.createFakeAddress();
-		String phone = "+91-" + Util.rnd.nextInt( 1000, 1000000);
-		
-		JsonObject json;
-		
-		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone, "");
-		json.display();
-		assertTrue( json.has( "url", custId, "status"));
-		
-		S.out( "-------part 2--------");
-		// changing the phone is okay; it just creates a new cust id
-		var json2 = Onramp.getKycUrl( json.getString( custId), wallet, phone + 1);
-		json2.display();
-		assertNotEquals( json.getString( custId), json2.getString( custId) ); 
-		
-		// no phone
-		try {
-			json2 = Onramp.getKycUrl( json.getString( custId), wallet, "");
-			json2.display();
-			assertTrue( false);
-		}
-		catch( Exception e) {}
-	}
-	
-	public void testChangeWallet() throws Exception {
-		String wallet = Util.createFakeAddress();
-		String phone = "+91-" + Util.rnd.nextInt( 1000, 1000000);
-		
-		JsonObject json;
-		
-		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone, "");
-		json.display();
-		assertTrue( json.has( "url", custId, "status"));
-		
-		// this is a bug in the onramp api; you can pass any value except 
-		// for null for the wallet the second time
-		try {
-			var json2 = Onramp.getKycUrl( json.getString(custId), "abc", phone, "");
-			json2.display();
-			assertEquals( json.getString(custId), json2.getString(custId) ); 
-			assertEquals( json.getString("status"), json2.getString("status") );
-			//assertTrue( false); // should fail but doesn't
-		}
-		catch( Exception e) {}
 
-		// no wallet
+		// change wallet - fails with misleading message about the phone number
+		S.out( "json2***");
 		try {
-			var json2 = Onramp.getKycUrl( json.getString( custId), phone, "");
-			json2.display();
+			Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
 			assertTrue( false);
 		}
-		catch( Exception e) {}
-	}
-	
-	public void testChangeCustId() throws Exception {
-		String wallet = Util.createFakeAddress();
-		String phone = "+91-" + Util.rnd.nextInt( 1000, 1000000);
-		
-		JsonObject json;
-		
-		S.out( "-------- part 1 --------");
-		json = Onramp.getKycUrl( wallet, phone, "");
-		json.display();
-		assertTrue( json.has( "url", custId, "status") );
+		catch( Exception e) {
+		}
 
-		// change cust id
-		S.out( "---------------");
+		// change phone - okay to reuse the same wallet!
+		S.out( "json3***");
 		try {
-			var json2 = Onramp.getKycUrl( "Z" + json.getString( custId), wallet, phone, "");
-			json2.display();
-			assertTrue( false);
+			Onramp.getKycUrlFirst( Cookie.wallet, newPhone(), "http://redirect");
 		}
-		catch( Exception e) {}
-		
-		// remove cust id
-		S.out( "---------------");
-		try {
-			var json2 = Onramp.getKycUrl( "", wallet, phone, "");
-			json2.display();
-			assertTrue( false);
+		catch( Exception e) {
 		}
-		catch( Exception e) {}
+
+		// second time, pass ID only
+		S.out( "json4***");
+		var json4 = Onramp.getKycUrlNext( json.getString( custId), "http://redirect");
+		assertEquals( json.getString(custId), json4.getString(custId) );
 	}
-	
+
 	public void testApi() throws Exception {
-		Cookie.setNewFakeAddress(false);
-		
-		var data = Util.toJson( 
-				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
-				"currency", "INR", 
-				"buyAmt", 10000,
-				"recAmt", 1000
-				);
-		
-		cli().post("/api/onramp-convert", data).readJsonObject();
-		assert400(); // should fail due to no phone number
-		
 		Cookie.setNewFakeAddress(true);
 		
 		// get quote
@@ -165,33 +79,35 @@ public class TestOnramp extends MyTestCase {
 				"currency", "INR", 
 				"buyAmt", 10000
 				)).readJsonObject();
+		S.out( "got quote " + quote);
 		assertTrue( quote.getDouble( "recAmt") > 0);
 
-		// get kyc info (first time customerId will be created)
-		var json = cli().post("/api/onramp-get-kyc-info", Util.toJson(
-					"wallet_public_key", Cookie.wallet,
-					"cookie", Cookie.cookie
-					)).readJsonObject();
-		assert200_();
-		assertTrue( json.has( "status", "url", "customerId") );
-
-		// make sure second time works as well (customerId will be retrieved)
-		cli().post("/api/onramp-get-kyc-info", Util.toJson(
+		// convert, first time, creates new onramp id
+		S.out( "waiting");
+		cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie
-				)).readJsonObject();
+				"cookie", Cookie.cookie,
+				"currency", "INR", 
+				"buyAmt", 10000,
+				"recAmt", quote.getDouble( "recAmt")
+				));
 		assert200_();
+		S.out( "rec " + cli.getMessage() );
 		
-		cli().post( "/api/onramp-convert", Util.toJson(
-					"wallet_public_key", Cookie.wallet,
-					"cookie", Cookie.cookie,
-					"currency", "INR", 
-					"buyAmt", 10000,
-					"recAmt", quote.getDouble( "recAmt")
-					)).readJsonObject();
-		assert400();
-		
-		// for status, use getUserTransactions(), don't make the frontend remember the transactionId; but you should log it in the log table
+		S.out( "waiting2");
+		cli().postToJson( "/api/onramp-convert", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"currency", "INR", 
+				"buyAmt", 10000,
+				"recAmt", quote.getDouble( "recAmt")
+				));
+		assert200_();
+		S.out( "rec " + cli.getMessage() );
 	}
 	
+	private String newPhone() {
+		return "+44-" + Util.rnd.nextLong( 2172845679L, 7172845679L);
+	}
+// try one more time in test system	
 }

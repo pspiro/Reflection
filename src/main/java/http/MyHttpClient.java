@@ -202,6 +202,10 @@ public class MyHttpClient {
 		TestCase.assertEquals(code, getResponseCode() );
 	}
 
+	public JsonObject postToJson(String url, JsonObject data) throws Exception {
+		return postToJson(url, data.toString() );
+	}
+
 	public JsonObject postToJson(String url, String data) throws Exception {
 		post(url, data);
 		return readJsonObject();

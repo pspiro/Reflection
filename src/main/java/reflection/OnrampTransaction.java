@@ -20,7 +20,6 @@ public class OnrampTransaction extends MyTransaction {
 	public void handleGetQuote() {
 		wrap( () -> {
 			parseMsg();
-
 			m_walletAddr = m_map.getString( "wallet_public_key"); // used only for debugging
 
 			String currency = m_map.getRequiredString("currency");
@@ -31,43 +30,6 @@ public class OnrampTransaction extends MyTransaction {
 			
 			respond( Util.toJson( "recAmt", Onramp.getQuote( currency, amount) ) );
 		});
-	}
-
-	/** @return fields are url customerId and status */
-	private JsonObject getOrCreateOnrampUser() throws Exception {
-		var user = getorCreateUser();
-
-		String phone = fixPhone( user.getString( "phone") );
-		
-		require( isValidPhone( phone), RefCode.INVALID_REQUEST, 
-				"Please update your user profile to include a valid phone number.\n"
-				+ "The required format is: '+##-123456789' where ## is the country code, e.g. '+91-8374827'\n"
-				+ "(You can update your profile from the drop-down menu in the upper-right corner.)");
-		
-		String onrampId = user.getString( "onramp_id");
-		JsonObject json;
-		
-		// first time?
-		if (S.isNull( onrampId) ) {
-			json = Onramp.getKycUrl( m_walletAddr, phone, m_config.baseUrl() );
-			String newOnrampId = json.getString( "customerId");
-			Util.require( S.isNotNull( newOnrampId), "No on-ramp ID was assigned");
-			
-			m_config.sqlCommand( sql -> sql.insertOrUpdate(
-					"users",
-					Util.toJson( 
-						"wallet_public_key", m_walletAddr.toLowerCase(),
-						"onramp_id", newOnrampId),
-					"where wallet_public_key='%s'",
-					m_walletAddr.toLowerCase() ) );
-		}
-		else {
-			json = Onramp.getKycUrl( onrampId, m_walletAddr, phone, m_config.baseUrl() );
-			Util.require( json.getString( "customerId").equals( onrampId), "The on-ramp ID has changed" );  //onramp id should not change
-			Onramp.getKycUrl( onrampId, m_walletAddr, phone);
-		}
-
-		return json;
 	}
 
 	/** user sends: currency, amount, receive-amount 
@@ -107,18 +69,66 @@ public class OnrampTransaction extends MyTransaction {
 						+ "You will receive an email notifying you when it is completed.") );
 			}
 			else {
-				respond( json.append( Message, "Please KYC with our on-ramp partner"));
+				respond( json
+						.append( code, 200)
+						.append( Message, "Please KYC with our on-ramp partner"));
 			}
 		});
 	}
 
-	private String fixPhone(String phone) {
-		return phone.trim().replaceAll( " ", "-");
+	/** once a phone number is linked to the onramp cust id, it can never change,
+	 *  so we have to remember id
+	 *   
+	 * @return fields are url customerId and status */
+	private JsonObject getOrCreateOnrampUser() throws Exception {
+		var user = getorCreateUser();
+		
+		String onrampId = user.getString( "onramp_id");  // cust id and phone
+		JsonObject json;
+		
+		// first time?
+		if (S.isNull( onrampId) ) {
+			String phone = user.getString( "phone");
+
+			require( isValidPhone( phone), RefCode.INVALID_REQUEST, 
+					"Please update your user profile to include a valid phone number.\n"
+					+ "The required format is: '+##-123456789' where ## is the country code, e.g. '+91-8374827'\n"
+					+ "(You can update your profile from the drop-down menu in the upper-right corner.)");
+
+			json = Onramp.getKycUrlFirst( m_walletAddr, phone, m_config.baseUrl() );
+			String custId = json.getString( "customerId");
+			Util.require( S.isNotNull( custId), "No on-ramp ID was assigned");
+			
+			m_config.sqlCommand( sql -> sql.insertOrUpdate(
+					"users",
+					Util.toJson( 
+						"wallet_public_key", m_walletAddr.toLowerCase(),
+						"onramp_id", custId),
+					"where wallet_public_key='%s'",
+					m_walletAddr.toLowerCase() ) );
+		}
+		else {
+			json = Onramp.getKycUrlNext( onrampId, m_config.baseUrl() );
+			Util.require( json.getString( "customerId").equals( onrampId), "The on-ramp ID has changed" );  //onramp id should not change
+		}
+
+		return json;
 	}
 
 	private static boolean isValidPhone(String phone) {
-		return phone.startsWith( "+") && phone.indexOf( "-") != -1;
+		return	phone.startsWith( "+") && 
+				phone.indexOf( "-") != -1 && 
+				phone.indexOf( " ") == -1;
 	}
 	
+	interface Func {
+		void process( String str1, String str2);
+	}
+
+	// useless
+	void split( String str, String sep, Func func) {
+		String[] split = str.split( sep);
+		func.process( split[0], split[1]);
+	}
 
 }
