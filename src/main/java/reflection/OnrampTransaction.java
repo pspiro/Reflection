@@ -33,18 +33,6 @@ public class OnrampTransaction extends MyTransaction {
 		});
 	}
 
-	/** return KYC status and URL */
-	public void handleGetKycInfo() {
-		wrap( () -> {
-			parseMsg();
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookie("onramp-kyc");
-			
-			respond( getOrCreateOnrampUser()
-					.append( Message, "this is a message") ); // fields are url customerId and status );
-		});
-	}
-
 	/** @return fields are url customerId and status */
 	private JsonObject getOrCreateOnrampUser() throws Exception {
 		var user = getorCreateUser();

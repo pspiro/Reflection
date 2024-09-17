@@ -16,6 +16,7 @@ import org.json.simple.JsonArray;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
+import onramp.Onramp;
 import redis.MyRedis;
 import reflection.Stock;
 import reflection.Stocks;
@@ -113,7 +114,7 @@ public class Monitor {
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		m_tabs.addTab( "Email", new EmailPanel() );
-		//m_tabs.addTab( "OnRamp", new OnRampPanel() );
+		m_tabs.addTab( "OnRamp", new OnrampPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -197,6 +198,23 @@ public class Monitor {
 		public void refresh() throws Exception {
 			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/api/hot-stocks");
 			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class OnrampPanel extends JsonPanel {
+		OnrampPanel() {
+			super( new BorderLayout(), "abc");
+			add( m_model.createTable() );
+		}
+		
+		@Override protected void refresh() throws Exception {
+			JsonArray trans = Onramp.getAllTransactions();
+			
+			m_model.setNames( String.join( ",", trans.getKeys() ) );
+			m_model.fireTableStructureChanged();
+
+			setRows( trans);
 			m_model.fireTableDataChanged();
 		}
 	}

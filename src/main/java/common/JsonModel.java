@@ -64,7 +64,7 @@ public class JsonModel extends MyTableModel {
 	}
 
 	@Override public int getColumnCount() {
-		return m_namesMap.size();
+		return m_colNames.length;
 	}
 	
 	@Override public String getColumnName(int col) {

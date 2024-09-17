@@ -29,6 +29,9 @@ public class Onramp {
 	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
 	static String wlUrl = dev; 
 	
+	// more:
+	// url to add bank accounts https://api.onramp.money/onramp/api/v2/whiteLabel/bank/addFiatAccountUrl
+	
 	public static void setWhiteLabel( String url) {
 		S.out( "Setting onramp white label url to " + url);
 		wlUrl = url;
@@ -109,11 +112,10 @@ public class Onramp {
 	}
 		
 	// should be used by Monitor?
-	public static void getAllTransactions() throws Exception {
-		var resp = whiteLab( "/onramp/allTransaction", Util.toJson(
+	public static JsonArray getAllTransactions() throws Exception {
+		return whiteLab( "/onramp/allTransaction", Util.toJson(
 				"page", 1,
-				"pageSize", "500") );
-		resp.display();
+				"pageSize", "500") ).getArray( "data");
 	}
 		
 //		
@@ -227,7 +229,7 @@ public class Onramp {
 	}
 
 	/** 'data' could be json containing the status, or a string containing 'LOGIN_REQUIRED' */
-	private static String getKycStatus( String customerId) throws Exception {
+	public static String getKycStatus( String customerId) throws Exception {
 		var json = whiteLab( "/kyc/status", Util.toJson( "customerId", customerId) );
 		String data = json.getString( "data");
 		return JsonObject.isObject( data) ? json.getObject( "data").getString( "status") : data;
@@ -379,6 +381,16 @@ public class Onramp {
 		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
 		MyClient.getJson( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();  // get payment method types
 	}
+	
+	/** Returns a map of currency id to currency, e.g. '1': 'INR'
+	 *  Not currently used. No credentials required 
+	 * @throws Exception */
+	static JsonObject getCurrencies() throws Exception {
+		return MyClient
+				.getJson( "https://api.onramp.money/onramp/api/v2/whiteLabel/public/listSupportedFiat")
+				.getObject( "data")
+				.getObject( "onramp");
+	}
 
 	private static JsonObject getPaymentTypeMap() {
 		return Util.toJson( 
@@ -448,6 +460,21 @@ public class Onramp {
 "KES" : 15,
 "XAF" : 19,
 "BRL" : 7
+
+1": "INR",
+"2": "TRY",
+"3": "AED",
+"4": "MXN",
+"5": "VND",
+"6": "NGN",
+"7": "BRL",
+"8": "PEN",
+"10": "CLP",
+"11": "PHP",
+"12": "EUR",
+"14": "IDR",
+"20": "GBP",
+"29": "ARS"
 
 payment types
 For INR -> UPI

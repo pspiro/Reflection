@@ -5,6 +5,7 @@ import static monitor.Monitor.m_config;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
+import java.awt.event.ActionEvent;
 import java.util.HashMap;
 
 import javax.swing.Box;
@@ -52,7 +53,7 @@ public class WalletPanel extends MonPanel {
 	private CryptoPanel cryptoPanel = new CryptoPanel();
 	private TokPanel tokPanel = new TokPanel();
 	private LogPanel logPanel = new LogPanel();
-	private OnrampPanel onrampPanel = new OnrampPanel();
+	private OnrampUserPanel onrampPanel = new OnrampUserPanel();
 	private String m_emailAddr;
 
 	private final NewTabbedPanel m_tabs = new NewTabbedPanel(true);
@@ -602,31 +603,68 @@ public class WalletPanel extends MonPanel {
 		
 	}
 	
-	class OnrampPanel extends MiniTab {
-		JTextField id = new JTextField( 10);
-		JsonModel model = new JsonModel( "a,b");
+	class OnrampUserPanel extends MiniTab {
+		int size = 13;
+		private JTextField m_phone = new JTextField( size);
+		private JTextField m_id = new JTextField( size);
+		private JTextField m_kycStatus = new JTextField( size);
+		private JsonModel model = new JsonModel( "phone,onramp_id");
 		
-		OnrampPanel() {
+		OnrampUserPanel() {
 			super( new BorderLayout() );
 			
 			VerticalPanel p = new VerticalPanel();
-			p.add( "OnRamp ID", id);
-			
+			p.add( "Phone", m_phone, new HtmlButton( "Update", this::updatePhone), 
+					new JLabel("(Required format is: XX-XXXXXXXXX)") );
+			p.add( "OnRamp ID", m_id, new HtmlButton( "Update", this::updateId) );
+			p.add( "KYC Status", m_kycStatus);
 			
 			add( p, BorderLayout.NORTH);
 			add( model.createTable() );
+		}
+		
+		void updatePhone( ActionEvent e) {
+			wrap( () -> {
+				m_config.sqlCommand( sql -> sql.execWithParams(
+						"update users set phone = '%s' where wallet_public_key = '%s'",
+							m_phone.getText(), m_wallet.toLowerCase() ) );;
+				Util.inform( this, "Done");
+			});
+		}
+		
+		void updateId( ActionEvent e) {
+			wrap( () -> {
+				m_config.sqlCommand( sql -> sql.execWithParams(
+						"update users set onramp_id = '%s' where wallet_public_key = '%s'",
+							m_id.getText(), m_wallet.toLowerCase() ) );;
+				Util.inform( this, "Done");
+			});
 		}
 		
 		@Override protected void clear() {
 		}
 
 		@Override public void activated() {
-			wrap( () -> {
-				var users = m_config.sqlQuery("select onramp_id from users where wallet_public_key = '%s'", m_wallet);
-				if (users.size() > 0) {
-					String onrampId = users.get( 0).getString( "onramp_id");
-					model.setRows( Onramp.getUserTransactions( onrampId) );
-					model.fireTableDataChanged();
+			wrap( () -> {				
+				var users = m_config.sqlQuery("select phone, onramp_id from users where wallet_public_key = '%s'", m_wallet);
+				if (users.size() > 0) {					
+					var phone = users.get( 0).getString( "phone");
+					m_phone.setText( phone);
+
+					var id = users.get( 0).getString( "onramp_id");
+					m_id.setText( id);
+					
+					if (S.isNotNull( id) ) {
+						String status = Onramp.getKycStatus( id);
+						m_kycStatus.setText( status);
+						
+						var trans = Onramp.getUserTransactions( id);
+						model.setNames( String.join( ",", trans.getKeys() ) );
+						model.fireTableStructureChanged();
+	
+						model.setRows( trans);
+						model.fireTableDataChanged();
+					}
 				}
 			});
 		}
