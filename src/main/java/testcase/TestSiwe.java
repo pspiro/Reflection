@@ -71,7 +71,7 @@ public class TestSiwe extends MyTestCase {
 		assertEquals( 20, nonce.length() );  // confirm nonce
 
 		// the server uses the time on the message itself, not the actual elapsed time
-		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().minusSeconds(70) );
 		
 		JsonObject signedMsgSent = new JsonObject();
 		signedMsgSent.put( "signature", signature);
@@ -95,7 +95,7 @@ public class TestSiwe extends MyTestCase {
 		// confirm nonce
 		assertEquals( 20, nonce.length() );
 		
-		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().plusSeconds(22) );
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now().plusSeconds(70) );
 		
 		JsonObject signedMsgSent = new JsonObject();
 		signedMsgSent.put( "signature", signature);
@@ -158,7 +158,8 @@ public class TestSiwe extends MyTestCase {
 		S.out( "failDup " + cli.readJsonObject() );
 		assertEquals( 400, cli.getResponseCode() );
 	}
-	
+
+	// won't work on Mock server since it doesn't read config
 	public void testFailTimeout() throws Exception {
 		modifySetting( "sessionTimeout", "2000", () -> {
 			
@@ -222,8 +223,7 @@ public class TestSiwe extends MyTestCase {
 	
 	public void testSiweSignin() throws Exception {
 		// test siwe/init
-		cli = cli();
-		cli.get("/siwe/init");
+		cli().get("/siwe/init");
 		assert200_();
 		String nonce = cli.readJsonObject().getString("nonce");
 		assertEquals( 20, nonce.length() );  // confirm nonce
@@ -235,8 +235,7 @@ public class TestSiwe extends MyTestCase {
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
 		// test siwe/signin
-		cli = cli();
-		cli.post("/siwe/signin", signedMsgSent.toString() );
+		cli().post("/siwe/signin", signedMsgSent.toString() );
 		assert200_();
 		String cookie = cli.getHeaders().get("set-cookie");
 		assertTrue( cookie != null && cookie.split("=").length >= 2);
@@ -249,8 +248,7 @@ public class TestSiwe extends MyTestCase {
 		assertEquals( nonce, msg3.getString("nonce"));
 
 		// test successful siwe/me
-		cli = cli();
-		cli.addHeader("Cookie", "mycookie=abcde; " + cookie)  // add an unrelated cookie for fun
+		cli().addHeader("Cookie", "mycookie=abcde; " + cookie)  // add an unrelated cookie for fun
 			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assert200_();
@@ -264,8 +262,8 @@ public class TestSiwe extends MyTestCase {
 		String badCookie = String.format( "__Host_authToken%s5=abc", TestSiwe.myWalletAddress);
 		cookie = badCookie + "; " + cookie;
 				
-		cli = cli();
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		cli().addHeader("Cookie", cookie)
+			.get("/siwe/me");
 		S.out( "me " + cli.readString() );
 		assert200_();
 		meResponseMsg = cli.readJsonObject();
@@ -279,18 +277,22 @@ public class TestSiwe extends MyTestCase {
 	public void testRestartRefAPI() throws Exception {
 		Cookie.setNewFakeAddress(false);
 		
-		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
+		cli().addHeader( "Cookie", Cookie.cookie)
+			.get("/siwe/me");
 		assert200_();
 
 		S.out( "Restart RefAPI");
 		Util.pause();
 
-		// missing cookie
-		cli().get( "/api/get-profile/" + Cookie.wallet);
-		assertEquals( 400, cli.getResponseCode() );
-
-		cli().post( "/api/get-profile/" + Cookie.wallet, Util.toJson("cookie", Cookie.cookie).toString() ); 
+		// still works
+		cli().addHeader( "Cookie", Cookie.cookie)
+			.get("/siwe/me");
 		assert200_();
+		
+		// fails with wrong cookie
+		cli().addHeader( "Cookie", Cookie.cookie + "abc")
+			.get("/siwe/me");
+		assert400();
 	}
 	
 	public void testFailCookie() throws Exception {
@@ -305,15 +307,13 @@ public class TestSiwe extends MyTestCase {
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
 		// test siwe/signin
-		cli = cli();
-		cli.post("/siwe/signin", signedMsgSent.toString() );
+		cli().post("/siwe/signin", signedMsgSent.toString() );
 		String cookie = cli.getHeaders().get("set-cookie");
 		//JsonObject signedMsgRec = JsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
 		//JsonObject msg3 = signedMsgRec.getObject("message");
 
 		// test siwe/me w/ no cookie
-		cli = cli();
-		cli.get("/siwe/me");
+		cli().get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		startsWith( "Null cookie", cli.getMessage() );
@@ -324,16 +324,14 @@ public class TestSiwe extends MyTestCase {
 				""");
 		
 		String badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000005=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli = cli();
-		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		cli().addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "Cookie header wallet address", cli.getMessage() );
 
 		// test cookie not found
 		badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000015=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli = cli();
-		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		cli().addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "No session object found", cli.getMessage() );
@@ -343,16 +341,15 @@ public class TestSiwe extends MyTestCase {
 				 { "signature": "signature", "message": { "address": "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "nonce": "badnonce" } }
 				""");		
 		badCookie = String.format( "__Host_authToken0xb016711702D3302ceF6cEb62419abBeF5c44450e5=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli = cli();
-		cli.addHeader("cookie", badCookie).get("/siwe/me");
+		cli().addHeader("cookie", badCookie).get("/siwe/me");
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 		//startsWith( "Cookie nonce", cli.getMessage() );
 
 		// test a successful me
 		S.sleep(500);
-		cli = cli();
-		cli.addHeader("Cookie", cookie).get("/siwe/me");
+		cli().addHeader("Cookie", cookie)
+			.get("/siwe/me");
 		assert200_();
 	}
 	

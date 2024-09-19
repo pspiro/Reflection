@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import reflection.Config;
 import tw.util.S;
 import web3.NodeServer;
 

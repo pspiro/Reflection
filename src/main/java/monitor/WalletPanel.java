@@ -6,6 +6,8 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.Box;
@@ -39,7 +41,7 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
-import web3.MoralisServer;
+import web3.NodeServer;
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -312,7 +314,7 @@ public class WalletPanel extends MonPanel {
 			wrap( () -> {
 				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
-				HashMap<String, Double> posMap = MoralisServer.reqPositionsMap(m_wallet);
+				HashMap<String, Double> posMap = NodeServer.reqPositionsMap(m_wallet, Monitor.stocks.getAllContractsAddresses(), StockToken.stockTokenDecimals);
 				
 				double stockBal = 0;
 				

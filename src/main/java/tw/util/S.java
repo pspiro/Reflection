@@ -297,6 +297,10 @@ public class S {
 		return str == null ? "" : str;
 	}
 	
+	public static String notNull( String str, String def) {
+		return str == null ? def : str;
+	}
+	
 	public static double min(double v1, double v2) {
 		if( !isValid( v1) && !isValid( v2) ) {
 			return Double.MAX_VALUE;

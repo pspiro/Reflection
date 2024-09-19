@@ -451,9 +451,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Will convert a string to enum; may return null */
 	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
 		Object val = get(key);
-		return val == null 
-			? null 
-			: Util.getEnum(val.toString(), values);
+		return val == null ? null : Util.getEnum(val.toString(), values);
+	}
+
+	public <T extends Enum<T>> T getEnum( String key, T[] values, T defVal) throws Exception {
+		Object val = get(key);
+		return val == null ? null : Util.getEnum(val.toString(), values, defVal);
 	}
 
 	/** Add all keys to the key set */

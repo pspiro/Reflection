@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -687,6 +688,11 @@ public class Util {
 	/** Convert vararg to array */
 	@SafeVarargs public static <T> T[] toArray( T... ts) {
 		return ts;
+	}
+	
+	/** @deprecated call set.toArray() */
+	public static <T> T[] toArray( Set<T> set) {
+		return set.toArray( new Type[]); 
 	}
 	
 	/** convert to decimal; accepts null */

@@ -116,40 +116,6 @@ public class MoralisServer {
 		return JsonArray.parse( ret);
 	}
 	
-	/** Returns a map of contract address (lower case) -> position (Double).
-	 *  This version retrieves the map from Moralis; is having issues of
-	 *  missing positions as of 1/23/24 
-	 *  I think passing the contracts may fix it.
-	 *  They are claiming it is fixed as of 1/26/24;
-	 *  will not work for pulsechain 
-	 *  only used by Monitor
-	 *  @deprecated use RefBlocks */ 
-	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
-		//Util.require( contracts.length > 0, "Contract addresses are required");  // needed to fix Moralis bug
-		
-		HashMap<String,Double> map = new HashMap<>();
-		
-		for (JsonObject token : MoralisServer.reqPositionsList(wallet, new String[0] ) ) {
-			String addr = token.getString("token_address");			
-			String balance = token.getString("balance");
-			
-			if (S.isNotNull(addr) && S.isNotNull(balance) ) {
-				int decimals = token.getInt("decimals");
-				
-				// this was a bug that they fixed so should not happen anymore
-				// (it still seems to happen with spam tokens as of 7/30/24)
-				if (decimals == 0) {
-					S.out( "Error: Moralis query failed to return number of decimals for %s; defaulting to 18", addr);
-					decimals = 18;
-				}
-				
-				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, decimals) );
-			}
-		}
-		
-		return map;
-	}
-	
 	/** For ERC-20 token, tells you how much the spender is authorized to spend on behalf of owner.
 	 *  In our case, token is non-RUSD stablecoin, owner is the user, and spender is RUSD */  
 	public static JsonObject reqAllowance(String contract, String owner, String spender) throws Exception {

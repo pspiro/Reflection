@@ -83,7 +83,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// if no quantity specified, if > pos, or w/in .03 of pos, set it to pos
 			if (m_quantity == 0 || m_quantity > pos - .03) {
-				Util.truncate( pos, 4); // some parts only handle 4 dec, should be changed to 6... 
+				m_quantity = Util.truncate( pos, 4); // some parts only handle 4 dec, should be changed to 6... 
 			}
 			
 			m_quantity = Util.truncate( m_quantity, 4); // truncate after four digits because Erc20 rounds to four digits when converting to Blockchain mode
@@ -130,7 +130,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				}
 			}
 
-			// insufficient BUSD in RefWallet?
+			// insufficient BUSD in RefWallet or > maxAutoRedeem?
 			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
 			double allowance = Main.m_config.getApprovedAmt(); // sends query
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {

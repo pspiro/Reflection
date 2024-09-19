@@ -25,6 +25,7 @@ import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.TradingHours.Session;
+import siwe.SiweTransaction;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -119,6 +120,9 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
 		
+		// start Siwe thread to periodically save siwe cookies
+		SiweTransaction.startThread();
+		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
@@ -130,18 +134,18 @@ public class Main implements ITradeReportHandler {
 			
 			// SIWE signin
 			// or: nonce=init, verify=signin, session=me, signout=signout
-			server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-			server.createContext("/siwe/nonce", exch -> new SiweTransaction( this, exch).handleSiweInit() );
-			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-			server.createContext("/siwe/verify", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-			server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-			server.createContext("/siwe/session", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
+			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
+			server.createContext("/siwe/nonce", exch -> new SiweTransaction( exch).handleSiweInit() );
+			server.createContext("/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/siwe/verify", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/siwe/session", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 
-			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
-			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-			server.createContext("/api/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-			server.createContext("/api/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
+			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );

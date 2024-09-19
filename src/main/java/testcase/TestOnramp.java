@@ -1,12 +1,9 @@
 package testcase;
 
-import static reflection.Main.require;
-
 import org.json.simple.JsonObject;
 
 import common.Util;
 import onramp.Onramp;
-import reflection.RefCode;
 import tw.util.S;
 
 public class TestOnramp extends MyTestCase {

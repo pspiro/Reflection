@@ -24,6 +24,7 @@ import refblocks.RbRusd;
 import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
+import siwe.SiweTransaction;
 import tw.google.Auth;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -246,8 +247,6 @@ public class Config extends ConfigBase {
 		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
 		this.autoFill = m_tab.getBoolean("autoFill");
-		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
-		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
@@ -274,6 +273,11 @@ public class Config extends ConfigBase {
 		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
+		
+		// siwe config items
+		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
+		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
+		SiweTransaction.setTimeouts( siweTimeout, sessionTimeout);
 		
 		Alerts.setEmail( this.alertEmail);
 		

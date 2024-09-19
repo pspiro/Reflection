@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -298,5 +299,13 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	/** get rid of null values and empty strings */
 	public void removeNulls() {
 		forEach( rec -> rec.removeNulls() );
+	}
+
+	/** Create a map of key to record 
+	 * @throws Exception */
+	public HashMap<String, JsonObject> getMap(String key) throws Exception {
+		HashMap<String, JsonObject> map = new HashMap<>();
+		Util.forEach( this, rec -> Util.iff( rec.getString( key), val -> map.put( val, rec) ) );;
+		return map;
 	}
 }

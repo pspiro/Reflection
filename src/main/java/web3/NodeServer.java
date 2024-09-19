@@ -22,7 +22,7 @@ public class NodeServer {
 
 	/** different nodes have different batch sizes; you can probably get bigger size
 	 * with a paid node e.g. Moralis */
-	static int maxBatchSize = 20; // should be configurable; it may be that different MESSAGE have dif. max batch size. but I saw large sizes > 100 on all chains for small message
+	static int maxBatchSize = 20; // default only; size is overriden from config file
 
 	/** you could make this a member var */
 	private static String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
