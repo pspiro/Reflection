@@ -692,7 +692,7 @@ public class Util {
 	
 	/** @deprecated call set.toArray() */
 	public static <T> T[] toArray( Set<T> set) {
-		return set.toArray( new Type[]); 
+		throw new Error(); 
 	}
 	
 	/** convert to decimal; accepts null */
