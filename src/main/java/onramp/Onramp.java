@@ -182,7 +182,7 @@ public class Onramp {
 	}
 	
 	/** first call; customer id will be assigned 
-	 *  fields are url customerId and status
+	 *  fields are url customerId
 	 *  WARNING: if you get 'Please provide a valid phone number string, it may
 	 *  mean that your wallet is already associated with a different phone number */ 
 	public static JsonObject getKycUrlFirst( String wallet, String phone, String redirectUrl) throws Exception {
@@ -195,7 +195,7 @@ public class Onramp {
 	}
 
 	/** subsequent call; wallet and phone can change
-	 * fields are url customerId and status */
+	 * fields are url customerId */
 	public static JsonObject getKycUrlNext( String custId, String redirectUrl) throws Exception {
 		var req = Util.toJson(
 				"customerId", custId,
@@ -224,8 +224,7 @@ public class Onramp {
 			
 		return Util.toJson( 
 				"url", url, 
-				"customerId", custId, 
-				"status", getKycStatus( custId)  // not sure if this is being used
+				"customerId", custId
 				);
 	}
 
