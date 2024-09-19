@@ -48,6 +48,21 @@ public class Onramp {
 		}
 	}
 
+	public enum KycStatus {
+		TEMPORARY_FAILED, 
+		PERMANENT_FAILED, 
+		BASIC_KYC_COMPLETED, 
+		INTERMEDIATE_KYC_COMPLETED,
+		ADVANCE_KYC_COMPLETED,
+		IN_REVIEW, 
+		COMPLETED;
+		
+		public boolean isCompleted() {
+			return Util.equals( this, BASIC_KYC_COMPLETED, INTERMEDIATE_KYC_COMPLETED, ADVANCE_KYC_COMPLETED);
+		}
+	}
+	
+
 	public static void main(String[] args) throws Exception {
 //		queryHistory();
 //		queryLimits().display();
@@ -57,17 +72,20 @@ public class Onramp {
 //		query( "https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType").display();
 //		S.out( getKycUrl("qFpJQsYRKT_30054", "0xaecd5a9e92dfc6dda75d9666ab9fe97d1bea63a8", "+91-8810484514" ) );
 //		getPrices().display();
-		S.out( getQuote( "EUR", 1000) );
-		S.out( getQuote( "EUR", 10000) );
-		S.out( getQuote( "EUR", 100000) );
-		S.out( getQuote( "EUR", 12000) );
-		S.out( getQuote( "EUR", 120000) );
-		S.out( getQuote( "EUR", 1200000) );
-
-//
-//		JsonObject prices = getPrices();
-//		prices.getObject( "data").getObject( "onramp").forEach( (key,val) -> 
-//			S.out( "%s: %s", tokenMap.getString( key.toString() ), val) );
+		
+		S.out( getKycStatus( "jB1HTZwft1_2440") );
+//		var status = KycStatus.BASIC_KYC_COMPLETED;
+//		S.out( "setting to " + status);
+//		updateKycStatus( "jB1HTZwft1_2440", status); 
+//		S.out( getKycStatus( "jB1HTZwft1_2440") );
+		
+//		double rate = getQuote( "EUR", 100);
+//		S.out( "rate is " + rate);
+		
+//		transact( "jB1HTZwft1_2440", 100, "EUR", 
+//				"0x2703161D6DD37301CEd98ff717795E14427a462B", 108.22).display();
+		
+		S.out( getTransStatus("jB1HTZwft1_2440", "1137") );
 	}
 	
 	public static JsonObject transact(
@@ -95,12 +113,34 @@ public class Onramp {
 		return whiteLab( "/onramp/createTransaction", body);
 	}
 	
-	public static void getTransaction( String customerId, String transactionId) throws Exception {
+	public static JsonObject updateKycStatus(String customerId, KycStatus status) throws Exception {
+		return whiteLab( "/test/changeKycStatus", Util.toJson(
+				"customerId", customerId,
+				"status", status
+				));
+	}
+
+	// Transaction status
+//	-2, -1 : FAILED
+//	2, 10: FIAT_DEPOSIT_RECEIVED
+//	3, 13: TRADE_COMPLETED
+//	14: ON_CHAIN_INITIATED
+//	4, 15: ON_CHAIN_COMPLETED
+	
+	public static int getTransStatus( String customerId, String transactionId) throws Exception {
 		var resp = whiteLab( "/onramp/transaction", Util.toJson(
 				"customerId", customerId,
 				"transactionId", transactionId
-				));
-		resp.display();
+				) );
+		return resp.getObjectNN("data").getInt( "status");
+	}
+	
+	public static JsonObject setTransStatus( String customerId, String transactionId, int status) throws Exception {
+		return whiteLab( "test/changeOnrampStatus", Util.toJson(
+				"customerId", customerId,
+				"transactionId", transactionId,
+				"status", "" + status
+				) ); 
 	}
 	
 	public static JsonArray getUserTransactions( String customerId) throws Exception {
@@ -118,44 +158,6 @@ public class Onramp {
 				"pageSize", "500") ).getArray( "data");
 	}
 		
-//		
-//		{
-//		    "status": 1,
-//		    "code": 200,
-//		    "data": {
-//		        "transactionId": "635",
-//		        "createdAt": "2023-12-08 00:31:44",
-//		        "fiatAmount": "1741",
-//		        "fiatPaymentInstructions": {
-//		            "type": "IMPS",
-//		            "bank": {
-//		                "name": "",
-//		                "accountNumber": "",
-//		                "ifsc": "",
-//		                "type": "",
-//		                "branch": "",
-//		                "bank": ""
-//		            },
-//		            "bankNotes": [
-//		                {
-//		                    "type": -1,
-//		                    "msg": "NEFT not allowed for this account."
-//		                },
-//		                {
-//		                    "type": 1,
-//		                    "msg": "Bank transfers from UPI Apps like gPay, PhonePe, Paytm are working."
-//		                },
-//		                {
-//		                    "type": 1,
-//		                    "msg": "UPI bank transfers, IMPS is allowed for this account."
-//		                }
-//		            ],
-//		            "otp": "3217"
-//		        }
-//		    }
-//		}
-
-	
 	/** why do I need the chain and payment method to get a quote? 
 	 *  are there different prices on different chains and methods? */
 	public static double getQuote( String currency, double fromAmt) throws Exception {
@@ -201,7 +203,7 @@ public class Onramp {
 	public static JsonObject getKycUrlNext( String custId, String redirectUrl) throws Exception {
 		var req = Util.toJson(
 				"customerId", custId,
-				"type", "INDIVIDUAL",  		// individual or business
+				"type", "INDIVIDUAL",  			  // individual or business
 				"kycRedirectUrl", redirectUrl);  // user is redirected here after kyc
 		return getKycUrl( req);
 	}

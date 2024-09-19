@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import onramp.Onramp;
+import onramp.Onramp.KycStatus;
 import tw.util.S;
 
 public class OnrampTransaction extends MyTransaction {
@@ -42,7 +43,8 @@ public class OnrampTransaction extends MyTransaction {
 			
 			var json = getOrCreateOnrampUser();  // get url, customerId, and status
 			
-			if (json.getString( "status").equals( "EDD_COMPLETED") ) {
+			KycStatus status = json.getEnum( "status", KycStatus.values(), KycStatus.IN_REVIEW);
+			if (status.isCompleted() ) {
 				String currency = m_map.getRequiredString("currency");
 				require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 				
