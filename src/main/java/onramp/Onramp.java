@@ -48,7 +48,9 @@ public class Onramp {
 		}
 	}
 
+	/** these are the known statuses but there could be others */
 	public enum KycStatus {
+		LOGIN_REQUIRED,
 		TEMPORARY_FAILED, 
 		PERMANENT_FAILED, 
 		BASIC_KYC_COMPLETED, 
@@ -56,10 +58,6 @@ public class Onramp {
 		ADVANCE_KYC_COMPLETED,
 		IN_REVIEW, 
 		COMPLETED;
-		
-		public boolean isCompleted() {
-			return Util.equals( this, BASIC_KYC_COMPLETED, INTERMEDIATE_KYC_COMPLETED, ADVANCE_KYC_COMPLETED);
-		}
 	}
 	
 
@@ -168,8 +166,6 @@ public class Onramp {
 				"paymentMethodType", mapFiatToPaymentType.getString( currency),
 				"chain", "MATIC20"
 				) );
-
-		json.display();
 		
 		var data = json.getObjectNN( "data");
 		double toAmt = data.getDouble( "toAmount");

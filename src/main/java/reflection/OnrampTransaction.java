@@ -51,8 +51,8 @@ public class OnrampTransaction extends MyTransaction {
 			
 			var json = getOrCreateOnrampUser();  // get url, customerId, and status
 			
-			KycStatus status = json.getEnum( "status", KycStatus.values(), KycStatus.IN_REVIEW);
-			if (status.isCompleted() ) {
+			String status = json.getString( "status");
+			if (isCompleted( status) ) {
 				String currency = m_map.getRequiredString("currency");
 				require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 				
@@ -85,11 +85,19 @@ public class OnrampTransaction extends MyTransaction {
 						"recAmt", receiveAmt) );
 			}
 			else {
+				out( "  KYC not completed, status is " + status);
 				respond( json
 						.append( code, 200)
 						.append( Message, "Please KYC with our on-ramp partner"));
 			}
 		});
+	}
+
+	private boolean isCompleted(String status) {
+		return Util.equals( status.toUpperCase(), 
+				"BASIC_KYC_COMPLETED", 
+				"INTERMEDIATE_KYC_COMPLETED", 
+				"ADVANCE_KYC_COMPLETED");
 	}
 
 	/** once a phone number is linked to the onramp cust id, it can never change,
