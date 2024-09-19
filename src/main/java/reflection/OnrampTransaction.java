@@ -11,6 +11,7 @@ import common.Util;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
 import tw.util.S;
+import util.LogType;
 
 public class OnrampTransaction extends MyTransaction {
 
@@ -26,10 +27,17 @@ public class OnrampTransaction extends MyTransaction {
 			String currency = m_map.getRequiredString("currency");
 			require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 			
-			double amount = m_map.getRequiredDouble( "buyAmt");
-			require( amount > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
+			double buyAmt = m_map.getRequiredDouble( "buyAmt");
+			require( buyAmt > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
 			
-			respond( Util.toJson( "recAmt", Onramp.getQuote( currency, amount) ) );
+			double quote = Onramp.getQuote( currency, buyAmt);
+			respond( Util.toJson( "recAmt", quote) );
+			
+			jlog( LogType.ONRAMP, Util.toJson( 
+					"type", "quote",
+					"currency", currency,
+					"buyAmt", buyAmt,
+					"recAmt", quote) );
 		});
 	}
 
@@ -48,8 +56,8 @@ public class OnrampTransaction extends MyTransaction {
 				String currency = m_map.getRequiredString("currency");
 				require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 				
-				double amount = m_map.getRequiredDouble( "buyAmt");
-				require( amount > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
+				double buyAmt = m_map.getRequiredDouble( "buyAmt");
+				require( buyAmt > 0, RefCode.INVALID_REQUEST, "The buy amount is invalid");
 				
 				double receiveAmt = m_map.getRequiredDouble( "recAmt");
 				require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
@@ -59,16 +67,22 @@ public class OnrampTransaction extends MyTransaction {
 				
 				var resp = Onramp.transact( 
 						onrampId,
-						amount,
+						buyAmt,
 						currency,
 						m_config.refWalletAddr(),
 						receiveAmt);
 				
 				require( resp.getInt( "code") == 200, RefCode.ONRAMP_FAILED,
-					"An error occurred - " + resp.getString( "error") );
+					"An on-ramp error occurred - " + resp.getString( "error") );
 	
 				respond( Util.toJson( code, 200, Message, "The transaction has been initiated.<br>"
 						+ "You will receive an email notifying you when it is completed.") );
+				
+				jlog( LogType.ONRAMP, Util.toJson(
+						"type", "order",
+						"currency", currency,
+						"buyAmt", buyAmt,
+						"recAmt", receiveAmt) );
 			}
 			else {
 				respond( json

@@ -6,8 +6,6 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.Box;
@@ -25,9 +23,11 @@ import org.json.simple.JsonObject;
 import common.JsonModel;
 import common.Util;
 import http.MyClient;
+import monitor.AnyQueryPanel.MyComboBox;
 import monitor.wallet.BlockDetailPanel;
 import monitor.wallet.BlockSummaryPanel;
 import onramp.Onramp;
+import onramp.Onramp.KycStatus;
 import reflection.Stock;
 import test.MyTimer;
 import tw.util.DualPanel;
@@ -606,11 +606,13 @@ public class WalletPanel extends MonPanel {
 	}
 	
 	class OnrampUserPanel extends MiniTab {
-		int size = 13;
+		int size = 11;
 		private JTextField m_phone = new JTextField( size);
 		private JTextField m_id = new JTextField( size);
-		private JTextField m_kycStatus = new JTextField( size);
+		private JTextField m_kycStatus = new JTextField( size + 5);
 		private JsonModel model = new JsonModel( "phone,onramp_id");
+		private MyComboBox m_kycCombo = new MyComboBox(KycStatus.values() );
+		private JsonModel m_logModel = new JsonModel( "type,currency,buyAmt,recAmt");
 		
 		OnrampUserPanel() {
 			super( new BorderLayout() );
@@ -619,10 +621,21 @@ public class WalletPanel extends MonPanel {
 			p.add( "Phone", m_phone, new HtmlButton( "Update", this::updatePhone), 
 					new JLabel("(Required format is: XX-XXXXXXXXX)") );
 			p.add( "OnRamp ID", m_id, new HtmlButton( "Update", this::updateId) );
-			p.add( "KYC Status", m_kycStatus);
+			p.add( "KYC Status", m_kycStatus, m_kycCombo, new HtmlButton( "Set", this::setKyc) );
 			
 			add( p, BorderLayout.NORTH);
 			add( model.createTable() );
+			add( m_logModel.createTable(), BorderLayout.EAST);
+		}
+		
+		void setKyc(ActionEvent e) {
+			wrap( () -> { 
+				Onramp.updateKycStatus( m_id.getText(), (KycStatus)m_kycCombo.getSelected() );
+				
+				m_kycStatus.setText( Onramp.getKycStatus( m_id.getText() ) );
+				
+				Util.inform( this, "Done");
+			});
 		}
 		
 		void updatePhone( ActionEvent e) {
@@ -668,6 +681,11 @@ public class WalletPanel extends MonPanel {
 						model.fireTableDataChanged();
 					}
 				}
+				
+				var logs = m_config.sqlQuery( "select * from log where wallet_public_key = '%s' and type = '%s'",
+						m_wallet, LogType.ONRAMP);
+				m_logModel.setRows( logs);
+				m_logModel.fireTableDataChanged();
 			});
 		}
 	}

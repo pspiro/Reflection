@@ -11,7 +11,7 @@ import common.JsonModel;
 import tw.util.S;
 
 /** Panel with a table that contains rows of Json objects; each column header is a key 
- *  in the Json table */
+ *  in the Json table */  // this really adds nothing, just use JsonModel
 public abstract class JsonPanel extends MonPanel {
 	final protected JsonModel m_model;
 	

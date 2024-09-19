@@ -65,6 +65,11 @@ class AnyQueryPanel extends JsonPanel {
 	}
 
 	static class MyComboBox extends JComboBox<Object> {
+		MyComboBox(Object[] data) {
+			this();
+			set( data);
+		}
+
 		MyComboBox() {
 			super( "wwwwwwwwwwwww".split(",") ); 
 		}
