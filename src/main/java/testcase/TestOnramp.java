@@ -4,6 +4,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import onramp.Onramp;
+import onramp.Onramp.KycStatus;
 import tw.util.S;
 
 public class TestOnramp extends MyTestCase {
@@ -72,35 +73,56 @@ public class TestOnramp extends MyTestCase {
 		Cookie.setNewFakeAddress(true);
 		
 		// get quote
-		var quote = cli().post( "/api/onramp-get-quote", Util.toJson( 
-				"currency", "INR", 
-				"buyAmt", 10000
-				)).readJsonObject();
+		S.out( "getquote");
+		var quote = cli().postToJson( "/api/onramp-get-quote", Util.toJson( 
+				"wallet_public_key", Cookie.wallet,
+				"currency", "EUR", 
+				"buyAmt", 3000
+				));
 		S.out( "got quote " + quote);
 		assertTrue( quote.getDouble( "recAmt") > 0);
 
 		// convert, first time, creates new onramp id
-		S.out( "waiting");
-		cli().postToJson( "/api/onramp-convert", Util.toJson(
+		S.out( "testapi1");
+		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"currency", "INR", 
-				"buyAmt", 10000,
+				"currency", "EUR", 
+				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
 				));
 		assert200_();
-		S.out( "rec " + cli.getMessage() );
+		assertNotNull( resp.getString( "url") ); 
+		assertNotNull( resp.getString( "customerId") );
 		
-		S.out( "waiting2");
-		cli().postToJson( "/api/onramp-convert", Util.toJson(
+		S.out( "testapi2");
+		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
-				"currency", "INR", 
-				"buyAmt", 10000,
+				"currency", "EUR", 
+				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
 				));
 		assert200_();
-		S.out( "rec " + cli.getMessage() );
+		assertNotNull( resp.getString( "url") ); 
+		assertNotNull( resp.getString( "customerId") );
+		
+		S.out( "enter OTP to progress:");
+		S.out( "url is:\n" + resp.getString( "url") );
+		Util.pause();
+
+		Onramp.updateKycStatus(resp.getString( "customerId"), KycStatus.BASIC_KYC_COMPLETED);
+
+		S.out( "testapi3");
+		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"currency", "EUR", 
+				"buyAmt", 3000,
+				"recAmt", quote.getDouble( "recAmt")
+				));
+		assert200_();
+		startsWith( "The transaction has been initiated", cli.getMessage() );
 	}
 	
 	private String newPhone() {

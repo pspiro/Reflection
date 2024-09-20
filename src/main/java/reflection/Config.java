@@ -415,11 +415,14 @@ public class Config extends ConfigBase {
 	}
 	
 	private String fetchPw() throws Exception {
-		try {
-			String str = IStream.readLine("name.txt");
-			if (str.length() > 0) return str;
-		} catch (Exception e) {
+		if (!Util.equals( m_tab.tabName().toLowerCase(), "prod-config", "pulse-config") ) {
+			try {
+				String str = IStream.readLine("name.txt");
+				if (str.length() > 0) return str;
+			} catch (Exception e) {
+			}
 		}
+		
 		// get refblocks pw from pwserver
 		var json = Util.toJson( 
 				"code", "lwjkefdj827",

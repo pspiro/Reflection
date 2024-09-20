@@ -612,7 +612,7 @@ public class WalletPanel extends MonPanel {
 		private JTextField m_kycStatus = new JTextField( size + 5);
 		private JsonModel model = new JsonModel( "phone,onramp_id");
 		private MyComboBox m_kycCombo = new MyComboBox(KycStatus.values() );
-		private JsonModel m_logModel = new JsonModel( "type,currency,buyAmt,recAmt");
+		private JsonModel m_logModel = new JsonModel( "created_at,type,currency,buyAmt,recAmt");
 		
 		OnrampUserPanel() {
 			super( new BorderLayout() );
@@ -684,7 +684,15 @@ public class WalletPanel extends MonPanel {
 				
 				var logs = m_config.sqlQuery( "select * from log where wallet_public_key = '%s' and type = '%s'",
 						m_wallet, LogType.ONRAMP);
-				m_logModel.setRows( logs);
+
+				var data = new JsonArray();
+				for (var log : logs) {
+					data.add( log
+							.getObject( "data")
+							.append( "created_at", log.getString("created_at").substring( 0, 19) ) );
+				}
+				
+				m_logModel.setRows( data);
 				m_logModel.fireTableDataChanged();
 			});
 		}

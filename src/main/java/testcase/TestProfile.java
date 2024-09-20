@@ -133,7 +133,7 @@ public class TestProfile extends MyTestCase {
 		json.put( "first_name", "jammy");
 		json.put( "last_name", "sprate");
 		json.put( "email", email);
-		json.put( "phone", "+91-" + Util.rnd.nextInt( 1000, 1000000) );  // valid for onramp
+		json.put( "phone", "+44-" + Util.rnd.nextLong( 2222222222L, 2229999999L) );  // valid for onramp
 		json.put( "pan_number", "XXXXX9393Y");
 		json.put( "aadhaar", "939393939393");
 		return json;

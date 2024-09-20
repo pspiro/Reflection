@@ -394,7 +394,7 @@ public class Onramp {
 
 	private static JsonObject getPaymentTypeMap() {
 		return Util.toJson( 
-			"INR", "IMPS",
+			//"INR", "IMPS", // not supported
 			"TRY", "TRY_BANK_TRANSFER",
 			"AED", "AED-BANK-TRANFER",
 			"MXN", "SPEI",

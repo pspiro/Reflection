@@ -22,7 +22,7 @@ public class OnrampTransaction extends MyTransaction {
 	public void handleGetQuote() {
 		wrap( () -> {
 			parseMsg();
-			m_walletAddr = m_map.getString( "wallet_public_key"); // used only for debugging
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");  // used in jlog
 
 			String currency = m_map.getRequiredString("currency");
 			require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
@@ -75,9 +75,9 @@ public class OnrampTransaction extends MyTransaction {
 				
 				respond( json
 						.append( code, RefCode.OK)
-						.append( Message, "Please verify your identity with our on-ramp partner"));
+						.append( Message, "Please verify your identity with our on-ramp partner") );
 				
-				jlog( LogType.ONRAMP, Util.toJson( "type", "order/key part 1") );
+				jlog( LogType.ONRAMP, Util.toJson( "type", "order/KYC part 1") );
 			}
 			
 			// we have ID; KYC already completed?
@@ -121,7 +121,7 @@ public class OnrampTransaction extends MyTransaction {
 						.append( code, RefCode.OK)
 						.append( Message, "Please continue your KYC with our on-ramp partner"));
 
-				jlog( LogType.ONRAMP, Util.toJson( "type", "order/key part 2") );
+				jlog( LogType.ONRAMP, Util.toJson( "type", "order/KYC part 2") );
 			}
 		});
 	}
