@@ -44,7 +44,7 @@ public class TestOnramp extends MyTestCase {
 		// first time
 		S.out( "json1***");
 		JsonObject json = Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
-		assertTrue( json.has( "url", custId, "status"));
+		assertTrue( json.has( "kycUrl", custId));
 
 		// change wallet - fails with misleading message about the phone number
 		S.out( "json2***");
