@@ -78,6 +78,9 @@ public class OnrampTransaction extends MyTransaction {
 						.append( Message, "Please verify your identity with our on-ramp partner") );
 				
 				jlog( LogType.ONRAMP, Util.toJson( "type", "order/KYC part 1") );
+
+				alert( "User started onramp KYC", 
+						String.format( "%s %s", user.getString( "first_name"), user.getString( "last_name") ) );
 			}
 			
 			// we have ID; KYC already completed?
@@ -110,6 +113,9 @@ public class OnrampTransaction extends MyTransaction {
 						"currency", currency,
 						"buyAmt", buyAmt,
 						"recAmt", receiveAmt) );
+				
+				alert( "USER SUBMITTED ONRAMP ORDER", 
+						String.format( "%s %s", user.getString( "first_name"), user.getString( "last_name") ) );
 			}
 			
 			// continue with subsequent KYC
