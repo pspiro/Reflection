@@ -14,6 +14,7 @@ import tw.util.S;
 import util.LogType;
 
 public class OnrampTransaction extends MyTransaction {
+	static String KycMessage = "You will now be redirected to our on-ramp partner to verify your identiy. When completed, please come back to this screen and resubmit your request.";
 
 	OnrampTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange, true);
@@ -56,12 +57,11 @@ public class OnrampTransaction extends MyTransaction {
 			if (S.isNull( onrampId) ) {
 				String phone = user.getString( "phone");
 
-				require( isValidPhone( phone), RefCode.INVALID_REQUEST, 
-						"Please update your user profile to include a valid phone number.\n"
-						+ "The required format is: '+##-123456789' where ## is the country code, e.g. '+91-8374827'\n"
-						+ "(You can update your profile from the drop-down menu in the upper-right corner.)");
+				require( isValidPhone( phone), RefCode.INVALID_USER_PROFILE, 
+						"Please update your user profile to include a valid phone number.\n\n"
+						+ "The required format is: '##-########'\n\nwhere the first set of digits is the country code");
 
-				var json = Onramp.getKycUrlFirst( m_walletAddr, phone, m_config.baseUrl() );
+				var json = Onramp.getKycUrlFirst( m_walletAddr, format( phone), m_config.baseUrl() );
 				String custId = json.getString( "customerId");
 				Util.require( S.isNotNull( custId), "No on-ramp ID was assigned");
 				
@@ -75,7 +75,7 @@ public class OnrampTransaction extends MyTransaction {
 				
 				respond( json
 						.append( code, RefCode.OK)
-						.append( Message, "Please verify your identity with our on-ramp partner") );
+						.append( Message, KycMessage) );
 				
 				jlog( LogType.ONRAMP, Util.toJson( "type", "order/KYC part 1") );
 			}
@@ -133,12 +133,35 @@ public class OnrampTransaction extends MyTransaction {
 				"ADVANCE_KYC_COMPLETED");
 	}
 
-	private static boolean isValidPhone(String phone) {
-		return	phone.startsWith( "+") && 
-				phone.indexOf( "-") != -1 && 
-				phone.indexOf( " ") == -1;
+	public static void main(String[] args) throws Exception {
+		S.out( isValidPhone( "-9393939393") );
+		S.out( isValidPhone( "2-22224") );
+		S.out( isValidPhone( "2 -22224") );
+		S.out( isValidPhone( "2- 22224") );
+		S.out( isValidPhone( "34-8282") );
+		S.out( isValidPhone( "222-9393939") );
+		S.out( isValidPhone( "+939-939393") );
+		S.out( isValidPhone( "+9349-939393") );
+		
+		S.out( format( "2-838383"));
+		S.out( format( "+2 -838383"));
 	}
 	
+	/** add the required '+' sign if necessary, strip spaces */
+	static String format( String phone) {
+		phone = strip( phone);
+		return phone.startsWith( "+") ? phone : "+" + phone;
+	}
+	
+	static boolean isValidPhone(String phone) {
+		String[] toks = strip(phone).split( "-");
+		return toks.length == 2 && toks[0].length() >= 1 && toks[0].length() <= 4; 
+	}
+	
+	private static String strip(String phone) {
+		return phone.replaceAll( " ", "");
+	}
+
 	interface Func {
 		void process( String str1, String str2);
 	}
