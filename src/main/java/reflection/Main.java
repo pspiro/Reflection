@@ -1,6 +1,9 @@
 package reflection;
 
 import java.io.OutputStream;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -617,8 +620,21 @@ public class Main implements ITradeReportHandler {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
-	
+
+    private LocalDate lastDate;
+    
+    /** check if it's time to send out the summary emails; when data changes in NY */
+	void checkSummaries() {
+		LocalDate today = ZonedDateTime.now( ZoneId.of("America/New_York") ).toLocalDate();
+        if (lastDate != null && !today.equals(lastDate)) {        	
+        	lastDate = today;
+        	
+        	Util.wrap( () -> new SummaryEmail( m_config, m_stocks).generateSummaries() );
+        }
+	}
 }
+
+
 
 //no change
 
