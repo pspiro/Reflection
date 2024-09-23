@@ -28,6 +28,11 @@ public class Onramp {
 	static String prod = "https://api.onramp.money/onramp/api/v2/whiteLabel";
 	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
 	static String wlUrl = dev; 
+	static boolean debug = true;
+	
+	public static void useProd() {
+		wlUrl = prod;
+	}
 	
 	// more:
 	// url to add bank accounts https://api.onramp.money/onramp/api/v2/whiteLabel/bank/addFiatAccountUrl
@@ -334,9 +339,9 @@ public class Onramp {
 		byte[] result = mac.doFinal( encodedPayload.getBytes() );
 		String signature = Encrypt.bytesToHex(result);
 
-		S.out( "Sending onramp request");
-		S.out( "  onramp url: " + url);
-		S.out( "  onramp body: " + body);
+		out( "Sending onramp request");
+		out( "  request url: " + url);
+		out( "  request body: " + body);
 //		S.out( "payload: " + payload);
 //		S.out( "encoded payload: " + encodedPayload);
 //		S.out( "signature: " + signature);
@@ -349,9 +354,13 @@ public class Onramp {
 				.header("X-ONRAMP-SIGNATURE", signature)
 				.query().body();
 		
-		S.out( "  onramp response: " + str);
+		out( "  onramp response: " + str);
 
 		return JsonObject.parse( str);
+	}
+	
+	static void out( String str) {
+		if (debug) S.out( str);
 	}
 		
 	/** Returns a map of currency id to currency, e.g. '1': 'INR'
@@ -448,6 +457,10 @@ public class Onramp {
 			"20", "GBP",
 			"29", "ARS"
 			);
+	}
+
+	public static void debugOff() {
+		debug = false;
 	}
 }
 

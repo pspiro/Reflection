@@ -905,5 +905,17 @@ public class Util {
 		return MyClient.getJson( "http://127.0.0.1:4040/api/tunnels")
 				.getArray( "tunnels").get( 0)
 				.getString( "public_url");
-	}			
+	}
+	
+	/** return the two strings separated by a space if they are both not null */ 
+	public static String combine( String str1, String str2) {
+		return S.isNotNull( str1) && S.isNotNull( str2)
+				? String.format( "%s %s", str1, str2)
+				: str1 + str2;
+	}
+
+	/** returns object if not null or a new object created by supplier */ 
+	public static <T> T notNull( T obj, Supplier<T> supplier) {
+		return obj != null ? obj : supplier.get();
+	}
 }

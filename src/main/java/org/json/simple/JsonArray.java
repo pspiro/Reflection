@@ -308,4 +308,12 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		Util.forEach( this, rec -> Util.iff( rec.getString( key), val -> map.put( val, rec) ) );;
 		return map;
 	}
+	
+	/** Create array from the same tag of each element 
+	 * @throws Exception */
+	public ArrayList<String> getArrayOf( String key) throws Exception {
+		ArrayList<String> list = new ArrayList<String>();
+		Util.forEach( this, rec -> list.add( rec.getString( key)));
+		return list;
+	}
 }
