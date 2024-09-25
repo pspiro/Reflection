@@ -157,6 +157,7 @@ public class Config extends ConfigBase {
 		return m_rusd.address(); 
 	}
 
+	/** @return non-RUSD stablecoin address lower case */
 	public String busdAddr() { 
 		return m_busd.address(); 
 	}

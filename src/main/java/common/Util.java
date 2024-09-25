@@ -10,7 +10,9 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -894,6 +896,12 @@ public class Util {
 	//	<T> T[] toArray( ArrayList<T> list) {
 	//		return (T[])list.toArray();
 	//	}
+	
+	public static <T> ArrayList<T> toList( T[] ar) {
+		ArrayList<T> list = new ArrayList<T>();
+		Collections.addAll(list, ar);
+		return list;
+	}
 	
 	/** Works with or without 0x at start */
 	public static String getPublicKey( String privateKey) {

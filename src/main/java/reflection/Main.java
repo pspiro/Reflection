@@ -1,6 +1,7 @@
 package reflection;
 
 import java.io.OutputStream;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -67,6 +68,7 @@ public class Main implements ITradeReportHandler {
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
+    private LocalDate m_lastDate;  // last date that we sent daily account summary emails
 
 	
 	Stocks stocks() { return m_stocks; }
@@ -228,6 +230,11 @@ public class Main implements ITradeReportHandler {
 		if (!Main.m_config.autoFill()) {
 			S.out( "checking for stale mkt data every minute");
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
+		}
+
+		// send out daily account summaries
+		if (m_config.isProduction() ) {
+			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkSummaries);
 		}
 	}
 
@@ -621,15 +628,18 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
-    private LocalDate lastDate;
-    
     /** check if it's time to send out the summary emails; when data changes in NY */
 	void checkSummaries() {
 		LocalDate today = ZonedDateTime.now( ZoneId.of("America/New_York") ).toLocalDate();
-        if (lastDate != null && !today.equals(lastDate)) {        	
-        	lastDate = today;
-        	
-        	Util.wrap( () -> new SummaryEmail( m_config, m_stocks).generateSummaries() );
+        if (m_lastDate != null && !today.equals(m_lastDate) ) {        	
+        	m_lastDate = today;
+
+            DayOfWeek dayOfWeek = today.getDayOfWeek();
+            if (dayOfWeek != DayOfWeek.SUNDAY && dayOfWeek != DayOfWeek.MONDAY) {
+            	Util.wrap( () -> 
+            		new SummaryEmail( m_config, m_stocks, false)
+            			.generateSummaries() );
+        	}
         }
 	}
 }

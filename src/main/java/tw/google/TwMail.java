@@ -84,6 +84,8 @@ public class TwMail {
 	/** @param tos is space-separated
 	 *  @param type "plain" or "html" */
 	public void send(String from, String fromEmail, String tos, String subject, String text, boolean html) throws Exception {
+		Util.require( S.isNotNull( from), "'from' address required");
+		Util.require( S.isNotNull( from), "'to' address required");
 		Util.require( tos.indexOf( '<') == -1, "display name in 'to' field is not supported"); // doesn't work with gmail
 		
 		S.out( "Sending email");

@@ -497,6 +497,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 	
+	public static void displayMap( HashMap<String,?> map) {
+		new JsonObject( map).display();
+	}
+	
 
 }
 /** NOTE: Timestamp objects are stored as

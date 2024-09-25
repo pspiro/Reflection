@@ -11,6 +11,7 @@ import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
@@ -88,15 +89,38 @@ public class MoralisServer {
 				moralis, contractAddress, chain, functionName);
 		return post( url, abi);
 	}
+
+	/** return map of address (lower case) to position */
+	static public HashMap<String, Double> reqPositionsMap(String wallet, String[] addresses) throws Exception {
+		HashMap<String, Double> map = new HashMap<>();
+		
+		for (var item : reqPositionsList( wallet, addresses) ) {
+			String addr = item.getString( "token_address").toLowerCase();
+			
+			if (item.has( "decimals") ) {
+				double val = Erc20.fromBlockchain( item.getString( "balance"), item.getInt( "decimals") );
+				if (val > 0) {
+					map.put( addr.toLowerCase(), val);
+				}
+			}
+			else {
+				S.out( "WARNING: no decimals returned for Moralis positions map; skipping  wallet=%s  address=%s",
+						wallet, addr);
+			}
+		}
+		
+		return map;
+	}
 	
-	/** Fields returned:
- 		symbol : BUSD,
-		balance : 4722366482869645213697,
-		possible_spam : true,
-		decimals : 18,
-		name : Reflection BUSD,
-		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d
-		@param addresses is the list of token addresses for which we want the positions */
+	/**
+		@param addresses is the list of token addresses for which we want the positions
+		@return the following fields:
+	 		symbol : BUSD,
+			balance : 4722366482869645213697,
+			possible_spam : true,
+			decimals : 18,
+			name : Reflection BUSD,
+			token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
 	public static JsonArray reqPositionsList(String wallet, String[] addresses) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		
@@ -240,6 +264,12 @@ public class MoralisServer {
 	// and they are blocking next trans; they have to be removed
 	static void show( JsonObject obj, String addr) throws Exception {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config c = Config.ask();
+		var map = reqPositionsMap( "0x2703161D6DD37301CEd98ff717795E14427a462B", c.readStocks().getAllContractsAddresses() );
+		JsonObject.displayMap( map);
 	}
 	
 }
