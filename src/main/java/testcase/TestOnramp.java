@@ -69,9 +69,10 @@ public class TestOnramp extends MyTestCase {
 		assertEquals( json.getString(custId), json4.getString(custId) );
 	}
 
+	// this test is failing, sorry
 	public void testApi() throws Exception {
-		Cookie.setNewFakeAddress(true);
-		
+//		Cookie.setNewFakeAddress(true);
+		Cookie.setWalletAddr("0x7c3e1c7291DDF2045e5Fc0C61a3e9cc5E28Dd783"); // set a wallet that has onramp id and passed kyc (set it manually from 
 		// get quote
 		S.out( "getquote");
 		var quote = cli().postToJson( "/api/onramp-get-quote", Util.toJson( 
@@ -89,7 +90,8 @@ public class TestOnramp extends MyTestCase {
 				"cookie", Cookie.cookie,
 				"currency", "EUR", 
 				"buyAmt", 3000,
-				"recAmt", quote.getDouble( "recAmt")
+				"recAmt", quote.getDouble( "recAmt"),
+				"test", true
 				));
 		assert200_();
 		assertNotNull( resp.getString( "url") ); 
@@ -122,7 +124,13 @@ public class TestOnramp extends MyTestCase {
 				"recAmt", quote.getDouble( "recAmt")
 				));
 		assert200_();
-		startsWith( "The transaction has been initiated", cli.getMessage() );
+		startsWith( "The transaction has been", cli.getMessage() );
+		assertNotNull( resp.get( "fiatAmount") );
+		assertNotNull( resp.get( "createdAt") );
+		assertNotNull( resp.get( "bank") );
+		assertNotNull( resp.get( "iban") );
+		assertNotNull( resp.get( "name") );
+		assertNotNull( resp.get( "type") );
 	}
 	
 	private String newPhone() {

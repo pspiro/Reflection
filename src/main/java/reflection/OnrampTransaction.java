@@ -8,6 +8,7 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import common.Util.ExRunnable;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
 import tw.util.S;
@@ -41,6 +42,24 @@ public class OnrampTransaction extends MyTransaction {
 					"recAmt", quote) );
 		});
 	}
+	
+	public final void wrapOnramp( ExRunnable runnable) {
+		try {
+			runnable.run();
+		}
+		catch( Exception e) {
+			RefCode refCode = e instanceof RefException ex ? ex.code() : RefCode.UNKNOWN;
+			
+			if ( ! (e instanceof RefException) ) { 
+				e.printStackTrace();
+			}
+
+			elog( LogType.ONRAMP, e);  // could change to onramp error
+			respondFull( RefException.eToJson(e, refCode), 400, null);
+			postWrap(null);
+		}
+	}
+	
 
 	/** user sends: currency, amount, receive-amount 
 	 *  can return: code, message, url */
@@ -104,15 +123,57 @@ public class OnrampTransaction extends MyTransaction {
 				
 				require( resp.getInt( "code") == 200, RefCode.ONRAMP_FAILED,
 					"An on-ramp error occurred - " + resp.getString( "error") );
-	
-				respond( Util.toJson( code, 200, Message, "The transaction has been initiated.<br>"
-						+ "You will receive an email notifying you when it is completed.") );
+				
+				var data = resp.getObjectNN( "data");
+
+				double amount = data.getDouble( "fiatAmount");
+				Util.require( amount > 0, "Error - the on-ramp amount returned is invalid");
+				
+				var instr = data.getObject( "fiatPaymentInstructions");
+				// onramp sandbox does not return payment instructions; add it
+				if (instr == null && !m_config.isProduction() && m_map.getBool( "test") ) {
+					instr = JsonObject.parse( testInstr);
+				}
+				Util.require( instr != null, "Error: no fiatPaymentInstructions returned");
+				
+				var bank = instr.getObject( "bank");
+				Util.require( bank != null, "Error: no bank instructions returned");
+
+				// create return json
+				// tags are: fiatAmount, createdAt, bank, iban, name, type, Message, code
+				JsonObject send = new JsonObject();
+				send.copyFrom( data, "createdAt");
+				send.copyFrom( bank, "bank", "iban", "name");
+				send.copyFrom( instr, "type");
+				send.put( "amount", data.getDouble( "fiatAmount") );
+				send.put( Message, "The transaction has been accepted");
+				send.put( code, RefCode.OK);
+				
+				send.display();
+				
+				// respond to Frontend
+				respond( send);
+				
+				// send email to customer
+				Profile profile = new Profile( user);
+				String html = emailTemplate
+						.replace( "#username#", String.format( "%s %s", profile.first(), profile.last() ) )
+						.replace( "#iban#", send.getString( "iban") )
+						.replace( "#name#", send.getString( "name") )
+						.replace( "#bank#", send.getString( "bank") )
+						.replace( "#type#", send.getString( "type") )
+						.replace( "#amount#", S.fmt2( send.getDouble( "amount") ) )
+						.replace( "#date#", send.getString( "createdAt") );
+						
+				Main.m_config.sendEmail( profile.email(), "Reflection Onramp Transaction", html); 
 				
 				jlog( LogType.ONRAMP, Util.toJson(
 						"type", "order/place",
 						"currency", currency,
 						"buyAmt", buyAmt,
-						"recAmt", receiveAmt) );
+						"recAmt", receiveAmt,
+						"data", data,
+						"returned", send) );
 				
 				alert( "USER SUBMITTED ONRAMP ORDER", 
 						String.format( "%s %s", user.getString( "first_name"), user.getString( "last_name") ) );
@@ -178,4 +239,28 @@ public class OnrampTransaction extends MyTransaction {
 		func.process( split[0], split[1]);
 	}
 
+	static String testInstr = """
+		{ "bank" : { "bank" : "somebank", "iban" : "TR700005901010130101011089", "name" : "somebank name" },  "bankNotes" : [ { "msg" : "You can only send TRY from an individual bank account registered in your name.", "type" : 1 }, { "msg" : "You can withdraw and send money whenever you want during bank working hours.", "type" : 1 } ], "otp" : "4970", "type" : "TRY_BANK_TRANSFER" }""";
+
+	static String emailTemplate = """
+			Dear #username#,<br>
+			<br>
+			Your fiat-to-crypto transaction has been accepted.<br>
+			<br>
+			Please send funds as follows:<br>
+			<br>
+			IBAN: #iban#<br>
+			NAME: #name#<br>
+			BANK: #bank#<br>
+			TYPE: #type#<br>			
+			<br>
+			AMOUNT: #amount#<br>
+			CREATED AT: #date#<br>
+			<br>
+			You will be notified by email when funds have been received and the token transfer is complete.<br>
+			<br>
+			Sincerely,<br>
+			<br>
+			The Reflection team
+			""";
 }

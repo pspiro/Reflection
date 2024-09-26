@@ -48,7 +48,14 @@ public class Mock {
 			{ "smartcontractid": "0x2fa250dc78dce5d6031f30fb8b45a66e986b6551", "allow": "", "symbol": "FSLR (First Solar)", "tokenSymbol": "FSLR.r", "last": 242.95, "endDate": "", "description": "First Solar Inc - The top producer of solar panels and photovoltaic power plants in the world", "type": "Stock", "tradingView": "NASDAQ:FSLR", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 244.94, "conid": "41622169", "exchange": "SMART", "convertsToAddress": "", "bid": 242.75, "startDate": "", "isHot": true }
 			""";  // first solar
 	
-
+	String onrampQuote = """
+			{"status":1,"code":200,"data":{"fromCurrency":"EUR","toCurrency":"USDT","toAmount":"3252.52","fromAmount":"3000","rate":"0.92","fees":[{"type":"fiat","onrampFee":"7.5","clientFee":"0","gatewayFee":"0","gasFee":"0.18"}]}}
+			""";
+			
+	String onrampConvert = """
+			{ "createdAt" : "2024-09-26 16:16:01", "bank" : "somebank", "amount" : 3000, "code" : "OK", "iban" : "TR700005901010130101011089", "name" : "somebank name", "type" : "TRY_BANK_TRANSFER", "message" : "The transaction has been accepted" }
+			""";
+			
 	HashMap<String,String> map = new HashMap<>(); // key must be lower case
 
 	public static void main(String[] args) {
@@ -79,6 +86,8 @@ public class Mock {
 		map.put( "all-live-orders", emptyArray);
 		map.put( "faqs", emptyArray);
 		map.put( "get-stock-with-price", stockWithPrice); // first solar
+		map.put( "onramp-get-quote", onrampQuote); // first solar
+		map.put( "onramp-convert", onrampConvert); // first solar
 		
 		BaseTransaction.setDebug( true);
 				
