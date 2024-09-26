@@ -13,17 +13,4 @@ fi
 
 # must restart all servers or you can get classnotfound errors
 
-echo restarting tgserver
-sudo systemctl restart tgserver
-sleep 2
-echo restarting hookserver
-sudo systemctl restart hookserver
-sleep 2
-echo restarting mdserver
-sudo systemctl restart mdserver
-sleep 2
-echo restarting fbserver
-sudo systemctl restart fbserver
-sleep 2
-echo restarting refapi
-sudo systemctl restart refapi
+./run
