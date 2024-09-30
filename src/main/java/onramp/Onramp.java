@@ -324,7 +324,9 @@ public class Onramp {
 	private static JsonObject query( String url) throws Exception {
 		return query( url, new JsonObject() );
 	}
-	
+
+	/** @return an ORDERED json object, so we don't lose the order of the Bank
+	 *  section when we send the createTransaction endpoint */
 	private static JsonObject query( String url, JsonObject body) throws Exception {
 		JsonObject payload = Util.toJson( 
 				"timestamp", System.currentTimeMillis() - 30000,
@@ -356,7 +358,7 @@ public class Onramp {
 		
 		out( "  onramp response: " + str);
 
-		return JsonObject.parse( str);
+		return JsonObject.parseOrdered( str);  // NOTE this calls parseORDERED
 	}
 	
 	static void out( String str) {

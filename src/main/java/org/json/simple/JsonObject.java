@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 
 import com.moonstoneid.siwe.SiweMessage;
@@ -188,6 +190,18 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static JsonObject parse( String text) throws Exception {
 		Util.require( isObject(text), "Error: not a json object: " + text);
 		return (JsonObject)new JSONParser().parse( text);
+	}
+	
+	public static JsonObject parseOrdered( String text) throws Exception {
+		Util.require( isObject(text), "Error: not a json object: " + text);
+		return (JsonObject)new JSONParser().parse( text, new ContainerFactory() {
+			@Override public Map createObjectContainer() {
+				return new OrderedJson();
+			}
+			@Override public List creatArrayContainer() {
+				return null;
+			}
+		});
 	}
 	
 	public static JsonObject parse(InputStream is) throws Exception {
@@ -498,8 +512,6 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static void displayMap( HashMap<String,?> map) {
 		new JsonObject( map).display();
 	}
-	
-
 }
 /** NOTE: Timestamp objects are stored as
  *  

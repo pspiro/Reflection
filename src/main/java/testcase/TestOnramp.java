@@ -158,12 +158,10 @@ public class TestOnramp extends MyTestCase {
 				));
 		
 		startsWith( "The transaction has been", cli.getMessage() );
-		assertNotNull( resp.get( "fiatAmount") );
+		assertNotNull( resp.get( "amount") );
+		assertNotNull( resp.get( "message") );
 		assertNotNull( resp.get( "createdAt") );
 		assertNotNull( resp.get( "bank") );
-		assertNotNull( resp.get( "iban") );
-		assertNotNull( resp.get( "name") );
-		assertNotNull( resp.get( "type") );
 	}
 	
 	private String newPhone() {

@@ -142,13 +142,12 @@ public class OnrampTransaction extends MyTransaction {
 				// create return json
 				// tags are: fiatAmount, createdAt, bank, iban, name, type, Message, code
 				JsonObject send = new JsonObject();
-				send.copyFrom( data, "createdAt");
-				send.copyFrom( bank, "bank", "iban", "name", "type");
-				//send.copyFrom( instr, "type");
+				send.copyFrom( instr, "bank");  // note that bank has order maintained; we will display all fields
 				send.put( "amount", data.getDouble( "fiatAmount") );
+				send.put( "createdAt", data.getString( "createdAt") );
 				send.put( Message, "The transaction has been accepted");
-				send.put( code, RefCode.OK);
 				
+				S.out( "sending to Frontend:");
 				send.display();
 				
 				// respond to Frontend
