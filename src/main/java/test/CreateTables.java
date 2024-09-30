@@ -11,6 +11,8 @@ import tw.util.S;
  *  NOTE: if you don't set the timezone here for the created_at, it uses
  *  some other inconsistent timezone; data is always returned in the time
  *  zone that was used when setting the value
+ *  
+ *  APPARENTLY USING INDEX INSIDE CREATE BLOCK WILL NOT WORK
  */
 public class CreateTables  {
 	static MySqlConnection con;
@@ -69,6 +71,25 @@ public class CreateTables  {
 
 					INDEX log_wallet_key (wallet_public_key)
 					);""";		
+
+		con.execute(sql);
+	}
+	
+	void createOnrampTable() throws Exception {
+		String sql = """
+				CREATE TABLE onramp (
+				    created_at timestamp without time zone DEFAULT (CURRENT_TIMESTAMP(6) AT TIME ZONE 'America/New_York'),
+				    wallet_public_key varchar(42) NOT NULL CHECK (wallet_public_key = LOWER(wallet_public_key) AND wallet_public_key <> ''),
+				    trans_id varchar(32) NOT NULL UNIQUE CHECK (trans_id <> ''),  -- OnRamp transaction id
+				    uid varchar(8),  -- ties back to the transaction submitted by the user
+				    amount double precision NOT NULL,  -- amount of USD expected
+				    state varchar(32),  -- our own status
+				    hash  -- trans hash of minting RUSD into user's wallet
+				);
+				
+				-- Create the index for wallet_public_key
+				CREATE INDEX onramp_wallet_key ON onramp (wallet_public_key);
+				""";		
 
 		con.execute(sql);
 	}

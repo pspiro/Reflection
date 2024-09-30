@@ -17,6 +17,7 @@ import tw.util.S;
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
 public class NodeServer {
+    static final String transferEventSignature = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B";
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
@@ -406,13 +407,8 @@ public class NodeServer {
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
 	}
 	
-	public static void main(String[] args) throws Exception {
-		Config.ask();
-		S.out( isKnownTransaction( "0x66ae1980873d7dfb18886bf5852db6427ad0cb4933f8701d3c89f05e93c3b5a2") );
-	}
-	
 	/** must handle the no receipt or not ready yet state */
-	public static String getReceipt( String transHash) throws Exception {
+	public static JsonObject getReceipt( String transHash) throws Exception {
 		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
@@ -424,16 +420,15 @@ public class NodeServer {
 			}""", transHash);
 		
 		// no result is no "result" tag, just id
-		var result = nodeQuery( body);//.getObjectNN( "result").removeEntry( "logs"); // long and boring
-//		boolean success = result.getString( "status").equals( "0x1");
-		result.display();
-		return "";
+		return nodeQuery( body).getObject( "result");
 	}
 	
 	public static boolean isKnownTransaction(String transHash) throws Exception {
-		return getTransByHash( transHash).getObject( "result") != null;
+		return getTransByHash( transHash) != null;
 	}
 	
+	/** returns the 'result' or null
+	 *  fields are: blockHash, accessList, transactionIndex, type, nonce, input, r, s, chainId, v, blockNumber, gas, maxPriorityFeePerGas, from, to, maxFeePerGas, value, hash, gasPrice */
 	public static JsonObject getTransByHash( String transHash) throws Exception {
 		String body = String.format( """
 				{
@@ -445,7 +440,47 @@ public class NodeServer {
 				]
 				}""", transHash);
 			
-		return nodeQuery( body);
+		return nodeQuery( body).getObject( "result");
+	}
+	
+	public static long getBlockNumber( String transHash) throws Exception {
+		var obj = getTransByHash( transHash);
+		return obj != null ? obj.getLong( "blockNumber") : 0;
+	}
+	
+	/** returns transaction age in blocks */
+	public static long getTransactionAge( String transHash) throws Exception {
+		return getBlockNumber() - getBlockNumber( transHash);
+	}
+	
+	public static record Received( String contract, String from, String to, double amount) {}
+
+	public static Received checkReceipt( String hash, int decimals) throws Exception {
+		var receipt = getReceipt( hash);
+		Util.require( receipt != null && receipt.getString( "status").equals( "0x1"), "Receipt is invalid");
+		
+	    // Loop through all logs in the receipt to find Transfer events
+	    for (var log : receipt.getArray( "logs") ) {
+	    	ArrayList<String> topics = log.<String>getArrayOf( "topics");
+	    	
+	    	if (topics.size() >= 3 && topics.get( 0).equals( transferEventSignature) ) {
+	    		String contract = log.getString( "address");
+	    		String sender = "0x" + topics.get( 1).substring(26); // Extract sender from topics[1]
+	    		String recipient = "0x" + topics.get( 2).substring(26); // Extract recipient from topics[2]
+
+	    		// The amount of tokens transferred is stored in the 'data' field (hexadecimal value)
+	    		double amount = Erc20.fromBlockchain( log.getString( "data"), decimals );
+
+				return new Received( contract, sender, recipient, amount);
+	    	}
+	    }
+	    return null;
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config.ask();
+		S.out( checkReceipt( "0x030e01c4814db7ed69aebc51a40a32fec833815b03cf03e4211e8df67e7345e7", 6) );
+		
 	}
 }
 

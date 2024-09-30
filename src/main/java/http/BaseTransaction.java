@@ -103,7 +103,7 @@ public class BaseTransaction {
 
 			if (m_timer != null) {
 				// print to standard out
-				String output = contentType.equals( "text/html") ? "" : Util.left(data, 200); // don't print html to log file 
+				String output = contentType.equals( "text/html") ? "" : Util.left(data, 500); // don't print html to log file 
 				out( "  responded in %s ms %s", m_timer.time(), output);
 			}
 			else if (responseCode != 200) {

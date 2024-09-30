@@ -114,67 +114,63 @@ public class OnrampTransaction extends MyTransaction {
 				require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
 	
 				// submit order
-				var resp = Onramp.transact( 
+				var submission = Onramp.transact( 
 						onrampId,
 						buyAmt,
 						currency,
 						m_config.refWalletAddr(),
 						receiveAmt);
+				out( "Submitted onramp order, received: " + submission);
 				
-				require( resp.getInt( "code") == 200, RefCode.ONRAMP_FAILED,
-					"An on-ramp error occurred - " + resp.getString( "error") );
+				require( submission.getInt( "code") == 200 && submission.getInt( "status") == 1, 
+						RefCode.ONRAMP_FAILED,
+						"An on-ramp error occurred - " + submission.getString( "error")	);
+
+				// get transaction id
+				String transId = submission.getString( "transactionId");
+				require( S.isNotNull( transId), 
+						RefCode.ONRAMP_FAILED,
+						"A valid transaction id was not returned");
 				
-				var data = resp.getObjectNN( "data");
+				var data = submission.getObjectNN( "data");
 
 				double amount = data.getDouble( "fiatAmount");
 				Util.require( amount > 0, "Error - the on-ramp amount returned is invalid");
 				
-				var instr = data.getObject( "fiatPaymentInstructions");
+				var pmtInstructions = data.getObject( "fiatPaymentInstructions");
 				// onramp sandbox does not return payment instructions; add it
-				if (instr == null && !m_config.isProduction() && m_map.getBool( "test") ) {
-					instr = JsonObject.parse( testInstr);
+				if (pmtInstructions == null && !m_config.isProduction() && m_map.getBool( "test") ) {
+					pmtInstructions = JsonObject.parse( testInstr);
 				}
-				Util.require( instr != null, "Error: no fiatPaymentInstructions returned");
+				Util.require( pmtInstructions != null, "Error: no fiatPaymentInstructions returned");
 				
-				var bank = instr.getObject( "bank");
+				var bank = pmtInstructions.getObject( "bank");
 				Util.require( bank != null, "Error: no bank instructions returned");
 
-				// create return json
-				// tags are: fiatAmount, createdAt, bank, iban, name, type, Message, code
-				JsonObject send = new JsonObject();
-				send.copyFrom( instr, "bank");  // note that bank has order maintained; we will display all fields
-				send.put( "amount", data.getDouble( "fiatAmount") );
-				send.put( "createdAt", data.getString( "createdAt") );
-				send.put( Message, "The transaction has been accepted");
-				
-				S.out( "sending to Frontend:");
-				send.display();
+				// create response   (tags are: fiatAmount, createdAt, bank, iban, name, type, Message)
+				JsonObject response = new JsonObject();
+				response.copyFrom( pmtInstructions, "bank");  // note that bank has order maintained; we will display all fields
+				response.put( "amount", data.getDouble( "fiatAmount") );
+				response.put( "createdAt", data.getString( "createdAt") );
+				response.put( Message, "The transaction has been accepted");
 				
 				// respond to Frontend
-				respond( send);
+				respond( response);
+
+				// insert into onramp table of Reflection database
+				insertOnramp( transId, amount);
 				
-				// send email to customer
-				StringBuilder bankInstr = new StringBuilder();
-				bank.forEach( (key,val) -> {
-					bankInstr.append( String.format( "<strong>%s: </strong>%s<br>", key.toUpperCase(), val) );
-				});
-				
-				Profile profile = new Profile( user);
-				String html = emailTemplate
-						.replace( "#username#", String.format( "%s %s", profile.first(), profile.last() ) )
-						.replace( "#instructions#", bankInstr)
-						.replace( "#amount#", S.fmt2( send.getDouble( "amount") ) )
-						.replace( "#date#", send.getString( "createdAt") );
-						
-				Main.m_config.sendEmail( profile.email(), "Reflection Fiat Onramp Transaction", html); 
-				
+				// send email to customer and bcc me
+				sendEmail(user, bank, response);
+
+				// write log entry
 				jlog( LogType.ONRAMP, Util.toJson(
 						"type", "order/place",
 						"currency", currency,
 						"buyAmt", buyAmt,
 						"recAmt", receiveAmt,
 						"data", data,
-						"returned", send) );
+						"returned", response) );
 				
 				alert( "USER SUBMITTED ONRAMP ORDER", 
 						String.format( "%s %s", user.getString( "first_name"), user.getString( "last_name") ) );
@@ -193,7 +189,33 @@ public class OnrampTransaction extends MyTransaction {
 			}
 		});
 	}
-	
+
+	private void insertOnramp(String transId, double amount) throws Exception {
+		JsonObject dbEntry = Util.toJson(
+				"wallet_public_key", m_walletAddr.toLowerCase(),
+				"uid", m_uid,
+				"trans_id", transId, 
+				"amount", amount);
+		Main.m_config.sqlCommand( sql-> sql.insertJson("onramp", dbEntry) );
+	}
+
+	/** Send email to customer giving them the bank transfer instructions */ 
+	private void sendEmail(JsonObject user, JsonObject bank, JsonObject response) {
+		StringBuilder bankInstr = new StringBuilder();
+		bank.forEach( (key,val) -> {
+			bankInstr.append( String.format( "<strong>%s: </strong>%s<br>", key.toUpperCase(), val) );
+		});
+		
+		Profile profile = new Profile( user);
+		String html = emailTemplate
+				.replace( "#username#", String.format( "%s %s", profile.first(), profile.last() ) )
+				.replace( "#instructions#", bankInstr)
+				.replace( "#amount#", S.fmt2( response.getDouble( "amount") ) )
+				.replace( "#date#", response.getString( "createdAt") );
+				
+		Main.m_config.sendEmail( profile.email(), "Reflection Fiat Onramp Transaction", html);
+	}
+
 	private boolean isCompleted(String status) {
 		return Util.equals( status.toUpperCase(), 
 				"BASIC_KYC_COMPLETED", 

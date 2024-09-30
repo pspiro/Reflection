@@ -80,6 +80,8 @@ public class Onramp {
 		getQuote( "AED", 100);
 	}
 	
+	/** @return status, code, data -> transactionId, fiatAmount, fiatPaymentInstructions -> 
+	 * 		type, bank, bankNotes, otp */
 	public static JsonObject transact(
 			String fromCustomerId,
 			double amount,
