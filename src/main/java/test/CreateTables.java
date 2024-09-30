@@ -84,7 +84,7 @@ public class CreateTables  {
 				    uid varchar(8),  -- ties back to the transaction submitted by the user
 				    amount double precision NOT NULL,  -- amount of USD expected
 				    state varchar(32),  -- our own status
-				    hash  -- trans hash of minting RUSD into user's wallet
+				    hash varchar(66) -- trans hash of minting RUSD into user's wallet
 				);
 				
 				-- Create the index for wallet_public_key

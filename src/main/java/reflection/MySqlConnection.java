@@ -14,6 +14,7 @@ import org.postgresql.util.PSQLException;
 
 import common.Util;
 import tw.util.S;
+import util.LogType;
 
 public class MySqlConnection implements AutoCloseable {
 	private Connection connection;

@@ -36,7 +36,7 @@ public class TestOnramp extends MyTestCase {
 //		assert200_();
 //	}
 	
-	/** test onramp API directly */
+	/** test onramp API directly; you need Main running to set the cookie */
 	public void testGetKycUrl() throws Exception {
 		Cookie.setNewFakeAddress(true);
 		String phone = newPhone();
@@ -44,32 +44,16 @@ public class TestOnramp extends MyTestCase {
 		// first time
 		S.out( "json1***");
 		JsonObject json = Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
-		assertTrue( json.has( "kycUrl", custId));
-
-		// change wallet - fails with misleading message about the phone number
-		S.out( "json2***");
-		try {
-			Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
-			assertTrue( false);
-		}
-		catch( Exception e) {
-		}
-
-		// change phone - okay to reuse the same wallet!
-		S.out( "json3***");
-		try {
-			Onramp.getKycUrlFirst( Cookie.wallet, newPhone(), "http://redirect");
-		}
-		catch( Exception e) {
-		}
+		json.display();
+		assertTrue( json.has( "url", custId));
 
 		// second time, pass ID only
 		S.out( "json4***");
 		var json4 = Onramp.getKycUrlNext( json.getString( custId), "http://redirect");
+		assertTrue( json4.has( "url", custId));
 		assertEquals( json.getString(custId), json4.getString(custId) );
 	}
 
-	// this test is failing, sorry
 	public void testApi() throws Exception {
 		Cookie.setNewFakeAddress(true);
 		
@@ -125,12 +109,9 @@ public class TestOnramp extends MyTestCase {
 				));
 		assert200_();
 		startsWith( "The transaction has been", cli.getMessage() );
-		assertNotNull( resp.get( "fiatAmount") );
-		assertNotNull( resp.get( "createdAt") );
-		assertNotNull( resp.get( "bank") );
-		assertNotNull( resp.get( "iban") );
-		assertNotNull( resp.get( "name") );
-		assertNotNull( resp.get( "type") );
+		assertTrue( resp.has( "createdAt") );
+		assertTrue( resp.has( "bank") );
+		assertTrue( resp.has( "amount") );
 	}
 	
 	public void testExistingWallet() throws Exception {

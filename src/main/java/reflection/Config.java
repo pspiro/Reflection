@@ -791,4 +791,8 @@ public class Config extends ConfigBase {
 	public String onrampUrl() {
 		return onrampUrl;
 	}
+	
+	public void log(JsonObject obj) throws Exception {
+		sqlCommand( conn -> conn.insertJson( "log", obj) );
+	}
 }

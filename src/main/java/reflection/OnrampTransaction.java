@@ -15,8 +15,6 @@ import tw.util.S;
 import util.LogType;
 
 public class OnrampTransaction extends MyTransaction {
-	static String KycMessage = "You will now be redirected to our on-ramp partner to verify your identiy. When completed, please come back to this screen and resubmit your request.";
-
 	OnrampTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange, true);
 	}
@@ -94,7 +92,7 @@ public class OnrampTransaction extends MyTransaction {
 				
 				respond( json
 						.append( code, RefCode.OK)
-						.append( Message, KycMessage) );
+						.append( Message, "Please begin your KYC with our on-ramp partner") );
 				
 				jlog( LogType.ONRAMP, Util.toJson( "type", "order/KYC part 1") );
 
@@ -126,13 +124,13 @@ public class OnrampTransaction extends MyTransaction {
 						RefCode.ONRAMP_FAILED,
 						"An on-ramp error occurred - " + submission.getString( "error")	);
 
+				var data = submission.getObjectNN( "data");
+
 				// get transaction id
-				String transId = submission.getString( "transactionId");
+				String transId = data.getString( "transactionId");
 				require( S.isNotNull( transId), 
 						RefCode.ONRAMP_FAILED,
 						"A valid transaction id was not returned");
-				
-				var data = submission.getObjectNN( "data");
 
 				double amount = data.getDouble( "fiatAmount");
 				Util.require( amount > 0, "Error - the on-ramp amount returned is invalid");
@@ -276,7 +274,9 @@ public class OnrampTransaction extends MyTransaction {
 			<br>
 			<strong>AMOUNT:</strong> $#amount#<br>
 			<br>
-			You will be notified by email when funds have been received and the token transfer is complete.<br>
+			You will be notified by email when your funds have been received and the token transfer to your wallet is complete.<br>
+			<br>
+			Please don't hesitate to contact us with any questions or concerns.<br>
 			<br>
 			Sincerely,<br>
 			<br>

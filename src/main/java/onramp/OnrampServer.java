@@ -7,8 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import reflection.Config;
-import reflection.Main;
-import reflection.Profile;
+import reflection.RefException;
 import reflection.Stocks;
 import tw.util.S;
 import util.LogType;
@@ -16,6 +15,8 @@ import web3.NodeServer;
 import web3.NodeServer.Received;
 
 public class OnrampServer {
+	enum State { Funding, Completed, Error }
+
 	static int poll = 5000;
 	static final long confRequired = 12;  // require 12 confirmations on PulseChain
 	static final double maxAuto = 300;
@@ -30,17 +31,13 @@ public class OnrampServer {
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		Onramp.useProd();
 		Onramp.debugOff();
-		new OnrampServer( null); //Config.ask() );
+		new OnrampServer( Config.ask() );
 	}
 
 	public OnrampServer(Config ask) throws Exception {
 		m_config = ask;
 		m_stocks = m_config.readStocks();
 		Util.executeEvery(0, poll, this::check);
-	}
-	
-	enum Status {
-		Funding, Funded, Dead 
 	}
 	
 	void check() {
@@ -50,12 +47,32 @@ public class OnrampServer {
 			JsonArray rows = m_config.sqlQuery( "select * from onramp where (state is null or state = '')");
 			
 			for (var dbTrans : rows) {
-				Util.wrap( () -> {
+				try {
 					processDbTrans( dbTrans);
-				});
+				}
+				catch( Exception e) {
+					S.out( "Error - " + e.getMessage() + " " + dbTrans);
+					
+					// update state so we won't try again; admin must intervene 
+					Util.wrap( () -> updateState( State.Error, "", dbTrans.getString( "trans_id") ) );  
+
+					m_config.log( Util.toJson(
+							"type", LogType.ONRAMP,
+							"wallet_public_key", dbTrans.getString( "wallet_public_key"),
+							"data", Util.toJson( 
+									"type", "error", 
+									"text", e.getMessage() ) ) );
+
+					e.printStackTrace();
+				}
 			}
 		});
 	}
+	
+	/* use this transaction id for a transfer of 12.04: 1060395
+insert into onramp (wallet_public_key, trans_id, amount) values ('0xabc', '1060395', 12.0399); 
+update onramp set state = '';
+	*/
 	
 	/** process one transaction with no hash code and no state 
 	 * @throws Exception */
@@ -94,7 +111,7 @@ public class OnrampServer {
 						id, wallet, dbTrans.getDouble( "amount"), received.amount() );
 				
 				// update database so we don't double-send
-				updateState( "Funding", id);
+				updateState( State.Funding, "", id);
 
 				// send funds to the user, same as we received
 				S.out( "funding %s with %s", dbTrans, received.amount() );
@@ -105,7 +122,7 @@ public class OnrampServer {
 						).waitForHash();
 				
 				// update database again that it was successful
-				updateState( "Completed", id);
+				updateState( State.Completed, reflToUserHash, id);
 				
 				// notify user by email
 				sendEmail( wallet, received.amount(), reflToUserHash);
@@ -119,20 +136,22 @@ public class OnrampServer {
 						"data", Util.toJson(
 								"type", "funded",
 								"amount", received.amount() ) );
-				m_config.sqlCommand( sql -> sql.insertJson( "log", log) );
+				m_config.log( log);
 			}
 			else {
-				// waiting for more confirmations
+				S.out( "not enough blocks yet for transaction " + onrampTrans);
 			}						
 		}
 		else {  // check for final status. pas
-			S.out( "no hash yet for transaction " + onrampTrans);
+			//S.out( "no hash yet for transaction " + onrampTrans);
 		}
 	}
 
-	private void updateState(String state, String id) throws Exception {
+	
+	private void updateState(State state, String hash, String id) throws Exception {
 		m_config.sqlCommand( sql -> sql.execWithParams( 
-				"update onramp set state='%s' where trans_id = '%s'", state, id) );
+				"update onramp set state='%s', hash='%s' where trans_id = '%s'", 
+				state, hash, id) );
 	}
 
 	static String emailTempl = """
