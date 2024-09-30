@@ -154,17 +154,19 @@ public class OnrampTransaction extends MyTransaction {
 				respond( send);
 				
 				// send email to customer
+				StringBuilder bankInstr = new StringBuilder();
+				bank.forEach( (key,val) -> {
+					bankInstr.append( String.format( "<strong>%s: </strong>%s<br>", key.toUpperCase(), val) );
+				});
+				
 				Profile profile = new Profile( user);
 				String html = emailTemplate
 						.replace( "#username#", String.format( "%s %s", profile.first(), profile.last() ) )
-						.replace( "#iban#", send.getString( "iban") )
-						.replace( "#name#", send.getString( "name") )
-						.replace( "#bank#", send.getString( "bank") )
-						.replace( "#type#", send.getString( "type") )
+						.replace( "#instructions#", bankInstr)
 						.replace( "#amount#", S.fmt2( send.getDouble( "amount") ) )
 						.replace( "#date#", send.getString( "createdAt") );
 						
-				Main.m_config.sendEmail( profile.email(), "Reflection Onramp Transaction", html); 
+				Main.m_config.sendEmail( profile.email(), "Reflection Fiat Onramp Transaction", html); 
 				
 				jlog( LogType.ONRAMP, Util.toJson(
 						"type", "order/place",
@@ -248,18 +250,16 @@ public class OnrampTransaction extends MyTransaction {
 			<br>
 			Please send funds as follows:<br>
 			<br>
-			IBAN: #iban#<br>
-			NAME: #name#<br>
-			BANK: #bank#<br>
-			TYPE: #type#<br>			
+			#instructions#
 			<br>
-			AMOUNT: #amount#<br>
-			CREATED AT: #date#<br>
+			<strong>AMOUNT:</strong> $#amount#<br>
 			<br>
 			You will be notified by email when funds have been received and the token transfer is complete.<br>
 			<br>
 			Sincerely,<br>
 			<br>
-			The Reflection team
+			The Reflection team<br>
+			<br>
+			CREATED AT: #date#<br>
 			""";
 }
