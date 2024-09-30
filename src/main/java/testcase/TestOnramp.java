@@ -71,8 +71,8 @@ public class TestOnramp extends MyTestCase {
 
 	// this test is failing, sorry
 	public void testApi() throws Exception {
-//		Cookie.setNewFakeAddress(true);
-		Cookie.setWalletAddr("0x7c3e1c7291DDF2045e5Fc0C61a3e9cc5E28Dd783"); // set a wallet that has onramp id and passed kyc (set it manually from 
+		Cookie.setNewFakeAddress(true);
+		
 		// get quote
 		S.out( "getquote");
 		var quote = cli().postToJson( "/api/onramp-get-quote", Util.toJson( 
@@ -124,6 +124,39 @@ public class TestOnramp extends MyTestCase {
 				"recAmt", quote.getDouble( "recAmt")
 				));
 		assert200_();
+		startsWith( "The transaction has been", cli.getMessage() );
+		assertNotNull( resp.get( "fiatAmount") );
+		assertNotNull( resp.get( "createdAt") );
+		assertNotNull( resp.get( "bank") );
+		assertNotNull( resp.get( "iban") );
+		assertNotNull( resp.get( "name") );
+		assertNotNull( resp.get( "type") );
+	}
+	
+	public void testExistingWallet() throws Exception {
+		Cookie.setWalletAddr("0x7c3e1c7291DDF2045e5Fc0C61a3e9cc5E28Dd783"); // set a wallet that has onramp id and passed kyc (set it manually from 
+
+		// get quote
+		S.out( "getquote");
+		var quote = cli().postToJson( "/api/onramp-get-quote", Util.toJson( 
+				"wallet_public_key", Cookie.wallet,
+				"currency", "EUR", 
+				"buyAmt", 3000
+				));
+		S.out( "got quote " + quote);
+		assertTrue( quote.getDouble( "recAmt") > 0);
+
+		// convert, first time, creates new onramp id
+		S.out( "testapi1");
+		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
+				"wallet_public_key", Cookie.wallet,
+				"cookie", Cookie.cookie,
+				"currency", "EUR", 
+				"buyAmt", 3000,
+				"recAmt", quote.getDouble( "recAmt"),
+				"test", true
+				));
+		
 		startsWith( "The transaction has been", cli.getMessage() );
 		assertNotNull( resp.get( "fiatAmount") );
 		assertNotNull( resp.get( "createdAt") );
