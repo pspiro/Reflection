@@ -52,8 +52,11 @@ public class Mock {
 			{"status":1,"code":200,"data":{"fromCurrency":"EUR","toCurrency":"USDT","toAmount":"3252.52","fromAmount":"3000","rate":"0.92","fees":[{"type":"fiat","onrampFee":"7.5","clientFee":"0","gatewayFee":"0","gasFee":"0.18"}]}}
 			""";
 			
+//	String onrampConvert = """
+//			{ "createdAt" : "2024-09-26 16:16:01", "bank" : "somebank", "amount" : 3000, "code" : "OK", "iban" : "TR700005901010130101011089", "name" : "somebank name", "type" : "TRY_BANK_TRANSFER", "message" : "The transaction has been accepted" }
+//			""";
 	String onrampConvert = """
-			{ "createdAt" : "2024-09-26 16:16:01", "bank" : "somebank", "amount" : 3000, "code" : "OK", "iban" : "TR700005901010130101011089", "name" : "somebank name", "type" : "TRY_BANK_TRANSFER", "message" : "The transaction has been accepted" }
+			{ "url": "https://www.ibm.com" }
 			""";
 			
 	HashMap<String,String> map = new HashMap<>(); // key must be lower case

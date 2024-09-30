@@ -22,7 +22,7 @@ public class OnrampTransaction extends MyTransaction {
 	}
 
 	public void handleGetQuote() {
-		wrap( () -> {
+		wrapOnramp( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");  // used in jlog
 
@@ -64,7 +64,7 @@ public class OnrampTransaction extends MyTransaction {
 	/** user sends: currency, amount, receive-amount 
 	 *  can return: code, message, url */
 	public void handleConvert() {
-		wrap( () -> {
+		wrapOnramp( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("onramp-convert");
@@ -143,8 +143,8 @@ public class OnrampTransaction extends MyTransaction {
 				// tags are: fiatAmount, createdAt, bank, iban, name, type, Message, code
 				JsonObject send = new JsonObject();
 				send.copyFrom( data, "createdAt");
-				send.copyFrom( bank, "bank", "iban", "name");
-				send.copyFrom( instr, "type");
+				send.copyFrom( bank, "bank", "iban", "name", "type");
+				//send.copyFrom( instr, "type");
 				send.put( "amount", data.getDouble( "fiatAmount") );
 				send.put( Message, "The transaction has been accepted");
 				send.put( code, RefCode.OK);
