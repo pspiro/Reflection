@@ -137,7 +137,7 @@ public class TestOnramp extends MyTestCase {
 				"recAmt", quote.getDouble( "recAmt"),
 				"test", true
 				));
-		
+		resp.display();
 		startsWith( "The transaction has been", cli.getMessage() );
 		assertNotNull( resp.get( "amount") );
 		assertNotNull( resp.get( "message") );
