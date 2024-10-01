@@ -424,12 +424,12 @@ public class NodeServer {
 	}
 	
 	public static boolean isKnownTransaction(String transHash) throws Exception {
-		return getTransByHash( transHash) != null;
+		return getTransactionByHash( transHash) != null;
 	}
 	
-	/** returns the 'result' or null
+	/** returns the 'result' or null if not found 
 	 *  fields are: blockHash, accessList, transactionIndex, type, nonce, input, r, s, chainId, v, blockNumber, gas, maxPriorityFeePerGas, from, to, maxFeePerGas, value, hash, gasPrice */
-	public static JsonObject getTransByHash( String transHash) throws Exception {
+	public static JsonObject getTransactionByHash( String transHash) throws Exception {
 		String body = String.format( """
 				{
 				"jsonrpc": "2.0",
@@ -444,8 +444,13 @@ public class NodeServer {
 	}
 	
 	public static long getBlockNumber( String transHash) throws Exception {
-		var obj = getTransByHash( transHash);
-		return obj != null ? obj.getLong( "blockNumber") : 0;
+		var obj = getTransactionByHash( transHash);
+		Util.require( obj != null, "Transaction not found with hash " + transHash);
+		
+		long block = obj.getLong( "blockNumber");
+		Util.require( block > 0, "Block number not found for transaction " + transHash);
+		
+		return block;
 	}
 	
 	/** returns transaction age in blocks */
@@ -479,7 +484,8 @@ public class NodeServer {
 	
 	public static void main(String[] args) throws Exception {
 		Config.ask();
-		S.out( checkReceipt( "0x030e01c4814db7ed69aebc51a40a32fec833815b03cf03e4211e8df67e7345e7", 6) );
+		S.out( getBlockNumber( "0x030e01c4814db7ed69aebc51a40a32fec833815b03cf03e4211e8df67a7345e7") );
+		getTransactionByHash( "0x030e01c4814db7ed69aebc51a40a32fec833815b03cf03e4211e8df67a7345e7").display();
 		
 	}
 }

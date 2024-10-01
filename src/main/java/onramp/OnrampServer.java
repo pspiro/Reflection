@@ -86,10 +86,13 @@ update onramp set state = '';
 		// get onramp transaction
 		var onrampTrans = map.get( id);
 		Util.require( onrampTrans != null, "Error: could not find onramp transaction  id=%s  wallet=%s", id, wallet);
+		
+		S.out( "found onramp transaction: " + onrampTrans);
 
 		// get transaction hash of transfer from onramp to RefWallet 
-		String onrampToReflHash = onrampTrans.getString( transactionHash);
+		String onrampToReflHash = onrampTrans.getString( transactionHash); // <<< THIS IS ON POLYGON!!!
 		if (S.isNotNull( onrampToReflHash) ) {
+			S.out( "got onramp-to-reflection hash %s", onrampToReflHash);
 			
 			// check for required number of confirmations
 			long ago = NodeServer.getTransactionAge(onrampToReflHash);
