@@ -7,17 +7,15 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import reflection.Config;
-import reflection.RefException;
 import reflection.Stocks;
 import tw.util.S;
 import util.LogType;
-import web3.NodeServer;
-import web3.NodeServer.Received;
+import web3.NodeInstance.Received;
 
 public class OnrampServer {
 	enum State { Funding, Completed, Error }
 
-	static int poll = 5000;
+	static int poll = 10000;
 	static final long confRequired = 12;  // require 12 confirmations on PulseChain
 	static final double maxAuto = 300;
 	static final double tolerance = .01; // received amount vs expected amount
@@ -28,8 +26,9 @@ public class OnrampServer {
 	private Stocks m_stocks;
 
 	public static void main(String[] args) throws Exception {
+		Thread.currentThread().setName("OnRamp");
 		S.out( "Starting onramp server with %s ms polling interval", poll);
-		Onramp.useProd();
+		//Onramp.useProd();
 		Onramp.debugOff();
 		new OnrampServer( Config.ask() );
 	}
@@ -90,16 +89,16 @@ update onramp set state = '';
 		S.out( "found onramp transaction: " + onrampTrans);
 
 		// get transaction hash of transfer from onramp to RefWallet 
-		String onrampToReflHash = onrampTrans.getString( transactionHash); // <<< THIS IS ON POLYGON!!!
+		String onrampToReflHash = onrampTrans.getString( transactionHash); // <<< ON POLYGON!!!
 		if (S.isNotNull( onrampToReflHash) ) {
 			S.out( "got onramp-to-reflection hash %s", onrampToReflHash);
 			
 			// check for required number of confirmations
-			long ago = NodeServer.getTransactionAge(onrampToReflHash);
+			long ago = m_config.node().getTransactionAge(onrampToReflHash);  // <<< ON POLYGON!!!
 			if (ago >= confRequired) {
 
 				// get receipt
-				Received received = m_config.busd().checkReceipt( onrampToReflHash);
+				Received received = m_config.node().checkReceipt( onrampToReflHash, m_config.busd().decimals() );
 
 				// confirm correct contract address
 				Util.require( received.contract().equalsIgnoreCase( m_config.busdAddr() ), "Error: the blockchain transaction is for the wrong contract  id=%s  wallet=%s  expected=%s  got=%s",

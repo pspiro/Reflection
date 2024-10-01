@@ -39,6 +39,7 @@ import web3.Busd.IBusd;
 import web3.CreateKey;
 import web3.Matic;
 import web3.MoralisServer;
+import web3.NodeInstance;
 import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
@@ -123,6 +124,8 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
+
+	private NodeInstance m_node;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -361,9 +364,10 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
-		NodeServer.setDecimals( m_rusd);
-		NodeServer.setDecimals( m_busd);
+		m_node = new NodeInstance( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
+		m_node.setDecimals( m_rusd);
+		m_node.setDecimals( m_busd);
+		NodeServer.setInstance(m_node);
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -794,5 +798,9 @@ public class Config extends ConfigBase {
 	
 	public void log(JsonObject obj) throws Exception {
 		sqlCommand( conn -> conn.insertJson( "log", obj) );
+	}
+	
+	public NodeInstance node() {
+		return m_node;
 	}
 }

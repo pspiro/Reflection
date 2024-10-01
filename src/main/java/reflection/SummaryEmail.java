@@ -8,10 +8,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import tw.google.Auth;
 import tw.util.S;
 import web3.MoralisServer;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 // you could create an easier way for this, where you pass Json and it finds the replacement tags based on json tags
 // pass a json array for multiple
@@ -74,7 +73,7 @@ public class SummaryEmail {
 		// wallets must be all lower case
 
 		if (m_testing ){
-			String wallet = NodeServer.prod.toLowerCase();
+			String wallet = NodeInstance.prod.toLowerCase();
 			var userRec = users.find( "wallet_public_key", wallet);
 			Util.require( userRec != null, "Error");
 			generateSummary( wallet, userRec);

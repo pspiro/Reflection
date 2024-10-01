@@ -1,7 +1,7 @@
 package web3;
 
 import common.Util;
-import web3.NodeServer.Received;
+import web3.NodeInstance.Received;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;
@@ -36,10 +36,5 @@ public class Busd extends Stablecoin {
 
 	public double getApprovedAmt(String approverAddr, String spenderAddr) throws Exception {
 		return NodeServer.getAllowance( m_address, approverAddr, spenderAddr, m_decimals);
-	}
-
-	/** @param hash is for a transfer of this token */
-	public Received checkReceipt(String hash) throws Exception {
-		return NodeServer.checkReceipt( hash, m_decimals);
 	}
 }
