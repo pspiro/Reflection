@@ -1,7 +1,7 @@
 package web3;
 
 import common.Util;
-import web3.NodeInstance.Received;
+import web3.NodeInstance.TransferReceipt;
 
 public class Busd extends Stablecoin {
 	private IBusd m_core;

@@ -74,10 +74,11 @@ public class Onramp {
 	}
 	
 
-	public static void main(String[] args) throws Exception {
-		fiatMap.display();
-		paymentMethodMap.display();
-		getQuote( "AED", 100);
+	public static void main(String[] args) throws Exception {		
+//		fiatMap.display();
+//		paymentMethodMap.display();
+		//getQuote( "AED", 100);
+		getTransaction("0tLnVOxqd0_2541", "1057732").display();
 	}
 	
 	/** @return status, code, data -> transactionId, fiatAmount, fiatPaymentInstructions -> 
@@ -125,11 +126,14 @@ public class Onramp {
 //	4, 15: ON_CHAIN_COMPLETED
 	
 	public static int getTransStatus( String customerId, String transactionId) throws Exception {
-		var resp = whiteLab( "/onramp/transaction", Util.toJson(
+		return getTransaction( customerId, transactionId).getInt( "status");
+	}
+	
+	public static JsonObject getTransaction( String customerId, String transactionId) throws Exception {
+		return whiteLab( "/onramp/transaction", Util.toJson(
 				"customerId", customerId,
 				"transactionId", transactionId
-				) );
-		return resp.getObjectNN("data").getInt( "status");
+				) ).getObjectNN("data");
 	}
 	
 	public static JsonObject setTransStatus( String customerId, String transactionId, int status) throws Exception {

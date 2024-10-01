@@ -464,9 +464,11 @@ public class NodeInstance {
 		return getBlockNumber() - getBlockNumber( transHash);
 	}
 	
-	public static record Received( String contract, String from, String to, double amount) {}
+	/** This is a receipt for an ERC-20 token transfer */
+	public static record TransferReceipt( String contract, String from, String to, double amount) {
+	}
 
-	public Received checkReceipt( String hash, int decimals) throws Exception {
+	public TransferReceipt getTransferReceipt( String hash, int decimals) throws Exception {
 		var receipt = getReceipt( hash);
 		Util.require( receipt != null && receipt.getString( "status").equals( "0x1"), "Receipt is invalid");
 		
@@ -482,7 +484,7 @@ public class NodeInstance {
 	    		// The amount of tokens transferred is stored in the 'data' field (hexadecimal value)
 	    		double amount = Erc20.fromBlockchain( log.getString( "data"), decimals );
 
-				return new Received( contract, sender, recipient, amount);
+				return new TransferReceipt( contract, sender, recipient, amount);
 	    	}
 	    }
 	    return null;

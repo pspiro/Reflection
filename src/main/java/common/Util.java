@@ -361,6 +361,10 @@ public class Util {
 		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
 	}
 	
+	public static boolean isValidHash( String str) {
+		return str != null && str.length() == 66 && str.startsWith("0x"); 
+	}
+	
 	public static String reqValidAddress(String str) throws Exception {
 		require( isValidAddress(str), "Invalid address: %s", str);
 		return str;
