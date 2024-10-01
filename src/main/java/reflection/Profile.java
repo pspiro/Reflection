@@ -70,7 +70,7 @@ public class Profile extends JsonObject {
 		require(
 				OnrampTransaction.isValidPhone( getString( "phone") ), 
 				RefCode.INVALID_USER_PROFILE, 
-				"The phone number is invalid. Please use the following format:\n\n+##-##########\n\nwhere the first one or two digits are the country code"); 
+				"The phone number is invalid. Please use the following format where the first set of digits is the country code:\n\n##-##########"); 
 	}
 
 	private static boolean validUserEntry(String str) {

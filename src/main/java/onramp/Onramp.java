@@ -152,7 +152,7 @@ public class Onramp {
 				) ).getArray("data");
 	}
 		
-	// should be used by Monitor?
+	/** returns only the "data" portion of each transaction */ // should be used by Monitor?
 	public static JsonArray getAllTransactions() throws Exception {
 		return whiteLab( "/onramp/allTransaction", Util.toJson(
 				"page", 1,
@@ -488,5 +488,6 @@ public class Onramp {
 11  order placement initiated  The process of placing the order has begun.  
 12  purchasing crypto  The cryptocurrency purchase is in progress.  
 14  withdrawal initiated  The withdrawal process has started.
+15  withdrawal complete  The withdrawal process is completed.  
 
 */

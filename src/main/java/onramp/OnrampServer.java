@@ -27,6 +27,12 @@ public class OnrampServer {
 	static final double maxAuto = 300;
 	static final double tolerance = .01; // received amount vs expected amount
 	private static final String transactionHash = "transactionHash";
+
+	static final JsonObject errCodes = Util.toJson(
+			"-4", "The sent amount does not match the required amount",
+			"-3", "The names on the bank account and KYC do not match",
+			"-2", "The user has abandoned the transaction",
+			"-1", "The transaction has exceeded the allowable time limit");  
 	
 	private Config m_polygon;
 	private Config m_pulsechain;
@@ -43,7 +49,7 @@ public class OnrampServer {
 
 	public OnrampServer(String[] args) throws Exception {
 		m_polygon = Config.readFrom( "Prod-config");  // must come first! because Config.read() sets the NodeServer instance
-		m_pulsechain = Config.readFrom( "Pulse-config");  // must come second!
+		m_pulsechain = Config.readFrom( "Dev3-config");  // must come second!
 		m_stocks = m_pulsechain.readStocks();
 		Util.executeEvery(0, poll, this::check);
 	}
@@ -94,12 +100,16 @@ public class OnrampServer {
 		
 		S.out( "found onramp transaction: " + onrampTrans);
 
+		// negative status implies an error
+		int status = onrampTrans.getInt( "status");
+		Util.require( status >= 0, S.notNull( errCodes.getString( "" + status), "An error occurred with status " + status) );
+
 		// get transaction hash of transfer from onramp to RefWallet 
 		String onrampToReflHash = onrampTrans.getString( transactionHash); // <<< ON POLYGON!!!
 		if (S.isNotNull( onrampToReflHash) ) {
 			S.out( "got onramp-to-reflection hash %s", onrampToReflHash);
 			
-			Util.require( Util.isValidHash( onrampToReflHash), "the hash for trans_id %s is invalid", id);
+			Util.require( Util.isValidHash( onrampToReflHash), "the hash for trans_id %s is invalid", id); // the hash is always invalid in the OnRamp sandbox
 			
 			// check for required number of confirmations
 			long ago = m_polygon.node().getTransactionAge(onrampToReflHash);  // <<< ON POLYGON!!!
@@ -160,7 +170,6 @@ public class OnrampServer {
 		}
 	}
 
-	
 	private void updateState(State state, String hash, String id) throws Exception {
 		m_pulsechain.sqlCommand( sql -> sql.execWithParams( 
 				"update onramp set state='%s', hash='%s' where trans_id = '%s'", 
@@ -170,11 +179,12 @@ public class OnrampServer {
 	static String emailTempl = """
 			Dear #username#,<br>
 			<br>
-			Your fiat-to-crypto transaction is complete.<br>
+			Your fiat-to-crypto transaction is complete!<br>
 			<br>
-			WALLET: #wallet#<br>
-			AMOUNT: #amount#<br>
-			HASH: #hash#<br>
+			<strong>Amount:</strong> #amount#<br>
+			<strong>Wallet:</strong> #wallet#<br>
+			<br>
+			You can <a href="#link#">view the transaction in the blockchain explorer.</a><br>
 			<br>
 			If you have any questions or concerns, please don't hesitate to contact us.<br>
 			<br>
@@ -193,7 +203,7 @@ public class OnrampServer {
 				.replace( "#username#", username)
 				.replace( "#wallet#", wallet)
 				.replace( "#amount#", S.fmt2( amount) )
-				.replace( "#hash#", hash);
+				.replace( "#link#", m_pulsechain.blockchainTx(hash) );
 		
 		m_pulsechain.sendEmail( 
 				user.getString( "email"), 

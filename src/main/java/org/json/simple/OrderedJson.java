@@ -7,7 +7,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-/** JsonObject that maintains the insertion order. Use sparingly, it hasn't been well-tested */
+/** JsonObject that maintains the insertion order. Use sparingly, it hasn't been well-tested.
+ *  Not everything works, e.g. forEach()  */
 public class OrderedJson extends JsonObject {
 
 	private static final long serialVersionUID = 1L;
