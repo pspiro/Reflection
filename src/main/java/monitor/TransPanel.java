@@ -16,6 +16,7 @@ select
 	quantity,
 	conid,
 	symbol,
+	blockchain_hash,
 	price,
 	transactions.country as country,
 	ip_address,
@@ -36,7 +37,7 @@ $limit""";  // you must order by desc to get the latest entries
 		@Override public void adjust(JsonObject obj) {
 			double v = obj.getDouble( "quantity") * obj.getDouble("price");
 			if (v != 0) {
-				obj.put( "amount", v);
+				obj.put( "amount", v);    // note this doesn't include the commission or tds so does not match blockchain trans amt
 			}
 		}
 		

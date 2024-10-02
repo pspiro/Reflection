@@ -1,6 +1,11 @@
 package reflection;
 
 import java.io.OutputStream;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -25,6 +30,7 @@ import http.MyServer;
 import reflection.Config.RefApiConfig;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.TradingHours.Session;
+import siwe.SiweTransaction;
 import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -35,9 +41,9 @@ import util.LogType;
 
 public class Main implements ITradeReportHandler {
 	// constants
-	enum Status {
-		Connected, Disconnected
-	};
+	enum Status { Connected, Disconnected };
+	enum Time { Before, After, Unknown }
+
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 
 	// no ticks in this time and we have a problem
@@ -63,10 +69,9 @@ public class Main implements ITradeReportHandler {
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
-
+    private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails 
 	
 	Stocks stocks() { return m_stocks; }
-
 
 	public static void main(String[] args) {
 		try {
@@ -119,6 +124,9 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
 		
+		// start Siwe thread to periodically save siwe cookies
+		SiweTransaction.startThread();
+		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
@@ -126,19 +134,22 @@ public class Main implements ITradeReportHandler {
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
-			server.createContext("/api/onramp-get-kyc-info", exch -> new OnrampTransaction( this, exch).handleGetKycInfo() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
 			// SIWE signin
-			server.createContext("/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
-			server.createContext("/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-			server.createContext("/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-			server.createContext("/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+			// or: nonce=init, verify=signin, session=me, signout=signout
+			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
+			server.createContext("/siwe/nonce", exch -> new SiweTransaction( exch).handleSiweInit() );
+			server.createContext("/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/siwe/verify", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/siwe/session", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 
-			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( this, exch).handleSiweSignout() );
-			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( this, exch).handleSiweSignin() );
-			server.createContext("/api/siwe/me", exch -> new SiweTransaction( this, exch).handleSiweMe() );
-			server.createContext("/api/siwe/init", exch -> new SiweTransaction( this, exch).handleSiweInit() );
+			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
+			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
+			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
+			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 
 			// orders and live orders
 			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
@@ -218,6 +229,11 @@ public class Main implements ITradeReportHandler {
 		if (!Main.m_config.autoFill()) {
 			S.out( "checking for stale mkt data every minute");
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
+		}
+
+		// send out daily account summaries
+		if (m_config.isProduction() && m_config.maxSummaryEmails() > 0) {
+			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkSummaries);
 		}
 	}
 
@@ -388,7 +404,7 @@ public class Main implements ITradeReportHandler {
 
 	/** Writes entry to log table in database; must not throw exception */
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
-		S.out( "%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		S.out( "LogType.%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,
@@ -610,8 +626,27 @@ public class Main implements ITradeReportHandler {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
 	}
-	
+
+    /** check if it's time to send out the summary emails; when data changes in NY */
+	void checkSummaries() {
+		boolean nowAfter = Util.isLaterThanEST( 20);
+
+		// if we just passed the time threshold...
+		if (m_timeWas == Time.Before && nowAfter) {
+            DayOfWeek dayOfWeek = Util.getDayEST();
+
+            // and not a weekend, send the daily email summaries
+            if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
+            	Util.wrap( () -> new SummaryEmail( m_config, m_stocks, false)
+            			.generateSummaries( m_config.maxSummaryEmails() ) );
+        	}
+        }
+		
+		m_timeWas = nowAfter ? Time.After : Time.Before;
+	}
 }
+
+
 
 //no change
 

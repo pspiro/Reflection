@@ -22,6 +22,7 @@ import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
 
+/** see also MyServer.listen */
 public class SimpleTransaction {
 	public interface MyHttpHandler {
 		void handle( SimpleTransaction trans);
@@ -41,7 +42,8 @@ public class SimpleTransaction {
 		m_exchange = exchange;
 	}
 
-	/** Quits the program if there is an exception */
+	/** Quits the program if there is an exception 
+	 * see also MyServer.listen */
 	public static void listen(String host, int port, MyHttpHandler handler) {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress(host, port), 0);

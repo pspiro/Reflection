@@ -55,17 +55,23 @@ public class HoldersPanel extends JsonPanel {
 			JsonArray ar = new JsonArray();
 			
 			total = 0;
-
-			Monitor.m_config.sqlCommand( sql -> {  // make all username queries from a single database connection
-				Util.forEach( map, (wallet, balance) -> { 
-					if (balance >= .0001) {
-						ar.add( Util.toJson( 
-								"wallet", wallet,
-								"name", getUsersName(sql, wallet),
-								"balance", balance ) );
-						total += balance;
-					}
-				});
+			
+			String[] wallets = map.keySet().toArray( new String[0]);
+			String list = String.format( "'" + String.join( "','", wallets) + "'");
+			String query = String.format( "select wallet_public_key, first_name, last_name from users where wallet_public_key in (%s)", list).toLowerCase();
+			S.out( query);
+			
+			JsonArray names = Monitor.m_config.sqlQuery(query);
+			HashMap<String,JsonObject> nameMap = names.getMap( "wallet_public_key"); 
+			
+			Util.forEach( map, (wallet, balance) -> { 
+				if (balance >= .0001) {
+					ar.add( Util.toJson( 
+							"wallet", wallet,
+							"name", getName( nameMap.get(wallet) ),
+							"balance", balance ) );
+					total += balance;
+				}
 			});
 			
 			setRows( ar);
@@ -73,6 +79,12 @@ public class HoldersPanel extends JsonPanel {
 			
 			m_title.setText( S.format( "%s  Total: %s", token.name(), total) ); 
 		});
+	}
+
+	private String getName(JsonObject obj) {
+		return obj != null 
+				? String.format( "%s %s", obj.getString( "first_name"), obj.getString( "last_name"))
+				: null;
 	}
 
 	private String getUsersName(MySqlConnection sql, String wallet) throws Exception {

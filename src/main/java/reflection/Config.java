@@ -24,6 +24,7 @@ import refblocks.RbRusd;
 import refblocks.Refblocks;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
+import siwe.SiweTransaction;
 import tw.google.Auth;
 import tw.google.GTable;
 import tw.google.NewSheet;
@@ -38,6 +39,7 @@ import web3.Busd.IBusd;
 import web3.CreateKey;
 import web3.Matic;
 import web3.MoralisServer;
+import web3.NodeInstance;
 import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
@@ -104,6 +106,7 @@ public class Config extends ConfigBase {
 	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
+	private int maxSummaryEmails;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -122,6 +125,8 @@ public class Config extends ConfigBase {
 	private int fbPollIingInterval;
 	private Busd m_busd;
 	private Rusd m_rusd;
+
+	private NodeInstance m_node;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -156,6 +161,7 @@ public class Config extends ConfigBase {
 		return m_rusd.address(); 
 	}
 
+	/** @return non-RUSD stablecoin address lower case */
 	public String busdAddr() { 
 		return m_busd.address(); 
 	}
@@ -246,8 +252,6 @@ public class Config extends ConfigBase {
 		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
 		this.autoFill = m_tab.getBoolean("autoFill");
-		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
-		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
@@ -274,6 +278,12 @@ public class Config extends ConfigBase {
 		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
+		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
+		
+		// siwe config items
+		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
+		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
+		SiweTransaction.setTimeouts( siweTimeout, sessionTimeout);
 		
 		Alerts.setEmail( this.alertEmail);
 		
@@ -356,9 +366,10 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		NodeServer.setChain( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
-		NodeServer.setDecimals( m_rusd);
-		NodeServer.setDecimals( m_busd);
+		m_node = new NodeInstance( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
+		m_node.setDecimals( m_rusd);
+		m_node.setDecimals( m_busd);
+		NodeServer.setInstance(m_node);
 
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
@@ -411,11 +422,14 @@ public class Config extends ConfigBase {
 	}
 	
 	private String fetchPw() throws Exception {
-		try {
-			String str = IStream.readLine("name.txt");
-			if (str.length() > 0) return str;
-		} catch (Exception e) {
+		if (!Util.equals( m_tab.tabName().toLowerCase(), "prod-config", "pulse-config") ) {
+			try {
+				String str = IStream.readLine("name.txt");
+				if (str.length() > 0) return str;
+			} catch (Exception e) {
+			}
 		}
+		
 		// get refblocks pw from pwserver
 		var json = Util.toJson( 
 				"code", "lwjkefdj827",
@@ -782,5 +796,21 @@ public class Config extends ConfigBase {
 	
 	public String onrampUrl() {
 		return onrampUrl;
+	}
+	
+	public void log(JsonObject obj) throws Exception {
+		sqlCommand( conn -> conn.insertJson( "log", obj) );
+	}
+	
+	public NodeInstance node() {
+		return m_node;
+	}
+	
+	public String[] getStablecoinAddresses() {
+		return new String[] { rusdAddr(), busdAddr() };
+	}
+	
+	public int maxSummaryEmails() {
+		return maxSummaryEmails;
 	}
 }

@@ -129,7 +129,7 @@ public class Stocks implements Iterable<Stock> {
 	/** takes the Token Symbol from the release-specific tab, e.g. AAPL.r */ 
 	public Stock getStockBySymbol(String tokenSymbol) throws Exception {
 		for (Stock stock : this) {
-			if (tokenSymbol.equals(stock.tokenSmbol() ) ) {
+			if (tokenSymbol.equals(stock.tokenSymbol() ) ) {
 				return stock;
 			}
 		}

@@ -65,7 +65,7 @@ public class Stock extends JsonObject {
 	}
 
 	/** From specific tab, e.g. AAPL.r */
-	public String tokenSmbol() {
+	public String tokenSymbol() {
 		return getString("tokenSymbol");
 	}
 

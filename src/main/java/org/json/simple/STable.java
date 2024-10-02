@@ -26,12 +26,13 @@ public class STable<T> extends HashMap<String,T> {
 	private int m_period; // in ms
 	private boolean m_set;
 	
-	public STable( String filename, int n, Class<T> clas) {
+	public STable( String filename, int period, Class<T> clas) {
 		m_filename = filename;
-		m_period = n;
-		
+		m_period = period;
 		readFile(clas);
-		
+	}
+
+	public void startThread() {
 		Util.executeEvery(m_period, m_period, () -> check() );
 	}
 

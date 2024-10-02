@@ -119,6 +119,6 @@ public class ParamMap {
 	}
 	
 	public String getUnescapedString(String tag) {
-		return Util.unescHtml( getString( tag) );
+		return Util.unescHtml( getString( tag), false);
 	}
 }

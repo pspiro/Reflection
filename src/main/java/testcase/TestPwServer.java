@@ -1,7 +1,5 @@
 package testcase;
 
-import static org.junit.Assert.assertEquals;
-
 import common.Util;
 import http.MyClient;
 import junit.framework.TestCase;

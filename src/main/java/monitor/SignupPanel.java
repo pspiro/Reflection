@@ -53,6 +53,6 @@ class SignupPanel extends JsonPanel {
 	}
 	
 	@Override protected Object format(String key, Object value) {
-		return key.equals("referer") ? Util.unescHtml(value.toString()) : value;
+		return key.equals("referer") ? Util.unescHtml(value.toString(), false) : value;
 	}
 }

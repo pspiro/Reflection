@@ -22,6 +22,7 @@ import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
 import http.BaseTransaction;
+import siwe.SiweTransaction;
 import tw.util.S;
 import util.LogType;
 
@@ -166,14 +167,6 @@ public abstract class MyTransaction extends BaseTransaction {
 		return m_walletAddr;
 	}
 	
-	protected String getCountryCode() throws Exception {
-		return Util.left( getFirstHeader( "X-Country-Code"), 2);
-	}
-
-	protected String getUserIpAddress() throws Exception {
-		return Util.left( getFirstHeader( "X-Real-IP"), 15);
-	}
-
 	/** create a User object for this */
 	protected JsonObject getUser() throws Exception {
 		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );

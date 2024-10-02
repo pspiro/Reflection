@@ -21,7 +21,6 @@ import org.web3j.tx.FastRawTransactionManager;
 import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.TransactionManager;
-import org.web3j.tx.exceptions.TxHashMismatchException;
 import org.web3j.tx.gas.StaticEIP1559GasProvider;
 import org.web3j.tx.response.EmptyTransactionReceipt;
 import org.web3j.tx.response.PollingTransactionReceiptProcessor;
@@ -205,6 +204,11 @@ public class Refblocks {
 				new DelayedTrp() ) );
 	}
 
+	/** note that we could use a singleton DelayedTrp if desired; there is no state */
+	protected static TransactionManager getSlowerTm(String callerKey) {
+		return new SlowerTm(web3j, Credentials.create( callerKey) );
+	}
+
 	/** This is only used for deployment and minting stock tokens.
 	 *  Should not be used in production because nonce will get mixed up with FasterTm
 	 *  
@@ -231,7 +235,7 @@ public class Refblocks {
 		Fees fees = NodeServer.queryFees();
 		fees.showFees(units);
 
-		return new StaticEIP1559GasProvider( // fails with this
+		return new StaticEIP1559GasProvider(
 				chainId,
 				fees.totalFee(),
 				fees.priorityFee(),
@@ -297,8 +301,8 @@ public class Refblocks {
 
 		private String m_key;  // for debugonly
 
-		public SlowerTm(Web3j web3j, Credentials credentials, TransactionReceiptProcessor trp) {
-			super(web3j, credentials, chainId, trp);
+		public SlowerTm(Web3j web3j, Credentials credentials) {
+			super(web3j, credentials, chainId);
 			m_key = credentials.getAddress().substring( 0, 6);
 		}
 		
@@ -417,7 +421,8 @@ public class Refblocks {
 		}
 	}
 
-	/** sign any random text; compare with https://app.mycrypto.com/sign-message */
+	/** sign any random text; compare with https://app.mycrypto.com/sign-message
+	 *  Not used but could come in handy */
     static void getSignature(String message, String key) {
         Credentials credentials = Credentials.create( key);
 

@@ -1,15 +1,20 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.json.simple.JsonObject;
+import org.json.simple.OrderedJson;
+
 import common.Util;
 import http.MyClient;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book.Tab;
 import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
@@ -47,7 +52,7 @@ public class CryptoPanel extends MonPanel {
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
-		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
+		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendToOther() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
 		HtmlButton refSendMatic = new HtmlButton( "Send", ev -> refSendMatic() );
 
@@ -97,26 +102,50 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	/** Send from Owner to somewhere else */
-	private void ownerSendBusd() {
+	private void ownerSendToOther() {
 		wrap( () -> {
-			String name = Util.ask( "Enter name");
+			String name = Util.ask( "Enter name from Recipients tab");
+			if (S.isNull( name) ) return;
 			
-			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
-			String address = Util.reqValidAddress( tab.get( name) );
+			GTable recips = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
+			String address = Util.reqValidAddress( recips.get( name) );
 			
-			double amt = Double.parseDouble( Util.ask( "Enter amount"));
+			JsonObject json = new OrderedJson();
+			json.put( "Date", S.USER_DATE.format( new Date() ) );
+			json.put( "Payor or Payee", name);
+			json.put( "Description", "");
+			json.put( "Category", "");
+			json.put( "Amount", "");
+			json.put( "Account", "Owner wallet");
+			
+			// let user edit the json object
+			if (!JsonDlg.edit( Monitor.m_frame, json) ) {
+				return;
+			}
+			
+			// check amount too high or too low
+			double amt = json.getDouble( "Amount");
+			if (amt <= 0) return;
+			
 			if (amt > 300 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
 				Util.inform( this, "The password was invalid");
 				return;
 			}
-			
+
+			// do the transfer
 			String hash = config().busd().transfer( 
 					config().ownerKey(),
 					address,
 					amt
 					).waitForHash();
 			
-			//Util.browse( config().blockchainTx( hash) );
+			// add transaction to Reflection financial spreadsheet
+			if (Monitor.m_config.isProduction() ) {
+				Tab tab = NewSheet.getTab( NewSheet.ReflTransactions, "Register");
+				tab.insert( json);
+			}
+
+			// copy has to clipboard
 			Util.copyToClipboard( config().blockchainTx( hash) );
 			Util.inform(this, "Done, hash is copied to clipboard");
 		});

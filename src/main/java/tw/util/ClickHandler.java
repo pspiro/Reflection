@@ -40,8 +40,7 @@ public class ClickHandler {
         final MouseEvent event = (MouseEvent)eventIn;
     
         if (event.getID() == MouseEvent.MOUSE_PRESSED) {
-            if (event.getSource() instanceof JTable) {
-                JTable table = (JTable)event.getSource();
+            if (event.getSource() instanceof JTable table) {
                 int row = table.rowAtPoint(event.getPoint());
                 int col = table.columnAtPoint(event.getPoint());
                 m_point = new Point( row, col);

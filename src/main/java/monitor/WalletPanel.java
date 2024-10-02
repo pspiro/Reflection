@@ -5,6 +5,7 @@ import static monitor.Monitor.m_config;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
+import java.awt.event.ActionEvent;
 import java.util.HashMap;
 
 import javax.swing.Box;
@@ -22,8 +23,11 @@ import org.json.simple.JsonObject;
 import common.JsonModel;
 import common.Util;
 import http.MyClient;
+import monitor.AnyQueryPanel.MyComboBox;
 import monitor.wallet.BlockDetailPanel;
 import monitor.wallet.BlockSummaryPanel;
+import onramp.Onramp;
+import onramp.Onramp.KycStatus;
 import reflection.Stock;
 import test.MyTimer;
 import tw.util.DualPanel;
@@ -37,7 +41,8 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
-import web3.MoralisServer;
+import web3.NodeInstance.Transfers;
+import web3.NodeServer;
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -51,6 +56,7 @@ public class WalletPanel extends MonPanel {
 	private CryptoPanel cryptoPanel = new CryptoPanel();
 	private TokPanel tokPanel = new TokPanel();
 	private LogPanel logPanel = new LogPanel();
+	private OnrampUserPanel onrampPanel = new OnrampUserPanel();
 	private String m_emailAddr;
 
 	private final NewTabbedPanel m_tabs = new NewTabbedPanel(true);
@@ -80,6 +86,7 @@ public class WalletPanel extends MonPanel {
 		m_tabs.addTab( "Crypto", cryptoPanel); 
 		m_tabs.addTab( "Tokens", tokPanel); 
 		m_tabs.addTab( "Log", logPanel);
+		m_tabs.addTab( "OnRamp", onrampPanel);
 
 		add( top, BorderLayout.NORTH);
 		add( m_tabs);
@@ -190,33 +197,42 @@ public class WalletPanel extends MonPanel {
 	}
 
 	class BlockchainPanel extends MiniTab {
-		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
 		BlockDetailPanel m_allTransPanel = new BlockDetailPanel();
+		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
 
 		BlockchainPanel() {
 			super( new BorderLayout() );
 
-			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
 			m_allTransPanel.setBorder( new TitledBorder( "All Transactions"));
+			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
 
 			DualPanel dualPanel = new DualPanel();
-			dualPanel.add( m_sumPanel, "1");
 			dualPanel.add( m_allTransPanel, "2");
+			dualPanel.add( m_sumPanel, "1");
 
 			add( dualPanel);
 		}
 
 		@Override public void activated() {
 			wrap( () -> {
-				m_allTransPanel.refresh( m_wallet);
-				m_sumPanel.refresh( m_wallet, m_allTransPanel.rows() );
+				// get all relevant transfers
+				var ts = new Transfers();
+				ts.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.stocks.getAllContractsAddresses() ) );
+				ts.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
+				
+				// filter based on contract and transfer size
+				// not necessary anymore, only necessary if using Moralis
+				// weCare( ts) and amount() 
+
+				m_allTransPanel.refresh( m_wallet, ts);
+				m_sumPanel.refresh( m_wallet, ts);
 			});
 		}
 
 		protected void clear() {
 			try {
-				m_allTransPanel.refresh( "");
-				m_sumPanel.refresh( "", new JsonArray() );
+				m_allTransPanel.refresh( "", null);
+//				m_sumPanel.refresh( "", new JsonArray() );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -308,7 +324,7 @@ public class WalletPanel extends MonPanel {
 			wrap( () -> {
 				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
-				HashMap<String, Double> posMap = MoralisServer.reqPositionsMap(m_wallet);
+				HashMap<String, Double> posMap = NodeServer.reqPositionsMap(m_wallet, Monitor.stocks.getAllContractsAddresses(), StockToken.stockTokenDecimals);
 				
 				double stockBal = 0;
 				
@@ -598,6 +614,100 @@ public class WalletPanel extends MonPanel {
 		}
 		
 	}
+	
+	class OnrampUserPanel extends MiniTab {
+		int size = 11;
+		private JTextField m_phone = new JTextField( size);
+		private JTextField m_id = new JTextField( size);
+		private JTextField m_kycStatus = new JTextField( size + 5);
+		private JsonModel model = new JsonModel( "phone,onramp_id");
+		private MyComboBox m_kycCombo = new MyComboBox(KycStatus.values() );
+		private JsonModel m_logModel = new JsonModel( "created_at,type,currency,buyAmt,recAmt");
+		
+		OnrampUserPanel() {
+			super( new BorderLayout() );
+			
+			VerticalPanel p = new VerticalPanel();
+			p.add( "Phone", m_phone, new HtmlButton( "Update", this::updatePhone), 
+					new JLabel("(Required format is: XX-XXXXXXXXX)") );
+			p.add( "OnRamp ID", m_id, new HtmlButton( "Update", this::updateId) );
+			p.add( "KYC Status", m_kycStatus, m_kycCombo, new HtmlButton( "Set", this::setKyc) );
+			
+			add( p, BorderLayout.NORTH);
+			add( model.createTable() );
+			add( m_logModel.createTable(), BorderLayout.EAST);
+		}
+		
+		void setKyc(ActionEvent e) {
+			wrap( () -> { 
+				Onramp.updateKycStatus( m_id.getText(), (KycStatus)m_kycCombo.getSelected() );
+				
+				m_kycStatus.setText( Onramp.getKycStatus( m_id.getText() ) );
+				
+				Util.inform( this, "Done");
+			});
+		}
+		
+		void updatePhone( ActionEvent e) {
+			wrap( () -> {
+				m_config.sqlCommand( sql -> sql.execWithParams(
+						"update users set phone = '%s' where wallet_public_key = '%s'",
+							m_phone.getText(), m_wallet.toLowerCase() ) );;
+				Util.inform( this, "Done");
+			});
+		}
+		
+		void updateId( ActionEvent e) {
+			wrap( () -> {
+				m_config.sqlCommand( sql -> sql.execWithParams(
+						"update users set onramp_id = '%s' where wallet_public_key = '%s'",
+							m_id.getText(), m_wallet.toLowerCase() ) );;
+				Util.inform( this, "Done");
+			});
+		}
+		
+		@Override protected void clear() {
+		}
+
+		@Override public void activated() {
+			wrap( () -> {				
+				var users = m_config.sqlQuery("select phone, onramp_id from users where wallet_public_key = '%s'", m_wallet);
+				if (users.size() > 0) {					
+					var phone = users.get( 0).getString( "phone");
+					m_phone.setText( phone);
+
+					var id = users.get( 0).getString( "onramp_id");
+					m_id.setText( id);
+					
+					if (S.isNotNull( id) ) {
+						String status = Onramp.getKycStatus( id);
+						m_kycStatus.setText( status);
+						
+						var trans = Onramp.getUserTransactions( id);
+						model.setNames( String.join( ",", trans.getKeys() ) );
+						model.fireTableStructureChanged();
+	
+						model.setRows( trans);
+						model.fireTableDataChanged();
+					}
+				}
+				
+				var logs = m_config.sqlQuery( "select * from log where wallet_public_key = '%s' and type = '%s'",
+						m_wallet, LogType.ONRAMP);
+
+				var data = new JsonArray();
+				for (var log : logs) {
+					data.add( log
+							.getObject( "data")
+							.append( "created_at", log.getString("created_at").substring( 0, 19) ) );
+				}
+				
+				m_logModel.setRows( data);
+				m_logModel.fireTableDataChanged();
+			});
+		}
+	}
+	
 
 	/** Used by TestCase as well as Monitor */
 	public static JsonObject createLockObject( String wallet, double amt, long lockUntil, int requiredTrades) throws Exception {

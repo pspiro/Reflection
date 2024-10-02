@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 
 import com.moonstoneid.siwe.SiweMessage;
@@ -188,6 +190,18 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static JsonObject parse( String text) throws Exception {
 		Util.require( isObject(text), "Error: not a json object: " + text);
 		return (JsonObject)new JSONParser().parse( text);
+	}
+	
+	public static JsonObject parseOrdered( String text) throws Exception {
+		Util.require( isObject(text), "Error: not a json object: " + text);
+		return (JsonObject)new JSONParser().parse( text, new ContainerFactory() {
+			@Override public Map createObjectContainer() {
+				return new OrderedJson();
+			}
+			@Override public List creatArrayContainer() {
+				return null;
+			}
+		});
 	}
 	
 	public static JsonObject parse(InputStream is) throws Exception {
@@ -437,9 +451,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Copy all tags from other to this object; null values are okay but not added */
 	public void copyFrom(JsonObject other, String... tags) {
 		for (String tag : tags) {
-			if (other.get(tag) != null) {
-				put( tag, other.get(tag) );
-			}
+			putIf( tag, other.get(tag) );
 		}
 	}
 
@@ -451,9 +463,12 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	/** Will convert a string to enum; may return null */
 	public <T extends Enum<T>> T getEnum( String key, T[] values) throws Exception {
 		Object val = get(key);
-		return val == null 
-			? null 
-			: Util.getEnum(val.toString(), values);
+		return val == null ? null : Util.getEnum(val.toString(), values);
+	}
+
+	public <T extends Enum<T>> T getEnum( String key, T[] values, T defVal) throws Exception {
+		Object val = get(key);
+		return val == null ? null : Util.getEnum(val.toString(), values, defVal);
 	}
 
 	/** Add all keys to the key set */
@@ -494,6 +509,27 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 	
+	public static void displayMap( HashMap<String,?> map) {
+		new JsonObject( map).display();
+	}
+
+	public static JsonObject toJson( Record record) throws Exception {
+		JsonObject json = new JsonObject();
+
+		// Iterate over each component (field) and add it to the JSON object
+		for (var component : record.getClass().getRecordComponents() ) {
+			// Make the method accessible if necessary
+			component.getAccessor().setAccessible(true);
+
+			// Get the field name
+			String fieldName = component.getName();
+			Object fieldValue = component.getAccessor().invoke(record);
+
+			// Add the field and its value to the JSON object
+			json.put(fieldName, fieldValue);
+		}                
+		return json;
+	}
 
 }
 /** NOTE: Timestamp objects are stored as

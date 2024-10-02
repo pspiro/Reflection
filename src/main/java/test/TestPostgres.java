@@ -1,10 +1,8 @@
 package test;
 
 import common.Util;
-import http.MyClient;
 import reflection.Config;
-import testcase.Cookie;
-import web3.NodeServer;
+import tw.util.S;
 
 
 
@@ -14,17 +12,15 @@ public class TestPostgres {
 
 	static {
 		try {
-			m_config = Config.read();
+//			m_config = Config.ask();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-		Cookie.setWalletAddr( NodeServer.prod);
-
-		MyClient.postToJson("http://localhost:5000/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-		.display();
+		S.out( Util.fmtTime(1811563292425L) );
+		
 
 	}
 
