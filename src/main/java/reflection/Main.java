@@ -3,6 +3,7 @@ package reflection;
 import java.io.OutputStream;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Random;
@@ -40,9 +41,9 @@ import util.LogType;
 
 public class Main implements ITradeReportHandler {
 	// constants
-	enum Status {
-		Connected, Disconnected
-	};
+	enum Status { Connected, Disconnected };
+	enum Time { Before, After, Unknown }
+
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 
 	// no ticks in this time and we have a problem
@@ -68,11 +69,9 @@ public class Main implements ITradeReportHandler {
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
-    private LocalDate m_lastDate;  // last date that we sent daily account summary emails
-
+    private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails 
 	
 	Stocks stocks() { return m_stocks; }
-
 
 	public static void main(String[] args) {
 		try {
@@ -233,7 +232,7 @@ public class Main implements ITradeReportHandler {
 		}
 
 		// send out daily account summaries
-		if (m_config.isProduction() ) {
+		if (m_config.isProduction() && m_config.maxSummaryEmails() > 0) {
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkSummaries);
 		}
 	}
@@ -630,17 +629,20 @@ public class Main implements ITradeReportHandler {
 
     /** check if it's time to send out the summary emails; when data changes in NY */
 	void checkSummaries() {
-		LocalDate today = ZonedDateTime.now( ZoneId.of("America/New_York") ).toLocalDate();
-        if (m_lastDate != null && !today.equals(m_lastDate) ) {        	
-        	m_lastDate = today;
+		boolean nowAfter = Util.isLaterThanEST( 16);
 
-            DayOfWeek dayOfWeek = today.getDayOfWeek();
-            if (dayOfWeek != DayOfWeek.SUNDAY && dayOfWeek != DayOfWeek.MONDAY) {
-            	Util.wrap( () -> 
-            		new SummaryEmail( m_config, m_stocks, false)
-            			.generateSummaries() );
+		// if we just passed the time threshold...
+		if (m_timeWas == Time.Before && nowAfter) {
+            DayOfWeek dayOfWeek = Util.getDayEST();
+
+            // and not a weekend, send the daily email summaries
+            if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
+            	Util.wrap( () -> new SummaryEmail( m_config, m_stocks, false)
+            			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }
+		
+		m_timeWas = nowAfter ? Time.After : Time.Before;
 	}
 }
 

@@ -2,7 +2,10 @@ package common;
 
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.RecordComponent;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -153,4 +156,11 @@ public class JsonModel extends MyTableModel {
 	protected void onCtrlClick(JsonObject row, String tag) {
 	}
 
+	/** return comma-separated list of all fields */
+	public static String getAllFields(Class<? extends Record> recordClass) {
+        var list = Arrays.stream(recordClass.getRecordComponents())
+                     .map(RecordComponent::getName)
+                     .collect(Collectors.toList());		
+		return String.join( ",", list.toArray( new String[0]) );
+	}
 }

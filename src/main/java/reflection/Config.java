@@ -106,6 +106,7 @@ public class Config extends ConfigBase {
 	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
+	private int maxSummaryEmails;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -277,6 +278,7 @@ public class Config extends ConfigBase {
 		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
+		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
 		
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
@@ -802,5 +804,13 @@ public class Config extends ConfigBase {
 	
 	public NodeInstance node() {
 		return m_node;
+	}
+	
+	public String[] getStablecoinAddresses() {
+		return new String[] { rusdAddr(), busdAddr() };
+	}
+	
+	public int maxSummaryEmails() {
+		return maxSummaryEmails;
 	}
 }

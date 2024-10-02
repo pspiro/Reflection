@@ -8,7 +8,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -325,6 +330,12 @@ public class Util {
 		if (!test) {
 			throw new Exception( String.format( S.notNull( text), params) );
 		}
+	}
+	
+	/** confirm test = true, then return obj */
+	public static <T> T checkReturn( T obj, boolean test, String text, Object... params) throws Exception {
+		require( test, text, params);
+		return obj;
 	}
 
 	/** Use this in more places. */  // try String.join(), dummy!
@@ -930,4 +941,17 @@ public class Util {
 	public static <T> T notNull( T obj, Supplier<T> supplier) {
 		return obj != null ? obj : supplier.get();
 	}
+
+	/** @param hour pass the 24-hour time in EST, e.g. 16 = 4pm */
+	public static boolean isLaterThanEST( int hour) {
+        return ZonedDateTime.now( ZoneId.of("America/New_York") )
+        		.toLocalTime()
+        		.isAfter( LocalTime.of(hour, 0) );
+    }
+
+	public static DayOfWeek getDayEST() {
+		return ZonedDateTime.now( ZoneId.of("America/New_York") ).toLocalDate()
+				.getDayOfWeek();
+	}
+
 }

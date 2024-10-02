@@ -11,7 +11,7 @@ import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
 import util.LogType;
-import web3.NodeInstance.TransferReceipt;
+import web3.NodeInstance.Transfer;
 
 /* use this transaction id for a transfer of 12.04: 1060395
 insert into onramp (wallet_public_key, trans_id, amount) values ('0xabc', '1060395', 12.0399); 
@@ -116,7 +116,7 @@ public class OnrampServer {
 			if (ago >= confRequired) {
 
 				// get receipt and info about the transfer
-				TransferReceipt received = m_polygon.node().getTransferReceipt( onrampToReflHash, m_polygon.busd().decimals() ); // <<< ON POLYGON!!!
+				Transfer received = m_polygon.node().getTransferReceipt( onrampToReflHash, m_polygon.busd().decimals() ); // <<< ON POLYGON!!!
 
 				// confirm correct contract address
 				Util.require( received.contract().equalsIgnoreCase( m_polygon.busdAddr() ), "Error: the blockchain transaction is for the wrong contract  id=%s  wallet=%s  expected=%s  got=%s",

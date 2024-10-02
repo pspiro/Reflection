@@ -197,13 +197,14 @@ public class MoralisServer {
 		return queryObject( url);
 	}
 	
-	/** returns one page of transactions for a specific token
+	/** returns one page of transactions for a specific wallet
 	 *  relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
 	 *  @address is ERC20 token address */
-	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
+	public static JsonObject getWalletTransfers(String wallet, String cursor) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
-		return queryObject( url);
+		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, wallet, chain, S.notNull(cursor) );
+		var obj = queryObject( url);
+		return Util.checkReturn( obj, !obj.has( "message"), "Cannot get wallet transfers - " + obj.get( "message") );
 	}
 	
 	interface Query {
@@ -248,11 +249,10 @@ public class MoralisServer {
 //		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 //	}
 
-	/** returns all transactions for a specific token
-	 * relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
-	 */
-	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
-		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+	/** returns all transactions for a specific wallet
+	 * relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value */
+	public static void getAllWalletTransfers(String wallet, Consumer<JsonArray> consumer) throws Exception {
+		getAll( consumer, cursor -> getWalletTransfers(wallet, cursor) );  
 	}
 
 	public static void setChain(String chainIn) throws Exception {

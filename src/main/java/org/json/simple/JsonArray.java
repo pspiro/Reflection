@@ -316,4 +316,12 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		Util.forEach( this, rec -> list.add( rec.getString( key)));
 		return list;
 	}
+	
+	static public JsonArray toJson( ArrayList<? extends Record> list) throws Exception {
+		JsonArray json = new JsonArray();
+		for (var item : list) {
+			json.add( JsonObject.toJson( item) );
+		}
+		return json;
+	}
 }

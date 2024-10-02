@@ -8,6 +8,7 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import tw.google.Auth;
 import tw.util.S;
 import web3.MoralisServer;
 import web3.NodeInstance;
@@ -38,7 +39,7 @@ public class SummaryEmail {
 		try {
 			Config c = Config.ask();
 			new SummaryEmail( c, c.readStocks(), true)  // don't set to false; there will be no prices
-			.generateSummaries();
+				.generateSummaries( 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -51,8 +52,10 @@ public class SummaryEmail {
 
 		if (m_testing) {
 			for ( Stock stock : m_stocks) {  //remove. pas
-				stock.setPrices( new Prices( Util.toJson(
-						"last", 83.82) ) );
+				if (Util.rnd.nextBoolean()) {
+					stock.setPrices( new Prices( Util.toJson(
+							"last", 83.82) ) );
+				}
 			}
 		}
 
@@ -63,14 +66,12 @@ public class SummaryEmail {
 	}
 
 	/** generate the daily summary emails */
-	void generateSummaries() throws Exception {
+	void generateSummaries( int maxToSend) throws Exception {
 		S.out( "Generating daily email summaries");
 
 		// get wallet and names from users table
 		S.out( "querying users table");
 		JsonArray users = m_config.sqlQuery( "select first_name, last_name, email, wallet_public_key from users");
-
-		// wallets must be all lower case
 
 		if (m_testing ){
 			String wallet = NodeInstance.prod.toLowerCase();
@@ -83,9 +84,8 @@ public class SummaryEmail {
 		for (var userRec : users) {
 			String wallet = userRec.getString( "wallet_public_key");
 			try {
-				if (userRec.has( "email")) {
-					generateSummary( wallet, userRec);
-					if (++count == max)	break;
+				if (generateSummary( wallet, userRec) && ++count == maxToSend) {
+					break;
 				}
 			}
 			catch( Exception e) {
@@ -97,47 +97,54 @@ public class SummaryEmail {
 
 
 	/** @param wallet lower case
-	 * @param map maps wallet to record with first and last name, if we have it  */
-	private void generateSummary( String wallet, JsonObject userRec) throws Exception {
+	 * @param map maps wallet to record with first and last name, if we have it
+	 * @return true if we sent an email  */
+	private boolean generateSummary( String wallet, JsonObject userRec) throws Exception {
+		String email = userRec.getString( "email");
+		
+		if (!Util.isValidEmail( email) ) {
+			return false;
+		}
+
 		S.out( "generating summary for %s", wallet);
 
-		HashMap<String, Double> posMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
+		HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
 				wallet, m_list.toArray( new String[0]) );
 
 		// build array of Positions
 		ArrayList<Position> positions = new ArrayList<>();
+		
+		boolean missedOne = false;
 
 		// add stocks
 		for ( Stock stock : m_stocks) {
-			Util.iff( posMap.get( stock.getSmartContractId().toLowerCase() ), balance -> {
-				if (balance > 0) {
-					if (stock.prices().validLast() ) {
-						positions.add( new Position( stock.symbol(), balance, stock.prices().last() ) );
-					}
-					else {
-						S.out( "Error: cannot add %s to statement, no valid last", stock.symbol() );
-					}
+			var balance = positionsMap.get( stock.getSmartContractId().toLowerCase() );
+			if (balance != null && balance > 0) {
+				double last = stock.prices().validLast() ? stock.prices().last() : 0;
+				positions.add( new Position( stock.symbol(), balance, last) );
+
+				if (!stock.prices().validLast() ) {
+					S.out( "Error: no valid last for %s when generating statement", stock.symbol() );
+					missedOne = true;
 				}
-			});
+			}
 		}
 		
 		// sort positions by symbol
 		positions.sort( (p1, p2) -> p1.name().compareTo( p2.name() ) );
 
 		// add RUSD and BUSD at the bottom
-		Util.iff( posMap.get( m_config.rusdAddr() ), pos -> 
+		Util.iff( positionsMap.get( m_config.rusdAddr() ), pos -> 
 			positions.add( new Position( m_config.rusd().name() + " (stablecoin)", (double)pos, 1) ) );
-		Util.iff( posMap.get( m_config.busdAddr() ), pos -> 
+		Util.iff( positionsMap.get( m_config.busdAddr() ), pos -> 
 			positions.add( new Position( m_config.busd().name() + " (stablecoin)", (double)pos, 1) ) );
 
-		// WARNING: if price is zero, item will not display
-		
-		// build the positions section from list of Pos
+		// build the positions section
 		StringBuilder posRows = new StringBuilder();
 		double total = 0;
 		for (Position pos : positions) {
 			double value = pos.quantity() * pos.price();
-			if (value >= .01) {
+			if (value >= .01 || pos.price() == 0. && pos.quantity > .001) {
 				String item = Text.portRow
 						.replace( "#token#", pos.name() )
 						.replace( "#quantity#", S.fmt2( pos.quantity() ) )
@@ -176,30 +183,32 @@ public class SummaryEmail {
 		if (posRows.length() > 0 || actRows.length() > 0) {
 			String name = Util.combine( userRec.getString( "first_name"), userRec.getString( "last_name")).trim();  
 
+			String totalStr = missedOne ? "" : S.fmt2( total);  // don't display total if we were missing prices as it won't be accurate
+			
 			String html = Text.email
 					.replace( "#name#", name)
 					.replace( "#wallet#", wallet)
 					.replace( "#portrows#", posRows.toString() )
 					.replace( "#actrows#", actRows.toString() )
-					.replace( "#total#", S.fmt2( total) );
+					.replace( "#total#", totalStr);
 
-			String to = S.isNotNull( name)
-					? String.format( "%s <%s>", name, userRec.getString( "email") )
-							: userRec.getString( "email");
+			// 'to' display name not supported with gmail
+//			String to = S.isNotNull( name)
+//					? String.format( "%s <%s>", name, userRec.getString( "email") )
+//							: userRec.getString( "email");
 
+			Auth.auth().getMail().send(
+					"Reflection", 
+					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
+					email, 
+					"Reflection Account Statement", 
+					html, 
+					true);
 
-			to = userRec.getString( "email");  // display name not supported when sending w/ gmail
-
-//			Auth.auth().getMail().send(
-//					"Reflection", 
-//					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
-//					to, 
-//					"Reflection Account Statement", 
-//					html, 
-//					true);
-
-
-			S.out( "sent email for " + wallet + "\n" + html);
+			S.out( "sent email for " + wallet); //+ "\n" + html);
+			return true;
 		}
+		
+		return false;
 	}
 }

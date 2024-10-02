@@ -33,7 +33,7 @@ public class Monitor {
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
-	static final Stocks stocks = new Stocks();
+	public static final Stocks stocks = new Stocks();
 
 	public static MonitorConfig m_config;
 	static MyRedis m_redis;

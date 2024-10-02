@@ -512,6 +512,25 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	public static void displayMap( HashMap<String,?> map) {
 		new JsonObject( map).display();
 	}
+
+	public static JsonObject toJson( Record record) throws Exception {
+		JsonObject json = new JsonObject();
+
+		// Iterate over each component (field) and add it to the JSON object
+		for (var component : record.getClass().getRecordComponents() ) {
+			// Make the method accessible if necessary
+			component.getAccessor().setAccessible(true);
+
+			// Get the field name
+			String fieldName = component.getName();
+			Object fieldValue = component.getAccessor().invoke(record);
+
+			// Add the field and its value to the JSON object
+			json.put(fieldName, fieldValue);
+		}                
+		return json;
+	}
+
 }
 /** NOTE: Timestamp objects are stored as
  *  

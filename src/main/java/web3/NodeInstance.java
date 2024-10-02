@@ -2,6 +2,7 @@ package web3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
@@ -13,6 +14,7 @@ import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
+import web3.NodeInstance.Transfer;
 
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
@@ -193,6 +195,7 @@ public class NodeInstance {
 		return new Fees( baseFee * 1.2, sum / 5.);
 	}
 	
+	/** show pending and queued transactions to find stuck transactions */
 	public void showTrans() throws Exception {
 		Config c = Config.ask( "Dt2");
 		JsonObject result = getQueuedTrans().getObject("result");
@@ -412,7 +415,7 @@ public class NodeInstance {
 		
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
 	}
-	
+		
 	/** must handle the no receipt or not ready yet state */
 	public JsonObject getReceipt( String transHash) throws Exception {
 		String body = String.format( """
@@ -465,10 +468,13 @@ public class NodeInstance {
 	}
 	
 	/** This is a receipt for an ERC-20 token transfer */
-	public static record TransferReceipt( String contract, String from, String to, double amount) {
+	public static record Transfer( String contract, String from, String to, double amount, long block, String hash) {
+	}
+	
+	public static class Transfers extends ArrayList<Transfer> {
 	}
 
-	public TransferReceipt getTransferReceipt( String hash, int decimals) throws Exception {
+	public Transfer getTransferReceipt( String hash, int decimals) throws Exception {
 		var receipt = getReceipt( hash);
 		Util.require( receipt != null && receipt.getString( "status").equals( "0x1"), "Receipt is invalid");
 		
@@ -484,15 +490,40 @@ public class NodeInstance {
 	    		// The amount of tokens transferred is stored in the 'data' field (hexadecimal value)
 	    		double amount = Erc20.fromBlockchain( log.getString( "data"), decimals );
 
-				return new TransferReceipt( contract, sender, recipient, amount);
+				return new Transfer( contract, sender, recipient, amount, log.getLong( "blockNumber"), hash);
 	    	}
 	    }
 	    return null;
 	}
+
+	/** return all token transfers for the specified wallet and contract addresses */
+	public Transfers getTokenTransfers( String wallet, String[] addresses) throws Exception {
+		int fromBlock = 20556807;
+
+		Transfers trans = new Transfers();
+		trans.addAll( getTransfers( wallet, addresses, fromBlock, wallet, null) );
+		trans.addAll( getTransfers( wallet, addresses, fromBlock, null, wallet) );
+
+		return trans;
+	}
+	
+	/** return all token transfers for the specified wallet and contract addresses
+	 *  additionally filtered by "from" and "to" wallets */
+	private List<Transfer> getTransfers( String wallet, String[] addresses, int fromBlock, String from, String to) throws Exception {
+		var query = NodeAux.createReq( addresses, fromBlock, from, to);
+		S.out( "query: " + query);
+		
+		var json = nodeQuery( query.toString() );
+		S.out( "response: " + json);
+		
+		return NodeAux.processResult( json, wallet, this::getDecimals);
+	}
 	
 	public static void main(String[] args) throws Exception {
-		Config.ask();
-	}
+		Config c = Config.ask();
+		var trans = c.node().getTokenTransfers(NodeInstance.prod, c.getStablecoinAddresses() );
+		trans.forEach(System.out::println);
+	}	
 }
 
 	

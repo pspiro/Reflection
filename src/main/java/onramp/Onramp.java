@@ -169,14 +169,11 @@ public class Onramp {
 				"paymentMethodType", paymentMethodMap.getString( currency),
 				"chain", "MATIC20"
 				) );
-		
+		Util.require( !json.has( "error"), "Could not get quote - " + json.getString( "error") ); 
+
 		var data = json.getObjectNN( "data");
 		double toAmt = data.getDouble( "toAmount");
-
-		if (toAmt <= 0) {
-			throw new MyException( "Error: could not get onramp quote  currency=%s  fromAmt=%s",
-					currency, fromAmt);
-		}
+		Util.require( toAmt > 0, "Error: could not get quote for %s %s", fromAmt, currency);
 		
 		// save the rate; we'll use it later when creating the order
 		fiatRateMap.put( currency, data.getDouble( "rate"));

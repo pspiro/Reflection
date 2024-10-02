@@ -41,6 +41,7 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.NodeInstance.Transfers;
 import web3.NodeServer;
 import web3.StockToken;
 
@@ -196,33 +197,42 @@ public class WalletPanel extends MonPanel {
 	}
 
 	class BlockchainPanel extends MiniTab {
-		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
 		BlockDetailPanel m_allTransPanel = new BlockDetailPanel();
+		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
 
 		BlockchainPanel() {
 			super( new BorderLayout() );
 
-			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
 			m_allTransPanel.setBorder( new TitledBorder( "All Transactions"));
+			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
 
 			DualPanel dualPanel = new DualPanel();
-			dualPanel.add( m_sumPanel, "1");
 			dualPanel.add( m_allTransPanel, "2");
+			dualPanel.add( m_sumPanel, "1");
 
 			add( dualPanel);
 		}
 
 		@Override public void activated() {
 			wrap( () -> {
-				m_allTransPanel.refresh( m_wallet);
-				m_sumPanel.refresh( m_wallet, m_allTransPanel.rows() );
+				// get all relevant transfers
+				var ts = new Transfers();
+				ts.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.stocks.getAllContractsAddresses() ) );
+				ts.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
+				
+				// filter based on contract and transfer size
+				// not necessary anymore, only necessary if using Moralis
+				// weCare( ts) and amount() 
+
+				m_allTransPanel.refresh( m_wallet, ts);
+				m_sumPanel.refresh( m_wallet, ts);
 			});
 		}
 
 		protected void clear() {
 			try {
-				m_allTransPanel.refresh( "");
-				m_sumPanel.refresh( "", new JsonArray() );
+				m_allTransPanel.refresh( "", null);
+//				m_sumPanel.refresh( "", new JsonArray() );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
