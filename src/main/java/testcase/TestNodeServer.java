@@ -28,7 +28,7 @@ public class TestNodeServer extends MyTestCase {
 //	}
 	
 	public void testGetNativeBal() throws Exception {
-		assertTrue( node().getNativeBalance( node().prod) > 0);
+		assertTrue( node().getNativeBalance( NodeInstance.prod) > 0);
 	}
 	
 	public void testQueryFees() throws Exception {
@@ -40,7 +40,7 @@ public class TestNodeServer extends MyTestCase {
 	}
 	
 	public void testGetBalance() throws Exception {
-		assertTrue( node().getBalance( m_config.rusdAddr(), node().prod, 6) > 0);
+		assertTrue( node().getBalance( m_config.rusdAddr(), NodeInstance.prod, 6) > 0);
 	}
 	
 	public void testGetTotalSupply() throws Exception {
@@ -48,7 +48,7 @@ public class TestNodeServer extends MyTestCase {
 	}
 	
 	public void testGetAllowance() throws Exception {
-		assertTrue( node().getAllowance( m_config.rusdAddr(), node().prod, node().prod, 6) >= 0); 
+		assertTrue( node().getAllowance( m_config.rusdAddr(), NodeInstance.prod, NodeInstance.prod, 6) >= 0); 
 	}
 
 	public void testGetDecimals() throws Exception {
@@ -58,7 +58,7 @@ public class TestNodeServer extends MyTestCase {
 	
 	public void testReqPosMap() throws Exception {
 		Map<String, Double> map = node().reqPositionsMap( 
-				node().prod,
+				NodeInstance.prod,
 				stocks.getAllContractsAddresses(),
 				18);
 		new JsonObject( map).display();
