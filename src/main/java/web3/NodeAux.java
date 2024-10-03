@@ -44,6 +44,7 @@ public class NodeAux {
 		return requestBody;
 	}
 
+	/** NOTE address, sender, and recipient will all be lower case */
 	static List<Transfer> processResult( JsonObject json, String wallet, ExFunction<String,Integer> map) throws Exception {
 		List<Transfer> transactions = new ArrayList<>();
 		
@@ -57,13 +58,13 @@ public class NodeAux {
 
 		// Step 5: Filter transactions for contract transfers involving the wallet
 		for (var log : logs) {
-			String address = log.getString("address");
+			String address = log.getLowerString("address");
 			ArrayList<String> topics = log.<String>getArrayOf("topics");
 			
 			// Ensure the log has at least two topics: event signature and sender/recipient
 			if (topics.size() >= 3) {  // Ensure there are at least 3 topics (event signature, sender, recipient)
-			    String sender = "0x" + topics.get(1).substring(26);  // Extract sender address
-			    String recipient = "0x" + topics.get(2).substring(26);  // Extract recipient address
+			    String sender = "0x" + topics.get(1).substring(26).toLowerCase();  // Extract sender address
+			    String recipient = "0x" + topics.get(2).substring(26).toLowerCase();  // Extract recipient address
 				double val = Erc20.fromBlockchain( log.getString("data"), map.apply( address) );
 				
 				// Only consider transfers where the wallet is either sender or recipient

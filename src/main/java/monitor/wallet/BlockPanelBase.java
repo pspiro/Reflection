@@ -9,15 +9,15 @@ import reflection.Config;
 import web3.NodeInstance.Transfer;
 
 public class BlockPanelBase extends JPanel {
-	static final String Me = "***";
-	static final String RefWallet = "RefWallet";  // remove this. pas
+	public static final String Me = "This wallet";
+	public static final String RefWallet = "RefWallet";  // remove this. pas
+	public static final String nullAddr = "0x00";
 	static final String address = "address";
 	static final String toAddress = "to";
 	static final String fromAddress = "from";
 	static final String valueDecimal = "value_decimal";
 	static final String tokenSymbol = "token_symbol";
 	static final String timestamp = "block_timestamp";
-	static final String nullAddr = "0x0000000000000000000000000000000000000000";
 
 	protected String refWallet; 
 	protected String wallet; // currently selected wallet
@@ -27,6 +27,7 @@ public class BlockPanelBase extends JPanel {
 		refWallet = Monitor.m_config.refWalletAddr();
 	}
 
+	// not used
 	protected boolean weCare(Transfer trans) {
 		return isRusd( trans) || isBusd( trans) || isStock( trans);
 	}
@@ -48,11 +49,11 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	protected boolean isRusd(Transfer obj) {
-		return obj.contract().equalsIgnoreCase( config().rusdAddr() ); 
+		return obj.contract().equalsIgnoreCase( config().rusd().name() ); 
 	}
 
 	protected boolean isBusd(Transfer obj) {
-		return obj.contract().equalsIgnoreCase( config().busdAddr() );
+		return obj.contract().equalsIgnoreCase( config().busd().name() );
 	}
 
 	/** this is not reliable; you need to check the token address */
@@ -61,11 +62,11 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	protected boolean isMint(Transfer obj) {
-		return obj.from().equals( "Mint");
+		return obj.from().equals( nullAddr);
 	}
 
 	protected boolean isBurn(Transfer obj) {
-		return obj.to().equals( "Burn");
+		return obj.to().equals( nullAddr);
 	}
 	
 	static Config config() {
