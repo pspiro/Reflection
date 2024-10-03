@@ -33,7 +33,9 @@ public class NodeServer {
 	}
 
 	public static void setDecimals(int decimals, String[] addresses) {
-		inst.setDecimals(decimals, addresses);
+		if (inst != null) {  // lame hack to fix mdserver
+			inst.setDecimals(decimals, addresses);
+		}
 	}
 
 	public static HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
