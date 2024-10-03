@@ -285,6 +285,8 @@ public class BackendTransaction extends MyTransaction {
 	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
+			out( "warning: mywallet requests should route to HookServer");
+			
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
@@ -410,6 +412,8 @@ public class BackendTransaction extends MyTransaction {
 			String text = String.format( "name: %s<br>email: %s<br>%s",
 					m_map.getString("name"), m_map.getString("email"), m_map.getString("msg") );
 			
+			text = Util.unescHtml(text, true); 
+			
 			m_config.sendEmail("info@reflection.trading", "MESSAGE FROM USER", text); 
 		});
 	}
@@ -528,6 +532,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** this is a request for onramp order status */
 	public void handleOnramp() {
 		wrap( () -> {
 			JsonObject obj = parseToObject();

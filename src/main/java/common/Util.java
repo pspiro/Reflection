@@ -8,9 +8,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,6 +26,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,6 +41,7 @@ import org.web3j.crypto.Credentials;
 
 import com.ib.client.Decimal;
 
+import http.MyClient;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
@@ -322,6 +331,12 @@ public class Util {
 			throw new Exception( String.format( S.notNull( text), params) );
 		}
 	}
+	
+	/** confirm test = true, then return obj */
+	public static <T> T checkReturn( T obj, boolean test, String text, Object... params) throws Exception {
+		require( test, text, params);
+		return obj;
+	}
 
 	/** Use this in more places. */  // try String.join(), dummy!
 	public static String concatenate(char separator, String... values) {
@@ -355,6 +370,10 @@ public class Util {
 	
 	public static boolean isValidAddress( String str) {
 		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
+	}
+	
+	public static boolean isValidHash( String str) {
+		return str != null && str.length() == 66 && str.startsWith("0x"); 
 	}
 	
 	public static String reqValidAddress(String str) throws Exception {
@@ -481,6 +500,10 @@ public class Util {
 	
 	public interface ExSupplier<T> {
 	    T get() throws Exception;
+	}
+
+	public interface ExFunction<T,R> {
+		R apply(T t) throws Exception;
 	}
 
 	/** get or create; create can throw an exception */
@@ -684,6 +707,11 @@ public class Util {
 		return ts;
 	}
 	
+	/** @deprecated call set.toArray() */
+	public static <T> T[] toArray( Set<T> set) {
+		throw new Error(); 
+	}
+	
 	/** convert to decimal; accepts null */
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
@@ -795,10 +823,12 @@ public class Util {
 		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
 	}
 	
-	public static String unescHtml(String html) {
+	/** @param useBr controls %0a */
+	public static String unescHtml(String html, boolean useBr) {
 		return html
 				.replaceAll( "%20", " ")
 				.replaceAll( "%22", "\"")
+				.replaceAll( "%0a", useBr ? "<br>" : "\n")
 				.replaceAll( "%2[cC]", ",")
 				.replaceAll( "%2[fF]", "/")
 				.replaceAll( "%3[aA]", ":")
@@ -882,8 +912,46 @@ public class Util {
 	//		return (T[])list.toArray();
 	//	}
 	
+	public static <T> ArrayList<T> toList( T[] ar) {
+		ArrayList<T> list = new ArrayList<T>();
+		Collections.addAll(list, ar);
+		return list;
+	}
+	
 	/** Works with or without 0x at start */
 	public static String getPublicKey( String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
 	}
+
+	/** return url of ngrok running on local device; used for testing */
+	public static String getNgrokUrl() throws Exception {
+		return MyClient.getJson( "http://127.0.0.1:4040/api/tunnels")
+				.getArray( "tunnels").get( 0)
+				.getString( "public_url");
+	}
+	
+	/** return the two strings separated by a space if they are both not null */ 
+	public static String combine( String str1, String str2) {
+		return S.isNotNull( str1) && S.isNotNull( str2)
+				? String.format( "%s %s", str1, str2)
+				: str1 + str2;
+	}
+
+	/** returns object if not null or a new object created by supplier */ 
+	public static <T> T notNull( T obj, Supplier<T> supplier) {
+		return obj != null ? obj : supplier.get();
+	}
+
+	/** @param hour pass the 24-hour time in EST, e.g. 16 = 4pm */
+	public static boolean isLaterThanEST( int hour) {
+        return ZonedDateTime.now( ZoneId.of("America/New_York") )
+        		.toLocalTime()
+        		.isAfter( LocalTime.of(hour, 0) );
+    }
+
+	public static DayOfWeek getDayEST() {
+		return ZonedDateTime.now( ZoneId.of("America/New_York") ).toLocalDate()
+				.getDayOfWeek();
+	}
+
 }

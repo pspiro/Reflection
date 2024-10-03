@@ -19,10 +19,10 @@ public class Prices {
 	
 	private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
 	
-	private double m_bid;
-	private double m_ask;
-	private double m_last;
-	private long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
+	private final double m_bid;
+	private final double m_ask;
+	private final double m_last;
+	private final long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
 
 	public double bid() { return m_bid; }
 	public double ask() { return m_ask; }
@@ -38,6 +38,10 @@ public class Prices {
 	
 	/** Used only by NULL prices. */
 	public Prices() {
+		m_bid = 0;
+		m_ask = 0;
+		m_last = 0;
+		m_time = 0;  // ms since epoch; time of most recent price, could be bid, ask, or last
 	}
 
 	public String getFormattedTime() {

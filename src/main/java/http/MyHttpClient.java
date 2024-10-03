@@ -121,6 +121,10 @@ public class MyHttpClient {
 	}
 	
 	/** e.g. post2( "/api", */
+	public MyHttpClient post( String url, JsonObject data) throws Exception {
+		return post( url, data.toString() );
+	}
+	
 	public MyHttpClient post( String url, String data) throws Exception {
 		addHeader( "Content-length", "" + data.length() );
 
@@ -133,15 +137,15 @@ public class MyHttpClient {
 		return this;
 	}
 
-	/** @param data may or not start with / 
+	/** @param url may or not start with / 
 	 * @return */
-	public MyHttpClient get( String data) throws Exception {
-		if (!data.startsWith("/") ) {
-			data = "/" + data;
+	public MyHttpClient get( String url) throws Exception {
+		if (!url.startsWith("/") ) {
+			url = "/" + url;
 		}
 		
 		StringBuilder sb = new StringBuilder();
-		sb.append( "GET " + data + " HTTP/1.1\r\n");
+		sb.append( "GET " + url + " HTTP/1.1\r\n");
 		addHeaders(sb);
 
 		write( sb.toString() );
@@ -196,6 +200,10 @@ public class MyHttpClient {
 
 	public void assertResponseCode(int code) throws Exception {
 		TestCase.assertEquals(code, getResponseCode() );
+	}
+
+	public JsonObject postToJson(String url, JsonObject data) throws Exception {
+		return postToJson(url, data.toString() );
 	}
 
 	public JsonObject postToJson(String url, String data) throws Exception {

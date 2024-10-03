@@ -103,7 +103,7 @@ public class BaseTransaction {
 
 			if (m_timer != null) {
 				// print to standard out
-				String output = contentType.equals( "text/html") ? "" : Util.left(data, 200); // don't print html to log file 
+				String output = contentType.equals( "text/html") ? "" : Util.left(data, 500); // don't print html to log file 
 				out( "  responded in %s ms %s", m_timer.time(), output);
 			}
 			else if (responseCode != 200) {
@@ -180,7 +180,7 @@ public class BaseTransaction {
 	
 	/** The main difference between Exception and RefException is that Exception is not expected and will print a stack trace.
 	 *  Also Exception returns code UNKNOWN since none is passed with the exception */
-	protected final void wrap( ExRunnable runnable) {
+	public final void wrap( ExRunnable runnable) {
 		try {
 			runnable.run();
 		}
@@ -296,4 +296,28 @@ public class BaseTransaction {
 	public HttpExchange exchange() {
 		return m_exchange;
 	}
+
+	protected String getCountryCode() throws Exception {
+		return Util.left( getFirstHeader( "X-Country-Code"), 2);
+	}
+
+	protected String getUserIpAddress() throws Exception {
+		return Util.left( getFirstHeader( "X-Real-IP"), 15);
+	}
+
+	/** StringTokenizer would be better, or String split() */
+	public String getPostApiToken() {
+		int start = m_uri.indexOf( "/api/") + 5;
+		int next1 = m_uri.indexOf( "/", start);
+		int next2 = m_uri.indexOf( "?", start);
+		
+		int end = next1 != -1 ? next1 : 1000;
+		
+		if (next2 != -1) {
+			end = Math.min( end, next2);
+		}
+		
+		return Util.substring( m_uri, start, end);
+	}
+
 }

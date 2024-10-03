@@ -12,7 +12,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import positions.Streams;
+import positions.MoralisStreams;
 import tw.util.HtmlButton;
 import tw.util.HtmlPane;
 import tw.util.S;
@@ -47,11 +47,11 @@ class HookServerPanel extends JsonPanel {
 				String suffix = Monitor.m_config.getHookNameSuffix();  
 						
 				S.out( "Deleting transfers stream");
-				Streams.deleteStreamByName( String.format( 
+				MoralisStreams.deleteStreamByName( String.format( 
 						"Transfers-%s", suffix) );
 				
 				S.out( "Deleting approvals stream");
-				Streams.deleteStreamByName( String.format( 
+				MoralisStreams.deleteStreamByName( String.format( 
 						"Approvals-%s", suffix) );
 				
 				UI.flash( "Done");

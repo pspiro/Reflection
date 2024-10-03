@@ -10,6 +10,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import tw.util.S;
 
+/** See also SimpleTransaction.listen() */
 public class MyServer {
 	public static void listen(int port, int threads, Consumer<HttpServer> adder) throws IOException {
 		try {

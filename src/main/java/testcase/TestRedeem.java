@@ -3,7 +3,7 @@ package testcase;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import monitor.NewWalletPanel;
+import monitor.WalletPanel;
 import reflection.RefCode;
 import tw.util.S;
 
@@ -67,7 +67,7 @@ public class TestRedeem extends MyTestCase {
 	
 	private void lock(int amt, long lockUntil, int requiredTrades) throws Exception {
 		String wallet = Cookie.wallet.toLowerCase();
-		JsonObject lockObj = NewWalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
+		JsonObject lockObj = WalletPanel.createLockObject( wallet, amt, lockUntil, requiredTrades);
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
@@ -84,7 +84,53 @@ public class TestRedeem extends MyTestCase {
 ////		redeem();
 //		//assert200();
 //	}
+	
+	// test is failing; here's what you need to do: redeploy busd with lots of error info including the
+	// balance
+	public void testPartial() throws Exception {
+		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
+		S.out( "***testPartial");
 
+		// make sure we have some BUSD in RefWallet
+		if (m_config.busd().getPosition(refWallet) < 10) {
+			S.out( "minting");
+			m_config.mintBusd( refWallet, 2000)
+					.waitForCompleted();
+		}
+		
+		// mint an amount of RUSD
+		S.out( "minting");
+		//Cookie.setNewFakeAddress( true);
+		Cookie.setWalletAddr( "0xDD250c8360f4A892A2D099220B39CF46b8A688AE");
+//		mintRusd(Cookie.wallet, 7);
+		
+		m_config.rusd().sellRusd(
+				Cookie.wallet, 
+				m_config.busd(), 
+				3).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+
+		System.exit(0);
+		
+		// fail, amount too low
+		S.out( "fail");
+		redeem( 2);
+		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
+	
+		// succeed
+		S.out( "succeed");
+		redeem( 5);
+		assert200();
+		waitForRusdBalance( Cookie.wallet, 2, true);
+		
+		// do the rest
+		S.out( "succeed");
+		redeem( 3);
+		assert200();
+		waitForRusdBalance( Cookie.wallet, 0, true);
+		
+
+	}
+	
 	/** This test is failing in dev3 and you couldn't figure it out.
 	 *  to fix it, show it to Jitin, or re-write the busd class to print out
 	 *  more infomation in the error message, or put BUSD and RUSD code all into chat
@@ -139,10 +185,17 @@ public class TestRedeem extends MyTestCase {
 		waitForRedeem(Cookie.wallet);
 		waitForRusdBalance(Cookie.wallet, .0001, true);
 	}
-	
+
 	private void redeem() throws Exception {
-		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-			.display();
+		redeem(0);
+	}
+
+	private void redeem(double amount) throws Exception {
+		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( 
+				"cookie", Cookie.cookie,
+				"quantity", amount)
+			.toString() )
+		.display();
 	}
 
 	public void testExceedMaxAutoRedeem() throws Exception {

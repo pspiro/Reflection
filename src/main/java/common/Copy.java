@@ -46,6 +46,18 @@ public class Copy {
 	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
+		String str = clipboard.getData( DataFlavor.stringFlavor).toString();
+		
+		Transferable stringSelection = new HtmlTrans(str);
+		clipboard.setContents(stringSelection, null);
+
+		Transferable t = clipboard.getContents(null);
+		S.out( t.getTransferData(DataFlavor.fragmentHtmlFlavor));
+		
+	}
+	public static void main2( String[] args) throws UnsupportedFlavorException, IOException {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+
 		// margin is on the outside, horz only
 		// padding is on the inside, vert and horz.		
 		String myString = Config.template.replace( "%text", "<strong>abcd</strong>");

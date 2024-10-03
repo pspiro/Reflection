@@ -1,4 +1,4 @@
-package reflection;
+package siwe;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -18,55 +18,32 @@ import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
+import http.BaseTransaction;
+import reflection.Main;
+import reflection.RefCode;
+import reflection.RefException;
 import tw.util.S;
 import util.LogType;
 
 /** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
-public class SiweTransaction extends MyTransaction {
+public class SiweTransaction extends BaseTransaction {
 	private static final HashSet<String> validNonces = new HashSet<>(); // not serialized
-	private static final STable<Session> sessionMap = new STable<Session>("siwe.dat", 5000, Session.class);  // map wallet address to Session
+	private static final STable<SiweSession> sessionMap = new STable<SiweSession>("siwe.dat", 5000, SiweSession.class);  // map wallet address to Session
 	
-	public static class Session implements STable.Ser {
-		private String m_nonce;
-		private long m_lastTime;
-		
-		/** Needed for deserialization */
-		public Session() {
-		}
-
-		public Session(String nonce) {
-			m_nonce = nonce;
-			m_lastTime = System.currentTimeMillis();
-		}
-
-		public String nonce() {
-			return m_nonce;
-		}
-		
-		public long lastTime() {
-			return m_lastTime;
-		}
-
-		public void update() {
-			m_lastTime = System.currentTimeMillis();
-		}
-		
-		@Override public String toString() {
-			return m_nonce;
-		}
-		
-		public JsonObject getJson() {
-			return Util.toJson( "nonce", m_nonce, "time", m_lastTime);
-		}
-		
-		public void setJson( JsonObject obj) {
-			m_nonce = obj.getString( "nonce");
-			m_lastTime = obj.getLong( "time");
-		}
+	private static long siweTimeout = Util.MINUTE;		// sign-in must be completed in this timeframe 
+	private static long sessionTimeout = Util.HOUR;  	// user must re-auth after this expires
+	
+	public static void setTimeouts( long t1, long t2) {
+		siweTimeout = t1; 
+		sessionTimeout = t2;
 	}
 	
-	public SiweTransaction(Main main, HttpExchange exch) {
-		super(main, exch, true);
+	public static void startThread() {
+		sessionMap.startThread();
+	}
+
+	public SiweTransaction(HttpExchange exch) {
+		super( exch, true);
 	}
 
 	/** Frontend requests nonce to build SIWE message.
@@ -91,7 +68,7 @@ public class SiweTransaction extends MyTransaction {
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
 			// set m_wallet so it will appear in log messages
-			m_walletAddr = siweMsg.getAddress();  // mixed-case
+			String walletAddr = siweMsg.getAddress();  // mixed-case
             out( "  received sign-in for %s", siweMsg.getAddress() );
 			
 			// validate and remove the nonce so it is no longer valid
@@ -116,16 +93,16 @@ public class SiweTransaction extends MyTransaction {
 			Instant issuedAt = Instant.from( DateTimeFormatter.ISO_INSTANT.parse( siweMsg.getIssuedAt() ) );
 			Instant now = Instant.now();
 			Main.require(
-					Duration.between( issuedAt, now).toMillis() <= Main.m_config.siweTimeout(),
+					Duration.between( issuedAt, now).toMillis() <= siweTimeout,
 					RefCode.TOO_SLOW,
 					"You waited too long to sign in; please sign in again");
 					// The 'issuedAt' time on the SIWE login request is too far in the past  issuedAt=%s  now=%s  max=%s",					+ "
-					//issuedAt, now, Main.m_config.siweTimeout() );
+					//issuedAt, now, siweTimeout() );
 			Main.require(
-					Duration.between( now, issuedAt).toMillis() <= Main.m_config.siweTimeout(),
+					Duration.between( now, issuedAt).toMillis() <= siweTimeout,
 					RefCode.TOO_FAST,
 					"The 'issuedAt' time on the SIWE login request is too far in the future  issuedAt=%s  now=%s  max=%s",
-					issuedAt, now, Main.m_config.siweTimeout() );
+					issuedAt, now, siweTimeout );
 			
 			Main.require(
 					S.isNotNull( siweMsg.getAddress() ),
@@ -133,7 +110,7 @@ public class SiweTransaction extends MyTransaction {
 					"Null address during siwe/signin");
 			
 			// store session object; let the wallet address be the key for the session 
-			Session session = new Session( siweMsg.getNonce() );
+			SiweSession session = new SiweSession( siweMsg.getNonce() );
 			sessionMap.put( siweMsg.getAddress().toLowerCase(), session);
 			out( "  mapping %s to %s", siweMsg.getAddress(), session);
 		
@@ -157,7 +134,9 @@ public class SiweTransaction extends MyTransaction {
 	 *  This is a keep-alive; we should verify that the timer has not expired */
 	public void handleSiweMe() {
 		wrap( () -> {
+			out( "received siwe/me from %s", getUserIpAddress() );  // log the ip to see if we get multiple messages from the same user 
 			ArrayList<String> cookies = authCookies();
+			
 			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
 			
 			if (cookies.size() > 1) {
@@ -200,7 +179,7 @@ public class SiweTransaction extends MyTransaction {
 	/** @param cookie could come from header or message body
 	 *  @param wallet may be null
 	 *  @return siwe message */ 
-	static JsonObject validateCookie( String cookie, String wallet) throws Exception {
+	public static JsonObject validateCookie( String cookie, String wallet) throws Exception {
 		// the cookie has two parts: tag=value
 		// the tag is __Host_authToken<address><chainid>
 		// the value is json with two fields, signature and message
@@ -234,7 +213,7 @@ public class SiweTransaction extends MyTransaction {
 				wallet, bodyAddress);
 		
 		// find session object
-		Session session = sessionMap.get( bodyAddress.toLowerCase() );
+		SiweSession session = sessionMap.get( bodyAddress.toLowerCase() );
 		Main.require( session != null, RefCode.VALIDATION_FAILED, "No session object found; please sign in and resubmit your request");
 		
 		// validate nonce
@@ -245,7 +224,7 @@ public class SiweTransaction extends MyTransaction {
 				siweMsg.getString("nonce"), session.nonce() );
 		
 		// check expiration
-		Main.require( System.currentTimeMillis() - session.lastTime() <= Main.m_config.sessionTimeout(),
+		Main.require( System.currentTimeMillis() - session.lastTime() <= sessionTimeout,
 				RefCode.VALIDATION_FAILED,
 				"Your session has expired; please sign in again and resubmit your request"); // this message makes it back to the client for user actions but not /siwe/me
 		
@@ -256,7 +235,7 @@ public class SiweTransaction extends MyTransaction {
 	}
 	
 	/** Sign out all sign-in users (there should be only one) */
-	void handleSiweSignout() {
+	public void handleSiweSignout() {
 		wrap( () -> {
 			for (String cookie : authCookies() ) {
 				String address = S.notNull(address(cookie));

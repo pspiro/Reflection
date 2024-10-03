@@ -76,6 +76,7 @@ public class ProfileTransaction extends MyTransaction {
 			Profile profile = new Profile( m_map.obj() );
 			profile.trim(); // trim spaces since this data was entered by the user
 			profile.validate();
+			profile.validatePhone();
 			
 			// add the country code; this is not part of the user-entered profile but could come in handy
 			profile.put( "geo_code", getCountryCode() );

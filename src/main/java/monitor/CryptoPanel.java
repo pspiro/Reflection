@@ -1,15 +1,20 @@
 package monitor;
 
 import java.awt.BorderLayout;
+import java.util.Date;
 
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.json.simple.JsonObject;
+import org.json.simple.OrderedJson;
+
 import common.Util;
 import http.MyClient;
 import tw.google.GTable;
 import tw.google.NewSheet;
+import tw.google.NewSheet.Book.Tab;
 import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
@@ -47,28 +52,31 @@ public class CryptoPanel extends MonPanel {
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
-		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendBusd() );
+		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendToOther() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
+		HtmlButton refSendMatic = new HtmlButton( "Send", ev -> refSendMatic() );
 
 		VerticalPanel leftPanel = new VerticalPanel();
 		leftPanel.addHeader( "RUSD");
 		leftPanel.add( "Address", m_rusdAddress);
 		leftPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
+		String busd = config().busd().name();
+		
 		leftPanel.addHeader( "RefWallet");
 		leftPanel.add( "Address", m_refAddress);
-		leftPanel.add( "RefWallet USDT", m_refWalletBusd, emptyRefWallet);
-		leftPanel.add( "RefWallet USDT approved", m_approved, new JLabel( " for spending by RUSD"));
-		leftPanel.add( "RefWallet MATIC", m_refWalletMatic);
+		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, emptyRefWallet);
+		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
+		leftPanel.add( "RefWallet " + config().nativeTokName(), m_refWalletMatic, refSendMatic);
 		
 		leftPanel.addHeader( "Owner Wallet");
 		leftPanel.add( "Address", m_ownerAddress);
-		leftPanel.add( "Owner USDT", m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		leftPanel.add( "Owner MATIC", m_ownerMatic, ownerSendMatic);
+		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
+		leftPanel.add( "Owner " + config().nativeTokName(), m_ownerMatic, ownerSendMatic);
 		
 		leftPanel.addHeader( "Admin Accounts");
-		leftPanel.add( "Admin1 MATIC", m_admin1Matic);
-		leftPanel.add( "Admin2 MATIC", m_admin2Matic);
+		leftPanel.add( "Admin1 " + config().nativeTokName(), m_admin1Matic);
+		leftPanel.add( "Admin2 " + config().nativeTokName(), m_admin2Matic);
 
 		leftPanel.addHeader( "Brokerage (IB)");
 		leftPanel.add( "Cash in brokerage", m_cash);
@@ -94,45 +102,75 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	/** Send from Owner to somewhere else */
-	private void ownerSendBusd() {
+	private void ownerSendToOther() {
 		wrap( () -> {
-			String name = Util.ask( "Enter name");
+			String name = Util.ask( "Enter name from Recipients tab");
+			if (S.isNull( name) ) return;
 			
-			GTable tab = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
-			String address = Util.reqValidAddress( tab.get( name) );
+			GTable recips = new GTable(NewSheet.Reflection, "Recipients", "Name", "Address");
+			String address = Util.reqValidAddress( recips.get( name) );
 			
-			double amt = Double.parseDouble( Util.ask( "Enter amount"));
+			JsonObject json = new OrderedJson();
+			json.put( "Date", S.USER_DATE.format( new Date() ) );
+			json.put( "Payor or Payee", name);
+			json.put( "Description", "");
+			json.put( "Category", "");
+			json.put( "Amount", "");
+			json.put( "Account", "Owner wallet");
+			
+			// let user edit the json object
+			if (!JsonDlg.edit( Monitor.m_frame, json) ) {
+				return;
+			}
+			
+			// check amount too high or too low
+			double amt = json.getDouble( "Amount");
+			if (amt <= 0) return;
+			
 			if (amt > 300 && !Util.ask( "Enter password due to high amount").equals( "1359") ) {
 				Util.inform( this, "The password was invalid");
 				return;
 			}
-			
+
+			// do the transfer
 			String hash = config().busd().transfer( 
 					config().ownerKey(),
 					address,
 					amt
 					).waitForHash();
 			
-			//Util.browse( config().blockchainTx( hash) );
+			// add transaction to Reflection financial spreadsheet
+			if (Monitor.m_config.isProduction() ) {
+				Tab tab = NewSheet.getTab( NewSheet.ReflTransactions, "Register");
+				tab.insert( json);
+			}
+
+			// copy has to clipboard
 			Util.copyToClipboard( config().blockchainTx( hash) );
 			Util.inform(this, "Done, hash is copied to clipboard");
 		});
 	}
 
 	private void ownerSendMatic() {
-		wrap( () -> {
-			config().matic().transfer( 
-					config().ownerKey(),
-					Util.ask("Enter dest wallet address"),
-					Double.parseDouble( Util.ask( "Enter amount"))
-					);
-			Util.inform(this, "Done");
-		});
+		wrap( () -> sendMatic( config().ownerKey() ) );
+	}
+
+	private void refSendMatic() {
+		wrap( () -> sendMatic( config().refWalletKey() ) );
+	}
+
+	private void sendMatic(String senderKey) throws NumberFormatException, Exception {
+		config().matic().transfer( 
+				senderKey,
+				Util.ask("Enter dest wallet address"),
+				Double.parseDouble( Util.ask( "Enter amount"))
+				);
+		Util.inform(this, "Done");
 	}
 
 	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
-		if (Util.confirm(this, "Are you sure you want to transfer all USDT from RefWallet to Owner?") ) {
+		if (Util.confirm(this, "Are you sure you want to transfer this amount (-1) " + config().busd().name() + " from RefWallet to Owner?") ) {
 			wrap( () -> {
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
 

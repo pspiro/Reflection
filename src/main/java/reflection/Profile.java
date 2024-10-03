@@ -66,6 +66,13 @@ public class Profile extends JsonObject {
 		}
 	}
 
+	public void validatePhone() throws RefException {
+		require(
+				OnrampTransaction.isValidPhone( getString( "phone") ), 
+				RefCode.INVALID_USER_PROFILE, 
+				"The phone number is invalid. Please use the following format where the first set of digits is the country code:\n\n##-##########"); 
+	}
+
 	private static boolean validUserEntry(String str) {
 		return str.indexOf('<') == -1 && str.indexOf('>') == -1;
 	}

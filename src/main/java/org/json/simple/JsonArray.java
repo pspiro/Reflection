@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -144,6 +145,9 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	}
 
 	/** Return the item in the array that has tag=value (where value is a string) */
+	// you could create more generic version that takes a method that takes
+	// a value object and returns true or false?
+	// Function<Object,Boolean>
 	public JsonObject find(String tag, String value) throws Exception {
 		for (JsonObject item : this) {
 			if (value.equals( item.getString(tag) ) ) {
@@ -295,5 +299,29 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 	/** get rid of null values and empty strings */
 	public void removeNulls() {
 		forEach( rec -> rec.removeNulls() );
+	}
+
+	/** Create a map of key to record 
+	 * @throws Exception */
+	public HashMap<String, JsonObject> getMap(String key) throws Exception {
+		HashMap<String, JsonObject> map = new HashMap<>();
+		Util.forEach( this, rec -> Util.iff( rec.getString( key), val -> map.put( val, rec) ) );;
+		return map;
+	}
+	
+	/** Create array from the same tag of each element 
+	 * @throws Exception */
+	public ArrayList<String> getArrayOf( String key) throws Exception {
+		ArrayList<String> list = new ArrayList<String>();
+		Util.forEach( this, rec -> list.add( rec.getString( key)));
+		return list;
+	}
+	
+	static public JsonArray toJson( ArrayList<? extends Record> list) throws Exception {
+		JsonArray json = new JsonArray();
+		for (var item : list) {
+			json.add( JsonObject.toJson( item) );
+		}
+		return json;
 	}
 }

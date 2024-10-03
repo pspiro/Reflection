@@ -44,10 +44,9 @@
 				<configuration>
 					<source>17</source>
 					<target>17</target>
+					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-			
-			
 		</plugins>
 	</build>  
 

@@ -84,7 +84,7 @@ public class ParamMap {
 		}
 	}		
 
-	double getDoubleParam(String tag) throws RefException {
+	public double getDoubleParam(String tag) throws RefException {
 		try {
 			String val = m_obj.getString(tag);
 			return S.isNull(val) ? 0 : Double.valueOf(val);
@@ -119,6 +119,6 @@ public class ParamMap {
 	}
 	
 	public String getUnescapedString(String tag) {
-		return Util.unescHtml( getString( tag) );
+		return Util.unescHtml( getString( tag), false);
 	}
 }

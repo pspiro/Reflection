@@ -1,12 +1,10 @@
 #!/bin/bash
 
-# this file gets modified when we run the program, but we don't want to keep the changes
-git restore .googfiles/StoredCredential
-
 git pull
 echo
 echo "Expect '[WARNING] Unrecognised tag: blocked' during build process"
 echo
+
 # move jar file aside so we don't disturb running instance and we can blow away
 # target folder if desired
 rm old.jar
@@ -33,10 +31,6 @@ sleep 2
 echo restarting mdserver
 sudo systemctl restart mdserver
 sleep 2
-
-#echo restarting fbserver
-#sudo systemctl restart fbserver
-#sleep 2
 
 echo restarting refapi
 sudo systemctl restart refapi

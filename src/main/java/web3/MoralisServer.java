@@ -11,6 +11,7 @@ import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
@@ -88,15 +89,38 @@ public class MoralisServer {
 				moralis, contractAddress, chain, functionName);
 		return post( url, abi);
 	}
+
+	/** return map of address (lower case) to position */
+	static public HashMap<String, Double> reqPositionsMap(String wallet, String[] addresses) throws Exception {
+		HashMap<String, Double> map = new HashMap<>();
+		
+		for (var item : reqPositionsList( wallet, addresses) ) {
+			String addr = item.getString( "token_address").toLowerCase();
+			
+			if (item.has( "decimals") ) {
+				double val = Erc20.fromBlockchain( item.getString( "balance"), item.getInt( "decimals") );
+				if (val > 0) {
+					map.put( addr.toLowerCase(), val);
+				}
+			}
+			else {
+				S.out( "WARNING: no decimals returned for Moralis positions map; skipping  wallet=%s  address=%s",
+						wallet, addr);
+			}
+		}
+		
+		return map;
+	}
 	
-	/** Fields returned:
- 		symbol : BUSD,
-		balance : 4722366482869645213697,
-		possible_spam : true,
-		decimals : 18,
-		name : Reflection BUSD,
-		token_address : 0x833c8c086885f01bf009046279ac745cec864b7d
-		@param addresses is the list of token addresses for which we want the positions */
+	/**
+		@param addresses is the list of token addresses for which we want the positions
+		@return the following fields:
+	 		symbol : BUSD,
+			balance : 4722366482869645213697,
+			possible_spam : true,
+			decimals : 18,
+			name : Reflection BUSD,
+			token_address : 0x833c8c086885f01bf009046279ac745cec864b7d */
 	public static JsonArray reqPositionsList(String wallet, String[] addresses) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
 		
@@ -114,40 +138,6 @@ public class MoralisServer {
 		}
 
 		return JsonArray.parse( ret);
-	}
-	
-	/** Returns a map of contract address (lower case) -> position (Double).
-	 *  This version retrieves the map from Moralis; is having issues of
-	 *  missing positions as of 1/23/24 
-	 *  I think passing the contracts may fix it.
-	 *  They are claiming it is fixed as of 1/26/24;
-	 *  will not work for pulsechain 
-	 *  only used by Monitor
-	 *  @deprecated use RefBlocks */ 
-	public static HashMap<String,Double> reqPositionsMap(String wallet) throws Exception {
-		//Util.require( contracts.length > 0, "Contract addresses are required");  // needed to fix Moralis bug
-		
-		HashMap<String,Double> map = new HashMap<>();
-		
-		for (JsonObject token : MoralisServer.reqPositionsList(wallet, new String[0] ) ) {
-			String addr = token.getString("token_address");			
-			String balance = token.getString("balance");
-			
-			if (S.isNotNull(addr) && S.isNotNull(balance) ) {
-				int decimals = token.getInt("decimals");
-				
-				// this was a bug that they fixed so should not happen anymore
-				// (it still seems to happen with spam tokens as of 7/30/24)
-				if (decimals == 0) {
-					S.out( "Error: Moralis query failed to return number of decimals for %s; defaulting to 18", addr);
-					decimals = 18;
-				}
-				
-				map.put( addr.toLowerCase(), Erc20.fromBlockchain(balance, decimals) );
-			}
-		}
-		
-		return map;
 	}
 	
 	/** For ERC-20 token, tells you how much the spender is authorized to spend on behalf of owner.
@@ -207,12 +197,14 @@ public class MoralisServer {
 		return queryObject( url);
 	}
 	
-	/** returns one page of transactions for a specific token
+	/** returns one page of transactions for a specific wallet
+	 *  relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
 	 *  @address is ERC20 token address */
-	public static JsonObject getWalletTransfers(String address, String cursor) throws Exception {
+	public static JsonObject getWalletTransfers(String wallet, String cursor) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
-		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, address, chain, S.notNull(cursor) );
-		return queryObject( url);
+		String url = String.format( "%s/%s/erc20/transfers/?chain=%s&cursor=%s", moralis, wallet, chain, S.notNull(cursor) );
+		var obj = queryObject( url);
+		return Util.checkReturn( obj, !obj.has( "message"), "Cannot get wallet transfers - " + obj.get( "message") );
 	}
 	
 	interface Query {
@@ -257,9 +249,10 @@ public class MoralisServer {
 //		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
 //	}
 
-	/** returns all transactions for a specific token */
-	public static void getAllWalletTransfers(String address, Consumer<JsonArray> consumer) throws Exception {
-		getAll( consumer, cursor -> getWalletTransfers(address, cursor) );  
+	/** returns all transactions for a specific wallet
+	 * relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value */
+	public static void getAllWalletTransfers(String wallet, Consumer<JsonArray> consumer) throws Exception {
+		getAll( consumer, cursor -> getWalletTransfers(wallet, cursor) );  
 	}
 
 	public static void setChain(String chainIn) throws Exception {
@@ -271,6 +264,12 @@ public class MoralisServer {
 	// and they are blocking next trans; they have to be removed
 	static void show( JsonObject obj, String addr) throws Exception {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Config c = Config.ask();
+		var map = reqPositionsMap( "0x2703161D6DD37301CEd98ff717795E14427a462B", c.readStocks().getAllContractsAddresses() );
+		JsonObject.displayMap( map);
 	}
 	
 }

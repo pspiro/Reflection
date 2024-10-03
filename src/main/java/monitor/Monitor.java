@@ -16,6 +16,7 @@ import org.json.simple.JsonArray;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
+import onramp.Onramp;
 import redis.MyRedis;
 import reflection.Stock;
 import reflection.Stocks;
@@ -32,13 +33,13 @@ public class Monitor {
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
-	static final Stocks stocks = new Stocks();
+	public static final Stocks stocks = new Stocks();
 
 	public static MonitorConfig m_config;
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
-	static NewWalletPanel m_walletPanel;
+	static WalletPanel m_walletPanel;
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
@@ -63,7 +64,7 @@ public class Monitor {
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
 		m_logPanel = new LogPanel();
-		m_walletPanel = new NewWalletPanel();
+		m_walletPanel = new WalletPanel();
 		m_southPanel = new SouthPanel();
 		
 		m_config.useExternalDbUrl();
@@ -113,6 +114,7 @@ public class Monitor {
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		m_tabs.addTab( "Email", new EmailPanel() );
+		m_tabs.addTab( "OnRamp", new OnrampPanel() );
 		//m_tabs.addTab( "Coinstore", new CoinstorePanel() );
 		
 		m_frame.add( butPanel, BorderLayout.NORTH);
@@ -196,6 +198,23 @@ public class Monitor {
 		public void refresh() throws Exception {
 			JsonArray ar = MyClient.getArray(m_config.baseUrl() + "/api/hot-stocks");
 			setRows( ar);
+			m_model.fireTableDataChanged();
+		}
+	}
+	
+	static class OnrampPanel extends JsonPanel {
+		OnrampPanel() {
+			super( new BorderLayout(), "abc");
+			add( m_model.createTable() );
+		}
+		
+		@Override protected void refresh() throws Exception {
+			JsonArray trans = Onramp.getAllTransactions();
+			
+			m_model.setNames( String.join( ",", trans.getKeys() ) );
+			m_model.fireTableStructureChanged();
+
+			setRows( trans);
 			m_model.fireTableDataChanged();
 		}
 	}
