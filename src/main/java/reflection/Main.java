@@ -629,7 +629,7 @@ public class Main implements ITradeReportHandler {
 
     /** check if it's time to send out the summary emails; when data changes in NY */
 	void checkSummaries() {
-		boolean nowAfter = Util.isLaterThanEST( 21); // 9 pm
+		boolean nowAfter = Util.isLaterThanEST( 16); // 9 pm
 
 		// if we just passed the time threshold...
 		if (m_timeWas == Time.Before && nowAfter) {

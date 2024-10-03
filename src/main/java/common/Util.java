@@ -730,11 +730,6 @@ public class Util {
         		new StringSelection( toString(obj) ), null);
 	}
 	
-	/** @return value if not null, or default if null */
-	public static String valOr( String value, String def) {
-		return S.isNotNull(value) ? value : def;
-	}
-	
 	/** return fake EIP-55 address; don't send crypto here, it can never be recovered */
 	public static String createFakeAddress() {
 		StringBuilder sb = new StringBuilder("0x");
@@ -935,6 +930,11 @@ public class Util {
 		return S.isNotNull( str1) && S.isNotNull( str2)
 				? String.format( "%s %s", str1, str2)
 				: str1 + str2;
+	}
+	
+	/** @return value if not null, or default if null */
+	public static String valOr( String value, String def) {
+		return S.isNotNull(value) ? value : def;
 	}
 
 	/** returns object if not null or a new object created by supplier */ 

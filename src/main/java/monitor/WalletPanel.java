@@ -25,6 +25,7 @@ import common.Util;
 import http.MyClient;
 import monitor.AnyQueryPanel.MyComboBox;
 import monitor.wallet.BlockDetailPanel;
+import monitor.wallet.BlockPanelBase;
 import monitor.wallet.BlockSummaryPanel;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
@@ -41,13 +42,17 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
+import web3.NodeInstance;
 import web3.NodeServer;
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
 	static String usersFields = "first_name,last_name,wallet_public_key,kyc_status,created_at,address,address_1,address_2,city,state,zip,country,geo_code,email,telegram,phone,pan_number,aadhaar,locked";
 
+	HashMap<String,String> walletMap = new HashMap<>(); // map wallet address (lower case) to wallet name
+	
 	private JTextField m_walField = new JTextField(28);
 	private String m_wallet;  // trimmed, lower case
 	private UserPanel dataPanel = new UserPanel();
@@ -197,8 +202,8 @@ public class WalletPanel extends MonPanel {
 	}
 
 	class BlockchainPanel extends MiniTab {
-		BlockDetailPanel m_allTransPanel = new BlockDetailPanel();
-		BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
+		private BlockDetailPanel m_allTransPanel = new BlockDetailPanel();
+		private BlockSummaryPanel m_sumPanel = new BlockSummaryPanel();
 
 		BlockchainPanel() {
 			super( new BorderLayout() );
@@ -215,18 +220,49 @@ public class WalletPanel extends MonPanel {
 
 		@Override public void activated() {
 			wrap( () -> {
+				walletMap.clear();
+				walletMap.put( m_config.refWalletAddr().toLowerCase(), BlockPanelBase.RefWallet);
+				walletMap.put( m_config.admin1Addr().toLowerCase(), "Admin1");
+				walletMap.put( m_config.ownerAddr().toLowerCase(), "Owner");
+				walletMap.put( NodeInstance.prod, "My prod wallet");
+				walletMap.put( NodeInstance.nullAddr, BlockPanelBase.nullAddr);
+				walletMap.put( m_wallet, BlockPanelBase.Me);
+
 				// get all relevant transfers
-				var ts = new Transfers();
-				ts.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.stocks.getAllContractsAddresses() ) );
-				ts.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
-				
+				var transfers = new Transfers();
+				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.stocks.getAllContractsAddresses() ) );
+				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
+
+				// build new list with substitutions
+				var altered = new Transfers();
+				for (var transfer : transfers) altered.add( adjust( transfer) );
+
 				// filter based on contract and transfer size
 				// not necessary anymore, only necessary if using Moralis
 				// weCare( ts) and amount() 
 
-				m_allTransPanel.refresh( m_wallet, ts);
-				m_sumPanel.refresh( m_wallet, ts);
+				m_allTransPanel.refresh( m_wallet, altered);
+				m_sumPanel.refresh( m_wallet, altered);
 			});
+		}
+
+		private Transfer adjust(Transfer t) throws Exception {
+			String from = Util.valOr( walletMap.get( t.from() ), t.from() ); 
+			String to = Util.valOr( walletMap.get( t.to() ), t.to() );
+
+			String contract = t.contract();
+			Stock stock = Monitor.stocks.getStockByTokenAddr(contract);
+			if (stock != null) {
+				contract = stock.symbol();
+			}
+			else if (contract.equals( m_config.rusdAddr() ) ) {
+				contract = m_config.rusd().name();
+			}
+			else if (contract.equals( m_config.busdAddr() ) ) {
+				contract = m_config.busd().name();
+			}
+			
+			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash() );  
 		}
 
 		protected void clear() {

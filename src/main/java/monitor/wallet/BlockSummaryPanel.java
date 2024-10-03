@@ -9,6 +9,7 @@ import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
+import tw.util.S;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
 
@@ -16,12 +17,19 @@ import web3.NodeInstance.Transfers;
  *  into a single row */
 public class BlockSummaryPanel extends BlockPanelBase {
 	
-	private JsonModel m_model = new JsonModel( JsonModel.getAllFields( Transfer.class) );
+	private JsonModel m_model = new JsonModel( "action,qty,token,amount,stablecoin,block") {
+		protected Object format(String key, Object value) {
+			if ( (key.equals( "qty") || key.equals( "amount") ) && value instanceof Double) {
+				return S.fmt2( (double)value);
+			}
+			return value;
+		}
+	};
 
 	public BlockSummaryPanel() {
 		super();
 		
-		m_model.justify("llrlr");
+		m_model.justify("lrlrl");
 		
 		
 		JLabel lab = new JLabel("Blockchain Transactions");
@@ -31,14 +39,14 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		add( m_model.createTable() );
 	}
 
-	public void refresh( String walletAddr, Transfers ts) throws Exception {
+	public void refresh( String walletAddr, Transfers transfers) throws Exception {
 		m_model.ar().clear();
 		
 		// create a map of transaction hash to a list of Transfers having that transaction hash
 		HashMap<String,Transfers> map = new HashMap<>();
-		for (var obj : ts) {
-			Util.getOrCreate( map, obj.hash(), () -> new Transfers() )
-				.add( obj);
+		for (var trans : transfers) {
+			Util.getOrCreate( map, trans.hash(), () -> new Transfers() )
+				.add( trans);
 		}
 		
 		// key is trans hash, val is list of transactions with that hash
@@ -86,6 +94,11 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		}
 		
 		obj.put( "action", action);
+		obj.put( "qty", trans.amount() );
+		obj.put( "token", trans.contract() );
+//		obj.put( "amount", );
+//		obj.put( "stablecoin", );
+		obj.put( "block", trans.block() );
 		
 		m_model.ar().add( obj);
 	}
@@ -95,33 +108,40 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		JsonObject obj = new JsonObject();
 		obj.put("time", "???"); //trans1.getString( timestamp)) ;
 
-		// redeem RUSD for USDT?
-		if (isBusd( trans1) &&  
-			trans1.from().equalsIgnoreCase(config().refWalletAddr()) &&
-			isBurn( trans2) && isRusd( trans2) ) {
-
-			obj.put("action", "Redeem");
+		// redeem RUSD for BUSD?
+		if (isBurn( trans1) && isRusd( trans1) && 
+			isBusd( trans2) && isFromRefWallet( trans2) && isToMe( trans2) ) {
+			
+			obj.put("action", "Redeem" );
 			obj.put("qty", trans1.amount() );
-			//obj.put("token", trans1.getString( tokenSymbol) );
+			obj.put("token", trans1.contract() );
 			obj.put("amount", trans2.amount() );
-			//obj.put("stablecoin", trans2.getString( tokenSymbol) );
+			obj.put("stablecoin", trans2.contract() );
+			obj.put( "block", trans1.block() );
 
 			m_model.ar().add( obj);
-			
+
 			return true;
-		}
+		}			
 
 		// buy stock with RUSD or USDT?
-		if (isMint( trans1) && isStock( trans1) &&
-			(isBurn( trans2) && isRusd( trans2) ||
-			 isBusd( trans2) && isFromMe( trans2) && isToRefWallet( trans2) ) ) {
-
+		if (isMint( trans1) &&   // && isStock(trans1)
+				
+			(
+				// burn RUSD?
+				(isBurn( trans2) && isRusd( trans2) ) ||
+			
+				// send BUSD?
+				isBusd( trans2) && isFromMe( trans2) && isToRefWallet( trans2)
+			) ) {
+			
 			obj.put("action", "Buy");
 			obj.put("qty", trans1.amount() );
-//			obj.put("token", trans1.getString( tokenSymbol) );
+			obj.put("token", trans1.contract() );
 			obj.put("amount", trans2.amount() );
-//			obj.put("stablecoin", trans2.getString( tokenSymbol) );
-			
+			obj.put("stablecoin", trans2.contract() );
+			obj.put( "block", trans1.block() );
+
 			m_model.ar().add( obj);
 
 			return true;
@@ -129,31 +149,19 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			
 		// sell stock for RUSD?
 		if (isMint( trans1) && isRusd( trans1) &&
-			isBurn( trans2) && isStock( trans2) ) {
+			isBurn( trans2) ) {
 			
 			obj.put("action", "Sell" );
 			obj.put("qty", trans2.amount() );
-//			obj.put("token", trans2.getString( tokenSymbol) );
+			obj.put("token", trans2.contract() );
 			obj.put("amount", trans1.amount() );
-//			obj.put("stablecoin", trans1.getString( tokenSymbol) );
-				
+			obj.put("stablecoin", trans1.contract() );
+			obj.put( "block", trans1.block() );
+
 			m_model.ar().add( obj);
 
 			return true;
 		}
-		
-		if (isBurn( trans1) && isRusd( trans1) && 
-			isBusd( trans2) && isFromRefWallet( trans2) && isToMe( trans2) ) {
-			obj.put("action", "Redeem" );
-			obj.put("qty", trans1.amount() );
-//			obj.put("token", trans1.getString( tokenSymbol) );
-			obj.put("amount", trans2.amount() );
-//			obj.put("stablecoin", trans2.getString( tokenSymbol) );
-
-			m_model.ar().add( obj);
-
-			return true;
-		}			
 		
 		return false;
 	}
