@@ -14,7 +14,6 @@ import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
-import web3.NodeInstance.Transfer;
 
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
@@ -500,25 +499,71 @@ public class NodeInstance {
 
 	/** return all token transfers for the specified wallet and contract addresses */
 	public Transfers getTokenTransfers( String wallet, String[] addresses) throws Exception {
-		int fromBlock = 20556807;
+		int fromBlock = 20556807;  // def. not good. pas
 
 		Transfers trans = new Transfers();
-		trans.addAll( getTransfers( wallet, addresses, fromBlock, wallet, null) );
-		trans.addAll( getTransfers( wallet, addresses, fromBlock, null, wallet) );
+		trans.addAll( getTransfers( addresses, fromBlock, wallet, null) );
+		trans.addAll( getTransfers( addresses, fromBlock, null, wallet) );
 
 		return trans;
 	}
 	
 	/** return all token transfers for the specified wallet and contract addresses
 	 *  additionally filtered by "from" and "to" wallets */
-	private List<Transfer> getTransfers( String wallet, String[] addresses, int fromBlock, String from, String to) throws Exception {
+	private List<Transfer> getTransfers( String[] addresses, int fromBlock, String from, String to) throws Exception {
 		var query = NodeAux.createReq( addresses, fromBlock, from, to);
 		S.out( "query: " + query);
 		
 		var json = nodeQuery( query.toString() );
 		S.out( "response: " + json);
 		
-		return NodeAux.processResult( json, wallet, this::getDecimals);
+		return NodeAux.processResult( json, this::getDecimals);
+	}
+	
+	public HashMap<String,Double> getHolderBalances( String contract, int decimals) throws Exception {
+		HashMap<String,Double> map = new HashMap<>();
+
+		// get all transactions, build the map
+		for (var transfer : getAllTokenTransfers( contract, decimals) ) {
+			Util.inc( map, transfer.from(), -transfer.amount() );
+			Util.inc( map, transfer.to(), transfer.amount() );
+		}
+
+		return map;
+	}
+
+    // Function to fetch token holders from an Ethereum RPC node
+	public Transfers getAllTokenTransfers( String address, int decimals) throws Exception {
+		address = address.toLowerCase();
+		
+		var topics = new ArrayList<String>();
+		topics.add(transferEventSignature);
+
+		JsonObject params = new JsonObject();
+		params.put("fromBlock", "earliest");
+		params.put("toBlock", "latest");
+		params.put("address", address);
+		params.put("topics", topics);
+
+		JsonArray paramArray = new JsonArray();
+		paramArray.add(params);
+		
+		// build json request
+		JsonObject jsonRequest = new JsonObject();
+		jsonRequest.put("jsonrpc", "2.0");
+		jsonRequest.put("method", "eth_getLogs");
+		jsonRequest.put("id", 1);
+		jsonRequest.put("params", paramArray);
+		
+		// send query for logs for the specified contract address; could be too huge for popular tokens
+		JsonObject jsonResponse = nodeQuery( jsonRequest.toString() );
+
+		Transfers ts = new Transfers();
+		for (var log : jsonResponse.getArray("result") ) {
+			Util.iff( NodeAux.parseLog( log, decimals), transfer -> ts.add( transfer) );
+		}
+
+		return ts;
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -528,9 +573,9 @@ public class NodeInstance {
 	}	
 }
 
-	
-	// to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
-	// this simulates the call as if it were executed at the end of the specified block
+
+// to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
+// this simulates the call as if it were executed at the end of the specified block
 //	{
 //		  "jsonrpc": "2.0",
 //		  "method": "eth_call",
@@ -546,7 +591,7 @@ public class NodeInstance {
 //		  "id": 1
 //		}
 
-	
+
 // notes
 // you can use eth_call to get revert reason for a past block AND ALSO to see what would
 // happen if you called the transaction now, on the current block

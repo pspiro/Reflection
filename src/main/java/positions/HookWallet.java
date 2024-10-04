@@ -42,7 +42,7 @@ class HookWallet {
 	 *  @contract must be lower case */
 	public void adjustERC20(String contract, double amt, boolean confirmed) throws Exception {
 		if (!confirmed) {
-			Erc20.inc( m_map, contract, amt);
+			Util.inc( m_map, contract, amt);
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {

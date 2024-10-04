@@ -1,5 +1,6 @@
 package monitor;
 
+import static monitor.Monitor.m_config;
 import java.awt.BorderLayout;
 import java.text.DecimalFormat;
 import java.text.Format;
@@ -50,7 +51,7 @@ public class HoldersPanel extends JsonPanel {
 		wrap( () -> {
 			m_title.setText( token.name() );
 			
-			HashMap<String,Double> map = token.getAllBalances();
+			var map = m_config.node().getHolderBalances( token.address(), token.decimals() );
 
 			JsonArray ar = new JsonArray();
 			
@@ -61,7 +62,7 @@ public class HoldersPanel extends JsonPanel {
 			String query = String.format( "select wallet_public_key, first_name, last_name from users where wallet_public_key in (%s)", list).toLowerCase();
 			S.out( query);
 			
-			JsonArray names = Monitor.m_config.sqlQuery(query);
+			JsonArray names = m_config.sqlQuery(query);
 			HashMap<String,JsonObject> nameMap = names.getMap( "wallet_public_key"); 
 			
 			Util.forEach( map, (wallet, balance) -> { 

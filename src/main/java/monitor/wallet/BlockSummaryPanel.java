@@ -134,10 +134,19 @@ public class BlockSummaryPanel extends BlockPanelBase {
 				// send BUSD?
 				isBusd( trans2) && isFromMe( trans2) && isToRefWallet( trans2)
 			) ) {
+
+			// burn RUSD?
+			if (isRusd( trans2) && trans1.amount() == 0) {
+				obj.put("action", "Burn");
+			}
 			
-			obj.put("action", "Buy");
-			obj.put("qty", trans1.amount() );
-			obj.put("token", trans1.contract() );
+			// normal stock purchase
+			else {
+				obj.put("action", "Buy");
+				obj.put("qty", trans1.amount() );
+				obj.put("token", trans1.contract() );
+			}
+			
 			obj.put("amount", trans2.amount() );
 			obj.put("stablecoin", trans2.contract() );
 			obj.put( "block", trans1.block() );
@@ -151,9 +160,18 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		if (isMint( trans1) && isRusd( trans1) &&
 			isBurn( trans2) ) {
 			
-			obj.put("action", "Sell" );
-			obj.put("qty", trans2.amount() );
-			obj.put("token", trans2.contract() );
+			// minting RUSD?
+			if (trans2.amount() == 0) {
+				obj.put("action", "Mint" );
+			}
+			
+			// normal sells stock
+			else {
+				obj.put("action", "Sell" );
+				obj.put("qty", trans2.amount() );
+				obj.put("token", trans2.contract() );
+			}
+
 			obj.put("amount", trans1.amount() );
 			obj.put("stablecoin", trans1.contract() );
 			obj.put( "block", trans1.block() );

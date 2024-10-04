@@ -954,4 +954,10 @@ public class Util {
 				.getDayOfWeek();
 	}
 
+	/** Look up value by address and increment it */
+	public static void inc(HashMap<String, Double> map, String address, double amt) {
+		Double v = map.get(address);
+		map.put( address, v == null ? amt : v + amt);
+	}
+
 }

@@ -2,20 +2,27 @@ package test;
 
 import tw.util.S;
 
-/** Call next(), next(), etc., done() */
+/** 
+ *   INSTRUCTIONS: Call next(), next(), etc., done() 
+ *   
+ *   always call next() to start
+ *   
+ *   */
 public class MyTimer {
 	long start;
 
 	public MyTimer() {
 	}
 	
-	public void next(String format, Object... params) {
+	/** start here */
+	public MyTimer next(String format, Object... params) {
 		if (start > 0) {
 			done();
 		}
 		
 		S.out(format, params);
 		start = System.currentTimeMillis();
+		return this;
 	}
 	
 	/** Use this for custom "done" messages */

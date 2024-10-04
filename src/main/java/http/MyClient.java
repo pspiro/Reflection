@@ -43,19 +43,16 @@ public class MyClient {
 	
 	/** build GET request; call this directly to add headers, then call query() */
 	public static MyClient create( String url) {
-		write( url + " GET");
 		return new MyClient( newBuilder( url).GET() );
 	}
 		
 	/** build POST request; call this directly to add headers, then call query() */
 	public static MyClient create( String url, String body) {
-		write( url + " POST");
 		return new MyClient( newBuilder( url).POST( HttpRequest.BodyPublishers.ofString( body)));
 	}
 
 	/** build PATCH request; call this directly to add headers */
 	public static MyClient createPatch( String url, String body) {
-		write( url + " PATCH");
 		return new MyClient( newBuilder( url).method( 
 				"PATCH", 
 				HttpRequest.BodyPublishers.ofString( body) ) );
@@ -63,14 +60,12 @@ public class MyClient {
 
 	/** Create PUT */
 	public static MyClient createPut( String url, String body) {
-		write( url + " PUT");
 		return new MyClient( newBuilder( url)
 				.PUT( HttpRequest.BodyPublishers.ofString( body)));
 	}
 
 	/** Create DELETE */
 	public static MyClient createDelete( String url) {
-		write( url + " DELETE");
 		return new MyClient( newBuilder( url).DELETE() );
 	}
 
@@ -103,7 +98,12 @@ public class MyClient {
 		HttpRequest request = m_builder.build();
 
 		try {
+			long start = System.currentTimeMillis();
+			
 			HttpResponse<String> response = client.send( request, HttpResponse.BodyHandlers.ofString());
+
+			write( String.format( "%s %s sync %s ms",
+					request.uri(), request.method(), System.currentTimeMillis() - start) );
 
 			// avoid returning html messages from nginx; at least catch 404 and 502 
 			if (!niceCode( response.statusCode() ) ) {
@@ -112,11 +112,9 @@ public class MyClient {
 			
 			return response;
 		}
-		catch( ConnectException ce) {
-			throw new ConnectException( "Could not connect to " + request.uri() );
-		}
 		catch( Throwable e) {
-			throw ( Util.toException( e) ); // check the type. pas 
+			write( "Error " + request.uri() + " " + e.getMessage() );
+			throw new Exception( "Could not connect to " + request.uri(), e);  // add the URL to the exception
 		}
 	}
 	
@@ -125,8 +123,14 @@ public class MyClient {
 	public void query( ExConsumer<HttpResponse<String>> ret) {
 		HttpRequest request = m_builder.build();
 		
+		long start = System.currentTimeMillis();
+
 		client.sendAsync( request, HttpResponse.BodyHandlers.ofString())
 				.thenAccept( response -> { 
+					
+					write( String.format( "%s %s async %s ms",
+							request.uri(), request.method(), System.currentTimeMillis() - start) );
+
 						if (niceCode( response.statusCode() ) ) {  // catch 502 and 404 here
 							try {
 								ret.accept( response);

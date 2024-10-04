@@ -22,8 +22,8 @@ public class LookupConid extends ConnectionAdapter {
 	}
 
 	LookupConid() throws Exception {
-		Config config = Config.readFrom("Dev-config");
-		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 838, null);
+		Config config = Config.readFrom("Dev3-config");
+		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), config.twsOrderClientId() , null);
 	}
 
 	public void onRecNextValidId(int id) {
