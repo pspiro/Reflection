@@ -372,16 +372,27 @@ public class HookServer {
 			// this code is the same as for Moralis and could be shared, but
 			// they are separate in case one changes and not the other
 			for (JsonObject trans : obj.getArray("erc20Approvals") ) {
+				// tags are: contract, logIndex, owner, spender, tokenDecimals, tokenName, tokenSymbol, transactionHash, value, valueWithDecimals, 
+
 				String contract = trans.getString("contract");
 				
 				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
 					String owner = trans.getString("owner");
 					String spender = trans.getString("spender");
 					double amt = trans.getDouble("valueWithDecimals");
+					int dec = trans.getInt( "tokenDecimals");
+					String value = trans.getString( "value");
+					
+					// sometimes decimal amount is not provided, we have to look it up
+					if (amt == 0 && dec == 0) {
+						dec = m_config.node().getDecimals( contract);  // could send a query
+						amt = Erc20.fromBlockchain( value, dec);
+						S.out( "  looked up dec val  dec=%s  amt=%s  raw=%s", dec, amt, value);
+					}
+					S.out( "MORALIS APPROVAL  %s can spend %s %s on behalf of %s",
+							spender, amt, contract, owner);  // use java formatting for amt which can be huge
 
 					Util.lookup( hookServer.m_hookMap.get(owner), hookWallet -> {
-						S.out( "MORALIS APPROVAL  %s can spend %s %s on behalf of %s",
-								spender, "" + amt, contract, owner);  // use java formatting for amt which can be huge
 						hookWallet.approved( amt);	
 					});
 				}
