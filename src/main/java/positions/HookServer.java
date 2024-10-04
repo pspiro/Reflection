@@ -392,8 +392,9 @@ public class HookServer {
 					S.out( "MORALIS APPROVAL  %s can spend %s %s on behalf of %s",
 							spender, amt, contract, owner);  // use java formatting for amt which can be huge
 
+					double finalAmt = amt;
 					Util.lookup( hookServer.m_hookMap.get(owner), hookWallet -> {
-						hookWallet.approved( amt);	
+						hookWallet.approved( finalAmt);	
 					});
 				}
 			}

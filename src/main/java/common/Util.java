@@ -766,12 +766,12 @@ public class Util {
 		return t;
 	}
 
-	/** Retrieve a value and process and return it if not null */ 
-	public static <T> T lookup( T t, ExConsumer<T> consumer) throws Exception {
-		if (t != null) {
-			consumer.accept( t);
+	/** Execute block AND RETURN THE VALUE if not null; similar to iff */ 
+	public static <T> T lookup( T obj, ExConsumer<T> consumer) throws Exception {
+		if (obj != null) {
+			consumer.accept( obj);
 		}
-		return t;
+		return obj;
 	}
 
 	/** "if not null"; execute block if object is not null and not empty string

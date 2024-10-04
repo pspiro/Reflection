@@ -196,17 +196,17 @@ public class NodeInstance {
 		return new Fees( baseFee * 1.2, sum / 5.);
 	}
 	
-	/** show pending and queued transactions to find stuck transactions */
-	public void showTrans() throws Exception {
-		Config c = Config.ask( "Dt2");
+	/** show pending and queued transactions to find stuck transactions
+	 *  take a long time and returns a lot of data */
+	public void showTrans( String wallet) throws Exception {
 		JsonObject result = getQueuedTrans().getObject("result");
 
 		S.out( "Pending");
-		show( result.getObject( "pending"), c.ownerAddr() );
+		show( result.getObject( "pending"), wallet);
 		
 		S.out( "");
 		S.out( "Queued");
-		show( result.getObject( "queued"), c.ownerAddr() );
+		show( result.getObject( "queued"), wallet);
 	}
 	
 	// I think the issue is that you have pending trans that will never get picked up
@@ -566,10 +566,17 @@ public class NodeInstance {
 		return ts;
 	}
 	
+	// get the hash from e.g. MetaMask
+	void unstick() throws Exception {
+		String hash = "0xca7398e9fe1f14183573fb181d8ad527903d9d88c95abb47aa759546b256ddaa";
+		JsonObject t = getTransactionByHash( hash);
+		int nonce = t.getInt( "nonce");
+		// work in progress...
+		
+	}
+	
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
-		var trans = c.node().getTokenTransfers(NodeInstance.prod, c.getStablecoinAddresses() );
-		trans.forEach(System.out::println);
 	}	
 }
 
