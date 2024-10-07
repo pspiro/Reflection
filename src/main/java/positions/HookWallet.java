@@ -8,7 +8,6 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 import web3.Busd;
-import web3.Erc20;
 import web3.NodeServer;
 
 class HookWallet {

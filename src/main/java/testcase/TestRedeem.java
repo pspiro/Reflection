@@ -37,19 +37,19 @@ public class TestRedeem extends MyTestCase {
 		
 		// lock it by time and redeem; should fail
 		lock( 5, System.currentTimeMillis() + Util.DAY, 0);
-		redeem();
+		redeem( 5);
 		assertEquals( RefCode.RUSD_LOCKED, cli.getRefCode() );
 		S.out( cli.getMessage() );
 		
 		// lock it by required transactions; should fail
 		lock( 5, System.currentTimeMillis() - Util.DAY, 2);
-		redeem();
+		redeem( 5);
 		assertEquals( RefCode.RUSD_LOCKED, cli.getRefCode() );
 		S.out( cli.getMessage() );
 		
 		// lock part of it; it should redeem only part
 		lock( 3, System.currentTimeMillis() + Util.DAY, 0);
-		redeem();
+		redeem( 5);
 		assert200();
 		startsWith( "RUSD was partially redeemed", cli.getMessage() );
 	}
@@ -61,7 +61,7 @@ public class TestRedeem extends MyTestCase {
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 5);
 		lock( 5, System.currentTimeMillis() - 10, 0);
-		redeem();
+		redeem( 5);
 		assert200();
 	}
 	
@@ -71,7 +71,7 @@ public class TestRedeem extends MyTestCase {
 		m_config.sqlCommand( sql -> sql.insertOrUpdate("users", lockObj, "wallet_public_key = '%s'", wallet) );
 	}
 
-//	public void testRedeem() throws Exception {
+//	public void testredeem( 5) throws Exception {
 //		String wal = "0xcb6c2EDBb986ef14B66E094787245350b69EA5Ec";
 //		Cookie.setWalletAddr(wal);
 //		S.out( "**approved=%s", m_config.getApprovedAmt() );
@@ -81,7 +81,7 @@ public class TestRedeem extends MyTestCase {
 //		S.out( "sending redemption request to succeed");
 //		m_config.rusd().sellRusd(wal, m_config.busd(), 3)
 //			.displayHash();
-////		redeem();
+////		redeem( 5);
 //		//assert200();
 //	}
 	
@@ -150,44 +150,47 @@ public class TestRedeem extends MyTestCase {
 		// mint an amount of RUSD that should work--high 
 		Cookie.setNewFakeAddress( true);
 		mintRusd(Cookie.wallet, 9);
+		
+		// fail, too low
+		redeem( 4);
+		assert400();
 
-		// this doesn't work; for some reason, it's 
+		// this doesn't work; for some reason
 		// clear approved amount
-//		S.out( "clearing allowance");
-//		m_config.busd().approve(
-//				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
-//
-//		// redeem RUSD, fail due to allowance
-//		S.out( "sending redemption request to fail");
-//		redeem();
-//		assertTrue( cli.getResponseCode() == 400);
-//
-//		// restore approved amount
+		S.out( "clearing allowance");
+		m_config.busd().approve(
+				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
+		S.out( "approved: " + m_config.getApprovedAmt() );
+
+		// redeem RUSD, fail due to allowance
+		S.out( "sending redemption request to fail");
+		redeem( 5);
+		assert400();
+
+		// restore approved amount
 		S.out( "restoring allowance");
 		m_config.busd().approve(
 				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
-//		
-//		// wait for it to solidify
-//		S.out( "waiting 10 sec");
-//		S.sleep( 30000);
+		S.out( "approved: " + m_config.getApprovedAmt() );
+		
+		
+		// wait for it to solidify
+		S.out( "waiting 5 sec");
+		S.sleep( 5000);
 
 		// redeem RUSD, pass
 		S.out( "sending redemption request to succeed");
-		redeem();
+		redeem( 5);
 		assert200();
 
 		// second one should fail w/ REDEMPTION_PENDING
 		S.sleep(200);
 		S.out( "sending dup redemption request to fail");
-		redeem();
+		redeem( 5);
 		assertEquals( RefCode.REDEMPTION_PENDING, cli.getRefCode() );
 
 		waitForRedeem(Cookie.wallet);
 		waitForRusdBalance(Cookie.wallet, .0001, true);
-	}
-
-	private void redeem() throws Exception {
-		redeem(0);
 	}
 
 	private void redeem(double amount) throws Exception {
@@ -198,7 +201,7 @@ public class TestRedeem extends MyTestCase {
 		.display();
 	}
 
-	public void testExceedMaxAutoRedeem() throws Exception {
+	public void testExceedmaxAutoRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered
 		S.out( "***testExceedMax");
 

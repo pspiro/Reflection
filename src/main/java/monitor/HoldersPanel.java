@@ -1,6 +1,7 @@
 package monitor;
 
 import static monitor.Monitor.m_config;
+
 import java.awt.BorderLayout;
 import java.text.DecimalFormat;
 import java.text.Format;

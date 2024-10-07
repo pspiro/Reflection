@@ -42,9 +42,9 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
-import web3.NodeInstance;
 import web3.NodeServer;
 import web3.StockToken;
 

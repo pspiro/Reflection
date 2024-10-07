@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 
 import common.JsonModel;
 import common.Util;
-import tw.util.S;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
 

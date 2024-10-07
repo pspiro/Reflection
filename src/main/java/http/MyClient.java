@@ -1,6 +1,5 @@
 package http;
 
-import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -13,7 +12,6 @@ import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import common.Util;
 import common.Util.ExConsumer;
 import tw.util.OStream;
 import tw.util.S;

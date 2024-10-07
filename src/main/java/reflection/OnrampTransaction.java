@@ -10,7 +10,6 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import common.Util.ExRunnable;
 import onramp.Onramp;
-import onramp.Onramp.KycStatus;
 import tw.util.S;
 import util.LogType;
 
