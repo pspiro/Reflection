@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Alerts;
 import common.Util;
+import http.SimpleTransaction;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
@@ -41,6 +42,10 @@ public class OnrampServer {
 
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("OnRamp");
+		
+		// don't allow running twice
+		SimpleTransaction.listen("0.0.0.0", 48001, SimpleTransaction.nullHandler);
+
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		//Onramp.useProd();
 		Onramp.debugOff();
