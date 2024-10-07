@@ -164,7 +164,7 @@ public class NodeInstance {
 				"id": 1,
 				"method": "txpool_content"
 				}""";
-		return nodeQuery( body);  // result -> pending and result -> queued
+		return nodeQuery( body).getObject("result");  // result -> pending and result -> queued
 	}
 
 	public double getNativeBalance(String walletAddr) throws Exception {
@@ -199,7 +199,7 @@ public class NodeInstance {
 	/** show pending and queued transactions to find stuck transactions
 	 *  take a long time and returns a lot of data */
 	public void showTrans( String wallet) throws Exception {
-		JsonObject result = getQueuedTrans().getObject("result");
+		JsonObject result = getQueuedTrans();
 
 		S.out( "Pending");
 		show( result.getObject( "pending"), wallet);
@@ -577,6 +577,7 @@ public class NodeInstance {
 	
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
+		c.node().showTrans( prod);
 	}	
 }
 

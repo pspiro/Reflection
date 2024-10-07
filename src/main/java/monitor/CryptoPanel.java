@@ -51,6 +51,7 @@ public class CryptoPanel extends MonPanel {
 		m_rusdAddress.setText( config().rusdAddr() );
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
+		HtmlButton sendBusdFromRefWallet = new HtmlButton( "Send", ev -> sendBusdFromRefWallet() );
 		HtmlButton sendToRefWallet = new HtmlButton( "Send to RefWallet", ev -> sendToRefWallet() );
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendToOther() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
@@ -65,7 +66,7 @@ public class CryptoPanel extends MonPanel {
 		
 		leftPanel.addHeader( "RefWallet");
 		leftPanel.add( "Address", m_refAddress);
-		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, emptyRefWallet);
+		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, sendBusdFromRefWallet, emptyRefWallet);
 		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
 		leftPanel.add( "RefWallet " + config().nativeTokName(), m_refWalletMatic, refSendMatic);
 		
@@ -89,6 +90,22 @@ public class CryptoPanel extends MonPanel {
 		add(dualPanel);
 	}
 	
+	private void sendBusdFromRefWallet() {
+		wrap( () -> {
+			String to = Util.ask( "Enter wallet");
+			double amt = Double.parseDouble( Util.ask( "Enter amount") );
+			
+			if (Util.confirm( this, "Are you sure you want to send %s %s from RefWallet to %s",
+					amt, config().busd().name(), to) ) {
+				
+				config().busd().transfer( config().refWalletKey(), to, amt)
+					.waitForHash();
+				
+				Util.inform(this, "Done");
+			}
+		});
+	}
+
 	/** Send from Owner to RefWallet */
 	private void sendToRefWallet() {
 		wrap( () -> {
@@ -170,7 +187,7 @@ public class CryptoPanel extends MonPanel {
 
 	/** Send all from RefWallet to owner */
 	private void emptyRefWallet() {
-		if (Util.confirm(this, "Are you sure you want to transfer this amount (-1) " + config().busd().name() + " from RefWallet to Owner?") ) {
+		if (Util.confirm(this, "Are you sure you want to transfer the full amount of " + config().busd().name() + " from RefWallet to Owner?") ) {
 			wrap( () -> {
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
 
