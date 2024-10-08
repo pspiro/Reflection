@@ -15,7 +15,7 @@ public class NodeAux {
 	private static final String METHOD = "eth_getLogs";  // To fetch transaction logs (for ERC-20 transfers)
 	static String pad = "0x000000000000000000000000";
 	
-	static JsonObject createReq( String[] addresses, int fromBlock, String from, String to) {
+	static JsonObject createReq( String[] addresses, String fromBlock, String from, String to) {
 		// Set up filtering by contract addresses
 		var topics = new ArrayList<String>();
 		topics.add( NodeInstance.transferEventSignature);

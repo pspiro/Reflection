@@ -31,6 +31,15 @@ class LogPanel extends QueryPanel {
 		Util.wrap( () -> refresh() );
 	}
 	
+	@Override protected void onDouble(String tag, Object val) {
+		switch(tag) {
+			case "wallet_public_key":
+				Monitor.m_tabs.select( "Wallet");
+				Monitor.m_walletPanel.setWallet( val.toString() );
+				break;
+			}
+	}
+
 	@Override protected String getTooltip(JsonObject row, String tag) {
 		try {
 			if (tag.equals("data") ) {

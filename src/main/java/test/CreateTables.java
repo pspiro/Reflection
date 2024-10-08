@@ -74,7 +74,7 @@ public class CreateTables  {
 
 		con.execute(sql);
 	}
-	
+
 	void createOnrampTable() throws Exception {
 		String sql = """
 				CREATE TABLE onramp (
@@ -82,7 +82,8 @@ public class CreateTables  {
 				    wallet_public_key varchar(42) NOT NULL CHECK (wallet_public_key = LOWER(wallet_public_key) AND wallet_public_key <> ''),
 				    trans_id varchar(32) NOT NULL UNIQUE CHECK (trans_id <> ''),  -- OnRamp transaction id
 				    uid varchar(8),  -- ties back to the transaction submitted by the user
-				    amount double precision NOT NULL,  -- amount of USD expected
+				    fiat_amount double precision NOT NULL,  -- user will pay this
+				    crypto_amount double precision NOT NULL,  -- user will receive this
 				    state varchar(32),  -- our own status
 				    hash varchar(66) -- trans hash of minting RUSD into user's wallet
 				);

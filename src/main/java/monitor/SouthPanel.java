@@ -26,6 +26,7 @@ public class SouthPanel extends JPanel {
 	private final JTextField m_fbServer = new JTextField(10);
 	private final JTextField m_mdServer = new JTextField(10);
 	private final JTextField m_hookServer = new JTextField(10);
+	private final JTextField m_onrampServer = new JTextField(10);
 
 	SouthPanel() {
 		add( new JLabel("Ref API:"));
@@ -33,12 +34,15 @@ public class SouthPanel extends JPanel {
 		add( Box.createHorizontalStrut(10));
 		add( new JLabel("MD Server:"));
 		add( m_mdServer);
-		add( Box.createHorizontalStrut(10));
-		add( new JLabel("FB Server:"));
-		add( m_fbServer);
+//		add( Box.createHorizontalStrut(10));
+//		add( new JLabel("FB Server:"));
+//		add( m_fbServer);
 		add( Box.createHorizontalStrut(10));
 		add( new JLabel("Hook Server:"));
 		add( m_hookServer);
+		add( Box.createHorizontalStrut(10));
+		add( new JLabel("Onramp Server:"));
+		add( m_onrampServer);
 		add( Box.createHorizontalStrut(10));
 		
 		m_timer.schedule( new TimerTask() {
@@ -54,6 +58,7 @@ public class SouthPanel extends JPanel {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
 			test( Monitor.m_config.hookBaseUrl() + "/hook/ok", m_hookServer);
+			test( Monitor.refApiBaseUrl() + "/onramp/ok", m_onrampServer);
 			
 			if (Monitor.m_config.web3Type() == Web3Type.Fireblocks) {
 				test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);

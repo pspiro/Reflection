@@ -499,7 +499,8 @@ public class NodeInstance {
 
 	/** return all token transfers for the specified wallet and contract addresses */
 	public Transfers getTokenTransfers( String wallet, String[] addresses) throws Exception {
-		int fromBlock = 20556807;  // def. not good. pas
+		// int fromBlock = 20556807;  // def. not good. pas
+		String fromBlock = "earliest";
 
 		Transfers trans = new Transfers();
 		trans.addAll( getTransfers( addresses, fromBlock, wallet, null) );
@@ -510,7 +511,7 @@ public class NodeInstance {
 	
 	/** return all token transfers for the specified wallet and contract addresses
 	 *  additionally filtered by "from" and "to" wallets */
-	private List<Transfer> getTransfers( String[] addresses, int fromBlock, String from, String to) throws Exception {
+	private List<Transfer> getTransfers( String[] addresses, String fromBlock, String from, String to) throws Exception {
 		var query = NodeAux.createReq( addresses, fromBlock, from, to);
 		S.out( "query: " + query);
 		

@@ -208,6 +208,13 @@ public class Monitor {
 			add( m_model.createTable() );
 		}
 		
+		@Override protected Object format(String key, Object value) {
+			if (key.equals( "createdAt") ) {
+				return Util.left( value.toString(), 19).replace( "T", " ");
+			}
+			return super.format(key, value);
+		}
+		
 		@Override protected void refresh() throws Exception {
 			JsonArray trans = Onramp.getAllTransactions();
 			

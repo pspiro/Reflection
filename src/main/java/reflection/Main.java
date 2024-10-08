@@ -398,9 +398,10 @@ public class Main implements ITradeReportHandler {
 		jlog( type, "-", "-", Util.toJson( "text", text) );
 	}
 
-	/** Writes entry to log table in database; must not throw exception */
+	/** Writes entry to log table in database; must not throw exception;
+	 *  @param uid may be null */
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
-		S.out( "LogType.%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		S.out( "%sLogType.%s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,
@@ -625,7 +626,7 @@ public class Main implements ITradeReportHandler {
 
     /** check if it's time to send out the summary emails; when data changes in NY */
 	void checkSummaries() {
-		boolean nowAfter = Util.isLaterThanEST( 16); // 9 pm
+		boolean nowAfter = Util.isLaterThanEST( 16); // 4 pm
 
 		// if we just passed the time threshold...
 		if (m_timeWas == Time.Before && nowAfter) {

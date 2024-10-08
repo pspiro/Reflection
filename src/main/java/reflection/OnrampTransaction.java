@@ -110,7 +110,7 @@ public class OnrampTransaction extends MyTransaction {
 				double receiveAmt = m_map.getRequiredDouble( "recAmt");
 				require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
 	
-				// submit order
+				// submit order to OnRamp
 				var submission = Onramp.transact( 
 						onrampId,
 						buyAmt,
@@ -131,8 +131,8 @@ public class OnrampTransaction extends MyTransaction {
 						RefCode.ONRAMP_FAILED,
 						"A valid transaction id was not returned");
 
-				double amount = data.getDouble( "fiatAmount");
-				Util.require( amount > 0, "Error - the on-ramp amount returned is invalid");
+				double fiatAmount = data.getDouble( "fiatAmount");
+				Util.require( fiatAmount > 0, "Error - the on-ramp amount returned is invalid");
 				
 				var pmtInstructions = data.getObject( "fiatPaymentInstructions");
 				// onramp sandbox does not return payment instructions; add it
@@ -155,9 +155,9 @@ public class OnrampTransaction extends MyTransaction {
 				respond( response);
 
 				// insert into onramp table of Reflection database
-				insertOnramp( transId, amount);
+				insertOnramp( transId, buyAmt, receiveAmt);
 				
-				// send email to customer and bcc me
+				// send email to customer
 				sendEmail(user, bank, response);
 
 				// write log entry
@@ -187,12 +187,14 @@ public class OnrampTransaction extends MyTransaction {
 		});
 	}
 
-	private void insertOnramp(String transId, double amount) throws Exception {
+	private void insertOnramp(String transId, double buyAmount, double receiveAmount) throws Exception {
 		JsonObject dbEntry = Util.toJson(
 				"wallet_public_key", m_walletAddr.toLowerCase(),
 				"uid", m_uid,
 				"trans_id", transId, 
-				"amount", amount);
+				"fiat_amount", buyAmount,
+				"crypto_amount", receiveAmount 
+				);
 		Main.m_config.sqlCommand( sql-> sql.insertJson("onramp", dbEntry) );
 	}
 

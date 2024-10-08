@@ -44,7 +44,7 @@ public class OnrampServer {
 		Thread.currentThread().setName("OnRamp");
 		
 		// don't allow running twice
-		SimpleTransaction.listen("0.0.0.0", 48001, SimpleTransaction.nullHandler);
+		SimpleTransaction.listen("0.0.0.0", 5003, SimpleTransaction.nullHandler);
 
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		//Onramp.useProd();
@@ -132,7 +132,7 @@ public class OnrampServer {
 						id, wallet, m_pulsechain.refWalletAddr(), received.to() );
 				
 				// confirm correct amount
-				Util.require( Util.isEq( received.amount(), dbTrans.getDouble( "amount"), tolerance), "Error: the received amount is incorrect  id=%s  wallet=%s  expected=%s  got=%s",
+				Util.require( Util.isEq( received.amount(), dbTrans.getDouble( "crypto_amount"), tolerance), "Error: the received amount is incorrect  id=%s  wallet=%s  expected=%s  got=%s",
 						id, wallet, dbTrans.getDouble( "amount"), received.amount() );
 				
 				// update database so we don't double-send
