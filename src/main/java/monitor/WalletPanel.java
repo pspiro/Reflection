@@ -657,9 +657,18 @@ public class WalletPanel extends MonPanel {
 		private JTextField m_id = new JTextField( size);
 		private JTextField m_kycStatus = new JTextField( size + 5);
 		private MyComboBox m_kycCombo = new MyComboBox(KycStatus.values() );
-		private JsonModel m_apiModel = new JsonModel( "phone,onramp_id");
 		private JsonModel m_logModel = new JsonModel( "created_at,type,currency,buyAmt,recAmt,text");
 		private JsonModel m_dbModel = new JsonModel( "created_at,fiat_amount,crypto_amount,hash,state,uid");
+		
+		private JsonModel m_apiModel = new JsonModel( "phone,onramp_id") {
+			@Override protected Object format(String key, Object value) {
+				if (key.equals( "createdAt") ) {
+					return Util.left( value.toString(), 19).replace( "T", " ");
+				}
+				return super.format(key, value);
+			}
+
+		};
 		
 		OnrampUserPanel() {
 			super( new BorderLayout() );
