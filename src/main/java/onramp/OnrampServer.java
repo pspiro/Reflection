@@ -26,7 +26,7 @@ public class OnrampServer {
 	static int poll = 10000;
 	static final long confRequired = 12;  // require 12 confirmations on PulseChain
 	static final double maxAuto = 300;
-	static final double tolerance = .01; // received amount vs expected amount
+	static final double tolerance = .01; // max percentage slippage
 	private static final String transactionHash = "transactionHash";
 
 	static final JsonObject errCodes = Util.toJson(
@@ -35,10 +35,11 @@ public class OnrampServer {
 			"-2", "The user has abandoned the transaction",
 			"-1", "The transaction has exceeded the allowable time limit");  
 	
-	private Config m_polygon;
-	private Config m_pulsechain;
+	private final Config m_polygon;
+	private final Config m_pulsechain;
 	private HashMap<String, JsonObject> map = new HashMap<>(); // map onramp transId to onramp record
 	private Stocks m_stocks;
+	private boolean m_testMode;
 
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("OnRamp");
@@ -49,12 +50,20 @@ public class OnrampServer {
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		//Onramp.useProd();
 		Onramp.debugOff();
-		new OnrampServer( args);
+		new OnrampServer();
 	}
 
-	public OnrampServer(String[] args) throws Exception {
+	public OnrampServer() throws Exception {
 		m_polygon = Config.readFrom( "Prod-config");  // must come first! because Config.read() sets the NodeServer instance
 		m_pulsechain = Config.readFrom( "Pulse-config");  // must come second!
+		m_stocks = m_pulsechain.readStocks();
+		Util.executeEvery(0, poll, this::check);
+	}
+	
+	/** test mode, not used because we cannot simulate the hash code */
+	public OnrampServer(Config config) throws Exception {
+		m_testMode = true;
+		m_pulsechain = m_polygon = config;
 		m_stocks = m_pulsechain.readStocks();
 		Util.executeEvery(0, poll, this::check);
 	}
@@ -132,8 +141,10 @@ public class OnrampServer {
 						id, wallet, m_pulsechain.refWalletAddr(), received.to() );
 				
 				// confirm correct amount
-				Util.require( Util.isEq( received.amount(), dbTrans.getDouble( "crypto_amount"), tolerance), "Error: the received amount is incorrect  id=%s  wallet=%s  expected=%s  got=%s",
-						id, wallet, dbTrans.getDouble( "amount"), received.amount() );
+				double expected = dbTrans.getDouble( "crypto_amount");
+				double lostPct = (expected - received.amount() ) / expected;
+				Util.require( lostPct <= tolerance, "Error: the received amount is insufficient  id=%s  wallet=%s  expected=%s  got=%s  lossPct=%s",
+						id, wallet, expected, received.amount(), lostPct);
 				
 				// update database so we don't double-send
 				updateState( State.Funding, "", id);
@@ -222,7 +233,7 @@ public class OnrampServer {
 		return users.get( 0); 
 	}
 
-	/** build the map and note and transitions */
+	/** build the map and note transitions */
 	void checkOnrampTransactions() {
 		Util.wrap( () -> { 
 			for (var trans : Onramp.getAllTransactions() ) {
