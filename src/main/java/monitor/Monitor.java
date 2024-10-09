@@ -13,6 +13,7 @@ import javax.swing.JTextField;
 
 import org.json.simple.JsonArray;
 
+import common.JsonModel;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
@@ -21,6 +22,7 @@ import redis.MyRedis;
 import reflection.Stock;
 import reflection.Stocks;
 import tw.google.NewSheet;
+import tw.util.DualPanel;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
 import tw.util.S;
@@ -202,27 +204,41 @@ public class Monitor {
 		}
 	}
 	
-	static class OnrampPanel extends JsonPanel {
-		OnrampPanel() {
-			super( new BorderLayout(), "abc");
-			add( m_model.createTable() );
-		}
-		
-		@Override protected Object format(String key, Object value) {
-			if (key.equals( "createdAt") ) {
-				return Util.left( value.toString(), 19).replace( "T", " ");
+	static class OnrampPanel extends MonPanel {
+		private JsonModel m_apiModel = new JsonModel("abc") {
+			@Override protected Object format(String key, Object value) {
+				if (key.equals( "createdAt") ) {
+					return Util.left( value.toString(), 19).replace( "T", " ");
+				}
+				return super.format(key, value);
 			}
-			return super.format(key, value);
+		};
+
+		private JsonModel m_dbModel = new JsonModel("abc");
+		
+		OnrampPanel() {
+			super( new BorderLayout() );
+			
+			JPanel p = new DualPanel();
+			p.add( m_apiModel.createTable( "OnRamp API Transactions"), "1");
+			p.add( m_dbModel.createTable( "Reflection Database Transactions"), "2");
+			
+			add( p);
 		}
 		
 		@Override protected void refresh() throws Exception {
-			JsonArray trans = Onramp.getAllTransactions();
+			JsonArray apiTrans = Onramp.getAllTransactions();
+			m_apiModel.setNames( String.join( ",", apiTrans.getKeys() ) );
+			m_apiModel.fireTableStructureChanged();
+			m_apiModel.setRows( apiTrans);
+			m_apiModel.fireTableDataChanged();
 			
-			m_model.setNames( String.join( ",", trans.getKeys() ) );
-			m_model.fireTableStructureChanged();
-
-			setRows( trans);
-			m_model.fireTableDataChanged();
+			JsonArray dbTrans = m_config.sqlQuery( "select * from onramp");
+			m_dbModel.setNames( String.join( ",", dbTrans.getKeys() ) );
+			m_dbModel.fireTableStructureChanged();
+			m_dbModel.setRows( dbTrans);
+			m_dbModel.fireTableDataChanged();
+			
 		}
 	}
 	

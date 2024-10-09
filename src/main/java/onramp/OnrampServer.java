@@ -50,7 +50,7 @@ public class OnrampServer {
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		//Onramp.useProd();
 		Onramp.debugOff();
-		new OnrampServer();
+		new OnrampServer(true);
 	}
 
 	public OnrampServer() throws Exception {
@@ -61,19 +61,17 @@ public class OnrampServer {
 	}
 	
 	/** test mode, not used because we cannot simulate the hash code */
-	public OnrampServer(Config config) throws Exception {
+	public OnrampServer(boolean test) throws Exception {
+		this();
 		m_testMode = true;
-		m_pulsechain = m_polygon = config;
-		m_stocks = m_pulsechain.readStocks();
-		Util.executeEvery(0, poll, this::check);
 	}
 	
 	void check() {
 		Util.wrap( () -> {
 			checkOnrampTransactions();
 
+			// look for unfulfilled database transactions
 			JsonArray rows = m_pulsechain.sqlQuery( "select * from onramp where (state is null or state = '')");
-			
 			for (var dbTrans : rows) {
 				try {
 					processDbTrans( dbTrans);
@@ -148,34 +146,39 @@ public class OnrampServer {
 				
 				// update database so we don't double-send
 				updateState( State.Funding, "", id);
-
-				// send funds to the user, same as we received
-				S.out( "funding %s with %s", dbTrans, received.amount() );
-				String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
-						wallet, 
-						received.amount(), 
-						m_stocks.getAnyStockToken()
-						).waitForHash();
 				
-				// update database again that it was successful
-				updateState( State.Completed, reflToUserHash, id);
+				if (!m_testMode) {
+					// send funds to the user, same as we received
+					S.out( "funding %s with %s", dbTrans, received.amount() );
+					String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
+							wallet, 
+							received.amount(), 
+							m_stocks.getAnyStockToken()
+							).waitForHash();
+					
+					// update database again that it was successful
+					updateState( State.Completed, reflToUserHash, id);
+					
+					// notify user by email
+					sendEmail( wallet, received.amount(), reflToUserHash);
 				
-				// notify user by email
-				sendEmail( wallet, received.amount(), reflToUserHash);
-
-				// notify us
-				Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);
+					// notify us
+					Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);
 				
-				// we should send them an update on the platform here as well. pas
-
-				// create a log entry
-				var log = Util.toJson( 
-						"type", LogType.ONRAMP,
-						"wallet_public_key", wallet,
-						"data", Util.toJson(
-								"type", "funded",
-								"amount", received.amount() ) );
-				m_pulsechain.log( log);
+					// we should send them an update on the platform here as well. pas
+	
+					// create a log entry
+					var log = Util.toJson( 
+							"type", LogType.ONRAMP,
+							"wallet_public_key", wallet,
+							"data", Util.toJson(
+									"type", "funded",
+									"amount", received.amount() ) );
+					m_pulsechain.log( log);
+				}
+				else {
+					S.out( "test mode: would be funding %s with %s", dbTrans, received.amount() );
+				}
 			}
 			else {
 				S.out( "not enough blocks yet for transaction " + onrampTrans);
