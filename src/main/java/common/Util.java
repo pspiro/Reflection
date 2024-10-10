@@ -959,4 +959,8 @@ public class Util {
 		map.put( address, v == null ? amt : v + amt);
 	}
 
+	/* return 0x83832...8383 */
+	public static String shorten( String wallet) {
+		return wallet != null ? String.format( "%s...%s", Util.left( wallet, 7), Util.right( wallet, 4) ) : "";
+	}
 }

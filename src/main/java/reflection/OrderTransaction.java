@@ -615,8 +615,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			
 			if (m_config.sendTelegram() ) {
 				out( "sending telegram");
-				String str = String.format( "Wallet %s just %s [%s %s stock tokens!](%s)",
-						m_walletAddr, isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash) ); 
+				String str = String.format( "Wallet %s just %s [%s %s stock tokens](%s) on %s!",
+						Util.shorten( m_walletAddr), isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash), m_config.blockchainName() ); 
 				Telegram.post( str);
 			}
 			else {
