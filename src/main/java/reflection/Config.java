@@ -422,7 +422,7 @@ public class Config extends ConfigBase {
 	}
 	
 	private String fetchPw() throws Exception {
-		if (!Util.equals( m_tab.tabName().toLowerCase(), "prod-config", "pulse-config") ) {
+		if (!isProduction() ) {
 			try {
 				String str = IStream.readLine("name.txt");
 				if (str.length() > 0) return str;
@@ -592,7 +592,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform) || "pulsechain".equals(moralisPlatform);  
+		return Util.equals( moralisPlatform, "polygon", "pulsechain", "zksync");
 	}
 	
 	public String moralisPlatform() {

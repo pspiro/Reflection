@@ -7,8 +7,8 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.SmtpSender;
 import common.Util;
-import tw.google.Auth;
 import tw.util.S;
 import web3.MoralisServer;
 import web3.NodeInstance;
@@ -72,26 +72,33 @@ public class SummaryEmail {
 		// get wallet and names from users table
 		S.out( "querying users table");
 		JsonArray users = m_config.sqlQuery( "select first_name, last_name, email, wallet_public_key from users");
-
-		if (m_testing ){
-			String wallet = NodeInstance.prod.toLowerCase();
-			var userRec = users.find( "wallet_public_key", wallet);
-			Util.require( userRec != null, "Error");
-			generateSummary( wallet, userRec);
-			System.exit( 0);
-		}
-
-		for (var userRec : users) {
-			String wallet = userRec.getString( "wallet_public_key");
-			try {
-				if (generateSummary( wallet, userRec) && ++count == maxToSend) {
-					break;
+		
+		try (SmtpSender sender = SmtpSender.Josh.email() ) {
+			if (m_testing ){
+				String wallet = NodeInstance.prod.toLowerCase();
+				var userRec = users.find( "wallet_public_key", wallet);
+				Util.require( userRec != null, "Error");
+				generateSummary( wallet, userRec, sender);
+				System.exit( 0);
+			}
+	
+			for (var userRec : users) {
+				String wallet = userRec.getString( "wallet_public_key");
+				try {
+					if (generateSummary( wallet, userRec, sender) && ++count == maxToSend) {
+						break;
+					}
+					// EuroDNS allows only 500 per hour per account; switch to AWE SES
+					// or use multiple mail accounts to go faster
+					S.sleep( 7200);   
+				}
+				catch( Exception e) {
+					S.out( "Error while generating summary for wallet %s", wallet);
+					e.printStackTrace();
 				}
 			}
-			catch( Exception e) {
-				S.out( "Error while generating summary for wallet %s", wallet);
-				e.printStackTrace();
-			}
+			
+			S.out( "Sent %s summary emails", count);
 		}
 	}
 
@@ -99,7 +106,7 @@ public class SummaryEmail {
 	/** @param wallet lower case
 	 * @param map maps wallet to record with first and last name, if we have it
 	 * @return true if we sent an email  */
-	private boolean generateSummary( String wallet, JsonObject userRec) throws Exception {
+	private boolean generateSummary( String wallet, JsonObject userRec, SmtpSender sender) throws Exception {
 		String email = userRec.getString( "email");
 		
 		if (!Util.isValidEmail( email) ) {
@@ -192,20 +199,21 @@ public class SummaryEmail {
 					.replace( "#actrows#", actRows.toString() )
 					.replace( "#total#", totalStr);
 
-			// 'to' display name not supported with gmail
-//			String to = S.isNotNull( name)
-//					? String.format( "%s <%s>", name, userRec.getString( "email") )
-//							: userRec.getString( "email");
-
-			Auth.auth().getMail().send(
-					"Reflection", 
-					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
+//			Auth.auth().getMail().send(
+//					"Reflection", 
+//					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
+//					email, 
+//					"Reflection Account Statement", 
+//					html, 
+//					true);
+			
+			sender.send( 
+					"Reflection",
+					"josh@reflection.trading", 
 					email, 
 					"Reflection Account Statement", 
-					html, 
-					true);
+					html); 
 
-			S.out( "sent email for " + wallet); //+ "\n" + html);
 			return true;
 		}
 		

@@ -634,7 +634,7 @@ public class Main implements ITradeReportHandler {
 
             // and not a weekend, send the daily email summaries
             if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-            	Util.wrap( () -> new SummaryEmail( m_config, m_stocks, false)
+            	Util.executeAndWrap( () -> new SummaryEmail( m_config, m_stocks, false) // don't tie up the Util timer thread
             			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }
