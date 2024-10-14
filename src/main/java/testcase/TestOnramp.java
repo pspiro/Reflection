@@ -115,6 +115,7 @@ public class TestOnramp extends MyTestCase {
 	}
 	
 	public void testExistingWallet() throws Exception {
+		S.out( "testExistingWallet");
 		Cookie.setWalletAddr("0x7c3e1c7291DDF2045e5Fc0C61a3e9cc5E28Dd783"); // set a wallet that has onramp id and passed kyc (set it manually from 
 
 		// get quote
@@ -128,7 +129,6 @@ public class TestOnramp extends MyTestCase {
 		assertTrue( quote.getDouble( "recAmt") > 0);
 
 		// convert, first time, creates new onramp id
-		S.out( "testapi1");
 		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
@@ -145,7 +145,7 @@ public class TestOnramp extends MyTestCase {
 		assertNotNull( resp.get( "bank") );
 	}
 	
-	private String newPhone() {
+	public static String newPhone() {
 		return "+44-" + Util.rnd.nextLong( 2172845679L, 7172845679L);
 	}
 // try one more time in test system	
