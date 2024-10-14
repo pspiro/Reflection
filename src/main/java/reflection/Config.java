@@ -813,4 +813,8 @@ public class Config extends ConfigBase {
 	public int maxSummaryEmails() {
 		return maxSummaryEmails;
 	}
+
+	public boolean isZksync() {
+		return moralisPlatform.equals( "zksync");
+	}
 }

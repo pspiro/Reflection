@@ -98,6 +98,7 @@ public class Encrypt {
 		return Base64.getEncoder().encodeToString(bytes);
 	}
 	
+	/** Or use HexFormat class */
 	public static String bytesToHex(byte[] hash) {
 		StringBuilder hexString = new StringBuilder(2 * hash.length);
 		for (int i = 0; i < hash.length; i++) {
@@ -109,6 +110,17 @@ public class Encrypt {
 		}
 		return hexString.toString();
 	}
+	
+	/** Or use HexFormat class e.g. HexFormat.of().parseHex(hexString); */
+	public static byte[] hexToBytes(String hex) {
+	    int length = hex.length();
+	    byte[] data = new byte[length / 2];
+	    for (int i = 0; i < length; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+	                             + Character.digit(hex.charAt(i+1), 16));
+	    }
+	    return data;
+	}		
 
 	/** RSASSA-PKCS1-v1_5 using SHA-256 hash */
 	public static String signRSA(String input, String key) throws Exception {
@@ -120,5 +132,5 @@ public class Encrypt {
 		sig.update(input.getBytes("UTF-8"));
 		return Encrypt.encode( sig.sign() );
 	}
-	
 }
+
