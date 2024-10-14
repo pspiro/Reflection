@@ -43,7 +43,8 @@ public class Copy {
 		}
 	}
 	
-	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
+	/** copy html text on cliboard to html format */
+	public static void main9( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
 		String str = clipboard.getData( DataFlavor.stringFlavor).toString();
@@ -55,7 +56,9 @@ public class Copy {
 		S.out( t.getTransferData(DataFlavor.fragmentHtmlFlavor));
 		
 	}
-	public static void main2( String[] args) throws UnsupportedFlavorException, IOException {
+	
+	// copy 
+	public static void main( String[] args) throws UnsupportedFlavorException, IOException {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
 		// margin is on the outside, horz only

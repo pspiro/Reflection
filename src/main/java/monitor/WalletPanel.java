@@ -42,9 +42,9 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
-import web3.NodeInstance;
 import web3.NodeServer;
 import web3.StockToken;
 
@@ -427,7 +427,7 @@ public class WalletPanel extends MonPanel {
 			VerticalPanel vp = new VerticalPanel();
 			vp.addHeader( "Crypto");
 			vp.add( "RUSD", m_rusd);
-			vp.add( "USDT", m_busd);
+			vp.add( m_config.busd().name(), m_busd);
 			vp.add( "Approved", m_approved);
 			vp.add( "MATIC", m_matic);
 			vp.add( "Locked", m_locked);
@@ -435,7 +435,7 @@ public class WalletPanel extends MonPanel {
 			vp.addHeader( "Operations");
 			vp.add( "Set Verified", new HtmlButton( "Set KYC to Verified", ev -> setVerified() ) );
 			vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-			vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
+			vp.add( "Burn " + m_config.busd().name(), m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 			vp.add( "Award", 
 					m_awardAmt, 
 					new JLabel( "RUSD for "),
@@ -652,13 +652,23 @@ public class WalletPanel extends MonPanel {
 	}
 	
 	class OnrampUserPanel extends MiniTab {
-		int size = 11;
+		int size = 13;
 		private JTextField m_phone = new JTextField( size);
 		private JTextField m_id = new JTextField( size);
 		private JTextField m_kycStatus = new JTextField( size + 5);
-		private JsonModel model = new JsonModel( "phone,onramp_id");
 		private MyComboBox m_kycCombo = new MyComboBox(KycStatus.values() );
-		private JsonModel m_logModel = new JsonModel( "created_at,type,currency,buyAmt,recAmt");
+		private JsonModel m_logModel = new JsonModel( "created_at,type,currency,buyAmt,recAmt,text");
+		private JsonModel m_dbModel = new JsonModel( "created_at,fiat_amount,crypto_amount,hash,state,uid");
+		
+		private JsonModel m_apiModel = new JsonModel( "phone,onramp_id") {
+			@Override protected Object format(String key, Object value) {
+				if (key.equals( "createdAt") ) {
+					return Util.left( value.toString(), 19).replace( "T", " ");
+				}
+				return super.format(key, value);
+			}
+
+		};
 		
 		OnrampUserPanel() {
 			super( new BorderLayout() );
@@ -668,10 +678,14 @@ public class WalletPanel extends MonPanel {
 					new JLabel("(Required format is: XX-XXXXXXXXX)") );
 			p.add( "OnRamp ID", m_id, new HtmlButton( "Update", this::updateId) );
 			p.add( "KYC Status", m_kycStatus, m_kycCombo, new HtmlButton( "Set", this::setKyc) );
-			
 			add( p, BorderLayout.NORTH);
-			add( model.createTable() );
-			add( m_logModel.createTable(), BorderLayout.EAST);
+			
+			DualPanel left = new DualPanel();
+			left.add( m_apiModel.createTable( "OnRamp API Transactions"), "1");
+			left.add( m_dbModel.createTable( "Database Onramp Table"), "2");
+			
+			add( left, BorderLayout.CENTER);
+			add( m_logModel.createTable("Database Log Table"), BorderLayout.EAST);
 		}
 		
 		void setKyc(ActionEvent e) {
@@ -720,17 +734,19 @@ public class WalletPanel extends MonPanel {
 						m_kycStatus.setText( status);
 						
 						var trans = Onramp.getUserTransactions( id);
-						model.setNames( String.join( ",", trans.getKeys() ) );
-						model.fireTableStructureChanged();
+						m_apiModel.setNames( String.join( ",", trans.getKeys() ) );
+						m_apiModel.fireTableStructureChanged();
 	
-						model.setRows( trans);
-						model.fireTableDataChanged();
+						m_apiModel.setRows( trans);
+						m_apiModel.fireTableDataChanged();
 					}
 				}
 				
+				// read log entries
 				var logs = m_config.sqlQuery( "select * from log where wallet_public_key = '%s' and type = '%s'",
 						m_wallet, LogType.ONRAMP);
 
+				// update log record with data from the json field
 				var data = new JsonArray();
 				for (var log : logs) {
 					data.add( log
@@ -740,6 +756,10 @@ public class WalletPanel extends MonPanel {
 				
 				m_logModel.setRows( data);
 				m_logModel.fireTableDataChanged();
+				
+				var dbs = m_config.sqlQuery( "select * from onramp where wallet_public_key = '%s'", m_wallet);
+				m_dbModel.setRows( dbs);
+				m_dbModel.fireTableDataChanged();
 			});
 		}
 	}

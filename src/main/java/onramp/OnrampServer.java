@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Alerts;
 import common.Util;
+import http.SimpleTransaction;
 import reflection.Config;
 import reflection.Stocks;
 import tw.util.S;
@@ -25,7 +26,7 @@ public class OnrampServer {
 	static int poll = 10000;
 	static final long confRequired = 12;  // require 12 confirmations on PulseChain
 	static final double maxAuto = 300;
-	static final double tolerance = .01; // received amount vs expected amount
+	static final double tolerance = .01; // max percentage slippage
 	private static final String transactionHash = "transactionHash";
 
 	static final JsonObject errCodes = Util.toJson(
@@ -34,32 +35,43 @@ public class OnrampServer {
 			"-2", "The user has abandoned the transaction",
 			"-1", "The transaction has exceeded the allowable time limit");  
 	
-	private Config m_polygon;
-	private Config m_pulsechain;
+	private final Config m_polygon;
+	private final Config m_pulsechain;
 	private HashMap<String, JsonObject> map = new HashMap<>(); // map onramp transId to onramp record
 	private Stocks m_stocks;
+	private boolean m_testMode;
 
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("OnRamp");
+		
+		// don't allow running twice
+		SimpleTransaction.listen("0.0.0.0", 5003, SimpleTransaction.nullHandler);
+
 		S.out( "Starting onramp server with %s ms polling interval", poll);
 		//Onramp.useProd();
 		Onramp.debugOff();
-		new OnrampServer( args);
+		new OnrampServer(true);
 	}
 
-	public OnrampServer(String[] args) throws Exception {
+	public OnrampServer() throws Exception {
 		m_polygon = Config.readFrom( "Prod-config");  // must come first! because Config.read() sets the NodeServer instance
-		m_pulsechain = Config.readFrom( "Dev3-config");  // must come second!
+		m_pulsechain = Config.readFrom( "Pulse-config");  // must come second!
 		m_stocks = m_pulsechain.readStocks();
 		Util.executeEvery(0, poll, this::check);
+	}
+	
+	/** test mode, not used because we cannot simulate the hash code */
+	public OnrampServer(boolean test) throws Exception {
+		this();
+		m_testMode = true;
 	}
 	
 	void check() {
 		Util.wrap( () -> {
 			checkOnrampTransactions();
 
+			// look for unfulfilled database transactions
 			JsonArray rows = m_pulsechain.sqlQuery( "select * from onramp where (state is null or state = '')");
-			
 			for (var dbTrans : rows) {
 				try {
 					processDbTrans( dbTrans);
@@ -127,39 +139,46 @@ public class OnrampServer {
 						id, wallet, m_pulsechain.refWalletAddr(), received.to() );
 				
 				// confirm correct amount
-				Util.require( Util.isEq( received.amount(), dbTrans.getDouble( "amount"), tolerance), "Error: the received amount is incorrect  id=%s  wallet=%s  expected=%s  got=%s",
-						id, wallet, dbTrans.getDouble( "amount"), received.amount() );
+				double expected = dbTrans.getDouble( "crypto_amount");
+				double lostPct = (expected - received.amount() ) / expected;
+				Util.require( lostPct <= tolerance, "Error: the received amount is insufficient  id=%s  wallet=%s  expected=%s  got=%s  lossPct=%s",
+						id, wallet, expected, received.amount(), lostPct);
 				
 				// update database so we don't double-send
 				updateState( State.Funding, "", id);
-
-				// send funds to the user, same as we received
-				S.out( "funding %s with %s", dbTrans, received.amount() );
-				String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
-						wallet, 
-						received.amount(), 
-						m_stocks.getAnyStockToken()
-						).waitForHash();
 				
-				// update database again that it was successful
-				updateState( State.Completed, reflToUserHash, id);
+				if (!m_testMode) {
+					// send funds to the user, same as we received
+					S.out( "funding %s with %s", dbTrans, received.amount() );
+					String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
+							wallet, 
+							received.amount(), 
+							m_stocks.getAnyStockToken()
+							).waitForHash();
+					
+					// update database again that it was successful
+					updateState( State.Completed, reflToUserHash, id);
+					
+					// notify user by email
+					sendEmail( wallet, received.amount(), reflToUserHash);
 				
-				// notify user by email
-				sendEmail( wallet, received.amount(), reflToUserHash);
-
-				// notify us
-				Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);
+					// notify us
+					Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);
 				
-				// we should send them an update on the platform here as well. pas
-
-				// create a log entry
-				var log = Util.toJson( 
-						"type", LogType.ONRAMP,
-						"wallet_public_key", wallet,
-						"data", Util.toJson(
-								"type", "funded",
-								"amount", received.amount() ) );
-				m_pulsechain.log( log);
+					// we should send them an update on the platform here as well. pas
+	
+					// create a log entry
+					var log = Util.toJson( 
+							"type", LogType.ONRAMP,
+							"wallet_public_key", wallet,
+							"data", Util.toJson(
+									"type", "funded",
+									"amount", received.amount() ) );
+					m_pulsechain.log( log);
+				}
+				else {
+					S.out( "test mode: would be funding %s with %s", dbTrans, received.amount() );
+				}
 			}
 			else {
 				S.out( "not enough blocks yet for transaction " + onrampTrans);
@@ -217,7 +236,7 @@ public class OnrampServer {
 		return users.get( 0); 
 	}
 
-	/** build the map and note and transitions */
+	/** build the map and note transitions */
 	void checkOnrampTransactions() {
 		Util.wrap( () -> { 
 			for (var trans : Onramp.getAllTransactions() ) {

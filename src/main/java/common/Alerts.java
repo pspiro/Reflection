@@ -25,6 +25,8 @@ public class Alerts {
 		try {
 			Util.require( S.isNotNull( m_emailAddr), "Cannot send alert; call Alerts.setEmail()" );
 
+			S.out( "Sending alert %s - %s", subject, body);
+
 			TwMail mail = Auth.auth().getMail();
 			mail.send(
 					from, 
@@ -33,7 +35,6 @@ public class Alerts {
 					subject,
 					body,
 					false);
-			S.out( "Sending alert %s - %s", subject, body);
 		}
 		catch( Exception e) {
 			e.printStackTrace();

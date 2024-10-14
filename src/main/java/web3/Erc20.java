@@ -98,6 +98,8 @@ public class Erc20 {
 	/** return the balances of all wallets holding this token;
 	 *  Used by Monitor and ProofOfReserves only, not any core apps
 	 *  
+	 *  PulseChain uses a different method
+	 *  
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
@@ -106,31 +108,14 @@ public class Erc20 {
 		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
 				Util.wrap( () -> {
 					double value = fromBlockchain( obj.getString("value") );
-					inc( map, obj.getString("from_address"), -value);
-					inc( map, obj.getString("to_address"), value);
+					Util.inc( map, obj.getString("from_address"), -value);
+					Util.inc( map, obj.getString("to_address"), value);
 				});
 		} ) );
 		
 		return map;
 	}
 
-	/** Look up value by address and increment it */
-	public static void inc(HashMap<String, Double> map, String address, double amt) {
-		Double v = map.get(address);
-		map.put( address, v == null ? amt : v + amt);
-	}
-
-	/** not used */
-	public void showAllTransactions() throws Exception {
-			MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				S.out( "%8s %s %s %s", 
-						obj.getString("value_decimal"), 
-						Util.left( obj.getString("from_address"), 8),
-						Util.left( obj.getString("to_address"), 8),
-						obj.getString("transaction_hash") );
-		} ) );
-	}
-	
 	/** note w/ moralis you can also get the token balance by wallet */
 	public double queryTotalSupply() throws Exception {
 		return NodeServer.getTotalSupply( m_address, m_decimals);

@@ -62,7 +62,6 @@ public abstract class ConnectionMgrBase implements IConnectionHandler {
 	
 	/** Attempt to connect now */
 	private synchronized void connectNow() throws Exception {
-		S.out( "Connecting to TWS on %s:%s with client id %s", m_host, m_port, m_clientId);
 		if (!m_controller.connect(m_host, m_port, m_clientId, "") ) {
 			throw new Exception("Could not connect to TWS");
 		}

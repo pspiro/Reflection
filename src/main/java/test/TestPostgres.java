@@ -1,8 +1,8 @@
 package test;
 
-import common.Util;
 import reflection.Config;
 import tw.util.S;
+import web3.NodeInstance;
 
 
 
@@ -12,15 +12,14 @@ public class TestPostgres {
 
 	static {
 		try {
-//			m_config = Config.ask();
+			m_config = Config.ask();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public static void main(String[] args) throws Exception {
-		S.out( Util.fmtTime(1811563292425L) );
-		
+		S.out( m_config.busd().getApprovedAmt( NodeInstance.prod, m_config.rusdAddr() ) );
 
 	}
 

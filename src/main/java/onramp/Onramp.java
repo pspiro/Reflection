@@ -5,14 +5,13 @@ import java.util.HashMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.checkerframework.common.reflection.qual.GetMethod;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
 import http.ClientException;
 import http.MyClient;
-import tw.util.MyException;
+import testcase.TestOnramp;
 import tw.util.S;
 import web3.Encrypt;
 
@@ -74,11 +73,8 @@ public class Onramp {
 	}
 	
 
-	public static void main(String[] args) throws Exception {		
-//		fiatMap.display();
-//		paymentMethodMap.display();
-		//getQuote( "AED", 100);
-		getTransaction("0tLnVOxqd0_2541", "1057732").display();
+	public static void main(String[] args) throws Exception {
+		S.out( getKycUrlFirst("0x2703161D6DD37301CEd98ff717795E14427a462B", TestOnramp.newPhone(), "https://abc.com") );  
 	}
 	
 	/** @return status, code, data -> transactionId, fiatAmount, fiatPaymentInstructions -> 
@@ -176,6 +172,7 @@ public class Onramp {
 		Util.require( toAmt > 0, "Error: could not get quote for %s %s", fromAmt, currency);
 		
 		// save the rate; we'll use it later when creating the order
+		// note that rate = from / to i.e. fiat / crypto
 		fiatRateMap.put( currency, data.getDouble( "rate"));
 		
 		return toAmt;
@@ -205,7 +202,7 @@ public class Onramp {
 	}
 
 	/** all calls */
-	public static JsonObject getKycUrl( JsonObject req) throws Exception {
+	private static JsonObject getKycUrl( JsonObject req) throws Exception {
 		var json = whiteLab( "/kyc/url", req);
 		
 		if (json.has( "error")) {

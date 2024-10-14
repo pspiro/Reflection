@@ -2,10 +2,6 @@ package reflection;
 
 import java.io.OutputStream;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -402,9 +398,10 @@ public class Main implements ITradeReportHandler {
 		jlog( type, "-", "-", Util.toJson( "text", text) );
 	}
 
-	/** Writes entry to log table in database; must not throw exception */
+	/** Writes entry to log table in database; must not throw exception;
+	 *  @param uid may be null */
 	void jlog( LogType type, String uid, String wallet, JsonObject json) {
-		S.out( "LogType.%s %s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		S.out( "%sLogType.%s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,
@@ -629,7 +626,7 @@ public class Main implements ITradeReportHandler {
 
     /** check if it's time to send out the summary emails; when data changes in NY */
 	void checkSummaries() {
-		boolean nowAfter = Util.isLaterThanEST( 16); // 9 pm
+		boolean nowAfter = Util.isLaterThanEST( 16); // 4 pm
 
 		// if we just passed the time threshold...
 		if (m_timeWas == Time.Before && nowAfter) {
@@ -637,7 +634,7 @@ public class Main implements ITradeReportHandler {
 
             // and not a weekend, send the daily email summaries
             if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-            	Util.wrap( () -> new SummaryEmail( m_config, m_stocks, false)
+            	Util.executeAndWrap( () -> new SummaryEmail( m_config, m_stocks, false) // don't tie up the Util timer thread
             			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }

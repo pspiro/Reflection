@@ -82,6 +82,12 @@ public class EClientSocket extends EClient implements EClientMsgSink  {
 			S.out( "EClientSocket.connect() already connected");
 			return true;
 		}
+		
+		if (clientId == 0) {
+			clientId = common.Util.rnd.nextInt( 100, 100000000);
+		}
+
+		S.out( "Connecting to TWS on %s:%s with client id %s", host, port, clientId);
 
 	    m_host = host;
 	    m_clientId = clientId;

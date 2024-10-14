@@ -88,10 +88,8 @@ public class TwMail {
 		Util.require( S.isNotNull( from), "'to' address required");
 		Util.require( tos.indexOf( '<') == -1, "display name in 'to' field is not supported"); // doesn't work with gmail
 		
-		S.out( "Sending email");
-		S.out( "  from: %s <%s>", from, fromEmail);
-		S.out( "  to: %s", tos);
-		S.out( "  subject: %s", subject);
+		S.out( "Sending email  from=%s <%s>  to=%s  subject=%s",
+				from, fromEmail, tos, subject);
 
 		MimeMessage message = createEmail( from, fromEmail, tos, subject);
 		message.setText(text, null, html ? "html" : "plain");
@@ -123,9 +121,6 @@ public class TwMail {
 		Message message = new Message();
 		message.setRaw(encodedEmail);
 		message = m_gmail.users().messages().send(userId, message).execute();
-		
-		S.out("Message id: " + message.getId());
-		S.out(message.toPrettyString());
 	}
 	
 	/** @param query format is "label:inbox" */ 

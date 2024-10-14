@@ -4,6 +4,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -44,7 +45,12 @@ public abstract class MyTableModel extends AbstractTableModel {
 
 	public void selectionChanged(ListSelectionEvent e) {
 	}
-	
+
+	public JScrollPane createTable( String title) {
+		var panel = createTable();
+		panel.setBorder( new TitledBorder( title) );
+		return panel;
+	}
 	
 	public JScrollPane createTable() {
 		return new JScrollPane( new MyTable( this) );

@@ -164,6 +164,7 @@ public class CreateKey {
 		return scanner.nextLine();
 	}
 
+	/** same as Encrypt.bytesToHex()? */
 	public static String createPrivateKey() {
 		// Generate a 32-bytes private key
 		byte[] bytes = new byte[32];

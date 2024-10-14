@@ -20,7 +20,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	enum LiveStatus {
 		Working,  // redemption was submitted and is being processed on the blockchain 
 		Delayed,  // redemption is delayed due to lack of funds in the wallet
-		Locked,   // RUSD is locked
+		Locked,   // RUSD is locked, seems never used
 		Completed, 
 		Failed
 	}
@@ -147,23 +147,28 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				// report error back to user
 				throw new RefException( RefCode.DELAYED_REDEMPTION, "Your redemption request is being processed; we appreciate your patience");
 			}
+			
+			// set working status to prevent another redeem attempt
+			insertRedemption( busd, m_quantity, "", LiveStatus.Working); // informational only, don't throw an exception
 
 			// redeem it  try/catch here?
-			// no good; if this fails, we'll never make an entry in the database
-			String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+			try {
+				String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
-			olog( LogType.REDEEMED, "amount", m_quantity);
+				respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 
-			insertRedemption( busd, m_quantity, hash, LiveStatus.Working); // informational only, don't throw an exception
+				olog( LogType.REDEEMED, "amount", m_quantity);
 
-			respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
-				
-			// redemption is working on the blockchain and will now be tracked by the live order system
-			liveRedemptions.put( m_walletAddr.toLowerCase(), this);
-			allLiveTransactions.put( hash, this);
+				insertRedemption( busd, m_quantity, hash, LiveStatus.Completed); // informational only, don't throw an exception
+			}
+			catch( Exception e) {
+				// update the database so user can try again
+				insertRedemption( busd, m_quantity, "", LiveStatus.Failed); // informational only, don't throw an exception
+				throw e;
+			}
 		});
 	}
-
+	
 	/** return the number of completed trades */
 	private int numTrades() throws Exception {
 		JsonArray ar = Main.m_config.sqlQuery(

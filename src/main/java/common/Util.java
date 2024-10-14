@@ -10,7 +10,6 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -766,12 +765,12 @@ public class Util {
 		return t;
 	}
 
-	/** Retrieve a value and process and return it if not null */ 
-	public static <T> T lookup( T t, ExConsumer<T> consumer) throws Exception {
-		if (t != null) {
-			consumer.accept( t);
+	/** Execute block AND RETURN THE VALUE if not null; similar to iff */ 
+	public static <T> T lookup( T obj, ExConsumer<T> consumer) throws Exception {
+		if (obj != null) {
+			consumer.accept( obj);
 		}
-		return t;
+		return obj;
 	}
 
 	/** "if not null"; execute block if object is not null and not empty string
@@ -954,4 +953,14 @@ public class Util {
 				.getDayOfWeek();
 	}
 
+	/** Look up value by address and increment it */
+	public static void inc(HashMap<String, Double> map, String address, double amt) {
+		Double v = map.get(address);
+		map.put( address, v == null ? amt : v + amt);
+	}
+
+	/* return 0x83832...8383 */
+	public static String shorten( String wallet) {
+		return wallet != null ? String.format( "%s...%s", Util.left( wallet, 7), Util.right( wallet, 4) ) : "";
+	}
 }

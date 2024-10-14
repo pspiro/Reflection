@@ -1,5 +1,6 @@
 package refblocks;
 
+import java.io.IOException;
 import java.math.BigInteger;
 
 import org.web3j.abi.FunctionEncoder;
@@ -11,6 +12,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.exceptions.TransactionException;
 import org.web3j.tx.Contract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
@@ -112,4 +114,30 @@ public class MyContract extends Contract {
 	private String name() {
 		return m_function != null ? m_function.getName() : "unknown";
 	}
+
+	public static String deployAddress;  // used only during deployment; not needed or used, i think
+	
+    protected TransactionReceipt sendEIP1559(
+            long chainId,
+            String to,
+            String data,
+            BigInteger value,
+            BigInteger gasLimit,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            boolean constructor)
+            throws IOException, TransactionException {
+
+    	return super.sendEIP1559(
+                chainId,
+                S.isNull( to) && S.isNotNull( deployAddress) ? deployAddress : to,
+                data,
+                value,
+                gasLimit,
+                maxPriorityFeePerGas,
+                maxFeePerGas,
+                constructor);
+   	}
+
+
 }

@@ -7,8 +7,8 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.SmtpSender;
 import common.Util;
-import tw.google.Auth;
 import tw.util.S;
 import web3.MoralisServer;
 import web3.NodeInstance;
@@ -32,9 +32,6 @@ public class SummaryEmail {
 	private List<String> m_list;
 	private boolean m_testing;
 
-	int count = 1;
-	int max = 30;
-
 	public static void main(String[] args) {
 		try {
 			Config c = Config.ask();
@@ -50,12 +47,10 @@ public class SummaryEmail {
 		m_stocks = stocks;
 		m_testing = testing;
 
+		// set fake stock prices for testing
 		if (m_testing) {
-			for ( Stock stock : m_stocks) {  //remove. pas
-				if (Util.rnd.nextBoolean()) {
-					stock.setPrices( new Prices( Util.toJson(
-							"last", 83.82) ) );
-				}
+			for ( Stock stock : m_stocks) {
+				stock.setPrices( new Prices( Util.toJson( "last", 83.82) ) );
 			}
 		}
 
@@ -72,27 +67,32 @@ public class SummaryEmail {
 		// get wallet and names from users table
 		S.out( "querying users table");
 		JsonArray users = m_config.sqlQuery( "select first_name, last_name, email, wallet_public_key from users");
-
-		if (m_testing ){
-			String wallet = NodeInstance.prod.toLowerCase();
-			var userRec = users.find( "wallet_public_key", wallet);
-			Util.require( userRec != null, "Error");
-			generateSummary( wallet, userRec);
-			System.exit( 0);
-		}
-
+		
+		int count = 0;
 		for (var userRec : users) {
 			String wallet = userRec.getString( "wallet_public_key");
+			
+			if (m_testing ){
+				wallet = NodeInstance.prod.toLowerCase();
+				userRec = users.find( "wallet_public_key", wallet);
+				Util.require( userRec != null, "Error");
+			}
+			
 			try {
 				if (generateSummary( wallet, userRec) && ++count == maxToSend) {
 					break;
 				}
+				// EuroDNS allows only 500 per hour per account; switch to AWE SES
+				// or use multiple mail accounts to go faster
+				S.sleep( 7200);   
 			}
 			catch( Exception e) {
 				S.out( "Error while generating summary for wallet %s", wallet);
 				e.printStackTrace();
 			}
 		}
+
+		S.out( "Sent %s summary emails", count);
 	}
 
 
@@ -192,20 +192,21 @@ public class SummaryEmail {
 					.replace( "#actrows#", actRows.toString() )
 					.replace( "#total#", totalStr);
 
-			// 'to' display name not supported with gmail
-//			String to = S.isNotNull( name)
-//					? String.format( "%s <%s>", name, userRec.getString( "email") )
-//							: userRec.getString( "email");
-
-			Auth.auth().getMail().send(
-					"Reflection", 
-					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
+//			Auth.auth().getMail().send(
+//					"Reflection", 
+//					"josh@reflection.trading",  // must be a valid "from" address in gmail; display name is supported 
+//					email, 
+//					"Reflection Account Statement", 
+//					html, 
+//					true);
+			
+			SmtpSender.Josh.send( 
+					"Reflection",
+					"josh@reflection.trading", 
 					email, 
 					"Reflection Account Statement", 
-					html, 
-					true);
+					html); 
 
-			S.out( "sent email for " + wallet); //+ "\n" + html);
 			return true;
 		}
 		

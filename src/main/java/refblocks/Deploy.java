@@ -1,7 +1,12 @@
 package refblocks;
 
 
+import java.math.BigInteger;
+
+import org.web3j.abi.datatypes.Address;
+
 import common.Util;
+import io.zksync.utils.ContractDeployer;
 import reflection.Config;
 import reflection.Config.Web3Type;
 import tw.google.NewSheet;
@@ -36,6 +41,12 @@ public class Deploy {
 		
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusdAddress) ) {
+			if (config.isZksync() ) {
+//				Address deplAddr = ContractDeployer.computeL2CreateAddress(
+//						new Address(config.ownerAddr() ),
+//						BigInteger.valueOf(Util.rnd.nextLong() ) );
+			}
+			
 			rusdAddress = RbRusd.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
 			S.out( "deployed rusd to " + rusdAddress);
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
@@ -62,6 +73,8 @@ public class Deploy {
 		// deploy stock tokens where address is set to deploy (should be inactive to prevent errors in RefAPI)
 		for (ListEntry row : NewSheet.getTab( NewSheet.Reflection, config.symbolsTab() ).fetchRows(false) ) {
 			if (row.getString( "Token Address").equalsIgnoreCase("deploy") ) {
+				MyContract.deployAddress = Util.createFakeAddress();
+				
 				// deploy stock token
 				String address = RbStockToken.deploy(
 						config.ownerKey(),

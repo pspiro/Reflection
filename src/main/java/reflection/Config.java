@@ -107,6 +107,7 @@ public class Config extends ConfigBase {
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
+	private String blockchainName;  // for messages
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -279,7 +280,8 @@ public class Config extends ConfigBase {
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
-		
+		this.blockchainName = m_tab.get( "blockchainName"); 
+				
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
@@ -386,6 +388,7 @@ public class Config extends ConfigBase {
 		require( S.isNotNull( backendConfigTab), "backendConfigTab" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
+		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
 	}
 
 	/** confirm we have access to the password 
@@ -422,7 +425,7 @@ public class Config extends ConfigBase {
 	}
 	
 	private String fetchPw() throws Exception {
-		if (!Util.equals( m_tab.tabName().toLowerCase(), "prod-config", "pulse-config") ) {
+		if (!isProduction() ) {
 			try {
 				String str = IStream.readLine("name.txt");
 				if (str.length() > 0) return str;
@@ -592,7 +595,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return "polygon".equals(moralisPlatform) || "pulsechain".equals(moralisPlatform);  
+		return Util.equals( moralisPlatform, "polygon", "pulsechain", "zksync");
 	}
 	
 	public String moralisPlatform() {
@@ -812,5 +815,13 @@ public class Config extends ConfigBase {
 	
 	public int maxSummaryEmails() {
 		return maxSummaryEmails;
+	}
+
+	public boolean isZksync() {
+		return "zksync".equals( blockchainName);
+	}
+	
+	public String blockchainName() {
+		return blockchainName;
 	}
 }

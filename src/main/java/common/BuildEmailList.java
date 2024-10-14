@@ -7,6 +7,9 @@ import tw.google.NewSheet;
 import tw.util.S;
 
 public class BuildEmailList {
+	
+	// NOT SO GOOD, THE EXCLUDED PEOPLE ARE NOT BEING EXCLUDED; REBUILD THE "FILTERED" LIST EACH TIME
+	
 	public static void main(String[] args) throws Exception {
 		// read existing emails and add them to a map so we don't add dups
 		var tab = NewSheet.getTab( NewSheet.Prefinery, "Full list");
