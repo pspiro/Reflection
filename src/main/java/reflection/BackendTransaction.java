@@ -614,4 +614,61 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleFundWallet() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("fundWallet");
+			
+			double amount = m_map.getRequiredDouble("amount");
+			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
+			
+			var user = getUser();
+			require( user != null, RefCode.INVALID_REQUEST, "Error: There is no existing user profile for this wallet");
+			
+			// $500 award requires KYC  
+			require( amount == 100 || Util.equalsIgnore( user.getString("kyc_status"), "VERIFIED", "completed"),
+					RefCode.INVALID_REQUEST,
+					"Error: You must verify your identity before collecting collecting this reward");
+			
+			// get or create existing locked rec
+			var locked = user.getObjectNN( "locked");
+			
+			// wallet has rusd?
+			require( m_config.rusd().getPosition( m_walletAddr) < 1, 
+					RefCode.INVALID_REQUEST, 
+					"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
+			
+			// already collected a prize?
+			require( !locked.getBool( "rewarded"), 
+					RefCode.INVALID_REQUEST, 
+					"This wallet already collected a prize"); 
+			
+			// no auto-awards?
+			if (m_config.autoReward() < amount) {
+				respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
+				return;
+			}
+			
+			// update users table with locked BEFORE we award the RUSD
+			JsonObject lockRec = Util.toJson(
+					"wallet_public_key", m_walletAddr.toLowerCase(),
+					"locked", locked.append("rewarded", true) ); 
+			m_config.sqlCommand(sql -> 
+				sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+			
+			// mint award for the user
+			out( "Minting $%s RUSD reward for %s", amount, m_walletAddr);
+			
+			// don't tie up the http thread
+			Util.executeAndWrap( () -> {
+				m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() )
+					.waitForHash();
+				
+				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);
+				respond( code, RefCode.OK, Message, message);
+			});
+		});			
+	}
+
 }
