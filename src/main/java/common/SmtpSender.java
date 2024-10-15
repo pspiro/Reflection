@@ -20,8 +20,14 @@ import tw.util.S;
  */
 public class SmtpSender implements AutoCloseable {
 	public static record SmtpUser( String host, String username, String password) {
-		public SmtpSender email() throws Exception { 
+		/** for sending multiple emails; didn't work well, needs extensive testing */
+		public SmtpSender sender() throws Exception { 
 			return new SmtpSender( host, username, password); 
+		}
+
+		/** Send one email  and close connection */
+		public void send( String fromName, String fromEmail, String toEmail, String subject, String body) throws Exception {
+			sendOne( host, username, password, fromName, fromEmail, toEmail, subject, body);
 		}
 	}
 
@@ -109,10 +115,10 @@ public class SmtpSender implements AutoCloseable {
 		return responseLine;
 	}
 	
-	/** Send one email */ 
-	static void sendOne( String host, String username, String password, String from, String fromEmail, String toEmail, String subject, String body) throws Exception {
+	/** Send one email  and close connection */
+	public static void sendOne( String host, String username, String password, String fromName, String fromEmail, String toEmail, String subject, String body) throws Exception {
 		try (SmtpSender email = new SmtpSender( host, username, password) ) {
-			email.send( from, fromEmail, toEmail, subject, body);
+			email.send( fromName, fromEmail, toEmail, subject, body);
 		}
 	}
 	
@@ -121,11 +127,13 @@ public class SmtpSender implements AutoCloseable {
 	}
 	
 	public static void test() throws Exception {
-		try (SmtpSender email = Josh.email() ) { 
-			email.send( "Josh", Josh.username(), MyGmail, "hello from josh", "hello there");
+		// sending multiple on a single connection worked here but not elsewhere and would need extensive testing */
+		try (SmtpSender email = Josh.sender() ) { 
+			email.send( "Josh", Josh.username(), MyGmail, "hello from josh 1", "hello there");
+			email.send( "Josh", Josh.username(), MyGmail, "hello from josh 2", "hello there");
 		}
 		
-		try (SmtpSender email = Peter.email() ) { 
+		try (SmtpSender email = Peter.sender() ) { 
 			email.send( "Peter", Peter.username, MyGmail, "hello from peter", "");
 		}
 	}

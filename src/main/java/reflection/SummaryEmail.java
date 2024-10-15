@@ -32,9 +32,6 @@ public class SummaryEmail {
 	private List<String> m_list;
 	private boolean m_testing;
 
-	int count = 1;
-	int max = 30;
-
 	public static void main(String[] args) {
 		try {
 			Config c = Config.ask();
@@ -50,12 +47,10 @@ public class SummaryEmail {
 		m_stocks = stocks;
 		m_testing = testing;
 
+		// set fake stock prices for testing
 		if (m_testing) {
-			for ( Stock stock : m_stocks) {  //remove. pas
-				if (Util.rnd.nextBoolean()) {
-					stock.setPrices( new Prices( Util.toJson(
-							"last", 83.82) ) );
-				}
+			for ( Stock stock : m_stocks) {
+				stock.setPrices( new Prices( Util.toJson( "last", 83.82) ) );
 			}
 		}
 
@@ -73,40 +68,38 @@ public class SummaryEmail {
 		S.out( "querying users table");
 		JsonArray users = m_config.sqlQuery( "select first_name, last_name, email, wallet_public_key from users");
 		
-		try (SmtpSender sender = SmtpSender.Josh.email() ) {
+		int count = 0;
+		for (var userRec : users) {
+			String wallet = userRec.getString( "wallet_public_key");
+			
 			if (m_testing ){
-				String wallet = NodeInstance.prod.toLowerCase();
-				var userRec = users.find( "wallet_public_key", wallet);
+				wallet = NodeInstance.prod.toLowerCase();
+				userRec = users.find( "wallet_public_key", wallet);
 				Util.require( userRec != null, "Error");
-				generateSummary( wallet, userRec, sender);
-				System.exit( 0);
-			}
-	
-			for (var userRec : users) {
-				String wallet = userRec.getString( "wallet_public_key");
-				try {
-					if (generateSummary( wallet, userRec, sender) && ++count == maxToSend) {
-						break;
-					}
-					// EuroDNS allows only 500 per hour per account; switch to AWE SES
-					// or use multiple mail accounts to go faster
-					S.sleep( 7200);   
-				}
-				catch( Exception e) {
-					S.out( "Error while generating summary for wallet %s", wallet);
-					e.printStackTrace();
-				}
 			}
 			
-			S.out( "Sent %s summary emails", count);
+			try {
+				if (generateSummary( wallet, userRec) && ++count == maxToSend) {
+					break;
+				}
+				// EuroDNS allows only 500 per hour per account; switch to AWE SES
+				// or use multiple mail accounts to go faster
+				S.sleep( 7200);   
+			}
+			catch( Exception e) {
+				S.out( "Error while generating summary for wallet %s", wallet);
+				e.printStackTrace();
+			}
 		}
+
+		S.out( "Sent %s summary emails", count);
 	}
 
 
 	/** @param wallet lower case
 	 * @param map maps wallet to record with first and last name, if we have it
 	 * @return true if we sent an email  */
-	private boolean generateSummary( String wallet, JsonObject userRec, SmtpSender sender) throws Exception {
+	private boolean generateSummary( String wallet, JsonObject userRec) throws Exception {
 		String email = userRec.getString( "email");
 		
 		if (!Util.isValidEmail( email) ) {
@@ -207,7 +200,7 @@ public class SummaryEmail {
 //					html, 
 //					true);
 			
-			sender.send( 
+			SmtpSender.Josh.send( 
 					"Reflection",
 					"josh@reflection.trading", 
 					email, 
