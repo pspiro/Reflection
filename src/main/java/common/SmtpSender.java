@@ -73,7 +73,7 @@ public class SmtpSender implements AutoCloseable {
 
 	// Send message method
 	public void send(String fromName, String fromEmail, String toEmail, String subject, String body) throws IOException {
-		S.out( "Sending email  from=%s <%s>  to=%s  subject=%s", fromName, fromEmail, toEmail, subject);
+		S.out( "Sending email  from:%s <%s>  to:%s  subject:%s", fromName, fromEmail, toEmail, subject);
 		
 		writer.println("MAIL FROM:<" + fromEmail + ">");
 		printServerResponse("mail from");

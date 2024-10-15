@@ -821,6 +821,7 @@ public class Config extends ConfigBase {
 		return "zksync".equals( blockchainName);
 	}
 	
+	/** for display to user */
 	public String blockchainName() {
 		return blockchainName;
 	}

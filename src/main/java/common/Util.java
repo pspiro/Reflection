@@ -963,4 +963,9 @@ public class Util {
 	public static String shorten( String wallet) {
 		return wallet != null ? String.format( "%s...%s", Util.left( wallet, 7), Util.right( wallet, 4) ) : "";
 	}
+	
+	/** returns null if they cancel out */
+	public static String input( Component parent, String prompt, Object defVal) {
+		return JOptionPane.showInputDialog(parent, prompt, defVal);
+	}
 }
