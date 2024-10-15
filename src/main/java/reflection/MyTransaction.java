@@ -167,7 +167,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		return m_walletAddr;
 	}
 	
-	/** create a User object for this */
+	/** return existing User object or null */
 	protected JsonObject getUser() throws Exception {
 		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
 		return ar.size() == 0 ? null : ar.get( 0);

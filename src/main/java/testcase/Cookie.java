@@ -32,6 +32,20 @@ public abstract class Cookie extends MyTestCase {
 		}
 	}
 	
+	public static void setNewFakeAddress(boolean andProfile, boolean andKyc) throws Exception {
+		setNewFakeAddress( andProfile);
+		
+		if (andKyc) {
+			// insert/update (record may or may not exist)
+			var json = Util.toJson( 
+					"wallet_public_key", wallet.toLowerCase(),
+					"kyc_status", "VERIFIED");
+			
+			m_config.sqlCommand( sql -> 
+				sql.insertOrUpdate("users", json, "where wallet_public_key = '%s'", wallet.toLowerCase() ) ); 
+		}
+	}
+
 	public static void setNewFakeAddress(boolean andProfile) throws Exception {
 		setWalletAddr( Util.createFakeAddress() );
 		
