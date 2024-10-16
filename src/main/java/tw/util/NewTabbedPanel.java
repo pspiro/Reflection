@@ -346,9 +346,19 @@ public class NewTabbedPanel extends JPanel {
 	}
 
 	public void reactivateCurrent() {
-		if (m_current instanceof INewTab) {
-			((INewTab)m_current).activated();
+		String title = getTitle( m_current);
+		if (S.isNotNull( title) ) {
+			select( title);
 		}
+	}
+	
+	private String getTitle( JComponent c) {
+		for (var entry : m_map.entrySet() ) {
+			if (entry.getValue().m_comp == c) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 	
 }
