@@ -108,7 +108,7 @@ public class CreateTables  {
 
 					symbol varchar(32),
 					conid int check (conid > 0),
-					action varchar(10),
+					action varchar(10),  -- Buy or Sell
 					quantity double precision check (quantity > 0),
 					rounded_quantity int, -- could be zero
 					price double precision check (price > 0),

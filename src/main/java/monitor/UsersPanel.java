@@ -1,5 +1,6 @@
 package monitor;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
 import org.json.simple.JsonObject;
@@ -64,9 +65,30 @@ class UsersPanel extends QueryPanel {
 				Monitor.m_walletPanel.setWallet( wallet);
 			}
 		}));
+		m.add( JsonModel.menuItem("Edit", ev -> edit( rec, tag, val) ) );
 		m.add( JsonModel.menuItem("Delete", ev -> delete( rec) ) );
 	}
 	
+	private void edit(JsonObject rec, String tag, Object val) {
+		try {
+			String wallet = rec.getString( "wallet_public_key");
+			if (Util.isValidAddress( wallet) ) {
+				String newval = Util.input( this, "Enter new value for " + tag, val);
+				if (newval != null) {
+					Monitor.m_config.sqlCommand( sql -> sql.execWithParams(
+							"update users set %s='%s' where wallet_public_key = '%s'",
+							tag, newval, wallet) );
+					rec.put( tag, newval);
+					m_model.fireTableDataChanged();
+				}
+			}
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			Util.inform( this, "Error - " + e.getMessage() );
+		}
+	}
+
 	void delete(JsonObject rec) {
 		// confirm
 		if (Util.confirm( this, "Are you sure you want to delete this record?") ) {

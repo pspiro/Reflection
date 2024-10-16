@@ -8,6 +8,7 @@ public class Text {
 			<td style="border: 1px solid #ddd; padding: 8px;">#quantity#</td>
 			<td style="border: 1px solid #ddd; padding: 8px;">$#price#</td>
 			<td style="border: 1px solid #ddd; padding: 8px;">$#value#</td>
+			<td style="border: 1px solid #ddd; padding: 8px;">$#pnl#</td>
 		</tr>
 		""";
 	
@@ -38,6 +39,7 @@ public class Text {
 			<h2 style="font-size: 18px; margin-bottom: 5px; padding-bottom: 5px; text-decoration: underline;">Customer Info</h2>
 			<p style="margin: 1px 0;"><strong>Name:</strong> #name#</p>
 			<p style="margin: 7px 0;"><strong>Wallet:</strong> #wallet#</p>
+			<p style="margin: 7px 0;"><strong>Blockchain:</strong> #blockchain#</p>
 		</div>
 
 		<div style="margin-bottom: 30px;">
@@ -49,6 +51,7 @@ public class Text {
 						<th style="background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;">Quantity</th>
 						<th style="background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;">Price</th>
 						<th style="background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;">Value</th>
+						<th style="background-color: #f2f2f2; border: 1px solid #ddd; padding: 8px; text-align: left;">PnL</th>
 					</tr>
 				</thead>
 				<tbody>

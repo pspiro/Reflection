@@ -821,7 +821,17 @@ public class Config extends ConfigBase {
 		return "zksync".equals( blockchainName);
 	}
 	
+	/** for display to user */
 	public String blockchainName() {
 		return blockchainName;
+	}
+
+	/** return completed transactions from the database for a single wallet 
+	 * @throws Exception */
+	public JsonArray getCompletedTransactions(String wallet) throws Exception {
+		return sqlQuery( """ 
+				select * from transactions
+				where wallet_public_key = '%s' and status = 'COMPLETED'
+				order by created_at""", wallet.toLowerCase() );
 	}
 }

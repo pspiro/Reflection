@@ -765,7 +765,8 @@ public class Util {
 		return t;
 	}
 
-	/** Execute block AND RETURN THE VALUE if not null; similar to iff */ 
+	/** Execute block AND RETURN THE VALUE if not null; similar to iff.
+	 *  Never used in the intended way, remove and replace with iff() */ 
 	public static <T> T lookup( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj != null) {
 			consumer.accept( obj);
@@ -962,5 +963,10 @@ public class Util {
 	/* return 0x83832...8383 */
 	public static String shorten( String wallet) {
 		return wallet != null ? String.format( "%s...%s", Util.left( wallet, 7), Util.right( wallet, 4) ) : "";
+	}
+	
+	/** returns null if they cancel out */
+	public static String input( Component parent, String prompt, Object defVal) {
+		return JOptionPane.showInputDialog(parent, prompt, defVal);
 	}
 }

@@ -127,4 +127,8 @@ public class Stock extends JsonObject {
 	public long lastTime() {
 		return m_prices != null ? m_prices.time() : 0;
 	}
+
+	public double markPrice() {
+		return m_prices.markPrice();
+	}
 }
