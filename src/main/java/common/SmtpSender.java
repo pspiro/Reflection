@@ -18,6 +18,11 @@ import tw.util.S;
  * 5000 messages per day and user
  *
  */
+
+// ses-smtp-user.20241015-104833
+// smtp username: AKIA3GXEBTOE7ZUQKYWF
+// smtp pw: BKH2OchBydo3BfNhbwjpK+/BpTMMTB7Q6799mjiViKMa
+// host: email-smtp.us-east-1.amazonaws.com
 public class SmtpSender implements AutoCloseable {
 	public static record SmtpUser( String host, String username, String password) {
 		/** for sending multiple emails; didn't work well, needs extensive testing */
@@ -33,14 +38,15 @@ public class SmtpSender implements AutoCloseable {
 
 	private static final String MyGmail = "peteraspiro@gmail.com";
 	private static final String OpenXchange = "smtp.openxchange.eu";
+	private static boolean debug;
 	
 	public static SmtpUser Josh = new SmtpUser( OpenXchange, "josh@reflection.trading", "KyvuPRpi7uscVE@");
 	public static SmtpUser Peter = new SmtpUser( OpenXchange, "peter@reflection.trading", "mvLYAnCr4*7)");
+	public static SmtpUser Ses = new SmtpUser( "email-smtp.us-east-1.amazonaws.com", "AKIA3GXEBTOE7ZUQKYWF", "BKH2OchBydo3BfNhbwjpK+/BpTMMTB7Q6799mjiViKMa");
 
 	private SSLSocket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
-	private boolean debug;
 
 	public SmtpSender( String host, String username, String password) throws Exception {
 		var sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
@@ -88,6 +94,7 @@ public class SmtpSender implements AutoCloseable {
 		writer.println("From: " + fromName + " <" + fromEmail + ">");
 		writer.println("To: " + toEmail);
 		writer.println("Content-Type: text/html; charset=UTF-8");
+		writer.println("Return-Receipt-To: " + fromEmail);
 		writer.println();
 		writer.println(body);
 		writer.println(".");
@@ -122,27 +129,16 @@ public class SmtpSender implements AutoCloseable {
 		}
 	}
 	
-	public static void main(String[] args) throws Exception {
-		test();
-	}
-	
-	public static void test() throws Exception {
-		// sending multiple on a single connection worked here but not elsewhere and would need extensive testing */
-		try (SmtpSender email = Josh.sender() ) { 
-			email.send( "Josh", Josh.username(), MyGmail, "hello from josh 1", "hello there");
-			email.send( "Josh", Josh.username(), MyGmail, "hello from josh 2", "hello there");
-		}
-		
-		try (SmtpSender email = Peter.sender() ) { 
-			email.send( "Peter", Peter.username, MyGmail, "hello from peter", "");
-		}
-	}
-	
 	static int code( String str) {
 		return Integer.parseInt( firstTok( str) );
 	}
 	
 	static String firstTok( String str) {
 		return str.split( " ")[0];
+	}
+	
+	public static void main(String[] args) throws Exception {
+		debug = true;
+		Josh.send("josh", "josh@reflection.trading", MyGmail, "sub", "body");
 	}
 }
