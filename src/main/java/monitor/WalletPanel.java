@@ -118,7 +118,7 @@ public class WalletPanel extends MonPanel {
 			Util.require( S.isNull( m_wallet) || Util.isValidAddress(m_wallet), "Invalid wallet address");
 	
 			if (Util.isValidAddress( m_wallet) ) {
-				m_tabs.resetActivated();
+				m_tabs.resetActivated();  // set activated flag to false
 				m_tabs.reactivateCurrent();  // this will trigger call to activated() on the current tab
 			}
 		});
