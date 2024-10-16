@@ -121,6 +121,15 @@ public class Prices {
 				conid, m_bid, m_ask, m_last);	
 	}
 
+	/** return last price bounded by bid/ask, or zero if there is no valid last */
+	public double markPrice() {
+		return validLast() ? S.between( 
+				m_last, 
+				validBid() ? m_bid : 0, 
+				validAsk() ? m_ask : Double.MAX_VALUE
+				) : 0;
+	}
+
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");
 //	public static void main(String[] args) throws ParseException {
 //		String str = "09/01 14:57:23";

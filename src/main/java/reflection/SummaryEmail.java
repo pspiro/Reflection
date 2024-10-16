@@ -7,6 +7,8 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.ib.client.Types.Action;
+
 import common.SmtpSender;
 import common.Util;
 import tw.util.S;
@@ -112,14 +114,10 @@ public class SummaryEmail {
 		HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
 				walletLc, m_list.toArray( new String[0]) );
 
-		// query transactions from database
-		var transactions = m_config.sqlQuery( """ 
-				select * from transactions
-				where wallet_public_key = '%s' and status = 'COMPLETED'
-				order by created_at""", walletLc);
-		
+		var transactions = m_config.getCompletedTransactions( walletLc); 
+
 		// build average cost map
-		var pnlMap = calcAvgCost( transactions);
+		var pnlMap = new PnlMap( transactions);
 
 		// build array of Positions
 		ArrayList<Position> positions = new ArrayList<>();
@@ -130,12 +128,11 @@ public class SummaryEmail {
 		for ( Stock stock : m_stocks) {
 			var balance = positionsMap.get( stock.getSmartContractId().toLowerCase() );
 			if (balance != null && balance > 0) {
-				double last = stock.prices().validLast() ? stock.prices().last() : 0;
-				
+				// calculate pnl
 				var pair = pnlMap.get( stock.conid() );
-				double unreal = last > 0 && pair != null ? balance * (last - pair.avgPrice) : 0;  
+				double pnl = pair != null ? pair.getPnl( stock.markPrice(), balance) : 0;
 				
-				positions.add( new Position( stock.symbol(), balance, last, unreal) );
+				positions.add( new Position( stock.symbol(), balance, stock.markPrice(), pnl) );
 
 				if (!stock.prices().validLast() ) {
 					S.out( "Error: no valid last for %s when generating statement", stock.symbol() );
@@ -231,11 +228,11 @@ public class SummaryEmail {
 		return false;
 	}
 
-	private static class Pair {
+	static class PnlPair {
 		double size;
 		double avgPrice;
 		
-		public void increment(JsonObject trans) {
+		void increment(JsonObject trans) {
 			double prevSpent = size * avgPrice;
 			
 			double qty = trans.getDouble( "quantity");
@@ -245,30 +242,37 @@ public class SummaryEmail {
 			size += qty;
 			avgPrice = (prevSpent + newSpent) / size;
 		}
-		
-		public void decrement(double qty) {
+
+		void decrement(double qty) {
 			size = Math.max( size - qty, 0);  // don't go negative
 		}
 		
-		@Override
-		public String toString() {
+		public double getPnl(double markPrice, double balance) {
+			return markPrice > 0 ? balance * (markPrice - avgPrice) : 0;
+		}
+		
+		@Override public String toString() {
 			return S.format( "[%s / %s]", size, avgPrice); 
 		}
 	}
 	
-	private static HashMap<Integer,Pair> calcAvgCost(JsonArray transactions) {
-		HashMap<Integer,Pair> map = new HashMap<>();
-		
-		for (var trans : transactions) {
-			var pair = Util.getOrCreate( map, (Integer)trans.getInt( "conid"), () -> new Pair() );
+	/** The pnl map of conid -> Pair for a single wallet */
+	static class PnlMap extends HashMap<Integer,PnlPair> {
+		/** Create PnlMap for a single wallet */
+		PnlMap(JsonArray transactions) {
+			transactions.forEach( trans -> process( trans) );
+		}
 
-			if (trans.getString( "action").equals( "Buy") ) {
-				pair.increment( trans); 
+		/** incorporate a single transaction into the pnl map for this wallet and conid */ 
+		synchronized void process( JsonObject transaction) {
+			var pair = Util.getOrCreate( this, transaction.getInt( "conid"), () -> new PnlPair() );   // access to map is synchronized
+			
+			if (transaction.getString( "action").equals( "Buy") ) {
+				pair.increment( transaction);
 			}
 			else {
-				pair.decrement( trans.getDouble( "quantity") );
+				pair.decrement( transaction.getDouble( "quantity") );
 			}
 		}
-		return map;
 	}
 }

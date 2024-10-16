@@ -765,7 +765,8 @@ public class Util {
 		return t;
 	}
 
-	/** Execute block AND RETURN THE VALUE if not null; similar to iff */ 
+	/** Execute block AND RETURN THE VALUE if not null; similar to iff.
+	 *  Never used in the intended way, remove and replace with iff() */ 
 	public static <T> T lookup( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj != null) {
 			consumer.accept( obj);

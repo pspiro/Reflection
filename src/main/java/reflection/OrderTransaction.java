@@ -684,6 +684,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("ip_address", getUserIpAddress() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
+			
+			PortfolioTransaction.processTrans( m_walletAddr, obj);
 		} 
 		catch (Exception e) {
 			elog( LogType.DATABASE_ERROR, e);
