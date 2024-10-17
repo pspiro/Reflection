@@ -113,7 +113,7 @@ public class TgServer {
 	
 	static void send( String message, String chatId) throws Exception {
 		S.out( "Posting message " + message);
-		S.out( Telegram.send( ReflectionCommunity, message) );
+		S.out( Telegram.sendMessage( ReflectionCommunity, message) );
 	}
 }
 

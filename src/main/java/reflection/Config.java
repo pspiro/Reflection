@@ -108,7 +108,7 @@ public class Config extends ConfigBase {
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
 	private String blockchainName;  // for messages
-	private int faucetAmt;
+	private double faucetAmt;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -282,7 +282,7 @@ public class Config extends ConfigBase {
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
 		this.blockchainName = m_tab.get( "blockchainName");
-		this.faucetAmt = m_tab.getInt( "faucetAmt");
+		this.faucetAmt = m_tab.getDouble( "faucetAmt");
 				
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
@@ -391,7 +391,7 @@ public class Config extends ConfigBase {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
-		require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
+		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
 
 	private boolean isPulseChain() {
@@ -842,7 +842,7 @@ public class Config extends ConfigBase {
 				order by created_at""", wallet.toLowerCase() );
 	}
 	
-	public int faucetAmt() {
+	public double faucetAmt() {
 		return faucetAmt;
 	}
 }

@@ -94,4 +94,9 @@ public abstract class Cookie extends MyTestCase {
 		return client.getHeaders().get("set-cookie");
 		//S.out( "received cookie: " + cookie);
 	}
+	
+	/** does not check for null */
+	public static JsonObject getUser() throws Exception {
+		return m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", wallet.toLowerCase() ).get( 0);
+	}
 }

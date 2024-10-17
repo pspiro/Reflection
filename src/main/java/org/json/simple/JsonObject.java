@@ -253,6 +253,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return obj != null ? (JsonObject)obj : new JsonObject();
 	}
 	
+	/** Never returns null, creates new JsonObject and adds it to the map if necessary */
+	public JsonObject getOrAddObject(String key) throws Exception {
+		var obj = getObject(key);
+		if (obj == null) {
+			obj = new JsonObject();
+			put( key, obj);
+		}
+		return obj;
+	}
+	
 	/** Returns zero for null value Can handle hex calues starting with 0x. */
 	public long getLong(String key) {
 		return Util.getLong( getString( key) );

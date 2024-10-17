@@ -613,6 +613,8 @@ public class BackendTransaction extends MyTransaction {
 		});			
 	}
 
+	/** The faucet is for giving some free native token for gas to users.
+	 *  We store the amount given in the users.locked.faucet.<blockchain name> */
 	public void handleShowFaucet() {
 		wrap( () -> {
 			getWalletFromUri();
@@ -620,50 +622,57 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	private int getFaucetAmt() throws Exception {
+	/** return the amount of native token that the user is eligible to receive */
+	private double getFaucetAmt() throws Exception {
 		
 		// check how much user has already received from faucet
-		int received = getorCreateUser()
+		double received = getorCreateUser()
 				.getObjectNN( "locked")
 				.getObjectNN( "faucet")
-				.getInt( m_config.blockchainName()
+				.getDouble( m_config.blockchainName()
 				);
 		
 		// let them have the full amount if they have not received the full amount AND
 		// their wallet has less than the full amount
-		return 
+		return
 				received < m_config.faucetAmt() && 
 				NodeServer.getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
 					? m_config.faucetAmt() 
 					: 0;
 	}
 
+	/** The faucet is for giving some free native token for gas to users.
+	 *  We store the amount given in the users.locked.faucet.<blockchain name> */
 	public void handleTurnFaucet() {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("turn-faucet");
 			
-			int amount = getFaucetAmt();
+			// require user profile
+			require(new Profile( getorCreateUser() ).isValid(), 
+					RefCode.INVALID_USER_PROFILE, 
+					"Please update your user profile before receiving PLS");
+			
+			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");
 			
 			m_config.matic().transfer( m_config.admin1Key(), m_walletAddr, amount)
 				.waitForHash();
+
+			// update the faucet object in the user/locked json
+			var locked = getorCreateUser().getObjectNN( "locked");  // reads the database again, not so efficient
+			locked.getOrAddObject( "faucet").put( m_config.blockchainName(), amount);
+
+			// update the database with new  
+			m_config.sqlCommand( sql -> sql.updateJson( 
+					"users", 
+					Util.toJson( "locked", locked), 
+					"wallet_public_key = '%s'", 
+					m_walletAddr.toLowerCase() ) );
 			
 			respond( code, RefCode.OK, Message, "Your wallet has been funded!");
 		});
 	}
 	
-//	public Object handleShowFaucet() {
-//		wrap( () -> {
-//			parseMsg();
-//			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-//			validateCookie("showFaucet");
-//			
-//			require( new Profile( getorCreateUser() ).isValid(), RefCode.INVALID_USER_PROFILE, "Please update your user profile before accepting PLS");
-//		}
-//			
-//			
-//	}
-
 }
