@@ -173,6 +173,8 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
 			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
+			server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
+			server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
 			server.createContext("/api/positions", exch -> new PortfolioTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
 			server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );

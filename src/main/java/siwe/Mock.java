@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
 import tw.util.S;
@@ -41,16 +42,19 @@ public class Mock {
 			[ { "smartcontractid": "0xad7244b5be15e038f592f3748b4eeaa67966a1fb", "allow": "All", "symbol": "AAPL (Apple)", "tokenSymbol": "AAPL.r", "last": 216.75, "endDate": "", "description": "Apple Inc - Maker of iPhone, iPad, MacBook, and AirPods", "type": "Stock", "tradingView": "NASDAQ:AAPL", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 216.76, "conid": "265598", "exchange": "SMART", "convertsToAddress": "", "bid": 216.7, "startDate": "", "isHot": true }, { "smartcontractid": "0x7e34f86085fe9cab36083364e1d26a852eaeeae1", "allow": "", "symbol": "ADBE (Adobe)", "tokenSymbol": "ADBE.r", "last": 515.03, "endDate": "", "description": "Adobe Inc - Leading producer of computer graphics software; creator of Photoshop and Illustrator", "type": "Stock", "tradingView": "NASDAQ:ADBE", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 515.3, "conid": "265768", "exchange": "SMART", "convertsToAddress": "", "bid": 514.98, "startDate": "", "isHot": true }, { "smartcontractid": "0xf3206bd1e31b071f93d5b46abf28c8fa52a124ae", "allow": "", "symbol": "AMD (Advanced Micro Devices)", "tokenSymbol": "AMD.r", "last": 150.71, "endDate": "", "description": "Advanced Micro Devices Inc - One of the top computer chip makers in the world", "type": "Stock", "tradingView": "NASDAQ:AMD", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 150.74, "conid": "4391", "exchange": "SMART", "convertsToAddress": "", "bid": 150.68, "startDate": "", "isHot": true }, { "smartcontractid": "0x637245ce1c35abdcefc3cc33074562312ad1112d", "allow": "", "symbol": "AMZN (Amazon)", "tokenSymbol": "AMZN.r", "last": 187.08, "endDate": "", "description": "Amazon.com Inc - Largest online retailer in the world", "type": "Stock", "tradingView": "NASDAQ:AMZN", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 187.08, "conid": "3691937", "exchange": "SMART", "convertsToAddress": "", "bid": 187, "startDate": "", "isHot": true } ]""";
 	
 	String liveOrders = """
-			{ "orders": [], "messages": [] }
-			""";
+			{ "orders": [], "messages": [] }""";
 	
 	String stockWithPrice = """  
-			{ "smartcontractid": "0x2fa250dc78dce5d6031f30fb8b45a66e986b6551", "allow": "", "symbol": "FSLR (First Solar)", "tokenSymbol": "FSLR.r", "last": 242.95, "endDate": "", "description": "First Solar Inc - The top producer of solar panels and photovoltaic power plants in the world", "type": "Stock", "tradingView": "NASDAQ:FSLR", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 244.94, "conid": "41622169", "exchange": "SMART", "convertsToAddress": "", "bid": 242.75, "startDate": "", "isHot": true }
-			""";  // first solar
+			{ "smartcontractid": "0x2fa250dc78dce5d6031f30fb8b45a66e986b6551", "allow": "", "symbol": "FSLR (First Solar)", "tokenSymbol": "FSLR.r", "last": 242.95, "endDate": "", "description": "First Solar Inc - The top producer of solar panels and photovoltaic power plants in the world", "type": "Stock", "tradingView": "NASDAQ:FSLR", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 244.94, "conid": "41622169", "exchange": "SMART", "convertsToAddress": "", "bid": 242.75, "startDate": "", "isHot": true }""";  // first solar
 	
 	String onrampQuote = """
-			{"recAmt": 67.89}
-			""";
+			{"recAmt": 67.89}""";
+	
+	String showFaucet = """
+			{ "code": "OK", "amount": 250 }""";
+	
+	String turnFaucet = """
+			{ "code": "OK", "message": "Your wallet has been funded!" }""";
 			
 	String onrampConvert = """
 			{ 
@@ -100,6 +104,8 @@ public class Mock {
 		map.put( "get-stock-with-price", stockWithPrice); // first solar
 		map.put( "onramp-get-quote", onrampQuote); // first solar
 		map.put( "onramp-convert", onrampConvert); // first solar
+		map.put( "show-faucet", showFaucet);
+		map.put( "turn-faucet", turnFaucet);
 		
 		BaseTransaction.setDebug( true);
 				
@@ -133,6 +139,10 @@ public class Mock {
 		
 		if (val == invalid) {
 			S.out( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		}
+		
+		if (key.equals( "turn-faucet")) {
+			S.sleep( 3000);
 		}
 		
 		t.wrap( () -> {
