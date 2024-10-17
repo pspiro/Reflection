@@ -613,4 +613,57 @@ public class BackendTransaction extends MyTransaction {
 		});			
 	}
 
+	public void handleShowFaucet() {
+		wrap( () -> {
+			getWalletFromUri();
+			respond( code, RefCode.OK, "amount", getFaucetAmt() );
+		});
+	}
+
+	private int getFaucetAmt() throws Exception {
+		
+		// check how much user has already received from faucet
+		int received = getorCreateUser()
+				.getObjectNN( "locked")
+				.getObjectNN( "faucet")
+				.getInt( m_config.blockchainName()
+				);
+		
+		// let them have the full amount if they have not received the full amount AND
+		// their wallet has less than the full amount
+		return 
+				received < m_config.faucetAmt() && 
+				NodeServer.getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
+					? m_config.faucetAmt() 
+					: 0;
+	}
+
+	public void handleTurnFaucet() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("turn-faucet");
+			
+			int amount = getFaucetAmt();
+			Util.require( amount > 0, "This account is not eligible for more native token");
+			
+			m_config.matic().transfer( m_config.admin1Key(), m_walletAddr, amount)
+				.waitForHash();
+			
+			respond( code, RefCode.OK, Message, "Your wallet has been funded!");
+		});
+	}
+	
+//	public Object handleShowFaucet() {
+//		wrap( () -> {
+//			parseMsg();
+//			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+//			validateCookie("showFaucet");
+//			
+//			require( new Profile( getorCreateUser() ).isValid(), RefCode.INVALID_USER_PROFILE, "Please update your user profile before accepting PLS");
+//		}
+//			
+//			
+//	}
+
 }

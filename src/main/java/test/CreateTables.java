@@ -171,7 +171,15 @@ public class CreateTables  {
 		);
 		""";
 		con.execute( sql);
-	}		
+	}
+	
+	/* locked jsonb fields
+	 * 
+	 * faucet {
+	 *   <blockchain name>: amount
+	 *   }
+	 *  
+	 */
 		
 	
 	/** This has never been run and probably doesn't work */
