@@ -111,8 +111,10 @@ public class Statements {
 		S.out( "generating summary for %s", walletLc);
 
 		// get positions from Blockchain
-		HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
-				walletLc, m_list.toArray( new String[0]) );
+		// doesn't work for Pulsechain: HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
+				//walletLc, m_list.toArray( new String[0]) );
+		HashMap<String, Double> positionsMap = m_config.node().reqPositionsMap(       // you could also try graphql or 
+				walletLc, m_list.toArray( new String[0]), 0);
 
 		var transactions = m_config.getCompletedTransactions( walletLc); 
 
