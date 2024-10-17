@@ -30,64 +30,6 @@ public class BackendTransaction extends MyTransaction {
 	public BackendTransaction(Main main, HttpExchange exch, boolean debug) {
 		super(main, exch, debug);
 	}
-	
-	/** obsolete, remove */
-	public void handleReqPositions() {
-		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
-			
-			// query positions from Moralis
-			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
-			
-			JsonArray retVal = new JsonArray();
-			
-			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
-				JsonObject stock = m_main.getStockByTokAddr( entry.getKey() );
-
-				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
-					JsonObject resp = new JsonObject();
-					resp.put("conId", stock.get("conid") );
-					resp.put("symbol", stock.get("symbol") );
-					resp.put("price", getPrice(stock) );
-					resp.put("quantity", entry.getValue() ); 
-					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
-				}
-			});
-			
-			retVal.sortJson( "symbol", true);
-			respond(retVal);
-		});
-	}
-
-	/** You'll see exceptions here when the HookServer is restarting */
-	public void handleReqPositionsNew() {
-		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
-
-			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", m_config.hookServerPort(), m_walletAddr.toLowerCase() );
-
-			JsonArray retVal = new JsonArray();
-
-			for (JsonObject pos : MyClient.getJson( url).getArray( "positions") ) {   // returns the following keys: native, approved, positions, wallet
-				double position = pos.getDouble("position");
-				
-				JsonObject stock = m_main.getStockByTokAddr( pos.getString("address") );
-				if (stock != null && position >= m_config.minTokenPosition() ) {
-					JsonObject resp = new JsonObject();
-					resp.put("conId", stock.get("conid") );
-					resp.put("symbol", stock.get("symbol") );
-					resp.put("price", getPrice(stock) );
-					resp.put("quantity", position); 
-					retVal.add(resp);
-				}
-			}
-			
-			retVal.sortJson( "symbol", true);
-			respond(retVal);
-		});
-	}
 
 	/** Handle a Backend-style event. Conid is last parameter
 	 * 
@@ -614,4 +556,123 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	public void handleFundWallet() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("fundWallet");
+			
+			double amount = m_map.getRequiredDouble("amount");
+			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
+			
+			var user = getUser();
+			require( user != null, RefCode.INVALID_REQUEST, "Error: There is no existing user profile for this wallet");
+			
+			// $500 award requires KYC  
+			require( amount == 100 || Util.equalsIgnore( user.getString("kyc_status"), "VERIFIED", "completed"),
+					RefCode.INVALID_REQUEST,
+					"Error: You must verify your identity before collecting collecting this reward");
+			
+			// get or create existing locked rec
+			var locked = user.getObjectNN( "locked");
+			
+			// wallet has rusd?
+			require( m_config.rusd().getPosition( m_walletAddr) < 1, 
+					RefCode.INVALID_REQUEST, 
+					"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
+			
+			// already collected a prize?
+			require( !locked.getBool( "rewarded"), 
+					RefCode.INVALID_REQUEST, 
+					"This wallet already collected a prize"); 
+			
+			// no auto-awards?
+			if (m_config.autoReward() < amount) {
+				respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
+				return;
+			}
+			
+			// update users table with locked BEFORE we award the RUSD
+			JsonObject lockRec = Util.toJson(
+					"wallet_public_key", m_walletAddr.toLowerCase(),
+					"locked", locked.append("rewarded", true) ); 
+			m_config.sqlCommand(sql -> 
+				sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
+			
+			// mint award for the user
+			out( "Minting $%s RUSD reward for %s", amount, m_walletAddr);
+			
+			// don't tie up the http thread
+			Util.executeAndWrap( () -> {
+				m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() )
+					.waitForHash();
+				
+				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);
+				respond( code, RefCode.OK, Message, message);
+			});
+		});			
+	}
+
+	/** The faucet is for giving some free native token for gas to users.
+	 *  We store the amount given in the users.locked.faucet.<blockchain name> */
+	public void handleShowFaucet() {
+		wrap( () -> {
+			getWalletFromUri();
+			respond( code, RefCode.OK, "amount", getFaucetAmt() );
+		});
+	}
+
+	/** return the amount of native token that the user is eligible to receive */
+	private double getFaucetAmt() throws Exception {
+		
+		// check how much user has already received from faucet
+		double received = getorCreateUser()
+				.getObjectNN( "locked")
+				.getObjectNN( "faucet")
+				.getDouble( m_config.blockchainName()
+				);
+		
+		// let them have the full amount if they have not received the full amount AND
+		// their wallet has less than the full amount
+		return
+				received < m_config.faucetAmt() && 
+				NodeServer.getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
+					? m_config.faucetAmt() 
+					: 0;
+	}
+
+	/** The faucet is for giving some free native token for gas to users.
+	 *  We store the amount given in the users.locked.faucet.<blockchain name> */
+	public void handleTurnFaucet() {
+		wrap( () -> {
+			parseMsg();
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("turn-faucet");
+			
+			// require user profile
+			require(new Profile( getorCreateUser() ).isValid(), 
+					RefCode.INVALID_USER_PROFILE, 
+					"Please update your user profile before receiving PLS");
+			
+			double amount = getFaucetAmt();
+			Util.require( amount > 0, "This account is not eligible for more native token");
+			
+			m_config.matic().transfer( m_config.admin1Key(), m_walletAddr, amount)
+				.waitForHash();
+
+			// update the faucet object in the user/locked json
+			var locked = getorCreateUser().getObjectNN( "locked");  // reads the database again, not so efficient
+			locked.getOrAddObject( "faucet").put( m_config.blockchainName(), amount);
+
+			// update the database with new  
+			m_config.sqlCommand( sql -> sql.updateJson( 
+					"users", 
+					Util.toJson( "locked", locked), 
+					"wallet_public_key = '%s'", 
+					m_walletAddr.toLowerCase() ) );
+			
+			respond( code, RefCode.OK, Message, "Your wallet has been funded!");
+		});
+	}
+	
 }

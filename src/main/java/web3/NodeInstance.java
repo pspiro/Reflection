@@ -197,7 +197,9 @@ public class NodeInstance {
 	}
 	
 	/** show pending and queued transactions to find stuck transactions
-	 *  take a long time and returns a lot of data */
+	 *  take a long time and returns a lot of data
+	 *  
+	 *  Goes with CancelStuckTransaction class */
 	public void showTrans( String wallet) throws Exception {
 		JsonObject result = getQueuedTrans();
 
@@ -567,18 +569,9 @@ public class NodeInstance {
 		return ts;
 	}
 	
-	// get the hash from e.g. MetaMask
-	void unstick() throws Exception {
-		String hash = "0xca7398e9fe1f14183573fb181d8ad527903d9d88c95abb47aa759546b256ddaa";
-		JsonObject t = getTransactionByHash( hash);
-		int nonce = t.getInt( "nonce");
-		// work in progress...
-		
-	}
-	
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
-		c.node().showTrans( prod);
+		c.node().showTrans( c.admin1Addr() );
 	}	
 }
 

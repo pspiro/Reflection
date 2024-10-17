@@ -617,7 +617,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				out( "sending telegram");
 				String str = String.format( "Wallet %s just %s [%s %s stock tokens](%s) on %s!",
 						Util.shorten( m_walletAddr), isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash), m_config.blockchainName() ); 
-				Telegram.post( str);
+				Telegram.postPhoto( str, isBuy() ? Telegram.bought : Telegram.sold);
 			}
 			else {
 				out( "not sending telegram");
@@ -684,6 +684,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			obj.put("ip_address", getUserIpAddress() );
 		
 			m_main.queueSql( conn -> conn.insertJson("transactions", obj) );
+			
+			PortfolioTransaction.processTrans( m_walletAddr, obj);
 		} 
 		catch (Exception e) {
 			elog( LogType.DATABASE_ERROR, e);

@@ -42,7 +42,7 @@ public class ExtractNames {
 			id = id.substring(4);
 		}
 		
-		Telegram.send( id, String.format( text, name) )
+		Telegram.sendMessage( id, String.format( text, name) )
 			.display();
 	}
 }

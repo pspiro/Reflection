@@ -7,6 +7,8 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.ib.client.Types.Action;
+
 import common.SmtpSender;
 import common.Util;
 import tw.util.S;
@@ -25,7 +27,7 @@ import web3.NodeInstance;
 // ******************
 
 public class SummaryEmail {
-	private record Position( String name, double quantity, double price) {}
+	private record Position( String name, double quantity, double price, double unreal) {}
 
 	private Config m_config;
 	private Stocks m_stocks;
@@ -96,20 +98,26 @@ public class SummaryEmail {
 	}
 
 
-	/** @param wallet lower case
+	/** @param walletLc lower case
 	 * @param map maps wallet to record with first and last name, if we have it
 	 * @return true if we sent an email  */
-	private boolean generateSummary( String wallet, JsonObject userRec) throws Exception {
+	private boolean generateSummary( String walletLc, JsonObject userRec) throws Exception {
 		String email = userRec.getString( "email");
 		
 		if (!Util.isValidEmail( email) ) {
 			return false;
 		}
 
-		S.out( "generating summary for %s", wallet);
+		S.out( "generating summary for %s", walletLc);
 
+		// get positions from Blockchain
 		HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
-				wallet, m_list.toArray( new String[0]) );
+				walletLc, m_list.toArray( new String[0]) );
+
+		var transactions = m_config.getCompletedTransactions( walletLc); 
+
+		// build average cost map
+		var pnlMap = new PnlMap( transactions);
 
 		// build array of Positions
 		ArrayList<Position> positions = new ArrayList<>();
@@ -120,8 +128,11 @@ public class SummaryEmail {
 		for ( Stock stock : m_stocks) {
 			var balance = positionsMap.get( stock.getSmartContractId().toLowerCase() );
 			if (balance != null && balance > 0) {
-				double last = stock.prices().validLast() ? stock.prices().last() : 0;
-				positions.add( new Position( stock.symbol(), balance, last) );
+				// calculate pnl
+				var pair = pnlMap.get( stock.conid() );
+				double pnl = pair != null ? pair.getPnl( stock.markPrice(), balance) : 0;
+				
+				positions.add( new Position( stock.symbol(), balance, stock.markPrice(), pnl) );
 
 				if (!stock.prices().validLast() ) {
 					S.out( "Error: no valid last for %s when generating statement", stock.symbol() );
@@ -135,9 +146,9 @@ public class SummaryEmail {
 
 		// add RUSD and BUSD at the bottom
 		Util.iff( positionsMap.get( m_config.rusdAddr() ), pos -> 
-			positions.add( new Position( m_config.rusd().name() + " (stablecoin)", (double)pos, 1) ) );
+			positions.add( new Position( m_config.rusd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
 		Util.iff( positionsMap.get( m_config.busdAddr() ), pos -> 
-			positions.add( new Position( m_config.busd().name() + " (stablecoin)", (double)pos, 1) ) );
+			positions.add( new Position( m_config.busd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
 
 		// build the positions section
 		StringBuilder posRows = new StringBuilder();
@@ -149,7 +160,9 @@ public class SummaryEmail {
 						.replace( "#token#", pos.name() )
 						.replace( "#quantity#", S.fmt2( pos.quantity() ) )
 						.replace( "#price#", S.fmt2( pos.price() ) )
-						.replace( "#value#", S.fmt2( value) );
+						.replace( "#value#", S.fmt2( value) )
+						.replace( "#pnl#", S.fmt2( pos.unreal() ) )
+						;
 				posRows.append( item); 
 				total += value;		
 			}
@@ -158,7 +171,8 @@ public class SummaryEmail {
 		// build the activity rows
 		StringBuilder actRows = new StringBuilder();
 
-		for (var trans : m_config.sqlQuery( "select * from transactions where wallet_public_key = '%s' and status = 'COMPLETED' order by created_at", wallet) ) {
+
+		for (var trans : transactions) { 
 			boolean buy = trans.getString( "action").equals( "Buy");
 
 			String date = Util.left( trans.getString( "created_at"), 10);  // add a column for commission
@@ -187,7 +201,8 @@ public class SummaryEmail {
 			
 			String html = Text.email
 					.replace( "#name#", name)
-					.replace( "#wallet#", wallet)
+					.replace( "#wallet#", walletLc)
+					.replace( "#blockchain#", m_config.blockchainName() )
 					.replace( "#portrows#", posRows.toString() )
 					.replace( "#actrows#", actRows.toString() )
 					.replace( "#total#", totalStr);
@@ -211,5 +226,53 @@ public class SummaryEmail {
 		}
 		
 		return false;
+	}
+
+	static class PnlPair {
+		double size;
+		double avgPrice;
+		
+		void increment(JsonObject trans) {
+			double prevSpent = size * avgPrice;
+			
+			double qty = trans.getDouble( "quantity");
+			double price = trans.getDouble( "price");
+			double newSpent = qty * price + trans.getDouble( "commission");
+			
+			size += qty;
+			avgPrice = (prevSpent + newSpent) / size;
+		}
+
+		void decrement(double qty) {
+			size = Math.max( size - qty, 0);  // don't go negative
+		}
+		
+		public double getPnl(double markPrice, double balance) {
+			return markPrice > 0 ? balance * (markPrice - avgPrice) : 0;
+		}
+		
+		@Override public String toString() {
+			return S.format( "[%s / %s]", size, avgPrice); 
+		}
+	}
+	
+	/** The pnl map of conid -> Pair for a single wallet */
+	static class PnlMap extends HashMap<Integer,PnlPair> {
+		/** Create PnlMap for a single wallet */
+		PnlMap(JsonArray transactions) {
+			transactions.forEach( trans -> process( trans) );
+		}
+
+		/** incorporate a single transaction into the pnl map for this wallet and conid */ 
+		synchronized void process( JsonObject transaction) {
+			var pair = Util.getOrCreate( this, transaction.getInt( "conid"), () -> new PnlPair() );   // access to map is synchronized
+			
+			if (transaction.getString( "action").equals( "Buy") ) {
+				pair.increment( transaction);
+			}
+			else {
+				pair.decrement( transaction.getDouble( "quantity") );
+			}
+		}
 	}
 }

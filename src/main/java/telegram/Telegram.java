@@ -10,19 +10,36 @@ public class Telegram {
 	static final String reflectionChatId = "-1001262398926"; // community chat
 	static final String botKey = "bot6642832599:AAF8J9ymAXIfyLZ6G0UcU2xsU8_uHhpSXBY";
 	static final String part1 = "https://api.telegram.org/" + botKey;
+	public static final String bought = "https://ibb.co/fDbyQsj";  // bought image
+	public static final String sold = "https://ibb.co/bb1BVT2"; // sold image
+	
+	// min image height seems to be 80
 	
 	public static void main(String[] args) throws Exception {
-		//post( "Visit <a href=\"https://reflection.trading\">Reflection</a>");
-		post( "Visit *it* [Reflection](https://reflection.trading)");
+	}
+
+	public static void postPhoto( String message, String photoUrl) {
+		Util.wrap( () -> {
+			JsonObject params = Util.toJson( 
+					"chat_id", reflectionChatId,
+					"photo", photoUrl,
+					"caption", message,
+					"disable_web_page_preview", true,
+					"parse_mode", "Markdown");  // or "HTML"
+			
+			MyClient.create(part1 + "/sendPhoto", params.toString() )
+					.header( "Content-Type", "application/json")
+					.queryToJson();
+		});
 	}
 
 	/** post to Reflection channel; format for links is [text](link) */
 	public static void post( String message) {
-		Util.wrap( () -> send( reflectionChatId, message) );
+		Util.wrap( () -> sendMessage( reflectionChatId, message) );
 	}
 	
 	/** send message with web preview disabled */
-	static JsonObject send( String chatId, String message) throws Exception {
+	static JsonObject sendMessage( String chatId, String message) throws Exception {
 		S.out( "Posting to Telegram: " + message);
 		
 		JsonObject params = Util.toJson( 

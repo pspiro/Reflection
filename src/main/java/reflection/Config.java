@@ -108,6 +108,7 @@ public class Config extends ConfigBase {
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
 	private String blockchainName;  // for messages
+	private double faucetAmt;
 
 	// Fireblocks
 	private Web3Type web3Type;
@@ -280,7 +281,8 @@ public class Config extends ConfigBase {
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
-		this.blockchainName = m_tab.get( "blockchainName"); 
+		this.blockchainName = m_tab.get( "blockchainName");
+		this.faucetAmt = m_tab.getDouble( "faucetAmt");
 				
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
@@ -389,8 +391,13 @@ public class Config extends ConfigBase {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
+		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
 
+	private boolean isPulseChain() {
+		return "PulseChain".equals( blockchainName);
+	}
+	
 	/** confirm we have access to the password 
 	 * @throws Exception */
 	private void checkPassword() throws Exception {
@@ -821,7 +828,21 @@ public class Config extends ConfigBase {
 		return "zksync".equals( blockchainName);
 	}
 	
+	/** for display to user */
 	public String blockchainName() {
 		return blockchainName;
+	}
+
+	/** return completed transactions from the database for a single wallet 
+	 * @throws Exception */
+	public JsonArray getCompletedTransactions(String wallet) throws Exception {
+		return sqlQuery( """ 
+				select * from transactions
+				where wallet_public_key = '%s' and status = 'COMPLETED'
+				order by created_at""", wallet.toLowerCase() );
+	}
+	
+	public double faucetAmt() {
+		return faucetAmt;
 	}
 }

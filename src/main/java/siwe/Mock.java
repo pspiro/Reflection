@@ -7,6 +7,7 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
 import tw.util.S;
@@ -23,7 +24,7 @@ public class Mock {
 			{ "refresh": 30000, "tokens": [ { "buttonTooltip": "Click here to exchange your RUSD for BUSD. The BUSD can then be converted to cash on other platforms", "balance": 55.555, "name": "RUSD", "tooltip": "RUSD is the native stablecoin of the Reflection platform. It is what you receive when you sell a stock token, and likewise it can be used to buy more stock tokens. It is backed 1-to-1 with a combination of US dollars and USDC and can be redeemed at no cost for USDC at any time." }, { "buttonTooltip": "Click here to approve your BUSD for use on the Reflection system. You can give approval at the time an order is placed, but approving now makes for a smoother trading experience", "stablecoin": true, "balance": 22.222, "approvedBalance": 33.333, "name": "BUSD", "tooltip": "BUSD is a popular stablecoin that can be used to purchase Reflection stock tokens" }, { "balance": 44.4444, "name": "ETH", "tooltip": "ETH is the native currency of the Goerli network. You will need a little bit (less than $1 worth) to approve your Reflection stock token purchases or to transfer tokens on the Polygon network" } ] }""";
 	
 	String positions = """
-			[ { "symbol": "AMD (Advanced Micro Devices)", "quantity": 1, "price": 150.04, "conId": "4391" }, { "symbol": "COIN (Coinbase)", "quantity": 2.0868, "price": 161.935, "conId": "481691285" }, { "symbol": "COST (Costco)", "quantity": 1, "price": 899.42, "conId": "272997" }, { "symbol": "FSLR (First Solar)", "quantity": 1, "price": 238.42, "conId": "41622169" }, { "symbol": "GME (GameStop)", "quantity": 1, "price": 20.125, "conId": "36285627" }, { "symbol": "GOOG (Google)", "quantity": 1.2702, "price": 159.805, "conId": "208813720" }, { "symbol": "IBIT (Bitcoin ETF)", "quantity": 5.5586, "price": 34.395, "conId": "677037673" }, { "symbol": "INDY (Nifty-50 ETF)", "quantity": 3.3552, "price": 55.445, "conId": "70333958" }, { "symbol": "INTC (Intel)", "quantity": 2.162, "price": 21.435, "conId": "270639" }, { "symbol": "META (Facebook)", "quantity": 0.7709, "price": 534.275, "conId": "107113386" }, { "symbol": "MMYT (Make My Trip)", "quantity": 3, "price": 104.37, "conId": "77879741" }, { "symbol": "MRNA (Moderna)", "quantity": 1.168, "price": 71.985, "conId": "344809106" }, { "symbol": "NFLX (Netflix)", "quantity": 1, "price": 705.33, "conId": "15124833" }, { "symbol": "NVDA (Nvidia)", "quantity": 0.747, "price": 115.315, "conId": "4815747" }, { "symbol": "PYPL (Paypal)", "quantity": 2, "price": 71.405, "conId": "199169591" }, { "symbol": "QQQ (Nasdaq 100 ETF)", "quantity": 0.0416, "price": 472.735, "conId": "320227571" }, { "symbol": "REGN (Regeneron)", "quantity": 0.1552, "price": 1140.025, "conId": "273733" }, { "symbol": "SBUX (Starbucks)", "quantity": 0.131, "price": 96.09, "conId": "274105" }, { "symbol": "TSLA (Tesla)", "quantity": 0.2289, "price": 227.625, "conId": "76792991" }, { "symbol": "ZM (Zoom)", "quantity": 0.4217, "price": 68.04, "conId": "361181057" } ]""";
+			[ { "symbol": "AMD (Advanced Micro Devices)", "quantity": 1, "price": 150.044, "pnl": 15.71, "conId": "4391" }, { "symbol": "COIN (Coinbase)", "quantity": 2.0868, "pnl": 5.71, "price": 161.935, "conId": "481691285" }, { "symbol": "COST (Costco)", "quantity": 1, "pnl": 3.84, "price": 899.42, "conId": "272997" }, { "symbol": "FSLR (First Solar)", "pnl": 12.8, "quantity": 1, "price": 238.42, "pnl": 15, "conId": "41622169" }, { "symbol": "GME (GameStop)", "quantity": 1, "price": 20.125, "conId": "36285627" }, { "symbol": "GOOG (Google)", "quantity": 1.2702, "price": 159.805, "conId": "208813720" }, { "symbol": "IBIT (Bitcoin ETF)", "quantity": 5.5586, "price": 34.395, "conId": "677037673" }, { "symbol": "INDY (Nifty-50 ETF)", "quantity": 3.3552, "price": 55.445, "conId": "70333958" }, { "symbol": "INTC (Intel)", "quantity": 2.162, "price": 21.435, "conId": "270639" }, { "symbol": "META (Facebook)", "quantity": 0.7709, "price": 534.275, "conId": "107113386" }, { "symbol": "MMYT (Make My Trip)", "quantity": 3, "price": 104.37, "conId": "77879741" }, { "symbol": "MRNA (Moderna)", "quantity": 1.168, "price": 71.985, "conId": "344809106" }, { "symbol": "NFLX (Netflix)", "quantity": 1, "price": 705.33, "conId": "15124833" }, { "symbol": "NVDA (Nvidia)", "quantity": 0.747, "price": 115.315, "conId": "4815747" }, { "symbol": "PYPL (Paypal)", "quantity": 2, "price": 71.405, "conId": "199169591" }, { "symbol": "QQQ (Nasdaq 100 ETF)", "quantity": 0.0416, "price": 472.735, "conId": "320227571" }, { "symbol": "REGN (Regeneron)", "quantity": 0.1552, "price": 1140.025, "conId": "273733" }, { "symbol": "SBUX (Starbucks)", "quantity": 0.131, "price": 96.09, "conId": "274105" }, { "symbol": "TSLA (Tesla)", "quantity": 0.2289, "price": 227.625, "conId": "76792991" }, { "symbol": "ZM (Zoom)", "quantity": 0.4217, "price": 68.04, "conId": "361181057" } ]""";
 	
 	String sysConfig = """
 			{ "max_order_size": 5000, "sell_spread": 0.005, "buy_spread": 0.005, "min_order_size": 3, "non_kyc_max_order_size": 600, "price_refresh_interval": 30, "commission": 0.25 }""";
@@ -41,16 +42,19 @@ public class Mock {
 			[ { "smartcontractid": "0xad7244b5be15e038f592f3748b4eeaa67966a1fb", "allow": "All", "symbol": "AAPL (Apple)", "tokenSymbol": "AAPL.r", "last": 216.75, "endDate": "", "description": "Apple Inc - Maker of iPhone, iPad, MacBook, and AirPods", "type": "Stock", "tradingView": "NASDAQ:AAPL", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 216.76, "conid": "265598", "exchange": "SMART", "convertsToAddress": "", "bid": 216.7, "startDate": "", "isHot": true }, { "smartcontractid": "0x7e34f86085fe9cab36083364e1d26a852eaeeae1", "allow": "", "symbol": "ADBE (Adobe)", "tokenSymbol": "ADBE.r", "last": 515.03, "endDate": "", "description": "Adobe Inc - Leading producer of computer graphics software; creator of Photoshop and Illustrator", "type": "Stock", "tradingView": "NASDAQ:ADBE", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 515.3, "conid": "265768", "exchange": "SMART", "convertsToAddress": "", "bid": 514.98, "startDate": "", "isHot": true }, { "smartcontractid": "0xf3206bd1e31b071f93d5b46abf28c8fa52a124ae", "allow": "", "symbol": "AMD (Advanced Micro Devices)", "tokenSymbol": "AMD.r", "last": 150.71, "endDate": "", "description": "Advanced Micro Devices Inc - One of the top computer chip makers in the world", "type": "Stock", "tradingView": "NASDAQ:AMD", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 150.74, "conid": "4391", "exchange": "SMART", "convertsToAddress": "", "bid": 150.68, "startDate": "", "isHot": true }, { "smartcontractid": "0x637245ce1c35abdcefc3cc33074562312ad1112d", "allow": "", "symbol": "AMZN (Amazon)", "tokenSymbol": "AMZN.r", "last": 187.08, "endDate": "", "description": "Amazon.com Inc - Largest online retailer in the world", "type": "Stock", "tradingView": "NASDAQ:AMZN", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 187.08, "conid": "3691937", "exchange": "SMART", "convertsToAddress": "", "bid": 187, "startDate": "", "isHot": true } ]""";
 	
 	String liveOrders = """
-			{ "orders": [], "messages": [] }
-			""";
+			{ "orders": [], "messages": [] }""";
 	
 	String stockWithPrice = """  
-			{ "smartcontractid": "0x2fa250dc78dce5d6031f30fb8b45a66e986b6551", "allow": "", "symbol": "FSLR (First Solar)", "tokenSymbol": "FSLR.r", "last": 242.95, "endDate": "", "description": "First Solar Inc - The top producer of solar panels and photovoltaic power plants in the world", "type": "Stock", "tradingView": "NASDAQ:FSLR", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 244.94, "conid": "41622169", "exchange": "SMART", "convertsToAddress": "", "bid": 242.75, "startDate": "", "isHot": true }
-			""";  // first solar
+			{ "smartcontractid": "0x2fa250dc78dce5d6031f30fb8b45a66e986b6551", "allow": "", "symbol": "FSLR (First Solar)", "tokenSymbol": "FSLR.r", "last": 242.95, "endDate": "", "description": "First Solar Inc - The top producer of solar panels and photovoltaic power plants in the world", "type": "Stock", "tradingView": "NASDAQ:FSLR", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 244.94, "conid": "41622169", "exchange": "SMART", "convertsToAddress": "", "bid": 242.75, "startDate": "", "isHot": true }""";  // first solar
 	
 	String onrampQuote = """
-			{"recAmt": 67.89}
-			""";
+			{"recAmt": 67.89}""";
+	
+	String showFaucet = """
+			{ "code": "OK", "amount": 250 }""";
+	
+	String turnFaucet = """
+			{ "code": "OK", "message": "Your wallet has been funded!" }""";
 			
 	String onrampConvert = """
 			{ 
@@ -100,6 +104,8 @@ public class Mock {
 		map.put( "get-stock-with-price", stockWithPrice); // first solar
 		map.put( "onramp-get-quote", onrampQuote); // first solar
 		map.put( "onramp-convert", onrampConvert); // first solar
+		map.put( "show-faucet", showFaucet);
+		map.put( "turn-faucet", turnFaucet);
 		
 		BaseTransaction.setDebug( true);
 				
@@ -133,6 +139,10 @@ public class Mock {
 		
 		if (val == invalid) {
 			S.out( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		}
+		
+		if (key.equals( "turn-faucet")) {
+			S.sleep( 3000);
 		}
 		
 		t.wrap( () -> {

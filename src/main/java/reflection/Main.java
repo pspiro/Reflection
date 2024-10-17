@@ -161,6 +161,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc/persona completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
+			server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
 			
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
@@ -172,8 +173,10 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
 			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
 			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
-			server.createContext("/api/positions", exch -> new BackendTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
-			server.createContext("/api/positions-new", exch -> new BackendTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
+			server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
+			server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
+			server.createContext("/api/positions", exch -> new PortfolioTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
+			server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices

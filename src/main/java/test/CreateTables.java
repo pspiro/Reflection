@@ -108,7 +108,7 @@ public class CreateTables  {
 
 					symbol varchar(32),
 					conid int check (conid > 0),
-					action varchar(10),
+					action varchar(10),  -- Buy or Sell
 					quantity double precision check (quantity > 0),
 					rounded_quantity int, -- could be zero
 					price double precision check (price > 0),
@@ -171,7 +171,15 @@ public class CreateTables  {
 		);
 		""";
 		con.execute( sql);
-	}		
+	}
+	
+	/* locked jsonb fields
+	 * 
+	 * faucet {
+	 *   <blockchain name>: amount
+	 *   }
+	 *  
+	 */
 		
 	
 	/** This has never been run and probably doesn't work */
