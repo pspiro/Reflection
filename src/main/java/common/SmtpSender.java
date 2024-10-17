@@ -139,6 +139,6 @@ public class SmtpSender implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		debug = true;
-		Josh.send("josh", "josh@reflection.trading", MyGmail, "sub", "body");
+		Ses.send("josh", "josh@reflection.trading", MyGmail, "sub2", "body");
 	}
 }

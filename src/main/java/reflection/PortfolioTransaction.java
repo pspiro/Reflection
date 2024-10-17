@@ -7,13 +7,11 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Util;
 import http.MyClient;
-import reflection.SummaryEmail.PnlMap;
-import reflection.SummaryEmail.PnlPair;
+import reflection.Statements.PnlMap;
 import web3.NodeServer;
 
 public class PortfolioTransaction extends MyTransaction {
