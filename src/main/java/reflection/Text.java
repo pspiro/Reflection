@@ -57,9 +57,10 @@ public class Text {
 				<tbody>
 					#portrows#
 					<tr>
-						<td colspan="3" style="text-align: right; font-weight: bold; border: 1px solid #ddd; padding: 8px;">Total:</td> <!-- Merge first 3 columns, align right -->
-						<td style="font-weight: bold; border: 1px solid #ddd; padding: 8px;">#total#</td>
+						<td colspan="3" style="text-align: right; font-weight: bold; border: none; padding: 8px;">Total:</td>
+						<td style="font-weight: bold; border: none; padding: 8px;">#total#</td>
 					</tr>
+
 				</tbody>
 			</table>
 		</div>

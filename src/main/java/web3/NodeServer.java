@@ -38,6 +38,7 @@ public class NodeServer {
 		}
 	}
 
+	/** @param decimals pass zero for lookup */
 	public static HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		return inst.reqPositionsMap(walletAddr, contracts, decimals);
 	}

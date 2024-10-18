@@ -26,7 +26,7 @@ import web3.NodeInstance;
 
 // ******************
 
-public class SummaryEmail {
+public class Statements {
 	private record Position( String name, double quantity, double price, double unreal) {}
 
 	private Config m_config;
@@ -37,14 +37,14 @@ public class SummaryEmail {
 	public static void main(String[] args) {
 		try {
 			Config c = Config.ask();
-			new SummaryEmail( c, c.readStocks(), true)  // don't set to false; there will be no prices
+			new Statements( c, c.readStocks(), true)  // don't set to false; there will be no prices
 				.generateSummaries( 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	SummaryEmail( Config config, Stocks stocks, boolean testing) {
+	Statements( Config config, Stocks stocks, boolean testing) {
 		m_config = config;
 		m_stocks = stocks;
 		m_testing = testing;
@@ -111,8 +111,10 @@ public class SummaryEmail {
 		S.out( "generating summary for %s", walletLc);
 
 		// get positions from Blockchain
-		HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
-				walletLc, m_list.toArray( new String[0]) );
+		// doesn't work for Pulsechain: HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
+				//walletLc, m_list.toArray( new String[0]) );
+		HashMap<String, Double> positionsMap = m_config.node().reqPositionsMap(       // you could also try graphql or 
+				walletLc, m_list.toArray( new String[0]), 0);
 
 		var transactions = m_config.getCompletedTransactions( walletLc); 
 
