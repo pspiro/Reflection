@@ -12,8 +12,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Keys;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
-import org.web3j.protocol.core.DefaultBlockParameter;
-import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.utils.Numeric;
 
 import common.Util;
@@ -31,6 +29,7 @@ public class NodeInstance {
     static final String transferEventSignature = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
 	public static final String nullAddr = "0x0000000000000000000000000000000000000000";
+	public static final String latest = "latest";
 
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
@@ -193,7 +192,7 @@ public class NodeInstance {
 
 	public Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
-		JsonObject json = getFeeHistory(5, 60).getObject( "result");
+		JsonObject json = getFeeHistory(5, 1).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -463,17 +462,6 @@ public class NodeInstance {
 		return nodeQuery( body).getObject( "result");
 	}
 	
-	BigInteger getNonce( String walletAddr) throws Exception {
-		String body = String.format( """
-				{
-				"jsonrpc": "2.0",
-				"id": 1,
-				"method": "eth_getTransactionCount",
-				"params": [ "%s", "latest" ]
-				}""", walletAddr);
-		return Erc20.decodeQuantity( queryHexResult( body, "nonce", "n/a", walletAddr) );
-	}
-
 	public long getBlockNumber( String transHash) throws Exception {
 		var obj = getTransactionByHash( transHash);
 		Util.require( obj != null, "Transaction not found with hash " + transHash);
@@ -631,7 +619,19 @@ public class NodeInstance {
 				500000
 				)
 			.waitForReceipt();
-				
+	}				
+
+	/** @deprecated use queryFees instead */
+	BigInteger getGasPrice() throws Exception {
+		return Numeric.decodeQuantity(
+				queryHexResult( new Req("eth_gasPrice", 1).toString(), "gas", "n/a", "n/a")
+			);
+	}
+	
+	public BigInteger getNonce(String addr) throws Exception {
+		var req = new Req("eth_getTransactionCount", 1);
+		req.put( "params", Util.toArray( addr, latest) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), "count", "n/a", "n/a") );
 	}	
 	
 	// to get the reason you have to call again with the "defaultBlockParameter" set to 
