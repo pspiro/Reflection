@@ -37,6 +37,7 @@ public class SmtpSender implements AutoCloseable {
 	}
 
 	private static final String MyGmail = "peteraspiro@gmail.com";
+	private static final String MyReflEmail = "peter@reflection.trading";
 	private static final String OpenXchange = "smtp.openxchange.eu";
 	private static boolean debug;
 	
@@ -95,6 +96,7 @@ public class SmtpSender implements AutoCloseable {
 		writer.println("To: " + toEmail);
 		writer.println("Content-Type: text/html; charset=UTF-8");
 		writer.println("Return-Receipt-To: " + fromEmail);
+		writer.println("X-SES-CONFIGURATION-SET: MySet");  // for testing
 		writer.println();
 		writer.println(body);
 		writer.println(".");
@@ -140,5 +142,6 @@ public class SmtpSender implements AutoCloseable {
 	public static void main(String[] args) throws Exception {
 		debug = true;
 		Ses.send("josh", "josh@reflection.trading", MyGmail, "sub2", "body");
+		Ses.send("dad", "josh@reflection.trading", MyReflEmail, "sub3", "body");
 	}
 }
