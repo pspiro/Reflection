@@ -429,7 +429,7 @@ public class WalletPanel extends MonPanel {
 			vp.add( "RUSD", m_rusd);
 			vp.add( m_config.busd().name(), m_busd);
 			vp.add( "Approved", m_approved);
-			vp.add( "MATIC", m_matic);
+			vp.add( m_config.nativeTokName(), m_matic);
 			vp.add( "Locked", m_locked);
 
 			vp.addHeader( "Operations");
@@ -445,7 +445,7 @@ public class WalletPanel extends MonPanel {
 					new JLabel( "trades"),
 					new HtmlButton("Go", e -> award() ) ); 
 
-			vp.add( "Give MATIC", new HtmlButton("Transfer .01 MATIC from Owner to this wallet", e -> giveMatic() ) );
+			vp.add( "Give " + m_config.nativeTokName(), new HtmlButton("Transfer .01 " + m_config.nativeTokName() + " from Owner to this wallet", e -> giveMatic() ) );
 
 			vp.addHeader( "Send Email");
 			vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
