@@ -1,5 +1,6 @@
 package web3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,13 +8,22 @@ import java.util.List;
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Keys;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.utils.Numeric;
 
 import common.Util;
+import fireblocks.FbRusd;
+import fireblocks.Fireblocks;
 import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
+import web3.RetVal.NewRetVal;
 
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
@@ -35,10 +45,12 @@ public class NodeInstance {
 
 	/** you could make this a member var */
 	private String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
+	private int chainId;
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
-	public NodeInstance( String rpcUrlIn, int maxBatchSizeIn) throws Exception {
+	public NodeInstance( String rpcUrlIn, int chainIdIn, int maxBatchSizeIn) throws Exception {
 		rpcUrl = rpcUrlIn;
+		chainId = chainIdIn;
 		
 		if (maxBatchSizeIn > 0) {
 			maxBatchSize = maxBatchSizeIn;
@@ -426,9 +438,7 @@ public class NodeInstance {
 			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "eth_getTransactionReceipt",
-			"params": [
-				"%s"
-			]
+			"params": [ "%s" ]
 			}""", transHash);
 		
 		// no result is no "result" tag, just id
@@ -447,14 +457,23 @@ public class NodeInstance {
 				"jsonrpc": "2.0",
 				"id": 1,
 				"method": "eth_getTransactionByHash",
-				"params": [
-					"%s"
-				]
+				"params": [ "%s" ]
 				}""", transHash);
 			
 		return nodeQuery( body).getObject( "result");
 	}
 	
+	BigInteger getNonce( String walletAddr) throws Exception {
+		String body = String.format( """
+				{
+				"jsonrpc": "2.0",
+				"id": 1,
+				"method": "eth_getTransactionCount",
+				"params": [ "%s", "latest" ]
+				}""", walletAddr);
+		return Erc20.decodeQuantity( queryHexResult( body, "nonce", "n/a", walletAddr) );
+	}
+
 	public long getBlockNumber( String transHash) throws Exception {
 		var obj = getTransactionByHash( transHash);
 		Util.require( obj != null, "Transaction not found with hash " + transHash);
@@ -569,10 +588,129 @@ public class NodeInstance {
 		return ts;
 	}
 	
+	// Assuming Param, Address, and BigInt classes are defined as provided
+	static class Param {}  // get rid of these, they are redundant
+
+	static class Address extends Param {
+		String value;
+
+		public Address(String value) {
+			this.value = value;
+		}
+	}
+
+	static class BigInt extends Param {
+		BigInteger value;
+
+		public BigInt(BigInteger value) {
+			this.value = value;
+		}
+
+		public BigInt(int value) {
+			this.value = BigInteger.valueOf(value);
+		}
+	}
+
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
-		c.node().showTrans( c.admin1Addr() );
+		var tok = c.readStocks().getAnyStockToken();
+		
+		Param[] params = {
+				new Address( prod),
+				new Address( c.rusdAddr()),
+				new Address( tok.address()),
+				new BigInt( c.rusd().toBlockchain( 1.) ),
+				new BigInt( tok.toBlockchain( 1.) )
+		};
+		
+		c.node().callSigned( 
+				c.admin1Key(),
+				c.rusdAddr(),
+				FbRusd.sellStockKeccak,
+				params,
+				500000
+				)
+			.waitForReceipt();
+				
 	}	
+	
+	// to get the reason you have to call again with the "defaultBlockParameter" set to 
+	// the block returned set like this
+	// DefaultBlockParameter.valueOf(transactionReceipt.getBlockNumber()))
+	// as a second parameter in the list of parameters
+	
+
+	// Updated method signature to include baseFee, priorityFee, and gasLimit for EIP-1559 transactions
+	/** @return hash code */
+	public RetVal callSigned(
+			String privateKey, 
+			String contractAddr, 
+			String keccak, 
+			Param[] params, 
+			int gasLimit 
+			) throws Exception {
+		
+		String callerAddr = Util.getAddress( privateKey);
+		String encodedData = encodeData(keccak, params);
+		var fees = queryFees();
+		
+		RawTransaction rawTransaction = RawTransaction.createTransaction(
+				chainId,
+				getNonce(callerAddr),
+				BigInteger.valueOf( gasLimit),
+				contractAddr,
+				BigInteger.ZERO,  // no ether to send
+				encodedData,
+				fees.priorityFee(),
+				fees.totalFee()
+				);
+		
+		Credentials credentials = Credentials.create(privateKey);
+		byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+		String hex = Numeric.toHexString(signedMessage);
+		
+		Req req = new Req("eth_sendRawTransaction", 1);
+		req.put( "params", Util.toArray( hex) );
+		
+		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
+		S.out( "  transaction hash: " + hash);
+		
+		return new NewRetVal( hash, this, callerAddr, contractAddr, encodedData);
+	}
+	
+	public void getRevertReason(String from, String to, String data, String blockNumber) throws Exception {
+		Req req = new Req( "eth_call", 1);
+
+		var param1 = Util.toJson(
+			"from", from,
+			"to", to,
+			"data", data,
+			"value", "0x0",
+			"gas", "0x1"
+			);
+//		"gas": "0x7a120"  // (optional) Gas limit (500,000 in this case)
+		
+		req.put( "params", Util.toArray( param1, blockNumber) );
+		S.out( "revert reason is ");
+		nodeQuery( req.toString() ).display();
+	}
+
+	// Method to encode the function call with its parameters
+	// remove, redundant
+	private static String encodeData(String keccak, Param[] params) throws Exception {
+		StringBuilder data = new StringBuilder(keccak);  // Start with the Keccak hash of the method signature
+
+		for (Param param : params) {
+			if (param instanceof Address address) {
+				data.append(Fireblocks.padAddr( address.value) );  // Address is 20 bytes, but we pad to 32 bytes (64 hex chars)
+			}
+			else if (param instanceof BigInt intVal) {
+				data.append(Fireblocks.padBigInt(intVal.value) );  // BigInt is 32 bytes
+			}
+		}
+
+		return "0x" + data.toString();  // Prepend 0x to the encoded data
+	}
 }
 
 

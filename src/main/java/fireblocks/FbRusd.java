@@ -9,12 +9,12 @@ import web3.Stablecoin;
 import web3.StockToken;
 
 public class FbRusd extends FbErc20 implements IRusd {
-	static final String buyRusdKeccak = "8a854e17";
-	static final String sellRusdKeccak = "5690cc4f"; 
-	static final String buyStockKeccak = "58e78a85";
-	static final String sellStockKeccak = "5948f1f0";
-	static final String addOrRemoveKeccak = "89fa2c03";
-	static final String swapKeccak = "62835413";
+	public static final String buyRusdKeccak = "8a854e17";
+	public static final String sellRusdKeccak = "5690cc4f"; 
+	public static final String buyStockKeccak = "58e78a85";
+	public static final String sellStockKeccak = "5948f1f0";
+	public static final String addOrRemoveKeccak = "89fa2c03";
+	public static final String swapKeccak = "62835413";
 
 	public FbRusd(String address, int decimals) throws Exception {
 		super( address, decimals, "RUSD");

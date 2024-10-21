@@ -28,7 +28,7 @@ public class TestRedeem extends MyTestCase {
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.mintBusd( refWallet, 2000).waitForCompleted();
+			m_config.mintBusd( refWallet, 2000).waitForHash();
 		}
 		
 		// mint some RUSD to new wallet 
@@ -95,7 +95,7 @@ public class TestRedeem extends MyTestCase {
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			S.out( "minting");
 			m_config.mintBusd( refWallet, 2000)
-					.waitForCompleted();
+					.waitForHash();
 		}
 		
 		// mint an amount of RUSD
@@ -144,7 +144,7 @@ public class TestRedeem extends MyTestCase {
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			m_config.mintBusd( refWallet, 2000)
-					.waitForCompleted();
+					.waitForHash();
 		}
 		
 		// mint an amount of RUSD that should work--high 

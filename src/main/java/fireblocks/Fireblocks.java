@@ -145,7 +145,7 @@ public class Fireblocks {
 	}
 
 	/** Pad with left zeros to 64 characters which is 32 bytes */
-	private static String padLeft(String str) {
+	public static String padLeft(String str) {
 		return Util.padLeft( str, 64, '0'); 
 	}
 	

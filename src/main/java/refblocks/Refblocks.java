@@ -102,8 +102,8 @@ public class Refblocks {
 		/** wait for the transaction receipt; not that this is a difference instance than
 		 *  the one where the initial wait is called; it doesn't matter since there is 
 		 *  no state */
-		public TransactionReceipt reallyWait(TransactionReceipt receipt) throws Exception {
-	        return super.waitForTransactionReceipt( receipt.getTransactionHash() );
+		public TransactionReceipt reallyWait(String hash) throws Exception {
+	        return super.waitForTransactionReceipt( hash);
 	    }
 	}
 	
@@ -409,15 +409,15 @@ public class Refblocks {
 	
 	/** wait for the transaction receipt with polling;
 	 *  this can timeout; try twice */
-	public static TransactionReceipt waitForReceipt(TransactionReceipt receipt) throws Exception {
+	public static TransactionReceipt waitForReceipt(String hash) throws Exception {
 		try {
 			// try once
-			return new DelayedTrp().reallyWait( receipt);
+			return new DelayedTrp().reallyWait( hash);
 		}
 		catch( SocketTimeoutException e) {
 			// try twice; second failing throws the exception
 			S.out( "WARNING: waiting for receipt http call timed out; trying again"); // not the same as the whole wait-for-receipt process timing out
-			return new DelayedTrp().reallyWait( receipt);
+			return new DelayedTrp().reallyWait( hash);
 		}
 	}
 
