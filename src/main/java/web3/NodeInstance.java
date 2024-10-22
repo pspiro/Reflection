@@ -308,8 +308,15 @@ public class NodeInstance {
 			decMap.put( address.toLowerCase(), decimals);
 		}
 	}
+	
+//	public long queryDecimals(String contractAddr) throws Exception {
+//		var p1 = Util.toJson( "to", contractAddr, "data", "0x18160ddd"); 
+//		var req = new Req( "eth_call", 1)
+//				.append( "params", Util.toArray( p1, "latest") );
+//		return Util.getLong( queryHexResult( req.toString(), "getDecimals", contractAddr, "n/a") );
+//	}
 
-	private int getTokenDecimals(String contractAddr) throws Exception {
+	public int getTokenDecimals(String contractAddr) throws Exception {
 		Util.reqValidAddress( contractAddr);
 
 		String body = String.format( """
@@ -430,7 +437,7 @@ public class NodeInstance {
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
 	}
 		
-	/** must handle the no receipt or not ready yet state */
+	/** @return null if no receipt; must handle the no receipt or not ready yet state */
 	public JsonObject getReceipt( String transHash) throws Exception {
 		String body = String.format( """
 			{
