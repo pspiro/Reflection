@@ -214,7 +214,7 @@ public class Statements {
 //					html, 
 //					true);
 			
-			SmtpSender.Josh.send( 
+			SmtpSender.Ses.send( 
 					"Reflection",
 					"josh@reflection.trading", 
 					email, 
