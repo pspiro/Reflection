@@ -265,7 +265,7 @@ public class Refblocks {
             Util.require( Numeric.isIntegerValue(weiValue), "Non decimal Wei value provided");
 
             // this could be reduced if needed
-    		BigInteger gasUnits = BigInteger.valueOf( 40000);
+    		BigInteger gasUnits = BigInteger.valueOf( 200000);  // was 40k, increased to 200k for ZkSync
     		
     		Fees fees = NodeServer.queryFees();
     		fees.showFees( gasUnits);

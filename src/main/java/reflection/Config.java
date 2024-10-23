@@ -393,10 +393,6 @@ public class Config extends ConfigBase {
 		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
-
-	private boolean isPulseChain() {
-		return "PulseChain".equals( blockchainName);
-	}
 	
 	/** confirm we have access to the password 
 	 * @throws Exception */
@@ -602,7 +598,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return Util.equals( moralisPlatform, "polygon", "pulsechain", "zksync");
+		return isPolygon() || isPulseChain() || isZksync();
 	}
 	
 	public String moralisPlatform() {
@@ -824,8 +820,16 @@ public class Config extends ConfigBase {
 		return maxSummaryEmails;
 	}
 
+	public boolean isPulseChain() {
+		return chainId == 369;
+	}
+
+	public boolean isPolygon() {
+		return chainId == 137;
+	}
+
 	public boolean isZksync() {
-		return "zksync".equals( blockchainName);
+		return chainId == 324;
 	}
 	
 	/** for display to user */

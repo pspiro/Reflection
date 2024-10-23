@@ -20,6 +20,7 @@ public abstract class RetVal {
 		S.out( waitForHash() );
 	}
 
+	/** Used with NodeInstance.callSigned() */
 	public static class NewRetVal extends RetVal {
 		private String m_hash;
 		private NodeInstance m_node;

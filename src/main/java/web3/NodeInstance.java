@@ -16,11 +16,12 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import fireblocks.FbRusd;
-import fireblocks.Fireblocks;
 import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
+import web3.Param.Address;
+import web3.Param.BigInt;
 import web3.RetVal.NewRetVal;
 
 /** id sent will be returned on response; you could batch all different query types
@@ -584,28 +585,6 @@ public class NodeInstance {
 	}
 	
 	// Assuming Param, Address, and BigInt classes are defined as provided
-	static class Param {}  // get rid of these, they are redundant
-
-	static class Address extends Param {
-		String value;
-
-		public Address(String value) {
-			this.value = value;
-		}
-	}
-
-	static class BigInt extends Param {
-		BigInteger value;
-
-		public BigInt(BigInteger value) {
-			this.value = value;
-		}
-
-		public BigInt(int value) {
-			this.value = BigInteger.valueOf(value);
-		}
-	}
-
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
 		var tok = c.readStocks().getAnyStockToken();
@@ -648,7 +627,8 @@ public class NodeInstance {
 	
 
 	// Updated method signature to include baseFee, priorityFee, and gasLimit for EIP-1559 transactions
-	/** @return hash code */
+	/** Not used, but could be;
+	 *  @return hash code */
 	public RetVal callSigned(
 			String privateKey, 
 			String contractAddr, 
@@ -658,7 +638,7 @@ public class NodeInstance {
 			) throws Exception {
 		
 		String callerAddr = Util.getAddress( privateKey);
-		String encodedData = encodeData(keccak, params);
+		String encodedData = Param.encodeData(keccak, params);
 		var fees = queryFees();
 		
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
@@ -684,6 +664,10 @@ public class NodeInstance {
 		
 		return new NewRetVal( hash, this, callerAddr, contractAddr, encodedData);
 	}
+
+	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
+		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
+	}
 	
 	public void getRevertReason(String from, String to, String data, String blockNumber) throws Exception {
 		Req req = new Req( "eth_call", 1);
@@ -704,20 +688,6 @@ public class NodeInstance {
 
 	// Method to encode the function call with its parameters
 	// remove, redundant
-	private static String encodeData(String keccak, Param[] params) throws Exception {
-		StringBuilder data = new StringBuilder(keccak);  // Start with the Keccak hash of the method signature
-
-		for (Param param : params) {
-			if (param instanceof Address address) {
-				data.append(Fireblocks.padAddr( address.value) );  // Address is 20 bytes, but we pad to 32 bytes (64 hex chars)
-			}
-			else if (param instanceof BigInt intVal) {
-				data.append(Fireblocks.padBigInt(intVal.value) );  // BigInt is 32 bytes
-			}
-		}
-
-		return "0x" + data.toString();  // Prepend 0x to the encoded data
-	}
 }
 
 

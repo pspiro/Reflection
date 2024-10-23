@@ -42,7 +42,7 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	static final HookConfig m_config = new HookConfig();
+	private static final HookConfig m_config = new HookConfig();
 	static String chain() { return Util.toHex( m_config.chainId() ); }
 	final Stocks stocks;
 	final StreamMgr sm;
@@ -68,11 +68,15 @@ public class HookServer {
 	HookServer(String[] args) throws Exception {
 		m_config.readFromSpreadsheet( Config.getTabName( args) );
 		stocks = m_config.readStocks();
-		sm = m_config.hookType().create();
+		
+		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
+		sm = m_config.hookType() == HookType.Moralis
+				? new MoralisStreamMgr()
+				: new AlchemyStreamMgr( m_config.alchemyChain(), m_config.nativeTokName(), m_config.busdAddr() );
 	}
 	
 	void run() throws Exception {
-		MyClient.filename = "hookserver.http.log";
+		MyClient.filename = "hook.http.log";
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
@@ -100,10 +104,10 @@ public class HookServer {
 		});
 
 		if (streaming() ) {
-			// for Alchemy, the hooks don't have names, so we can only run one see of 
+			// for Alchemy, the hooks don't have names, so we can only run one set of 
 			// hooks per chain (or we could remember the set of ID's and delete by id)
 			if (m_config.hookType() == HookType.Alchemy) {  // improve this to delete the chains better
-				new AlchemyStreamMgr().deleteAllForChain( m_config.alchemyChain() ); 
+				AlchemyStreamMgr.deleteAllForChain( m_config.alchemyChain() ); 
 			}
 
 			String urlBase = m_config.hookServerUrlBase();

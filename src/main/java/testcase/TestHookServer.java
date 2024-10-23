@@ -46,7 +46,7 @@ public class TestHookServer extends MyTestCase {
 		m_config.rusd().mintRusd(newWallet, 10, stocks.getAnyStockToken() )
 				.displayHash();
 
-		S.out( "waiting for position");
+		S.out( "waiting for position from hookserver");
 		waitFor( 60, () -> {
 			JsonObject obj = MyClient.getJson( hook + "/get-wallet/" + newWallet)
 					.getArray("positions")
@@ -74,45 +74,45 @@ public class TestHookServer extends MyTestCase {
 	}
 
 	public void testNative() throws Exception {
-		double n = .0001;
+		double ethAmt = .00001;
 		
 		// send native token to wallet
 		S.out( "testing native transfer");
 		m_config.matic().transfer(
 				m_config.ownerKey(), 
 				newWallet,
-				n).displayHash();
+				ethAmt).displayHash();
 
 		// wait for it to appear
 		waitFor( 60, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + newWallet)
 					.getDouble( "native");
 			S.out( String.format( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
-					n, S.fmt4(pos), S.fmt4(NodeServer.getNativeBalance( newWallet) ) ) );
-			return Util.isEq( pos, n, .00001);
+					ethAmt, S.fmt4(pos), S.fmt4(NodeServer.getNativeBalance( newWallet) ) ) );
+			return Util.isEq( pos, ethAmt, .000001);
 		});
 	}
 	
 	public void testApprove() throws Exception {
-		int n = Util.rnd.nextInt( 10000) + 10;
+		int amt = Util.rnd.nextInt( 10000) + 10;
 
 		// let Owner approve RUSD to spend BUSD
-		S.out( "testing approve");
+		S.out( "testing approve w/ random amt %s", amt);
 
 		// create the owner wallet first so we know we get the event
 		MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() );
 
 		// let Owner approve RUSD to spend BUSD (no sig needed)
-		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), n)
+		m_config.busd().approve( m_config.ownerKey(), m_config.rusdAddr(), amt)
 				.displayHash();
-
+		
 		// wait for it to be reflected in wallet
 		waitFor( 120, () -> {
 			double pos = MyClient.getJson( hook + "/get-wallet/" + m_config.ownerAddr() )
 					.getDouble( "approved");
 			S.out( "need=%s  hookserver=%s  query=%s",  // note that the query comes about 3 seconds quicker
-					n, pos, m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
-			return pos == n; 
+					amt, pos, m_config.busd().getAllowance( m_config.ownerAddr(), m_config.rusdAddr() ) );
+			return pos == amt; 
 		});
 	}
 	
@@ -120,25 +120,30 @@ public class TestHookServer extends MyTestCase {
 	 * @throws Exception */
 	public void testBalances() throws Exception {
 		var tok = stocks.getAnyStockToken();
-		String wallet = Util.createFakeAddress();
 
-		m_config.rusd().mintRusd( wallet, 5, tok);
-		m_config.busd().mint( m_config.ownerKey(), wallet, 6);
-		m_config.rusd().mintStockToken(wallet, tok, 7);
+		m_config.rusd().mintRusd( newWallet, 5, tok).waitForHash();
+		m_config.rusd().mintStockToken(newWallet, tok, 6).waitForHash();
+		if (!m_config.isProduction() ) {
+			m_config.busd().mint( m_config.ownerKey(), newWallet, 7).waitForHash();
+		}
 		
-		waitForBalance(wallet, m_config.rusdAddr(), 5, false);
-		waitForBalance(wallet, m_config.busdAddr(), 6, false);
-		waitForBalance(wallet, tok.address(), 7, false);
+		// wait for balances to appear in wallet locally
+		waitForBalance(newWallet, m_config.rusdAddr(), 5, false);
+		waitForBalance(newWallet, tok.address(), 6, false);
+		if (!m_config.isProduction() ) {
+			waitForBalance(newWallet, m_config.busdAddr(), 7, false);
+		}
 		
-		var ret = MyClient.getJson( hook + "/get-wallet-map/" + wallet);
+		var ret = MyClient.getJson( hook + "/get-wallet-map/" + newWallet);
 		ret.display();
-		
+
+		// verify that hookserver has the balances as well
 		var balances = ret.getObject( "positions");
-		
 		assertEquals( 5., balances.getDouble( m_config.rusdAddr() ) );
-		assertEquals( 6., balances.getDouble( m_config.busdAddr() ) );
-		assertEquals( 7., balances.getDouble( tok.address() ) );
-		
+		assertEquals( 6., balances.getDouble( tok.address() ) );
+		if (!m_config.isProduction() ) {
+			assertEquals( 7., balances.getDouble( m_config.busdAddr() ) );
+		}
 	}
 	
 }

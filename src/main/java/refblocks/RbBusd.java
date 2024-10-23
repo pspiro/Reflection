@@ -42,9 +42,12 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "%s approving %s to spend %s %s", 
 				Refblocks.getAddressPk(approverKey), spenderAddr, amt, m_name);
 		
-		return Refblocks.exec( approverKey, tm -> load( tm, 100000)
+		return Refblocks.exec( approverKey, tm -> load( tm, 200000)
 				.approve( spenderAddr, toBlockchain( amt) ) );
 	}
+	
+	// for gas amount, it's not enough to put in the amount really needed;
+	// you have to put in a much higher amount--at least with zksync
 		
 	/** For testing only; anyone can call this but they must have some gas */
 	@Override public RetVal mint( String callerKey, String address, double amt) throws Exception {
@@ -54,7 +57,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "%s minting %s %s for %s", 
 				Refblocks.getAddressPk(callerKey), amt, m_name, address);
 
-		return Refblocks.exec( callerKey, tm -> load( tm, 100000)
+		return Refblocks.exec( callerKey, tm -> load( tm, 200000)  // zksync requires higher amounts
 				.mint( address, toBlockchain( amt) ) );
 	}
 
@@ -66,7 +69,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		S.out( "transferring %s %s from %s to %s",
 				amt, m_name, Refblocks.getAddressPk( fromKey), toAddr);
 
-		return Refblocks.exec( fromKey, tm -> load( tm, 100000) // actual is around 50000
+		return Refblocks.exec( fromKey, tm -> load( tm, 200000) // actual is around 50000
 			.transfer( toAddr, toBlockchain( amt) ) );
 	}
 }

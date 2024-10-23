@@ -9,41 +9,50 @@ import junit.framework.TestCase;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	TestApprove.class,			//
-	TestBackendMsgs.class,		// testOnRamp
-	TestCheckIdentity.class,	//
-	TestConfig.class,			//
-	TestErrors.class,			//
-	TestFaqs.class,				//
-	TestFbOrders.class,			// testInsufAllow fails
-	TestFireblocks.class,
-	TestGetCryptoTrans.class,	//
-	TestGetPositions.class,		// testTokPos
-	TestGtable.class,			//
+	// blockchain stuff
+	
+//	TestAlchemy.class,
+	TestFbOrders.class,
 	TestHookServer.class,
-	TestHttpClient.class,		// testgetarray
-	TestKyc.class,				//
-	TestMktDataServer.class,	//
-	TestNodeServer.class,		// testKnownTrans
-	TestOnramp.class,			
-	TestOrder.class,			// testFillBuy fails then passes
-	//TestOrderNoAutoFill.class,
-	//TestOutsideHours.class,
-	//TestPanic.class,			// fails, ok
-	//TestPartialFill.class,	// fails, ok
-	TestPositionTracker.class,	//
-	TestPrices.class,			//
-	TestProfile.class,			// 
-	//TestRedeem.class,			// fails because of nonce errors; needs fixing
-	TestReward.class,			//
-	TestSignup.class,			//
-	TestSiwe.class,				//
-	TestSplitDates.class,		// fails, ignoring for now
-	TestSql.class,				//
-	TestSwap.class,				// not implemented yet
-	TestUnwindOrder.class,		// won't work in auto-fill mode
-	TestUserTokMgr.class,		//
-	TestWallet.class,			// testMyWallet, testPosQuery
+	TestNodeServer.class,
+	TestSwap.class,
+	
+	TestApprove.class,
+	TestBackendMsgs.class,
+	TestCheckIdentity.class,
+	TestConfig.class,
+	TestErrors.class,
+	TestFaqs.class,
+	TestFaucet.class,
+	TestFundWallet.class,
+	TestGetCryptoTrans.class,
+	TestGetPositions.class,
+	TestGtable.class,
+	TestHttpClient.class,
+	TestJson.class,
+	TestKyc.class,
+	TestMktDataServer.class,
+	TestOnramp.class,
+	TestOrder.class,
+	TestOrderNoAutoFill.class,
+	TestOutsideHours.class,
+	TestPanic.class,
+	TestParams.class,
+	TestPartialFill.class,
+	TestPositionTracker.class,
+	TestPrices.class,
+	TestProfile.class,
+	TestPwServer.class,
+	TestRedeem.class,
+	TestReqPositionsMap.class,
+	TestReward.class,
+	TestSignup.class,
+	TestSiwe.class,
+	TestSplitDates.class,
+	TestSql.class,
+	TestUnwindOrder.class,
+	TestUserTokMgr.class,
+	TestWallet.class
 })
 public class TestAll extends TestCase {
 }

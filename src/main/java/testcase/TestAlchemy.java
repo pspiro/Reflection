@@ -10,6 +10,7 @@ import http.MyClient;
 import http.MyServer;
 import tw.util.S;
 
+/** test handling Alchemy webhooks */
 public class TestAlchemy {
 	public static void main(String[] args) throws Exception {
 		MyServer.listen( 8080, 10, server -> {

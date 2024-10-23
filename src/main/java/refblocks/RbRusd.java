@@ -127,7 +127,7 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidAddress(address);
 
 		S.out( "RB-RUSD %s %s admin %s",
-				Refblocks.getAddressPk( ownerKey),
+				Util.getAddress( ownerKey),
 				add ? "adding" : "removing",
 				address);
 				
@@ -143,8 +143,8 @@ public class RbRusd extends Erc20 implements IRusd {
 		Util.reqValidKey(approverKey);
 		Util.reqValidAddress(spenderAddr);
 
-		S.out( "RUSD %s allows spending of %s RUSD by %s",
-				approverKey,
+		S.out( "RB-RUSD %s allows spending of %s RUSD by %s",
+				Util.getAddress(approverKey),
 				amt,
 				spenderAddr);
 		

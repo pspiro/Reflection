@@ -7,8 +7,8 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
+import positions.AlchemyStreamMgr;
 import positions.HookConfig;
-import positions.MoralisStreams;
 import reflection.Config;
 import tw.util.S;
 
@@ -18,19 +18,22 @@ public class TestStream {
 		c.readFromSpreadsheet( Config.getTabName(args) );
 
 		MyServer.listen( c.hookServerPort(), 10, server -> {
-			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
+			server.createContext("/test/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
 		});
 
-		MoralisStreams.createStream(
-				MoralisStreams.approval, 
-				"junk1", 
-				c.hookServerUrlBase() + "/hook/webhook", 
-				Util.toHex( c.chainId() ),
-				c.rusdAddr() );
-
+//		MoralisStreams.createStream(
+//				MoralisStreams.approval, 
+//				"junk1", 
+//				c.hookServerUrlBase() + "/hook/webhook", 
+//				Util.toHex( c.chainId() ),
+//				c.rusdAddr() );
+		AlchemyStreamMgr mgr = new AlchemyStreamMgr( c.alchemyChain(), c.nativeTokName(), c.busdAddr() );
+		mgr.createApprovalStream( Util.getNgrokUrl() + "/test", c.rusdAddr() );
+		
 		Util.executeIn( 5000, () -> {
 			try {
-				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5);
+				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5).waitForHash();
+				c.rusd().approve( c.ownerKey(), c.busdAddr(), 6).waitForHash();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
