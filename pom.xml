@@ -148,12 +148,13 @@
 			<version>4.10.3</version>
 		</dependency>
 
-	<dependency>
-      <groupId>io.zksync</groupId>
-      <artifactId>zksync2</artifactId>
-      <version>v0.2.0</version>
-    </dependency>
-</dependencies>
+		<dependency>
+		    <groupId>io.zksync</groupId>
+		    <artifactId>zksync2</artifactId>
+		    <version>0.3.0</version>
+		</dependency>
+  
+		</dependencies>
 	
 	<!-- you can use this for dependency management, they you don't need to add the version
 	     of any of the google cloud libraries; in particular this will add the correct

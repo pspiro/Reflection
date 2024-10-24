@@ -13,13 +13,11 @@ public class FbRetVal extends RetVal {
 		return m_id;
 	}
 	
-	/** This blocks for up to 63 seconds */
-	@Override public String waitForHash() throws Exception {
-		return Fireblocks.waitForHash(m_id, 60, 2000);
-	}
-	
 	/** This blocks for up to 2 min */
-	@Override public void waitForCompleted() throws Exception {
+	@Override public String waitForHash() throws Exception {
+		// take your pick
+		Fireblocks.waitForHash(m_id, 60, 2000);
 		Fireblocks.waitForStatus(m_id, "COMPLETED");  // throw an exception if not completed. pas
+		throw new Exception();
 	}
 }

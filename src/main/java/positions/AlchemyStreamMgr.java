@@ -9,9 +9,20 @@ import positions.HookServer.StreamMgr;
 import tw.util.S;
 import web3.Erc20;
 
-class AlchemyStreamMgr extends StreamMgr {
-	
+public class AlchemyStreamMgr extends StreamMgr {
+	private String chain;
+	private String nativeTokName;
+	private String busdAddr;  // used for the approval stream only
+
 	static String base = "https://dashboard.alchemy.com/api";
+
+	/** Alchemy chain from here: https://docs.alchemy.com/reference/create-webhook 
+	 * @param string */
+	public AlchemyStreamMgr(String chainIn, String nativeTokNameIn, String busdAddrIn) {
+		chain = chainIn;
+		nativeTokName = nativeTokNameIn;
+		busdAddr = busdAddrIn;
+	}
 	
 	private JsonObject post( String uri, JsonObject body) throws Exception {
 		return MyClient.create( base + uri, body.toString() ).queryAlchemy(); 
@@ -21,11 +32,11 @@ class AlchemyStreamMgr extends StreamMgr {
 		return MyClient.createPatch( base + uri, body.toString() ).queryAlchemy(); 
 	}
 	
-	private JsonObject get( String uri) throws Exception {
+	private static JsonObject get( String uri) throws Exception {
 		return MyClient.create( base + uri).queryAlchemy(); 
 	}
 	
-	private JsonObject delete( String uri) throws Exception {
+	private static JsonObject delete( String uri) throws Exception {
 		return MyClient.createDelete( base + uri).queryAlchemy(); 
 	}
 	
@@ -33,14 +44,16 @@ class AlchemyStreamMgr extends StreamMgr {
 	 * 
 	 * @return webhook id */
 	@Override public String createTransfersStream(String urlBase) throws Exception {
+		Util.require( S.isNotNull( chain), "Null Alchemy chain");
+
 		JsonObject body = Util.toJson(
-				"network", HookServer.m_config.alchemyChain(),  
+				"network", chain,  
 				"webhook_type", "ADDRESS_ACTIVITY",
 				"webhook_url", urlBase + "/hook/webhook",
 				"addresses", new String[0]
 				);
 
-		S.out( "Creating alchemy transfers webhook");
+		S.out( "Creating alchemy transfers webhook " + body);
 		return createAndActivate( body);
 	}
 	
@@ -48,25 +61,26 @@ class AlchemyStreamMgr extends StreamMgr {
 	 * 
 	 *  @return webhook id */
 	@Override public String createApprovalStream( String urlBase, String address) throws Exception {
+		Util.require( S.isNotNull( chain), "Null Alchemy chain");
+		
 		JsonObject body = Util.toJson(
-				"network", HookServer.m_config.alchemyChain(),  
+				"network", chain,  
 				"webhook_type", "ADDRESS_ACTIVITY",
 				"webhook_url", urlBase + "/hook/webhook",
 				"topics", Util.toArray( "0x8c5be1e5ebec7d5bd14f71443fa28e55bc75e4bba6c7d3e62bd1bcbf2c7c5f4a"),
 				"addresses", Util.toArray( address)
 				);
 
-		S.out( "Creating alchemy approvals webhook");
+		S.out( "Creating alchemy approvals webhook " + body);
 		return createAndActivate( body);
-		
 	}
 	
-	private JsonArray getAllHooks() throws Exception {
+	private static JsonArray getAllHooks() throws Exception {
 		S.out( "getting all Alchemy webhooks");
 		return get( "/team-webhooks").getArray( "data");
 	}
 	
-	public void deleteAllForChain( String chain) throws Exception {
+	public static void deleteAllForChain( String chain) throws Exception {
 		for (var hook : getAllHooks() ) {
 			if (hook.getString( "network").equals( chain) ) {
 				deleteHook( hook.getString( "id") );
@@ -74,13 +88,13 @@ class AlchemyStreamMgr extends StreamMgr {
 		}
 	}
 
-	public void deleteAllHooks() throws Exception {
+	public static void deleteAllHooks() throws Exception {
 		for (var hook : getAllHooks() ) {
 			deleteHook( hook.getString( "id") );
 		}
 	}
 
-	private void deleteHook(String id) throws Exception {
+	private static void deleteHook(String id) throws Exception {
 		S.out( "deleting Alchemy hook %s", id);
 		delete( "/delete-webhook?webhook_id=" + id);  
 	}
@@ -146,7 +160,7 @@ class AlchemyStreamMgr extends StreamMgr {
 						// native transfer?
 						if ( (category.equals( "internal") || category.equals( "external") ) &&
 								S.isNull( contract) &&
-								assetName.equalsIgnoreCase( HookServer.m_config.nativeTokName() ) ) {
+								assetName.equalsIgnoreCase( nativeTokName) ) {
 
 							S.out( "ALCHEMY NATIVE TRANSFER  %s native token was transferred from %s to %s", 
 									amt, from, to);
@@ -183,7 +197,7 @@ class AlchemyStreamMgr extends StreamMgr {
 		for (var trans : hook.getArray( "erc20Approvals") ) {
 			String contract = trans.getString("contract");
 
-			if (contract.equalsIgnoreCase(HookServer.m_config.busd().address() ) ) {
+			if (contract.equalsIgnoreCase(busdAddr) ) {
 				String owner = trans.getString("owner");
 				String spender = trans.getString("spender");
 				double amt = trans.getDouble("valueWithDecimals");

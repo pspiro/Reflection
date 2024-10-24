@@ -103,7 +103,7 @@ public class TestTwoAdmins {
 		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), config);
 		
 		config.rusd().mintRusd( wallet, amt, stocks.getAnyStockToken() )
-			.waitForCompleted();
+			.waitForHash();
 	}
 
 	private static void createUserProfile(String wallet, Config config) throws Exception {

@@ -27,7 +27,7 @@ public class TestStockToken extends MyTestCase {
 
 			// buy stock should fail now that RUSD has been changed
 			shouldFail( () -> m_config.rusd().buyStockWithRusd( Cookie.wallet, 1, st, 1)
-					.waitForCompleted() );  // note that waitForHash() succeeds!!!
+					.waitForHash() );  // note that waitForHash() succeeds!!!
 
 			// set RUSD back to normal
 			fbSt.setRusdAddress( Accounts.instance.getId("Owner"), m_config.rusd().address() )

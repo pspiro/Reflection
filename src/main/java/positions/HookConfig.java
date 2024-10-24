@@ -8,27 +8,7 @@ import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
 public class HookConfig extends Config {
-	public enum HookType { 
-		None {
-			StreamMgr create() throws Exception {
-				throw new Exception( "HookServer is not configured");
-			}
-		},
-		Moralis {
-			StreamMgr create() throws Exception {
-				S.out( "Using Moralis streams");
-				return new MoralisStreamMgr();
-			}
-		},			
-		Alchemy {
-			StreamMgr create() throws Exception {
-				S.out( "Using Alchemy streams");
-				return new AlchemyStreamMgr();
-			}
-		};
-		
-		abstract StreamMgr create() throws Exception;
-	};
+	public enum HookType { None, Moralis, Alchemy }
 
 	private HookType hookType;
 	private String alchemyChain;

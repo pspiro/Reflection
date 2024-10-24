@@ -556,6 +556,7 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
+	/** This is called as part of on-boarding process */
 	public void handleFundWallet() {
 		wrap( () -> {
 			parseMsg();
@@ -652,7 +653,7 @@ public class BackendTransaction extends MyTransaction {
 			// require user profile
 			require(new Profile( getorCreateUser() ).isValid(), 
 					RefCode.INVALID_USER_PROFILE, 
-					"Please update your user profile before receiving PLS");
+					"Please update your user profile and try again");
 			
 			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");

@@ -17,7 +17,7 @@ public class TestUserTokMgr extends MyTestCase {
 		double amt = buyPrice * 2 + 5;
 		S.out( "Minting %s RUSD", amt);
 		m_config.rusd().mintRusd( Cookie.wallet, amt, stocks.getAnyStockToken() )  // I don't think this is necessary but I saw it fail without this
-			.waitForCompleted();
+			.waitForHash();
 		waitForRusdBalance(Cookie.wallet, amt, false);
 
 		// first order - should pass

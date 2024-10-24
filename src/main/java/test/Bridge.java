@@ -20,7 +20,7 @@ public class Bridge {
 //		double v1 = ether.getBalance( usdcOnEther, owner, 6);
 //		S.out( v1);
 
-		NodeInstance pulse = new NodeInstance( pulseNode, 10);
+		NodeInstance pulse = new NodeInstance( pulseNode, 0, 10);
 		S.out( "Prod owner wallet on PulseChain");
 		double usdcBal = pulse.getBalance( usdcOnPulse, prodOwner, 6);
 		S.out( "USDC: %s", usdcBal);

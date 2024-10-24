@@ -1,5 +1,6 @@
 package web3;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,13 +8,21 @@ import java.util.List;
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+import org.web3j.crypto.Credentials;
 import org.web3j.crypto.Keys;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
+import org.web3j.utils.Numeric;
 
 import common.Util;
+import fireblocks.FbRusd;
 import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
+import web3.Param.Address;
+import web3.Param.BigInt;
+import web3.RetVal.NewRetVal;
 
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
@@ -21,6 +30,7 @@ public class NodeInstance {
     static final String transferEventSignature = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
 	public static final String nullAddr = "0x0000000000000000000000000000000000000000";
+	public static final String latest = "latest";
 
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
@@ -35,10 +45,12 @@ public class NodeInstance {
 
 	/** you could make this a member var */
 	private String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
+	private int chainId;
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
-	public NodeInstance( String rpcUrlIn, int maxBatchSizeIn) throws Exception {
+	public NodeInstance( String rpcUrlIn, int chainIdIn, int maxBatchSizeIn) throws Exception {
 		rpcUrl = rpcUrlIn;
+		chainId = chainIdIn;
 		
 		if (maxBatchSizeIn > 0) {
 			maxBatchSize = maxBatchSizeIn;
@@ -181,7 +193,7 @@ public class NodeInstance {
 
 	public Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
-		JsonObject json = getFeeHistory(5, 60).getObject( "result");
+		JsonObject json = getFeeHistory(5, 1).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -297,8 +309,15 @@ public class NodeInstance {
 			decMap.put( address.toLowerCase(), decimals);
 		}
 	}
+	
+//	public long queryDecimals(String contractAddr) throws Exception {
+//		var p1 = Util.toJson( "to", contractAddr, "data", "0x18160ddd"); 
+//		var req = new Req( "eth_call", 1)
+//				.append( "params", Util.toArray( p1, "latest") );
+//		return Util.getLong( queryHexResult( req.toString(), "getDecimals", contractAddr, "n/a") );
+//	}
 
-	private int getTokenDecimals(String contractAddr) throws Exception {
+	public int getTokenDecimals(String contractAddr) throws Exception {
 		Util.reqValidAddress( contractAddr);
 
 		String body = String.format( """
@@ -419,16 +438,14 @@ public class NodeInstance {
 		return Erc20.fromBlockchain( queryHexResult( body, "balance", contractAddr, walletAddr), decimals);
 	}
 		
-	/** must handle the no receipt or not ready yet state */
+	/** @return null if no receipt; must handle the no receipt or not ready yet state */
 	public JsonObject getReceipt( String transHash) throws Exception {
 		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "eth_getTransactionReceipt",
-			"params": [
-				"%s"
-			]
+			"params": [ "%s" ]
 			}""", transHash);
 		
 		// no result is no "result" tag, just id
@@ -447,9 +464,7 @@ public class NodeInstance {
 				"jsonrpc": "2.0",
 				"id": 1,
 				"method": "eth_getTransactionByHash",
-				"params": [
-					"%s"
-				]
+				"params": [ "%s" ]
 				}""", transHash);
 			
 		return nodeQuery( body).getObject( "result");
@@ -569,10 +584,110 @@ public class NodeInstance {
 		return ts;
 	}
 	
+	// Assuming Param, Address, and BigInt classes are defined as provided
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
-		c.node().showTrans( c.admin1Addr() );
+		var tok = c.readStocks().getAnyStockToken();
+		
+		Param[] params = {
+				new Address( prod),
+				new Address( c.rusdAddr()),
+				new Address( tok.address()),
+				new BigInt( c.rusd().toBlockchain( 1.) ),
+				new BigInt( tok.toBlockchain( 1.) )
+		};
+		
+		c.node().callSigned( 
+				c.admin1Key(),
+				c.rusdAddr(),
+				FbRusd.sellStockKeccak,
+				params,
+				500000
+				)
+			.waitForReceipt();
+	}				
+
+	/** @deprecated use queryFees instead */
+	BigInteger getGasPrice() throws Exception {
+		return Numeric.decodeQuantity(
+				queryHexResult( new Req("eth_gasPrice", 1).toString(), "gas", "n/a", "n/a")
+			);
+	}
+	
+	public BigInteger getNonce(String addr) throws Exception {
+		var req = new Req("eth_getTransactionCount", 1);
+		req.put( "params", Util.toArray( addr, latest) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), "count", "n/a", "n/a") );
 	}	
+	
+	// to get the reason you have to call again with the "defaultBlockParameter" set to 
+	// the block returned set like this
+	// DefaultBlockParameter.valueOf(transactionReceipt.getBlockNumber()))
+	// as a second parameter in the list of parameters
+	
+
+	// Updated method signature to include baseFee, priorityFee, and gasLimit for EIP-1559 transactions
+	/** Not used, but could be;
+	 *  @return hash code */
+	public RetVal callSigned(
+			String privateKey, 
+			String contractAddr, 
+			String keccak, 
+			Param[] params, 
+			int gasLimit 
+			) throws Exception {
+		
+		String callerAddr = Util.getAddress( privateKey);
+		String encodedData = Param.encodeData(keccak, params);
+		var fees = queryFees();
+		
+		RawTransaction rawTransaction = RawTransaction.createTransaction(
+				chainId,
+				getNonce(callerAddr),
+				BigInteger.valueOf( gasLimit),
+				contractAddr,
+				BigInteger.ZERO,  // no ether to send
+				encodedData,
+				fees.priorityFee(),
+				fees.totalFee()
+				);
+		
+		Credentials credentials = Credentials.create(privateKey);
+		byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
+		String hex = Numeric.toHexString(signedMessage);
+		
+		Req req = new Req("eth_sendRawTransaction", 1);
+		req.put( "params", Util.toArray( hex) );
+		
+		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
+		S.out( "  transaction hash: " + hash);
+		
+		return new NewRetVal( hash, this, callerAddr, contractAddr, encodedData);
+	}
+
+	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
+		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
+	}
+	
+	public void getRevertReason(String from, String to, String data, String blockNumber) throws Exception {
+		Req req = new Req( "eth_call", 1);
+
+		var param1 = Util.toJson(
+			"from", from,
+			"to", to,
+			"data", data,
+			"value", "0x0",
+			"gas", "0x1"
+			);
+//		"gas": "0x7a120"  // (optional) Gas limit (500,000 in this case)
+		
+		req.put( "params", Util.toArray( param1, blockNumber) );
+		S.out( "revert reason is ");
+		nodeQuery( req.toString() ).display();
+	}
+
+	// Method to encode the function call with its parameters
+	// remove, redundant
 }
 
 

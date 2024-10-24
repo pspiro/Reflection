@@ -24,19 +24,17 @@ import tw.util.S;
 // smtp pw: BKH2OchBydo3BfNhbwjpK+/BpTMMTB7Q6799mjiViKMa
 // host: email-smtp.us-east-1.amazonaws.com
 public class SmtpSender implements AutoCloseable {
+	public enum Type { Statement, Newsletter, Message };  // for the Type SES metric
+	
 	public static record SmtpUser( String host, String username, String password) {
-		/** for sending multiple emails; didn't work well, needs extensive testing */
-		public SmtpSender sender() throws Exception { 
-			return new SmtpSender( host, username, password); 
-		}
-
 		/** Send one email  and close connection */
-		public void send( String fromName, String fromEmail, String toEmail, String subject, String body) throws Exception {
-			sendOne( host, username, password, fromName, fromEmail, toEmail, subject, body);
+		public void send( String fromName, String fromEmail, String toEmail, String subject, String body, Type type) throws Exception {
+			sendOne( host, username, password, fromName, fromEmail, toEmail, subject, body, type);
 		}
 	}
 
 	private static final String MyGmail = "peteraspiro@gmail.com";
+	private static final String MyRefl = "peter@reflection.trading";
 	private static final String OpenXchange = "smtp.openxchange.eu";
 	private static boolean debug;
 	
@@ -78,7 +76,7 @@ public class SmtpSender implements AutoCloseable {
 	}
 
 	// Send message method
-	public void send(String fromName, String fromEmail, String toEmail, String subject, String body) throws IOException {
+	public void send(String fromName, String fromEmail, String toEmail, String subject, String body, Type type) throws IOException {
 		S.out( "Sending email  from:%s <%s>  to:%s  subject:%s", fromName, fromEmail, toEmail, subject);
 		
 		writer.println("MAIL FROM:<" + fromEmail + ">");
@@ -94,7 +92,9 @@ public class SmtpSender implements AutoCloseable {
 		writer.println("From: " + fromName + " <" + fromEmail + ">");
 		writer.println("To: " + toEmail);
 		writer.println("Content-Type: text/html; charset=UTF-8");
-		writer.println("Return-Receipt-To: " + fromEmail);
+		writer.println("X-SES-CONFIGURATION-SET: MySet");
+		writer.println("User: " + toEmail);
+		writer.println("Type: " + type);
 		writer.println();
 		writer.println(body);
 		writer.println(".");
@@ -123,9 +123,9 @@ public class SmtpSender implements AutoCloseable {
 	}
 	
 	/** Send one email  and close connection */
-	public static void sendOne( String host, String username, String password, String fromName, String fromEmail, String toEmail, String subject, String body) throws Exception {
+	public static void sendOne( String host, String username, String password, String fromName, String fromEmail, String toEmail, String subject, String body, Type type) throws Exception {
 		try (SmtpSender email = new SmtpSender( host, username, password) ) {
-			email.send( fromName, fromEmail, toEmail, subject, body);
+			email.send( fromName, fromEmail, toEmail, subject, body, type);
 		}
 	}
 	
@@ -139,6 +139,7 @@ public class SmtpSender implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		debug = true;
-		Ses.send("josh", "josh@reflection.trading", MyGmail, "sub2", "body");
+		Ses.send("josh", "josh@reflection.trading", MyGmail, "sub2", "body", Type.Message);
+		Ses.send("josh", "josh@reflection.trading", MyRefl, "sub2", "body", Type.Message);
 	}
 }

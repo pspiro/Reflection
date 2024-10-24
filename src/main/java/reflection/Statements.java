@@ -7,12 +7,9 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import com.ib.client.Types.Action;
-
 import common.SmtpSender;
 import common.Util;
 import tw.util.S;
-import web3.MoralisServer;
 import web3.NodeInstance;
 
 // you could create an easier way for this, where you pass Json and it finds the replacement tags based on json tags
@@ -217,12 +214,13 @@ public class Statements {
 //					html, 
 //					true);
 			
-			SmtpSender.Josh.send( 
+			SmtpSender.Ses.send( 
 					"Reflection",
 					"josh@reflection.trading", 
 					email, 
 					"Reflection Account Statement", 
-					html); 
+					html,
+					SmtpSender.Type.Statement); 
 
 			return true;
 		}

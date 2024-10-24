@@ -53,12 +53,12 @@ public class TestRusd extends MyTestCase {
 		StockToken stock = stocks.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				.waitForCompleted();
+				.waitForHash();
 		
 		// sell stock
 		S.out( "***selling stock");  // failing with same nonce
 		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
-				.waitForCompleted();
+				.waitForHash();
 		
 		// mint busd into refwallet so user can redeem (anyone can call this, 
 		// must have matic)

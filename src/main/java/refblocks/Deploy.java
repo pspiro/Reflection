@@ -3,9 +3,18 @@ package refblocks;
 
 import java.math.BigInteger;
 
+import org.json.simple.JsonObject;
 import org.web3j.abi.datatypes.Address;
+import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.utils.Numeric;
 
 import common.Util;
+import fireblocks.Fireblocks;
+import io.zksync.protocol.ZkSync;
+import io.zksync.protocol.account.Wallet;
 import io.zksync.utils.ContractDeployer;
 import reflection.Config;
 import reflection.Config.Web3Type;
@@ -42,20 +51,18 @@ public class Deploy {
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusdAddress) ) {
 			if (config.isZksync() ) {
-//				Address deplAddr = ContractDeployer.computeL2CreateAddress(
-//						new Address(config.ownerAddr() ),
-//						BigInteger.valueOf(Util.rnd.nextLong() ) );
+				rusdAddress = deployRusdZksync(config);
 			}
-			
-			rusdAddress = RbRusd.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
-			S.out( "deployed rusd to " + rusdAddress);
+			else {
+				rusdAddress = RbRusd.deploy( config.ownerKey(), config.refWalletAddr(), config.admin1Addr() );
+				S.out( "deployed rusd to " + rusdAddress);
+			}
 			config.setRusdAddress( rusdAddress);  // update spreadsheet with deployed address
 
 			// transfer some gas to RefWallet if needed
 			//config.matic().transfer( config.ownerKey(), config.refWalletAddr(), .005);
 
 			// let RefWallet approve RUSD to spend BUSD;
-			// we use the Rusd contract to call a method (approve) on the Busd contract which is fine
 			// because the method signature is the same
 			// this works as of 7/29/24
 			new RbBusd( busdAddress, config.busd().decimals(), config.busd().name() )
@@ -76,12 +83,18 @@ public class Deploy {
 				MyContract.deployAddress = Util.createFakeAddress();
 				
 				// deploy stock token
-				String address = RbStockToken.deploy(
-						config.ownerKey(),
-						row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
-						row.getString( "Token Symbol"),
-						rusdAddress
-				);
+				String address = config.isZksync() 
+						? deployStockZksync( config, 
+								row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
+								row.getString( "Token Symbol"),
+								rusdAddress
+								)
+						: RbStockToken.deploy(
+								config.ownerKey(),
+								row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
+								row.getString( "Token Symbol"),
+								rusdAddress
+								);
 				
 				// update row on Symbols tab with new stock token address
 				S.out( "deployed stock token to " + address);
@@ -92,5 +105,71 @@ public class Deploy {
 		
 		//Test.run(config, busd, rusd);
 	}
-// test build	
+	
+	/** @return deployed RUSD contract address */
+	private static String deployRusdZksync(Config config) throws Exception {
+		String file = "C:\\Work\\zk3\\artifacts-zk\\contracts\\RUSD.sol\\rusd.json";
+		
+		String hex = JsonObject.readFromFile( file).getString( "bytecode");
+		Util.require( S.isNotNull( hex), "no bytecode");
+		Util.require( (hex.length() - 2) / 2 % 32 == 0, "bytecode length must be divisible by 32; make sure to compile for zksync");
+
+		S.out( "deploying RUSD on zksync from " + file);
+
+		String params = Fireblocks.encodeParameters(
+				Util.toArray( "address", "address"),
+				Util.toArray( config.refWalletAddr(), config.admin1Addr() ) );
+
+		String addr = deployZksync( config.ownerKey(), hex, params);
+
+		// confirm that we can interact w/ contract 
+		Util.require( config.node().getTokenDecimals( addr) == 6, "wrong number of decimals");
+
+		return addr;
+	}
+
+	private static String deployStockZksync(Config config, String name, String symbol, String rusdAddr) throws Exception {
+		String file = "C:\\Work\\zk3\\artifacts-zk\\contracts\\StockToken.sol\\StockToken.json";
+		
+		String hex = JsonObject.readFromFile( file).getString( "bytecode");
+		Util.require( S.isNotNull( hex), "no bytecode");
+		Util.require( (hex.length() - 2) / 2 % 32 == 0, "bytecode length must be divisible by 32; make sure to compile for zksync");
+
+		S.out( "deploying StockToken on zksync from " + file);
+
+		// set up zkSync and ether providers
+		ZkSync zkSync = ZkSync.build(new HttpService("https://mainnet.era.zksync.io"));
+		Web3j web3j = Web3j.build( new HttpService( "https://eth.llamarpc.com") );
+
+		String params = Fireblocks.encodeParameters(
+				Util.toArray( "string", "string", "address"),
+				Util.toArray( name, symbol, rusdAddr) );
+		
+		String addr = deployZksync( config.ownerKey(), hex, params);
+
+		// confirm that we can interact w/ contract 
+		Util.require( config.node().getTokenDecimals( addr) == 18, "wrong number of decimals");
+
+		return addr;
+	}
+
+	private static String deployZksync( String ownerKey, String hex, String params) throws Exception {
+		ZkSync zkSync = ZkSync.build(new HttpService("https://mainnet.era.zksync.io"));
+		Web3j web3j = Web3j.build( new HttpService( "https://eth.llamarpc.com") );
+
+		Credentials credentials = Credentials.create(ownerKey);
+		Wallet wallet = new Wallet(web3j, zkSync, credentials);
+
+		// deploy it
+		TransactionReceipt retval = wallet.deployAccount(
+        		Numeric.hexStringToByteArray(hex), 
+        		Numeric.hexStringToByteArray(params)
+        		).send();
+		
+		var txHash = retval.getTransactionHash();
+		S.out( "  transHash: " + txHash);
+		S.out( "  deployed to: " + retval.getContractAddress() );
+
+		return retval.getContractAddress();
+	}
 }

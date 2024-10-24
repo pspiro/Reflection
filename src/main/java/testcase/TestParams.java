@@ -6,7 +6,7 @@ import java.math.BigInteger;
 
 import fireblocks.Fireblocks;
 
-public class TestFireblocks {
+public class TestParams {
 	
 	String ge =       "0x7abc82771a6afa4d0d56045cf09cb1deaedb3cc2";
 	String userAddr = "0xAb52e8f017fBD6C7708c7C90C0204966690e7Fc8"; // Testnet Test1 account (id=1)	

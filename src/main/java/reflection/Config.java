@@ -370,7 +370,7 @@ public class Config extends ConfigBase {
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
-		m_node = new NodeInstance( m_tab.getRequiredString( "rpcUrl"), m_tab.getInt( "rpcMaxBatchSize") );
+		m_node = new NodeInstance( m_tab.getRequiredString( "rpcUrl"), chainId, m_tab.getInt( "rpcMaxBatchSize") );
 		m_node.setDecimals( m_rusd);
 		m_node.setDecimals( m_busd);
 		NodeServer.setInstance(m_node);
@@ -392,10 +392,6 @@ public class Config extends ConfigBase {
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
-	}
-
-	private boolean isPulseChain() {
-		return "PulseChain".equals( blockchainName);
 	}
 	
 	/** confirm we have access to the password 
@@ -602,7 +598,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {
-		return Util.equals( moralisPlatform, "polygon", "pulsechain", "zksync");
+		return isPolygon() || isPulseChain() || isZksync();
 	}
 	
 	public String moralisPlatform() {
@@ -824,8 +820,16 @@ public class Config extends ConfigBase {
 		return maxSummaryEmails;
 	}
 
+	public boolean isPulseChain() {
+		return chainId == 369;
+	}
+
+	public boolean isPolygon() {
+		return chainId == 137;
+	}
+
 	public boolean isZksync() {
-		return "zksync".equals( blockchainName);
+		return chainId == 324;
 	}
 	
 	/** for display to user */

@@ -112,7 +112,7 @@ public class TestFbOrders extends MyTestCase {
 		
 		// let bob approve .49 BUSD spending by RUSD
 		S.out( "**approving .49");
-		busd.approve( bobKey, rusd.address(), .49).waitForCompleted();
+		busd.approve( bobKey, rusd.address(), .49).waitForHash();
 		waitFor( 30, () -> m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) > .48);
 		showAmounts("updated amounts");
 		

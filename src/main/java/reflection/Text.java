@@ -92,4 +92,4 @@ public class Text {
 	</div>
 </body>
 """;
-}
+} // if you add url, it must be tokenized for pulsechain, etc

@@ -11,6 +11,15 @@ import tw.util.S;
 public class Erc20 {
 	protected static final BigDecimal ten = new BigDecimal(10);
 	private static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
+	
+	// keccacs
+//	totalSupply:   '0x18160ddd'
+//	balanceOf:     '0x70a08231'
+//	transfer:      '0xa9059cbb'
+//	transferFrom:  '0x23b872dd'
+	public static String Approve = "0x095ea7b3";
+//	allowance:     '0xdd62ed3e'
+//	decimals:      '0x313ce567'	
 
 	protected String m_address;
 	protected int m_decimals;

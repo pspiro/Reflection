@@ -24,7 +24,7 @@ public class RbRetVal extends RetVal {
 	private Function m_function;  // the function that was called on the smart contract; we need this to display error text
 
 	/** If we already have the real receipt */
-	RbRetVal( TransactionReceipt receipt) {
+	public RbRetVal( TransactionReceipt receipt) {
 		m_receipt = receipt;
 	}
 	
@@ -46,7 +46,7 @@ public class RbRetVal extends RetVal {
 	    	S.out( "waiting for transaction receipt for %s, polling every %s ms",
 	    			id(), Refblocks.PollingInterval);
 			
-	    	m_receipt = Refblocks.waitForReceipt( m_receipt);
+	    	m_receipt = Refblocks.waitForReceipt( m_receipt.getTransactionHash() );
 			
 	    	S.out( "received transaction receipt: " + Refblocks.toString( m_receipt) );
 			
@@ -56,14 +56,9 @@ public class RbRetVal extends RetVal {
 		return m_receipt.getTransactionHash();
 	}
 	
-	/** This blocks for up to 2 min */
-	public void waitForCompleted() throws Exception {
-		waitForHash();
-	}
-
 	/** this code was copied from Contract.executeTransaction() 
 	 * @throws TransactionException */
-	private void checkReceipt(TransactionReceipt receipt) throws TransactionException {
+	protected void checkReceipt(TransactionReceipt receipt) throws TransactionException {
 	    if (!(receipt instanceof EmptyTransactionReceipt)
                 && receipt != null
                 && !receipt.isStatusOK() ) {
@@ -90,7 +85,7 @@ public class RbRetVal extends RetVal {
 					receipt, 
 					FunctionEncoder.encode(m_function),
 					Refblocks.web3j, BigInteger.ZERO)
-				: "?";
+				: "unknown, function not provided";
 		} catch (IOException e) {
 			return "Could not get reason - " + e.getMessage();
 		}

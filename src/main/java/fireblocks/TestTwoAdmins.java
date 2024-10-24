@@ -23,8 +23,8 @@ public class TestTwoAdmins {
 		S.out( "user1 balance: %s", rusd.getPosition( user1) );
 		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 
-		rusd.burnRusd( user1, 4, token).waitForCompleted();  // change this to 1!!!
-		rusd.burnRusd( user2, 3, token).waitForCompleted();  // change this to 1!!!
+		rusd.burnRusd( user1, 4, token).waitForHash();  // change this to 1!!!
+		rusd.burnRusd( user2, 3, token).waitForHash();  // change this to 1!!!
 		
 		S.out( "user1 balance: %s", rusd.getPosition( user1) );
 		S.out( "user2 balance: %s", rusd.getPosition( user2) );
@@ -42,17 +42,17 @@ public class TestTwoAdmins {
 		S.out( "user2 balance: %s", rusd.getPosition( user2) );
 
 		Util.executeAndWrap( () -> {
-			rusd.mintRusd( user1, 1, token).waitForCompleted();
-			rusd.buyStockWithRusd( user1, 1, token, 1).waitForCompleted();
-			rusd.sellStockForRusd( user1, 1, token, 1).waitForCompleted();
-			rusd.burnRusd( user1, 1, token).waitForCompleted();  // change this to 1!!!
+			rusd.mintRusd( user1, 1, token).waitForHash();
+			rusd.buyStockWithRusd( user1, 1, token, 1).waitForHash();
+			rusd.sellStockForRusd( user1, 1, token, 1).waitForHash();
+			rusd.burnRusd( user1, 1, token).waitForHash();  // change this to 1!!!
 		});
 		
 		Util.executeAndWrap( () -> {
-			rusd.mintRusd( user2, 1, token).waitForCompleted();
-			rusd.buyStockWithRusd( user2, 1, token, 1).waitForCompleted();
-			rusd.sellStockForRusd( user2, 1, token, 1).waitForCompleted();
-			rusd.burnRusd( user2, 1, token).waitForCompleted();  // change this to 1!!!
+			rusd.mintRusd( user2, 1, token).waitForHash();
+			rusd.buyStockWithRusd( user2, 1, token, 1).waitForHash();
+			rusd.sellStockForRusd( user2, 1, token, 1).waitForHash();
+			rusd.burnRusd( user2, 1, token).waitForHash();  // change this to 1!!!
 		});
 		
 		S.out( "user1 balance: %s", rusd.getPosition( user1) );
