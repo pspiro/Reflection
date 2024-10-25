@@ -48,6 +48,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private boolean m_ibOrderCompleted;
 	private Stablecoin m_stablecoin;  // stablecoin (upper-case) being used to purchase the stock token
 	private String m_email;
+	private Chain m_chain;
 	
 	// live order fields
 	private String m_errorText = "";  // returned with live orders if order fails
@@ -83,6 +84,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
+		// make sure user is signed in with SIWE and session is not expired
+		// must come before profile and KYC checks
+		validateCookie("order");
+		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
@@ -105,21 +110,20 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
 		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
 		
+		m_chain = chain();
+		
 		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
 		String currency = m_map.getRequiredString("currency").toUpperCase();
 		if (currency.equals( m_config.rusd().name() ) ) {
-			m_stablecoin = m_config.rusd();
+			m_stablecoin = m_chain.rusd();
 		}
 		else if (currency.equals(m_config.busd().name() ) ) {
-			m_stablecoin = m_config.busd();
+			m_stablecoin = m_chain.busd();
 		}
 		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
 			
 		// NOTE: this next code is the same as OrderTransaction
 
-		// make sure user is signed in with SIWE and session is not expired
-		// must come before profile and KYC checks
-		validateCookie("order");
 
 		// get record from Users table
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
@@ -670,6 +674,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
+			obj.put("chain", m_chain.chainId() );
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );

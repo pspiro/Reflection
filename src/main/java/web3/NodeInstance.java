@@ -44,7 +44,7 @@ public class NodeInstance {
 	private int maxBatchSize = 20; // default only; size is overriden from config file
 
 	/** you could make this a member var */
-	private String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
+	private String rpcUrl;  // with or without trailing /; note you can get your very own rpc url from Moralis for more bandwidth
 	private int chainId;
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */

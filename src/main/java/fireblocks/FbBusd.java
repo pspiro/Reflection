@@ -43,4 +43,9 @@ public class FbBusd extends FbErc20 implements IBusd {
 				amount, 
 				"transfer BUSD");
 	}
+	
+	@Override
+	public double getAllowance(String approverAddr, String spender)  {
+		throw new RuntimeException(); 
+	}
 }

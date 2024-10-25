@@ -1,10 +1,7 @@
 package refblocks;
 
 
-import java.math.BigInteger;
-
 import org.json.simple.JsonObject;
-import org.web3j.abi.datatypes.Address;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -15,7 +12,6 @@ import common.Util;
 import fireblocks.Fireblocks;
 import io.zksync.protocol.ZkSync;
 import io.zksync.protocol.account.Wallet;
-import io.zksync.utils.ContractDeployer;
 import reflection.Config;
 import reflection.Config.Web3Type;
 import tw.google.NewSheet;

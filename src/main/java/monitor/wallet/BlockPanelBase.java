@@ -48,7 +48,7 @@ public class BlockPanelBase extends JPanel {
 		return trans.to().equalsIgnoreCase( RefWallet);
 	}
 
-	protected boolean isRusd(Transfer obj) {
+	protected boolean isRusd(Transfer obj) throws Exception {
 		return obj.contract().equalsIgnoreCase( config().rusd().name() ); 
 	}
 

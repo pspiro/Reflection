@@ -1,5 +1,7 @@
 package monitor;
 
+import static monitor.Monitor.m_config;
+
 import java.awt.BorderLayout;
 import java.util.Date;
 
@@ -19,7 +21,6 @@ import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
 import tw.util.VerticalPanel;
-import web3.NodeServer;
 
 /** Not a json panel */
 public class CryptoPanel extends MonPanel {
@@ -206,10 +207,10 @@ public class CryptoPanel extends MonPanel {
 		double busd = config().busd().getPosition( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
 
-		double nativeBal = NodeServer.getNativeBalance( config().refWalletAddr() );
+		double nativeBal = m_config.node().getNativeBalance( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
-		double ownerMatic = NodeServer.getNativeBalance( config().ownerAddr() );
+		double ownerMatic = m_config.node().getNativeBalance( config().ownerAddr() );
 		double ownerBusd = config().busd().getPosition( config().ownerAddr() );
 		SwingUtilities.invokeLater( () -> {
 			m_ownerAddress.setText( config().ownerAddr() );
@@ -217,7 +218,7 @@ public class CryptoPanel extends MonPanel {
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = NodeServer.getNativeBalance( config().admin1Addr() );
+		double admin1Bal = m_config.node().getNativeBalance( config().admin1Addr() );
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
 //		double admin2Bal = new Wallet( config().admin2Addr()").getNativeBalance();

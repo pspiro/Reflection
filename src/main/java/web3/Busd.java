@@ -27,13 +27,14 @@ public class Busd extends Stablecoin {
 		return m_core.transfer( fromKey, toAddr, amt);
 	}
 
-	public interface IBusd {
-		RetVal mint( String callerKey, String address, double amount) throws Exception;
-		RetVal approve( String approverKey, String spenderAddr, double amt) throws Exception;
-		RetVal transfer(String fromKey, String toAddr, double amt) throws Exception;
+	public double getApprovedAmt(String approverAddr, String spenderAddr) throws Exception {
+		return m_core.getAllowance( approverAddr, spenderAddr);
 	}
 
-	public double getApprovedAmt(String approverAddr, String spenderAddr) throws Exception {
-		return NodeServer.getAllowance( m_address, approverAddr, spenderAddr, m_decimals);
+	public interface IBusd {
+		RetVal mint( String callerKey, String address, double amount) throws Exception;
+		double getAllowance(String approverAddr, String spenderAddr);
+		RetVal approve( String approverKey, String spenderAddr, double amt) throws Exception;
+		RetVal transfer(String fromKey, String toAddr, double amt) throws Exception;
 	}
 }

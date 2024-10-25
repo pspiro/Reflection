@@ -12,7 +12,6 @@ import com.sun.net.httpserver.HttpExchange;
 import common.Util;
 import http.MyClient;
 import reflection.Statements.PnlMap;
-import web3.NodeServer;
 
 public class PortfolioTransaction extends MyTransaction {
 	private static HashMap<String,PnlMap> pnls = new HashMap<>();
@@ -21,34 +20,34 @@ public class PortfolioTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-	/** obsolete, remove */
-	public void handleReqPositions() {
-		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
-			
-			// query positions from Moralis
-			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
-			
-			JsonArray retVal = new JsonArray();
-			
-			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
-				Stock stock = m_main.getStockByTokAddr( entry.getKey() );
-
-				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
-					JsonObject resp = new JsonObject();
-					resp.put("conId", stock.get("conid") );
-					resp.put("symbol", stock.get("symbol") );
-					resp.put("price", stock.markPrice() );
-					resp.put("quantity", entry.getValue() ); 
-					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
-				}
-			});
-			
-			retVal.sortJson( "symbol", true);
-			respond(retVal);
-		});
-	}
+//	/** obsolete, remove */
+//	public void handleReqPositions() {
+//		wrap( () -> {
+//			// read wallet address into m_walletAddr (last token in URI)
+//			getWalletFromUri();
+//			
+//			// query positions from Moralis
+//			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
+//			
+//			JsonArray retVal = new JsonArray();
+//			
+//			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
+//				Stock stock = m_main.getStockByTokAddr( entry.getKey() );
+//
+//				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
+//					JsonObject resp = new JsonObject();
+//					resp.put("conId", stock.get("conid") );
+//					resp.put("symbol", stock.get("symbol") );
+//					resp.put("price", stock.markPrice() );
+//					resp.put("quantity", entry.getValue() ); 
+//					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
+//				}
+//			});
+//			
+//			retVal.sortJson( "symbol", true);
+//			respond(retVal);
+//		});
+//	}
 
 	/** You'll see exceptions here when the HookServer is restarting */
 	public void handleReqPositionsNew() {
@@ -56,7 +55,8 @@ public class PortfolioTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 
-			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", m_config.hookServerPort(), m_walletAddr.toLowerCase() );
+			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", 
+					chain().hookServerPort(), m_walletAddr.toLowerCase() );
 
 			// get or create the PnlMap for this wallet
 			var pnlMap = Util.getOrCreateEx( pnls, m_walletAddr.toLowerCase(), () ->  // access to map is synchronized
@@ -87,6 +87,7 @@ public class PortfolioTransaction extends MyTransaction {
 			respond(positions);
 		});
 	}
+
 
 	/** Incorporate this trade into the map IFF there is already an entry for this wallet
 	 *  @param transaction is the json representation of an entry in the transactions table */ 

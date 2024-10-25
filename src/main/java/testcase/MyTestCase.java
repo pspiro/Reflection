@@ -23,6 +23,7 @@ public class MyTestCase extends TestCase {
 	static protected Accounts accounts = Accounts.instance;
 	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
 	static int port = 8383;
+	static int chainId = 11155111;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	

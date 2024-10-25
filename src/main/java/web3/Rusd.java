@@ -1,37 +1,37 @@
 package web3;
 
 import common.Util;
-import reflection.Config;
+import reflection.Chain;
 
 /** The Rusd class used by clients. Created by Config which knows which 
  *  type of core to pass in */
 public class Rusd extends Stablecoin {
 	private IRusd m_core;
-	private Config m_config;
+	private Chain m_chain;
 	
-	public Rusd( String rusdAddr, int rusdDecimals, Config config, IRusd core) throws Exception {
+	public Rusd( String rusdAddr, int rusdDecimals, Chain config, IRusd core) throws Exception {
 		super( rusdAddr, rusdDecimals, "RUSD");
 		
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
 		Util.require( core != null, "null core");
 
-		m_config = config;
+		m_chain = config;
 		m_core = core;
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal buyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.buyStock( m_config.admin1Key(), userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
+		return m_core.buyStock( m_chain.admin1Key(), userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.sellStockForRusd( m_config.admin1Key(), userAddr, rusdAmt, stockToken, stockTokenAmt);
+		return m_core.sellStockForRusd( m_chain.admin1Key(), userAddr, rusdAmt, stockToken, stockTokenAmt);
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
-		return m_core.sellRusd( m_config.admin1Key(), userAddr, busd, amt);
+		return m_core.sellRusd( m_chain.admin1Key(), userAddr, busd, amt);
 	}
 
 	public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {

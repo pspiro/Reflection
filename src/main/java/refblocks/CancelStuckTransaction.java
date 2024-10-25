@@ -3,7 +3,6 @@ package refblocks;
 import common.Util;
 import reflection.Config;
 import tw.util.S;
-import web3.NodeInstance;
 
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {

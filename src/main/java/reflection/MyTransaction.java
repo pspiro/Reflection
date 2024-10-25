@@ -16,6 +16,7 @@ import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.moonstoneid.siwe.SiweMessage;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Alerts;
@@ -25,6 +26,7 @@ import http.BaseTransaction;
 import siwe.SiweTransaction;
 import tw.util.S;
 import util.LogType;
+import static reflection.Main.m_config;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {
@@ -108,8 +110,8 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** don't throw an exception here, it should not disrupt any other process */
 	protected static void alert(String subject, String body) {
-		if (Main.m_config.isProduction() ) {
-			String text = String.format( "blockchain: %s\n\n%s", Main.m_config.moralisPlatform(), body);
+		if (m_config.isProduction() ) {
+			String text = String.format( "blockchain: %s\n\n%s", m_config.moralisPlatform(), body);
 			Alerts.alert( "RefAPI", subject, text);
 		}
 		else {
@@ -119,7 +121,8 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
 	 *  They could just send the nonce, it's the only part of the cookie we are using
-	 *  @param caller is a string describing the caller used for error msg only */
+	 *  @param caller is a string describing the caller used for error msg only
+	 *  @return siwe message, call getSiweMessage() */
 	JsonObject validateCookie(String caller) throws Exception {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
 		// we can take cookie from map or header
@@ -131,6 +134,17 @@ public abstract class MyTransaction extends BaseTransaction {
 		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
 		return SiweTransaction.validateCookie( cookie, m_walletAddr);
+	}
+
+	public int chainId() throws Exception {
+		String cookie = m_map.get("cookie");
+		return cookie != null
+			? SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId()
+			: m_config.chainId();
+	}
+	
+	public Chain chain() throws Exception {
+		return m_config.chains().get( chainId() );
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
@@ -169,7 +183,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	
 	/** return existing User object or null */
 	protected JsonObject getUser() throws Exception {
-		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		JsonArray ar = m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
 		return ar.size() == 0 ? null : ar.get( 0);
 	}
 

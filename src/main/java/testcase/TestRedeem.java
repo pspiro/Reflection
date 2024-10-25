@@ -160,7 +160,7 @@ public class TestRedeem extends MyTestCase {
 		S.out( "clearing allowance");
 		m_config.busd().approve(
 				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt() );
+		S.out( "approved: " + m_config.getApprovedAmt( chainId) );
 
 		// redeem RUSD, fail due to allowance
 		S.out( "sending redemption request to fail");
@@ -171,7 +171,7 @@ public class TestRedeem extends MyTestCase {
 		S.out( "restoring allowance");
 		m_config.busd().approve(
 				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt() );
+		S.out( "approved: " + m_config.getApprovedAmt( chainId) );
 		
 		
 		// wait for it to solidify

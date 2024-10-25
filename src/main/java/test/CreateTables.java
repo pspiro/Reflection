@@ -223,3 +223,21 @@ public class CreateTables  {
 // dev=> alter table users add column onramp_id varchar(64);
 
 // dev=> alter table users add column locked jsonb;
+
+
+
+//support multi-dbs
+//ALTER TABLE log ADD COLUMN chain INT;
+//CREATE INDEX idx_chain1 ON log (chain);
+//
+//ALTER TABLE onramp ADD COLUMN chain INT;
+//CREATE INDEX idx_chain2 ON onramp (chain);
+//
+//ALTER TABLE orders ADD COLUMN chain INT;
+//CREATE INDEX idx_chain3 ON orders (chain);
+//
+//ALTER TABLE redemptions ADD COLUMN chain INT;
+//CREATE INDEX idx_chain4 ON redemptions (chain);
+//
+//ALTER TABLE transactions ADD COLUMN chain INT;
+//CREATE INDEX idx_chain5 ON transactions (chain);

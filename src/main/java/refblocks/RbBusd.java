@@ -72,4 +72,9 @@ public class RbBusd extends Erc20 implements IBusd {
 		return Refblocks.exec( fromKey, tm -> load( tm, 200000) // actual is around 50000
 			.transfer( toAddr, toBlockchain( amt) ) );
 	}
+	
+	@Override	public double getAllowance(String approverAddr, String spender) throws Exception {
+		// TODO Auto-generated method stub
+		return super.getAllowance(approverAddr, spender);
+	}
 }

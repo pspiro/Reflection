@@ -24,7 +24,7 @@ import reflection.Stocks;
 import test.MyTimer;
 import tw.util.S;
 import web3.Erc20;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 
 /** HookServer tracks the balances for all contract, including both stock
@@ -48,6 +48,7 @@ public class HookServer {
 	final StreamMgr sm;
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
+	NodeInstance m_node;
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
@@ -68,6 +69,7 @@ public class HookServer {
 	HookServer(String[] args) throws Exception {
 		m_config.readFromSpreadsheet( Config.getTabName( args) );
 		stocks = m_config.readStocks();
+		m_node = m_config.node();
 		
 		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
 		sm = m_config.hookType() == HookType.Moralis
@@ -297,13 +299,13 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = NodeServer.reqPositionsMap( walletAddr, m_allContracts, 0);
+			HashMap<String, Double> positions = m_node.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = NodeServer.getNativeBalance( walletAddr);
+			double nativeBal = m_node.getNativeBalance( walletAddr);
 			
 			if (streaming() ) {
 				Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
@@ -406,7 +408,7 @@ public class HookServer {
 			// process ERC20 transfers
 			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
 				String contract = trans.getString("contract").toLowerCase();
-				double amt = Erc20.fromBlockchain( trans.getString("value"), NodeServer.getDecimals(contract) ); // note this can send a query to get decimals
+				double amt = Erc20.fromBlockchain( trans.getString("value"), m_node.getDecimals(contract) ); // note this can send a query to get decimals
 
 				if (amt != 0) {
 					String from = trans.getString("from").toLowerCase(); 

@@ -47,6 +47,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
+			validateCookie("redeem");
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
 			require( m_main.validWallet( m_walletAddr, Action.Sell), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
@@ -59,9 +60,6 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// NOTE: this next code is the same as OrderTransaction
 
-			// make sure user is signed in with SIWE and session is not expired
-			// must come before profile and KYC checks
-			validateCookie("redeem");
 			
 			// get record from Users table
 			JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
@@ -132,7 +130,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// insufficient BUSD in RefWallet or > maxAutoRedeem?
 			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
-			double allowance = Main.m_config.getApprovedAmt(); // sends query
+			double allowance = Main.m_config.getApprovedAmt( chainId() ); // sends query
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator

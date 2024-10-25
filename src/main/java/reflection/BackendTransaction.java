@@ -18,7 +18,7 @@ import onramp.Onramp;
 import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
-import web3.NodeServer;
+import web3.m_config.node();
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -267,7 +267,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			JsonObject base = new JsonObject();
 			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", NodeServer.getNativeBalance( m_walletAddr) );
+			base.put( "balance", m_config.node().getNativeBalance( m_walletAddr) );
 			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
 			
 			JsonArray ar = new JsonArray();
@@ -637,7 +637,7 @@ public class BackendTransaction extends MyTransaction {
 		// their wallet has less than the full amount
 		return
 				received < m_config.faucetAmt() && 
-				NodeServer.getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
+				m_config.node().getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
 					? m_config.faucetAmt() 
 					: 0;
 	}

@@ -8,15 +8,17 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 import web3.Busd;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 class HookWallet {
 	private String m_walletAddr;  // wallet, lower case
 	private HashMap<String,Double> m_map = new HashMap<>(); // map contract (lower case) to token position
 	private double m_nativeBal;
 	private double m_approved;
+	private NodeInstance m_node;
 	
-	HookWallet( String walletAddr, HashMap<String,Double> map, double approved, double nativeBal) {
+	HookWallet( NodeInstance node, String walletAddr, HashMap<String,Double> map, double approved, double nativeBal) {
+		m_node = node;
 		m_walletAddr = walletAddr;
 		m_map = map;
 		m_approved = approved;
@@ -45,7 +47,7 @@ class HookWallet {
 			S.out( "Updated %s / %s to %s", m_walletAddr, contract, m_map.get(contract) );
 		}
 		else {
-			double bal = NodeServer.getBalance( contract, m_walletAddr, 0);
+			double bal = m_node.getBalance( contract, m_walletAddr, 0);
 			if (!Util.isEq( bal, m_map.get(contract), HookServer.small) ) {
 				// this should only occur if we missed the unconfirmed event, i.e. if
 				// the HookServer was started after the event came in or if the
@@ -64,7 +66,7 @@ class HookWallet {
 			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
 		}
 		else {
-			double bal = NodeServer.getNativeBalance(m_walletAddr);
+			double bal = m_.node.getNativeBalance(m_walletAddr);
 			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
 				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
 				m_nativeBal = bal;

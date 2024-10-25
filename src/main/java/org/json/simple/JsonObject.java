@@ -23,6 +23,9 @@ import java.util.function.Function;
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moonstoneid.siwe.SiweMessage;
 
 import common.Util;
@@ -539,6 +542,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 			json.put(fieldName, fieldValue);
 		}                
 		return json;
+	}
+
+	public <T extends Record> T toRecord(Class<T> clas) throws Exception {
+        return new ObjectMapper().readValue( toString(), clas);
 	}
 
 }
