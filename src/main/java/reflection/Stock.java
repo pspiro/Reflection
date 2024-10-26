@@ -87,7 +87,7 @@ public class Stock extends JsonObject {
 	}
 
 	public double queryTotalSupply() throws Exception {
-		return new StockToken( getSmartContractId() ).queryTotalSupply();
+		return getToken().queryTotalSupply();
 	}
 	
 	public String getStartDate() {

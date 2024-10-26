@@ -54,8 +54,8 @@ public class OnrampServer {
 	}
 
 	public OnrampServer() throws Exception {
-		m_polygon = Config.readFrom( "Prod-config");  // must come first! because Config.read() sets the NodeServer instance
-		m_pulsechain = Config.readFrom( "Pulse-config");  // must come second!
+		m_polygon = Config.readFrom( "Prod-config");
+		m_pulsechain = Config.readFrom( "Pulse-config");
 		m_stocks = m_pulsechain.readStocks();
 		Util.executeEvery(0, poll, this::check);
 	}

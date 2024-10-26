@@ -100,8 +100,8 @@ public class Erc20 {
 	
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
-	public double getPosition(String walletAddr) throws Exception {
-		return NodeServer.getBalance( m_address, walletAddr, m_decimals);
+	public double getPosition(NodeInstance node, String walletAddr) throws Exception {
+		return node.getBalance( m_address, walletAddr, m_decimals);
 	}
 
 	/** return the balances of all wallets holding this token;
@@ -126,12 +126,12 @@ public class Erc20 {
 	}
 
 	/** note w/ moralis you can also get the token balance by wallet */
-	public double queryTotalSupply() throws Exception {
-		return NodeServer.getTotalSupply( m_address, m_decimals);
+	public double queryTotalSupply(NodeInstance node) throws Exception {
+		return node.getTotalSupply( m_address, m_decimals);
 	}
 
 	/** Sends a query to Moralis */
-	public double getAllowance(String approverAddr, String spender) throws Exception {
-		return NodeServer.getAllowance( m_address, approverAddr, spender, m_decimals);
+	public double getAllowance(NodeInstance node, String approverAddr, String spender) throws Exception {
+		return node.getAllowance( m_address, approverAddr, spender, m_decimals);
 	}
 }

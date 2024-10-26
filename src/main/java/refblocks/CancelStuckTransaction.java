@@ -18,7 +18,7 @@ public class CancelStuckTransaction {
 
 		int nonce = 0x383;  // the nonce of the stuck transaction; you can auto-pull it from the stuck transaction json
 
-		Refblocks.cancelStuckTransaction( c.admin1Key(), nonce);
+		c.refblocks().cancelStuckTransaction( c.admin1Key(), nonce);
 
 		S.out( c.ownerAddr() );
 		

@@ -1,5 +1,6 @@
 package reflection;
 
+import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.InputStreamReader;
@@ -16,7 +17,6 @@ import org.json.simple.JsonObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import com.moonstoneid.siwe.SiweMessage;
 import com.sun.net.httpserver.HttpExchange;
 
 import common.Alerts;
@@ -26,7 +26,6 @@ import http.BaseTransaction;
 import siwe.SiweTransaction;
 import tw.util.S;
 import util.LogType;
-import static reflection.Main.m_config;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {

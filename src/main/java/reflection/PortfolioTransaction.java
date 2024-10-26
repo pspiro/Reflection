@@ -20,35 +20,6 @@ public class PortfolioTransaction extends MyTransaction {
 		super(main, exch, debug);
 	}
 	
-//	/** obsolete, remove */
-//	public void handleReqPositions() {
-//		wrap( () -> {
-//			// read wallet address into m_walletAddr (last token in URI)
-//			getWalletFromUri();
-//			
-//			// query positions from Moralis
-//			setTimer( m_config.timeout(), () -> timedOut( "request for token positions timed out") );
-//			
-//			JsonArray retVal = new JsonArray();
-//			
-//			Util.forEach( NodeServer.reqPositionsMap(m_walletAddr, m_main.stocks().getAllContractsAddresses(), 18).entrySet(), entry -> {
-//				Stock stock = m_main.getStockByTokAddr( entry.getKey() );
-//
-//				if (stock != null && entry.getValue() >= m_config.minTokenPosition() ) {
-//					JsonObject resp = new JsonObject();
-//					resp.put("conId", stock.get("conid") );
-//					resp.put("symbol", stock.get("symbol") );
-//					resp.put("price", stock.markPrice() );
-//					resp.put("quantity", entry.getValue() ); 
-//					retVal.add(resp);   // alternatively, you could just add the whole stock to the array, but you would need to adjust the column names in the Monitor
-//				}
-//			});
-//			
-//			retVal.sortJson( "symbol", true);
-//			respond(retVal);
-//		});
-//	}
-
 	/** You'll see exceptions here when the HookServer is restarting */
 	public void handleReqPositionsNew() {
 		wrap( () -> {

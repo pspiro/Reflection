@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 //	TestAlchemy.class,
 	TestFbOrders.class,
 	TestHookServer.class,
-	TestNodeServer.class,
+	TestNode.class,
 	TestSwap.class,
 	
 	TestApprove.class,

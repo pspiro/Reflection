@@ -1,11 +1,13 @@
 package reflection;
 
 import org.json.simple.JsonObject;
+import org.web3j.protocol.Web3j;
 
 import common.Util;
 import http.MyClient;
 import refblocks.RbBusd;
 import refblocks.RbRusd;
+import refblocks.Refblocks;
 import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
@@ -48,8 +50,12 @@ public record Chain(
 				new RbRusd( rusdAddr, rusdDecimals) );
 	}
 	
-	public NodeInstance createNode() throws Exception {
+	private NodeInstance createNode() throws Exception {
 		return new NodeInstance( rpcUrl, chainId, rpcMaxBatchSize);
+	}
+	
+	private Refblocks createRefBlocks() {
+		return new Refblocks( chainId, rpcUrl);
 	}
 
 	public Busd busd() throws Exception {
@@ -121,10 +127,15 @@ public record Chain(
 	static class ChainWrapper {
 		Chain chain;
 		NodeInstance node;
-
+		Web3j web3j;
+		Refblocks blocks;
+		
 		ChainWrapper( Chain chainIn) throws Exception {
 			chain = chainIn;
 			node = chain.createNode();
+
+			//web3j = Web3j.build( new HttpService( chain.rpcUrl() ) );
+			blocks = chain.createRefBlocks();
 		}
 
 		public Chain chain() {

@@ -13,7 +13,7 @@ import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
-import web3.NodeServer;
+import web3.NodeInstance;();
 
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
@@ -136,7 +136,7 @@ public class MyTestCase extends TestCase {
 	/** Wait for HookServer to catch up Exception */
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
 		waitFor( 120, () -> {
-			double balance = NodeServer.getBalance( tokenAddr, walletAddr, 0);
+			double balance = node().getBalance( tokenAddr, walletAddr, 0);
 			
 //			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
 //					.getObjectNN( "positions")
@@ -202,6 +202,10 @@ public class MyTestCase extends TestCase {
 			
 			waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 		}
+	}
+	
+	protected NodeInstance node() {
+		return m_config.node();
 	}
 	
 }

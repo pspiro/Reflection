@@ -45,7 +45,7 @@ import util.LogType;
 import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
-import web3.NodeServer;
+import web3.m_config.node();
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -360,7 +360,7 @@ public class WalletPanel extends MonPanel {
 			wrap( () -> {
 				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
-				HashMap<String, Double> posMap = NodeServer.reqPositionsMap(m_wallet, Monitor.stocks.getAllContractsAddresses(), StockToken.stockTokenDecimals);
+				HashMap<String, Double> posMap = m_config.node().reqPositionsMap(m_wallet, Monitor.stocks.getAllContractsAddresses(), StockToken.stockTokenDecimals);
 				
 				double stockBal = 0;
 				

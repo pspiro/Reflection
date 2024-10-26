@@ -79,8 +79,5 @@ public class Migrate {
 				.03, //MoralisServer.getNativeBalance( sourceAddr) - .01, 
 				"transfer matic to new owner")
 			.waitForHash();
-
-		// wait for balance to register or the next transaction will fail due to insufficient gas
-		MyTestCase.waitFor(60, () -> NodeServer.getNativeBalance( destAddr) > 0);
 	}
 }

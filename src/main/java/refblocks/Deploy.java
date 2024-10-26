@@ -36,7 +36,8 @@ public class Deploy {
 		// deploy BUSD? (for testing only)
 		// note that the number of decimals is set in the .sol file before the Busd file is generaged */
 		if ("deploy".equals( busdAddress) ) {
-			busdAddress = RbBusd.deploy( config.ownerKey() );
+			busdAddress = RbBusd.deploy( config.chain().blocks(), config.ownerKey() );
+			
 			S.out( "deployed busd to " + busdAddress);
 			config.setBusdAddress( busdAddress);  // update spreadsheet with deployed address
 		}
@@ -46,7 +47,7 @@ public class Deploy {
 		
 		// deploy RUSD (if set to "deploy")
 		if ("deploy".equalsIgnoreCase( rusdAddress) ) {
-			if (config.isZksync() ) {
+			if (config.chain().isZksync() ) {
 				rusdAddress = deployRusdZksync(config);
 			}
 			else {
@@ -79,7 +80,7 @@ public class Deploy {
 				MyContract.deployAddress = Util.createFakeAddress();
 				
 				// deploy stock token
-				String address = config.isZksync() 
+				String address = config.chain().isZksync() 
 						? deployStockZksync( config, 
 								row.getString( "Token Name"),  // wrong, this should get pulled from master symbols tab
 								row.getString( "Token Symbol"),

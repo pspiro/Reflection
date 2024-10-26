@@ -16,11 +16,11 @@ public class RbBusd extends Erc20 implements IBusd {
 	
 	/** note that the number of decimals is set in the .sol file
 	 *  before the Busd file is generaged */
-	public static String deploy(String ownerKey) throws Exception {
+	public static String deploy(Refblocks blocks, String ownerKey) throws Exception {
 		return Busd.deploy( 
-				Refblocks.web3j,
-				Refblocks.getWaitingTm( ownerKey),
-				Refblocks.getGp( Refblocks.deployGas)
+				blocks.web3j(),
+				blocks.getWaitingTm( ownerKey),
+				blocks.getGp( Refblocks.deployGas)
 				).send().getContractAddress();
 	}
 
@@ -40,7 +40,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidAddress(spenderAddr);
 		
 		S.out( "%s approving %s to spend %s %s", 
-				Refblocks.getAddressPk(approverKey), spenderAddr, amt, m_name);
+				Util.getAddress(approverKey), spenderAddr, amt, m_name);
 		
 		return Refblocks.exec( approverKey, tm -> load( tm, 200000)
 				.approve( spenderAddr, toBlockchain( amt) ) );
@@ -55,7 +55,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidAddress(address);
 
 		S.out( "%s minting %s %s for %s", 
-				Refblocks.getAddressPk(callerKey), amt, m_name, address);
+				Util.getAddress(callerKey), amt, m_name, address);
 
 		return Refblocks.exec( callerKey, tm -> load( tm, 200000)  // zksync requires higher amounts
 				.mint( address, toBlockchain( amt) ) );
@@ -67,7 +67,7 @@ public class RbBusd extends Erc20 implements IBusd {
 		Util.reqValidAddress(toAddr);
 		
 		S.out( "transferring %s %s from %s to %s",
-				amt, m_name, Refblocks.getAddressPk( fromKey), toAddr);
+				amt, m_name, Util.getAddress( fromKey), toAddr);
 
 		return Refblocks.exec( fromKey, tm -> load( tm, 200000) // actual is around 50000
 			.transfer( toAddr, toBlockchain( amt) ) );

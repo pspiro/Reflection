@@ -10,18 +10,13 @@ import com.ib.client.Types.TimeInForce;
 
 import common.Alerts;
 import common.Util;
-import fireblocks.Accounts;
-import fireblocks.FbBusd;
 import fireblocks.FbMatic;
-import fireblocks.FbRusd;
-import fireblocks.Fireblocks;
 import http.MyClient;
 import onramp.Onramp;
 import redis.ConfigBase;
-import refblocks.RbBusd;
 import refblocks.RbMatic;
-import refblocks.RbRusd;
 import refblocks.Refblocks;
+import reflection.Chain.ChainWrapper;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import siwe.SiweTransaction;
@@ -31,19 +26,14 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
-import tw.google.Secret;
 import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
-import web3.Busd.IBusd;
-import web3.CreateKey;
 import web3.Matic;
 import web3.MoralisServer;
 import web3.NodeInstance;
-import web3.NodeServer;
 import web3.RetVal;
 import web3.Rusd;
-import web3.Rusd.IRusd;
 
 public class Config extends ConfigBase {
 
@@ -451,19 +441,19 @@ public class Config extends ConfigBase {
 	/** This causes a dependency that we might not want to have. 
 	 * @throws Exception */
 	public Rusd rusd( int chainId) throws Exception {
-		return chains.get( chainId).rusd();
+		return chain( chainId).rusd();
 	}
 
 	public Rusd rusd() throws Exception {
-		return chains.get( chainId() ).rusd();
+		return chain( chainId() ).rusd();
 	}
 
 	public Busd busd(int chainId) throws Exception {
-		return chains.get( chainId).busd();
+		return chain( chainId).busd();
 	}
 
 	public Busd busd() throws Exception {
-		return chains.get( chainId() ).busd();
+		return chain( chainId() ).busd();
 	}
 
 	/** mdserver query interval, called redisQueryInterval in config file */
@@ -778,17 +768,26 @@ public class Config extends ConfigBase {
 		return faucetAmt;
 	}
 	
-	public Chains chains() {
-		return chains;
+//	public Chains chains() {
+//		return chains;
+//	}
+
+	public ChainWrapper chainer( int id) throws Exception {
+		return chains.get( id);
 	}
-	
-	/** for testing and Monitor only */ 
-	public Chain chain() throws Exception {
+
+	/** not good, remove bc */
+	public ChainWrapper chainer() throws Exception {
 		return chains.get( chainId() );
 	}
 	
 	public Chain chain(int chainId) throws Exception {
-		return chains.get( chainId);
+		return chains.get( chainId).chain();
+	}
+	
+	/** not good, remove bc */
+	public Chain chain() throws Exception {
+		return chains.get( chainId() ).chain();
 	}
 	
 	/** for testing and Monitor only */ 

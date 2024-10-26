@@ -36,7 +36,7 @@ public class NodeInstance {
 
 	/** map contract address (lower case) to number of Decimals, so we only query it once;
 	 *  this assumes all calls are on the same blockchain */ 
-	private HashMap<String,Integer> decMap = new HashMap<>();
+	private static HashMap<String,Integer> decMap = new HashMap<>();
 	
 
 	/** different nodes have different batch sizes; you can probably get bigger size
@@ -241,7 +241,7 @@ public class NodeInstance {
 			}""";
 		return nodeQuery( body);
 	}
-	
+
 	/** note w/ moralis you can also get the token balance by wallet
 	 * I'm assuming that "data" is the parameters encoded the same was as in Fireblocks module 
 	 * @param m_address */
@@ -302,7 +302,7 @@ public class NodeInstance {
 	}
 
 	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
-	public synchronized void setDecimals(int decimals, String[] addresses) {
+	public synchronized static void setDecimals(int decimals, String[] addresses) {
 		S.out( "Pre-filling decimals map  decimals=%s  count=%s", decimals, addresses.length);
 		
 		for (var address : addresses) {

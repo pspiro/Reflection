@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import tw.util.S;
-import web3.NodeServer;
 
 public class TestReqPositionsMap extends MyTestCase {
 
@@ -19,7 +18,7 @@ public class TestReqPositionsMap extends MyTestCase {
 		//allContracts = trim( allContracts, 11);
 	
 		String wallet = "0x4c5f126Bc37d449944eDC343383be665F315d54A";
-		var map = NodeServer.reqPositionsMap( wallet, allContracts, 0);
+		var map = node().reqPositionsMap( wallet, allContracts, 0);
 		S.out( map);
 		
 	}

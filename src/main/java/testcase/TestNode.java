@@ -9,11 +9,7 @@ import common.Util;
 import tw.util.S;
 import web3.NodeInstance;
 
-public class TestNodeServer extends MyTestCase {
-	static NodeInstance node() {
-		return m_config.node();
-	}
-
+public class TestNode extends MyTestCase {
 	public void testGetBlockNumber() throws Exception {
 		assertTrue( node().getBlockNumber() > 0);
 	}
@@ -24,7 +20,7 @@ public class TestNodeServer extends MyTestCase {
 
 	/** This takes a long time and returns a lot of data */
 //	public void testGetQueued() throws Exception {
-//		NodeServer.getQueuedTrans().display();
+//		node().getQueuedTrans().display();
 //	}
 	
 	public void testGetNativeBal() throws Exception {

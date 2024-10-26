@@ -3,8 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import web3.NodeServer;
-
 public class TestWallet extends MyTestCase {
 	static String empty = "0x3695889Ef1b0aC4F8d0479BCdb29fC5369C219ad";
 	
@@ -14,7 +12,7 @@ public class TestWallet extends MyTestCase {
 	
 	public void testBadToken() throws Exception {
 		try {
-			NodeServer.getBalance( empty, Cookie.wallet, 22);
+			node().getBalance( empty, Cookie.wallet, 22);
 		}
 		catch( Exception e) {
 			return; // should come here
