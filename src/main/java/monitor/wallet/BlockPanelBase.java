@@ -28,7 +28,7 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	// not used
-	protected boolean weCare(Transfer trans) {
+	protected boolean weCare(Transfer trans) throws Exception {
 		return isRusd( trans) || isBusd( trans) || isStock( trans);
 	}
 
@@ -52,7 +52,7 @@ public class BlockPanelBase extends JPanel {
 		return obj.contract().equalsIgnoreCase( config().rusd().name() ); 
 	}
 
-	protected boolean isBusd(Transfer obj) {
+	protected boolean isBusd(Transfer obj) throws Exception {
 		return obj.contract().equalsIgnoreCase( config().busd().name() );
 	}
 

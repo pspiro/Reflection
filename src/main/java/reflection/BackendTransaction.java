@@ -15,10 +15,8 @@ import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
-import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
-import web3.m_config.node();
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -224,61 +222,13 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
-			out( "warning: mywallet requests should route to HookServer");
-			
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
-
-			double rusdBal = m_config.rusd().getPosition( m_walletAddr);
-			double busdBal = m_config.rusd().getPosition( m_walletAddr);
-			
-			JsonObject rusd = new JsonObject();
-			rusd.put( "name", "RUSD");
-			rusd.put( "balance", rusdBal);
-			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
-			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
-			
-			// add info about outstanding RUSD redemption request, if any
-			RedeemTransaction trans = liveRedemptions.get(m_walletAddr.toLowerCase() );
-			if (trans != null) {
-				if (trans.progress() == 100) {
-					rusd.put( "text", trans.text() );  // success or error message
-					rusd.put( "status", trans.status() );  // Completed or Failed 
-					liveRedemptions.remove( m_walletAddr.toLowerCase() );
-				}
-				else {
-					rusd.put( "progress", trans.progress() );
-				}
-			}
-			
-			// fix a display issue where some users approved a huge size by mistake
-			double approved = Math.min(1000000,m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ));
-			
-			JsonObject busd = new JsonObject();
-			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", busdBal);
-			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
-			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
-			busd.put( "approvedBalance", approved);
-			busd.put( "stablecoin", true);
-			
-			JsonObject base = new JsonObject();
-			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", m_config.node().getNativeBalance( m_walletAddr) );
-			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
-			
-			JsonArray ar = new JsonArray();
-			ar.add(rusd);
-			ar.add(busd);
-			ar.add(base);
-			
-			JsonObject obj = new JsonObject();
-			obj.put( "refresh", m_config.myWalletRefresh() );
-			obj.put( "tokens", ar);
-			respond(obj);
+			respondFull( Util.toJson( 
+					code, RefCode.INVALID_REQUEST, 
+					Message, "/api/mywallet not supported in RefAPI; run nginx and HookServer"),
+				400,
+				null);
 		});
 	}
 
@@ -606,7 +556,7 @@ public class BackendTransaction extends MyTransaction {
 			// don't tie up the http thread
 			Util.executeAndWrap( () -> {
 				m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() )
-					.waitForHash();
+					.waitForReceipt();
 				
 				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);
 				respond( code, RefCode.OK, Message, message);
@@ -658,8 +608,8 @@ public class BackendTransaction extends MyTransaction {
 			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");
 			
-			m_config.matic().transfer( m_config.admin1Key(), m_walletAddr, amount)
-				.waitForHash();
+			chain().blocks().transfer( m_config.admin1Key(), m_walletAddr, amount)
+				.waitForReceipt();
 
 			// update the faucet object in the user/locked json
 			var locked = getorCreateUser().getObjectNN( "locked");  // reads the database again, not so efficient

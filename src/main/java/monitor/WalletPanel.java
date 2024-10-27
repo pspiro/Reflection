@@ -45,7 +45,6 @@ import util.LogType;
 import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
-import web3.m_config.node();
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -543,7 +542,7 @@ public class WalletPanel extends MonPanel {
 			Util.require( Util.isValidAddress(m_wallet), "Invalid wallet address");
 
 			String hash = config().rusd().mintRusd( 
-					m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+					m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForReceipt();
 
 			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.MINT,
@@ -577,7 +576,7 @@ public class WalletPanel extends MonPanel {
 					Util.require( Util.isValidAddress(m_wallet), "Invalid wallet address");
 
 					String hash = config().rusd().burnRusd( 
-							m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+							m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForReceipt();
 
 					config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 							"type", LogType.BURN,
@@ -595,7 +594,7 @@ public class WalletPanel extends MonPanel {
 			if (Util.confirm( this, 
 						"Are you sure you want to transfer .01 MATIC from Owner to " + m_wallet ) ) {
 				wrap( () -> {
-					config().matic().transfer(
+					config().chain().blocks().transfer(
 							config().ownerKey(),
 							m_wallet, 
 							.01); 
@@ -805,7 +804,7 @@ public class WalletPanel extends MonPanel {
 		Util.reqValidAddress(m_wallet);
 		
 		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, m_wallet) ) ) {
-			config().rusd().mintStockToken( m_wallet, tok, amt).waitForHash();
+			config().rusd().mintStockToken( m_wallet, tok, amt).waitForReceipt();
 			Util.inform( this, "Done");
 		}
 	}

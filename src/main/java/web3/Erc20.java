@@ -4,31 +4,34 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 
+import chain.Chain;
 import common.Util;
 import tw.util.S;
+import web3.Param.Address;
+import web3.Param.BigInt;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
 public class Erc20 {
 	protected static final BigDecimal ten = new BigDecimal(10);
 	private static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 	
-	// keccacs
-//	totalSupply:   '0x18160ddd'
-//	balanceOf:     '0x70a08231'
-//	transfer:      '0xa9059cbb'
-//	transferFrom:  '0x23b872dd'
+	// keccaks - write   (	// 'address' and 'uint256' to calculate keccak)
 	public static String Approve = "0x095ea7b3";
-//	allowance:     '0xdd62ed3e'
-//	decimals:      '0x313ce567'	
+	public static String TransferOwnership = "0xf2fde38b";
+	public static String Mint = "0x40c10f19";
+	public static String TransferFrom = "0x23b872dd";
+	public static String Transfer = "0xa9059cbb";
 
 	protected String m_address;
 	protected int m_decimals;
 	protected String m_name;
+	protected Chain chain;
 
-	protected Erc20( String address, int decimals, String name) {
+	protected Erc20( String address, int decimals, String name, Chain chainIn) {
 		m_address = address;
 		m_decimals = decimals;
 		m_name = name;
+		chain = chainIn;
 	}
 	
 	public String address() {
@@ -100,8 +103,8 @@ public class Erc20 {
 	
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
-	public double getPosition(NodeInstance node, String walletAddr) throws Exception {
-		return node.getBalance( m_address, walletAddr, m_decimals);
+	public double getPosition(String walletAddr) throws Exception {
+		return chain.node().getBalance( m_address, walletAddr, m_decimals);
 	}
 
 	/** return the balances of all wallets holding this token;
@@ -126,12 +129,70 @@ public class Erc20 {
 	}
 
 	/** note w/ moralis you can also get the token balance by wallet */
-	public double queryTotalSupply(NodeInstance node) throws Exception {
-		return node.getTotalSupply( m_address, m_decimals);
+	public double queryTotalSupply() throws Exception {
+		return chain.node().getTotalSupply( m_address, m_decimals);
 	}
 
 	/** Sends a query to Moralis */
-	public double getAllowance(NodeInstance node, String approverAddr, String spender) throws Exception {
-		return node.getAllowance( m_address, approverAddr, spender, m_decimals);
+	public double getAllowance( String approverAddr, String spender) throws Exception {
+		return fromBlockchain( 
+				chain.node().getAllowance( m_address, approverAddr, spender) );
 	}
+	
+	public String getOwner() throws Exception {
+		return chain.node().getOwner( m_address);
+	}
+
+	public RetVal setOwner( String ownerKey, String newOwnerAddr) throws Exception {
+		return chain.node().callSigned(
+				ownerKey,
+				m_address,
+				TransferOwnership,
+				Util.toArray( new Address( newOwnerAddr) ),  
+				500000); 
+	}
+	
+	public RetVal approve( String ownerKey, String spender, double amount) throws Exception {
+		Param[] params = {
+				new Address( spender),
+				new BigInt( toBlockchain( amount) )
+		};
+
+		return chain.node().callSigned(
+				ownerKey,
+				m_address,
+				Approve,
+				params,
+				500000); 
+	}
+	
+	public RetVal mint( String callerKey, String address, double amount) throws Exception {
+		Param[] params = {
+				new Address( address),
+				new BigInt( toBlockchain( amount) )
+		};
+
+		return chain.node().callSigned(
+				callerKey,
+				m_address,
+				Mint,
+				params,
+				500000); 
+	}
+	
+	public RetVal transfer(String fromKey, String toAddr, double amount) throws Exception {
+		Param[] params = {
+				new Address( toAddr),
+				new BigInt( toBlockchain( amount) )
+		};
+
+		return chain.node().callSigned(
+				fromKey,
+				m_address,
+				Transfer,
+				params,
+				500000); 
+	}
+
 }
+	

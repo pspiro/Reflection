@@ -53,7 +53,7 @@ public abstract class MonPanel extends JPanel implements INewTab {
 		return SwingUtilities.getWindowAncestor(this);
 	}
 	
-	static Config config() {
+	protected static Config config() {
 		return Monitor.m_config;
 	}
 }

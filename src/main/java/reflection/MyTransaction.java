@@ -19,6 +19,7 @@ import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
 import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
@@ -135,19 +136,16 @@ public abstract class MyTransaction extends BaseTransaction {
 		return SiweTransaction.validateCookie( cookie, m_walletAddr);
 	}
 
-	public int chainId() throws Exception {
-		String cookie = m_map.get("cookie");
-		return cookie != null
-			? SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId()
-			: m_config.chainId();
-	}
-	
+	/** return the Chain from the chain id on the cookie */
 	public Chain chain() throws Exception {
-		return m_config.chains().get( chainId() );
+		String cookie = m_map.get("cookie");
+		Util.require( cookie != null, "cookie required but not found");
+		int chainId = SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId();
+		return m_config.chain( chainId);
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
-	void returnPrice(int conid, boolean csv) throws RefException {
+	void returnPrice(int conid, boolean csv) throws Exception {
 		Prices prices = m_main.getStock(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 

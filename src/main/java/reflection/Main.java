@@ -60,15 +60,12 @@ public class Main implements ITradeReportHandler {
 	private String m_type1Config; 
 	private JsonObject m_type2Config;
 	final TradingHours m_tradingHours; 
-	private final Stocks m_stocks = new Stocks();
 	private GTable m_blacklist;  // wallet is key, case insensitive
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
     private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails 
 	
-	Stocks stocks() { return m_stocks; }
-
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("RefAPI");
@@ -110,11 +107,9 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
 		
-		// add new fields
-//		m_config.sqlCommand( sql -> {
-//		});
 		// confirm we can access private keys
-		m_config.admin1Key();
+		timer.next( "Checking access to keys");
+		m_config.chains.checkKeys();
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
@@ -259,10 +254,11 @@ public class Main implements ITradeReportHandler {
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
-		if (readStocks) {
-			S.out( "refreshing stocks");
-			m_stocks.readFromSheet(book, m_config);
-		}
+		// now we read stocks on first use
+//		if (readStocks) {
+//			S.out( "refreshing stocks");
+//			m_config.chain().stocks().readFromSheet(book, m_config);
+//		}
 	}
 
 	/** as of 5/10/24 Frontend no longer needs buy_spread and sell_spread; the spreads
@@ -310,12 +306,12 @@ public class Main implements ITradeReportHandler {
 	
 	// let it fall back to read from a flatfile if this fails. pas
 
-	String getExchange( int conid) throws RefException {
+	String getExchange( int conid) throws Exception {
 		return getStock(conid).getString("exchange");
 	}
 
-	Stock getStock( int conid) throws RefException {
-		Stock stock = m_stocks.stockMap().get( conid);
+	Stock getStock( int conid) throws Exception {
+		Stock stock = m_config.chain().stocks().stockMap().get( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
 	}
@@ -323,7 +319,7 @@ public class Main implements ITradeReportHandler {
 	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
 	public Stock getStockByTokAddr(String addr) throws Exception {
 		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
-		return m_stocks.getStockByTokenAddr(addr);
+		return m_config.chain().stocks().getStockByTokenAddr(addr);
 	}
 
 
@@ -479,9 +475,9 @@ public class Main implements ITradeReportHandler {
 		return m_orderConnMgr;
 	}
 
-	void dump() {
+	void dump() throws Exception {
 		S.out( "-----Dumping Stocks-----");
-		JsonObject.display( m_stocks.stocks(), 0, false);
+		JsonObject.display( m_config.chain().stocks().stocks(), 0, false);
 		
 		S.out( "Dumping config");
 		m_config.dump();
@@ -489,8 +485,8 @@ public class Main implements ITradeReportHandler {
 
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		try {
-			MyClient.getArray( m_mdsUrl).forEach( prices -> {
-				Stock stock = m_stocks.getStockByConid( prices.getInt("conid") );
+			for (var prices : MyClient.getArray( m_mdsUrl) ) {				
+				Stock stock = m_config.chains().polygon().stocks().getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( new Prices(prices) );
 				
@@ -503,16 +499,19 @@ public class Main implements ITradeReportHandler {
 //				else {
 //					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
 //				}
-			});
+			}
 		}
 		catch( Exception e) {
 			S.err( "Error fetching prices", e); // need this because the exception doesn't give much info
 		}
 	}
 
-	/** For the watch list */
+	/** For the watch list 
+	 * @throws Exception */
 	private void handleGetStocksWithPrices(HttpExchange exch) {
-		new BackendTransaction(this, exch, false).respond( m_stocks.stocks());
+		Util.wrap( () -> {
+			new BackendTransaction(this, exch, false).respond( m_config.chain().stocks().stocks());
+		});
 	}
 
 	/** This can be used to serve static json stored in a string
@@ -540,8 +539,8 @@ public class Main implements ITradeReportHandler {
 		return m_type2Config;
 	}
 
-	public JsonArray hotStocks() {
-		return m_stocks.hotStocks();
+	public JsonArray hotStocks() throws Exception {
+		return m_config.chain().stocks().hotStocks();
 	}
 
 	/** @param side is buy or sell (lower case) */
@@ -564,7 +563,7 @@ public class Main implements ITradeReportHandler {
 	/** return true if all stocks are stale, indicating lack of market data 
 	 * @throws Exception */ 
 	boolean stale() throws Exception {
-		long latest = m_stocks.getLatest();
+		long latest = m_config.chain().stocks().getLatest();
 		long interval = System.currentTimeMillis() - latest ;
 		Session session = m_tradingHours.getTradingSession( true, "");
 		return session == Session.Smart && interval > SmartInterval ||
@@ -637,12 +636,16 @@ public class Main implements ITradeReportHandler {
 
             // and not a weekend, send the daily email summaries
             if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-            	Util.executeAndWrap( () -> new Statements( m_config, m_stocks, false) // don't tie up the Util timer thread
+            	Util.executeAndWrap( () -> new Statements( m_config, m_config.chain().stocks(), false) // don't tie up the Util timer thread
             			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }
 		
 		m_timeWas = nowAfter ? Time.After : Time.Before;
+	}
+
+	protected Stocks stocks() throws Exception { 
+		return m_config.chain().stocks(); 
 	}
 }
 

@@ -42,8 +42,7 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	private static final HookConfig m_config = new HookConfig();
-	static String chain() { return Util.toHex( m_config.chainId() ); }
+	private static final HookConfig m_config;
 	final Stocks stocks;
 	final StreamMgr sm;
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
@@ -52,6 +51,15 @@ public class HookServer {
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
+	
+	static {
+		Config.setSingleChain();
+		m_config = new HookConfig();
+	}
+	
+	static String chain() { 
+		return Util.toHex( m_config.chainId() ); 
+	}
 	
 	public static void main(String[] args) {
 		try {
@@ -68,7 +76,7 @@ public class HookServer {
 	
 	HookServer(String[] args) throws Exception {
 		m_config.readFromSpreadsheet( Config.getTabName( args) );
-		stocks = m_config.readStocks();
+		stocks = m_config.chain().stocks();
 		m_node = m_config.node();
 		
 		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
@@ -314,7 +322,7 @@ public class HookServer {
 			
 			t.done();
 			
-			return new HookWallet( walletAddr, positions, approved, nativeBal);
+			return new HookWallet( m_node, walletAddr, positions, approved, nativeBal);
 		});
 	}
 
@@ -329,7 +337,7 @@ public class HookServer {
 		protected abstract void handleHookWithData(JsonObject obj, HookServer hookServer) throws Exception;
 	}
 	
-	static class MoralisStreamMgr extends StreamMgr {
+	class MoralisStreamMgr extends StreamMgr {
 		@Override public String createTransfersStream( String urlBase) throws Exception {
 			return MoralisStreams.createStream(
 					MoralisStreams.erc20Transfers, 

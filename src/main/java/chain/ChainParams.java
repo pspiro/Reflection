@@ -1,66 +1,46 @@
-package reflection;
+package chain;
 
 import org.json.simple.JsonObject;
-import org.web3j.protocol.Web3j;
 
 import common.Util;
 import http.MyClient;
-import refblocks.RbBusd;
-import refblocks.RbRusd;
-import refblocks.Refblocks;
 import tw.util.IStream;
 import tw.util.S;
-import web3.Busd;
 import web3.CreateKey;
 import web3.NodeInstance;
-import web3.Rusd;
 
-public record Chain(
-		NodeInstance node,
-		String name,
-		int chainId,
-		String blockchainExpl,
-		String busdAddr,
-		String rusdAddr,
-		int hookServerPort,
-		String moralisPlatform,
-		String alchemyChain,
-		String platformBase,
-		double faucetAmt,
-		int rpcMaxBatchSize,
-		String rpcUrl,
-		String web3type,
-		int busdDecimals,
-		String busdName,
-		int rusdDecimals,
+public record ChainParams(
 		String admin1Addr,
 		String admin1RefblocksKey,
+		String alchemyChain,
+		String blockchainExpl,
+		String busdAddr,
+		int busdDecimals,
+		String busdName,
+		int chainId,
+		double faucetAmt,
+		int hookServerPort,
+		String moralisPlatform,
+		String name,
+		NodeInstance node,
 		String ownerAddr,
 		String ownerRefblocksKey,
+		String platformBase,
+		String pwName,
+		String pwUrl,
 		String refWalletAddr,
 		String refWalletRefblocksKey,
-		String pwName,
-		String pwUrl
+		int rpcMaxBatchSize,
+		String rpcUrl,
+		String rusdAddr,
+		int rusdDecimals,
+		String symbolsTab,
+		String web3type
 		)
 {
-	
-	
-	public Rusd rusd() throws Exception {
-		return new Rusd( rusdAddr, rusdDecimals, this, 
-				new RbRusd( rusdAddr, rusdDecimals) );
-	}
-	
-	private NodeInstance createNode() throws Exception {
+		
+	NodeInstance createNode() throws Exception {
 		return new NodeInstance( rpcUrl, chainId, rpcMaxBatchSize);
-	}
-	
-	private Refblocks createRefBlocks() {
-		return new Refblocks( chainId, rpcUrl);
-	}
-
-	public Busd busd() throws Exception {
-		return new Busd( busdAddr, busdDecimals, busdName, 
-				new RbBusd( busdAddr, busdDecimals, busdName) );
 	}
 	
 	public String admin1Key() throws Exception {
@@ -92,7 +72,7 @@ public record Chain(
 			} catch (Exception e) {
 			}
 		}
-		
+
 		// get refblocks pw from pwserver
 		var json = Util.toJson( 
 				"code", "lwjkefdj827",
@@ -124,27 +104,5 @@ public record Chain(
 		return chainId == 324;
 	}
 
-	static class ChainWrapper {
-		Chain chain;
-		NodeInstance node;
-		Web3j web3j;
-		Refblocks blocks;
-		
-		ChainWrapper( Chain chainIn) throws Exception {
-			chain = chainIn;
-			node = chain.createNode();
-
-			//web3j = Web3j.build( new HttpService( chain.rpcUrl() ) );
-			blocks = chain.createRefBlocks();
-		}
-
-		public Chain chain() {
-			return chain;
-		}
-
-		public NodeInstance node() {
-			return node;
-		}
-	}
 	
 }

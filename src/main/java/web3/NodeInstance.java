@@ -15,13 +15,9 @@ import org.web3j.crypto.TransactionEncoder;
 import org.web3j.utils.Numeric;
 
 import common.Util;
-import fireblocks.FbRusd;
 import http.MyClient;
-import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
-import web3.Param.Address;
-import web3.Param.BigInt;
 import web3.RetVal.NewRetVal;
 
 /** id sent will be returned on response; you could batch all different query types
@@ -265,7 +261,8 @@ public class NodeInstance {
 		return Erc20.fromBlockchain( queryHexResult( body, "totalSupply", contractAddr, "n/a"), decimals);
 	}
 	
-	public double getAllowance( String contractAddr, String approverAddr, String spenderAddr, int decimals) throws Exception {
+	/** returns allowance in hex */
+	public String getAllowance( String contractAddr, String approverAddr, String spenderAddr) throws Exception {
 		Util.reqValidAddress( contractAddr);
 		Util.reqValidAddress( approverAddr);
 		Util.reqValidAddress( spenderAddr);
@@ -284,7 +281,7 @@ public class NodeInstance {
 			]
 			}""", contractAddr, approverAddr.substring(2), spenderAddr.substring(2) );
 		
-		return Erc20.fromBlockchain( queryHexResult( body, "allowance", contractAddr, approverAddr), decimals);
+		return queryHexResult( body, "allowance", contractAddr, approverAddr);
 	}
 	
 	/** Return number of decimals for the contract; first time sends a query,
@@ -452,6 +449,16 @@ public class NodeInstance {
 		return nodeQuery( body).getObject( "result");
 	}
 	
+	public String getOwner( String contractAddr) throws Exception {
+		Req req = new Req( "eth_call", 1);
+		req.put( "params", Util.toArray( 
+				Util.toJson( "to", contractAddr, "data", "0x8da5cb5b"),
+				"latest")
+				);
+		String str = queryHexResult( req.toString(), "getOwner", contractAddr, "n/a");
+		return "0x" + Util.right( str, 40);
+	}
+	
 	public boolean isKnownTransaction(String transHash) throws Exception {
 		return getTransactionByHash( transHash) != null;
 	}
@@ -583,29 +590,6 @@ public class NodeInstance {
 
 		return ts;
 	}
-	
-	// Assuming Param, Address, and BigInt classes are defined as provided
-	public static void main(String[] args) throws Exception {
-		Config c = Config.ask();
-		var tok = c.readStocks().getAnyStockToken();
-		
-		Param[] params = {
-				new Address( prod),
-				new Address( c.rusdAddr()),
-				new Address( tok.address()),
-				new BigInt( c.rusd().toBlockchain( 1.) ),
-				new BigInt( tok.toBlockchain( 1.) )
-		};
-		
-		c.node().callSigned( 
-				c.admin1Key(),
-				c.rusdAddr(),
-				FbRusd.sellStockKeccak,
-				params,
-				500000
-				)
-			.waitForReceipt();
-	}				
 
 	/** @deprecated use queryFees instead */
 	BigInteger getGasPrice() throws Exception {
@@ -685,6 +669,9 @@ public class NodeInstance {
 		S.out( "revert reason is ");
 		nodeQuery( req.toString() ).display();
 	}
+	
+	public static void main(String[] args) throws Exception {
+	}				
 
 	// Method to encode the function call with its parameters
 	// remove, redundant

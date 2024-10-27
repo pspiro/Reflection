@@ -8,15 +8,13 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
+import chain.Chain;
+import chain.ChainParams;
+import chain.Chains;
 import common.Alerts;
 import common.Util;
-import fireblocks.FbMatic;
 import http.MyClient;
 import onramp.Onramp;
-import redis.ConfigBase;
-import refblocks.RbMatic;
-import refblocks.Refblocks;
-import reflection.Chain.ChainWrapper;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import siwe.SiweTransaction;
@@ -29,19 +27,16 @@ import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
-import web3.Matic;
 import web3.MoralisServer;
 import web3.NodeInstance;
 import web3.RetVal;
 import web3.Rusd;
 
-public class Config extends ConfigBase {
-
-	public enum Web3Type { Fireblocks, Refblocks };
+public class Config {
+	private static boolean singleChain;  // this is for testing and Monitor only
 
 	protected GTable m_tab;
-	Chains chains;
-	static boolean singleChain;  // this is for testing and Monitor only
+	protected final Chains chains = new Chains();;
 	
 	// user experience parameters
 	private double minOrderSize;  // in dollars
@@ -92,33 +87,19 @@ public class Config extends ConfigBase {
 	private int hookServerPort;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
-	private int m_chainId;
+	private int m_chainId;  // always call chainId, never access this directly!
 	private double autoReward; // automatically send users rewards
 	private String pwUrl; // url of pw server
-	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
 	private String blockchainName;  // for messages
 	private double faucetAmt;
-
-	// Fireblocks
-	private Web3Type web3Type;
-	private String admin1Addr;  // used for deployment and Monitor
-	private String admin1Key;   // used for signing transactions
-	private String ownerKey;  // for Fireblocks, this is "Owner"
-	private String ownerAddr;
-	private String refWalletKey;
-	private String refWalletAddr;
-
-	private String fireblocksApiKey;
-	private String fireblocksPrivateKey;
 	private String moralisPlatform;  // lower case
 	private String platformBase;
 	private int fbServerPort;
 	private int fbPollIingInterval;
 
-	private NodeInstance m_node;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -234,7 +215,6 @@ public class Config extends ConfigBase {
 		this.postgresPassword = m_tab.get( "postgresPassword");
 
 		// additional data
-		this.symbolsTab = m_tab.getRequiredString( "symbolsTab");
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
 		this.autoFill = m_tab.getBoolean("autoFill");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
@@ -254,13 +234,9 @@ public class Config extends ConfigBase {
 		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
-		this.admin1Addr = m_tab.getRequiredString("admin1Addr");
-		this.refWalletAddr = m_tab.getRequiredString("refWalletAddr");
-		this.ownerAddr = m_tab.getRequiredString("ownerAddr"); 
 		this.m_chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
-		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
@@ -276,48 +252,7 @@ public class Config extends ConfigBase {
 		
 		// Web3
 		this.platformBase = m_tab.getRequiredString("platformBase");
-		this.web3Type = Util.getEnum( m_tab.getRequiredString( "web3type"), Web3Type.values() );
 		
-//		if (web3Type == Web3Type.Fireblocks) {
-//			rusdCore = new FbRusd(
-//					m_tab.getRequiredString("rusdAddr").toLowerCase(),
-//					m_tab.getRequiredInt("rusdDecimals") );
-//
-//			busdCore = new FbBusd(
-//					m_tab.getRequiredString("busdAddr").toLowerCase(),
-//					m_tab.getRequiredInt("busdDecimals"),
-//					m_tab.getRequiredString("busdName") );
-//			
-//			this.fireblocksApiKey = m_tab.getRequiredString("fireblocksApiKey"); 
-//			this.fireblocksPrivateKey = m_tab.getRequiredString("fireblocksPrivateKey");
-//			this.fbServerPort = m_tab.getRequiredInt("fbServerPort");
-//			this.fbPollIingInterval = m_tab.getRequiredInt("fbPollIingInterval");
-//			this.fbAdmins = m_tab.getRequiredString("fbAdmins");
-//			this.fbLookback = m_tab.getRequiredDouble("fbLookback");
-//			this.ownerKey = m_tab.getRequiredString("ownerKey"); // this is used only for deployment and testing and doesn't need to be in the config file
-//			this.refWalletKey = m_tab.getRequiredString("refWalletKey"); // this is used only for deployment and doesn't need to be in the config file
-//			this.admin1Key = m_tab.getRequiredString("admin1Key"); // this is used only for deployment and doesn't need to be in the config file
-//			
-//			// the fireblocks keys could contain the actual keys, or they could
-//			// contain the paths to the google secrets containing the keys
-//			if (fireblocksApiKey.startsWith("projects/") ) {
-//				fireblocksApiKey = Secret.readValue( fireblocksApiKey);
-//				fireblocksPrivateKey = Secret.readValue( fireblocksPrivateKey);
-//			}
-//
-//			// update Fireblocks static keys and admins
-//			Fireblocks.setKeys( fireblocksApiKey, fireblocksPrivateKey, platformBase);
-//			Accounts.instance.setAdmins( fbAdmins);
-//		}
-		
-		Refblocks.setChainId(  //remove bc 
-				chainId(),
-				m_tab.getRequiredString( "rpcUrl") );
-		
-		this.ownerKey = m_tab.getRequiredString("ownerRefblocksKey"); // this is used only for deployment and testing and doesn't need to be in the config file
-		this.refWalletKey = m_tab.getRequiredString("refWalletRefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
-		this.admin1Key = m_tab.getRequiredString("admin1RefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
-
 		checkPassword(); // confirm we have access to password
 
 		// update onramp url?
@@ -329,8 +264,6 @@ public class Config extends ConfigBase {
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
 		MoralisServer.setChain( moralisPlatform);
 		
-		m_node = chain().node();
-
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
 		require( !autoFill || !isProduction(), "No auto-fill in production");
@@ -444,15 +377,17 @@ public class Config extends ConfigBase {
 		return chain( chainId).rusd();
 	}
 
-	public Rusd rusd() throws Exception {
+	// remove. bc
+	public Rusd rusd() {
 		return chain( chainId() ).rusd();
 	}
 
-	public Busd busd(int chainId) throws Exception {
+	public Busd busd(int chainId) {
 		return chain( chainId).busd();
 	}
 
-	public Busd busd() throws Exception {
+	// remove. bc
+	public Busd busd() {
 		return chain( chainId() ).busd();
 	}
 
@@ -525,7 +460,7 @@ public class Config extends ConfigBase {
 	}
 
 	public boolean isProduction() {  // probably need a separate setting for this
-		return true; // 
+		return Util.equals(m_chainId, 137, 369, 324);  
 	}
 	
 	public String moralisPlatform() {
@@ -619,12 +554,6 @@ public class Config extends ConfigBase {
 		return this; // for chaining calls
 	}
 
-	public Stocks readStocks() throws Exception {
-		Stocks stocks = new Stocks();
-		stocks.readFromSheet(this);
-		return stocks;
-	}
-
 	public double fbLookback() {
 		return fbLookback;
 	}
@@ -667,53 +596,53 @@ public class Config extends ConfigBase {
 	}
 	
 	public String admin1Addr() {
-		return admin1Addr;
+		return params().admin1Addr();
 	}
 
+	private ChainParams params() {
+		return chain().params();
+	}
+	
 	public String refWalletAddr() {
-		return refWalletAddr;
+		return params().refWalletAddr();
 	}
 	
 	/** returns private key or account name */
 	public String refWalletKey() throws Exception {
-		return chain().refWalletKey();
+		return params().refWalletKey();
 	}
 	
 	/** returns private key or account name */
 	public String ownerKey() throws Exception {  // private key or "Owner"
-		return chain().ownerKey();
+		return params().ownerKey();
 	}
 
 	/** returns private key or account name */
 	public String admin1Key() throws Exception {
-		return chain().admin1Key();
+		return params().admin1Key();
 	}
 
 	public String ownerAddr() {
-		return ownerAddr;
+		return params().ownerAddr();
 	}
 	
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( ownerKey(), wallet, amt);
 	}
 	
-	public Matic matic() {
-		return web3Type == Web3Type.Fireblocks ? new FbMatic() : new RbMatic();
-	}
-	
-	public int chainId() throws Exception {
-		Util.require( singleChain, "using chainId from config not allowed"); 
+	// remove this. bc
+	public int chainId() throws RuntimeException {
+		if (!singleChain) {
+			throw new RuntimeException("using chainId from config not allowed"); 
+		}
+		
 		return m_chainId;
-	}
-
-	public Web3Type web3Type() {
-		return web3Type;
 	}
 
 	/** Let RefWallet approve RUSD to spend BUSD on its behalf;
 	 *  Would be used only during migration, which is not needed anymore. */ 
-	public RetVal giveApproval() throws Exception {
-		return busd().approve( refWalletKey(), rusdAddr(), 1000000000); // $1B
+	public RetVal giveApproval( double amt) throws Exception {
+		return busd().approve( refWalletKey(), rusdAddr(), amt); // $1B
 	}
 	
 	public double autoReward() {
@@ -724,9 +653,8 @@ public class Config extends ConfigBase {
 		return sendTelegram;
 	}
 	
-	public double getApprovedAmt(int chainId) throws Exception {
-		Chain chain = chain( chainId);
-		return node().getAllowance( chain.busdAddr(), chain.refWalletAddr(), chain.rusdAddr(), chain.busdDecimals() );
+	public double getApprovedAmt(Chain chain) throws Exception {
+		return chain().busd().getAllowance( chain.params().refWalletAddr(),	chain.params().rusdAddr() );
 	}
 	
 	public String onrampUrl() {
@@ -738,11 +666,10 @@ public class Config extends ConfigBase {
 	}
 	
 	public NodeInstance node() throws Exception {
-		require( singleChain, "not supported");
-		return m_node;
+		return chain().node();
 	}
 	
-	public String[] getStablecoinAddresses() {
+	public String[] getStablecoinAddresses() throws Exception {
 		return new String[] { rusdAddr(), busdAddr() };
 	}
 	
@@ -772,32 +699,43 @@ public class Config extends ConfigBase {
 //		return chains;
 //	}
 
-	public ChainWrapper chainer( int id) throws Exception {
+	public Chain chain( int id) {
 		return chains.get( id);
 	}
 
 	/** not good, remove bc */
-	public ChainWrapper chainer() throws Exception {
+	public Chain chain() {
 		return chains.get( chainId() );
 	}
 	
-	public Chain chain(int chainId) throws Exception {
-		return chains.get( chainId).chain();
+	public Chains chains() {
+		return chains;
 	}
 	
-	/** not good, remove bc */
-	public Chain chain() throws Exception {
-		return chains.get( chainId() ).chain();
-	}
+//	public InnerChain chain(int chainId) throws Exception {
+//		return chains.get( chainId).chain();
+//	}
+//	
+//	/** not good, remove bc */
+//	public InnerChain chain() throws Exception {
+//		return chains.get( chainId() ).chain();
+//	}
 	
 	/** for testing and Monitor only */ 
-	public String rusdAddr() throws Exception {
-		return chain().rusdAddr(); 
+	public String rusdAddr() {
+		return chain().rusd().address(); 
 	}
 
 	/** for testing and Monitor only */
-	public String busdAddr() throws Exception { 
-		return chain().busdAddr(); 
+	public String busdAddr() { 
+		return chain().busd().address(); 
+	}
+	
+	/** Call this for Monitor and testing, not any production app.
+	 *  If set, we'll pull the chainId from the configuration.
+	 *  If not set, the chainId is required to return the Chain. */
+	public static void setSingleChain() {
+		singleChain = true;
 	}
 
 }

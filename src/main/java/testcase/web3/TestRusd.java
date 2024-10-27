@@ -17,7 +17,7 @@ public class TestRusd extends MyTestCase {
 		m_config.rusd().addOrRemoveAdmin(
 				m_config.ownerKey(),
 				Util.createFakeAddress(),
-				true).waitForHash();
+				true).waitForReceipt();
 	}
 
 	public void testAddOrRemoveFail() throws Exception {
@@ -27,7 +27,7 @@ public class TestRusd extends MyTestCase {
 					someKey,
 					Util.createFakeAddress(),
 					true);
-			ret.waitForHash();
+			ret.waitForReceipt();
 			assertTrue( false);  // should not come here
 		}
 		catch( Exception e) {
@@ -53,12 +53,12 @@ public class TestRusd extends MyTestCase {
 		StockToken stock = stocks.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				.waitForHash();
+				.waitForReceipt();
 		
 		// sell stock
 		S.out( "***selling stock");  // failing with same nonce
 		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
-				.waitForHash();
+				.waitForReceipt();
 		
 		// mint busd into refwallet so user can redeem (anyone can call this, 
 		// must have matic)
@@ -67,7 +67,7 @@ public class TestRusd extends MyTestCase {
 		// user has 90 redeem 80, left with 10
 		S.out( "***redeeming rusd");
 		m_config.rusd().sellRusd( user, m_config.busd(), 80)  
-				.waitForHash(); // if fails, check for insuf. allowance
+				.waitForReceipt(); // if fails, check for insuf. allowance
 		
 		t.next("***checkpoint");
 		
@@ -94,7 +94,7 @@ public class TestRusd extends MyTestCase {
 		StockToken stock = stocks.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				.waitForHash();
+				.waitForReceipt();
 		S.out( "  stock balance = " + stock.getPosition( user) );
 		
 

@@ -42,7 +42,7 @@ public class CryptoPanel extends MonPanel {
 	HoldersPanel holdersPanel = new HoldersPanel();
 	
 
-	CryptoPanel() {
+	CryptoPanel() throws Exception {
 		super( new BorderLayout() );
 		
 		HtmlButton button = new HtmlButton( "Show Wallets", ev -> {
@@ -100,7 +100,7 @@ public class CryptoPanel extends MonPanel {
 					amt, config().busd().name(), to) ) {
 				
 				config().busd().transfer( config().refWalletKey(), to, amt)
-					.waitForHash();
+					.waitForReceipt();
 				
 				Util.inform(this, "Done");
 			}
@@ -114,7 +114,7 @@ public class CryptoPanel extends MonPanel {
 					config().ownerKey(),
 					config().refWalletAddr(),
 					Double.parseDouble( Util.ask( "Enter amount"))
-					).waitForHash();
+					).waitForReceipt();
 			Util.inform(this, "Done");
 		});
 	}
@@ -155,7 +155,7 @@ public class CryptoPanel extends MonPanel {
 					config().ownerKey(),
 					address,
 					amt
-					).waitForHash();
+					).waitForReceipt();
 			
 			// add transaction to Reflection financial spreadsheet
 			if (Monitor.m_config.isProduction() ) {
@@ -178,7 +178,7 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	private void sendMatic(String senderKey) throws NumberFormatException, Exception {
-		config().matic().transfer( 
+		config().chain().blocks().transfer( 
 				senderKey,
 				Util.ask("Enter dest wallet address"),
 				Double.parseDouble( Util.ask( "Enter amount"))

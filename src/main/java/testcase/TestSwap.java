@@ -17,10 +17,10 @@ public class TestSwap extends MyTestCase {
 		
 		// mint one, then swap it for another
 		String wallet = Util.createFakeAddress();
-		m_config.rusd().mintStockToken( wallet, stock1, 8).waitForHash();   // succeeds
+		m_config.rusd().mintStockToken( wallet, stock1, 8).waitForReceipt();   // succeeds
 		waitForBalance( wallet, stock1.address(), 8, false);
 		
-		m_config.rusd().swap( wallet, stock1, stock2, 3, 4).waitForHash();
+		m_config.rusd().swap( wallet, stock1, stock2, 3, 4).waitForReceipt();
 		
 		waitFor( 60, () -> 
 			stock1.getPosition( wallet) == 5 &&

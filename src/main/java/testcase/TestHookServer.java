@@ -77,7 +77,7 @@ public class TestHookServer extends MyTestCase {
 		
 		// send native token to wallet
 		S.out( "testing native transfer");
-		m_config.matic().transfer(
+		m_config.chain().blocks().transfer(
 				m_config.ownerKey(), 
 				newWallet,
 				ethAmt).displayHash();
@@ -120,10 +120,10 @@ public class TestHookServer extends MyTestCase {
 	public void testBalances() throws Exception {
 		var tok = stocks.getAnyStockToken();
 
-		m_config.rusd().mintRusd( newWallet, 5, tok).waitForHash();
-		m_config.rusd().mintStockToken(newWallet, tok, 6).waitForHash();
+		m_config.rusd().mintRusd( newWallet, 5, tok).waitForReceipt();
+		m_config.rusd().mintStockToken(newWallet, tok, 6).waitForReceipt();
 		if (!m_config.isProduction() ) {
-			m_config.busd().mint( m_config.ownerKey(), newWallet, 7).waitForHash();
+			m_config.busd().mint( m_config.ownerKey(), newWallet, 7).waitForReceipt();
 		}
 		
 		// wait for balances to appear in wallet locally

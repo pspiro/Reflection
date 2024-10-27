@@ -22,10 +22,12 @@ import web3.RetVal;
 public class RbRetVal extends RetVal {
 	private TransactionReceipt m_receipt;  // could be a real receipt or an empty receipt
 	private Function m_function;  // the function that was called on the smart contract; we need this to display error text
+	private Refblocks m_blocks;
 
 	/** If we already have the real receipt */
-	public RbRetVal( TransactionReceipt receipt) {
+	public RbRetVal( TransactionReceipt receipt, Refblocks blocks) {
 		m_receipt = receipt;
+		m_blocks = blocks;
 	}
 	
 	RbRetVal( TransactionReceipt receipt, Function function) {
@@ -39,14 +41,14 @@ public class RbRetVal extends RetVal {
 	}
 
 	/** Wait for receipt or return it hash if we already have it */
-	public String waitForHash() throws Exception {
+	public String waitForReceipt() throws Exception {
 		Util.require( m_receipt != null, "null receipt");  // maybe you didn't 
 
 		if (m_receipt instanceof EmptyTransactionReceipt) { 
 	    	S.out( "waiting for transaction receipt for %s, polling every %s ms",
 	    			id(), Refblocks.PollingInterval);
 			
-	    	m_receipt = Refblocks.waitForReceipt( m_receipt.getTransactionHash() );
+	    	m_receipt = m_blocks.waitForReceipt( m_receipt.getTransactionHash() );
 			
 	    	S.out( "received transaction receipt: " + Refblocks.toString( m_receipt) );
 			
@@ -84,7 +86,7 @@ public class RbRetVal extends RetVal {
 				? RevertReasonExtractor.retrieveRevertReason( 
 					receipt, 
 					FunctionEncoder.encode(m_function),
-					Refblocks.web3j, BigInteger.ZERO)
+					m_blocks.web3j(), BigInteger.ZERO)
 				: "unknown, function not provided";
 		} catch (IOException e) {
 			return "Could not get reason - " + e.getMessage();

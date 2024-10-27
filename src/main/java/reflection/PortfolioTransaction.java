@@ -27,7 +27,7 @@ public class PortfolioTransaction extends MyTransaction {
 			getWalletFromUri();
 
 			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", 
-					chain().hookServerPort(), m_walletAddr.toLowerCase() );
+					chain().params().hookServerPort(), m_walletAddr.toLowerCase() );
 
 			// get or create the PnlMap for this wallet
 			var pnlMap = Util.getOrCreateEx( pnls, m_walletAddr.toLowerCase(), () ->  // access to map is synchronized

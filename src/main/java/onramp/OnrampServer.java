@@ -56,7 +56,7 @@ public class OnrampServer {
 	public OnrampServer() throws Exception {
 		m_polygon = Config.readFrom( "Prod-config");
 		m_pulsechain = Config.readFrom( "Pulse-config");
-		m_stocks = m_pulsechain.readStocks();
+		m_stocks = m_pulsechain.chain().stocks();
 		Util.executeEvery(0, poll, this::check);
 	}
 	
@@ -154,7 +154,7 @@ public class OnrampServer {
 							wallet, 
 							received.amount(), 
 							m_stocks.getAnyStockToken()
-							).waitForHash();
+							).waitForReceipt();
 					
 					// update database again that it was successful
 					updateState( State.Completed, reflToUserHash, id);

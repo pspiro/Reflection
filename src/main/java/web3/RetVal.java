@@ -7,28 +7,22 @@ import tw.util.S;
 public abstract class RetVal {
 	public abstract String id();  // FB ID or transaction hash
 
-	/** This blocks for up to 63 seconds. For Refblocks, it's really more like
-	 *  "waitForReceipt()" */
-	public abstract String waitForHash() throws Exception;
+	/** This blocks for up to 63 seconds. */
+	public abstract String waitForReceipt() throws Exception;
 
-	/** this is a more accurate name */
-	public final String waitForReceipt() throws Exception {
-		return waitForHash();
-	}
-
-	public void displayHash() throws Exception {
-		S.out( waitForHash() );
+	public final void displayHash() throws Exception {
+		S.out( waitForReceipt() );
 	}
 
 	/** Used with NodeInstance.callSigned() */
 	public static class NewRetVal extends RetVal {
 		private String m_hash;
 		private NodeInstance m_node;
-		private String m_from;
-		private String m_to;
+		private String m_from; // don't need this, can get it from the receipt when it comes
+		private String m_to; // don't need this, can get it from the receipt when it comes
 		private String m_data;
 
-		public NewRetVal(String hash, NodeInstance node, String from, String to, String data) {
+		public NewRetVal(String hash, NodeInstance node, String from, String to, String data) { //remove from and to. bc
 			m_hash = hash;
 			m_node = node;
 			m_from = from;
@@ -41,7 +35,7 @@ public abstract class RetVal {
 		}
 		
 		/** wait for receipt */  // could move this into NodeInstance
-		@Override public String waitForHash() throws Exception {
+		@Override public String waitForReceipt() throws Exception {
 			S.out( "waiting for transaction receipt");
 			
 			long start = System.currentTimeMillis();

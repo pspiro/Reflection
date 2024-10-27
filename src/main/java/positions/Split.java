@@ -17,7 +17,7 @@ public class Split {
 	public static void main(String[] args) throws Exception {
 		Config c = Config.ask();
 		
-		StockToken stock = c.readStocks().getStockByTokenAddr(stockAddr).getToken();
+		StockToken stock = c.chain().stocks().getStockByTokenAddr(stockAddr).getToken();
 		
 		JsonArray ar = new JsonArray();
 		
@@ -35,7 +35,7 @@ public class Split {
 			
 			S.out( "minting %s for %s", amt, wallet);
 			
-			c.rusd().mintStockToken( wallet, stock, amt).waitForHash();
+			c.rusd().mintStockToken( wallet, stock, amt).waitForReceipt();
 			S.out( "check one");
 		}
 	}

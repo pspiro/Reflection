@@ -29,7 +29,7 @@ public class TokensPanel extends JsonPanel {
 	@Override protected void onDouble(String tag, Object val) {
 		if (tag.equals( "smartcontractid")) {
 			try {
-				m_holdersPanel.refresh( new StockToken( val.toString() ) );
+				m_holdersPanel.refresh( new StockToken( val.toString(), config().chain() ) );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -32,8 +32,8 @@ public class TestStream {
 		
 		Util.executeIn( 5000, () -> {
 			try {
-				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5).waitForHash();
-				c.rusd().approve( c.ownerKey(), c.busdAddr(), 6).waitForHash();
+				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5).waitForReceipt();
+				c.rusd().approve( c.ownerKey(), c.busdAddr(), 6).waitForReceipt();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

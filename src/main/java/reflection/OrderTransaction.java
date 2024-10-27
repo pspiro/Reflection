@@ -20,10 +20,9 @@ import com.ib.client.Types.Action;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.Accounts;
-import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import telegram.Telegram;
@@ -32,7 +31,6 @@ import util.LogType;
 import web3.Erc20;
 import web3.RetVal;
 import web3.Stablecoin;
-import web3.StockToken;
 
 public class OrderTransaction extends MyTransaction implements IOrderHandler, LiveTransaction {
 	enum LiveOrderStatus { Working, Filled, Failed };
@@ -88,6 +86,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// must come before profile and KYC checks
 		validateCookie("order");
 		
+		m_chain = chain();
+		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
@@ -109,8 +109,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		double preCommAmt = price * m_desiredQuantity;
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
 		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
-		
-		m_chain = chain();
 		
 		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
 		String currency = m_map.getRequiredString("currency").toUpperCase();
@@ -446,7 +444,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					m_walletAddr,
 					m_stablecoin,
 					m_stablecoinAmt,
-					newStockToken(), 
+					m_stock.getToken(), 
 					m_desiredQuantity
 			);
 		}
@@ -456,7 +454,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			retval = m_config.rusd().sellStockForRusd(
 					m_walletAddr,
 					m_stablecoinAmt,
-					newStockToken(),
+					m_stock.getToken(),
 					m_desiredQuantity
 			);
 		}
@@ -468,41 +466,26 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// id to the map yet; we could fix this with synchronization
 		allLiveTransactions.put(retval.id(), this);
 
-		// FIREBLOCKS: update transaction table with fireblocks id
-		// order will be updated with status via live order system
-		if (m_config.web3Type() == Web3Type.Fireblocks) {
-			m_main.queueSql( conn -> conn.execute( 
-					String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-						retval.id(), m_uid) ) );
-		
-			olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-					"id", retval.id(), 
-					"currency", m_map.getParam("currency"),
-					"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
-		}
-		
 		// REFBLOCKS: wait for the transaction receipt (with polling)
 		// note this does not query for the real error message text if it fails;
 		// we could add that later if desired
-		else {
-			try {
-				out( "waiting for blockchain hash");
-				String hash = retval.waitForHash();
-				out( "blockchain transaction completed with hash %s", hash);
-				
-				// update hash in table; for Fireblocks, this is done when we receive a message 
-				// from the fbserver before onUpdateFbStatus() is called
-				m_main.queueSql( sql -> sql.execWithParams( 
-						"update transactions set blockchain_hash = '%s' where uid = '%s'", 
-						hash, m_uid) );
-				
-				onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
-			}
-			catch( Exception e) {
-				out( "blockchain transaction failed " + e.getMessage() );
-				e.printStackTrace();
-				onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
-			}
+		try {
+			out( "waiting for blockchain hash");
+			String hash = retval.waitForReceipt();
+			out( "blockchain transaction completed with hash %s", hash);
+			
+			// update hash in table; for Fireblocks, this is done when we receive a message 
+			// from the fbserver before onUpdateFbStatus() is called
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set blockchain_hash = '%s' where uid = '%s'", 
+					hash, m_uid) );
+			
+			onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
+		}
+		catch( Exception e) {
+			out( "blockchain transaction failed " + e.getMessage() );
+			e.printStackTrace();
+			onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
 		}
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
@@ -551,7 +534,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						"approved", Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
 						"USDC", Main.m_config.busd().getPosition(m_walletAddr),
 						"RUSD", Main.m_config.rusd().getPosition(m_walletAddr),
-						"stockToken", newStockToken().getPosition( m_walletAddr) );
+						"stockToken", m_stock.getToken().getPosition( m_walletAddr) );
 			});
 
 			try {
@@ -674,7 +657,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
-			obj.put("chain", m_chain.chainId() );
+			obj.put("chain", m_chain.params().chainId() );
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );
@@ -760,10 +743,6 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 		}
 		
-	}
-
-	private StockToken newStockToken() throws Exception {
-		return new StockToken( m_stock.getSmartContractId() );
 	}
 
 	/** The order was submitted. It may have been filled, maybe not. We must unwind the order from the

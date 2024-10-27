@@ -56,7 +56,7 @@ public class MyContract extends Contract {
     }
 
     /** @param method is smart contract method */
-    protected RetVal exec( ExSupplier<RemoteFunctionCall<TransactionReceipt>> method) throws Exception {
+    public RetVal exec( ExSupplier<RemoteFunctionCall<TransactionReceipt>> method) throws Exception {
     	return exec2( method, false);
 	}
 

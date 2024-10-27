@@ -1,4 +1,4 @@
-package refblocks;
+package web3;
 
 import reflection.Config;
 

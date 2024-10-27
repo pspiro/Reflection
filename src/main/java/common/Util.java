@@ -969,4 +969,10 @@ public class Util {
 	public static String input( Component parent, String prompt, Object defVal) {
 		return JOptionPane.showInputDialog(parent, prompt, defVal);
 	}
+	
+	public static String notNullMsg( Exception e) {
+		return S.isNotNull( e.getMessage() ) 
+				? e.getMessage() : 
+				S.isNotNull( e.toString() ) ? e.toString() : e.getClass().toString();
+	}
 }

@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import org.json.simple.JsonObject;
 
+import chain.Chain;
 import common.Util;
 import web3.StockToken;
 
@@ -36,6 +37,11 @@ import web3.StockToken;
  *    */
 public class Stock extends JsonObject {
 	private Prices m_prices = Prices.NULL;  // this does not get serialized into the json
+	private Chain chain;
+	
+	public Stock( Chain chainIn) {
+		chain = chainIn;
+	}
 
 	void setPrices( Prices prices) {
 		Objects.requireNonNull(prices, "prices cannot be null");
@@ -111,7 +117,8 @@ public class Stock extends JsonObject {
 	}
 	
 	public StockToken getToken() {
-		return new StockToken(getSmartContractId());
+		if (chain == null) throw new RuntimeException( "null chain");
+		return new StockToken(getSmartContractId(), chain);
 	}
 
 	public String getType() {

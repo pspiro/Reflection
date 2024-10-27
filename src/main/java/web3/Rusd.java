@@ -1,58 +1,147 @@
 package web3;
 
+import chain.Chain;
+import chain.ChainParams;
 import common.Util;
-import reflection.Chain;
+import tw.util.S;
 
 /** The Rusd class used by clients. Created by Config which knows which 
  *  type of core to pass in */
 public class Rusd extends Stablecoin {
-	private IRusd m_core;
+	public static final String buyRusdKeccak = "8a854e17";
+	public static final String sellRusdKeccak = "5690cc4f"; 
+	public static final String buyStockKeccak = "58e78a85";
+	public static final String sellStockKeccak = "5948f1f0";
+	public static final String addOrRemoveKeccak = "89fa2c03";
+	public static final String swapKeccak = "62835413";
+
+	
 	private Chain m_chain;
 	
-	public Rusd( String rusdAddr, int rusdDecimals, Chain config, IRusd core) throws Exception {
-		super( rusdAddr, rusdDecimals, "RUSD");
+	public Rusd( String rusdAddr, int rusdDecimals, Chain chain) throws Exception {
+		super( rusdAddr, rusdDecimals, "RUSD", chain);
 		
 		Util.require( rusdDecimals == 6, "Wrong number of decimals for RUSD " + rusdDecimals);
-		Util.require( core != null, "null core");
 
-		m_chain = config;
-		m_core = core;
+		m_chain = chain;
+	}
+	
+	ChainParams params() {
+		return m_chain.params();
+	}
+
+	private String admin1Key() throws Exception {
+		return params().admin1Key(); 
+	}
+	
+	/** RUSD has no mint function, so we sell zero shares of stock */
+	public RetVal mintRusd(String address, double amt, StockToken anyStockToken) throws Exception {
+		return sellStockForRusd( address, amt, anyStockToken, 0);
+	}
+
+	/** RUSD has no mint function, so we sell zero shares of stock */
+	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
+		return buyStockWithRusd( address, amt, anyStockToken, 0);
+	}
+	
+	public RetVal mintStockToken(String address, StockToken stockToken, double amt) throws Exception {
+		return buyStockWithRusd(address, 0, stockToken, amt);
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal buyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.buyStock( m_chain.admin1Key(), userAddr, stablecoin, stablecoinAmt, stockToken, stockTokenAmt);
+		Util.reqValidKey( admin1Key() );
+		Util.reqValidAddress(userAddr);
+		
+		S.out( "RB-RUSD buyStock %s %s paying %s %s for user %s", 
+				stockTokenAmt,
+				stockToken.address(),
+				stablecoinAmt,
+				stablecoin.name(),
+				userAddr);
+		
+		var contract = load( admin1Key() );
+		return contract.exec( () -> contract.buyStock(
+				userAddr, 
+				stablecoin.address(), 
+				stockToken.address(), 
+				stablecoin.toBlockchain( stablecoinAmt), 
+				stockToken.toBlockchain( stockTokenAmt)
+				) );
+
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return m_core.sellStockForRusd( m_chain.admin1Key(), userAddr, rusdAmt, stockToken, stockTokenAmt);
+		Util.reqValidKey( admin1Key() );
+		Util.reqValidAddress(userAddr);
+
+		S.out( "RB-RUSD sellStock %s %s receive %s RUSD for user %s",
+				stockTokenAmt,
+				stockToken.name(),
+				rusdAmt,
+				userAddr);
+
+		var contract = load( admin1Key() );
+		return contract.exec( () -> contract.sellStock( 
+				userAddr,
+				address(), 
+				stockToken.address(), 
+				toBlockchain( rusdAmt), 
+				stockToken.toBlockchain( stockTokenAmt)
+				) );
+
 	}
 
 	/** methods to change the smart contract are passed to the core */
 	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
-		return m_core.sellRusd( m_chain.admin1Key(), userAddr, busd, amt);
+		Util.reqValidKey(admin1Key() );
+		Util.reqValidAddress(userAddr);
+
+		S.out( "RUSD redeeming %s RUSD receive %s %s for user %s",
+				S.fmt6( amt),
+				S.fmt6( amt),
+				busd.name(),
+				userAddr);
+		
+		//S.out( "  the allowance is %s", )
+
+		var contract = load( admin1Key() );
+		return contract.exec( () -> contract.sellRusd(
+				userAddr,
+				busd.address(),
+				busd.toBlockchain( amt),
+				toBlockchain( amt)
+				) );
 	}
 
 	public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
-		return m_core.addOrRemoveAdmin( ownerKey, address, add);
+		Util.reqValidKey(ownerKey);
+		Util.reqValidAddress(address);
+
+		S.out( "RB-RUSD %s %s admin %s",
+				Util.getAddress( ownerKey),
+				add ? "adding" : "removing",
+				address);
+				
+		var contract = load( ownerKey);
+		return contract.exec( () -> contract.addOrRemoveAdmin( address,	add) );
 	}
 
 	public RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception {
-		return m_core.swap( userAddr, stockToBurn, stockToMint, burnAmt, mintAmt);
-	}
-
-	public RetVal setOwner( String ownerKey, String ownerAddr) throws Exception {
-		return m_core.setOwner( ownerKey, ownerAddr); 
+		throw new Exception(); // not implemented yet
 	}
 
 	public RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception {
-		return m_core.setRefWallet( ownerKey, refWalletAddr); 
+		Util.reqValidKey(ownerKey);
+		Util.reqValidAddress(refWalletAddr);
+		
+		S.out( "RB-RUSD setting RefWallet to %s", refWalletAddr);
+		
+		var contract = load( ownerKey);
+		return contract.exec( () -> contract.setRefWalletAddress( refWalletAddr) );
 	}
 
-	public RetVal approve( String ownerKey, String spender, double amt) throws Exception {
-		return m_core.approve( ownerKey, spender, amt);
-	}
 
 	// real methods are implemented here
 
@@ -73,28 +162,24 @@ public class Rusd extends Stablecoin {
 		);
 	}
 	
-	/** RUSD has no mint function, so we sell zero shares of stock */
-	public RetVal mintRusd(String address, double amt, StockToken anyStockToken) throws Exception {
-		return sellStockForRusd( address, amt, anyStockToken, 0);
+	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain
+	 *  note that we no longer need to have tm passed in because we can get it from Refblocks */
+	public refblocks.Rusd load(String callerKey) throws Exception {
+		return refblocks.Rusd.load( 
+				address(), 
+				m_chain.web3j(), 
+				m_chain.blocks().getFasterTm( callerKey), 
+				m_chain.blocks().getGp( 500000)  // this is good for everything except deployment
+				);
 	}
 
-	/** RUSD has no mint function, so we sell zero shares of stock */
-	public RetVal burnRusd(String address, double amt, StockToken anyStockToken) throws Exception {
-		return buyStockWithRusd( address, amt, anyStockToken, 0);
+	public String deploy( String ownerKey, String refWallet, String admin1) throws Exception {
+		return refblocks.Rusd.deploy( 
+				m_chain.web3j(),
+				m_chain.blocks().getWaitingTm( ownerKey),
+				m_chain.blocks().getGp( m_chain.blocks().deployGas),
+				refWallet, admin1
+				).send().getContractAddress();
 	}
 	
-	public RetVal mintStockToken(String address, StockToken stockToken, double amt) throws Exception {
-		return buyStockWithRusd(address, 0, stockToken, amt);
-	}
-	
-	public interface IRusd {
-		RetVal buyStock( String adminKey, String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
-		RetVal sellStockForRusd( String adminKey, String userAddr, double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception;
-		RetVal sellRusd( String adminKey, String userAddr, Busd Busd, double amt) throws Exception;
-		RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception;
-		RetVal swap( String userAddr, StockToken stockToBurn, StockToken stockToMint, double burnAmt, double mintAmt) throws Exception;
-		RetVal setOwner( String ownerKey, String ownerAddr) throws Exception;
-		RetVal setRefWallet( String ownerKey, String refWalletAddr) throws Exception;
-		RetVal approve(String ownerKey, String spender, double amt) throws Exception;
-	}
 }

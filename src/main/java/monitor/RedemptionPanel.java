@@ -114,7 +114,7 @@ public class RedemptionPanel extends QueryPanel {
 		// don't tie up the UI thread
 		Util.executeAndWrap( () -> {
 			String hash = rusd.sellRusd(walletAddr, busd, rusdPos)
-					.waitForHash();
+					.waitForReceipt();
 
 			// update redemptions table in DB and screen
 			String sql = String.format( 

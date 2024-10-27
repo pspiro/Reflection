@@ -44,7 +44,7 @@ public class TestNode extends MyTestCase {
 	}
 	
 	public void testGetAllowance() throws Exception {
-		assertTrue( node().getAllowance( m_config.rusdAddr(), NodeInstance.prod, NodeInstance.prod, 6) >= 0); 
+		assertTrue( m_config.chain().busd().getAllowance( NodeInstance.prod, m_config.rusdAddr() ) >= 0); 
 	}
 
 	public void testGetDecimals() throws Exception {
@@ -90,7 +90,7 @@ public class TestNode extends MyTestCase {
 	public void test() throws Exception {
 		Util.wrap( () -> {
 			m_config.rusd().mintRusd( Cookie.wallet, 1, stocks.getAnyStockToken() )
-				.waitForHash();
+				.waitForReceipt();
 		});
 	}
 }

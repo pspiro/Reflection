@@ -4,7 +4,7 @@ import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.util.S;
 
-public class MdConfig extends ConfigBase {
+public class MdConfig {
 	// program parameters
 	private String twsMdHost;  // TWS is listening on this host
 	private int twsMdPort;  // TWS is listening on this port
@@ -14,6 +14,7 @@ public class MdConfig extends ConfigBase {
 	private int mdsPort;
 	private boolean twsDelayed;
 	private boolean simulateBidAsk;
+	private String symbolsTab;
 
 	public String twsMdHost() { return twsMdHost; }
 	public int twsMdPort() { return twsMdPort; }
@@ -35,14 +36,13 @@ public class MdConfig extends ConfigBase {
 		this.mdsPort = tab.getRequiredInt("mdsPort");
 		this.twsDelayed = tab.getBoolean("twsDelayed");
 		this.simulateBidAsk = tab.getBoolean("simulateBidAsk");
+		this.symbolsTab = tab.getRequiredString( "symbolsTab");
 		
 		this.redisBatchTime = tab.getRequiredInt( "redisBatchTime");
 		require( redisBatchTime >= 0 && redisBatchTime <= 5000, "redisBatchTime");
 		
 		this.reconnectInterval = tab.getRequiredInt( "reconnectInterval");
 		require( reconnectInterval >= 1000 && reconnectInterval <= 60000, "reconnectInterval");
-
-		this.symbolsTab = tab.getRequiredString( "symbolsTab");
 	}
 	
 	private void require( boolean v, String parameter) throws Exception {
@@ -57,6 +57,10 @@ public class MdConfig extends ConfigBase {
 	}
 	public boolean simulateBidAsk() {
 		return simulateBidAsk;
+	}
+	
+	String symbolsTab() {
+		return symbolsTab;
 	}
 
 }

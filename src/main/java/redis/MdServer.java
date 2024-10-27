@@ -94,7 +94,7 @@ public class MdServer {
 		});
 		
 		timer.next( "Reading stock list from google sheet");
-		m_stocks.readFromSheet(m_config);
+		m_stocks.readFromSheet(m_config.symbolsTab(), null);
 
 		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
@@ -292,7 +292,7 @@ public class MdServer {
 			wrap( () -> {
 				S.out( "Refreshing list of stock tokens from spreadsheet");
 				mdController().cancelAllTopMktData();
-				m_stocks.readFromSheet(m_config);
+				m_stocks.readFromSheet(m_config.symbolsTab(), null);
 				requestPrices();
 				respondOk();
 			});

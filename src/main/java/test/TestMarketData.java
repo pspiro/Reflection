@@ -57,7 +57,7 @@ public class TestMarketData extends ConnectionAdapter {
 
 	void reqAll() throws Exception {
 		Config config = Config.ask();
-		Stocks stocks = config.readStocks();
+		Stocks stocks = config.chain().stocks();
 		
 		for( reflection.Stock stock : stocks) {
 			Contract c = new Contract();

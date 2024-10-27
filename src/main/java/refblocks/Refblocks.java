@@ -16,7 +16,6 @@ import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
-import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.FastRawTransactionManager;
 import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.RawTransactionManager;
@@ -32,29 +31,30 @@ import common.Util;
 import tw.util.S;
 import web3.Erc20;
 import web3.Fees;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 /** Support code for Web3j library */
 public class Refblocks {
 	static final BigInteger defaultBaseFee = BigInteger.valueOf(1_000_000_000L);  // used only if we can't fetch it
 	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
-	static final long deployGas = 2000000;
+	public static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 	Web3j web3j;
 	private long chainId;
 	HashMap<String,FasterTm> mgrMap = new HashMap<>(); // what is this? bc
+	NodeInstance node;
 	
 
 	/** Called when Config is read */
-	public Refblocks( long chainIdIn, String rpcUrl) {
-		S.out( "Refblocks  chainId=%s  rpcUrl=%s", chainIdIn, rpcUrl);
+	public Refblocks( long chainIdIn, Web3j web3jIn, NodeInstance nodeIn) {
 		chainId = chainIdIn;
-		web3j = Web3j.build( new HttpService( rpcUrl) );
+		web3j = web3jIn;
+		node = nodeIn;
 	}
 
 	/** returns same fees that are displayed here: https://polygonscan.com/gastracker */
 	
-	public String toString(TransactionReceipt receipt) throws Exception {
+	public static String toString(TransactionReceipt receipt) throws Exception {
 		Util.require( receipt != null, "null receipt");
 
 		BigInteger gasUsed = decodeQuantity( receipt.getGasUsedRaw() );
@@ -121,16 +121,15 @@ public class Refblocks {
 		TransactionManager tm = null;
 		
 		try {
-			// production
+			// production; returns empty receipt
 			tm = getFasterTm( callerKey);
 			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
-			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
+			return new RbRetVal( receipt, this);
 
-			// for debugging
+			// for testing; this returns actual receipt
 //			tm = getWaitingTm( callerKey);
 //			TransactionReceipt receipt = function.getCall( tm).send();
-
-			return new RbRetVal( receipt);
+//			return new RbRetVal( receipt);
 		}
 		catch( Exception e) {
 			S.out( "Error for caller %s: %s", 
@@ -196,7 +195,7 @@ public class Refblocks {
 	}
 	
 	/** note that we could use a singleton DelayedTrp if desired; there is no state */
-	protected TransactionManager getFasterTm(String callerKey) {
+	public TransactionManager getFasterTm(String callerKey) {
 //		return new SlowerTm(web3j, Credentials.create( callerKey), new DelayedTrp() );
 		return Util.getOrCreate( mgrMap, callerKey, () -> new FasterTm( 
 				web3j, 
@@ -232,7 +231,7 @@ public class Refblocks {
 	public StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = NodeServer.queryFees();
+		Fees fees = node.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider(
@@ -261,7 +260,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 200000);  // was 40k, increased to 200k for ZkSync
     		
-    		Fees fees = NodeServer.queryFees();
+    		Fees fees = node.queryFees();
     		fees.showFees( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
@@ -278,7 +277,7 @@ public class Refblocks {
 	}
 	
 	/** transfer native token; taken from Transfer.sendFundsEIP1559() */ 
-	RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
+	public RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
 		S.out( "transferring %s matic from %s to %s",
 				amt,
 				Util.getAddress(senderKey),
@@ -287,7 +286,7 @@ public class Refblocks {
 		TransactionReceipt receipt = new MyTransfer( getFasterTm(senderKey) )
 				.send( toAddr, BigDecimal.valueOf( amt) );
 		
-		return new RbRetVal( receipt);
+		return new RbRetVal( receipt, this);
 	}
 	
 	class SlowerTm extends RawTransactionManager {
@@ -442,7 +441,7 @@ public class Refblocks {
     EthSendTransaction handleTmTimeout(RawTransactionManager tm, RawTransaction rawTransaction, SocketTimeoutException e) throws IOException { String transHash = Hash.sha3( tm.sign(rawTransaction) );
         
         try {
-			if (NodeServer.isKnownTransaction( transHash) ) {
+			if (node.isKnownTransaction( transHash) ) {
 		        S.out( "Warning: transaction %s timed out but it was still broadcast; we will wait for the receipt", transHash);
 				var retVal = new EthSendTransaction();
 				retVal.setResult( transHash);
@@ -460,7 +459,7 @@ public class Refblocks {
     }
 
 	public Web3j web3j() {
-		return webj3;
+		return web3j;
 	}    	
 }
 

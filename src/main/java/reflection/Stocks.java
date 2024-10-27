@@ -6,8 +6,8 @@ import java.util.Iterator;
 
 import org.json.simple.JsonArray;
 
+import chain.Chain;
 import common.Util;
-import redis.ConfigBase;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -21,13 +21,15 @@ public class Stocks implements Iterable<Stock> {
 	private final JsonArray m_stocks = new JsonArray(); // all Active stocks as per the Symbols tab of the google sheet; array of JsonObject
 	private final JsonArray m_hotStocks = new JsonArray(); // hot stocks as per the spreadsheet
 	
-	public void readFromSheet(ConfigBase config) throws Exception {
-		readFromSheet( NewSheet.getBook(NewSheet.Reflection), config);
+	/** @param chain could be null when read from MdServer */
+	public void readFromSheet(String symbolsTab, Chain chain) throws Exception {
+		readFromSheet( NewSheet.getBook(NewSheet.Reflection), symbolsTab, chain);
 	}
 
-	/** Use this version for better performance when reading multiple tabs from same sheet */
-	public void readFromSheet(Book book, ConfigBase config) throws Exception {
-		S.out( "Reading stocks from %s", config.symbolsTab() );
+	/** Use this version for better performance when reading multiple tabs from same sheet
+	    @param chain could be null when read from MdServer */
+	public void readFromSheet(Book book, String symbolsTab, Chain chain) throws Exception {
+		S.out( "Reading stocks from %s", symbolsTab);
 		
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		m_stocks.clear();
@@ -38,8 +40,8 @@ public class Stocks implements Iterable<Stock> {
 		// read master list of symbols and map conid to entry
 		HashMap<Integer,ListEntry> masterList = readMasterSymbols(book);
 		
-		for (ListEntry row : book.getTab( config.symbolsTab() ).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
-			Stock stock = new Stock();
+		for (ListEntry row : book.getTab( symbolsTab).fetchRows(true) ) {  // we must pass "true" for formatted so we get the start and end dates in the right format (yyyy-mm-dd); if that's a problem, write a getDate() method
+			Stock stock = new Stock(chain);
 			if ("Y".equals( row.getString( "Active") ) ) {
 				int conid = Integer.valueOf( row.getString("Conid") );
 
@@ -118,7 +120,8 @@ public class Stocks implements Iterable<Stock> {
 	/** Return smart contract address of any stock 
 	 * @throws Exception */
 	public StockToken getAnyStockToken() throws Exception {
-		return new StockToken( m_stocks.get(0).getLowerString("smartcontractid") );
+		var stock = m_conidMap.entrySet().iterator().next().getValue();
+		return stock.getToken();
 	}
 
 	/** Return the stock or null */

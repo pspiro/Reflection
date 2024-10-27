@@ -1,7 +1,6 @@
 package testcase.web3;
 
 import common.Util;
-import reflection.Config.Web3Type;
 import testcase.MyTestCase;
 import tw.util.S;
 
@@ -11,10 +10,8 @@ public class TestBusd extends MyTestCase {
 	
 	static {
 		try {
-			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
-					? "bob" 
-					: Util.createPrivateKey();
-			bobAddr = m_config.matic().getAddress( bobKey);
+			bobKey = Util.createPrivateKey();
+			bobAddr = Util.getAddress( bobKey);
 		} 
 		catch (Exception e) {
 			e.printStackTrace();
@@ -39,13 +36,13 @@ public class TestBusd extends MyTestCase {
 	/** this is failing due to insufficient gas but it shouldn't be more */
 	public void testApprove() throws Exception {
 		// transfer some gas to bob
-		m_config.matic().transfer( m_config.ownerKey(), bobAddr, .005)
-				.waitForHash();
+		m_config.chain().blocks().transfer( m_config.ownerKey(), bobAddr, .005)
+				.waitForReceipt();
 
 		// let bob approve spending by spender
 		String spender = Util.createFakeAddress();
 		m_config.busd().approve( bobKey, spender, 50)
-				.waitForHash();
+				.waitForReceipt();
 		waitFor( 30, () -> m_config.busd().getAllowance(bobAddr, spender) > 49.99);
 	}		
 }

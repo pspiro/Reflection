@@ -66,7 +66,7 @@ class HookWallet {
 			S.out( "Updated native balance in %s to %s", m_walletAddr, m_nativeBal);
 		}
 		else {
-			double bal = m_.node.getNativeBalance(m_walletAddr);
+			double bal = m_node.getNativeBalance(m_walletAddr);
 			if (!Util.isEq( bal, m_nativeBal, HookServer.small) ) {
 				S.out( "Warning: updated native balance in %s to %s", m_walletAddr, bal);
 				m_nativeBal = bal;

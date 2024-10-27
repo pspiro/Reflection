@@ -130,7 +130,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// insufficient BUSD in RefWallet or > maxAutoRedeem?
 			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
-			double allowance = Main.m_config.getApprovedAmt( chainId() ); // sends query
+			double allowance = Main.m_config.getApprovedAmt( chain() ); // sends query
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
@@ -151,7 +151,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 			// redeem it  try/catch here?
 			try {
-				String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+				String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForReceipt(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 				respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 

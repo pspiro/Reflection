@@ -28,7 +28,7 @@ public class TestRedeem extends MyTestCase {
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.mintBusd( refWallet, 2000).waitForHash();
+			m_config.mintBusd( refWallet, 2000).waitForReceipt();
 		}
 		
 		// mint some RUSD to new wallet 
@@ -95,7 +95,7 @@ public class TestRedeem extends MyTestCase {
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			S.out( "minting");
 			m_config.mintBusd( refWallet, 2000)
-					.waitForHash();
+					.waitForReceipt();
 		}
 		
 		// mint an amount of RUSD
@@ -107,7 +107,7 @@ public class TestRedeem extends MyTestCase {
 		m_config.rusd().sellRusd(
 				Cookie.wallet, 
 				m_config.busd(), 
-				3).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+				3).waitForReceipt(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 		System.exit(0);
 		
@@ -144,7 +144,7 @@ public class TestRedeem extends MyTestCase {
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			m_config.mintBusd( refWallet, 2000)
-					.waitForHash();
+					.waitForReceipt();
 		}
 		
 		// mint an amount of RUSD that should work--high 
@@ -159,8 +159,8 @@ public class TestRedeem extends MyTestCase {
 		// clear approved amount
 		S.out( "clearing allowance");
 		m_config.busd().approve(
-				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt( chainId) );
+				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForReceipt(); // $1M
+		S.out( "approved: " + m_config.getApprovedAmt( chain() ) );
 
 		// redeem RUSD, fail due to allowance
 		S.out( "sending redemption request to fail");
@@ -170,8 +170,8 @@ public class TestRedeem extends MyTestCase {
 		// restore approved amount
 		S.out( "restoring allowance");
 		m_config.busd().approve(
-				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt( chainId) );
+				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForReceipt(); // $1M
+		S.out( "approved: " + m_config.getApprovedAmt(chain() ) );
 		
 		
 		// wait for it to solidify

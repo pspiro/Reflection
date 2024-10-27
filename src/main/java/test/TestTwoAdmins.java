@@ -9,7 +9,6 @@ import common.Util;
 import http.MyClient;
 import reflection.Config;
 import reflection.Stocks;
-import tw.google.NewSheet;
 import tw.util.S;
 
 /** This test proves that more admins are quicker. One admin 
@@ -99,11 +98,10 @@ public class TestTwoAdmins {
 	
 	public static void mint(String wallet, double amt, Config config) throws Exception {
 
-		Stocks stocks = new Stocks();
-		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), config);
+		Stocks stocks = config.chain().stocks();
 		
 		config.rusd().mintRusd( wallet, amt, stocks.getAnyStockToken() )
-			.waitForHash();
+			.waitForReceipt();
 	}
 
 	private static void createUserProfile(String wallet, Config config) throws Exception {

@@ -251,14 +251,14 @@ public class OldStyleTransaction extends MyTransaction {
 	}
 
 	/** Not being used because the google sheet IMPORTDATA doesn't work */
-	private void getPrice() throws RefException {
+	private void getPrice() throws Exception {
 		int conid = m_map.getRequiredInt( "conid");
 		boolean csv = m_map.getBool("csv");
 		returnPrice(conid, csv);
 	}	
 
 	/** Top-level message, return prices for debugging */
-	private void getAllPrices() throws RefException {
+	private void getAllPrices() throws Exception {
 		
 		// build the json response   // we could reuse this and just update the prices each time
 		JsonObject whole = new JsonObject();

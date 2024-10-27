@@ -3,35 +3,35 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import chain.Chain;
 import common.Util;
 import common.Util.ExRunnable;
 import common.Util.ExSupplier;
-import fireblocks.Accounts;
 import http.MyHttpClient;
 import junit.framework.TestCase;
 import reflection.Config;
 import reflection.RefCode;
 import reflection.Stocks;
 import tw.util.S;
-import web3.NodeInstance;();
+import web3.NodeInstance;
 
 public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
 	public static String prodWallet = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
 	
 	static protected Config m_config;
-	static protected Accounts accounts = Accounts.instance;
-	static protected Stocks stocks = new Stocks();  // you must read the stocks before using this
-	static int port = 8383;
-	static int chainId = 11155111;
+	static protected Stocks stocks;
+	static protected int port = 8383;
+	static protected int chainId = 11155111;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
+			Config.setSingleChain();
 			m_config = Config.read();  // pull from config.txt
 			assertTrue( !m_config.isProduction() ); // don't even think about it!
-			stocks.readFromSheet(m_config);
+			stocks = m_config.chain().stocks();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -188,7 +188,7 @@ public class MyTestCase extends TestCase {
 
 	public static void mintBusd(String wallet, double amt) throws Exception {
 		m_config.mintBusd( wallet, amt)
-				.waitForHash();
+				.waitForReceipt();
 		waitForBalance(wallet, m_config.busd().address(), amt, false); // make sure the new balance will register with the RefAPI
 	}
 	
@@ -198,14 +198,18 @@ public class MyTestCase extends TestCase {
 	
 			m_config.rusd()
 					.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
-					.waitForHash();
+					.waitForReceipt();
 			
 			waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 		}
 	}
 	
-	protected NodeInstance node() {
-		return m_config.node();
+	static protected Chain chain() {
+		return m_config.chain();
+	}
+
+	static protected NodeInstance node() {
+		return m_config.chain().node();
 	}
 	
 }
