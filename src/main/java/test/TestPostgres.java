@@ -23,49 +23,13 @@ import web3.Param.BigInt;
 /** Just test that you can connect to the database. */
 public class TestPostgres {
 	public static void main(String[] args) throws Exception {
-		Config c = Config.ask("zksync");
-		ZkSync zkSync = ZkSync.build(new HttpService("https://mainnet.era.zksync.io"));
-
-//		ERC20 er = ERC20.load( 
-//				c.busdAddr(), 
-//				zkSync, 
-//				Credentials.create( c.refWalletKey()),
-//				new DefaultGasProvider()
-//				);
-//		TransactionReceipt ret = er.approve( c.rusdAddr(), BigInteger.valueOf( 1000000) ).send();
-//		S.out( ret);
+		Config c = Config.ask("prod");
+		S.out( c.admin1Key() );
 		
-		new RbBusd( c.busdAddr(), c.busd().decimals(), c.busd().name() )
-			.approve( c.refWalletKey(), c.rusdAddr(), 1000000)
-			.waitForReceipt();
+		Config c2 = Config.ask("pulse");
+		S.out( c2.admin1Key() );
 
-
-		S.out( c.node().getDecimals( c.busdAddr() ) );
-				
-		Param[] params = {
-				new Address( c.rusdAddr() ),
-				new BigInt( Erc20.toBlockchain( 1000000, 6) )
-		};
-		
-
-		// this works
-//		c.node().callSigned(
-//				c.refWalletKey(),
-//				c.busdAddr(),
-//				Erc20.Approve,
-//				params,
-//				200000)  // 500k works, 100k does not
-//			.displayHash();
-		
-		S.out( c.getApprovedAmt() );
-		
-//		c.node().getRevertReason(
-//				c.refWalletAddr(),
-//				c.busdAddr(),
-//				Erc20.Approve,
-//				params
-//				);
-		
-
+		Config c3 = Config.ask("zksync");
+		S.out( c3.admin1Key() );
 	}
 }

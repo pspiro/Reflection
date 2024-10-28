@@ -11,22 +11,30 @@ public class PwServer {
 		JsonObject.parse( System.getenv("json") );
 
 		int port = Integer.valueOf( System.getenv("PORT") );
-		S.out( "listening on port " + port);
-		
+
 		MyServer.listen( port, 1, server -> {
-			server.createContext("/getpw", exch -> handle( new BaseTransaction(exch, true) ) );
+			server.createContext("/", exch -> handleCatchAll( new BaseTransaction(exch, true) ) );
+			server.createContext("/ok", exch -> new BaseTransaction(exch, true).respondOk() );
+			server.createContext("/getpw", exch -> handleGetPw( new BaseTransaction(exch, true) ) );
 		});
 	}
 	
-	static void handle(BaseTransaction trans) {
-		try {
-			var received = trans.parseToObject();
+	private static void handleCatchAll(BaseTransaction trans) {
+		trans.respond( Util.toJson( "error", "No such endpoint") );
+	}
 
-			// validate name and code
-			JsonObject pack = JsonObject.parse( System.getenv("json") )
-					.getObject( received.getString( "name") );
+	static void handleGetPw(BaseTransaction trans) {
+		try {
+			// read the request from client
+			var request = trans.parseToObject();
+
+			// read the list of codes from the google 'secretes'
+			JsonObject codes = JsonObject.parse( System.getenv("json") );
+
+			// get the 'pack' (code+pw+ips)
+			var pack = codes.getObject( request.getString( "name") );
 			Util.require( pack != null, "Invalid name");
-			Util.require( received.getString( "code").equals( pack.getString( "code")), "Invalid code" );
+			Util.require( request.getString( "code").equals( pack.getString( "code")), "Invalid code" );
 
 			// validate source IP address
 			String sourceIp = trans.exchange().getRemoteAddress().getAddress().getHostAddress();
@@ -38,7 +46,7 @@ public class PwServer {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
-			trans.respond( Util.toJson( "error", e.getMessage() ) );
+			trans.respond( Util.toJson( "error", e.toString() ) );
 		}
 	}
 
