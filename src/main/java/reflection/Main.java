@@ -130,7 +130,7 @@ public class Main implements ITradeReportHandler {
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
-			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
+/*BC*/		server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
 			// SIWE signin
 			// or: nonce=init, verify=signin, session=me, signout=signout
@@ -148,7 +148,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 
 			// orders and live orders
-			server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
+/*BC*/		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );
 			server.createContext("/api/working-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() ); // remove after frontend migrates to live-orders. pas
 			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
@@ -161,23 +161,23 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc/persona completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
-			server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
+/*BC*/		server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
 			
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
 			server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
-			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
+/*BC*/			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 
 			// dashboard panels
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
 			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
-			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
-			server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
-			server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
-			server.createContext("/api/positions", exch -> new PortfolioTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
-			server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
-			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+/*BC*/		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
+/*BC*/		server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
+/*BC*/		server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
+/*BC*/		server.createContext("/api/positions", exch -> new PortfolioTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
+/*BC*/		server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
+/*BC*/		server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
@@ -187,14 +187,14 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
-			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() );
-			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
+/*BC*/		server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
+/*BC*/		server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
-			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
+/*BC*/		server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );
@@ -211,7 +211,7 @@ public class Main implements ITradeReportHandler {
 
 			// trading screen
 			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
-			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
+/*BC*/		server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );
