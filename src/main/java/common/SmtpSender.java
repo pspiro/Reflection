@@ -56,23 +56,25 @@ public class SmtpSender implements AutoCloseable {
 
 		writer = new PrintWriter(socket.getOutputStream(), true);
 		reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		printServerResponse("connected");
+		
+		// receive the first response after connecting
+		receive();
 
 		// HELO command
-		writer.println("HELO localhost");
-		printServerResponse("helo");
+		send("HELO reflection.trading");
+		receive();
 
 		// AUTH LOGIN
-		writer.println("AUTH LOGIN");
-		printServerResponse("login");
+		send("AUTH LOGIN");
+		receive();
 
 		// Send base64-encoded username
-		writer.println(Base64.getEncoder().encodeToString(username.getBytes()));
-		printServerResponse("username");
+		send(Base64.getEncoder().encodeToString(username.getBytes()));
+		receive();
 
 		// Send base64-encoded password
-		writer.println(Base64.getEncoder().encodeToString(password.getBytes()));
-		var resp = printServerResponse("password");
+		send(Base64.getEncoder().encodeToString(password.getBytes()));
+		var resp = receive();
 		Util.require( code( resp) == 235, "Authentication error  host=%s  username=%s - %s", host, username, resp);
 	}
 
@@ -80,39 +82,42 @@ public class SmtpSender implements AutoCloseable {
 	public void send(String fromName, String fromEmail, String toEmail, String subject, String body, Type type) throws IOException {
 		S.out( "Sending email  from:%s <%s>  to:%s  subject:%s", fromName, fromEmail, toEmail, subject);
 		
-		writer.println("MAIL FROM:<" + fromEmail + ">");
-		printServerResponse("mail from");
+		send("MAIL FROM:<" + fromEmail + ">");
+		receive();
 
-		writer.println("RCPT TO:<" + toEmail + ">");
-		printServerResponse("receipt to:");
+		send("RCPT TO:<" + toEmail + ">");
+		receive();
 
-		writer.println("DATA");
-		printServerResponse("data");
+		send("DATA");
+		receive();
 
-		writer.println("Subject: " + subject);
-		writer.println("From: " + fromName + " <" + fromEmail + ">");
-		writer.println("To: " + toEmail);
-		writer.println("Content-Type: text/html; charset=UTF-8");
-		writer.println("X-SES-CONFIGURATION-SET: MySet");
-		writer.println("User: " + toEmail);
-		writer.println("Type: " + type);
-		writer.println();
-		writer.println(body);
-		writer.println(".");
-		printServerResponse("sent");
+		send("Subject: " + subject);
+		send("From: " + fromName + " <" + fromEmail + ">");
+		send("To: " + toEmail);
+		send("Content-Type: text/html; charset=UTF-8");
+		send("X-SES-CONFIGURATION-SET: MySet");
+		send("User: " + toEmail);
+		send("Type: " + type);
+		send("");
+		send(body);
+		send(".");
+		receive();
 	}
 
 	// Close the connection
 	@Override public void close() throws IOException {
-		writer.println("QUIT");
-		printServerResponse("quit");
+		send("QUIT");
+		receive();
 		socket.close();
+	}
+	
+	private void send( String str) {
+		dbg( "SEND: " + str);
+		writer.println( str);
 	}
 
 	// Utility method to print server response
-	private String printServerResponse(String str) throws IOException {
-		dbg( "SEND: " + str);
-		
+	private String receive() throws IOException {
 		String responseLine;
 		while ((responseLine = reader.readLine()) != null) {
 			dbg( "  REC: " + responseLine);
@@ -147,10 +152,10 @@ public class SmtpSender implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		debug = true;
-		S.out( "send US");
+		S.out( "sending through US");
 		Ses.send("josh", "josh@reflection.trading", "bob@reflection.trading", "sub2", "body", Type.Statement);
 		S.out( "");
-		S.out( "send Asia");
+		S.out( "sending through Asia");
 		SesAsia.send("josh", "josh@reflection.trading", "bob@reflection.trading", "sub2", "body", Type.Statement);
 	}
 }
