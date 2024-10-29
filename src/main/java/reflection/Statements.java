@@ -33,7 +33,8 @@ public class Statements {
 
 	public static void main(String[] args) {
 		try {
-			Config c = Config.ask();
+			Config c = Config.ask("prod");
+			SmtpSender.debug = true;
 			new Statements( c, c.readStocks(), true)  // don't set to false; there will be no prices
 				.generateSummaries( 1);
 		} catch (Exception e) {
