@@ -24,7 +24,7 @@ import tw.util.S;
 // smtp pw: BKH2OchBydo3BfNhbwjpK+/BpTMMTB7Q6799mjiViKMa
 // host: email-smtp.us-east-1.amazonaws.com
 public class SmtpSender implements AutoCloseable {
-	public enum Type { Statement, Newsletter, Message };  // for the Type SES metric
+	public enum Type { Statement, Newsletter, Message, Trade };  // for the Type SES metric
 	
 	public static record SmtpUser( String host, String username, String password) {
 		/** Send one email  and close connection */
@@ -36,16 +36,17 @@ public class SmtpSender implements AutoCloseable {
 	private static final String MyGmail = "peteraspiro@gmail.com";
 	private static final String MyRefl = "peter@reflection.trading";
 	private static final String OpenXchange = "smtp.openxchange.eu";
-	private static boolean debug;
+	public static boolean debug;
 	
 	public static SmtpUser Josh = new SmtpUser( OpenXchange, "josh@reflection.trading", "KyvuPRpi7uscVE@");
 	public static SmtpUser Peter = new SmtpUser( OpenXchange, "peter@reflection.trading", "mvLYAnCr4*7)");
 	public static SmtpUser Ses = new SmtpUser( "email-smtp.us-east-1.amazonaws.com", "AKIA3GXEBTOE7ZUQKYWF", "BKH2OchBydo3BfNhbwjpK+/BpTMMTB7Q6799mjiViKMa");
-
+	public static SmtpUser SesAsia = new SmtpUser( "email-smtp.ap-south-1.amazonaws.com", "AKIA3GXEBTOEYUZ6RL6G", "BNgHTgIJkzxY/i/b6TGTEUV5mjbWG0eDJF7PFEpIp0GR");
+	
 	private SSLSocket socket;
 	private PrintWriter writer;
 	private BufferedReader reader;
-
+	
 	public SmtpSender( String host, String username, String password) throws Exception {
 		var sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
 
@@ -110,16 +111,23 @@ public class SmtpSender implements AutoCloseable {
 
 	// Utility method to print server response
 	private String printServerResponse(String str) throws IOException {
+		dbg( "SEND: " + str);
+		
 		String responseLine;
 		while ((responseLine = reader.readLine()) != null) {
-			if (debug) {
-				System.out.println(str + ": " + responseLine);
-			}
+			dbg( "  REC: " + responseLine);
 			if (responseLine.charAt(3) == ' ') {
+				dbg( "  END");
 				break;
 			}
 		}
 		return responseLine;
+	}
+
+	private void dbg(String string) {
+		if (debug) {
+			S.out( string);
+		}
 	}
 	
 	/** Send one email  and close connection */
@@ -139,7 +147,10 @@ public class SmtpSender implements AutoCloseable {
 	
 	public static void main(String[] args) throws Exception {
 		debug = true;
-		Ses.send("josh", "josh@reflection.trading", MyGmail, "sub2", "body", Type.Message);
-		Ses.send("josh", "josh@reflection.trading", MyRefl, "sub2", "body", Type.Message);
+		S.out( "send US");
+		Ses.send("josh", "josh@reflection.trading", "bob@reflection.trading", "sub2", "body", Type.Statement);
+		S.out( "");
+		S.out( "send Asia");
+		SesAsia.send("josh", "josh@reflection.trading", "bob@reflection.trading", "sub2", "body", Type.Statement);
 	}
 }

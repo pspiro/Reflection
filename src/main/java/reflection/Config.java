@@ -346,8 +346,6 @@ public class Config extends ConfigBase {
 			this.ownerKey = m_tab.getRequiredString("ownerRefblocksKey"); // this is used only for deployment and testing and doesn't need to be in the config file
 			this.refWalletKey = m_tab.getRequiredString("refWalletRefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
 			this.admin1Key = m_tab.getRequiredString("admin1RefblocksKey"); // this is used only for deployment and doesn't need to be in the config file
-
-			checkPassword(); // confirm we have access to password
 		}
 
 		m_rusd = new web3.Rusd(
@@ -394,26 +392,6 @@ public class Config extends ConfigBase {
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
 	
-	/** confirm we have access to the password 
-	 * @throws Exception */
-	private void checkPassword() throws Exception {
-		// try first from file
-		try {
-			String str = IStream.readLine("name.txt");
-			if (str.length() > 0) {
-				S.out( "Found password in file");
-			}
-			return;
-		} catch (Exception e) {
-		}
-		
-		// try next from pwserver
-		require( S.isNotNull( pwUrl), "pwserver");
-		Util.require( JsonObject.isObject( MyClient.getString( pwUrl + "/getpw") ), 
-				"pwserver did not return json");
-		S.out( "pwserver ok");
-	}
-
 	/** For Refblocks, return the private key encoded in the json.
 	 *  For Fireblocks, return the account name.
 	 *  json fields are address, salt, data, ivstr.
