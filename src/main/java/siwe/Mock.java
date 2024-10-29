@@ -1,8 +1,14 @@
 package siwe;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.simple.JSONAware;
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -13,7 +19,8 @@ import http.MyServer;
 import tw.util.S;
 
 public class Mock {
-//	String invalid = """
+
+    //	String invalid = """
 //			{ "code": "INVALID_REQUEST", "message": "The 'msg' parameter is missing or the URI path is invalid", "error": { "message": "The 'msg' parameter is missing or the URI path is invalid" }, "statusCode": 400 }""";
 	String invalid = """
 			{ "code": "OK" }""";
@@ -80,7 +87,13 @@ public class Mock {
 			
 	HashMap<String,String> map = new HashMap<>(); // key must be lower case
 
+	static int count = 10;		// total
+	static int subcount = 3;	// mods
+	
+    JsonArray ar = new JsonArray();
+
 	public static void main(String[] args) {
+
 		try {
 			Thread.currentThread().setName("Mock");
 
@@ -94,7 +107,11 @@ public class Mock {
 	}
 
 	public Mock(int port) throws Exception {
-		map.put( "mywallet", myWallet);
+	    for (int i = 1; i <= count; i++) {
+	    	ar.add( new Stock( i, "Stock " + i, 100.0 + Util.rnd.nextDouble() * 10, 101.0 + Util.rnd.nextDouble() * 10));
+	    }
+
+	    map.put( "mywallet", myWallet);
 		map.put( "positions-new", positions);
 		map.put( "system-configurations", sysConfig); 
 		map.put( "configurations", config);
@@ -133,6 +150,7 @@ public class Mock {
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
 			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 			
+			server.createContext("/api/prices", Mock.this::handleSseRequest);			
 			
 			server.createContext("/", exch -> dummy( exch) );
 		});
@@ -157,4 +175,72 @@ public class Mock {
 					: JSONAware.parse( val) );
 		});
 	}
-}
+
+	private void handleSseRequest(HttpExchange exch) {
+		try {
+			handleSseRequest_( exch);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void handleSseRequest_(HttpExchange exch) throws Exception {
+		int id = Util.rnd.nextInt();
+		
+		S.out( "received request " + id);
+		
+        exch.getResponseHeaders().set("Content-Type", "text/event-stream");
+        exch.getResponseHeaders().set("Cache-Control", "no-cache");
+        exch.getResponseHeaders().set("Connection", "keep-alive");
+        exch.sendResponseHeaders(200, 0);
+
+        OutputStream outputStream = exch.getResponseBody();
+
+        // Send periodic stock updates every 2 seconds
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    JsonArray ar = getRandomStockUpdates();
+                    String sseMessage = "data: " + ar.toString() + "\n\n";
+                    S.out( "Sending %s %s", id, sseMessage);
+                    outputStream.write(sseMessage.getBytes());
+                    outputStream.flush();
+                } catch (IOException e) {
+                    timer.cancel();
+                    S.out("Client disconnected %s", id);
+                    try {
+                        outputStream.close();
+                    } catch (IOException ignored) {}
+                }
+            }
+        }, 0, 2000);
+    }
+
+
+    // Helper method to get random stock updates
+    private JsonArray getRandomStockUpdates() {
+    	JsonArray mod = new JsonArray();
+    	
+        for (int i = 0; i < subcount; i++) {
+            int index = Util.rnd.nextInt(count);
+            
+            Stock stock = (Stock)ar.get(index);
+            stock.put( "bid", Util.rnd.nextDouble(1, 999) );
+            stock.put( "ask", Util.rnd.nextDouble(1, 999) );
+            
+            mod.add(stock);
+        }
+        return mod;
+    }
+
+    static class Stock extends JsonObject {
+        Stock(int conid, String name, double bid, double ask) {
+        	put( "conid", conid);
+        	put( "name", name);
+        	put( "bid", bid);
+        	put( "ask", ask);
+        }
+    }
+ }
