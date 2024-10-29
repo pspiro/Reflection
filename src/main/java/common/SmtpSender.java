@@ -3,6 +3,7 @@ package common;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Base64;
 
@@ -44,7 +45,7 @@ public class SmtpSender implements AutoCloseable {
 	public static SmtpUser SesAsia = new SmtpUser( "email-smtp.ap-south-1.amazonaws.com", "AKIA3GXEBTOEYUZ6RL6G", "BNgHTgIJkzxY/i/b6TGTEUV5mjbWG0eDJF7PFEpIp0GR");
 	
 	private SSLSocket socket;
-	private PrintWriter writer;
+	private OutputStream os;
 	private BufferedReader reader;
 	
 	public SmtpSender( String host, String username, String password) throws Exception {
@@ -54,26 +55,26 @@ public class SmtpSender implements AutoCloseable {
 
 		this.socket = (SSLSocket) sslSocketFactory.createSocket(host, port);
 
-		writer = new PrintWriter(socket.getOutputStream(), true);
+		os = socket.getOutputStream();
 		reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 		
 		// receive the first response after connecting
 		receive();
 
 		// HELO command
-		send("HELO reflection.trading");
+		sendLine("HELO reflection.trading");
 		receive();
 
 		// AUTH LOGIN
-		send("AUTH LOGIN");
+		sendLine("AUTH LOGIN");
 		receive();
 
 		// Send base64-encoded username
-		send(Base64.getEncoder().encodeToString(username.getBytes()));
+		sendLine(Base64.getEncoder().encodeToString(username.getBytes()));
 		receive();
 
 		// Send base64-encoded password
-		send(Base64.getEncoder().encodeToString(password.getBytes()));
+		sendLine(Base64.getEncoder().encodeToString(password.getBytes()));
 		var resp = receive();
 		Util.require( code( resp) == 235, "Authentication error  host=%s  username=%s - %s", host, username, resp);
 	}
@@ -82,38 +83,39 @@ public class SmtpSender implements AutoCloseable {
 	public void send(String fromName, String fromEmail, String toEmail, String subject, String body, Type type) throws IOException {
 		S.out( "Sending email  from:%s <%s>  to:%s  subject:%s", fromName, fromEmail, toEmail, subject);
 		
-		send("MAIL FROM:<" + fromEmail + ">");
+		sendLine("MAIL FROM:<" + fromEmail + ">");
 		receive();
 
-		send("RCPT TO:<" + toEmail + ">");
+		sendLine("RCPT TO:<" + toEmail + ">");
 		receive();
 
-		send("DATA");
+		sendLine("DATA");
 		receive();
 
-		send("Subject: " + subject);
-		send("From: " + fromName + " <" + fromEmail + ">");
-		send("To: " + toEmail);
-		send("Content-Type: text/html; charset=UTF-8");
-		send("X-SES-CONFIGURATION-SET: MySet");
-		send("User: " + toEmail);
-		send("Type: " + type);
-		send("");
-		send(body);
-		send(".");
+		sendLine("Subject: " + subject);
+		sendLine("From: " + fromName + " <" + fromEmail + ">");
+		sendLine("To: " + toEmail);
+		sendLine("Content-Type: text/html; charset=UTF-8");
+		sendLine("X-SES-CONFIGURATION-SET: MySet");
+		sendLine("User: " + toEmail);
+		sendLine("Type: " + type);
+		sendLine("");
+		sendLine(body);
+		sendLine(".");
 		receive();
 	}
 
 	// Close the connection
 	@Override public void close() throws IOException {
-		send("QUIT");
+		sendLine("QUIT");
 		receive();
 		socket.close();
 	}
 	
-	private void send( String str) {
+	private void sendLine( String str) throws IOException {
 		dbg( "SEND: " + str);
-		writer.println( str);
+		os.write( (str + "\r\n").getBytes() );
+		os.flush();
 	}
 
 	// Utility method to print server response
