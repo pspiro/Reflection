@@ -203,6 +203,16 @@ public class JSONValue {
 		if(value instanceof Boolean)
 			return value.toString();
 		
+		if(value instanceof Record rec) {
+			try {
+				return JsonObject.toJson( rec).toString();
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+				return "null";
+			}
+		}
+		
 		if((value instanceof JSONAware))
 			return ((JSONAware)value).toJSONString();
 		
