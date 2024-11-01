@@ -82,6 +82,7 @@ public class NodeInstance {
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
+			S.out( "nodeQuery error: " + err);
 			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
 		}
 		return obj;
@@ -193,7 +194,7 @@ public class NodeInstance {
 
 	public Fees queryFees() throws Exception {
 		// params are # of blocks, which percentage to look at
-		JsonObject json = getFeeHistory(5, 1).getObject( "result");
+		JsonObject json = getFeeHistory(5, 60).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
