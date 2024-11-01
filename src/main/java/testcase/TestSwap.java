@@ -1,19 +1,16 @@
 package testcase;
 
-import java.util.Iterator;
-
 import common.Util;
-import reflection.Stock;
 import web3.StockToken;
 
 public class TestSwap extends MyTestCase {
 	
 	public void testSwap() throws Exception {
-		Iterator<Stock> set = stocks.stockSet().iterator();
+		var list = chain.tokens();
 		
 		// get two stock tokens
-		StockToken stock1 = set.next().getToken();
-		StockToken stock2 = set.next().getToken();
+		StockToken stock1 = list.get( 0);
+		StockToken stock2 = list.get( 1);
 		
 		// mint one, then swap it for another
 		String wallet = Util.createFakeAddress();

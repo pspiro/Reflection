@@ -13,6 +13,8 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Stocks;
+import chain.Stocks.Stock;
 import common.ConnectionMgrBase;
 import common.Util;
 import common.Util.ExRunnable;
@@ -20,10 +22,8 @@ import http.BaseTransaction;
 import http.MyServer;
 import redis.DualPrices.Prices;
 import redis.clients.jedis.exceptions.JedisConnectionException;
-import reflection.Config;
 import reflection.Main;
-import reflection.Stock;
-import reflection.Stocks;
+import reflection.SingleChainConfig;
 import reflection.TradingHours;
 import reflection.TradingHours.Session;
 import test.MyTimer;
@@ -73,7 +73,7 @@ public class MdServer {
 
 		// read config settings from google sheet 
 		timer.next("Reading configuration");
-		m_config.readFromSpreadsheet( Config.getTabName( args) );
+		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
 		
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.mdsPort(), 10, server -> {
@@ -94,7 +94,7 @@ public class MdServer {
 		});
 		
 		timer.next( "Reading stock list from google sheet");
-		m_stocks.readFromSheet(m_config.symbolsTab(), null);
+		m_stocks.readFromSheet();
 
 		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
@@ -153,7 +153,7 @@ public class MdServer {
 			mdController().reqMktDataType(MarketDataType.DELAYED);
 		}
 
-		for (Stock stock : m_stocks) {
+		for (Stock stock : m_stocks.stocks() ) {
 			final Contract contract = new Contract();
 			contract.conid( stock.conid() );
 			
@@ -173,7 +173,7 @@ public class MdServer {
 			});
 			
 			// request price on IBEOS
-			if (stock.is24Hour() ) {
+			if (stock.rec().is24Hour() ) {
 				contract.exchange( Overnight);
 				mdController().reqTopMktData(contract, "", false, false, new TopMktDataAdapter() {
 					@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
@@ -292,7 +292,7 @@ public class MdServer {
 			wrap( () -> {
 				S.out( "Refreshing list of stock tokens from spreadsheet");
 				mdController().cancelAllTopMktData();
-				m_stocks.readFromSheet(m_config.symbolsTab(), null);
+				m_stocks.readFromSheet();
 				requestPrices();
 				respondOk();
 			});

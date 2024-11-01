@@ -233,7 +233,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint RUSD for user Bob
 		S.out( "**minting 2000");
-		rusd.mintRusd( bobAddr, 2000, stocks.getAnyStockToken() ).waitForReceipt();
+		rusd.mintRusd( bobAddr, 2000, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance( bobAddr, 2000, false);
 		
 		// submit order
@@ -295,7 +295,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint a little less RUSD than needed
 		S.out( "**minting 100");
-		rusd.mintRusd( Cookie.wallet, amount - .01, stocks.getAnyStockToken() ).waitForReceipt();
+		rusd.mintRusd( Cookie.wallet, amount - .01, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance( Cookie.wallet, amount - .01, false);
 
 		// submit order

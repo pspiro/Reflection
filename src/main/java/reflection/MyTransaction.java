@@ -46,6 +46,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	protected Main m_main;
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
 	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
+	private Chain m_chain;
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, true);
@@ -133,20 +134,27 @@ public abstract class MyTransaction extends BaseTransaction {
 //		}
 		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
-		return SiweTransaction.validateCookie( cookie, m_walletAddr);
+		var siweMsg = SiweTransaction.validateCookie( cookie, m_walletAddr);
+		int chainId = siweMsg.getSiweMessage().getChainId();
+		m_chain = m_config.chain( chainId);
+		
+		return siweMsg;
 	}
 
 	/** return the Chain from the chain id on the cookie */
 	public Chain chain() throws Exception {
-		String cookie = m_map.get("cookie");
-		Util.require( cookie != null, "cookie required but not found");
-		int chainId = SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId();
-		return m_config.chain( chainId);
+		if (m_chain == null) {
+			String cookie = m_map.get("cookie");
+			Util.require( cookie != null, "cookie required but not found");
+			int chainId = SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId(); // don't call this twice. bc
+			m_chain = m_config.chain( chainId);
+		}
+		return m_chain;
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
 	void returnPrice(int conid, boolean csv) throws Exception {
-		Prices prices = m_main.getStock(conid).prices();
+		Prices prices = m_main.stocks().getStockByConid(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		// this is used by the google sheet to display prices

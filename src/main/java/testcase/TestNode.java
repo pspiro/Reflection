@@ -55,7 +55,7 @@ public class TestNode extends MyTestCase {
 	public void testReqPosMap() throws Exception {
 		Map<String, Double> map = node().reqPositionsMap( 
 				NodeInstance.prod,
-				stocks.getAllContractsAddresses(),
+				chain.getAllContractsAddresses(),
 				18);
 		new JsonObject( map).display();
 		assertTrue( map.size() > 1);
@@ -89,7 +89,7 @@ public class TestNode extends MyTestCase {
 
 	public void test() throws Exception {
 		Util.wrap( () -> {
-			m_config.rusd().mintRusd( Cookie.wallet, 1, stocks.getAnyStockToken() )
+			m_config.rusd().mintRusd( Cookie.wallet, 1, chain.getAnyStockToken() )
 				.waitForReceipt();
 		});
 	}

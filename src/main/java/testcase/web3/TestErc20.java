@@ -20,7 +20,7 @@ public class TestErc20 extends MyTestCase {
 	}
 	
 	public void test_getAllowance() throws Exception {
-		double v = m_config.getApprovedAmt( chain() );
+		double v = chain().getApprovedAmt();
 		S.out( "allowance: " + v);
 		assertTrue( v > 0);
 	}
@@ -42,8 +42,8 @@ public class TestErc20 extends MyTestCase {
 	}
 	
 	public void test_approve() throws Exception {
-		m_config.giveApproval( 1234).waitForReceipt();
-		double v = m_config.getApprovedAmt( chain() );
+		m_config.busd().approve( m_config.refWalletKey(), m_config.rusdAddr(), 1234).waitForReceipt();
+		double v = chain().getApprovedAmt();
 		assertEquals( 1234., v);
 	}
 	

@@ -13,14 +13,15 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
+import chain.Stocks;
 import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
 import positions.HookConfig.HookType;
-import reflection.Config;
 import reflection.RefCode;
-import reflection.Stocks;
+import reflection.SingleChainConfig;
 import test.MyTimer;
 import tw.util.S;
 import web3.Erc20;
@@ -43,7 +44,8 @@ public class HookServer {
 	static final double small = .0001;    // positions less than this will not be reported
 	
 	private static final HookConfig m_config;
-	final Stocks stocks;
+	final Chain m_chain;
+	final Stocks m_stocks = new Stocks();
 	final StreamMgr sm;
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
@@ -53,7 +55,7 @@ public class HookServer {
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
 	
 	static {
-		Config.setSingleChain();
+		SingleChainConfig.setSingleChain();
 		m_config = new HookConfig();
 	}
 	
@@ -75,9 +77,11 @@ public class HookServer {
 	}
 	
 	HookServer(String[] args) throws Exception {
-		m_config.readFromSpreadsheet( Config.getTabName( args) );
-		stocks = m_config.chain().stocks();
+		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
 		m_node = m_config.node();
+		m_chain = m_config.chain();
+
+		m_stocks.readFromSheet();
 		
 		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
 		sm = m_config.hookType() == HookType.Moralis
@@ -90,7 +94,7 @@ public class HookServer {
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
-		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
+		list.addAll( Arrays.asList( m_chain.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
@@ -213,8 +217,8 @@ public class HookServer {
 				JsonObject rusd = new JsonObject();
 				rusd.put( "name", "RUSD");
 				rusd.put( "balance", hookWallet.getBalance( m_config.rusdAddr() ) );
-				rusd.put( "tooltip", m_config.getTooltip(Config.Tooltip.rusdBalance) );
-				rusd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.redeemButton) );
+				rusd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.rusdBalance) );
+				rusd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.redeemButton) );
 				
 				double approved = hookWallet.getAllowance(m_config.busd(), walletAddr, m_config.rusdAddr() );
 				approved = Math.min(1000000, approved);  // fix a display issue where some users approved a huge size by mistake
@@ -223,8 +227,8 @@ public class HookServer {
 				JsonObject busd = new JsonObject();
 				busd.put( "name", m_config.busd().name() );
 				busd.put( "balance", hookWallet.getBalance( m_config.busd().address() ) );
-				busd.put( "tooltip", m_config.getTooltip(Config.Tooltip.busdBalance) );
-				busd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.approveButton) );
+				busd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.busdBalance) );
+				busd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.approveButton) );
 				busd.put( "approvedBalance", approved);
 				busd.put( "stablecoin", true);
 
@@ -232,7 +236,7 @@ public class HookServer {
 				JsonObject base = new JsonObject();
 				base.put( "name", m_config.nativeTokName() );
 				base.put( "balance", hookWallet.getNativeBalance() );
-				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
+				base.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.baseBalance) );
 				
 				JsonArray ar = new JsonArray();
 				ar.add(rusd);

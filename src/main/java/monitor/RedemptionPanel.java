@@ -48,7 +48,7 @@ public class RedemptionPanel extends QueryPanel {
 			Monitor.m_logPanel.filterByUid(val.toString());
 			break;
 		case "blockchain_hash":
-			Util.browse( config().blockchainTx( val.toString() ) );
+			Util.browse( config().chain().blockchainTx( val.toString() ) );
 			break;
 		default:
 			super.onDouble(tag, val);

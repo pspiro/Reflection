@@ -9,9 +9,8 @@ import common.Util.ExRunnable;
 import common.Util.ExSupplier;
 import http.MyHttpClient;
 import junit.framework.TestCase;
-import reflection.Config;
 import reflection.RefCode;
-import reflection.Stocks;
+import reflection.SingleChainConfig;
 import tw.util.S;
 import web3.NodeInstance;
 
@@ -19,19 +18,20 @@ public class MyTestCase extends TestCase {
 	public static String dead = "0x000000000000000000000000000000000000dead";
 	public static String prodWallet = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
 	
-	static protected Config m_config;
-	static protected Stocks stocks;
+	static protected SingleChainConfig m_config;
+	//static protected Stocks stocks;
 	static protected int port = 8383;
 	static protected int chainId = 11155111;
+	protected static Chain chain;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
 	
 	static {
 		try {
-			Config.setSingleChain();
-			m_config = Config.read();  // pull from config.txt
+			SingleChainConfig.setSingleChain();
+			m_config = SingleChainConfig.read();  // pull from config.txt
 			assertTrue( !m_config.isProduction() ); // don't even think about it!
-			stocks = m_config.chain().stocks();
+			chain = m_config.chain();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -197,7 +197,7 @@ public class MyTestCase extends TestCase {
 			S.out( "Minting %s RUSD into %s", amt, wallet);
 	
 			m_config.rusd()
-					.sellStockForRusd( wallet, amt, stocks.getAnyStockToken(), 0)
+					.sellStockForRusd( wallet, amt, chain.getAnyStockToken(), 0)
 					.waitForReceipt();
 			
 			waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI

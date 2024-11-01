@@ -26,9 +26,9 @@ import org.json.simple.parser.JSONParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moonstoneid.siwe.SiweMessage;
 
+import chain.Stocks.Stock;
 import common.Util;
 import reflection.SiweUtil;
-import reflection.Stock;
 import tw.util.S;
 import web3.Erc20;
 

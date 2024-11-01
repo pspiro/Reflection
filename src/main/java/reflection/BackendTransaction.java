@@ -11,6 +11,8 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
+import chain.Stocks.Stock;
 import common.SignupReport;
 import common.Util;
 import http.MyClient;
@@ -30,6 +32,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Handle a Backend-style event. Conid is last parameter
+	 * called from trade page in prod; may not be needed after we switch to paper
 	 * 
 	 * @return 
 		{
@@ -46,9 +49,22 @@ public class BackendTransaction extends MyTransaction {
 	public void handleGetStockWithPrice() {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
+			//var token = m_main.getStock( getConidFromUri() );
+			// is token addr really needed here? if so, frontend must pass the cookie
 			
-			Session session = m_main.m_tradingHours.getTradingSession( stock.is24Hour(), null);
-			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
+			var json = Util.toJson( 
+					//"smartcontractid",   // really needed
+					"symbol", stock.symbol(), 
+					"bid", stock.prices().anyBid(),
+					"ask", stock.prices().anyAsk(),
+					"description", stock.rec().description(),
+					"conid", String.valueOf( stock.conid() ),
+					"exchange", stock.rec().exchange(),
+					"type", stock.rec().type()
+					);
+			
+			Session session = m_main.m_tradingHours.getTradingSession( stock.rec().is24Hour(), null);
+			json.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
 			
 			respond(stock);
 		});
@@ -189,7 +205,7 @@ public class BackendTransaction extends MyTransaction {
 				// get existing locked rec, or create
 				var locked = getorCreateUser().getObjectNN( "locked");
 	
-				double rusdBalance = m_config.rusd().getPosition( m_walletAddr);
+				double rusdBalance = chain().rusd().getPosition( m_walletAddr);
 				out( "  alreadyRewarded=%s  rusdBalance=%s", locked.getBool( "rewarded"), rusdBalance);
 				
 				// check for not rewarded and zero RUSD balance
@@ -209,7 +225,7 @@ public class BackendTransaction extends MyTransaction {
 					message = S.format( "$%s RUSD is being minted into your wallet and will appear shortly", (int)m_config.autoReward() );
 					autoRewarded = m_config.autoReward();
 					Util.executeAndWrap( () -> {
-						m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() );
+						chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() );
 					});
 				}
 				else {
@@ -364,10 +380,22 @@ public class BackendTransaction extends MyTransaction {
 	
 	public void handleTradingStatic() {
 		wrap( () -> {
-			Stock stock = m_main.getStock( getConidFromUri() );
+			validateCookie("tradingStatic");
 			
-			JsonObject resp = new JsonObject();
-			resp.copyFrom( stock, "smartContractid", "symbol", "tokenSymbol", "description", "conid", "tradingView");
+			Stock stock = m_main.getStock( getConidFromUri() );
+			Util.require( stock != null, "null stock");
+			
+			var token = chain().getTokenByConid( getConidFromUri() );
+			Util.require( token != null, "null token");
+			
+			JsonObject resp = Util.toJson(
+					"smartContractid", token.address(), 
+					"symbol", stock.symbol(),
+					"tokenSymbol", token.name(),
+					"description", stock.rec().description(),
+					"conid", stock.conid(),
+					"tradingView", stock.rec().tradingView()
+					);
 			
 			respond( resp);
 		});
@@ -376,6 +404,8 @@ public class BackendTransaction extends MyTransaction {
 	/** we need both wallet AND conid here */
 	public void handleTradingDynamic() {
 		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /
+			validateCookie( "tradingDynamic");
+			
 			String[] ar = m_uri.split("/");
 			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
 			
@@ -384,26 +414,27 @@ public class BackendTransaction extends MyTransaction {
 			
 			int conid = Integer.parseInt( ar[4]);
 			
-			Stock stock = m_main.getStock( conid);
-			
 			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
-					m_config.hookServerPort(), 
+					chain().params().hookServerPort(), 
 					m_walletAddr.toLowerCase() );
 
 			// query for wallet positions (map style)
 			JsonObject json = MyClient.getJson( url);
 			JsonObject positions = json.getObject( "positions"); // you could improve this and create a special query just for this
 			
-			Prices prices = stock.prices();
+			String tokenAddr = chain().getTokenByConid( conid).getSmartContractId();
+			Prices prices = m_main.getStock( conid).prices();
 			// require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 			// Q what to do if there are no prices
+			
+			Chain chain = chain();
 
 			respond(			
 				"exchangeStatus", "open",
 				"exchangeTime", "n/a",
-				"stockTokenBalance", positions.getDouble( stock.getSmartContractId() ), 
-				"rusdBalance", positions.getDouble( m_config.rusdAddr() ),
-				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
+				"stockTokenBalance", positions.getDouble( tokenAddr), 
+				"rusdBalance", positions.getDouble( chain.params().rusdAddr() ),
+				"nonRusdBalance", positions.getDouble( chain.params().busdAddr() ),
 				"nonRusdApprovedAmt", json.getDouble( "approved"),
 				"bidPrice", prices.anyBid() * (1. - m_config.sellSpread() ),
 				"askPrice", prices.anyAsk() * (1. + m_config.buySpread() )
@@ -498,7 +529,7 @@ public class BackendTransaction extends MyTransaction {
 						}
 						catch( Exception e) {}
 
-						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						var ar = SignupReport.create( days, sql, m_config.chains().polygon().rusd(), null);
 						respondFull( ar, 200, null, "text/html");						
 					});
 				}); 
@@ -528,7 +559,7 @@ public class BackendTransaction extends MyTransaction {
 			var locked = user.getObjectNN( "locked");
 			
 			// wallet has rusd?
-			require( m_config.rusd().getPosition( m_walletAddr) < 1, 
+			require( chain().rusd().getPosition( m_walletAddr) < 1, 
 					RefCode.INVALID_REQUEST, 
 					"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
 			
@@ -555,7 +586,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			// don't tie up the http thread
 			Util.executeAndWrap( () -> {
-				m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() )
+				chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() )
 					.waitForReceipt();
 				
 				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);
@@ -573,7 +604,9 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** return the amount of native token that the user is eligible to receive */
+	/** return the amount of native token that the user is eligible to receive;
+	 *  currently faucet works on PulseChain only; we would have to add a selector
+	 *  on Frontend to support other chains */
 	private double getFaucetAmt() throws Exception {
 		
 		// check how much user has already received from faucet
@@ -587,7 +620,7 @@ public class BackendTransaction extends MyTransaction {
 		// their wallet has less than the full amount
 		return
 				received < m_config.faucetAmt() && 
-				m_config.node().getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
+				m_config.chains().pulseChain().node().getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
 					? m_config.faucetAmt() 
 					: 0;
 	}
@@ -608,7 +641,7 @@ public class BackendTransaction extends MyTransaction {
 			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");
 			
-			chain().blocks().transfer( m_config.admin1Key(), m_walletAddr, amount)
+			chain().blocks().transfer( chain().params().admin1Key(), m_walletAddr, amount)
 				.waitForReceipt();
 
 			// update the faucet object in the user/locked json

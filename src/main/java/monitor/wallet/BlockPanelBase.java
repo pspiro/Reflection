@@ -5,7 +5,7 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 import monitor.Monitor;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import web3.NodeInstance.Transfer;
 
 public class BlockPanelBase extends JPanel {
@@ -69,7 +69,7 @@ public class BlockPanelBase extends JPanel {
 		return obj.to().equals( nullAddr);
 	}
 	
-	static Config config() {
+	static SingleChainConfig config() {
 		return Monitor.m_config;
 	}
 }

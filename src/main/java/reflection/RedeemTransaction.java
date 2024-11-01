@@ -9,6 +9,7 @@ import org.json.simple.JsonObject;
 import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
 import common.Util;
 import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
@@ -32,6 +33,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	private String m_text;  // text returned to Frontend
 	private double m_quantity; // quantity of RUSD to redeem
 	private String m_email;
+	private Chain m_chain;
 
 	RedeemTransaction(Main main, HttpExchange exchange) {
 		super(main, exchange);
@@ -48,6 +50,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
 			validateCookie("redeem");
+			m_chain = chain();
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
 			require( m_main.validWallet( m_walletAddr, Action.Sell), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
@@ -55,8 +58,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
 			parseMsg();
 			
-			Rusd rusd = m_config.rusd();
-			Busd busd = m_config.busd();
+			Rusd rusd = m_chain.rusd();
+			Busd busd = m_chain.busd();
 
 			// NOTE: this next code is the same as OrderTransaction
 
@@ -121,7 +124,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 							"You must complete %s more trades and/or wait %s more days before redeeming your %s",
 							remainingTrades,
 							remainingDays,
-							Main.m_config.rusd().name() );
+							chain().rusd().name() );
 					
 					msg = "RUSD was partially redeemed; some was locked";
 					olog( LogType.PARTIAL_LOCK, locked); 
@@ -129,8 +132,8 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// insufficient BUSD in RefWallet or > maxAutoRedeem?
-			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
-			double allowance = Main.m_config.getApprovedAmt( chain() ); // sends query
+			double busdPos = busd.getPosition( chain().params().refWalletAddr() );  // sends query
+			double allowance = m_chain.getApprovedAmt(); // sends query
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
 				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
@@ -195,16 +198,16 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				if (m_config.isProduction() ) { //&& !m_map.getBool("testcase")) {
 					Util.wrap( () -> { 
 						alert( "REDEMPTION COMPLETED", S.format( "Converted %s %s to %s for %s", 
-								m_quantity, m_config.rusd().name(), m_config.busd().name(), m_walletAddr) );
+								m_quantity, m_chain.rusd().name(), m_chain.busd().name(), m_walletAddr) );
 							
 						// send email to the user
 						if (Util.isValidEmail( m_email) ) {
 							String html = String.format(
 									redeemHtml,
 									m_quantity,
-									m_config.busd().name(),
-									m_config.busd().address(),
-									m_config.blockchainTx(hash) );
+									m_chain.busd().name(),
+									m_chain.busd().address(),
+									m_chain.blockchainTx(hash) );
 							m_config.sendEmail( m_email, "RUSD has been redeemed on Reflection", html);
 						}
 					});
@@ -222,7 +225,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 				Util.wrap( () -> alert( 
 						"REDEMPTION FAILED", S.format( "Could not convert %s %s to %s for %s", 
-								m_quantity, m_config.rusd().name(), m_config.busd().name(), m_walletAddr) ) );
+								m_quantity, chain().rusd().name(), m_chain.busd().name(), m_walletAddr) ) );
 			}
 		}
 	}

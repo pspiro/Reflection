@@ -3,6 +3,7 @@ package web3;
 import chain.Chain;
 import chain.ChainParams;
 import common.Util;
+import refblocks.Refblocks;
 import tw.util.S;
 
 /** The Rusd class used by clients. Created by Config which knows which 
@@ -177,7 +178,7 @@ public class Rusd extends Stablecoin {
 		return refblocks.Rusd.deploy( 
 				m_chain.web3j(),
 				m_chain.blocks().getWaitingTm( ownerKey),
-				m_chain.blocks().getGp( m_chain.blocks().deployGas),
+				m_chain.blocks().getGp( Refblocks.deployGas),
 				refWallet, admin1
 				).send().getContractAddress();
 	}

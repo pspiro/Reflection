@@ -164,7 +164,7 @@ public class CryptoPanel extends MonPanel {
 			}
 
 			// copy has to clipboard
-			Util.copyToClipboard( config().blockchainTx( hash) );
+			Util.copyToClipboard( config().chain().blockchainTx( hash) );
 			Util.inform(this, "Done, hash is copied to clipboard");
 		});
 	}

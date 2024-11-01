@@ -8,7 +8,7 @@ import javax.swing.SwingUtilities;
 
 import common.Util;
 import common.Util.ExRunnable;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.NewTabbedPanel.INewTab;
 import tw.util.S;
 import tw.util.UI;
@@ -53,7 +53,7 @@ public abstract class MonPanel extends JPanel implements INewTab {
 		return SwingUtilities.getWindowAncestor(this);
 	}
 	
-	protected static Config config() {
+	protected static SingleChainConfig config() {
 		return Monitor.m_config;
 	}
 }

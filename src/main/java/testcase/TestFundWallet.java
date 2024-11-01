@@ -54,12 +54,12 @@ public class TestFundWallet extends MyTestCase {
 	
 	public void testRusd() throws Exception {
 		Cookie.setNewFakeAddress(true);
-		m_config.rusd().mintRusd( Cookie.wallet, 2, stocks.getAnyStockToken() ).waitForReceipt();
+		m_config.rusd().mintRusd( Cookie.wallet, 2, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance(Cookie.wallet, 2, false);
 		cli().postToJson( "/api/fund-wallet", getJson() );
 		assert400();  // fail, RUSD in wallet
 		
-		m_config.rusd().burnRusd( Cookie.wallet, 1.5, stocks.getAnyStockToken() ).waitForReceipt();
+		m_config.rusd().burnRusd( Cookie.wallet, 1.5, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance(Cookie.wallet, 1.5, true);
 		cli().postToJson( "/api/fund-wallet", getJson() );
 		assert200();  // pass, 50 cents is okay

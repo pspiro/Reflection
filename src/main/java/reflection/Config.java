@@ -8,8 +8,8 @@ import org.json.simple.JsonObject;
 
 import com.ib.client.Types.TimeInForce;
 
+import chain.Allow;
 import chain.Chain;
-import chain.ChainParams;
 import chain.Chains;
 import common.Alerts;
 import common.Util;
@@ -28,16 +28,15 @@ import tw.util.IStream;
 import tw.util.S;
 import web3.Busd;
 import web3.MoralisServer;
-import web3.NodeInstance;
-import web3.RetVal;
 import web3.Rusd;
 
-public class Config {
+public abstract class Config {
 	private static boolean singleChain;  // this is for testing and Monitor only
 
 	protected GTable m_tab;
-	protected final Chains chains = new Chains();;
 	
+	public abstract boolean isProduction();
+		
 	// user experience parameters
 	private double minOrderSize;  // in dollars
 	private double maxOrderSize; // max buy amt in dollars
@@ -64,7 +63,6 @@ public class Config {
 	private String postgresPassword;
 	private String backendConfigTab;
 	private double commission;
-	private boolean autoFill;  // approve all orders without placing them on the exchange; for paper trading only
 	private int redisQueryInterval;  // mdserver query interval
 	private double minTokenPosition; // minimum token position to display in portfolio section
 	private int siweTimeout; // max time between issuedAt field and now
@@ -84,10 +82,8 @@ public class Config {
 	private String alertEmail;
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
-	private int hookServerPort;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
-	private int m_chainId;  // always call chainId, never access this directly!
 	private double autoReward; // automatically send users rewards
 	private String pwUrl; // url of pw server
 	private boolean sendTelegram;
@@ -106,8 +102,6 @@ public class Config {
 	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
 	
-	public boolean autoFill() { return autoFill; }
-
 	public double minOrderSize() { return minOrderSize; }
 	public double maxOrderSize() { return maxOrderSize; }
 	
@@ -135,28 +129,28 @@ public class Config {
 	public String fbAdmins() { return fbAdmins; }
 	
 	/** try first from args and then from config.txt file in resources folder */
-	public static Config read( String[] args) throws Exception {
+	public static SingleChainConfig read( String[] args) throws Exception {
 		return readFrom( getTabName( args) );
 	}
 
 	/** takes the prefix */
-	public static Config ask(String prefix) throws Exception {
+	public static SingleChainConfig ask(String prefix) throws Exception {
 		return readFrom( prefix + "-config");
 	}
 
 	/** asks for prefix */
-	public static Config ask() throws Exception {
+	public static SingleChainConfig ask() throws Exception {
 		return readFrom( Util.ask("Enter config tab name prefix") + "-config");
 	}
 
 	/** takes tab name from config.txt file */
-	public static Config read() throws Exception {
+	public static SingleChainConfig read() throws Exception {
 		return readFrom( getTabName( new String[0]) );
 	}
 
 	/** takes full tab name */
-	public static Config readFrom(String tab) throws Exception {
-		Config config = new Config();
+	public static SingleChainConfig readFrom(String tab) throws Exception {
+		SingleChainConfig config = new SingleChainConfig();
 		config.readFromSpreadsheet(tab);
 		return config;
 	}
@@ -180,9 +174,6 @@ public class Config {
 	/** Override this version */
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		m_tab = new GTable( tab, "Tag", "Value", true);
-		
-		// read blockchain table from Reflection/Blockchain tab
-		chains.readAll();
 		
 		// user experience parameters
 		this.buySpread = m_tab.getRequiredDouble( "buy_spread");
@@ -216,7 +207,6 @@ public class Config {
 
 		// additional data
 		this.backendConfigTab = m_tab.get( "backendConfigTab");
-		this.autoFill = m_tab.getBoolean("autoFill");
 		this.errorCodesTab = m_tab.get("errorCodesTab");
 		this.tif = Util.getEnum(m_tab.getOrDefault("tif", "IOC"), TimeInForce.values() );
 		this.allowTrading = Util.getEnum(m_tab.getRequiredString("allowTrading"), Allow.values() );
@@ -231,10 +221,8 @@ public class Config {
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
-		this.hookServerPort = m_tab.getInt("hookServerPort");
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
-		this.m_chainId = m_tab.getRequiredInt( "chainId");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.pwUrl = m_tab.get("pwUrl");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
@@ -266,7 +254,6 @@ public class Config {
 		
 		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
 
-		require( !autoFill || !isProduction(), "No auto-fill in production");
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
@@ -370,26 +357,6 @@ public class Config {
 			);
 		}
 	}
-	
-	/** This causes a dependency that we might not want to have. 
-	 * @throws Exception */
-	public Rusd rusd( int chainId) throws Exception {
-		return chain( chainId).rusd();
-	}
-
-	// remove. bc
-	public Rusd rusd() {
-		return chain( chainId() ).rusd();
-	}
-
-	public Busd busd(int chainId) {
-		return chain( chainId).busd();
-	}
-
-	// remove. bc
-	public Busd busd() {
-		return chain( chainId() ).busd();
-	}
 
 	/** mdserver query interval, called redisQueryInterval in config file */
 	public int mdQueryInterval() {
@@ -406,13 +373,6 @@ public class Config {
 		m_tab.put( "busdAddr", address);
 	}
 
-	/** You could move refapi specific things into here if desired */
-	static class RefApiConfig extends Config {
-		protected void readFromSpreadsheet(Tab tab) throws Exception {
-			super.readFromSpreadsheet(tab);
-		}
-	}
-	
 	public void dump() {
 		S.out( "dumping config");
 		S.out( m_tab);
@@ -457,10 +417,6 @@ public class Config {
 	
 	public String backendConfigTab() {
 		return backendConfigTab;
-	}
-
-	public boolean isProduction() {  // probably need a separate setting for this
-		return Util.equals(m_chainId, 137, 369, 324);  
 	}
 	
 	public String moralisPlatform() {
@@ -548,10 +504,9 @@ public class Config {
 
 	/** RefAPI uses internal url; Monitor and java programs use external url 
 	 * @throws Exception */ 
-	public Config useExternalDbUrl() throws Exception {
+	public void useExternalDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
-		return this; // for chaining calls
 	}
 
 	public double fbLookback() {
@@ -575,14 +530,6 @@ public class Config {
 		return platformBase.split("_")[0];
 	}
 	
-	public int hookServerPort() {
-		return hookServerPort;
-	}
-		
-	public String blockchainTx(String hash) {
-		return String.format( "%s/tx/%s", blockchainExplorer, hash);
-	}
-
 	public String blockchainAddress(String address) {
 		return String.format( "%s/address/%s", blockchainExplorer, address);
 	}
@@ -595,56 +542,6 @@ public class Config {
 		return hookNameSuffix;
 	}
 	
-	public String admin1Addr() {
-		return params().admin1Addr();
-	}
-
-	private ChainParams params() {
-		return chain().params();
-	}
-	
-	public String refWalletAddr() {
-		return params().refWalletAddr();
-	}
-	
-	/** returns private key or account name */
-	public String refWalletKey() throws Exception {
-		return params().refWalletKey();
-	}
-	
-	/** returns private key or account name */
-	public String ownerKey() throws Exception {  // private key or "Owner"
-		return params().ownerKey();
-	}
-
-	/** returns private key or account name */
-	public String admin1Key() throws Exception {
-		return params().admin1Key();
-	}
-
-	public String ownerAddr() {
-		return params().ownerAddr();
-	}
-	
-	public RetVal mintBusd(String wallet, double amt) throws Exception {
-		return busd().mint( ownerKey(), wallet, amt);
-	}
-	
-	// remove this. bc
-	public int chainId() throws RuntimeException {
-		if (!singleChain) {
-			throw new RuntimeException("using chainId from config not allowed"); 
-		}
-		
-		return m_chainId;
-	}
-
-	/** Let RefWallet approve RUSD to spend BUSD on its behalf;
-	 *  Would be used only during migration, which is not needed anymore. */ 
-	public RetVal giveApproval( double amt) throws Exception {
-		return busd().approve( refWalletKey(), rusdAddr(), amt); // $1B
-	}
-	
 	public double autoReward() {
 		return autoReward;
 	}
@@ -653,24 +550,12 @@ public class Config {
 		return sendTelegram;
 	}
 	
-	public double getApprovedAmt(Chain chain) throws Exception {
-		return chain().busd().getAllowance( chain.params().refWalletAddr(),	chain.params().rusdAddr() );
-	}
-	
 	public String onrampUrl() {
 		return onrampUrl;
 	}
 	
 	public void log(JsonObject obj) throws Exception {
 		sqlCommand( conn -> conn.insertJson( "log", obj) );
-	}
-	
-	public NodeInstance node() throws Exception {
-		return chain().node();
-	}
-	
-	public String[] getStablecoinAddresses() throws Exception {
-		return new String[] { rusdAddr(), busdAddr() };
 	}
 	
 	public int maxSummaryEmails() {
@@ -699,18 +584,9 @@ public class Config {
 //		return chains;
 //	}
 
-	public Chain chain( int id) {
-		return chains.get( id);
-	}
 
 	/** not good, remove bc */
-	public Chain chain() {
-		return chains.get( chainId() );
-	}
 	
-	public Chains chains() {
-		return chains;
-	}
 	
 //	public InnerChain chain(int chainId) throws Exception {
 //		return chains.get( chainId).chain();
@@ -721,15 +597,6 @@ public class Config {
 //		return chains.get( chainId() ).chain();
 //	}
 	
-	/** for testing and Monitor only */ 
-	public String rusdAddr() {
-		return chain().rusd().address(); 
-	}
-
-	/** for testing and Monitor only */
-	public String busdAddr() { 
-		return chain().busd().address(); 
-	}
 	
 	/** Call this for Monitor and testing, not any production app.
 	 *  If set, we'll pull the chainId from the configuration.
@@ -737,5 +604,49 @@ public class Config {
 	public static void setSingleChain() {
 		singleChain = true;
 	}
+	
+	static class MultiChainConfig extends Config {
+		protected final Chains chains = new Chains();
+
+		protected void readFromSpreadsheet(Tab tab) throws Exception {
+			super.readFromSpreadsheet(tab);
+
+			// read blockchain table from Reflection/Blockchain tab
+			chains.readAll();
+		}
+		
+		public Chains chains() {
+			return chains;
+		}
+
+		public Chain chain( int id) {
+			Chain chain = chains.get( id);
+			if (chain == null) {
+				throw new RuntimeException( "Error: invalid chainId " + id);
+			}
+			return chain;
+		}
+		
+		/** This causes a dependency that we might not want to have. 
+		 * @throws Exception */
+		public Rusd rusd( int chainId) throws Exception {
+			return chain( chainId).rusd();
+		}
+
+		public Busd busd(int chainId) {
+			return chain( chainId).busd();
+		}
+		
+		public boolean isProduction() {  // probably need a separate setting for this
+			return true;  
+		}
+
+		/* check for stale mkt data in production but not test */ 
+		public boolean checkStaleData() {
+			return chains().size() > 1;
+		}
+	}
+	
+	
 
 }

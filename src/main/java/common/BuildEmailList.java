@@ -2,7 +2,7 @@ package common;
 
 import java.util.HashSet;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.google.NewSheet;
 import tw.util.S;
 
@@ -23,7 +23,7 @@ public class BuildEmailList {
 			emails.add( email);
 		}
 		
-		Config c = Config.readFrom( "Prod-config");
+		SingleChainConfig c = SingleChainConfig.readFrom( "Prod-config");
 
 		tab.startTransaction();
 

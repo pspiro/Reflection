@@ -7,7 +7,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import reflection.Stock;
 import tw.util.HtmlButton;
 
 /** This tracks the UserTokenMgr which subtracts out the quantity of live order 
@@ -47,9 +46,9 @@ public class UserTokenPanel extends JsonPanel {
 	private String updated(String tokenAddr) {
 		String ret = tokenAddr;
 		try {
-			Stock stock = Monitor.stocks.getStockByTokenAddr(tokenAddr);
-			if (stock != null) {
-				ret = stock.getString("symbol");
+			var token = Monitor.chain().getTokenByAddress(tokenAddr);
+			if (token != null) {
+				ret = token.name();
 			}
 			else if (tokenAddr.equalsIgnoreCase( Monitor.m_config.rusdAddr() ) ) {
 				ret = Monitor.m_config.rusd().name();

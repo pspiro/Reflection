@@ -17,13 +17,16 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.ITradeReportHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Allow;
+import chain.Stocks;
+import chain.Stocks.Stock;
 import common.Alerts;
 import common.ConnectionMgrBase;
 import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
-import reflection.Config.RefApiConfig;
+import reflection.Config.MultiChainConfig;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.TradingHours.Session;
 import siwe.SiweTransaction;
@@ -48,7 +51,7 @@ public class Main implements ITradeReportHandler {
 
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
-	static final Config m_config = new RefApiConfig();
+	static final MultiChainConfig m_config = new MultiChainConfig();
 
 	static GTable m_failCodes;  // table of error codes that we want to fail; used for testing, only read of Config.produceErrors is true
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
@@ -64,8 +67,9 @@ public class Main implements ITradeReportHandler {
 	private DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
-    private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails 
-	
+    private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails
+    private final Stocks m_stocks = new Stocks();
+
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("RefAPI");
@@ -80,7 +84,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	public Main(String[] args) throws Exception {
-		m_tabName = Config.getTabName( args);
+		m_tabName = SingleChainConfig.getTabName( args);
 		MyClient.filename = "refapi.http.log";
 		
 		MyTimer timer = new MyTimer();
@@ -97,19 +101,13 @@ public class Main implements ITradeReportHandler {
 		jlog( LogType.RESTART, null, null, Util.toJson( 
 				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
 
-		// APPROVE-ALL SETTING IS DANGEROUS and not normal
-		// make user approve it during startup
-		if (m_config.autoFill() ) {
-			S.out( "WARNING: The RefAPI will approve all orders and WILL NOT SEND ORDERS TO THE EXCHANGE");
-		}
-		
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
 		
 		// confirm we can access private keys
 		timer.next( "Checking access to keys");
-		m_config.chains.checkKeys();
+		m_config.chains().checkKeys();
 
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
@@ -125,7 +123,7 @@ public class Main implements ITradeReportHandler {
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
-/*OK*/		server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
+			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
 			// SIWE signin
 			// or: nonce=init, verify=signin, session=me, signout=signout
@@ -170,26 +168,24 @@ public class Main implements ITradeReportHandler {
 /*BC*/		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
 /*BC*/		server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
 /*BC*/		server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
-			// server.createContext("/api/positions", exch -> new PortfolioTransaction(this, exch, false).handleReqPositions() ); // obsolete, remove
 /*BC*/		server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
 /*OK*/		server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
 			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );
-			server.createContext("/api/get-stocks-with-prices", exch -> handleGetStocksWithPrices(exch) );  // obsolete, could be removed, just needs testing
 			server.createContext("/api/get-all-stocks", exch -> handleGetStocksWithPrices(exch) );  // watch list and dropdown
-			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() );
+			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // called from trade page in prod
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 
 			// status
-/*BC*/		server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
-/*BC*/		server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
+			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
+			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
-/*BC*/		server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
+			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );
@@ -206,7 +202,7 @@ public class Main implements ITradeReportHandler {
 
 			// trading screen
 			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
-/*JIT*/		server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
+			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );
@@ -220,7 +216,7 @@ public class Main implements ITradeReportHandler {
 		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
 		
 		// check market data every minute (production only)
-		if (!Main.m_config.autoFill()) {
+		if (!Main.m_config.checkStaleData() ) {
 			S.out( "checking for stale mkt data every minute");
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
 		}
@@ -240,6 +236,7 @@ public class Main implements ITradeReportHandler {
 		
 		// read RefAPI config
 		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
+		m_stocks.readFromSheet();
 
 		// read Backend config (used by Frontend)
 		readFaqsFromSheet(book);
@@ -253,6 +250,8 @@ public class Main implements ITradeReportHandler {
 		
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
+		
+		
 
 		// now we read stocks on first use
 //		if (readStocks) {
@@ -307,19 +306,13 @@ public class Main implements ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 
 	String getExchange( int conid) throws Exception {
-		return getStock(conid).getString("exchange");
+		return getStock(conid).rec().exchange();
 	}
 
 	Stock getStock( int conid) throws Exception {
-		Stock stock = m_config.chain().stocks().stockMap().get( conid);
+		Stock stock = m_stocks.getStockByConid( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
 		return stock;
-	}
-
-	// VERY BAD AND INEFFICIENT; build a map. pas; at least change to return Stock
-	public Stock getStockByTokAddr(String addr) throws Exception {
-		require(Util.isValidAddress(addr), RefCode.INVALID_REQUEST, "Invalid address %s when getting stock by tok addr", addr);
-		return m_config.chain().stocks().getStockByTokenAddr(addr);
 	}
 
 
@@ -476,29 +469,21 @@ public class Main implements ITradeReportHandler {
 	}
 
 	void dump() throws Exception {
-		S.out( "-----Dumping Stocks-----");
-		JsonObject.display( m_config.chain().stocks().stocks(), 0, false);
+//		S.out( "-----Dumping Stocks-----");
+//		JsonObject.display( m_config.chain().stocks().stocks(), 0, false);
 		
 		S.out( "Dumping config");
 		m_config.dump();
 	}
 
+	/** query price from mdserver */
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		try {
 			for (var prices : MyClient.getArray( m_mdsUrl) ) {				
-				Stock stock = m_config.chains().polygon().stocks().getStockByConid( prices.getInt("conid") );
+				Stock stock = stocks().getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( new Prices(prices) );
-				
-					// we never delete a valid last price
-					double last = prices.getDouble("last");
-					if (last > 0) {
-						stock.put( "last", last); // I think it's wrong and Frontend doesn't use this pas
-					}
 				}
-//				else {
-//					S.out( "Error: mdserver returned a conid '%s' that refapi doesn't know about", prices.getInt("conid") ) ;
-//				}
 			}
 		}
 		catch( Exception e) {
@@ -510,7 +495,7 @@ public class Main implements ITradeReportHandler {
 	 * @throws Exception */
 	private void handleGetStocksWithPrices(HttpExchange exch) {
 		Util.wrap( () -> {
-			new BackendTransaction(this, exch, false).respond( m_config.chain().stocks().stocks());
+			new BackendTransaction(this, exch, false).respond( m_stocks.watchList() );
 		});
 	}
 
@@ -531,7 +516,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	/** this seems useless since you can still be left with .000001 */
-	static double round(double val) {
+	public static double round(double val) {
 		return Math.round( val * 100) / 100.;
 	}
 	
@@ -540,7 +525,7 @@ public class Main implements ITradeReportHandler {
 	}
 
 	public JsonArray hotStocks() throws Exception {
-		return m_config.chain().stocks().hotStocks();
+		return null; //m_config.chain().stocks().hotStocks();
 	}
 
 	/** @param side is buy or sell (lower case) */
@@ -563,7 +548,7 @@ public class Main implements ITradeReportHandler {
 	/** return true if all stocks are stale, indicating lack of market data 
 	 * @throws Exception */ 
 	boolean stale() throws Exception {
-		long latest = m_config.chain().stocks().getLatest();
+		long latest = stocks().getLatest();
 		long interval = System.currentTimeMillis() - latest ;
 		Session session = m_tradingHours.getTradingSession( true, "");
 		return session == Session.Smart && interval > SmartInterval ||
@@ -626,7 +611,8 @@ public class Main implements ITradeReportHandler {
 		}
 	}
 
-    /** check if it's time to send out the summary emails; when data changes in NY */
+    /** check if it's time to send out the summary emails; when data changes in NY
+     *  currently sending summaries only for Polygon */
 	void checkSummaries() {
 		boolean nowAfter = Util.isLaterThanEST( 16); // 4 pm
 
@@ -636,7 +622,7 @@ public class Main implements ITradeReportHandler {
 
             // and not a weekend, send the daily email summaries
             if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-            	Util.executeAndWrap( () -> new Statements( m_config, m_config.chain().stocks(), false) // don't tie up the Util timer thread
+            	Util.executeAndWrap( () -> new Statements( m_config, m_config.chains().polygon(), false, m_stocks) // don't tie up the Util timer thread
             			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }
@@ -644,8 +630,11 @@ public class Main implements ITradeReportHandler {
 		m_timeWas = nowAfter ? Time.After : Time.Before;
 	}
 
-	protected Stocks stocks() throws Exception { 
-		return m_config.chain().stocks(); 
+	
+	/** you can use this for anything price-related, but not blockchain related 
+	 * @return */
+	protected Stocks stocks() {
+		return m_stocks;
 	}
 }
 

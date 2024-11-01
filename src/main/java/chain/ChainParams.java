@@ -12,6 +12,7 @@ import web3.NodeInstance;
 public record ChainParams(
 		String admin1Addr,
 		String admin1RefblocksKey,
+		boolean autoFill,
 		String alchemyChain,
 		String blockchainExpl,
 		String busdAddr,

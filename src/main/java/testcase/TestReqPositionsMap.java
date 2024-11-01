@@ -10,7 +10,7 @@ public class TestReqPositionsMap extends MyTestCase {
 	/** fails in production, batch size too large */
 	public void testBatch() throws Exception {
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
-		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
+		list.addAll( Arrays.asList( chain.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
 		var allContracts = list.toArray( new String[list.size()]);

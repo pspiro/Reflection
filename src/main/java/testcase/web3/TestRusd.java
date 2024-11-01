@@ -50,7 +50,7 @@ public class TestRusd extends MyTestCase {
 		mintRusd( user, 100);
 		
 		// buy stock
-		StockToken stock = stocks.getAnyStockToken();
+		StockToken stock = chain.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
 				.waitForReceipt();
@@ -84,14 +84,14 @@ public class TestRusd extends MyTestCase {
 		
 		// mint 100 rusd
 		S.out( "***minting rusd");
-		m_config.rusd().mintRusd( user, 100, stocks.getAnyStockToken() )
+		m_config.rusd().mintRusd( user, 100, chain.getAnyStockToken() )
 				; //.waitForHash();
 
 		S.out( "  rusd balance = " + m_config.rusd().getPosition( user) );
 		
 		
 		// buy stock
-		StockToken stock = stocks.getAnyStockToken();
+		StockToken stock = chain.getAnyStockToken();
 		S.out( "***buying stock %s", stock.address() );
 		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
 				.waitForReceipt();

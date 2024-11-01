@@ -16,7 +16,7 @@ public class TestUserTokMgr extends MyTestCase {
 		double buyPrice = curPrice * 1.1;
 		double amt = buyPrice * 2 + 5;
 		S.out( "Minting %s RUSD", amt);
-		m_config.rusd().mintRusd( Cookie.wallet, amt, stocks.getAnyStockToken() )  // I don't think this is necessary but I saw it fail without this
+		m_config.rusd().mintRusd( Cookie.wallet, amt, chain.getAnyStockToken() )  // I don't think this is necessary but I saw it fail without this
 			.waitForReceipt();
 		waitForRusdBalance(Cookie.wallet, amt, false);
 
@@ -35,7 +35,7 @@ public class TestUserTokMgr extends MyTestCase {
 
 		// wait for apple balance to go to 2
 		waitForBalance(	Cookie.wallet, 
-				stocks.getStockByConid( TestOrder.conid).getSmartContractId(),
+				chain.getTokenByConid( TestOrder.conid).address(),
 				2, false);
 
 		// first sell order - should pass

@@ -17,7 +17,7 @@ import refblocks.MyContract;
 import refblocks.Refblocks;
 import refblocks.Rusd;
 import refblocks.Stocktoken;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
@@ -29,7 +29,7 @@ public class Deploy {
 	// NOTE - CREATE THE REFWALLET FIRST AND GIVE IT SOME GAS
 	// you must have gas in the admin1, owner, and refWallet
 	public static void main(String[] args) throws Exception {
-		Config config = Config.ask();
+		SingleChainConfig config = SingleChainConfig.ask();
 		
 		String rusdAddress = config.rusd().address();
 		String busdAddress = config.busd().address();
@@ -107,7 +107,7 @@ public class Deploy {
 	}
 	
 	/** @return deployed RUSD contract address */
-	private static String deployRusdZksync(Config config) throws Exception {
+	private static String deployRusdZksync(SingleChainConfig config) throws Exception {
 		String file = "C:\\Work\\zk3\\artifacts-zk\\contracts\\RUSD.sol\\rusd.json";
 		
 		String hex = JsonObject.readFromFile( file).getString( "bytecode");
@@ -128,7 +128,7 @@ public class Deploy {
 		return addr;
 	}
 
-	private static String deployStockZksync(Config config, String name, String symbol, String rusdAddr) throws Exception {
+	private static String deployStockZksync(SingleChainConfig config, String name, String symbol, String rusdAddr) throws Exception {
 		String file = "C:\\Work\\zk3\\artifacts-zk\\contracts\\StockToken.sol\\StockToken.json";
 		
 		String hex = JsonObject.readFromFile( file).getString( "bytecode");

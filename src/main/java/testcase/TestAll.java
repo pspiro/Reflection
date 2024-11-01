@@ -4,6 +4,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
+import test.TestAlchemy;
 import testcase.web3.TestBusd;
 import testcase.web3.TestRusd;
 import testcase.web3.TestSendEth;

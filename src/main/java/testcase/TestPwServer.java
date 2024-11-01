@@ -2,9 +2,7 @@ package testcase;
 
 import common.Util;
 import http.MyClient;
-import junit.framework.TestCase;
-import reflection.Config;
-import tw.util.S;
+import reflection.SingleChainConfig;
 
 public class TestPwServer extends MyTestCase {
 	String code = "lwjkefdj827";
@@ -45,7 +43,7 @@ public class TestPwServer extends MyTestCase {
 	}
 	
 	public void testProd() throws Exception {
-		Config c = Config.ask( "pulse");
+		SingleChainConfig c = SingleChainConfig.ask( "pulse");
 		c.admin1Key();
 	}
 	

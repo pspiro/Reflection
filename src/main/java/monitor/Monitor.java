@@ -2,6 +2,8 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -13,19 +15,21 @@ import javax.swing.JTextField;
 
 import org.json.simple.JsonArray;
 
+import chain.Chain;
+import chain.Stocks;
+import chain.Stocks.Stock;
 import common.JsonModel;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
 import onramp.Onramp;
 import redis.MyRedis;
-import reflection.Stock;
-import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.DualPanel;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
 import tw.util.S;
+import web3.StockToken;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -37,7 +41,7 @@ public class Monitor {
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
 
 	public static MonitorConfig m_config;
-	public static Stocks stocks;
+	public static final Stocks stocks = new Stocks();
 	
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
@@ -62,7 +66,7 @@ public class Monitor {
 		
 		// read config
 		m_config = MonitorConfig.ask();
-		stocks = m_config.chain().stocks();
+		stocks.readFromSheet();
 		
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
@@ -228,8 +232,19 @@ public class Monitor {
 		if (address.equalsIgnoreCase( m_config.busd().address())) {
 			return m_config.busd().name();
 		}
-		Stock stock = stocks.getStockByTokenAddr(address);
-		return stock != null ? stock.symbol() : "Unknown";
+		var token = chain().getTokenByAddress(address);
+		return token != null ? token.name() : "Unknown";
 	}
-
+	
+	static Chain chain() {
+		return m_config.chain();
+	}
+	
+	static ArrayList<StockToken> tokens() { //rename. bc
+		return chain().tokens();
+	}
+	
+	static Collection<Stock> stocks() { //rename. bc
+		return stocks.stocks();
+	}
 }

@@ -1,7 +1,6 @@
 package test;
 
 import common.Util;
-import reflection.Config;
 import reflection.MySqlConnection;
 import tw.util.S;
 
@@ -21,7 +20,7 @@ public class CreateTables  {
 
 	public static void main(String[] args) {
 		try {
-			con = Config.ask().useExternalDbUrl().createConnection();
+//			con = ConfigSingleChain.ask().useExternalDbUrl().createConnection();
 			new CreateTables().createSignupTable();
 		} catch (Exception e) {
 			e.printStackTrace();

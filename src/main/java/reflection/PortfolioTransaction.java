@@ -25,6 +25,7 @@ public class PortfolioTransaction extends MyTransaction {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)
 			getWalletFromUri();
+			validateCookie( "positionsNew");
 
 			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", 
 					chain().params().hookServerPort(), m_walletAddr.toLowerCase() );
@@ -38,19 +39,23 @@ public class PortfolioTransaction extends MyTransaction {
 			for (JsonObject pos : MyClient.getJson( url).getArray( "positions") ) {   // returns the following keys: native, approved, positions, wallet
 				double position = pos.getDouble("position");
 				
-				Stock stock = m_main.getStockByTokAddr( pos.getString("address") );
-				if (stock != null && position >= m_config.minTokenPosition() ) {
-					
-					var pair = pnlMap.get( stock.conid() );
-					double pnl = pair != null ? pair.getPnl( stock.markPrice(), position) : 0;
-					
-					JsonObject resp = new JsonObject();
-					resp.put("conId", stock.conid() );
-					resp.put("symbol", stock.symbol() );
-					resp.put("price", stock.markPrice() );
-					resp.put("quantity", position); 
-					resp.put("pnl", pnl);
-					positions.add(resp);
+				var token = chain().getTokenByAddress( pos.getString("address") );
+				
+				if (token != null && position >= m_config.minTokenPosition() ) {
+					var stock = m_main.stocks().getStockByConid( token.conid() );
+
+					if (stock != null) {
+						var pair = pnlMap.get( token.rec().conid() );
+						double pnl = pair != null ? pair.getPnl( stock.markPrice(), position) : 0;
+						
+						JsonObject resp = new JsonObject();
+						resp.put("conId", stock.conid() );
+						resp.put("symbol", stock.symbol() );
+						resp.put("price", stock.markPrice() );
+						resp.put("quantity", position); 
+						resp.put("pnl", pnl);
+						positions.add(resp);
+					}
 				}
 			}
 			

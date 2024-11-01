@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -975,4 +976,11 @@ public class Util {
 				? e.getMessage() : 
 				S.isNotNull( e.toString() ) ? e.toString() : e.getClass().toString();
 	}
+
+	/** return list of field names for a record */
+    public static String[] getFieldNames(Class<?> clas) {
+        return Arrays.stream(clas.getDeclaredFields())
+                .map(Field::getName)
+                .toArray(String[]::new);
+    }
 }

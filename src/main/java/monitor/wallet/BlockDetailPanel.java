@@ -22,7 +22,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 		
 		@Override protected void onDoubleClick(String tag, Object val) {
 			if (tag.equals( "transaction_hash") ) {
-				Util.browse( m_config.blockchainTx( val.toString() ) );
+				Util.browse( m_config.chain().blockchainTx( val.toString() ) );
 			}				
 		}
 		

@@ -3,9 +3,9 @@ package redis;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import chain.Stocks.Stock;
 import common.Util;
 import redis.MdServer.MyTickType;
-import reflection.Stock;
 import reflection.TradingHours.Session;
 import tw.util.S;
 
@@ -41,7 +41,7 @@ class DualPrices {
 	}
 	
 	boolean is24() {
-		return m_stock.is24Hour();
+		return m_stock.rec().is24Hour();
 	}
 
 	public void tickSmart(MyTickType tickType, double price) {

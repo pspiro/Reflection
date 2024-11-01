@@ -38,11 +38,11 @@ public class TestHookServer extends MyTestCase {
 	}
 		
 	public void testTransfers() throws Exception {
-		StockToken tok = stocks.getAnyStockToken();
+		StockToken tok = chain.getAnyStockToken();
 
 		// mint RUSD
 		S.out( "minting 10 rusd into %s", newWallet);
-		m_config.rusd().mintRusd(newWallet, 10, stocks.getAnyStockToken() )
+		m_config.rusd().mintRusd(newWallet, 10, chain.getAnyStockToken() )
 				.displayHash();
 
 		S.out( "waiting for position from hookserver");
@@ -118,7 +118,7 @@ public class TestHookServer extends MyTestCase {
 	/** test that hookserver is using correct decimals 
 	 * @throws Exception */
 	public void testBalances() throws Exception {
-		var tok = stocks.getAnyStockToken();
+		var tok = chain.getAnyStockToken();
 
 		m_config.rusd().mintRusd( newWallet, 5, tok).waitForReceipt();
 		m_config.rusd().mintStockToken(newWallet, tok, 6).waitForReceipt();

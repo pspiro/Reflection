@@ -2,7 +2,7 @@ package testcase;
 
 import org.json.simple.JsonObject;
 
-import reflection.Allow;
+import chain.Allow;
 import reflection.RefCode;
 import tw.google.GTable;
 import tw.google.NewSheet;

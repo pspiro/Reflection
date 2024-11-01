@@ -1,6 +1,6 @@
 package common;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.OStream;
 import tw.util.S;
 
@@ -11,7 +11,7 @@ public class ProofOfReserves {
 		try (OStream os = new OStream( "c:/temp/file.csv") ) {
 			S.out( "RUSD Wallet Balances as of ");
 			S.out( "Wallet Address,RUSD Balance");
-			Config.ask( "prod").rusd().getAllBalances().forEach( (addr,bal) ->
+			SingleChainConfig.ask( "prod").rusd().getAllBalances().forEach( (addr,bal) ->
 				os.writeln( S.format( "%s,%s", addr, "" + bal) ) );
 		}
 	}

@@ -9,7 +9,7 @@ import org.web3j.utils.Numeric;
 import common.Util;
 import io.zksync.protocol.ZkSync;
 import io.zksync.protocol.account.Wallet;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 import web3.Param;
 
@@ -19,7 +19,7 @@ public class ZkDeploy {
 	public static void main(String[] args) throws Exception {
 		
 		// Step 2: Load credentials (private key of the deployer)
-		Config config = Config.ask( "zksync");
+		SingleChainConfig config = SingleChainConfig.ask( "zksync");
 
 		// Step 1: Set up zkSync provider
 		ZkSync zkSync = ZkSync.build(new HttpService("https://mainnet.era.zksync.io"));

@@ -1,14 +1,14 @@
 package web3;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		Config.setSingleChain();
-		Config c = Config.ask();
+		SingleChainConfig.setSingleChain();
+		SingleChainConfig c = SingleChainConfig.ask();
 		
 		String wallet = c.admin1Addr();  // wallet that is stuck
 		

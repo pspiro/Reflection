@@ -115,7 +115,7 @@ public class OnrampTransaction extends MyTransaction {
 						onrampId,
 						buyAmt,
 						currency,
-						m_config.refWalletAddr(),
+						chain().params().refWalletAddr(),
 						receiveAmt);
 				out( "Submitted onramp order, received: " + submission);
 				
