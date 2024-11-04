@@ -13,8 +13,8 @@ import tw.google.NewSheet.Book;
 import tw.util.S;
 
 public class Stocks {
-	private ArrayList<MiniStock> hotList = new ArrayList<>(); // for hot stocks
-	private ArrayList<MiniStock> fullList = new ArrayList<>(); // for watch list
+	private JsonArray hotList = new JsonArray(); // for hot stocks
+	private JsonArray fullList = new JsonArray(); // for watch list
 	private HashMap<Integer,Stock> conidMap = new HashMap<>(); // map conid to Stock, all stocks
 
 	/** json stock with conid, symbol, put and call, for sending to frontend */
@@ -29,7 +29,7 @@ public class Stocks {
 			String symbol, 
 			String description, 
 			String type,
-			String exchange,
+			// String exchange,  not needed by frontend
 			String tradingView,
 			String startDate,
 			String endDate
@@ -134,8 +134,12 @@ public class Stocks {
 		stocks.show();
 	}
 
-	public ArrayList<MiniStock> watchList() {
+	public JsonArray watchList() {
 		return fullList;
+	}
+	
+	public JsonArray hotStocks() {
+		return hotList;
 	}
 	
 	public Stock getStockByConid( int conid) {

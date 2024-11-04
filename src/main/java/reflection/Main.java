@@ -146,7 +146,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/live-orders", exch -> new LiveOrderTransaction(this, exch, false).handleGetLiveOrders() );
 			server.createContext("/api/clear-live-orders", exch -> new LiveOrderTransaction(this, exch, true).clearLiveOrders() );
 			server.createContext("/api/fireblocks", exch -> new LiveOrderTransaction(this, exch, true).handleFireblocks() ); // report build date/time
-			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );
+			server.createContext("/api/all-live-orders", exch -> new LiveOrderTransaction(this, exch, true).handleAllLiveOrders() );  // used by Monitor only
 
 			// get/update profile
 			server.createContext("/api/get-profile", exch -> new ProfileTransaction(this, exch).handleGetProfile() );
@@ -236,7 +236,7 @@ public class Main implements ITradeReportHandler {
 		
 		// read RefAPI config
 		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
-		m_stocks.readFromSheet();
+		m_stocks.readFromSheet( book);
 
 		// read Backend config (used by Frontend)
 		readFaqsFromSheet(book);
@@ -306,7 +306,7 @@ public class Main implements ITradeReportHandler {
 	// let it fall back to read from a flatfile if this fails. pas
 
 	String getExchange( int conid) throws Exception {
-		return getStock(conid).rec().exchange();
+		return "SMART";
 	}
 
 	Stock getStock( int conid) throws Exception {
@@ -522,10 +522,6 @@ public class Main implements ITradeReportHandler {
 	
 	JsonObject type2Config() {
 		return m_type2Config;
-	}
-
-	public JsonArray hotStocks() throws Exception {
-		return null; //m_config.chain().stocks().hotStocks();
 	}
 
 	/** @param side is buy or sell (lower case) */

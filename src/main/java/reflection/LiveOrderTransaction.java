@@ -48,7 +48,9 @@ public class LiveOrderTransaction extends MyTransaction {
 	}
 	
 	/** Return live orders to Frontend for a single wallet; 
-	 *  the list is displayed in the Working Orders panel */
+	 *  the list is displayed in the Working Orders panel.
+	 *  
+	 *  Display orders from all blockchains */
 	public void handleGetLiveOrders() {
 		wrap( () -> {
 			// read wallet address into m_walletAddr (last token in URI)

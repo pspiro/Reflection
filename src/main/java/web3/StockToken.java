@@ -2,6 +2,7 @@ package web3;
 
 import chain.Allow;
 import chain.Chain;
+import common.Util;
 
 /** The stock token class that is used by clients */
 public class StockToken extends Erc20 {
@@ -25,16 +26,13 @@ public class StockToken extends Erc20 {
 		super( address, stockTokenDecimals, "StockToken", chain	);
 	}
 
-	/** @param name is the .r name */
-	public StockToken(String address, String name, Chain chain, StockTokenRec params) {
+	/** @param name is the .r name 
+	 * @throws Exception */
+	public StockToken(String address, String name, Chain chain, StockTokenRec params) throws Exception {
 		super( address, stockTokenDecimals, name, chain);
 		m_params = params;
 	}
 
-	public String getSmartContractId() {
-		return address();
-	}
-	
 	public StockTokenRec rec() {
 		return m_params;
 	}

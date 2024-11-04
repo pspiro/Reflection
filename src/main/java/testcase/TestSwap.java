@@ -6,11 +6,11 @@ import web3.StockToken;
 public class TestSwap extends MyTestCase {
 	
 	public void testSwap() throws Exception {
-		var list = chain.tokens();
+		var iter = chain.tokens().iterator();
 		
 		// get two stock tokens
-		StockToken stock1 = list.get( 0);
-		StockToken stock2 = list.get( 1);
+		StockToken stock1 = iter.next();
+		StockToken stock2 = iter.next();
 		
 		// mint one, then swap it for another
 		String wallet = Util.createFakeAddress();

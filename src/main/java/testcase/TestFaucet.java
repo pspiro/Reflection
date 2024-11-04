@@ -52,7 +52,7 @@ public class TestFaucet extends MyTestCase {
 		assertEquals( amount, Cookie.getUser()
 				.getObjectNN( "locked")
 				.getObjectNN( "faucet")
-				.getDouble( m_config.blockchainName() ) );
+				.getDouble( "Sepolia") );
 		
 	}
 

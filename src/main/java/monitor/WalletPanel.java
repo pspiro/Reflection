@@ -358,7 +358,7 @@ public class WalletPanel extends MonPanel {
 				double stockBal = 0;
 				
 				for (var token : Monitor.tokens() ) {
-					double bal = Util.toDouble( posMap.get( token.getSmartContractId().toLowerCase() ) );
+					double bal = Util.toDouble( posMap.get( token.address().toLowerCase() ) );
 					if (bal > minBalance) {
 						JsonObject obj = new JsonObject();
 						obj.put( "Symbol", token.name() );

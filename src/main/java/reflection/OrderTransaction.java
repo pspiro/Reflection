@@ -85,7 +85,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
-		validateCookie("order");
+		validateCookie("order");  // set m_chain for retrieval with chain()
 		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
@@ -593,7 +593,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 							m_stock.symbol(),
 							m_stablecoinAmt,
 							m_stablecoin.name(),
-							m_stockToken.getSmartContractId(),
+							m_stockToken.address(),
 							chain().blockchainTx( hash) );
 					m_config.sendEmail(m_email, "Order filled on Reflection", html);
 				});
@@ -603,7 +603,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				Util.wrap( () -> {
 					out( "sending telegram");
 					String str = String.format( "Wallet %s just %s [%s %s stock tokens](%s) on %s!",
-							Util.shorten( m_walletAddr), isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), chain().blockchainTx( hash), m_config.blockchainName() ); 
+							Util.shorten( m_walletAddr), 
+							isBuy() ? "bought" : "sold", 
+							m_desiredQuantity, 
+							m_stock.symbol(), 
+							chain().blockchainTx( hash), 
+							chain().params().name()	);
+					
 					Telegram.postPhoto( str, isBuy() ? Telegram.bought : Telegram.sold);
 				});
 			}

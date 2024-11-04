@@ -80,7 +80,7 @@ public class SiweTransaction extends BaseTransaction {
 			out( "  nonce is valid");
 			
 			// verify signature
-			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
+			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 11155111) {
 				out( "  free pass");
 			}
 			else {

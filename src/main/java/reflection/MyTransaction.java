@@ -141,14 +141,10 @@ public abstract class MyTransaction extends BaseTransaction {
 		return siweMsg;
 	}
 
-	/** return the Chain from the chain id on the cookie */
+	/** return the Chain from the chain id on the cookie;
+	 * 	you must call validateCookie() before calling this method */
 	public Chain chain() throws Exception {
-		if (m_chain == null) {
-			String cookie = m_map.get("cookie");
-			Util.require( cookie != null, "cookie required but not found");
-			int chainId = SiweTransaction.validateCookie( cookie, m_walletAddr).getSiweMessage().getChainId(); // don't call this twice. bc
-			m_chain = m_config.chain( chainId);
-		}
+		Util.require( m_chain != null, "cookie required but not found");
 		return m_chain;
 	}
 

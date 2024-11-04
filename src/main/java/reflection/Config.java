@@ -89,7 +89,6 @@ public abstract class Config {
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
-	private String blockchainName;  // for messages
 	private double faucetAmt;
 	private String moralisPlatform;  // lower case
 	private String platformBase;
@@ -228,7 +227,6 @@ public abstract class Config {
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
-		this.blockchainName = m_tab.get( "blockchainName");
 		this.faucetAmt = m_tab.getDouble( "faucetAmt");
 				
 		// siwe config items
@@ -266,7 +264,6 @@ public abstract class Config {
 		require( S.isNotNull( backendConfigTab), "backendConfigTab" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
-		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
 	
@@ -562,11 +559,6 @@ public abstract class Config {
 		return maxSummaryEmails;
 	}
 	
-	/** for display to user */
-	public String blockchainName() {
-		return blockchainName;
-	}
-
 	/** return completed transactions from the database for a single wallet 
 	 * @throws Exception */
 	public JsonArray getCompletedTransactions(String wallet) throws Exception {

@@ -76,7 +76,7 @@ public abstract class Cookie extends MyTestCase {
 				address, 
 				"http://localhost", 
 				"1",	// version 
-				5,      // chainId 
+				11155111,      // chainId, Sepolia 
 				nonce,
 				Util.isoNow() )
 				.statement("Sign in to Reflection.")

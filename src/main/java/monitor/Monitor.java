@@ -240,7 +240,7 @@ public class Monitor {
 		return m_config.chain();
 	}
 	
-	static ArrayList<StockToken> tokens() { //rename. bc
+	static Collection<StockToken> tokens() { //rename. bc
 		return chain().tokens();
 	}
 	

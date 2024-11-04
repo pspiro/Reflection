@@ -9,6 +9,7 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import com.fasterxml.jackson.core.base.ParserMinimalBase;
 import com.sun.net.httpserver.HttpExchange;
 
 import chain.Chain;
@@ -36,14 +37,14 @@ public class BackendTransaction extends MyTransaction {
 	 * 
 	 * @return 
 		{
-		"smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
-		"symbol": "IBM",
-		"ask": 128.78,
-		"description": "International Business Machines",
+		// "smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
+		// could add tradingView if desired
 		"conid": "8314",
-		"exchange": "SMART",
+		"symbol": "IBM",
+		"description": "International Business Machines",
 		"type": "Stock",
 		"bid": 128.5
+		"ask": 128.78,
 		}
 	 */
 	public void handleGetStockWithPrice() {
@@ -52,21 +53,21 @@ public class BackendTransaction extends MyTransaction {
 			//var token = m_main.getStock( getConidFromUri() );
 			// is token addr really needed here? if so, frontend must pass the cookie
 			
+			Session session = m_main.m_tradingHours.getTradingSession( stock.rec().is24Hour(), null);
+
 			var json = Util.toJson( 
 					//"smartcontractid",   // really needed
+					//"exchange", stock.rec().exchange(),
 					"symbol", stock.symbol(), 
 					"bid", stock.prices().anyBid(),
 					"ask", stock.prices().anyAsk(),
 					"description", stock.rec().description(),
 					"conid", String.valueOf( stock.conid() ),
-					"exchange", stock.rec().exchange(),
-					"type", stock.rec().type()
+					"type", stock.rec().type(),
+					"exchangeStatus", session != Session.None ? "open" : "closed"  // this updates the global object and better be re-entrant
 					);
 			
-			Session session = m_main.m_tradingHours.getTradingSession( stock.rec().is24Hour(), null);
-			json.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
-			
-			respond(stock);
+			respond(json);
 		});
 	}
 	
@@ -122,20 +123,23 @@ public class BackendTransaction extends MyTransaction {
 	/** Return transactions for a specific user or for all users;
 	 *  populates the two panels on the Dashboard. We put this in the queue
 	 *  to release the query thread quickly and because this query
-	 *  is not so time-dependent */
+	 *  is not so time-dependent.
+	 *  
+	 *   Display transactions from all blockchains */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
-			String wallet = m_map.get("wallet_public_key");
-			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 
 			m_main.queueSql( conn -> {
 				wrap( () -> {
-					String where = "where blockchain_hash <> ''";  // use blockchain hash because the link is clickable for the user
-					if (S.isNotNull(wallet) ) {
-						where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
-					}
-					JsonArray ar = conn.queryToJson("select * from transactions %s order by created_at desc limit 20", where);
+					String sql = String.format("""
+							select * from transactions 
+							where blockchain_hash <> '' and wallet_public_key='%s'
+							order by created_at desc
+							limit 20""", m_walletAddr.toLowerCase() );
+					
+					JsonArray ar = conn.queryToJson( sql);
 					for (JsonObject obj : ar) fix(obj);  // switch "created_at" to "timestamp"
 					respond(ar);
 				});
@@ -240,11 +244,25 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleMyWallet() {
 		wrap( () -> {
-			respondFull( Util.toJson( 
-					code, RefCode.INVALID_REQUEST, 
-					Message, "/api/mywallet not supported in RefAPI; run nginx and HookServer"),
-				400,
-				null);
+			parseMsg();
+			getWalletFromUri();
+			
+			int chainId = m_map.getInt( "chain");
+			chainId = chainId == 0 ? 137 : chainId;  // default to Polygon if not specified
+			Chain chain = m_config.chains().get( chainId);
+			Util.require( chain != null, "No chain found with chainId %s", chainId);
+			
+			String url = String.format( "localhost:%s/hook/mywallet/%s",
+					chain.params().hookServerPort(), m_walletAddr);
+			
+			JsonObject json = MyClient.getJson( url);
+			respond( json);
+			
+//			respondFull( Util.toJson( 
+//					code, RefCode.INVALID_REQUEST, 
+//					Message, "/api/mywallet not supported in RefAPI; run nginx and HookServer"),
+//				400,
+//				null);
 		});
 	}
 
@@ -255,7 +273,7 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleHotStocks() {
 		wrap( () -> {
-			respond( m_main.hotStocks() );
+			respond( m_main.stocks().hotStocks() );
 		});
 	}
 	
@@ -422,7 +440,7 @@ public class BackendTransaction extends MyTransaction {
 			JsonObject json = MyClient.getJson( url);
 			JsonObject positions = json.getObject( "positions"); // you could improve this and create a special query just for this
 			
-			String tokenAddr = chain().getTokenByConid( conid).getSmartContractId();
+			String tokenAddr = chain().getTokenByConid( conid).address();
 			Prices prices = m_main.getStock( conid).prices();
 			// require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 			// Q what to do if there are no prices
@@ -608,12 +626,13 @@ public class BackendTransaction extends MyTransaction {
 	 *  currently faucet works on PulseChain only; we would have to add a selector
 	 *  on Frontend to support other chains */
 	private double getFaucetAmt() throws Exception {
+		Chain chain = m_config.chains().pulseChain();
 		
 		// check how much user has already received from faucet
 		double received = getorCreateUser()
 				.getObjectNN( "locked")
 				.getObjectNN( "faucet")
-				.getDouble( m_config.blockchainName()
+				.getDouble( chain.params().name()
 				);
 		
 		// let them have the full amount if they have not received the full amount AND
@@ -646,7 +665,7 @@ public class BackendTransaction extends MyTransaction {
 
 			// update the faucet object in the user/locked json
 			var locked = getorCreateUser().getObjectNN( "locked");  // reads the database again, not so efficient
-			locked.getOrAddObject( "faucet").put( m_config.blockchainName(), amount);
+			locked.getOrAddObject( "faucet").put( chain().params().name(), amount);
 
 			// update the database with new  
 			m_config.sqlCommand( sql -> sql.updateJson( 

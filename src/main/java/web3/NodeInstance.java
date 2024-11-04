@@ -16,6 +16,7 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import http.MyClient;
+import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
 import web3.RetVal.NewRetVal;
@@ -78,7 +79,8 @@ public class NodeInstance {
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
-			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
+			throw new MyException( "nodeQuery error  code=%s  chain=%s  %s", 
+					err.getInt( "code"), chainId, err.getString( "message") );
 		}
 		return obj;
 	}
@@ -136,7 +138,20 @@ public class NodeInstance {
 				.queryToAnyJson();
 	}
 
-	/** see also getLatestBlock() */
+	/** Gets the entire latest block */
+	public JsonObject getLatestBlock() throws Exception {
+		// the boolean says if it gets the "full" block or not
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getBlockByNumber",
+			"params": [	"latest", false ]
+			}""";
+		return nodeQuery( body);
+	}
+
+	/** Gets just the latest block number */
 	public long getBlockNumber() throws Exception {
 		String body = """
 			{
@@ -223,19 +238,6 @@ public class NodeInstance {
 	// and they are blocking next trans; they have to be removed
 	private static void show( JsonObject obj, String addr) throws Exception {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
-	}
-
-	/** see also getBlockNumber() */
-	public JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
 	}
 
 	/** note w/ moralis you can also get the token balance by wallet
@@ -556,16 +558,23 @@ public class NodeInstance {
 
 		return map;
 	}
+	
+	int maxBlocks = 50000;
 
     // Function to fetch token holders from an Ethereum RPC node
 	public Transfers getAllTokenTransfers( String address, int decimals) throws Exception {
+		long latest = getBlockNumber();
+		long first = Math.max( 0, latest - maxBlocks);
+		
+		
 		address = address.toLowerCase();
 		
 		var topics = new ArrayList<String>();
 		topics.add(transferEventSignature);
 
 		JsonObject params = new JsonObject();
-		params.put("fromBlock", "earliest");
+		params.put("fromBlock", "earliest");  // doesn't work on Sepolia, test on others. bc
+		//params.put("fromBlock", Util.toHex( first) );
 		params.put("toBlock", "latest");
 		params.put("address", address);
 		params.put("topics", topics);
@@ -671,6 +680,9 @@ public class NodeInstance {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		var c = Config.ask();
+		S.out( c.chain().node().getLatestBlock() );
+		S.out( c.chain().node().getBlockNumber() );
 	}				
 
 	// Method to encode the function call with its parameters

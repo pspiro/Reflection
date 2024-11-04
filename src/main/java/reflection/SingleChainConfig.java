@@ -13,6 +13,13 @@ import web3.Rusd;
 public class SingleChainConfig extends Config {
 		private int m_chainId;
 		private Chain m_chain;
+		/** for display to user */
+//		private String blockchainName;  // for messages
+//		this.blockchainName = m_tab.get( "blockchainName");
+//		require( S.isNotNull( blockchainName) || !sendTelegram, "blockchainName");
+//		public String blockchainName() {
+//			return blockchainName;
+//		}
 
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
 			super.readFromSpreadsheet(tab);
@@ -20,7 +27,8 @@ public class SingleChainConfig extends Config {
 			m_chainId = m_tab.getRequiredInt( "chainId");
 
 			Chains chains = new Chains();
-//			chains.readAll();
+			chains.readAll();
+			
 			m_chain = chains.get( m_chainId);
 		}
 

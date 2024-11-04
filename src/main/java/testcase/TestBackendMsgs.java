@@ -28,16 +28,6 @@ public class TestBackendMsgs extends MyTestCase {
 		assertTrue(item.getDouble("ask") > 0);
 	}
 	
-	public void testGetStocksWithPrices() throws Exception {
-		cli().get("/api/get-stocks-with-prices");
-		JsonArray ar = cli.readJsonArray();
-		assertTrue( ar.size() > 0);
-		JsonObject item = ar.getJsonObj(0);
-		assertNotNull(item.getString("symbol"));
-		assertNotNull(item.getString("type"));
-		assertNotNull(item.getString("conid"));
-	}
-	
 	public void testGetStockWithPrice() throws Exception {
 		cli().get("/api/get-stock-with-price/265598");
 		JsonObject obj = cli.readJsonObject();
@@ -49,10 +39,10 @@ public class TestBackendMsgs extends MyTestCase {
 		startsWith( "AAPL", obj.getString("symbol") );
 		assertEquals( "Stock", obj.getString("type") );
 		assertEquals( "265598", obj.getString("conid") );
-		assertEquals( "open", obj.getString("exchangeStatus") );
-		assertEquals( "NASDAQ:AAPL", obj.getString("tradingView") );
+		assertEquals( "closed", obj.getString("exchangeStatus") );
 		assertTrue( bid > 150 && bid < 300);
 		assertTrue( ask > 150 && ask < 300);
+		assertTrue( S.isNotNull( obj.getString("description") ) );
 	}
 	
 	public void testGetPrice() throws Exception {

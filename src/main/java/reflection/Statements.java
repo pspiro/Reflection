@@ -130,7 +130,7 @@ public class Statements {
 		// add stocks
 		for ( var token : m_chain.tokens() ) {
 			var stock = m_stocks.getStockByConid( token.conid() );
-			var balance = positionsMap.get( token.getSmartContractId().toLowerCase() );
+			var balance = positionsMap.get( token.address().toLowerCase() );
 			if (balance != null && balance > 0) {
 				// calculate pnl
 				var pair = pnlMap.get( token.conid() );
