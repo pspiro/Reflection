@@ -135,8 +135,10 @@ public abstract class MyTransaction extends BaseTransaction {
 		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
 		var siweMsg = SiweTransaction.validateCookie( cookie, m_walletAddr);
+
 		int chainId = siweMsg.getSiweMessage().getChainId();
 		m_chain = m_config.chain( chainId);
+		Util.require( m_chain != null, "invalid chain id %s", chainId);
 		
 		return siweMsg;
 	}
@@ -144,7 +146,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	/** return the Chain from the chain id on the cookie;
 	 * 	you must call validateCookie() before calling this method */
 	public Chain chain() throws Exception {
-		Util.require( m_chain != null, "cookie required but not found");
+		Util.require( m_chain != null, "call validateCookie() before chain()");
 		return m_chain;
 	}
 

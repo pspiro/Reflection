@@ -125,7 +125,8 @@ public class BackendTransaction extends MyTransaction {
 	 *  to release the query thread quickly and because this query
 	 *  is not so time-dependent.
 	 *  
-	 *   Display transactions from all blockchains */
+	 *  @return transactions from all blockchains
+	 *   */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();

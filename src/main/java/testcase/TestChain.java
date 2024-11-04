@@ -6,7 +6,6 @@ public class TestChain {
 //	/fund-wallet
 //	/get-stock-with-price
 //	/hot-stocks
-//	/live-orders
 //	/mywallet
 //	/order
 //	/positions-new
@@ -16,9 +15,5 @@ public class TestChain {
 //	/trading-screen-static
 //	/transactions
 //	/turn-faucet
-//	/update-profile
-//	/users/register
-//	/validate-email
-//	/working-orders
 
 }
