@@ -46,7 +46,7 @@ public class TestPartialFill extends MyTestCase {
 		obj.put("simPartial", 1);
 		
 		String uid = postOrderToId(obj);
-		assert200_();
+		assert200();
 		
 		S.sleep(1000);
 		confirmLog( "select * from log where uid = '%s' and type = 'PARTIAL_FILL'", uid);

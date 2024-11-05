@@ -9,13 +9,13 @@ import http.BaseTransaction;
 import http.MyServer;
 import positions.AlchemyStreamMgr;
 import positions.HookConfig;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 public class TestStream {
 	public static void main(String[] args) throws Exception {
 		HookConfig c = new HookConfig();
-		c.readFromSpreadsheet( Config.getTabName(args) );
+		c.readFromSpreadsheet( SingleChainConfig.getTabName(args) );
 
 		MyServer.listen( c.hookServerPort(), 10, server -> {
 			server.createContext("/test/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
@@ -32,8 +32,8 @@ public class TestStream {
 		
 		Util.executeIn( 5000, () -> {
 			try {
-				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5).waitForHash();
-				c.rusd().approve( c.ownerKey(), c.busdAddr(), 6).waitForHash();
+				c.busd().approve( c.ownerKey(), c.rusdAddr(), 5).waitForReceipt();
+				c.rusd().approve( c.ownerKey(), c.busdAddr(), 6).waitForReceipt();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

@@ -77,7 +77,7 @@ public class TestOnramp extends MyTestCase {
 				"recAmt", quote.getDouble( "recAmt"),
 				"test", true
 				));
-		assert200_();
+		assert200();
 		assertNotNull( resp.getString( "url") ); 
 		assertNotNull( resp.getString( "customerId") );
 		
@@ -89,7 +89,7 @@ public class TestOnramp extends MyTestCase {
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
 				));
-		assert200_();
+		assert200();
 		assertNotNull( resp.getString( "url") ); 
 		assertNotNull( resp.getString( "customerId") );
 		
@@ -107,7 +107,7 @@ public class TestOnramp extends MyTestCase {
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
 				));
-		assert200_();
+		assert200();
 		startsWith( "The transaction has been", cli.getMessage() );
 		assertTrue( resp.has( "createdAt") );
 		assertTrue( resp.has( "bank") );

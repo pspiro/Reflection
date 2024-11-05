@@ -5,13 +5,9 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config.Web3Type;
 import reflection.RefCode;
-import tw.google.GTable;
-import tw.google.NewSheet;
 import tw.util.S;
 import web3.Busd;
-import web3.NodeServer;
 import web3.Rusd;
 import web3.StockToken;
 
@@ -26,16 +22,12 @@ public class TestFbOrders extends MyTestCase {
 
 	static {		
 		try {
-			bobKey = m_config.web3Type() == Web3Type.Fireblocks 
-					? "Bob" 
-					: Util.createPrivateKey();
-			bobAddr = m_config.matic().getAddress( bobKey);
+			bobKey = Util.createPrivateKey();
+			bobAddr = Util.getAddress(bobKey);
 
 			S.out( "bobAddr = %s", bobAddr);
 			S.out( "bobKey = %s", bobKey);
 
-			GTable tab = new GTable( NewSheet.Reflection, m_config.symbolsTab(), "TokenSymbol", "TokenAddress");
-			stock = new StockToken( tab.get( "GOOG") );
 			busd = m_config.busd();
 			rusd = m_config.rusd();
 
@@ -59,28 +51,13 @@ public class TestFbOrders extends MyTestCase {
 		showAmounts("starting insuf. funds");
 		
 		// get current BUSD balance
-		cli().get("/api/mywallet/" + bobAddr);
-		double bal = cli.readJsonObject()
-				.getArray("tokens")
-				.find( "name", busd.name() )
-				.getDouble("balance");
+		double bal = m_config.busd().getPosition( bobAddr);
 		double maxQty = bal / (TestOrder.curPrice+3);  // this is the max we could buy w/ the current balance
 		
 		// buy more
 		JsonObject obj = TestOrder.createOrderWithOffset( "BUY", maxQty + 1, 3);
 		postOrderToObj(obj);
 		assertEquals( RefCode.INSUFFICIENT_STABLECOIN, cli.getRefCode() );
-
-//		// wait for final order code
-//		waitFor( 60, () -> {
-//			JsonObject ret = getLiveMessage2(id);
-//			if (ret != null) {
-//				assertEquals( "error", ret.getString("type"));
-//				startsWith( "The stablecoin balance", ret.getString("text") );
-//				return true;
-//			}
-//			return false;
-//		});
 	}
 	
 	/** this test fails? and we must fix it */
@@ -105,15 +82,15 @@ public class TestFbOrders extends MyTestCase {
 		// mint 2000 BUSD for user Bob
 		S.out( "**minting 2000");
 		m_config.mintBusd( bobAddr, 2000)
-			.waitForHash();
+			.waitForReceipt();
 		waitForBalance(bobAddr, busd.address(), 2000, false); // not return json
 		
 		gasUpBob();
 		
 		// let bob approve .49 BUSD spending by RUSD
 		S.out( "**approving .49");
-		busd.approve( bobKey, rusd.address(), .49).waitForHash();
-		waitFor( 30, () -> m_config.busd().getApprovedAmt( bobAddr, rusd.address() ) > .48);
+		busd.approve( bobKey, rusd.address(), .49).waitForReceipt();
+		waitFor( 30, () -> m_config.busd().getAllowance( bobAddr, rusd.address() ) > .48);
 		showAmounts("updated amounts");
 		
 		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() ) ).getString("id");
@@ -160,7 +137,7 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint BUSD for user Bob
 		S.out( "**minting 2000");
-		m_config.mintBusd( bobAddr, 2000).waitForHash();
+		m_config.mintBusd( bobAddr, 2000).waitForReceipt();
 		waitForBalance( bobAddr, m_config.busd().address(), 2000, false);
 		
 		gasUpBob();
@@ -171,7 +148,7 @@ public class TestFbOrders extends MyTestCase {
 				bobKey,
 				rusd.address(),      // I saw this hang forever
 				2000
-				).waitForHash();
+				).waitForReceipt();
 		waitFor( 120, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
 		showAmounts("updated amounts");
 
@@ -241,14 +218,14 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint RUSD for user Bob
 		S.out( "**minting 2000");
-		rusd.mintRusd( bobAddr, 2000, stocks.getAnyStockToken() ).waitForHash();
+		rusd.mintRusd( bobAddr, 2000, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance( bobAddr, 2000, false);
 		
 		// submit order
 		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, rusd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
-		assert200_();
+		assert200();
 
 		// show uid
 		String uid = map.getString("id");  // 5-digit code
@@ -303,23 +280,23 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint a little less RUSD than needed
 		S.out( "**minting 100");
-		rusd.mintRusd( Cookie.wallet, amount - .01, stocks.getAnyStockToken() ).waitForHash();
+		rusd.mintRusd( Cookie.wallet, amount - .01, chain.getAnyStockToken() ).waitForReceipt();
 		waitForRusdBalance( Cookie.wallet, amount - .01, false);
 
 		// submit order
 		S.out( "**Submitting: " + obj);
 		postOrderToObj(obj);
-		assert200_();
+		assert200();
 	}
 	
 	
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
-		if (NodeServer.getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+		if (node().getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
 			S.out( "gassing up bob");
-			m_config.matic().transfer( m_config.ownerKey(), bobAddr, .01)
-					.waitForHash();
+			m_config.chain().blocks().transfer( m_config.ownerKey(), bobAddr, .01)
+					.waitForReceipt();
 		}
 	}
 

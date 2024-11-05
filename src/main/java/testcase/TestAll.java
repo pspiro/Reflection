@@ -4,6 +4,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 import junit.framework.TestCase;
+import test.TestAlchemy;
+import testcase.web3.TestBusd;
+import testcase.web3.TestRusd;
+import testcase.web3.TestSendEth;
 
 // NOTE: static variables are shared across tests
 
@@ -11,12 +15,8 @@ import junit.framework.TestCase;
 @Suite.SuiteClasses({
 	// blockchain stuff
 	
-//	TestAlchemy.class,
-	TestFbOrders.class,
-	TestHookServer.class,
-	TestNodeServer.class,
-	TestSwap.class,
 	
+	TestAlchemy.class,
 	TestApprove.class,
 	TestBackendMsgs.class,
 	TestCheckIdentity.class,
@@ -24,20 +24,22 @@ import junit.framework.TestCase;
 	TestErrors.class,
 	TestFaqs.class,
 	TestFaucet.class,
+	TestFbOrders.class,
 	TestFundWallet.class,
 	TestGetCryptoTrans.class,
-	TestGetPositions.class,
+	TestPositionsNew.class,
 	TestGtable.class,
+	TestHookServer.class,
 	TestHttpClient.class,
 	TestJson.class,
 	TestKyc.class,
 	TestMktDataServer.class,
+	TestNode.class,
 	TestOnramp.class,
 	TestOrder.class,
 	TestOrderNoAutoFill.class,
 	TestOutsideHours.class,
 	TestPanic.class,
-	TestParams.class,
 	TestPartialFill.class,
 	TestPositionTracker.class,
 	TestPrices.class,
@@ -50,9 +52,15 @@ import junit.framework.TestCase;
 	TestSiwe.class,
 	TestSplitDates.class,
 	TestSql.class,
+	TestSwap.class,
 	TestUnwindOrder.class,
 	TestUserTokMgr.class,
-	TestWallet.class
+	TestMyWallet.class,
+	
+	// these are in a separate folder; don't delete them
+	TestBusd.class,
+	TestRusd.class,
+	TestSendEth.class,
 })
 public class TestAll extends TestCase {
 }
