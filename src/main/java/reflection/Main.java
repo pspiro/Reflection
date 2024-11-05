@@ -175,8 +175,12 @@ public class Main implements ITradeReportHandler {
 /*T*/		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );  // hot stocks for home page
 /*T*/		server.createContext("/api/get-watch-list", exch -> new BackendTransaction(this, exch, false).handleWatchList() );  // watch list for Dashboard
 /*T*/		server.createContext("/api/get-all-stocks", exch -> new BackendTransaction(this, exch).handleAllStocks() );  // all stocks for dropdown on trade page
-/*T*/		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // called from trade page in prod
 /*T*/		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
+			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
+			
+			// obsolete, remove
+			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
+/*T*/		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // from trade page in prod only
 
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
@@ -201,9 +205,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 
-			// trading screen
-			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
-			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );

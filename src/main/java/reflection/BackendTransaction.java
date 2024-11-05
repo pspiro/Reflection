@@ -32,7 +32,7 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Handle a Backend-style event. Conid is last parameter
-	 * called from trade page in prod; may not be needed after we switch to paper
+	 * called from trade page in prod, not used in paper, can be removed after upgrade
 	 * 
 	 * @return 
 		{
@@ -406,18 +406,13 @@ public class BackendTransaction extends MyTransaction {
 	}
 	
 	/** return data for the selected stock on the trading page
-	 *  uri is: /api/trading-screen-static/wallet/conid */
+	 *  uri is: /api/trading-screen-static/wallet/conid 
+	 *  
+	 *  obsolete, not used anywhere, remove after unified URL rollout */
 	public void handleTradingStatic() {
 		wrap( () -> {
 			String[] ar = m_uri.split("/");
 			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
-			
-			m_walletAddr = ar[3].toLowerCase();
-			Util.reqValidAddress(m_walletAddr);
-			
-			parseMsg();
-			validateCookie( "tradingStatic");
-			
 			int conid = Integer.parseInt( ar[4]);
 			
 			Stock stock = m_main.getStock( conid);

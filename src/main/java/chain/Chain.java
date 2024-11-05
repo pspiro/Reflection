@@ -1,9 +1,11 @@
 package chain;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
@@ -26,7 +28,7 @@ public class Chain {
 	private Busd busd;
 	private final HashMap<Integer,StockToken> mapConid = new HashMap<>();
 	private final HashMap<String,StockToken> mapAddress = new HashMap<>();
-	private String[] m_allAddresses;
+	private String[] allAddresses;
 	
 	Chain( ChainParams chainIn) throws Exception {
 		params = chainIn;
@@ -79,19 +81,19 @@ public class Chain {
 	}
 
 	public StockToken getAnyStockToken() {
-		return new StockToken( tokens().iterator().next().address(), this);
+		return tokens().iterator().next();
 	}
 
 	public String[] getAllContractsAddresses() {
-		if (m_allAddresses == null) {
-			m_allAddresses = new String[mapConid.size()];
+		if (allAddresses == null) {
+			allAddresses = new String[mapConid.size()];
 			
 			int i = 0;
 			for (StockToken token: mapConid.values() ) {
-				m_allAddresses[i++] = token.address();
+				allAddresses[i++] = token.address();
 			}
 		}
-		return m_allAddresses;
+		return allAddresses;
 	}
 	
 	/** for the get-all-stocks query which is for dropdown on trading page */ 
@@ -115,11 +117,22 @@ public class Chain {
 			}
 		}
 		
+		// sort alpha by symbol
+		ar.sort( new Comparator<JsonObject>() {
+			@Override public int compare(JsonObject o1, JsonObject o2) {
+				return o1.getString( "symbol").compareTo( o2.getString( "symbol") );
+			}
+			
+		});
+		
 		return ar;
 	}
 
 	/** read the symbols and create the stock tokens for this chain */ 
 	public void readSymbols() throws Exception {
+		mapConid.clear();
+		mapAddress.clear();
+		
 		var symbolsTab = NewSheet.getTab(NewSheet.Reflection, params.symbolsTab() );
 		S.out( "reading chain %s from tab %s", params().name(), params.symbolsTab() );
 
@@ -136,13 +149,13 @@ public class Chain {
 						Util.getEnum( row.getString( "Allow"), Allow.values(), Allow.All) 
 						);
 				
-				// create the stock token
 				Util.require( Util.isValidAddress(address), "Invalid address '%s' for conid %s on tab %s", 
 						address, row.getInt( "Conid"), params.symbolsTab() );
 				
+				// create the stock token
 				StockToken token = new StockToken( address, row.getString( "TokenSymbol"), this, rec);
 				
-				// add it to the list and maps
+				// add it to the maps
 				mapConid.put( row.getInt( "Conid"), token);
 				mapAddress.put( address, token);
 			}

@@ -33,7 +33,7 @@ public class NodeInstance {
 
 	/** map contract address (lower case) to number of Decimals, so we only query it once;
 	 *  this assumes all calls are on the same blockchain */ 
-	private static HashMap<String,Integer> decMap = new HashMap<>();
+	private HashMap<String,Integer> decMap = new HashMap<>();
 	
 
 	/** different nodes have different batch sizes; you can probably get bigger size
@@ -296,17 +296,8 @@ public class NodeInstance {
 	}
 
 	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
-	public void setDecimals(Erc20 token) {
-		setDecimals( token.decimals(), Util.toArray(token.address() ) ); 
-	}
-
-	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
-	public synchronized static void setDecimals(int decimals, String[] addresses) {
-		S.out( "Pre-filling decimals map  decimals=%s  count=%s", decimals, addresses.length);
-		
-		for (var address : addresses) {
-			decMap.put( address.toLowerCase(), decimals);
-		}
+	public void setDecimals(int decimals, String address) {
+		decMap.put( address.toLowerCase(), decimals);
 	}
 	
 //	public long queryDecimals(String contractAddr) throws Exception {

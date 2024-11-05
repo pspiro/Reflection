@@ -68,7 +68,7 @@ public class Chains extends HashMap<Integer,Chain> {
 		// create the Chain and read in the symbols
 		var chain = new Chain( params);
 		chain.readSymbols();
-
+		
 		// add this new chain to the map
 		put( params.chainId(), chain);
 

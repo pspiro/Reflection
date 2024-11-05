@@ -16,7 +16,7 @@ public class TestPostgres {
 		config.busd().mint( config.ownerKey(), config.ownerAddr(), 100000)
 			.waitForReceipt();
 		S.out( "balance: " + config.busd().getPosition(config.ownerAddr()));
-		
+		 
 		// let owner approve admin to send money
 		config.busd().approve( config.ownerKey(), config.admin1Addr(), 200)
 			.waitForReceipt();

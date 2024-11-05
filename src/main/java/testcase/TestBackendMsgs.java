@@ -18,8 +18,9 @@ public class TestBackendMsgs extends MyTestCase {
 	}
 
 	public void testGetAllStocks() throws Exception {
-		cli().get("/api/get-all-stocks");
+		cli().post("/api/get-all-stocks/" + Cookie.wallet, Cookie.getJson() );
 		JsonArray ar = cli.readJsonArray();
+		ar.display();
 		JsonObject item = ar.getJsonObj(0);
 		assertNotNull(item.getString("symbol"));
 		assertNotNull(item.getString("type"));

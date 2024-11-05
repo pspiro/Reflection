@@ -25,13 +25,15 @@ public class Erc20 {
 	protected String m_address;
 	protected int m_decimals;
 	protected String m_name;
-	protected Chain chain;
+	protected Chain m_chain;
 
-	protected Erc20( String address, int decimals, String name, Chain chainIn) {
+	protected Erc20( String address, int decimals, String name, Chain chain) {
 		m_address = address;
 		m_decimals = decimals;
 		m_name = name;
-		chain = chainIn;
+		m_chain = chain;
+		
+		m_chain.node().setDecimals( m_decimals, m_address);
 	}
 	
 	public String address() {
@@ -104,7 +106,7 @@ public class Erc20 {
 	/** Returns the number of this token held by wallet; sends a query to Moralis
 	 *  If you need multiple positions from the same wallet, use Wallet class instead */ 
 	public double getPosition(String walletAddr) throws Exception {
-		return chain.node().getBalance( m_address, walletAddr, m_decimals);
+		return m_chain.node().getBalance( m_address, walletAddr, m_decimals);
 	}
 
 	/** return the balances of all wallets holding this token;
@@ -130,21 +132,21 @@ public class Erc20 {
 
 	/** note w/ moralis you can also get the token balance by wallet */
 	public double queryTotalSupply() throws Exception {
-		return chain.node().getTotalSupply( m_address, m_decimals);
+		return m_chain.node().getTotalSupply( m_address, m_decimals);
 	}
 
 	/** Sends a query to Moralis */
 	public double getAllowance( String approverAddr, String spender) throws Exception {
 		return fromBlockchain( 
-				chain.node().getAllowance( m_address, approverAddr, spender) );
+				m_chain.node().getAllowance( m_address, approverAddr, spender) );
 	}
 	
 	public String getOwner() throws Exception {
-		return chain.node().getOwner( m_address);
+		return m_chain.node().getOwner( m_address);
 	}
 
 	public RetVal setOwner( String ownerKey, String newOwnerAddr) throws Exception {
-		return chain.node().callSigned(
+		return m_chain.node().callSigned(
 				ownerKey,
 				m_address,
 				TransferOwnership,
@@ -161,7 +163,7 @@ public class Erc20 {
 		S.out( "Erc20: let %s ('owner') approve %s ('spender') to spend %s %s",
 				Util.getAddress( ownerKey), spender, amount, m_name);
 		
-		return chain.node().callSigned(
+		return m_chain.node().callSigned(
 				ownerKey,
 				m_address,
 				Approve,
@@ -178,7 +180,7 @@ public class Erc20 {
 		S.out( "Erc20: let %s mint %s %s into %s",
 				Util.getAddress( callerKey), amount, m_name, address);
 		
-		return chain.node().callSigned(
+		return m_chain.node().callSigned(
 				callerKey,
 				m_address,
 				Mint,
@@ -195,7 +197,7 @@ public class Erc20 {
 		S.out( "Erc20: transfer %s %s from %s to %s",
 				amount, m_name, Util.getAddress( fromKey), toAddr);
 		
-		return chain.node().callSigned(
+		return m_chain.node().callSigned(
 				fromKey,
 				m_address,
 				Transfer,
@@ -218,13 +220,11 @@ public class Erc20 {
 		S.out( "Erc20: let %s transfer %s %s from %s to %s",
 				Util.getAddress( spenderKey), amount, m_name, fromAddr, toAddr);
 		
-		return chain.node().callSigned(
+		return m_chain.node().callSigned(
 				spenderKey,
 				m_address,
 				TransferFrom,
 				params,
 				500000); 
 	}
-
 }
-	

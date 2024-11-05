@@ -34,7 +34,7 @@ public class Stocks {
 			String tradingView,
 			String startDate,
 			String endDate
-			) {
+			) implements Comparable<StockRec> {
 
 		/** return Json for the get-all-stocks query */
 		public JsonObject toJson() {
@@ -43,6 +43,10 @@ public class Stocks {
 					"symbol", symbol,
 					"description", description,
 					"tradingView", tradingView);
+		}
+
+		@Override public int compareTo(StockRec other) {
+			return symbol.compareTo( other.symbol);
 		}
 	}
 
@@ -102,7 +106,7 @@ public class Stocks {
 	/** Use this version for better performance when reading multiple tabs from same sheet
 	    @param chain could be null when read from MdServer */
 	public void readFromSheet(Book book) throws Exception {
-		S.out( "Reading stocks from %s");
+		S.out( "Reading stocks from %s", book.name() );
 
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		hotStocks.clear();
@@ -111,6 +115,7 @@ public class Stocks {
 
 		// read master tab
 		ArrayList<StockRec> list = book.getTab( "M2").queryToRecList( StockRec.class);
+		list.sort( null);
 
 		// create master lists
 		for (var rec : list) {
@@ -129,9 +134,6 @@ public class Stocks {
 				conidMap.put( rec.conid(), stock);
 			}
 		}
-		
-		hotStocks.sort(null);  // fix this. pas
-		watchList.sort(null);
 	}
 	
 	public Collection<Stock> stocks() {

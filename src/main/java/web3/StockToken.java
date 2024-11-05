@@ -21,10 +21,6 @@ public class StockToken extends Erc20 {
 
 	private StockTokenRec m_params;
 
-	public StockToken(String address, Chain chain) {
-		super( address, stockTokenDecimals, "StockToken", chain	);
-	}
-
 	/** @param name is the .r name 
 	 * @throws Exception */
 	public StockToken(String address, String name, Chain chain, StockTokenRec params) throws Exception {

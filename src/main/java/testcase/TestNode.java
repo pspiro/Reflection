@@ -50,6 +50,7 @@ public class TestNode extends MyTestCase {
 	public void testGetDecimals() throws Exception {
 		assertEquals( 6, node().getDecimals( m_config.rusdAddr() ) );
 		assertEquals( 6, node().getDecimals( m_config.rusdAddr() ) );
+		assertEquals( 18, node().getDecimals( m_config.chain().getAnyStockToken().address() ) );
 	}
 	
 	public void testReqPosMap() throws Exception {
