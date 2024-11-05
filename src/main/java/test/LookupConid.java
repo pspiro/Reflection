@@ -8,7 +8,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ConnectionAdapter;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -22,7 +22,7 @@ public class LookupConid extends ConnectionAdapter {
 	}
 
 	LookupConid() throws Exception {
-		Config config = Config.readFrom("Dev3-config");
+		SingleChainConfig config = SingleChainConfig.readFrom("Dev3-config");
 		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), config.twsOrderClientId() , null);
 	}
 

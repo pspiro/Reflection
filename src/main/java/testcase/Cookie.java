@@ -76,7 +76,7 @@ public abstract class Cookie extends MyTestCase {
 				address, 
 				"http://localhost", 
 				"1",	// version 
-				5,      // chainId 
+				11155111,      // chainId, Sepolia 
 				nonce,
 				Util.isoNow() )
 				.statement("Sign in to Reflection.")
@@ -98,5 +98,9 @@ public abstract class Cookie extends MyTestCase {
 	/** does not check for null */
 	public static JsonObject getUser() throws Exception {
 		return m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", wallet.toLowerCase() ).get( 0);
+	}
+
+	public static JsonObject getJson() {
+		return Util.toJson( "cookie", cookie);
 	}
 }

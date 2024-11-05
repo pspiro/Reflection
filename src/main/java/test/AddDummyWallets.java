@@ -1,7 +1,7 @@
 package test;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 
 /** Add wallets to users table with name 'test test' */
 public class AddDummyWallets {
@@ -14,7 +14,7 @@ public class AddDummyWallets {
 		0x54c5b52f3b248ae98bea1f4c454d0866ff3b1f56""";
 		
 		for (String wallet : wallets.split(",") ) {
-			Config.ask().sqlCommand( sql -> sql.insertJson("users", Util.toJson( 
+			SingleChainConfig.ask().sqlCommand( sql -> sql.insertJson("users", Util.toJson( 
 					"first_name", "test",
 					"last_name", "test",
 					"wallet_public_key", wallet.trim() ) ) );
