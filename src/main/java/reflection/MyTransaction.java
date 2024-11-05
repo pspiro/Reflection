@@ -81,7 +81,7 @@ public abstract class MyTransaction extends BaseTransaction {
 			try {
 	            Reader reader = new InputStreamReader( m_exchange.getRequestBody() );
 	            m_map = new ParamMap( (JsonObject)new JSONParser().parse(reader) );  // if this returns a String, it means the text has been over-stringified (stringify called twice)
-	            if (!(this instanceof OrderTransaction) ) {  // order transaction prints its own log
+	            if (m_timer != null && !(this instanceof OrderTransaction) ) {  // order transaction prints its own log
 	            	out( "  parsed POST request " + m_map);
 	            }
 			}

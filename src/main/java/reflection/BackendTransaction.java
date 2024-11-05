@@ -405,15 +405,25 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
-	/** return data for the selected stock on the trading page */
+	/** return data for the selected stock on the trading page
+	 *  uri is: /api/trading-screen-static/wallet/conid */
 	public void handleTradingStatic() {
 		wrap( () -> {
-			validateCookie("tradingStatic");
+			String[] ar = m_uri.split("/");
+			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
 			
-			Stock stock = m_main.getStock( getConidFromUri() );
+			m_walletAddr = ar[3].toLowerCase();
+			Util.reqValidAddress(m_walletAddr);
+			
+			parseMsg();
+			validateCookie( "tradingStatic");
+			
+			int conid = Integer.parseInt( ar[4]);
+			
+			Stock stock = m_main.getStock( conid);
 			Util.require( stock != null, "null stock");
 			
-			var token = chain().getTokenByConid( getConidFromUri() );
+			var token = chain().getTokenByConid( conid);
 			Util.require( token != null, "null token");
 			
 			JsonObject resp = Util.toJson(
@@ -431,14 +441,15 @@ public class BackendTransaction extends MyTransaction {
 
 	/** we need both wallet AND conid here */
 	public void handleTradingDynamic() {
-		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /
-			validateCookie( "tradingDynamic");
-			
+		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /			
 			String[] ar = m_uri.split("/");
 			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
 			
 			m_walletAddr = ar[3].toLowerCase();
 			Util.reqValidAddress(m_walletAddr);
+			
+			parseMsg();
+			validateCookie( "tradingDynamic");
 			
 			int conid = Integer.parseInt( ar[4]);
 			
