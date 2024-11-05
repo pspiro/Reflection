@@ -16,7 +16,6 @@ import org.web3j.protocol.core.RemoteFunctionCall;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
-import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.FastRawTransactionManager;
 import org.web3j.tx.ManagedTransaction;
 import org.web3j.tx.RawTransactionManager;
@@ -32,24 +31,24 @@ import common.Util;
 import tw.util.S;
 import web3.Erc20;
 import web3.Fees;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 /** Support code for Web3j library */
 public class Refblocks {
-	static final BigInteger defaultBaseFee = BigInteger.valueOf(1_000_000_000L);  // used only if we can't fetch it
-	static final BigInteger defaultPriorityFee = BigInteger.valueOf(35_000_000_000L);  // used only if we can't fetch it
-	static final long deployGas = 2000000;
+	public static final long deployGas = 2000000;
 	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
-	public static Web3j web3j;
-	static long chainId;  // set from Config
-	//private static String polygonRpcUrl = "https://polygon-rpc.com/";
-	static HashMap<String,FasterTm> mgrMap = new HashMap<>();
+	
+	private Web3j web3j;
+	private long chainId;
+	private HashMap<String,FasterTm> mgrMap = new HashMap<>(); // map wallet private key to TM so we can get next nonce without querying for it
+	private NodeInstance node;
+	
 
 	/** Called when Config is read */
-	public static void setChainId( long id, String rpcUrl) {
-		S.out( "Refblocks  chainId=%s  rpcUrl=%s", id, rpcUrl);
-		chainId = id;
-		web3j = Web3j.build( new HttpService( rpcUrl) );
+	public Refblocks( long chainIdIn, Web3j web3jIn, NodeInstance nodeIn) {
+		chainId = chainIdIn;
+		web3j = web3jIn;
+		node = nodeIn;
 	}
 
 	/** returns same fees that are displayed here: https://polygonscan.com/gastracker */
@@ -88,7 +87,7 @@ public class Refblocks {
 	 *  NOTE you could inherit from QueuingTransactionReceiptProcessor to query
 	 *  from a single thread sequentially */
 	static class DelayedTrp extends PollingTransactionReceiptProcessor {
-	    DelayedTrp() {
+	    DelayedTrp(Web3j web3j) {
 	    	super( web3j, PollingInterval, 24); // two minutes
 	    }
 
@@ -112,34 +111,6 @@ public class Refblocks {
 		RemoteFunctionCall<TransactionReceipt> getCall( TransactionManager tm) throws Exception;
 	}
 		
-	/** Uses MyTransMgr and DelayedTrp. The call returns immediately; you then call
-	 *  RetVal.wait(). Otherwise, the call blocks until we have the trans receipt
-	 *  
-	 *  NOTE that this is no longer needed because the tm can be retrieved with a static function
-	 *  because we have one tm per address, not per call */
-	static RbRetVal exec( String callerKey, Func function) throws Exception {
-		TransactionManager tm = null;
-		
-		try {
-			// production
-			tm = getFasterTm( callerKey);
-			TransactionReceipt receipt = function.getCall( tm).send();  // EmptyTransactionReceipt
-			Util.require( receipt instanceof EmptyTransactionReceipt, "should be EmptyReceipt; use DelayedTrp");
-
-			// for debugging
-//			tm = getWaitingTm( callerKey);
-//			TransactionReceipt receipt = function.getCall( tm).send();
-
-			return new RbRetVal( receipt);
-		}
-		catch( Exception e) {
-			S.out( "Error for caller %s: %s", 
-					tm != null ? tm.getFromAddress() : "???", 
-					e.getMessage() );
-			throw e;
-		}
-	}
-	
 	/** If a transaction is submitted with too low, gas, it can get stuck and remain
 	 *  in pending state indefinitely. To cancel it, you submit a new transaction
 	 *  with same nonce and sufficient gas. You must consider if you want the subsequent
@@ -148,7 +119,7 @@ public class Refblocks {
 	 * @return 
 	 * @throws Exception 
 	 */
-	public static TransactionReceipt cancelStuckTransaction(String pk, int nonce) throws Exception {
+	public TransactionReceipt cancelStuckTransaction(String pk, int nonce) throws Exception {
 		// start by showing all nonces and figuring out which one or ones
 		// need to be canceled
 		//showAllNonces(address);
@@ -180,7 +151,7 @@ public class Refblocks {
 
 	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
-	public static void showAllNonces(String walletAddr) throws Exception {
+	public void showAllNonces(String walletAddr) throws Exception {
 		S.out( "%s nonce  finalized=%s  latest=%s  pending=%s",
         		walletAddr,
         		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
@@ -189,23 +160,23 @@ public class Refblocks {
         		);
 	}
 	
-	static BigInteger getNonce(String address, DefaultBlockParameterName type) throws Exception {
+	BigInteger getNonce(String address, DefaultBlockParameterName type) throws Exception {
 		return decodeQuantity( web3j.ethGetTransactionCount( address, type)
 				.send()
 				.getResult() );
 	}
 	
 	/** note that we could use a singleton DelayedTrp if desired; there is no state */
-	protected static TransactionManager getFasterTm(String callerKey) {
+	public TransactionManager getFasterTm(String callerKey) {
 //		return new SlowerTm(web3j, Credentials.create( callerKey), new DelayedTrp() );
 		return Util.getOrCreate( mgrMap, callerKey, () -> new FasterTm( 
 				web3j, 
 				Credentials.create( callerKey), 
-				new DelayedTrp() ) );
+				new DelayedTrp(web3j) ) );
 	}
 
 	/** note that we could use a singleton DelayedTrp if desired; there is no state */
-	protected static TransactionManager getSlowerTm(String callerKey) {
+	protected TransactionManager getSlowerTm(String callerKey) {
 		return new SlowerTm(web3j, Credentials.create( callerKey) );
 	}
 
@@ -218,7 +189,7 @@ public class Refblocks {
 	 *  receipt. If there is an error, it queries for the real error text from the contract.
 	 *  Used by deploy(). Rapid transactions with this hang because even if you wait for
 	 *  the receipt, the next nonce that gets returned is not incremented */
-	public static RawTransactionManager getWaitingTm(String callerKey) throws Exception {
+	public RawTransactionManager getWaitingTm(String callerKey) throws Exception {
 		Util.require( chainId != 0, "set chainId");
 		
 		return new RawTransactionManager(
@@ -229,10 +200,10 @@ public class Refblocks {
 	
 	/** Get the EIP1559 gas provider which knows the base fee, priority fee, and total fee 
 	 * @throws Exception */
-	public static StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
+	public StaticEIP1559GasProvider getGp( long unitsIn) throws Exception {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
-		Fees fees = NodeServer.queryFees();
+		Fees fees = node.queryFees();
 		fees.showFees(units);
 
 		return new StaticEIP1559GasProvider(
@@ -243,18 +214,12 @@ public class Refblocks {
 				);
 	}
 
-	/** @param privateKey must be a wallet private key;
-	 *  if it could be a Fireblocks key, use Matic.getAddress() */
-	protected static String getAddressPk(String privateKey) {
-		return Credentials.create( privateKey ).getAddress();
-	}
-	
 	/** Create our own transaction class so we can use our own TransactionManager.
 	 *  We would like to use the org.web3j.tx.Transfer class but the send() methods are private.
 	 *  Alternatively, you could copy the code from the library and then modify it directly */
-	static class MyTransfer extends ManagedTransaction {
+	class MyTransfer extends ManagedTransaction {
 		MyTransfer(TransactionManager tm) {
-			super( Refblocks.web3j, tm);
+			super( Refblocks.this.web3j, tm);
 		}
 		
 		/** @param amt is decimal amount of ether */
@@ -267,7 +232,7 @@ public class Refblocks {
             // this could be reduced if needed
     		BigInteger gasUnits = BigInteger.valueOf( 200000);  // was 40k, increased to 200k for ZkSync
     		
-    		Fees fees = NodeServer.queryFees();
+    		Fees fees = node.queryFees();
     		fees.showFees( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
@@ -284,19 +249,19 @@ public class Refblocks {
 	}
 	
 	/** transfer native token; taken from Transfer.sendFundsEIP1559() */ 
-	static RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
+	public RbRetVal transfer(String senderKey, String toAddr, double amt) throws Exception {
 		S.out( "transferring %s matic from %s to %s",
 				amt,
-				Refblocks.getAddressPk(senderKey),
+				Util.getAddress(senderKey),
 				toAddr);
 		
 		TransactionReceipt receipt = new MyTransfer( getFasterTm(senderKey) )
 				.send( toAddr, BigDecimal.valueOf( amt) );
 		
-		return new RbRetVal( receipt);
+		return new RbRetVal( receipt, web3j, null);
 	}
 	
-	static class SlowerTm extends RawTransactionManager {
+	class SlowerTm extends RawTransactionManager {
 		static int Interval = 60000; // re-query for nonce after one minute to get reset in case we get out of sync  
 
 		private String m_key;  // for debugonly
@@ -328,7 +293,7 @@ public class Refblocks {
 	/** This transaction manager increments the nonce for each call but
 	 *  queries for the nonce after 30 sec to reset it in case we get
 	 *  out of sync */
-	static class FasterTm extends FastRawTransactionManager {
+	class FasterTm extends FastRawTransactionManager {
 		/** re-query for nonce after one minute to reset it in case we get out of sync;
 		 *  this would happen if a call is made for the same wallet from another
 		 *  application, i.e. Monitor and RefApi.
@@ -393,7 +358,7 @@ public class Refblocks {
 	}
 
 	/** Use custom nonce to un-stick a transaction. Uses a polling receipt processor */
-	static class StuckTm extends RawTransactionManager {
+	class StuckTm extends RawTransactionManager {
 		private int m_nonce;
 
 		public StuckTm(Web3j web3j, Credentials credentials, int nonce) {
@@ -407,23 +372,9 @@ public class Refblocks {
 	}
 	
 	
-	/** wait for the transaction receipt with polling;
-	 *  this can timeout; try twice */
-	public static TransactionReceipt waitForReceipt(String hash) throws Exception {
-		try {
-			// try once
-			return new DelayedTrp().reallyWait( hash);
-		}
-		catch( SocketTimeoutException e) {
-			// try twice; second failing throws the exception
-			S.out( "WARNING: waiting for receipt http call timed out; trying again"); // not the same as the whole wait-for-receipt process timing out
-			return new DelayedTrp().reallyWait( hash);
-		}
-	}
-
 	/** sign any random text; compare with https://app.mycrypto.com/sign-message
 	 *  Not used but could come in handy */
-    static void getSignature(String message, String key) {
+    void getSignature(String message, String key) {
         Credentials credentials = Credentials.create( key);
 
         // Sign the message hash
@@ -445,11 +396,10 @@ public class Refblocks {
 	    if it times out, let's check if it was successful
 	    You can move this code into FasterTm class after you get rid of SlowerTm class 
 	 * @param e */
-    static EthSendTransaction handleTmTimeout(RawTransactionManager tm, RawTransaction rawTransaction, SocketTimeoutException e) throws IOException {
-        String transHash = Hash.sha3( tm.sign(rawTransaction) );
+    EthSendTransaction handleTmTimeout(RawTransactionManager tm, RawTransaction rawTransaction, SocketTimeoutException e) throws IOException { String transHash = Hash.sha3( tm.sign(rawTransaction) );
         
         try {
-			if (NodeServer.isKnownTransaction( transHash) ) {
+			if (node.isKnownTransaction( transHash) ) {
 		        S.out( "Warning: transaction %s timed out but it was still broadcast; we will wait for the receipt", transHash);
 				var retVal = new EthSendTransaction();
 				retVal.setResult( transHash);
@@ -464,7 +414,11 @@ public class Refblocks {
         S.out( "Error: transaction %s timed out. We could not determine if it was broadcast or not; you should check", 
         		transHash);
         throw e;
-    }    	
+    }
+
+	public Web3j web3j() {
+		return web3j;
+	}    	
 }
 
 // the whole Java Web3j has almost outlives its usefulness

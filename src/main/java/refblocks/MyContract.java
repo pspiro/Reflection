@@ -44,7 +44,7 @@ public class MyContract extends Contract {
 	public MyContract(String bin, String addr, Web3j web3j, Credentials credentials, BigInteger gasPrice, BigInteger gasLimit) {
 		super( bin, addr, web3j, credentials, gasPrice, gasLimit);
 	}
-
+	
 	protected Function function() {
 		return m_function;
 	}
@@ -56,7 +56,7 @@ public class MyContract extends Contract {
     }
 
     /** @param method is smart contract method */
-    protected RetVal exec( ExSupplier<RemoteFunctionCall<TransactionReceipt>> method) throws Exception {
+    public RetVal exec( ExSupplier<RemoteFunctionCall<TransactionReceipt>> method) throws Exception {
     	return exec2( method, false);
 	}
 
@@ -74,7 +74,7 @@ public class MyContract extends Contract {
 		// make the actual method call with signature
 		try {
 	        var receipt = method.get().send();  // << m_function gets set here
-	        return new RbRetVal( receipt, m_function);
+	        return new RbRetVal( receipt, web3j, m_function);
 		}
 		catch( Exception e) {
 			S.out( "Error occurred while calling smart contract method '%s' - %s",
