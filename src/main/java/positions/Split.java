@@ -4,20 +4,21 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 import web3.StockToken;
 
 /** BE CAREFUL. If it is a 10 for 1 split, you need to mint 9x current position */
 
-/** it would be better to do it right from the holder panel */
+/** A utility class to help with handling stock splits;
+ * it would be better to do it right from the holder panel */
 public class Split {
 	final static String stockAddr = "0x51cca1091a01d2d002d2e9dab6a2c45a24fcf6e8";
 	
 	public static void main(String[] args) throws Exception {
-		Config c = Config.ask();
+		SingleChainConfig c = SingleChainConfig.ask();
 		
-		StockToken stock = c.readStocks().getStockByTokenAddr(stockAddr).getToken();
+		StockToken stock = c.chain().getTokenByAddress(stockAddr);
 		
 		JsonArray ar = new JsonArray();
 		
@@ -35,7 +36,7 @@ public class Split {
 			
 			S.out( "minting %s for %s", amt, wallet);
 			
-			c.rusd().mintStockToken( wallet, stock, amt).waitForHash();
+			c.rusd().mintStockToken( wallet, stock, amt).waitForReceipt();
 			S.out( "check one");
 		}
 	}

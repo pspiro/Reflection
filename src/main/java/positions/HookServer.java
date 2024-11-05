@@ -13,18 +13,19 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
+import chain.Stocks;
 import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
 import positions.HookConfig.HookType;
-import reflection.Config;
 import reflection.RefCode;
-import reflection.Stocks;
+import reflection.SingleChainConfig;
 import test.MyTimer;
 import tw.util.S;
 import web3.Erc20;
-import web3.NodeServer;
+import web3.NodeInstance;
 
 
 /** HookServer tracks the balances for all contract, including both stock
@@ -42,15 +43,25 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	private static final HookConfig m_config = new HookConfig();
-	static String chain() { return Util.toHex( m_config.chainId() ); }
-	final Stocks stocks;
+	private static final HookConfig m_config;
+	final Chain m_chain;
+	final Stocks m_stocks = new Stocks();
 	final StreamMgr sm;
 	String[] m_allContracts;  // list of contract for which we want to request and monitor position; all stocks plus BUSD and RUSD
 	String m_transferStreamId;
+	NodeInstance m_node;
 
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
+	
+	static {
+		SingleChainConfig.setSingleChain();
+		m_config = new HookConfig();
+	}
+	
+	static String chain() { 
+		return Util.toHex( m_config.chainId() ); 
+	}
 	
 	public static void main(String[] args) {
 		try {
@@ -66,8 +77,11 @@ public class HookServer {
 	}
 	
 	HookServer(String[] args) throws Exception {
-		m_config.readFromSpreadsheet( Config.getTabName( args) );
-		stocks = m_config.readStocks();
+		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
+		m_node = m_config.node();
+		m_chain = m_config.chain();
+
+		m_stocks.readFromSheet();
 		
 		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
 		sm = m_config.hookType() == HookType.Moralis
@@ -80,7 +94,7 @@ public class HookServer {
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
-		list.addAll( Arrays.asList( stocks.getAllContractsAddresses() ) );
+		list.addAll( Arrays.asList( m_chain.getAllContractsAddresses() ) );
 		list.add( m_config.busd().address() );
 		list.add( m_config.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
@@ -203,8 +217,8 @@ public class HookServer {
 				JsonObject rusd = new JsonObject();
 				rusd.put( "name", "RUSD");
 				rusd.put( "balance", hookWallet.getBalance( m_config.rusdAddr() ) );
-				rusd.put( "tooltip", m_config.getTooltip(Config.Tooltip.rusdBalance) );
-				rusd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.redeemButton) );
+				rusd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.rusdBalance) );
+				rusd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.redeemButton) );
 				
 				double approved = hookWallet.getAllowance(m_config.busd(), walletAddr, m_config.rusdAddr() );
 				approved = Math.min(1000000, approved);  // fix a display issue where some users approved a huge size by mistake
@@ -213,8 +227,8 @@ public class HookServer {
 				JsonObject busd = new JsonObject();
 				busd.put( "name", m_config.busd().name() );
 				busd.put( "balance", hookWallet.getBalance( m_config.busd().address() ) );
-				busd.put( "tooltip", m_config.getTooltip(Config.Tooltip.busdBalance) );
-				busd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.approveButton) );
+				busd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.busdBalance) );
+				busd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.approveButton) );
 				busd.put( "approvedBalance", approved);
 				busd.put( "stablecoin", true);
 
@@ -222,7 +236,7 @@ public class HookServer {
 				JsonObject base = new JsonObject();
 				base.put( "name", m_config.nativeTokName() );
 				base.put( "balance", hookWallet.getNativeBalance() );
-				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
+				base.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.baseBalance) );
 				
 				JsonArray ar = new JsonArray();
 				ar.add(rusd);
@@ -297,13 +311,13 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = NodeServer.reqPositionsMap( walletAddr, m_allContracts, 0);
+			HashMap<String, Double> positions = m_node.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
 			
 			// query native balance
-			double nativeBal = NodeServer.getNativeBalance( walletAddr);
+			double nativeBal = m_node.getNativeBalance( walletAddr);
 			
 			if (streaming() ) {
 				Util.require( S.isNotNull( m_transferStreamId), "Cannot handle requests until transferStreamId is set");  // this can happen if we receive events from the old stream before the new stream is created
@@ -312,7 +326,7 @@ public class HookServer {
 			
 			t.done();
 			
-			return new HookWallet( walletAddr, positions, approved, nativeBal);
+			return new HookWallet( m_node, walletAddr, positions, approved, nativeBal);
 		});
 	}
 
@@ -327,7 +341,7 @@ public class HookServer {
 		protected abstract void handleHookWithData(JsonObject obj, HookServer hookServer) throws Exception;
 	}
 	
-	static class MoralisStreamMgr extends StreamMgr {
+	class MoralisStreamMgr extends StreamMgr {
 		@Override public String createTransfersStream( String urlBase) throws Exception {
 			return MoralisStreams.createStream(
 					MoralisStreams.erc20Transfers, 
@@ -406,7 +420,7 @@ public class HookServer {
 			// process ERC20 transfers
 			for (JsonObject trans : obj.getArray("erc20Transfers") ) {
 				String contract = trans.getString("contract").toLowerCase();
-				double amt = Erc20.fromBlockchain( trans.getString("value"), NodeServer.getDecimals(contract) ); // note this can send a query to get decimals
+				double amt = Erc20.fromBlockchain( trans.getString("value"), m_node.getDecimals(contract) ); // note this can send a query to get decimals
 
 				if (amt != 0) {
 					String from = trans.getString("from").toLowerCase(); 
