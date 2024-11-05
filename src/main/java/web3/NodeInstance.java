@@ -193,8 +193,12 @@ public class NodeInstance {
 	}
 
 	public Fees queryFees() throws Exception {
+		return queryFees( 5, 60);
+	}
+	
+	private Fees queryFees( int blocks, int pct) throws Exception {  // this version for testing only
 		// params are # of blocks, which percentage to look at
-		JsonObject json = getFeeHistory(5, 60).getObject( "result");
+		JsonObject json = getFeeHistory(blocks, pct).getObject( "result");
 
 		// get base fee of last/pending block
 		long baseFee = Util.getLong( json.<String>getArrayOf( "baseFeePerGas").get( 0) );
@@ -584,29 +588,6 @@ public class NodeInstance {
 
 		return ts;
 	}
-	
-	// Assuming Param, Address, and BigInt classes are defined as provided
-	public static void main(String[] args) throws Exception {
-		Config c = Config.ask();
-		var tok = c.readStocks().getAnyStockToken();
-		
-		Param[] params = {
-				new Address( prod),
-				new Address( c.rusdAddr()),
-				new Address( tok.address()),
-				new BigInt( c.rusd().toBlockchain( 1.) ),
-				new BigInt( tok.toBlockchain( 1.) )
-		};
-		
-		c.node().callSigned( 
-				c.admin1Key(),
-				c.rusdAddr(),
-				FbRusd.sellStockKeccak,
-				params,
-				500000
-				)
-			.waitForReceipt();
-	}				
 
 	/** @deprecated use queryFees instead */
 	BigInteger getGasPrice() throws Exception {
@@ -686,9 +667,11 @@ public class NodeInstance {
 		S.out( "revert reason is ");
 		nodeQuery( req.toString() ).display();
 	}
+	
+	// Assuming Param, Address, and BigInt classes are defined as provided
+	public static void main(String[] args) throws Exception {
+	}				
 
-	// Method to encode the function call with its parameters
-	// remove, redundant
 }
 
 

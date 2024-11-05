@@ -20,6 +20,7 @@ import com.ib.client.Types.Action;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.SmtpSender;
 import common.Util;
 import common.Util.ExRunnable;
 import fireblocks.Accounts;
@@ -606,7 +607,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 							m_stablecoin.name(),
 							m_stock.getSmartContractId(),
 							m_config.blockchainTx( hash) );
-					m_config.sendEmail(m_email, "Order filled on Reflection", html);
+					m_config.sendEmailSes(m_email, "Order filled on Reflection", html, SmtpSender.Type.Trade);
 				}
 				else {
 					out( "Error: cannot send email confirmation due to invalid email"); // should never happen

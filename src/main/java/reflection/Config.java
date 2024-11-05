@@ -9,6 +9,7 @@ import org.json.simple.JsonObject;
 import com.ib.client.Types.TimeInForce;
 
 import common.Alerts;
+import common.SmtpSender;
 import common.Util;
 import fireblocks.Accounts;
 import fireblocks.FbBusd;
@@ -645,6 +646,18 @@ public class Config extends ConfigBase {
 					subject, 
 					template.replace( "%text", html), 
 					true);
+		});
+	}
+	
+	public void sendEmailSes(String to, String subject, String html, SmtpSender.Type type) {
+		Util.wrap( () -> {
+			SmtpSender.Ses.send(
+					"Reflection",
+					"josh@reflection.trading", 
+					to, 
+					subject, 
+					template.replace( "%text", html), 
+					type);
 		});
 	}
 	
