@@ -14,7 +14,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config.Web3Type;
 
 /** Test the three servers */
 public class SouthPanel extends JPanel {
@@ -23,7 +22,6 @@ public class SouthPanel extends JPanel {
 	private final Timer m_timer = new Timer();
 
 	private final JTextField m_refApi = new JTextField(10);
-	private final JTextField m_fbServer = new JTextField(10);
 	private final JTextField m_mdServer = new JTextField(10);
 	private final JTextField m_hookServer = new JTextField(10);
 	private final JTextField m_onrampServer = new JTextField(10);
@@ -34,9 +32,6 @@ public class SouthPanel extends JPanel {
 		add( Box.createHorizontalStrut(10));
 		add( new JLabel("MD Server:"));
 		add( m_mdServer);
-//		add( Box.createHorizontalStrut(10));
-//		add( new JLabel("FB Server:"));
-//		add( m_fbServer);
 		add( Box.createHorizontalStrut(10));
 		add( new JLabel("Hook Server:"));
 		add( m_hookServer);
@@ -59,10 +54,6 @@ public class SouthPanel extends JPanel {
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
 			test( Monitor.m_config.hookBaseUrl() + "/hook/ok", m_hookServer);
 			test( Monitor.refApiBaseUrl() + "/onramp/ok", m_onrampServer);
-			
-			if (Monitor.m_config.web3Type() == Web3Type.Fireblocks) {
-				test( Monitor.m_config.fbBaseUrl() + "/fbserver/ok", m_fbServer);
-			}
 		}
 		catch( Exception e) {
 			e.printStackTrace();

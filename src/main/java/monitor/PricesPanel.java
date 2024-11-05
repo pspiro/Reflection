@@ -37,10 +37,10 @@ public class PricesPanel extends JsonPanel {
 	@Override public void activated() {
 		S.out( "Initializing Prices panel");
 
-		Monitor.stocks.stockSet().forEach( stockIn -> {
+		Monitor.stocks().forEach( stockIn -> {
 			JsonObject stock = new JsonObject();
 			stock.put( "symbol", stockIn.symbol() );
-			stock.put( "conid", stockIn.conid() );
+			stock.put( "conid", stockIn.rec().conid() );
 			rows().add( stock);
 		});
 

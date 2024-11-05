@@ -1,6 +1,5 @@
 package monitor;
 
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 
 import org.json.simple.JsonObject;
