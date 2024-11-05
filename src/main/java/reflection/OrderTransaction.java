@@ -20,11 +20,10 @@ import com.ib.client.Types.Action;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Stocks.Stock;
 import common.SmtpSender;
 import common.Util;
 import common.Util.ExRunnable;
-import fireblocks.Accounts;
-import reflection.Config.Web3Type;
 import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import telegram.Telegram;
@@ -43,7 +42,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	private final Order m_order = new Order();
 	private double m_desiredQuantity;  // decimal desired quantity
 	private double m_filledShares;
-	private Stock m_stock;
+	private Stock m_stock;		// for prices
+	private StockToken m_stockToken;			// for placing the order (has correct contract id)
 	private double m_stablecoinAmt;
 	private double m_tds;
 	private boolean m_ibOrderCompleted;
@@ -84,6 +84,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
+		// make sure user is signed in with SIWE and session is not expired
+		// must come before profile and KYC checks
+		validateCookie("order");  // set m_chain for retrieval with chain()
+		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
@@ -93,8 +97,9 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		int conid = m_map.getRequiredInt( "conid");
 		require( conid > 0, RefCode.INVALID_REQUEST, "'conid' must be positive integer");
-		m_stock = m_main.getStock(conid);  // throws exception if conid is invalid
-		require( m_stock.allow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
+		m_stock = m_main.getStock( conid);  // throws exception if conid is invalid
+		m_stockToken = chain().getTokenByConid( conid);  // throws exception if conid is invalid
+		require( m_stockToken.rec().allow().allow(side), RefCode.TRADING_HALTED, "Trading for this stock is temporarily halted. Please try your order again later.");
 
 		m_desiredQuantity = m_map.getRequiredDouble( "quantity");
 		require( m_desiredQuantity > 0.0, RefCode.INVALID_REQUEST, "Quantity must be positive");
@@ -108,19 +113,16 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		
 		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
 		String currency = m_map.getRequiredString("currency").toUpperCase();
-		if (currency.equals( m_config.rusd().name() ) ) {
-			m_stablecoin = m_config.rusd();
+		if (currency.equals( chain().rusd().name() ) ) {
+			m_stablecoin = chain().rusd();
 		}
-		else if (currency.equals(m_config.busd().name() ) ) {
-			m_stablecoin = m_config.busd();
+		else if (currency.equals( chain().busd().name() ) ) {
+			m_stablecoin = chain().busd();
 		}
 		require( m_stablecoin != null, RefCode.INVALID_REQUEST, "Invalid currency");
 			
 		// NOTE: this next code is the same as OrderTransaction
 
-		// make sure user is signed in with SIWE and session is not expired
-		// must come before profile and KYC checks
-		validateCookie("order");
 
 		// get record from Users table
 		JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
@@ -152,19 +154,19 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				
 		// check trading hours
 		Session session = m_main.m_tradingHours.getTradingSession( 
-						m_stock.is24Hour(), 
+						m_stock.rec().is24Hour(), 
 						m_map.get("simtime") );
 		require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
 
 		// check the dates (applies to stock splits only)
-		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.getStartDate(), m_stock.getEndDate() );
+		m_main.m_tradingHours.checkSplitDates( m_map.get("simtime"), m_stock.rec().startDate(), m_stock.rec().endDate() );
 		
 		Contract contract = new Contract();
 		contract.conid( conid);
 		contract.exchange( session.toString().toUpperCase() );
 		
 		// special case: for crypto, set exchange to PAXOS
-		if (m_stock.getType().equals( "Crypto") ) {
+		if (m_stock.rec().type().equals( "Crypto") ) {
 			contract.exchange( "PAXOS");
 		}
 
@@ -196,8 +198,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// check that we have prices and that they are within bounds;
 		// do this after checking trading hours because that would
 		// explain why there are no prices which should never happen otherwise
-		Prices prices = m_main.getStock(conid).prices();
-		prices.checkOrderPrice( m_order, orderPrice, m_config);
+		Prices prices = m_stock.prices();
+		prices.checkOrderPrice( m_order, orderPrice);
 		
 		// check that user has sufficient crypto to buy or sell
 		// must come after m_stablecoin is set
@@ -235,7 +237,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				onIBOrderCompleted(false, false);
 			}
 			// AUTO-FILL - for testing only
-			else if (m_config.autoFill() ) {
+			else if (chain().params().autoFill() ) {
 				simulateFill(contract);
 			}
 			// submit order to IB
@@ -246,7 +248,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
-		require( !m_config.isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
+		require( !chain().params().isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
 		
 		Random rnd = new Random(System.currentTimeMillis());
 		
@@ -439,67 +441,52 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 		// buy
 		if (m_order.isBuy() ) {
-			retval = m_config.rusd().buyStock(
+			retval = chain().rusd().buyStock(
 					m_walletAddr,
 					m_stablecoin,
 					m_stablecoinAmt,
-					newStockToken(), 
+					m_stockToken, 
 					m_desiredQuantity
 			);
 		}
 		
 		// sell
 		else {
-			retval = m_config.rusd().sellStockForRusd(
+			retval = chain().rusd().sellStockForRusd(
 					m_walletAddr,
 					m_stablecoinAmt,
-					newStockToken(),
+					m_stockToken,
 					m_desiredQuantity
 			);
 		}
 		
-		out( "Submitted blockchain order with id/hash=%s", retval.id() );
+		out( "Submitted blockchain order with id/hash=%s", retval.hash() );
 		
 		// the FB transaction has been submitted; there is a little window here where an
 		// update from FB could come and we would miss it because we have not added the
 		// id to the map yet; we could fix this with synchronization
-		allLiveTransactions.put(retval.id(), this);
+		allLiveTransactions.put(retval.hash(), this);
 
-		// FIREBLOCKS: update transaction table with fireblocks id
-		// order will be updated with status via live order system
-		if (m_config.web3Type() == Web3Type.Fireblocks) {
-			m_main.queueSql( conn -> conn.execute( 
-					String.format("update transactions set fireblocks_id = '%s' where uid = '%s'",
-						retval.id(), m_uid) ) );
-		
-			olog( LogType.SUBMITTED_TO_FIREBLOCKS, 
-					"id", retval.id(), 
-					"currency", m_map.getParam("currency"),
-					"adminId", Accounts.instance.getAdminAccountId(m_walletAddr) );
-		}
-		
 		// REFBLOCKS: wait for the transaction receipt (with polling)
 		// note this does not query for the real error message text if it fails;
 		// we could add that later if desired
-		else {
-			try {
-				out( "waiting for blockchain hash");
-				String hash = retval.waitForHash();
-				out( "blockchain transaction completed with hash %s", hash);
-				
-				// update hash in table; for Fireblocks, this is done when we receive a message 
-				// from the fbserver before onUpdateFbStatus() is called
-				m_main.queueSql( sql -> sql.execWithParams( 
-						"update transactions set blockchain_hash = '%s' where uid = '%s'", 
-						hash, m_uid) );
-				
-				onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
-			}
-			catch( Exception e) {
-				out( "blockchain transaction failed " + e.getMessage() );
-				e.printStackTrace();
-				onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
-			}
+		try {
+			out( "waiting for blockchain hash");
+			String hash = retval.waitForReceipt();
+			out( "blockchain transaction completed with hash %s", hash);
+			
+			// update hash in table; for Fireblocks, this is done when we receive a message 
+			// from the fbserver before onUpdateFbStatus() is called
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set blockchain_hash = '%s' where uid = '%s'", 
+					hash, m_uid) );
+			
+			onUpdateFbStatus( FireblocksStatus.COMPLETED, hash);
+		}
+		catch( Exception e) {
+			out( "blockchain transaction failed " + e.getMessage() );
+			e.printStackTrace();
+			onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
 		}
 		
 		// if we don't make it to here, it means there was an exception which will be picked up
@@ -545,10 +532,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				// above when trying to determine why the order failed; should be rare, though
 				olog( LogType.BLOCKCHAIN_FAILED, 
 						"desired", m_desiredQuantity,
-						"approved", Main.m_config.busd().getAllowance( m_walletAddr, Main.m_config.rusdAddr() ),
-						"USDC", Main.m_config.busd().getPosition(m_walletAddr),
-						"RUSD", Main.m_config.rusd().getPosition(m_walletAddr),
-						"stockToken", newStockToken().getPosition( m_walletAddr) );
+						"approved", chain().busd().getAllowance( m_walletAddr, chain().rusd().address() ),
+						"USDC", chain().busd().getPosition(m_walletAddr),
+						"RUSD", chain().rusd().getPosition(m_walletAddr),
+						"stockToken", m_stockToken.getPosition( m_walletAddr) );
 			});
 
 			try {
@@ -588,37 +575,45 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		if (m_status == LiveOrderStatus.Working) {
 			m_status = LiveOrderStatus.Filled;
 			m_progress = 100;
-			
-			jlog( LogType.ORDER_COMPLETED, Util.toJson( "hash", hash) );
 
-			m_main.queueSql( sql -> sql.execWithParams( 
-					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
+			// really take these out? where did they move to???
+//			jlog( LogType.ORDER_COMPLETED, Util.toJson( "hash", hash) );
+//
+//			m_main.queueSql( sql -> sql.execWithParams( 
+//					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			if (m_config.isProduction() && !m_map.getBool("testcase")) {
 				alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
 				
-				// send email to the user
-				if (Util.isValidEmail(m_email)) {
+				Util.wrap( () -> {
+					Util.require( Util.isValidEmail(m_email), "Error: invalid email " + m_email); // should never happen 
+					
+					// send email to the user
 					String html = S.format( isBuy() ? buyConf : sellConf,
 							m_desiredQuantity,
 							m_stock.symbol(),
 							m_stablecoinAmt,
 							m_stablecoin.name(),
-							m_stock.getSmartContractId(),
-							m_config.blockchainTx( hash) );
+							m_stockToken.address(),
+							chain().blockchainTx( hash) );
 					m_config.sendEmailSes(m_email, "Order filled on Reflection", html, SmtpSender.Type.Trade);
-				}
-				else {
-					out( "Error: cannot send email confirmation due to invalid email"); // should never happen
-				}
+				});
 			}
 			
 			if (m_config.sendTelegram() ) {
-				out( "sending telegram");
-				String str = String.format( "Wallet %s just %s [%s %s stock tokens](%s) on %s!",
-						Util.shorten( m_walletAddr), isBuy() ? "bought" : "sold", m_desiredQuantity, m_stock.symbol(), m_config.blockchainTx( hash), m_config.blockchainName() ); 
-				Telegram.postPhoto( str, isBuy() ? Telegram.bought : Telegram.sold);
+				Util.wrap( () -> {
+					out( "sending telegram");
+					String str = String.format( "Wallet %s just %s [%s %s stock tokens](%s) on %s!",
+							Util.shorten( m_walletAddr), 
+							isBuy() ? "bought" : "sold", 
+							m_desiredQuantity, 
+							m_stock.symbol(), 
+							chain().blockchainTx( hash), 
+							chain().params().name()	);
+					
+					Telegram.postPhoto( str, isBuy() ? Telegram.bought : Telegram.sold);
+				});
 			}
 			else {
 				out( "not sending telegram");
@@ -671,6 +666,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
+			obj.put("chain", chain().params().chainId() );
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );
@@ -743,23 +739,20 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 	
 	private Erc20 getSourceToken() {
-		return m_order.isBuy() ? m_stablecoin : m_stock.getToken();
+		return m_order.isBuy() ? m_stablecoin : m_stockToken;
 	}
 
 	private void requireSufficientApproval() throws Exception {
 		// if buying with BUSD, confirm the "approved" amount of BUSD is >= order amt
+		// it would be better to just call the eth_ method to pre-check the whole transaction
 		if (m_order.isBuy() && !m_stablecoin.isRusd() ) {
-			double approvedAmt = m_config.busd().getAllowance( m_walletAddr, m_config.rusdAddr() ); 
+			double approvedAmt = chain().busd().getAllowance( m_walletAddr, chain().params().rusdAddr() ); 
 			require( 
 					Util.isGtEq(approvedAmt, m_stablecoinAmt), 
 					RefCode.INSUFFICIENT_ALLOWANCE,
 					"The approved amount of stablecoin (%s) is insufficient for the order amount (%s)", approvedAmt, m_stablecoinAmt); 
 		}
 		
-	}
-
-	private StockToken newStockToken() throws Exception {
-		return new StockToken( m_stock.getSmartContractId() );
 	}
 
 	/** The order was submitted. It may have been filled, maybe not. We must unwind the order from the
@@ -792,12 +785,12 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 				
 				jlog( LogType.UNWIND_ORDER, m_order.getJsonLog(contract) );
 				
-				if (m_order.roundedQty() > 0 && !m_config.autoFill() ) {
+				if (m_order.roundedQty() > 0 && !chain().params().autoFill() ) {
 					
 					// start w/ bid/ask and adjust price
 					// this is tricky; too aggressive and we risk a bad fill; 
 					// too conservative and we risk not filling at all
-					Prices prices = m_main.getStock(conid).prices();
+					Prices prices = m_stock.prices();
 					double price = m_order.isBuy() ? prices.bid() * 1.01 : prices.ask() * .99;
 					Util.require( price > 0, "Can't unwind, no market price");  // adjustment won't affect this 
 					m_main.orderController().placeOrder(contract, m_order, null);

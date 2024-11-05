@@ -14,7 +14,6 @@ import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
 import util.LogType;
 import web3.Busd;
-import web3.Rusd;
 
 public class RedeemTransaction extends MyTransaction implements LiveTransaction {
 	enum LiveStatus {
@@ -45,23 +44,14 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 	/** Redeem (sell) RUSD */ 
 	public void handleRedeem() {
 		wrap( () -> {
-			// read wallet address into m_walletAddr (last token in URI)
-			getWalletFromUri();
+			parseMsg();  // cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() )
+			getWalletFromUri();  // read wallet address into m_walletAddr (last token in URI)
+			validateCookie("redeem");
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
 			require( m_main.validWallet( m_walletAddr, Action.Sell), RefCode.ACCESS_DENIED, "Your redemption cannot be processed at this time (L6)");  // make sure wallet is not blacklisted
 
-			// cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() ) 
-			parseMsg();
-			
-			Rusd rusd = m_config.rusd();
-			Busd busd = m_config.busd();
-
 			// NOTE: this next code is the same as OrderTransaction
-
-			// make sure user is signed in with SIWE and session is not expired
-			// must come before profile and KYC checks
-			validateCookie("redeem");
 			
 			// get record from Users table
 			JsonArray ar = Main.m_config.sqlQuery( conn -> conn.queryToJson("select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );  // note that this returns a map with all the null values
@@ -78,7 +68,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			m_quantity = m_map.getDoubleParam( "quantity");
 			
 			// confirm they have RUSD to redeem; note there is some delay after a completed transaction before it is reflected here
-			double pos = rusd.getPosition(m_walletAddr);
+			double pos = chain().rusd().getPosition(m_walletAddr);
 			require( pos > .004, RefCode.NO_RUSD_TO_REDEEM, "No RUSD in user wallet to redeem");
 
 			// if no quantity specified, if > pos, or w/in .03 of pos, set it to pos
@@ -123,7 +113,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 							"You must complete %s more trades and/or wait %s more days before redeeming your %s",
 							remainingTrades,
 							remainingDays,
-							Main.m_config.rusd().name() );
+							chain().rusd().name() );
 					
 					msg = "RUSD was partially redeemed; some was locked";
 					olog( LogType.PARTIAL_LOCK, locked); 
@@ -131,11 +121,11 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 
 			// insufficient BUSD in RefWallet or > maxAutoRedeem?
-			double busdPos = busd.getPosition( m_config.refWalletAddr() );  // sends query
-			double allowance = Main.m_config.getApprovedAmt(); // sends query
+			double busdPos = chain().busd().getPosition( chain().params().refWalletAddr() );  // sends query
+			double allowance = chain().getApprovedAmt(); // sends query
 			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
-				insertRedemption( busd, m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
+				insertRedemption( chain().busd(), m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
 				
 				// send alert email so we can move funds from brokerage to wallet
 				String str = String.format( 
@@ -149,21 +139,21 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			}
 			
 			// set working status to prevent another redeem attempt
-			insertRedemption( busd, m_quantity, "", LiveStatus.Working); // informational only, don't throw an exception
+			insertRedemption( chain().busd(), m_quantity, "", LiveStatus.Working); // informational only, don't throw an exception
 
 			// redeem it  try/catch here?
 			try {
-				String hash = rusd.sellRusd(m_walletAddr, busd, m_quantity).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+				String hash = chain().rusd().sellRusd(m_walletAddr, chain().busd(), m_quantity).waitForReceipt(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 				respond( code, RefCode.OK, "id", m_uid, "message", msg);  // we return the uid here to be consisten with the live order processing, but it's not really needed since Frontend can only have one Redemption request open at a time
 
 				olog( LogType.REDEEMED, "amount", m_quantity);
 
-				insertRedemption( busd, m_quantity, hash, LiveStatus.Completed); // informational only, don't throw an exception
+				insertRedemption( chain().busd(), m_quantity, hash, LiveStatus.Completed); // informational only, don't throw an exception
 			}
 			catch( Exception e) {
 				// update the database so user can try again
-				insertRedemption( busd, m_quantity, "", LiveStatus.Failed); // informational only, don't throw an exception
+				insertRedemption( chain().busd(), m_quantity, "", LiveStatus.Failed); // informational only, don't throw an exception
 				throw e;
 			}
 		});
@@ -197,16 +187,16 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				if (m_config.isProduction() ) { //&& !m_map.getBool("testcase")) {
 					Util.wrap( () -> { 
 						alert( "REDEMPTION COMPLETED", S.format( "Converted %s %s to %s for %s", 
-								m_quantity, m_config.rusd().name(), m_config.busd().name(), m_walletAddr) );
+								m_quantity, chain().rusd().name(), chain().busd().name(), m_walletAddr) );
 							
 						// send email to the user
 						if (Util.isValidEmail( m_email) ) {
 							String html = String.format(
 									redeemHtml,
 									m_quantity,
-									m_config.busd().name(),
-									m_config.busd().address(),
-									m_config.blockchainTx(hash) );
+									chain().busd().name(),
+									chain().busd().address(),
+									chain().blockchainTx(hash) );
 							m_config.sendEmail( m_email, "RUSD has been redeemed on Reflection", html);
 						}
 					});
@@ -224,7 +214,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 
 				Util.wrap( () -> alert( 
 						"REDEMPTION FAILED", S.format( "Could not convert %s %s to %s for %s", 
-								m_quantity, m_config.rusd().name(), m_config.busd().name(), m_walletAddr) ) );
+								m_quantity, chain().rusd().name(), chain().busd().name(), m_walletAddr) ) );
 			}
 		}
 	}

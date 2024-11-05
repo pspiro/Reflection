@@ -1,6 +1,5 @@
 package reflection;
 
-import static common.Util.round;
 import static reflection.Main.require;
 
 import java.util.HashSet;
@@ -17,6 +16,7 @@ import com.ib.controller.ApiController.IAccountSummaryHandler;
 import com.ib.controller.ApiController.IPositionHandler;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.Util;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book.Tab;
@@ -26,11 +26,9 @@ public class OldStyleTransaction extends MyTransaction {
 	enum MsgType {
 		disconnect,
 		dump,
-		getAllPrices,
 		getTradingHours,
 		getDescription,
 		getPositions,
-		getPrice,
 		getCashBal,
 		refreshConfig,
 		terminate,
@@ -58,12 +56,6 @@ public class OldStyleTransaction extends MyTransaction {
 		switch (msgType) { // this could be switched to polymorphism if desired
 			case getTradingHours:
 				getTradingHours();
-				break;
-			case getPrice:
-				getPrice();
-				break;
-			case getAllPrices:
-				getAllPrices();
 				break;
 			case getDescription:
 				getDescription();
@@ -126,7 +118,7 @@ public class OldStyleTransaction extends MyTransaction {
 
 		// build set of wallets on KYC page
 		HashSet<String> set = new HashSet<>();
-		for (var user : tab.queryToJson( WalletPub) ) {
+		for (var user : tab.queryToJson( Util.toArray( WalletPub) ) ) {
 			set.add( user.getString( WalletPub) ); 
 		}
 		
@@ -248,34 +240,6 @@ public class OldStyleTransaction extends MyTransaction {
 		});
 
 		setTimer( Main.m_config.timeout(), () -> timedOut( "getDescription timed out") );
-	}
-
-	/** Not being used because the google sheet IMPORTDATA doesn't work */
-	private void getPrice() throws RefException {
-		int conid = m_map.getRequiredInt( "conid");
-		boolean csv = m_map.getBool("csv");
-		returnPrice(conid, csv);
-	}	
-
-	/** Top-level message, return prices for debugging */
-	private void getAllPrices() throws RefException {
-		
-		// build the json response   // we could reuse this and just update the prices each time
-		JsonObject whole = new JsonObject();
-
-		for (Object obj : m_main.stocks().stocks() ) {
-			Stock stk = (Stock)obj;
-
-			JsonObject single = new JsonObject();
-			single.put( "bid", round( stk.prices().bid() ) );
-			single.put( "ask", round( stk.prices().ask() ) );
-			single.put( "last", round( stk.prices().last() ) );
-			single.put( "time", stk.prices().getFormattedTime() );
-
-			whole.put( stk.get("conid").toString(), single);
-		}
-
-		respond(whole);
 	}
 
 }

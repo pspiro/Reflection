@@ -158,7 +158,7 @@ public class Stocks {
 		return conidMap.get( conid);
 	}
 	
-	void show() {
+	public void show() {
 		S.out( "---- hot list");
 		S.out( JsonArray.toJSONString( hotStocks) );
 		S.out( "---- full list");

@@ -11,14 +11,14 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
+import chain.Stocks.Stock;
 import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
-import reflection.Config.Tooltip;
 import reflection.TradingHours.Session;
 import tw.util.S;
-import web3.NodeServer;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -32,27 +32,41 @@ public class BackendTransaction extends MyTransaction {
 	}
 
 	/** Handle a Backend-style event. Conid is last parameter
+	 * called from trade page in prod, not used in paper, can be removed after upgrade
 	 * 
 	 * @return 
 		{
-		"smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
-		"symbol": "IBM",
-		"ask": 128.78,
-		"description": "International Business Machines",
+		// "smartcontractid": "0xd3383F039bef69A65F8919e50d34c7FC9e913e20",
+		// could add tradingView if desired
 		"conid": "8314",
-		"exchange": "SMART",
+		"symbol": "IBM",
+		"description": "International Business Machines",
 		"type": "Stock",
 		"bid": 128.5
+		"ask": 128.78,
 		}
 	 */
 	public void handleGetStockWithPrice() {
 		wrap( () -> {
 			Stock stock = m_main.getStock( getConidFromUri() );
+			//var token = m_main.getStock( getConidFromUri() );
+			// is token addr really needed here? if so, frontend must pass the cookie
 			
-			Session session = m_main.m_tradingHours.getTradingSession( stock.is24Hour(), null);
-			stock.put( "exchangeStatus", session != Session.None ? "open" : "closed");  // this updates the global object and better be re-entrant
+			Session session = m_main.m_tradingHours.getTradingSession( stock.rec().is24Hour(), null);
+
+			var json = Util.toJson( 
+					//"smartcontractid",   // really needed
+					//"exchange", stock.rec().exchange(),
+					"symbol", stock.symbol(), 
+					"bid", stock.prices().anyBid(),
+					"ask", stock.prices().anyAsk(),
+					"description", stock.rec().description(),
+					"conid", String.valueOf( stock.conid() ),
+					"type", stock.rec().type(),
+					"exchangeStatus", session != Session.None ? "open" : "closed"  // this updates the global object and better be re-entrant
+					);
 			
-			respond(stock);
+			respond(json);
 		});
 	}
 	
@@ -108,20 +122,24 @@ public class BackendTransaction extends MyTransaction {
 	/** Return transactions for a specific user or for all users;
 	 *  populates the two panels on the Dashboard. We put this in the queue
 	 *  to release the query thread quickly and because this query
-	 *  is not so time-dependent */
+	 *  is not so time-dependent.
+	 *  
+	 *  @return transactions from all blockchains
+	 *   */
 	public void handleReqCryptoTransactions(HttpExchange exch) {
 		wrap( () -> {
 			parseMsg();
-			String wallet = m_map.get("wallet_public_key");
-			Main.require( S.isNull(wallet) || Util.isValidAddress(wallet), RefCode.INVALID_REQUEST, "The wallet address is invalid");
+			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 
 			m_main.queueSql( conn -> {
 				wrap( () -> {
-					String where = "where blockchain_hash <> ''";  // use blockchain hash because the link is clickable for the user
-					if (S.isNotNull(wallet) ) {
-						where += String.format(" and lower(wallet_public_key)='%s'", wallet.toLowerCase() );
-					}
-					JsonArray ar = conn.queryToJson("select * from transactions %s order by created_at desc limit 20", where);
+					String sql = String.format("""
+							select * from transactions 
+							where blockchain_hash <> '' and wallet_public_key='%s'
+							order by created_at desc
+							limit 20""", m_walletAddr.toLowerCase() );
+					
+					JsonArray ar = conn.queryToJson( sql);
 					for (JsonObject obj : ar) fix(obj);  // switch "created_at" to "timestamp"
 					respond(ar);
 				});
@@ -191,7 +209,7 @@ public class BackendTransaction extends MyTransaction {
 				// get existing locked rec, or create
 				var locked = getorCreateUser().getObjectNN( "locked");
 	
-				double rusdBalance = m_config.rusd().getPosition( m_walletAddr);
+				double rusdBalance = chain().rusd().getPosition( m_walletAddr);
 				out( "  alreadyRewarded=%s  rusdBalance=%s", locked.getBool( "rewarded"), rusdBalance);
 				
 				// check for not rewarded and zero RUSD balance
@@ -211,7 +229,7 @@ public class BackendTransaction extends MyTransaction {
 					message = S.format( "$%s RUSD is being minted into your wallet and will appear shortly", (int)m_config.autoReward() );
 					autoRewarded = m_config.autoReward();
 					Util.executeAndWrap( () -> {
-						m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() );
+						chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() );
 					});
 				}
 				else {
@@ -224,61 +242,20 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** obsolete; myWallet requests are sent directly to HookServer */
 	public void handleMyWallet() {
 		wrap( () -> {
-			out( "warning: mywallet requests should route to HookServer");
-			
-			// read wallet address into m_walletAddr (last token in URI)
+			parseMsg();
 			getWalletFromUri();
-
-			double rusdBal = m_config.rusd().getPosition( m_walletAddr);
-			double busdBal = m_config.rusd().getPosition( m_walletAddr);
+			validateCookie("mywallet");
 			
-			JsonObject rusd = new JsonObject();
-			rusd.put( "name", "RUSD");
-			rusd.put( "balance", rusdBal);
-			rusd.put( "tooltip", m_config.getTooltip(Tooltip.rusdBalance) );
-			rusd.put( "buttonTooltip", m_config.getTooltip(Tooltip.redeemButton) );
+			String url = String.format( "http://localhost:%s/hook/mywallet/%s",
+					chain().params().hookServerPort(), m_walletAddr);
 			
-			// add info about outstanding RUSD redemption request, if any
-			RedeemTransaction trans = liveRedemptions.get(m_walletAddr.toLowerCase() );
-			if (trans != null) {
-				if (trans.progress() == 100) {
-					rusd.put( "text", trans.text() );  // success or error message
-					rusd.put( "status", trans.status() );  // Completed or Failed 
-					liveRedemptions.remove( m_walletAddr.toLowerCase() );
-				}
-				else {
-					rusd.put( "progress", trans.progress() );
-				}
-			}
+			JsonObject json = MyClient.getJson( url);
 			
-			// fix a display issue where some users approved a huge size by mistake
-			double approved = Math.min(1000000,m_config.busd().getAllowance(m_walletAddr, m_config.rusdAddr() ));
-			
-			JsonObject busd = new JsonObject();
-			busd.put( "name", m_config.busd().name() );
-			busd.put( "balance", busdBal);
-			busd.put( "tooltip", m_config.getTooltip(Tooltip.busdBalance) );
-			busd.put( "buttonTooltip", m_config.getTooltip(Tooltip.approveButton) );
-			busd.put( "approvedBalance", approved);
-			busd.put( "stablecoin", true);
-			
-			JsonObject base = new JsonObject();
-			base.put( "name", "MATIC");  // pull from config
-			base.put( "balance", NodeServer.getNativeBalance( m_walletAddr) );
-			base.put( "tooltip", m_config.getTooltip(Tooltip.baseBalance) );
-			
-			JsonArray ar = new JsonArray();
-			ar.add(rusd);
-			ar.add(busd);
-			ar.add(base);
-			
-			JsonObject obj = new JsonObject();
-			obj.put( "refresh", m_config.myWalletRefresh() );
-			obj.put( "tokens", ar);
-			respond(obj);
+			String refCode = json.getString( "code");
+			int responseCode = S.isNotNull( refCode) && !refCode.equals( "OK") ? 400 : 200;
+			respondFull( json, responseCode, null);
 		});
 	}
 
@@ -289,7 +266,23 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleHotStocks() {
 		wrap( () -> {
-			respond( m_main.hotStocks() );
+			respond( m_main.stocks().hotStocks() );
+		});
+	}
+
+	public void handleWatchList() {
+		wrap( () -> {
+			respond( m_main.stocks().watchList() );
+		});
+	}
+	
+	public void handleAllStocks() {
+		wrap( () -> {
+			parseMsg();
+			getWalletFromUri();
+			validateCookie("all-stocks");
+			
+			respond( chain().getAllStocks( m_main.stocks() ) );
 		});
 	}
 	
@@ -412,12 +405,30 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 	
+	/** return data for the selected stock on the trading page
+	 *  uri is: /api/trading-screen-static/wallet/conid 
+	 *  
+	 *  obsolete, not used anywhere, remove after unified URL rollout */
 	public void handleTradingStatic() {
 		wrap( () -> {
-			Stock stock = m_main.getStock( getConidFromUri() );
+			String[] ar = m_uri.split("/");
+			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
+			int conid = Integer.parseInt( ar[4]);
 			
-			JsonObject resp = new JsonObject();
-			resp.copyFrom( stock, "smartContractid", "symbol", "tokenSymbol", "description", "conid", "tradingView");
+			Stock stock = m_main.getStock( conid);
+			Util.require( stock != null, "null stock");
+			
+			var token = chain().getTokenByConid( conid);
+			Util.require( token != null, "null token");
+			
+			JsonObject resp = Util.toJson(
+					"smartContractid", token.address(), 
+					"symbol", stock.symbol(),
+					"tokenSymbol", token.name(),
+					"description", stock.rec().description(),
+					"conid", stock.conid(),
+					"tradingView", stock.rec().tradingView()
+					);
 			
 			respond( resp);
 		});
@@ -425,35 +436,39 @@ public class BackendTransaction extends MyTransaction {
 
 	/** we need both wallet AND conid here */
 	public void handleTradingDynamic() {
-		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /
+		wrap( () -> {      // note that the first item in the array is empty string because the uri starts with /			
 			String[] ar = m_uri.split("/");
 			require( ar.length == 5, RefCode.INVALID_REQUEST, "Wrong number of parameters");
 			
 			m_walletAddr = ar[3].toLowerCase();
 			Util.reqValidAddress(m_walletAddr);
 			
+			parseMsg();
+			validateCookie( "tradingDynamic");
+			
 			int conid = Integer.parseInt( ar[4]);
 			
-			Stock stock = m_main.getStock( conid);
-			
 			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
-					m_config.hookServerPort(), 
+					chain().params().hookServerPort(), 
 					m_walletAddr.toLowerCase() );
 
 			// query for wallet positions (map style)
 			JsonObject json = MyClient.getJson( url);
 			JsonObject positions = json.getObject( "positions"); // you could improve this and create a special query just for this
 			
-			Prices prices = stock.prices();
+			String tokenAddr = chain().getTokenByConid( conid).address();
+			Prices prices = m_main.getStock( conid).prices();
 			// require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 			// Q what to do if there are no prices
+			
+			Chain chain = chain();
 
 			respond(			
 				"exchangeStatus", "open",
 				"exchangeTime", "n/a",
-				"stockTokenBalance", positions.getDouble( stock.getSmartContractId() ), 
-				"rusdBalance", positions.getDouble( m_config.rusdAddr() ),
-				"nonRusdBalance", positions.getDouble( m_config.busd().address() ),
+				"stockTokenBalance", positions.getDouble( tokenAddr), 
+				"rusdBalance", positions.getDouble( chain.params().rusdAddr() ),
+				"nonRusdBalance", positions.getDouble( chain.params().busdAddr() ),
 				"nonRusdApprovedAmt", json.getDouble( "approved"),
 				"bidPrice", prices.anyBid() * (1. - m_config.sellSpread() ),
 				"askPrice", prices.anyAsk() * (1. + m_config.buySpread() )
@@ -548,7 +563,7 @@ public class BackendTransaction extends MyTransaction {
 						}
 						catch( Exception e) {}
 
-						var ar = SignupReport.create( days, sql, m_config.rusd(), null);
+						var ar = SignupReport.create( days, sql, m_config.chains().polygon().rusd(), null);
 						respondFull( ar, 200, null, "text/html");						
 					});
 				}); 
@@ -578,7 +593,7 @@ public class BackendTransaction extends MyTransaction {
 			var locked = user.getObjectNN( "locked");
 			
 			// wallet has rusd?
-			require( m_config.rusd().getPosition( m_walletAddr) < 1, 
+			require( chain().rusd().getPosition( m_walletAddr) < 1, 
 					RefCode.INVALID_REQUEST, 
 					"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
 			
@@ -605,8 +620,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			// don't tie up the http thread
 			Util.executeAndWrap( () -> {
-				m_config.rusd().mintRusd(m_walletAddr, m_config.autoReward(), m_main.stocks().getAnyStockToken() )
-					.waitForHash();
+				chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() )
+					.waitForReceipt();
 				
 				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);
 				respond( code, RefCode.OK, Message, message);
@@ -618,26 +633,30 @@ public class BackendTransaction extends MyTransaction {
 	 *  We store the amount given in the users.locked.faucet.<blockchain name> */
 	public void handleShowFaucet() {
 		wrap( () -> {
+			parseMsg();
 			getWalletFromUri();
+			validateCookie("getfaucet");
 			respond( code, RefCode.OK, "amount", getFaucetAmt() );
 		});
 	}
 
-	/** return the amount of native token that the user is eligible to receive */
+	/** return the amount of native token that the user is eligible to receive;
+	 *  currently faucet works on PulseChain only; we would have to add a selector
+	 *  on Frontend to support other chains */
 	private double getFaucetAmt() throws Exception {
 		
 		// check how much user has already received from faucet
 		double received = getorCreateUser()
 				.getObjectNN( "locked")
 				.getObjectNN( "faucet")
-				.getDouble( m_config.blockchainName()
+				.getDouble( chain().params().name()
 				);
 		
 		// let them have the full amount if they have not received the full amount AND
 		// their wallet has less than the full amount
 		return
 				received < m_config.faucetAmt() && 
-				NodeServer.getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
+				m_config.chains().pulseChain().node().getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
 					? m_config.faucetAmt() 
 					: 0;
 	}
@@ -658,12 +677,12 @@ public class BackendTransaction extends MyTransaction {
 			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");
 			
-			m_config.matic().transfer( m_config.admin1Key(), m_walletAddr, amount)
-				.waitForHash();
+			chain().blocks().transfer( chain().params().admin1Key(), m_walletAddr, amount)
+				.waitForReceipt();
 
 			// update the faucet object in the user/locked json
 			var locked = getorCreateUser().getObjectNN( "locked");  // reads the database again, not so efficient
-			locked.getOrAddObject( "faucet").put( m_config.blockchainName(), amount);
+			locked.getOrAddObject( "faucet").put( chain().params().name(), amount);
 
 			// update the database with new  
 			m_config.sqlCommand( sql -> sql.updateJson( 

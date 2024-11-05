@@ -7,6 +7,8 @@ import java.util.List;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import chain.Chain;
+import chain.Stocks;
 import common.SmtpSender;
 import common.Util;
 import tw.util.S;
@@ -27,37 +29,38 @@ public class Statements {
 	private record Position( String name, double quantity, double price, double unreal) {}
 
 	private Config m_config;
-	private Stocks m_stocks;
+	private Chain m_chain;
 	private List<String> m_list;
 	private boolean m_testing;
+	private Stocks m_stocks;
 
 	public static void main(String[] args) {
 		try {
-			Config c = Config.ask("prod");
-			SmtpSender.debug = true;
-			new Statements( c, c.readStocks(), true)  // don't set to false; there will be no prices
+			SingleChainConfig c = SingleChainConfig.ask();
+			new Statements( c, c.chain(), true, new Stocks() )  // don't set to false; there will be no prices
 				.generateSummaries( 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	Statements( Config config, Stocks stocks, boolean testing) {
+	Statements( Config config, Chain chain, boolean testing, Stocks stocks) throws Exception {
 		m_config = config;
-		m_stocks = stocks;
+		m_chain = chain;
 		m_testing = testing;
+		m_stocks = stocks;
 
 		// set fake stock prices for testing
-		if (m_testing) {
-			for ( Stock stock : m_stocks) {
-				stock.setPrices( new Prices( Util.toJson( "last", 83.82) ) );
-			}
-		}
+//		if (m_testing) {
+//			for ( var stock : chain.stocks() ) {
+//				stock.setPrices( new Prices( Util.toJson( "last", 83.82) ) );
+//			}
+//		}
 
 		// get list of all stock contract addresses plus RUSD and BUSD
-		m_list = Util.toList( m_stocks.getAllContractsAddresses() );
-		m_list.add( m_config.rusdAddr().toLowerCase() );
-		m_list.add( m_config.busdAddr().toLowerCase() );
+		m_list = Util.toList( chain.getAllContractsAddresses() );
+		m_list.add( chain.params().rusdAddr().toLowerCase() );
+		m_list.add( chain.params().busdAddr().toLowerCase() );
 	}
 
 	/** generate the daily summary emails */
@@ -111,7 +114,7 @@ public class Statements {
 		// get positions from Blockchain
 		// doesn't work for Pulsechain: HashMap<String, Double> positionsMap = MoralisServer.reqPositionsMap(       // you could also try graphql or 
 				//walletLc, m_list.toArray( new String[0]) );
-		HashMap<String, Double> positionsMap = m_config.node().reqPositionsMap(       // you could also try graphql or 
+		HashMap<String, Double> positionsMap = m_chain.node().reqPositionsMap(       // you could also try graphql or 
 				walletLc, m_list.toArray( new String[0]), 0);
 
 		var transactions = m_config.getCompletedTransactions( walletLc); 
@@ -125,11 +128,12 @@ public class Statements {
 		boolean missedOne = false;
 
 		// add stocks
-		for ( Stock stock : m_stocks) {
-			var balance = positionsMap.get( stock.getSmartContractId().toLowerCase() );
-			if (balance != null && balance > 0) {
+		for ( var token : m_chain.tokens() ) {
+			var stock = m_stocks.getStockByConid( token.conid() );
+			var balance = positionsMap.get( token.address().toLowerCase() );
+			if (stock != null && balance != null && balance > 0) {
 				// calculate pnl
-				var pair = pnlMap.get( stock.conid() );
+				var pair = pnlMap.get( token.conid() );
 				double pnl = pair != null ? pair.getPnl( stock.markPrice(), balance) : 0;
 				
 				positions.add( new Position( stock.symbol(), balance, stock.markPrice(), pnl) );
@@ -145,10 +149,10 @@ public class Statements {
 		positions.sort( (p1, p2) -> p1.name().compareTo( p2.name() ) );
 
 		// add RUSD and BUSD at the bottom
-		Util.iff( positionsMap.get( m_config.rusdAddr() ), pos -> 
-			positions.add( new Position( m_config.rusd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
-		Util.iff( positionsMap.get( m_config.busdAddr() ), pos -> 
-			positions.add( new Position( m_config.busd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
+		Util.iff( positionsMap.get( m_chain.params().rusdAddr() ), pos -> 
+			positions.add( new Position( m_chain.rusd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
+		Util.iff( positionsMap.get( m_chain.params().busdAddr() ), pos -> 
+			positions.add( new Position( m_chain.busd().name() + " (stablecoin)", (double)pos, 1, 0) ) );
 
 		// build the positions section
 		StringBuilder posRows = new StringBuilder();
@@ -202,7 +206,7 @@ public class Statements {
 			String html = Text.email
 					.replace( "#name#", name)
 					.replace( "#wallet#", walletLc)
-					.replace( "#blockchain#", m_config.blockchainName() )
+					.replace( "#blockchain#", m_chain.params().name() )
 					.replace( "#portrows#", posRows.toString() )
 					.replace( "#actrows#", actRows.toString() )
 					.replace( "#total#", totalStr);
