@@ -17,6 +17,7 @@ import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chains;
 import common.Util;
 import http.BaseTransaction;
 import reflection.Main;
@@ -80,7 +81,7 @@ public class SiweTransaction extends BaseTransaction {
 			out( "  nonce is valid");
 			
 			// verify signature
-			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == 5) {
+			if (signedMsg.getString( "signature").equals("102268") && siweMsg.getChainId() == Chains.Sepolia) {
 				out( "  free pass");
 			}
 			else {

@@ -11,7 +11,6 @@ import org.web3j.crypto.Keys;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config;
 import tw.util.S;
 
 /** This app keeps the positions of all wallets in memory for fast access.
@@ -259,9 +258,6 @@ public class MoralisServer {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Config c = Config.ask();
-		var map = reqPositionsMap( "0x2703161D6DD37301CEd98ff717795E14427a462B", c.readStocks().getAllContractsAddresses() );
-		JsonObject.displayMap( map);
 	}
 	
 }

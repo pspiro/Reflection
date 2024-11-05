@@ -31,7 +31,7 @@ public class BaseTransaction {
 	protected final HttpExchange m_exchange;
 	protected boolean m_responded;  // only respond once per transaction
 	protected final String m_uri;
-	private final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
+	protected final MyTimer m_timer;  // if debug or verbose=true, we print to log when msg is received and when we respond
 	protected String m_uid;  // unique for each msg; for live order messages, gets switched to the uid of the order
 
 	public BaseTransaction(HttpExchange exchange, boolean debug) {
@@ -258,14 +258,14 @@ public class BaseTransaction {
 		});
 	}
 	
-	/** Assumes the wallet address is the last token in the URI
+	/** Assumes the conid is the last token in the URI
 	 *  Read it into the member variable so it is available for log entries */
 	public int getConidFromUri() throws RefException {
 		String conidStr = Util.getLastToken(m_uri, "/");
 		require( Util.isInteger(conidStr), RefCode.INVALID_REQUEST, "the conid is invalid", conidStr);
 		return Integer.parseInt(conidStr);
 	}
-
+	
 	/** returns list, never null, could be empty */
 	public List<String> getHeaders(String name) {
 		Headers headers = m_exchange.getRequestHeaders();

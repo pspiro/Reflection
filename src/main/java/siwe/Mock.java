@@ -13,9 +13,9 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import common.Util;
 import http.BaseTransaction;
 import http.MyServer;
+import reflection.BackendTransaction;
 import tw.util.S;
 
 public class Mock {
@@ -45,6 +45,23 @@ public class Mock {
 	String pos = """
 			[ { "symbol": "AMD (Advanced Micro Devices)", "quantity": 1, "price": 150.71, "conId": "4391" }, { "symbol": "COIN (Coinbase)", "quantity": 2.0868, "price": 162.62, "conId": "481691285" }, { "symbol": "COST (Costco)", "quantity": 1, "price": 897.39, "conId": "272997" }, { "symbol": "FSLR (First Solar)", "quantity": 1, "price": 240.085, "conId": "41622169" }, { "symbol": "GME (GameStop)", "quantity": 1, "price": 20.19, "conId": "36285627" }, { "symbol": "GOOG (Google)", "quantity": 1.2702, "price": 160.37, "conId": "208813720" } ]""";
 	
+	String watchList = """
+			[
+			{ 
+			"bid": 1,
+			"ask": 2,
+			"symbol": "AAPL",
+			"conid": "265598"
+			},
+			{ 
+			"bid": 1,
+			"ask": 2,
+			"symbol": "ABC",
+			"conid": "8314"
+			}
+			]			
+			""";
+	
 	String stocks = """
 			[ { "smartcontractid": "0xad7244b5be15e038f592f3748b4eeaa67966a1fb", "allow": "All", "symbol": "AAPL (Apple)", "tokenSymbol": "AAPL.r", "last": 216.75, "endDate": "", "description": "Apple Inc - Maker of iPhone, iPad, MacBook, and AirPods", "type": "Stock", "tradingView": "NASDAQ:AAPL", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 216.76, "conid": "265598", "exchange": "SMART", "convertsToAddress": "", "bid": 216.7, "startDate": "", "isHot": true }, { "smartcontractid": "0x7e34f86085fe9cab36083364e1d26a852eaeeae1", "allow": "", "symbol": "ADBE (Adobe)", "tokenSymbol": "ADBE.r", "last": 515.03, "endDate": "", "description": "Adobe Inc - Leading producer of computer graphics software; creator of Photoshop and Illustrator", "type": "Stock", "tradingView": "NASDAQ:ADBE", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 515.3, "conid": "265768", "exchange": "SMART", "convertsToAddress": "", "bid": 514.98, "startDate": "", "isHot": true }, { "smartcontractid": "0xf3206bd1e31b071f93d5b46abf28c8fa52a124ae", "allow": "", "symbol": "AMD (Advanced Micro Devices)", "tokenSymbol": "AMD.r", "last": 150.71, "endDate": "", "description": "Advanced Micro Devices Inc - One of the top computer chip makers in the world", "type": "Stock", "tradingView": "NASDAQ:AMD", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 150.74, "conid": "4391", "exchange": "SMART", "convertsToAddress": "", "bid": 150.68, "startDate": "", "isHot": true }, { "smartcontractid": "0x637245ce1c35abdcefc3cc33074562312ad1112d", "allow": "", "symbol": "AMZN (Amazon)", "tokenSymbol": "AMZN.r", "last": 187.08, "endDate": "", "description": "Amazon.com Inc - Largest online retailer in the world", "type": "Stock", "tradingView": "NASDAQ:AMZN", "exchangeStatus": "open", "convertsToAmt": 0, "is24hour": true, "ask": 187.08, "conid": "3691937", "exchange": "SMART", "convertsToAddress": "", "bid": 187, "startDate": "", "isHot": true } ]""";
 	
@@ -69,6 +86,12 @@ public class Mock {
 	String faqs = """
 			[ { "question": "What is Reflection?", "answer": "Reflection is the only platform where you can buy and sell stock tokens that are 100% backed by shares of real stock." }, { "question": "What are stock tokens?", "answer": "Stock tokens are crypto tokens which represent shares of stock in publically traded companies." }, { "question": "After purchasing a stock token, do I actually own the underlying stock?", "answer": "No, you do not own the stock and you are not entitled to any of the benefits of stock ownership, such as voting rights. Your only right is to redeem the token for stablecoin at whatever price the stock is trading at the time of redemption." }, { "question": "What is RUSD?", "answer": "RUSD is the Reflection US dollar stablecoin. It is backed one-to-one by a combination of US dollars and USDT stablecoin." }, { "question": "What stablecoins and crypto platforms do you support?", "answer": "At the moment, we operate on the Polygon network chain and support the USDT stablecoin, but support for more platforms and stablecoins is planned." }, { "question": "Which crypto wallets do you support?", "answer": "We support MetaMask and WalletConnect. If you do not already have a wallet, we suggest you use MetaMask." }, { "question": "How do I create a MetaMask wallet?", "answer": "Follow this guide: https://reflection.trading/create-wallet" }, { "question": "How do I get USDT stablecoin in my wallet?", "answer": "USDT can be purchased on many crypto exchanges; we suggest Binance." }, { "question": "Will I receive dividends while holding a stock token?", "answer": "Not yet, but support for dividends is planned." } ] """;
 			
+	String tradStatic = """
+			{ "symbol": "AAPL (Apple)", "tokenSymbol": "AAPL.r", "tradingView": "NASDAQ:AAPL", "description": "Apple Inc - Maker of iPhone, iPad, MacBook, and AirPods", "conid": "265598" }""";
+
+	String tradDynamic = """
+			{ "nonRusdApprovedAmt": 10, "askPrice": 224.02455, "stockTokenBalance": 1.0856, "rusdBalance": 1129.3953, "exchangeStatus": "open", "exchangeTime": "n/a", "nonRusdBalance": 45.261599, "bidPrice": 221.7855 }""";
+	
 	String onrampConvert = """
 			{ 
 			"createdAt" : "2024-09-26 16:16:01",
@@ -129,7 +152,10 @@ public class Mock {
 		map.put( "onramp-convert", onrampConvert); // first solar
 		map.put( "show-faucet", showFaucet);
 		map.put( "turn-faucet", turnFaucet);
-		
+		map.put( "get-watch-list", watchList);
+		map.put( "trading-screen-static", tradStatic);
+		map.put( "trading-screen-dynamic", tradDynamic);
+
 		BaseTransaction.setDebug( true);
 				
 		// start Siwe thread to periodically save siwe cookies

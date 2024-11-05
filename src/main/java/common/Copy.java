@@ -6,7 +6,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 public class Copy {
@@ -63,7 +63,7 @@ public class Copy {
 
 		// margin is on the outside, horz only
 		// padding is on the inside, vert and horz.		
-		String myString = Config.template.replace( "%text", "<strong>abcd</strong>");
+		String myString = SingleChainConfig.template.replace( "%text", "<strong>abcd</strong>");
 		
 		Transferable stringSelection = new HtmlTrans(myString);
 		clipboard.setContents(stringSelection, null);

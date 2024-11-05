@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -30,11 +31,13 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.swing.JOptionPane;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 import org.web3j.crypto.Credentials;
 
@@ -883,7 +886,7 @@ public class Util {
 	}
 
 	/** Return true if obj2 equals any of the others */
-	public static <T> boolean equals(T obj1, T... others) {
+	@SafeVarargs public static <T> boolean equals(T obj1, T... others) {
 		for (T obj2 : others) {
 			if (obj2.equals( obj1) ) {
 				return true;
@@ -969,4 +972,56 @@ public class Util {
 	public static String input( Component parent, String prompt, Object defVal) {
 		return JOptionPane.showInputDialog(parent, prompt, defVal);
 	}
+	
+	public static String notNullMsg( Exception e) {
+		return S.isNotNull( e.getMessage() ) 
+				? e.getMessage() : 
+				S.isNotNull( e.toString() ) ? e.toString() : e.getClass().toString();
+	}
+
+	/** return list of field names for a record */
+    public static String[] getFieldNames(Class<?> clas) {
+        return Arrays.stream(clas.getDeclaredFields())
+                .map(Field::getName)
+                .toArray(String[]::new);
+    }
+    
+    /** This is like javascript map function; turn one array into another. Use it everywhere */
+    public static <P,R> ArrayList<R> map( ArrayList<P> list, Function<P,R> func) {
+ 	   ArrayList<R> ret = new ArrayList<R>();
+ 	   
+ 	   for (var item : list) {
+ 		   ret.add( func.apply(item) );
+ 	   }
+ 	   
+ 	   return ret;
+    }
+    
+    /** This is like javascript map function; turn one array into another. Use it everywhere 
+     * @throws Exception */
+    public static <P,R> ArrayList<R> mapEx( ArrayList<P> list, ExFunction<P,R> func) throws Exception {
+ 	   ArrayList<R> ret = new ArrayList<R>();
+ 	   
+ 	   for (var item : list) {
+ 		   ret.add( func.apply(item) );
+ 	   }
+ 	   
+ 	   return ret;
+    }
+    
+    record A( String name) {}
+    
+    public static void main(String[] args) throws Exception {
+    	ArrayList<A> list = new ArrayList<>();
+    	list.add( new A( "bob"));
+    	list.add( new A( "sam"));
+    	list.add( new A( "ken"));
+    	S.out( list);
+    	
+    	JsonArray ar = JsonArray.toJson( list);
+    	S.out( ar);
+    	
+    	var list2 = ar.toRecord( A.class);
+    	S.out( list2);
+    }
 }

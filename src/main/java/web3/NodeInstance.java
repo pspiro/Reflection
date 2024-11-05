@@ -15,14 +15,11 @@ import org.web3j.crypto.TransactionEncoder;
 import org.web3j.utils.Numeric;
 
 import common.Util;
-import fireblocks.FbRusd;
 import http.MyClient;
 import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
-import web3.Param.Address;
-import web3.Param.BigInt;
-import web3.RetVal.NewRetVal;
+import web3.RetVal.NodeRetVal;
 
 /** id sent will be returned on response; you could batch all different query types
  *  when it gets busy */
@@ -44,7 +41,7 @@ public class NodeInstance {
 	private int maxBatchSize = 20; // default only; size is overriden from config file
 
 	/** you could make this a member var */
-	private String rpcUrl;  // note you can get your very own rpc url from Moralis for more bandwidth
+	private String rpcUrl;  // with or without trailing /; note you can get your very own rpc url from Moralis for more bandwidth
 	private int chainId;
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
@@ -82,8 +79,8 @@ public class NodeInstance {
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
-			S.out( "nodeQuery error: " + err);
-			throw new MyException( "nodeQuery error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
+			throw new MyException( "nodeQuery error  code=%s  chain=%s  %s", 
+					err.getInt( "code"), chainId, err.getString( "message") );
 		}
 		return obj;
 	}
@@ -141,7 +138,20 @@ public class NodeInstance {
 				.queryToAnyJson();
 	}
 
-	/** see also getLatestBlock() */
+	/** Gets the entire latest block */
+	public JsonObject getLatestBlock() throws Exception {
+		// the boolean says if it gets the "full" block or not
+		String body = """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_getBlockByNumber",
+			"params": [	"latest", false ]
+			}""";
+		return nodeQuery( body);
+	}
+
+	/** Gets just the latest block number */
 	public long getBlockNumber() throws Exception {
 		String body = """
 			{
@@ -234,19 +244,6 @@ public class NodeInstance {
 		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
 	}
 
-	/** see also getBlockNumber() */
-	public JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
-	}
-	
 	/** note w/ moralis you can also get the token balance by wallet
 	 * I'm assuming that "data" is the parameters encoded the same was as in Fireblocks module 
 	 * @param m_address */
@@ -270,7 +267,8 @@ public class NodeInstance {
 		return Erc20.fromBlockchain( queryHexResult( body, "totalSupply", contractAddr, "n/a"), decimals);
 	}
 	
-	public double getAllowance( String contractAddr, String approverAddr, String spenderAddr, int decimals) throws Exception {
+	/** returns allowance in hex */
+	public String getAllowance( String contractAddr, String approverAddr, String spenderAddr) throws Exception {
 		Util.reqValidAddress( contractAddr);
 		Util.reqValidAddress( approverAddr);
 		Util.reqValidAddress( spenderAddr);
@@ -289,7 +287,7 @@ public class NodeInstance {
 			]
 			}""", contractAddr, approverAddr.substring(2), spenderAddr.substring(2) );
 		
-		return Erc20.fromBlockchain( queryHexResult( body, "allowance", contractAddr, approverAddr), decimals);
+		return queryHexResult( body, "allowance", contractAddr, approverAddr);
 	}
 	
 	/** Return number of decimals for the contract; first time sends a query,
@@ -302,17 +300,8 @@ public class NodeInstance {
 	}
 
 	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
-	public void setDecimals(Erc20 token) {
-		setDecimals( token.decimals(), Util.toArray(token.address() ) ); 
-	}
-
-	/** allow the user to pre-fill the decimals map to avoid sending queries when possible */
-	public synchronized void setDecimals(int decimals, String[] addresses) {
-		S.out( "Pre-filling decimals map  decimals=%s  count=%s", decimals, addresses.length);
-		
-		for (var address : addresses) {
-			decMap.put( address.toLowerCase(), decimals);
-		}
+	public void setDecimals(int decimals, String address) {
+		decMap.put( address.toLowerCase(), decimals);
 	}
 	
 //	public long queryDecimals(String contractAddr) throws Exception {
@@ -457,6 +446,16 @@ public class NodeInstance {
 		return nodeQuery( body).getObject( "result");
 	}
 	
+	public String getOwner( String contractAddr) throws Exception {
+		Req req = new Req( "eth_call", 1);
+		req.put( "params", Util.toArray( 
+				Util.toJson( "to", contractAddr, "data", "0x8da5cb5b"),
+				"latest")
+				);
+		String str = queryHexResult( req.toString(), "getOwner", contractAddr, "n/a");
+		return "0x" + Util.right( str, 40);
+	}
+	
 	public boolean isKnownTransaction(String transHash) throws Exception {
 		return getTransactionByHash( transHash) != null;
 	}
@@ -554,16 +553,23 @@ public class NodeInstance {
 
 		return map;
 	}
+	
+	int maxBlocks = 50000;
 
     // Function to fetch token holders from an Ethereum RPC node
 	public Transfers getAllTokenTransfers( String address, int decimals) throws Exception {
+		long latest = getBlockNumber();
+		long first = Math.max( 0, latest - maxBlocks);
+		
+		
 		address = address.toLowerCase();
 		
 		var topics = new ArrayList<String>();
 		topics.add(transferEventSignature);
 
 		JsonObject params = new JsonObject();
-		params.put("fromBlock", "earliest");
+		params.put("fromBlock", "earliest");  // doesn't work on Sepolia, test on others. bc
+		//params.put("fromBlock", Util.toHex( first) );
 		params.put("toBlock", "latest");
 		params.put("address", address);
 		params.put("topics", topics);
@@ -596,10 +602,10 @@ public class NodeInstance {
 			);
 	}
 	
-	public BigInteger getNonce(String addr) throws Exception {
+	public BigInteger getNonce(String wallet) throws Exception {
 		var req = new Req("eth_getTransactionCount", 1);
-		req.put( "params", Util.toArray( addr, latest) );
-		return Erc20.decodeQuantity( queryHexResult( req.toString(), "count", "n/a", "n/a") );
+		req.put( "params", Util.toArray( wallet, latest) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
 	}	
 	
 	// to get the reason you have to call again with the "defaultBlockParameter" set to 
@@ -621,6 +627,7 @@ public class NodeInstance {
 		
 		String callerAddr = Util.getAddress( privateKey);
 		String encodedData = Param.encodeData(keccak, params);
+		
 		var fees = queryFees();
 		
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
@@ -644,7 +651,7 @@ public class NodeInstance {
 		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
 		S.out( "  transaction hash: " + hash);
 		
-		return new NewRetVal( hash, this, callerAddr, contractAddr, encodedData);
+		return new NodeRetVal( hash, this, callerAddr, contractAddr, encodedData);
 	}
 
 	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
@@ -668,10 +675,6 @@ public class NodeInstance {
 		nodeQuery( req.toString() ).display();
 	}
 	
-	// Assuming Param, Address, and BigInt classes are defined as provided
-	public static void main(String[] args) throws Exception {
-	}				
-
 }
 
 

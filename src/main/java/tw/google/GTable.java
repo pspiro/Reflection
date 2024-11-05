@@ -2,6 +2,8 @@ package tw.google;
 
 import java.util.HashMap;
 
+import org.json.simple.JsonObject;
+
 import common.Util.Ex;
 import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
@@ -20,7 +22,7 @@ public class GTable extends HashMap<String,String> {
 	public GTable() throws Exception {
 	}
 
-	/** @param col2 may be null */
+	/** @param col2 may be null; then is functions like a set */
 	public GTable( String sheetId, String tabName, String col1, String col2) throws Exception {
 		this( sheetId, tabName, col1, col2, true);
 	}
@@ -44,7 +46,7 @@ public class GTable extends HashMap<String,String> {
 		for ( ListEntry row : m_tab.fetchRows() ) {
 			String tag = row.getString( m_col1);
 			String val = S.isNotNull( m_col2) ? row.getString( m_col2) : "";
-			if (tag != null && val != null) {
+			if (S.isNotNull( tag) && val != null) {
 				super.put( m_caseSensitive ? tag : tag.toLowerCase(), val);
 			}
 		}
@@ -165,5 +167,9 @@ public class GTable extends HashMap<String,String> {
 	public String getName(String name) {
 		String val = get( name);
 		return val != null ? val : name;
+	}
+	
+	public JsonObject toJson() {
+		return new JsonObject( this);
 	}
 }

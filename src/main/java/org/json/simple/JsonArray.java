@@ -324,4 +324,10 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		}
 		return json;
 	}
+	
+	/** convert this JsonArray to a list of Records of type T */ 
+	public <T extends Record> ArrayList<T> toRecord(Class<T> clas) throws Exception {
+		return Util.mapEx( this, item -> item.toRecord( clas) );
+	}
 }
+
