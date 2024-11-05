@@ -1,14 +1,14 @@
-package refblocks;
+package web3;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
-import web3.NodeInstance;
 
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		Config c = Config.ask();
+		SingleChainConfig.setSingleChain();
+		SingleChainConfig c = SingleChainConfig.ask();
 		
 		String wallet = c.admin1Addr();  // wallet that is stuck
 		
@@ -19,7 +19,7 @@ public class CancelStuckTransaction {
 
 		int nonce = 0x383;  // the nonce of the stuck transaction; you can auto-pull it from the stuck transaction json
 
-		Refblocks.cancelStuckTransaction( c.admin1Key(), nonce);
+		c.chain().blocks().cancelStuckTransaction( c.admin1Key(), nonce);
 
 		S.out( c.ownerAddr() );
 		

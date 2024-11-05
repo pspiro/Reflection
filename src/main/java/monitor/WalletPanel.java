@@ -11,7 +11,6 @@ import java.util.HashMap;
 import javax.swing.Box;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -29,7 +28,6 @@ import monitor.wallet.BlockPanelBase;
 import monitor.wallet.BlockSummaryPanel;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
-import reflection.Stock;
 import test.MyTimer;
 import tw.util.DualPanel;
 import tw.util.HorzDualPanel;
@@ -45,7 +43,6 @@ import util.LogType;
 import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
-import web3.NodeServer;
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -230,7 +227,7 @@ public class WalletPanel extends MonPanel {
 
 				// get all relevant transfers
 				var transfers = new Transfers();
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.stocks.getAllContractsAddresses() ) );
+				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
 				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
 
 				// build new list with substitutions
@@ -251,9 +248,9 @@ public class WalletPanel extends MonPanel {
 			String to = Util.valOr( walletMap.get( t.to() ), t.to() );
 
 			String contract = t.contract();
-			Stock stock = Monitor.stocks.getStockByTokenAddr(contract);
-			if (stock != null) {
-				contract = stock.symbol();
+			var token = Monitor.chain().getTokenByAddress(contract);
+			if (token != null) {
+				contract = token.name();
 			}
 			else if (contract.equals( m_config.rusdAddr() ) ) {
 				contract = m_config.rusd().name();
@@ -342,10 +339,6 @@ public class WalletPanel extends MonPanel {
 				super("Symbol,Balance,Price,Value");
 				justify("lrrr");
 			}
-			
-			protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
-				menu.add( JsonModel.menuItem("Double it", ev -> wrap( () -> doubleIt( record) ) ) );
-			}
 		}
 
 		public void clear() {
@@ -360,19 +353,19 @@ public class WalletPanel extends MonPanel {
 			wrap( () -> {
 				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
-				HashMap<String, Double> posMap = NodeServer.reqPositionsMap(m_wallet, Monitor.stocks.getAllContractsAddresses(), StockToken.stockTokenDecimals);
+				HashMap<String, Double> posMap = m_config.node().reqPositionsMap(m_wallet, Monitor.chain().getAllContractsAddresses(), StockToken.stockTokenDecimals);
 				
 				double stockBal = 0;
 				
-				for (Stock stock : Monitor.stocks) {
-					double bal = Util.toDouble( posMap.get( stock.getSmartContractId().toLowerCase() ) );
+				for (var token : Monitor.tokens() ) {
+					double bal = Util.toDouble( posMap.get( token.address().toLowerCase() ) );
 					if (bal > minBalance) {
 						JsonObject obj = new JsonObject();
-						obj.put( "Symbol", stock.symbol() );
+						obj.put( "Symbol", token.name() );
 						obj.put( "Balance", bal);
-						obj.put( "stock", stock);
+						obj.put( "stock", token);
 						
-						var price = getPrice( prices, stock.conid() );
+						var price = getPrice( prices, token.conid() );
 						if (price != null) {
 							obj.put( "Price", fmt( price.getDouble( "last") ) );
 							
@@ -543,7 +536,7 @@ public class WalletPanel extends MonPanel {
 			Util.require( Util.isValidAddress(m_wallet), "Invalid wallet address");
 
 			String hash = config().rusd().mintRusd( 
-					m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+					m_wallet, amt, Monitor.chain().getAnyStockToken() ).waitForReceipt();
 
 			config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 					"type", LogType.MINT,
@@ -577,7 +570,7 @@ public class WalletPanel extends MonPanel {
 					Util.require( Util.isValidAddress(m_wallet), "Invalid wallet address");
 
 					String hash = config().rusd().burnRusd( 
-							m_wallet, amt, Monitor.stocks.getAnyStockToken() ).waitForHash();
+							m_wallet, amt, Monitor.chain().getAnyStockToken() ).waitForReceipt();
 
 					config().sqlCommand( sql -> sql.insertJson( "log", Util.toJson(
 							"type", LogType.BURN,
@@ -595,7 +588,7 @@ public class WalletPanel extends MonPanel {
 			if (Util.confirm( this, 
 						"Are you sure you want to transfer .01 MATIC from Owner to " + m_wallet ) ) {
 				wrap( () -> {
-					config().matic().transfer(
+					config().chain().blocks().transfer(
 							config().ownerKey(),
 							m_wallet, 
 							.01); 
@@ -794,19 +787,6 @@ public class WalletPanel extends MonPanel {
 	static class LeftFlow extends MyPanel {
 		LeftFlow() {
 			super( new FlowLayout( FlowLayout.LEFT) );
-		}
-	}
-	
-	private void doubleIt(JsonObject rec) throws Exception {
-		String symbol = rec.getString("Symbol");
-		double amt = rec.getDouble( "Balance");
-		StockToken tok = rec.getStock( "stock").getToken();
-		
-		Util.reqValidAddress(m_wallet);
-		
-		if (Util.confirm( this, String.format("You will mint %s %s for %s", amt, symbol, m_wallet) ) ) {
-			config().rusd().mintStockToken( m_wallet, tok, amt).waitForHash();
-			Util.inform( this, "Done");
 		}
 	}
 	

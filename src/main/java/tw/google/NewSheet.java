@@ -213,7 +213,14 @@ public class NewSheet {
 
 			String name() { return  m_name; }
 			
-			public JsonArray queryToJson() throws IOException, Exception {
+			public <T extends Record> ArrayList<T> queryToRecList( Class<T> clas) throws Exception {
+				// must limit the json to the field names in the record class
+				// or converting json to record will fail
+				return queryToJson( Util.getFieldNames( clas) )
+						.toRecord( clas);
+			}
+			
+			public JsonArray queryToJson() throws Exception {
 				JsonArray ar = new JsonArray();
 				
 				for (ListEntry row : fetchRows() ) {
@@ -223,8 +230,7 @@ public class NewSheet {
 				return ar;
 			}
 			
-			public JsonArray queryToJson(String colsIn) throws IOException, Exception {
-				String[] cols = colsIn.split( ",");
+			public JsonArray queryToJson(String[] cols) throws IOException, Exception {
 				
 				JsonArray ar = new JsonArray();
 				
@@ -527,14 +533,22 @@ public class NewSheet {
 				}
 				
 				/** Returns all columns;
+				 *  Does not add null values;
 				 *  returns all strings; could be improved to return ints and doubles */
 				public JsonObject toJson() {
 					JsonObject obj = new JsonObject();
 					for (int i = 0; i < m_headerRow.length && i < m_row.size(); i++) {
-						obj.put( m_headerRow[i], m_row.get( i) );
+						obj.putIf( m_headerRow[i].replaceAll( " ", ""), m_row.get( i) );
 					}
 					return obj;
 				}
+				
+				/** json tags should not begin with upper-case */
+//			    public static String fix(String input) {
+//			        return S.isNull( input)
+//			            ? input
+//			            : Character.toLowerCase(input.charAt(0)) + input.substring(1);
+//			    }
 
 				/** Returns requested columns;
 				 *  returns all strings; could be improved to return ints and doubles 

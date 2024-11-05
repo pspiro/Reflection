@@ -15,7 +15,7 @@ public class TestProfile extends MyTestCase {
 	public void testGetProfile() throws Exception {
 		JsonObject json = createValidProfile();
 		cli().postToJson("/api/get-profile/" + Cookie.wallet, json.toString() );
-		assert200_();
+		assert200();
 		
 		// get-profile requires cookie
 		json.remove("cookie");
@@ -111,7 +111,7 @@ public class TestProfile extends MyTestCase {
 		JsonObject ret = cli().postToJson("/api/get-profile/" + Cookie.wallet, json2.toString() );
 		ret.display();
 
-		assert200_();
+		assert200();
 	}		
 
 	static JsonObject createBigProfile() {

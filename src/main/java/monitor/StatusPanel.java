@@ -7,7 +7,6 @@ import javax.swing.JTextField;
 import common.Util;
 import http.MyClient;
 import positions.MoralisStreams;
-import reflection.Config.Web3Type;
 import tw.util.S;
 import tw.util.VerticalPanel;
 
@@ -49,13 +48,6 @@ class StatusPanel extends MonPanel {
 		p.add( "TWS", f6);
 		p.add( "IB", f7);
 		p.add( "Started", f8);
-		p.addHeader( "FbServer");
-		p.add( "FbServer", f10);
-		p.add( "Started", f11);
-		p.add( "Map size", f12);
-		p.add( "Last error", f13);
-		p.add( "Last successful fetch", f14);
-		p.add( "Last successful put", f15);
 		p.addHeader( "HookServer");
 		p.add( "HookServer", f16);
 		p.add( "Started", f21);
@@ -82,16 +74,6 @@ class StatusPanel extends MonPanel {
 			f7.setText( json.getBool("IB") ? "OK" : "ERROR" );
 			f8.setText( json.getTime("started", Util.yToS) );
 		});
-		
-		if (Monitor.m_config.web3Type() == Web3Type.Fireblocks) {
-			MyClient.getJson( Monitor.m_config.fbBaseUrl() + "/fbserver/status", json -> {
-				f10.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
-				f11.setText( json.getTime("started", Util.yToS) );
-				f12.setText( json.getString("mapSize").toString() );
-				f14.setText( json.getTime( "lastSuccessfulFetch", Util.hhmmss) );
-				f15.setText( json.getTime( "lastSuccessfulPut", Util.hhmmss) );
-			});
-		}
 		
 		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/status", json -> {
 			f16.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );

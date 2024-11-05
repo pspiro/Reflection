@@ -1,6 +1,6 @@
-package refblocks;
+package web3;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 
 /** Add the Refblocks admin to the RUSD created with Fireblocks.
  *  Must be called by the Fireblocks owner.
@@ -9,8 +9,8 @@ import reflection.Config;
  *  it will always be wrong */
 public class AddAdmin {
 	public static void main(String[] args) throws Exception {
-		Config fb = Config.ask( "Dev");
-		Config rb = Config.ask( "Dt2");
+		SingleChainConfig fb = SingleChainConfig.ask( "Dev");
+		SingleChainConfig rb = SingleChainConfig.ask( "Dt2");
 		
 		fb.rusd().addOrRemoveAdmin("Owner", rb.admin1Addr(), true)
 			.displayHash();

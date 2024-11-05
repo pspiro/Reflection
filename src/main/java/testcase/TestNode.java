@@ -9,11 +9,7 @@ import common.Util;
 import tw.util.S;
 import web3.NodeInstance;
 
-public class TestNodeServer extends MyTestCase {
-	static NodeInstance node() {
-		return m_config.node();
-	}
-
+public class TestNode extends MyTestCase {
 	public void testGetBlockNumber() throws Exception {
 		assertTrue( node().getBlockNumber() > 0);
 	}
@@ -24,7 +20,7 @@ public class TestNodeServer extends MyTestCase {
 
 	/** This takes a long time and returns a lot of data */
 //	public void testGetQueued() throws Exception {
-//		NodeServer.getQueuedTrans().display();
+//		node().getQueuedTrans().display();
 //	}
 	
 	public void testGetNativeBal() throws Exception {
@@ -48,7 +44,7 @@ public class TestNodeServer extends MyTestCase {
 	}
 	
 	public void testGetAllowance() throws Exception {
-		assertTrue( node().getAllowance( m_config.rusdAddr(), NodeInstance.prod, NodeInstance.prod, 6) >= 0); 
+		assertTrue( m_config.chain().busd().getAllowance( NodeInstance.prod, m_config.rusdAddr() ) >= 0); 
 	}
 
 	public void testGetDecimals() throws Exception {
@@ -59,7 +55,7 @@ public class TestNodeServer extends MyTestCase {
 	public void testReqPosMap() throws Exception {
 		Map<String, Double> map = node().reqPositionsMap( 
 				NodeInstance.prod,
-				stocks.getAllContractsAddresses(),
+				chain.getAllContractsAddresses(),
 				18);
 		new JsonObject( map).display();
 		assertTrue( map.size() > 1);
@@ -93,8 +89,8 @@ public class TestNodeServer extends MyTestCase {
 
 	public void test() throws Exception {
 		Util.wrap( () -> {
-			m_config.rusd().mintRusd( Cookie.wallet, 1, stocks.getAnyStockToken() )
-				.waitForHash();
+			m_config.rusd().mintRusd( Cookie.wallet, 1, chain.getAnyStockToken() )
+				.waitForReceipt();
 		});
 	}
 }

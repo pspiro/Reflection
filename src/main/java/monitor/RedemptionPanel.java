@@ -48,7 +48,7 @@ public class RedemptionPanel extends QueryPanel {
 			Monitor.m_logPanel.filterByUid(val.toString());
 			break;
 		case "blockchain_hash":
-			Util.browse( config().blockchainTx( val.toString() ) );
+			Util.browse( config().chain().blockchainTx( val.toString() ) );
 			break;
 		default:
 			super.onDouble(tag, val);
@@ -114,7 +114,7 @@ public class RedemptionPanel extends QueryPanel {
 		// don't tie up the UI thread
 		Util.executeAndWrap( () -> {
 			String hash = rusd.sellRusd(walletAddr, busd, rusdPos)
-					.waitForHash();
+					.waitForReceipt();
 
 			// update redemptions table in DB and screen
 			String sql = String.format( 

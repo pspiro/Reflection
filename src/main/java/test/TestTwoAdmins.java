@@ -7,9 +7,7 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config;
-import reflection.Stocks;
-import tw.google.NewSheet;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 /** This test proves that more admins are quicker. One admin 
@@ -97,16 +95,12 @@ public class TestTwoAdmins {
 		System.exit(0);
 	}
 	
-	public static void mint(String wallet, double amt, Config config) throws Exception {
-
-		Stocks stocks = new Stocks();
-		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), config);
-		
-		config.rusd().mintRusd( wallet, amt, stocks.getAnyStockToken() )
-			.waitForHash();
+	public static void mint(String wallet, double amt, SingleChainConfig config) throws Exception {
+		config.rusd().mintRusd( wallet, amt, config.chain().getAnyStockToken() )
+			.waitForReceipt();
 	}
 
-	private static void createUserProfile(String wallet, Config config) throws Exception {
+	private static void createUserProfile(String wallet, SingleChainConfig config) throws Exception {
 		JsonObject o = new JsonObject();
 		o.put( "wallet_public_key", wallet);
 		o.put( "first_name", "peter");

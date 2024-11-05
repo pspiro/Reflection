@@ -1,4 +1,4 @@
-package reflection;
+package chain;
 
 import com.ib.client.Types.Action;
 
@@ -6,7 +6,7 @@ import com.ib.client.Types.Action;
 public enum Allow {
 	Buy, Sell, All, None;
 
-	boolean allow(Action side) {
+	public boolean allow(Action side) {
 		return this == All || this.toString().equalsIgnoreCase(side.toString());
 	}
 }

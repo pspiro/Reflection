@@ -1,6 +1,7 @@
 package reflection;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.json.simple.JsonObject;
@@ -11,6 +12,8 @@ import common.Util;
 import tw.util.S;
 
 public class Prices {
+	static class AllPrices extends ArrayList<Prices> {}
+	
 	public static final Prices NULL = new Prices();
 	
 	public static String TOO_LOW = "Your order was not filled because the price was too low; try refreshing the token price and resubmitting the order"; // // this is displayed to user
@@ -60,7 +63,7 @@ public class Prices {
 		return m_ask >= 1;
 	}
 
-	public void checkOrderPrice(Order order, double orderPrice, Config config) throws RefException {
+	public void checkOrderPrice(Order order, double orderPrice) throws RefException {
 		if (order.isBuy() ) {
 			Main.require( validAsk(), RefCode.NO_PRICES, NO_PRICE, "ask");
 			Main.require( orderPrice >= m_ask, RefCode.INVALID_PRICE, TOO_LOW);  // this is displayed to user
@@ -77,16 +80,16 @@ public class Prices {
 	}
 	
 	/** Used for display on the Watch List */
-	double anyBid() {
+	public double anyBid() {
 		return validBid() ? m_bid : validLast() ? m_last - .05 : 0;
 	}
 
 	/** Used for display on the Watch List */
-	double anyAsk() {
+	public double anyAsk() {
 		return validAsk() ? m_ask : validLast() ? m_last + .05 : 0;
 	}
 
-	boolean validLast() {
+	public boolean validLast() {
 		return m_last > 0;
 	}
 	

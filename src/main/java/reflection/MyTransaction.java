@@ -1,5 +1,6 @@
 package reflection;
 
+import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.io.InputStreamReader;
@@ -18,6 +19,7 @@ import org.json.simple.parser.ParseException;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import chain.Chain;
 import common.Alerts;
 import common.Util;
 import common.Util.ExRunnable;
@@ -44,6 +46,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	protected Main m_main;
 	protected String m_walletAddr;  // must be mixed case or cookie validation will not work
 	protected ParamMap m_map = new ParamMap();  // this is a wrapper around JsonObject that adds functionality; could be reassigned
+	private Chain m_chain;
 
 	MyTransaction( Main main, HttpExchange exchange) {
 		this( main, exchange, true);
@@ -108,8 +111,8 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** don't throw an exception here, it should not disrupt any other process */
 	protected static void alert(String subject, String body) {
-		if (Main.m_config.isProduction() ) {
-			String text = String.format( "blockchain: %s\n\n%s", Main.m_config.moralisPlatform(), body);
+		if (m_config.isProduction() ) {
+			String text = String.format( "blockchain: %s\n\n%s", m_config.moralisPlatform(), body);
 			Alerts.alert( "RefAPI", subject, text);
 		}
 		else {
@@ -119,7 +122,8 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
 	 *  They could just send the nonce, it's the only part of the cookie we are using
-	 *  @param caller is a string describing the caller used for error msg only */
+	 *  @param caller is a string describing the caller used for error msg only
+	 *  @return siwe message, call getSiweMessage() */
 	JsonObject validateCookie(String caller) throws Exception {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
 		// we can take cookie from map or header
@@ -130,12 +134,25 @@ public abstract class MyTransaction extends BaseTransaction {
 //		}
 		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
-		return SiweTransaction.validateCookie( cookie, m_walletAddr);
+		var siweMsg = SiweTransaction.validateCookie( cookie, m_walletAddr);
+
+		int chainId = siweMsg.getSiweMessage().getChainId();
+		m_chain = m_config.chain( chainId);
+		Util.require( m_chain != null, "invalid chain id %s", chainId);
+		
+		return siweMsg;
+	}
+
+	/** return the Chain from the chain id on the cookie;
+	 * 	you must call validateCookie() before calling this method */
+	public Chain chain() throws Exception {
+		Util.require( m_chain != null, "call validateCookie() before chain()");
+		return m_chain;
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */
-	void returnPrice(int conid, boolean csv) throws RefException {
-		Prices prices = m_main.getStock(conid).prices();
+	void returnPrice(int conid, boolean csv) throws Exception {
+		Prices prices = m_main.stocks().getStockByConid(conid).prices();
 		require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 
 		// this is used by the google sheet to display prices
@@ -169,7 +186,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	
 	/** return existing User object or null */
 	protected JsonObject getUser() throws Exception {
-		JsonArray ar = Main.m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+		JsonArray ar = m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
 		return ar.size() == 0 ? null : ar.get( 0);
 	}
 

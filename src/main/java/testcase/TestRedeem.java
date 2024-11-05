@@ -28,7 +28,7 @@ public class TestRedeem extends MyTestCase {
 		
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
-			m_config.mintBusd( refWallet, 2000).waitForHash();
+			m_config.mintBusd( refWallet, 2000).waitForReceipt();
 		}
 		
 		// mint some RUSD to new wallet 
@@ -95,7 +95,7 @@ public class TestRedeem extends MyTestCase {
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			S.out( "minting");
 			m_config.mintBusd( refWallet, 2000)
-					.waitForHash();
+					.waitForReceipt();
 		}
 		
 		// mint an amount of RUSD
@@ -107,7 +107,7 @@ public class TestRedeem extends MyTestCase {
 		m_config.rusd().sellRusd(
 				Cookie.wallet, 
 				m_config.busd(), 
-				3).waitForHash(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
+				3).waitForReceipt(); // rounds to 4 decimals, but RUSD can take 6; this should fail if user has 1.00009 which would get rounded up
 
 		System.exit(0);
 		
@@ -139,16 +139,17 @@ public class TestRedeem extends MyTestCase {
 	 */
 	public void testInsufAndRedeem() throws Exception {
 		Util.require( !m_config.isProduction(), "No!"); // DO NOT run in production as the crypto sent to these wallets could never be recovered 
-		S.out( "***testRedeem");
 
 		// make sure we have some BUSD in RefWallet
 		if (m_config.busd().getPosition(refWallet) < 10) {
 			m_config.mintBusd( refWallet, 2000)
-					.waitForHash();
+					.waitForReceipt();
 		}
 		
 		// mint an amount of RUSD that should work--high 
 		Cookie.setNewFakeAddress( true);
+		S.out( "***testInsufAndRedeem with wallet " + Cookie.wallet);
+
 		mintRusd(Cookie.wallet, 9);
 		
 		// fail, too low
@@ -159,8 +160,8 @@ public class TestRedeem extends MyTestCase {
 		// clear approved amount
 		S.out( "clearing allowance");
 		m_config.busd().approve(
-				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt() );
+				m_config.refWalletKey(), m_config.rusdAddr(), 1).waitForReceipt(); // $1M
+		S.out( "approved: " + chain().getApprovedAmt() );
 
 		// redeem RUSD, fail due to allowance
 		S.out( "sending redemption request to fail");
@@ -170,8 +171,8 @@ public class TestRedeem extends MyTestCase {
 		// restore approved amount
 		S.out( "restoring allowance");
 		m_config.busd().approve(
-				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForHash(); // $1M
-		S.out( "approved: " + m_config.getApprovedAmt() );
+				m_config.refWalletKey(), m_config.rusdAddr(), 1000000000).waitForReceipt(); // $1M
+		S.out( "approved: " + chain().getApprovedAmt() );
 		
 		
 		// wait for it to solidify
@@ -210,8 +211,7 @@ public class TestRedeem extends MyTestCase {
 		mintRusd( Cookie.wallet, m_config.maxAutoRedeem() + 1);
 
 		// fail with INSUFFICIENT_FUNDS due to exceeding maxAutoRedeem value
-		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( "cookie", Cookie.cookie).toString() )
-			.display();
+		cli().postToJson( "/api/redemptions/redeem/" + Cookie.wallet, Cookie.getJson() ).display();
 		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
 	}
 	
@@ -238,21 +238,21 @@ public class TestRedeem extends MyTestCase {
 
 		// invalid address (wrong length)
 		cli().addHeader("Cookie", Cookie.cookie)
-			.get("/api/redemptions/redeem/" + Cookie.wallet + "a");
+			.post("/api/redemptions/redeem/" + Cookie.wallet + "a", Cookie.getJson() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
 		
 		// wrong address (must match cookie)
 		String wallet = ("0xaaa" + Cookie.wallet).substring(0, 42);
 		cli().addHeader("Cookie", Cookie.cookie)
-			.get("/api/redemptions/redeem/" + wallet);
+			.post("/api/redemptions/redeem/" + wallet, Cookie.getJson() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
 	
 	public void testFailNoCookie() throws Exception {
 		S.out( "***testFailNoCookie");
-		cli().get("/api/redemptions/redeem/" + Cookie.wallet);
+		cli().post("/api/redemptions/redeem/" + Cookie.wallet, Cookie.getJson() );
 		S.out( "fail: " + cli.readString() );
 		assertEquals(400, cli.getResponseCode() );
 	}

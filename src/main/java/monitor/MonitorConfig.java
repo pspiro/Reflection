@@ -2,11 +2,11 @@ package monitor;
 
 import javax.swing.JOptionPane;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
 
-public class MonitorConfig extends Config {
+public class MonitorConfig extends SingleChainConfig {
 	private String mdBaseUrl;	// does not end with /
 	private String fbBaseUrl;
 	private String hookBaseUrl;

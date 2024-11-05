@@ -324,4 +324,14 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		}
 		return json;
 	}
+	
+	public <T extends Record> ArrayList<T> toRecord(Class<T> clas) throws Exception {
+		ArrayList<T> list = new ArrayList<>();
+
+		for (var item : this) {
+			list.add( item.toRecord( clas) );
+		}
+		
+		return list;
+	}
 }

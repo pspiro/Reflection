@@ -13,8 +13,10 @@ import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
 import com.ib.controller.ApiController;
 
+import chain.Stocks.Stock;
 import common.Util;
 import redis.MdServer;
+import reflection.Config.MultiChainConfig;
 import tw.util.S;
 import util.LogType;
 
@@ -28,9 +30,9 @@ public class TradingHours {
     private ApiController m_controller;
 	private HashMap<String,ContractDetails> m_map = new HashMap<>();  // map exchange to trading hours; there will be two entries, one for SMART, and one for OVERNIGHT
 	private boolean m_started;
-	private Config m_config; // could be null
+	private MultiChainConfig m_config; // could be null
 	
-	public TradingHours(ApiController main, Config config) {
+	public TradingHours(ApiController main, MultiChainConfig config) {
 		m_controller = main;
 		m_config = config;
 	}
@@ -125,7 +127,7 @@ public class TradingHours {
 	Session getTradingSession( boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script
-		if (Main.m_config.autoFill() && S.isNull(simTime) ) {
+		if (!Main.m_config.isProduction() && S.isNull(simTime) ) {
 			return Session.Smart;  // for testing only
 		}
 		
@@ -149,7 +151,7 @@ public class TradingHours {
 		
 		return insideHours( "SMART", now)
 				? Session.Smart
-				: stock.is24Hour() && insideHours( MdServer.Overnight, now) 
+				: stock.rec().is24Hour() && insideHours( MdServer.Overnight, now) 
 					? Session.Overnight 
 					: Session.None;
 	}

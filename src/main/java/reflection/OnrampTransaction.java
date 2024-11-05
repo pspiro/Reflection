@@ -66,6 +66,8 @@ public class OnrampTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("onramp-convert");
 			
+			Util.require( chain().params().isPulseChain(), "On-ramp supported for PulseChain only");
+			
 			var user = getorCreateUser();
 			String onrampId = user.getString( "onramp_id");  // cust id and phone
 
@@ -115,7 +117,7 @@ public class OnrampTransaction extends MyTransaction {
 						onrampId,
 						buyAmt,
 						currency,
-						m_config.refWalletAddr(),
+						chain().params().refWalletAddr(),
 						receiveAmt);
 				out( "Submitted onramp order, received: " + submission);
 				

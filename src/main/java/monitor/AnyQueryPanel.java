@@ -1,7 +1,6 @@
 package monitor;
 
 import java.awt.BorderLayout;
-import java.util.Vector;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -83,12 +82,8 @@ class AnyQueryPanel extends JsonPanel {
 			return getSelected() != null ? getSelected().toString() : null;
 		}
 		
-		void set( Vector data) {
-			setModel( new DefaultComboBoxModel( data) );			
-		}
-		
 		void set( Object[] data) {
-			setModel( new DefaultComboBoxModel( data) );			
+			setModel( new DefaultComboBoxModel<Object>( data) );			
 		}
 	}
 	

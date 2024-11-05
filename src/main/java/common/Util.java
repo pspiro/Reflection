@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
@@ -883,7 +884,7 @@ public class Util {
 	}
 
 	/** Return true if obj2 equals any of the others */
-	public static <T> boolean equals(T obj1, T... others) {
+	@SafeVarargs public static <T> boolean equals(T obj1, T... others) {
 		for (T obj2 : others) {
 			if (obj2.equals( obj1) ) {
 				return true;
@@ -969,4 +970,17 @@ public class Util {
 	public static String input( Component parent, String prompt, Object defVal) {
 		return JOptionPane.showInputDialog(parent, prompt, defVal);
 	}
+	
+	public static String notNullMsg( Exception e) {
+		return S.isNotNull( e.getMessage() ) 
+				? e.getMessage() : 
+				S.isNotNull( e.toString() ) ? e.toString() : e.getClass().toString();
+	}
+
+	/** return list of field names for a record */
+    public static String[] getFieldNames(Class<?> clas) {
+        return Arrays.stream(clas.getDeclaredFields())
+                .map(Field::getName)
+                .toArray(String[]::new);
+    }
 }

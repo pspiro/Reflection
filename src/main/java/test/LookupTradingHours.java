@@ -7,7 +7,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ConnectionAdapter;
 
 import common.Util;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 public class LookupTradingHours extends ConnectionAdapter {
@@ -20,7 +20,7 @@ public class LookupTradingHours extends ConnectionAdapter {
 	}
 
 	LookupTradingHours() throws Exception {
-		Config config = Config.readFrom("Dt-config");
+		SingleChainConfig config = SingleChainConfig.readFrom("Dt-config");
 		m_controller.connect(config.twsOrderHost(), config.twsOrderPort(), 9284, null);
 	}
 

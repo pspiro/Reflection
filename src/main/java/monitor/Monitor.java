@@ -2,6 +2,7 @@ package monitor;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
+import java.util.Collection;
 
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -13,19 +14,21 @@ import javax.swing.JTextField;
 
 import org.json.simple.JsonArray;
 
+import chain.Chain;
+import chain.Stocks;
+import chain.Stocks.Stock;
 import common.JsonModel;
 import common.Util;
 import http.MyClient;
 import monitor.UsersPanel.PersonaPanel;
 import onramp.Onramp;
 import redis.MyRedis;
-import reflection.Stock;
-import reflection.Stocks;
 import tw.google.NewSheet;
 import tw.util.DualPanel;
 import tw.util.NewLookAndFeel;
 import tw.util.NewTabbedPanel;
 import tw.util.S;
+import web3.StockToken;
 
 // use this to query wallet balances, it is super-quick and returns all the positions for the wallet
 // https://deep-index.moralis.io/api/v2/:address/erc20	
@@ -35,9 +38,10 @@ public class Monitor {
 	static final String farDate = "12-31-2999";
 	static final String moralis = "https://deep-index.moralis.io/api/v2";
 	static final String apiKey = "2R22sWjGOcHf2AvLPq71lg8UNuRbcF8gJuEX7TpEiv2YZMXAw4QL12rDRZGC9Be6";
-	public static final Stocks stocks = new Stocks();
 
 	public static MonitorConfig m_config;
+	public static final Stocks stocks = new Stocks();
+	
 	static MyRedis m_redis;
 	static NewTabbedPanel m_tabs;
 	static LogPanel m_logPanel;
@@ -61,6 +65,7 @@ public class Monitor {
 		
 		// read config
 		m_config = MonitorConfig.ask();
+		stocks.readFromSheet();
 		
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
@@ -72,11 +77,6 @@ public class Monitor {
 		m_config.useExternalDbUrl();
 		S.out( "Read %s tab from google spreadsheet %s", m_config.getTabName(), NewSheet.Reflection);
 		S.out( "Using database %s", m_config.postgresUrl() );
-
-		// read stocks
-		S.out( "Reading stock list from google sheet");
-		stocks.readFromSheet( NewSheet.getBook( NewSheet.Reflection), Monitor.m_config);
-		S.out( "  done");
 
 		Util.require( S.isNotNull(m_config.baseUrl()), "baseUrl setting missing from config");
 		
@@ -111,7 +111,6 @@ public class Monitor {
 		m_tabs.addTab( "Redemptions", new RedemptionPanel() );
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
-		m_tabs.addTab( "FbServer", new FbServerPanel() );
 		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
@@ -169,24 +168,6 @@ public class Monitor {
 		}
 		
 		@Override public void refresh() throws Exception {
-		}
-	}
-	
-	static class FbServerPanel extends JsonPanel {
-		FbServerPanel() {
-			super( new BorderLayout(), "id,status,createdAt");
-			add( m_model.createTable() );  // don't move this, WalletPanel adds to a different place
-		}
-		
-		@Override protected Object format(String key, Object value) {
-			return key.equals("createdAt") ? Util.hhmmss.format(value) : value;
-		}
-		
-		@Override  // this is wrong, should use base url
-		public void refresh() throws Exception {
-			JsonArray ar = MyClient.getArray(m_config.fbBaseUrl() + "/fbserver/get-all");
-			setRows( ar);
-			m_model.fireTableDataChanged();
 		}
 	}
 	
@@ -250,8 +231,19 @@ public class Monitor {
 		if (address.equalsIgnoreCase( m_config.busd().address())) {
 			return m_config.busd().name();
 		}
-		Stock stock = stocks.getStockByTokenAddr(address);
-		return stock != null ? stock.symbol() : "Unknown";
+		var token = chain().getTokenByAddress(address);
+		return token != null ? token.name() : "Unknown";
 	}
-
+	
+	static Chain chain() {
+		return m_config.chain();
+	}
+	
+	static Collection<StockToken> tokens() {
+		return chain().tokens();
+	}
+	
+	static Collection<Stock> stocks() {
+		return stocks.stocks();
+	}
 }

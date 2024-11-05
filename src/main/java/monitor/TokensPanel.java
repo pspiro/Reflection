@@ -20,7 +20,7 @@ public class TokensPanel extends JsonPanel {
 	private HoldersPanel m_holdersPanel = new HoldersPanel();
 	
 	TokensPanel() {
-		super( new BorderLayout(), "symbol,conid,smartcontractid,tokens,position,dif,isHot");
+		super( new BorderLayout(), "symbol,conid,address,tokenSupply,position,dif");
 		add( m_model.createTable() );
 		add( m_holdersPanel, BorderLayout.EAST);
 		m_model.justify("lllrr");
@@ -29,7 +29,7 @@ public class TokensPanel extends JsonPanel {
 	@Override protected void onDouble(String tag, Object val) {
 		if (tag.equals( "smartcontractid")) {
 			try {
-				m_holdersPanel.refresh( new StockToken( val.toString() ) );
+				m_holdersPanel.refresh( new StockToken( val.toString(), config().chain() ) );
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -44,16 +44,20 @@ public class TokensPanel extends JsonPanel {
 		
 		// start with the stocks from the spreadsheet and add each to the map
 		// this shows active stocks only
-		Monitor.stocks.stocks().forEach( stock -> {
-			rows().add(stock);
-			m_map.put(stock.getInt("conid"), stock);
+		Monitor.tokens().forEach( token -> {
+			var row = Util.toJson( 
+					"conid", token.conid(),
+					"address", token.address() );
+			rows().add( row);
+					
+			m_map.put( token.rec().conid(), row);
 		});
 		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 		
 		// add IB positions
 		MyClient.getArray(Monitor.refApiBaseUrl() + "/api/?msg=getpositions", positions -> {
 			positions.forEach( position ->
-				getOrCreate( position.getInt("conid") )
+				getOrCreateRow( position.getInt("conid") )
 					.put( "position", position.get("position") )
 			);
 			SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
@@ -64,18 +68,19 @@ public class TokensPanel extends JsonPanel {
 		// note that if there are stocks for which we have an IB position but are not in the spreadsheet,
 		// we won't query for the blockchain position
 		Util.execute( () -> {
-			Monitor.stocks.forEach( stock -> {
+			Monitor.tokens().forEach( token -> {
 				wrap( () -> {
-					double supply = stock.queryTotalSupply();
-					S.out( "Total supply for %s is %s", stock.getString("symbol"), supply);
-					stock.put("tokens", supply);
+					double supply = token.queryTotalSupply();
+					S.out( "Total supply for %s is %s", token.name(), supply);
+					var row = getOrCreateRow( token.conid() );
+					row.put("tokenSupply", supply);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
 				});
 			});
 		});
 	}
 	
-	private JsonObject getOrCreate(int conid) {
+	private JsonObject getOrCreateRow(int conid) {
 		return Util.getOrCreate(m_map, conid, () -> {
 			JsonObject obj = new JsonObject();
 			obj.put("conid", String.valueOf(conid) );

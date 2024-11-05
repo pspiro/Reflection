@@ -3,9 +3,10 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import web3.NodeServer;
+import common.Util;
+import web3.NodeInstance;
 
-public class TestWallet extends MyTestCase {
+public class TestMyWallet extends MyTestCase {
 	static String empty = "0x3695889Ef1b0aC4F8d0479BCdb29fC5369C219ad";
 	
 	public void testBadWallet() throws Exception {
@@ -14,7 +15,7 @@ public class TestWallet extends MyTestCase {
 	
 	public void testBadToken() throws Exception {
 		try {
-			NodeServer.getBalance( empty, Cookie.wallet, 22);
+			node().getBalance( empty, Cookie.wallet, 22);
 		}
 		catch( Exception e) {
 			return; // should come here
@@ -28,7 +29,12 @@ public class TestWallet extends MyTestCase {
 	}
 
 	public void testMyWallet() throws Exception {
-		JsonObject obj = cli().get("/api/mywallet/" + Cookie.wallet).readJsonObject();
+		Cookie.setWalletAddr(NodeInstance.prod);
+		var param = Util.toJson( "cookie", Cookie.cookie);
+				
+		JsonObject obj = cli().postToJson("/api/mywallet/" + Cookie.wallet, param);
+		assert200();
+		
 		obj.display("My Wallet");
 		
 		assertTrue( obj.getInt("refresh") > 100);
@@ -37,17 +43,13 @@ public class TestWallet extends MyTestCase {
 		
 		JsonObject tok;
 		
-//		tok = ar.getJsonObj(0);  // moved to TestRedeem
-//		assertEquals("RUSD", tok.getString("name"));
-//		assertTrue( tok.getDouble("balance") > 0 );
-
 		tok = ar.getJsonObj(1);
 		assertEquals("BUSD", tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 		assertTrue( tok.getDouble("approvedBalance") > 0 );
 
 		tok = ar.getJsonObj(2);
-		assertEquals("MATIC", tok.getString("name"));
+		assertEquals(m_config.chain().params().platformBase(), tok.getString("name"));
 		assertTrue( tok.getDouble("balance") > 0 );
 	}
 }

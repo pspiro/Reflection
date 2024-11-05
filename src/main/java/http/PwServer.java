@@ -5,6 +5,7 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 
+/** This program runs in a google cloud run and retrieves the password from a google secret */
 public class PwServer {
 	public static void main(String[] args) throws Exception {
 		// make sure it will parse w/ no error but don't keep it in memory

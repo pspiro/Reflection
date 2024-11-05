@@ -5,7 +5,7 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 
 import monitor.Monitor;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import web3.NodeInstance.Transfer;
 
 public class BlockPanelBase extends JPanel {
@@ -28,7 +28,7 @@ public class BlockPanelBase extends JPanel {
 	}
 
 	// not used
-	protected boolean weCare(Transfer trans) {
+	protected boolean weCare(Transfer trans) throws Exception {
 		return isRusd( trans) || isBusd( trans) || isStock( trans);
 	}
 
@@ -48,11 +48,11 @@ public class BlockPanelBase extends JPanel {
 		return trans.to().equalsIgnoreCase( RefWallet);
 	}
 
-	protected boolean isRusd(Transfer obj) {
+	protected boolean isRusd(Transfer obj) throws Exception {
 		return obj.contract().equalsIgnoreCase( config().rusd().name() ); 
 	}
 
-	protected boolean isBusd(Transfer obj) {
+	protected boolean isBusd(Transfer obj) throws Exception {
 		return obj.contract().equalsIgnoreCase( config().busd().name() );
 	}
 
@@ -69,7 +69,7 @@ public class BlockPanelBase extends JPanel {
 		return obj.to().equals( nullAddr);
 	}
 	
-	static Config config() {
+	static SingleChainConfig config() {
 		return Monitor.m_config;
 	}
 }

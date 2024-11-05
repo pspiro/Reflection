@@ -1,19 +1,17 @@
 package positions;
 
 import common.Util;
-import positions.HookServer.MoralisStreamMgr;
-import positions.HookServer.StreamMgr;
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.google.NewSheet.Book.Tab;
-import tw.util.S;
 
-public class HookConfig extends Config {
+public class HookConfig extends SingleChainConfig {
 	public enum HookType { None, Moralis, Alchemy }
 
 	private HookType hookType;
 	private String alchemyChain;
 	private String hookServerUrlBase; // webhook url passed to Moralis
 	private boolean noStreams;
+	private int hookServerPort;
 
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		super.readFromSpreadsheet(tab);
@@ -30,6 +28,8 @@ public class HookConfig extends Config {
 		if (hookType == HookType.Alchemy) {
 			this.alchemyChain = m_tab.getRequiredString( "alchemyChain");
 		}
+		
+		this.hookServerPort = m_tab.getRequiredInt( "hookServerPort");
 	}		
 
 	public HookType hookType() {
@@ -46,5 +46,9 @@ public class HookConfig extends Config {
 	
 	public String alchemyChain() {
 		return alchemyChain;
+	}
+
+	public int hookServerPort() {
+		return hookServerPort;
 	}
 }

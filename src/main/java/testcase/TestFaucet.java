@@ -1,6 +1,7 @@
 package testcase;
 
 import common.Util;
+import tw.util.S;
 
 public class TestFaucet extends MyTestCase {
 	public void testShow() throws Exception {
@@ -8,11 +9,13 @@ public class TestFaucet extends MyTestCase {
 		Cookie.setNewFakeAddress(false);
 		
 		// show-faucet still succeeds
-		var json = cli().getJson("/api/show-faucet/" + Cookie.wallet);
+		S.out( "show faucet success");
+		var json = cli().postToJson("/api/show-faucet/" + Cookie.wallet, Cookie.getJson() );
 		assert200(); 
 		assertEquals( json.getDouble( "amount"), m_config.faucetAmt() );
 
 		// fails, no user id
+		S.out( "fail show faucet");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
 				"cookie", Cookie.cookie,
 				"wallet_public_key", Cookie.wallet))
@@ -23,20 +26,24 @@ public class TestFaucet extends MyTestCase {
 		Cookie.setNewFakeAddress(true);
 
 		// show faucet
-		double amount = cli().getJson("/api/show-faucet/" + Cookie.wallet)
+		S.out( "show faucet succeed - " + Cookie.wallet);
+		double amount = cli().postToJson("/api/show-faucet/" + Cookie.wallet, Cookie.getJson() )
 				.getDouble( "amount");
 		assert200(); 
 		assertEquals( m_config.faucetAmt(), amount);
 		
 		// fund wallet
+		S.out( "turn faucet succeed");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
 				"cookie", Cookie.cookie,
 				"wallet_public_key", Cookie.wallet))
 			.getDouble( "amount");
 		assert200(); // succeed
 		waitFor(30, () -> m_config.node().getNativeBalance(Cookie.wallet) == amount); // confirm balance in wallet
+		S.out( "  received native token");
 		
 		// fail second time
+		S.out( "fail turn faucet");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
 				"cookie", Cookie.cookie,
 				"wallet_public_key", Cookie.wallet))
@@ -44,7 +51,7 @@ public class TestFaucet extends MyTestCase {
 		assert400();
 		
 		// should no longer show faucet (returns zero)
-		double amt2 = cli().getJson("/api/show-faucet/" + Cookie.wallet).getDouble( "amount");
+		double amt2 = cli().postToJson("/api/show-faucet/" + Cookie.wallet, Cookie.getJson() ).getDouble( "amount");
 		assert200(); 
 		assertEquals( 0.0, amt2);
 		
@@ -52,7 +59,7 @@ public class TestFaucet extends MyTestCase {
 		assertEquals( amount, Cookie.getUser()
 				.getObjectNN( "locked")
 				.getObjectNN( "faucet")
-				.getDouble( m_config.blockchainName() ) );
+				.getDouble( "Sepolia") );
 		
 	}
 

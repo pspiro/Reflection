@@ -5,11 +5,11 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import chain.Stocks;
 import common.Alerts;
 import common.Util;
 import http.SimpleTransaction;
-import reflection.Config;
-import reflection.Stocks;
+import reflection.SingleChainConfig;
 import tw.util.S;
 import util.LogType;
 import web3.NodeInstance.Transfer;
@@ -35,10 +35,10 @@ public class OnrampServer {
 			"-2", "The user has abandoned the transaction",
 			"-1", "The transaction has exceeded the allowable time limit");  
 	
-	private final Config m_polygon;
-	private final Config m_pulsechain;
-	private HashMap<String, JsonObject> map = new HashMap<>(); // map onramp transId to onramp record
-	private Stocks m_stocks;
+	private final SingleChainConfig m_polygon;
+	private final SingleChainConfig m_pulsechain;
+	private final HashMap<String, JsonObject> map = new HashMap<>(); // map onramp transId to onramp record
+	private final Stocks m_stocks = new Stocks();
 	private boolean m_testMode;
 
 	public static void main(String[] args) throws Exception {
@@ -54,9 +54,8 @@ public class OnrampServer {
 	}
 
 	public OnrampServer() throws Exception {
-		m_polygon = Config.readFrom( "Prod-config");  // must come first! because Config.read() sets the NodeServer instance
-		m_pulsechain = Config.readFrom( "Pulse-config");  // must come second!
-		m_stocks = m_pulsechain.readStocks();
+		m_polygon = SingleChainConfig.readFrom( "Prod-config");
+		m_pulsechain = SingleChainConfig.readFrom( "Pulse-config");
 		Util.executeEvery(0, poll, this::check);
 	}
 	
@@ -153,8 +152,8 @@ public class OnrampServer {
 					String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
 							wallet, 
 							received.amount(), 
-							m_stocks.getAnyStockToken()
-							).waitForHash();
+							m_pulsechain.chain().getAnyStockToken()
+							).waitForReceipt();
 					
 					// update database again that it was successful
 					updateState( State.Completed, reflToUserHash, id);
@@ -222,7 +221,7 @@ public class OnrampServer {
 				.replace( "#username#", username)
 				.replace( "#wallet#", wallet)
 				.replace( "#amount#", S.fmt2( amount) )
-				.replace( "#link#", m_pulsechain.blockchainTx(hash) );
+				.replace( "#link#", m_pulsechain.chain().blockchainTx(hash) );
 		
 		m_pulsechain.sendEmail( 
 				user.getString( "email"), 

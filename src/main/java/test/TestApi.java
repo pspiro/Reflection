@@ -11,7 +11,7 @@ import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.ib.controller.ConnectionAdapter;
 
-import reflection.Config;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 public class TestApi extends ConnectionAdapter {
@@ -27,7 +27,7 @@ public class TestApi extends ConnectionAdapter {
 	}
 	
 	void run(String[] args) throws Exception {
-		Config m_config = Config.ask();
+		SingleChainConfig m_config = SingleChainConfig.ask();
 		
 		m_conn.connect( m_config.twsOrderHost(), m_config.twsOrderPort(), 776, "");
 	}

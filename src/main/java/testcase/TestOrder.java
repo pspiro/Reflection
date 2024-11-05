@@ -121,7 +121,7 @@ public class TestOrder extends MyTestCase {
 
 	// fill order buy order
 	public void testFillBuy() throws Exception {
-		StockToken stockToken = stocks.getStockByConid(265598).getToken();
+		StockToken stockToken = chain.getTokenByConid(265598);
 		
 		S.out( "pos: " + stockToken.getPosition( Cookie.wallet) );
 
