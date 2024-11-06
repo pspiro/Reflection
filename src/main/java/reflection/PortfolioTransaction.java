@@ -26,7 +26,7 @@ public class PortfolioTransaction extends MyTransaction {
 			// read wallet address into m_walletAddr (last token in URI)
 			parseMsg();
 			getWalletFromUri();
-			validateCookie( "positionsNew");
+			validateCookiee( "positionsNew");
 
 			String url = String.format( "http://localhost:%s/hook/get-wallet/%s", 
 					chain().params().hookServerPort(), m_walletAddr.toLowerCase() );

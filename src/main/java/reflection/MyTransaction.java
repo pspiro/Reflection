@@ -120,6 +120,16 @@ public abstract class MyTransaction extends BaseTransaction {
 		}
 	}
 
+	/** temporary method, remove after frontend with unified URL is released */
+	void validateCookiee(String caller) throws Exception {
+		try {
+			validateCookie( caller);
+		}
+		catch( Exception e) {
+			m_chain = m_config.defaultChain();
+		}
+	}
+
 	/** Validate the cookie or throw exception, and update the access time on the cookie.
 	 *  They could just send the nonce, it's the only part of the cookie we are using
 	 *  @param caller is a string describing the caller used for error msg only
@@ -137,7 +147,7 @@ public abstract class MyTransaction extends BaseTransaction {
 		var siweMsg = SiweTransaction.validateCookie( cookie, m_walletAddr);
 
 		int chainId = siweMsg.getSiweMessage().getChainId();
-		m_chain = m_config.chain( chainId);
+		m_chain = m_config.getChain( chainId);
 		Util.require( m_chain != null, "invalid chain id %s", chainId);
 		
 		return siweMsg;

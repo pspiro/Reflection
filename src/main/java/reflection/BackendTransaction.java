@@ -246,7 +246,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookie("mywallet");
+			validateCookiee("mywallet");
 			
 			String url = String.format( "http://localhost:%s/hook/mywallet/%s",
 					chain().params().hookServerPort(), m_walletAddr);
@@ -280,7 +280,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookie("all-stocks");
+			validateCookiee("all-stocks");
 			
 			respond( chain().getAllStocks( m_main.stocks() ) );
 		});
@@ -444,7 +444,7 @@ public class BackendTransaction extends MyTransaction {
 			Util.reqValidAddress(m_walletAddr);
 			
 			parseMsg();
-			validateCookie( "tradingDynamic");
+			validateCookiee( "tradingDynamic");
 			
 			int conid = Integer.parseInt( ar[4]);
 			
@@ -537,7 +537,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookie("checkIdentity");
+			validateCookiee("checkIdentity");
 			
 			JsonArray ar = m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",
 					m_walletAddr.toLowerCase() );
@@ -576,7 +576,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookie("fundWallet");
+			validateCookiee("fundWallet");
 			
 			double amount = m_map.getRequiredDouble("amount");
 			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
@@ -635,7 +635,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookie("getfaucet");
+			validateCookiee("getfaucet");
 			respond( code, RefCode.OK, "amount", getFaucetAmt() );
 		});
 	}
@@ -667,7 +667,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookie("turn-faucet");
+			validateCookiee("turn-faucet");
 			
 			// require user profile
 			require(new Profile( getorCreateUser() ).isValid(), 

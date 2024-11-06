@@ -33,11 +33,11 @@ public class GTable extends HashMap<String,String> {
 		this( NewSheet.getTab( sheetId, tabName), col1, col2, caseSensitive);
 	}
 	
-	/** @param col2 may be null
+	/** @param valCol may be null in which case it functions like a set
 	 *  @param caseSensitive applies to keys */
-	public GTable( Tab tab, String col1, String col2, boolean caseSensitive) throws Exception {
-		m_col1 = col1;
-		m_col2 = col2;
+	public GTable( Tab tab, String tagCol, String valCol, boolean caseSensitive) throws Exception {
+		m_col1 = tagCol;
+		m_col2 = valCol;
 		m_caseSensitive = caseSensitive;
 		
 		m_tab = tab;

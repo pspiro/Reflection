@@ -24,7 +24,7 @@ public class ProfileTransaction extends MyTransaction {
 			getWalletFromUri(); // read wallet address into m_walletAddr (last token in URI)
 			parseMsg();         // read cookie from msg body into m_map
 			out( "GET PROFILE COOKIE " + m_map.get("cookie") );
-			validateCookie("getprofile");
+			validateCookiee("getprofile");
 
 			JsonArray ar = m_config.sqlQuery( 
 					"select first_name, last_name, address_1, address_2, "

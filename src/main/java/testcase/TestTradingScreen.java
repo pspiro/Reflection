@@ -3,7 +3,7 @@ package testcase;
 import tw.util.S;
 
 public class TestTradingScreen extends MyTestCase {
-	public void testStatic() throws Exception {
+	public void testStatic() throws Exception { // obsolete, remove
 		S.out( "trading-screen-static");
 
 		String url = String.format( "/api/trading-screen-static/%s/265598", Cookie.wallet);
