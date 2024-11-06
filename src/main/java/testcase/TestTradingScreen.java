@@ -25,4 +25,15 @@ public class TestTradingScreen extends MyTestCase {
 		assertTrue( json.has( "askPrice", "bidPrice", "exchangeStatus", "exchangeTime", "nonRusdApprovedAmt", "nonRusdBalance" , "rusdBalance", "stockTokenBalance") );
 	}
 
+	public void testWatchList() throws Exception {
+		S.out( "watch-list");
+		
+		var ar = cli().get( "/api/get-watch-list").readJsonArray();
+		assert200();
+		
+		var item = ar.get( 0);
+		item.display();
+
+		assertTrue( item.has( "bid", "ask", "symbol", "conid") );
+	}
 }
