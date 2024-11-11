@@ -97,7 +97,6 @@ public abstract class Config {
 	private int fbServerPort;
 	private int fbPollIingInterval;
 
-
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
 	public int myWalletRefresh() { return myWalletRefresh; }
@@ -601,19 +600,27 @@ public abstract class Config {
 	
 	static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
+		private Chain defaultChain; // temporary, for upgrade only; remove after upgrade
 
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
 			super.readFromSpreadsheet(tab);
-
+			
 			// read blockchain table from Reflection/Blockchain tab
 			chains.readAll();
+			
+			defaultChain = chains.get( m_tab.getRequiredInt( "defaultChainId") ); // temporary, for upgrade only; remove after upgrade
+			require( defaultChain != null, "defaultChainId");
+		}
+		
+		public Chain defaultChain() {  // temporary
+			return defaultChain;
 		}
 		
 		public Chains chains() {
 			return chains;
 		}
-
-		public Chain chain( int id) {
+		
+		public Chain getChain( int id) {
 			Chain chain = chains.get( id);
 			if (chain == null) {
 				throw new RuntimeException( "Error: invalid chainId " + id);
@@ -621,14 +628,12 @@ public abstract class Config {
 			return chain;
 		}
 		
-		/** This causes a dependency that we might not want to have. 
-		 * @throws Exception */
 		public Rusd rusd( int chainId) throws Exception {
-			return chain( chainId).rusd();
+			return getChain( chainId).rusd();
 		}
 
 		public Busd busd(int chainId) {
-			return chain( chainId).busd();
+			return getChain( chainId).busd();
 		}
 		
 		public boolean isProduction() {  // probably need a separate setting for this
@@ -640,7 +645,6 @@ public abstract class Config {
 			return chains().size() > 1;
 		}
 	}
-	
 	
 
 }

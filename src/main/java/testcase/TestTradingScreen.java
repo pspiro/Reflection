@@ -3,7 +3,7 @@ package testcase;
 import tw.util.S;
 
 public class TestTradingScreen extends MyTestCase {
-	public void testStatic() throws Exception {
+	public void testStatic() throws Exception { // obsolete, remove
 		S.out( "trading-screen-static");
 
 		String url = String.format( "/api/trading-screen-static/%s/265598", Cookie.wallet);
@@ -25,4 +25,15 @@ public class TestTradingScreen extends MyTestCase {
 		assertTrue( json.has( "askPrice", "bidPrice", "exchangeStatus", "exchangeTime", "nonRusdApprovedAmt", "nonRusdBalance" , "rusdBalance", "stockTokenBalance") );
 	}
 
+	public void testWatchList() throws Exception {
+		S.out( "watch-list");
+		
+		var ar = cli().get( "/api/get-watch-list").readJsonArray();
+		assert200();
+		
+		var item = ar.get( 0);
+		item.display();
+
+		assertTrue( item.has( "bid", "ask", "symbol", "conid") );
+	}
 }

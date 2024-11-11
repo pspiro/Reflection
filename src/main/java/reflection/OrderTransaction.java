@@ -82,11 +82,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 	private void order() throws Exception {
 		m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+		
 		jlog( LogType.REC_ORDER, m_map.obj() );
 		
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");  // set m_chain for retrieval with chain()
+		setChainFromHttp( "order");
 		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");

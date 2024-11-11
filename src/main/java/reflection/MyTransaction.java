@@ -5,6 +5,7 @@ import static reflection.Main.require;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -120,27 +121,41 @@ public abstract class MyTransaction extends BaseTransaction {
 		}
 	}
 
-	/** Validate the cookie or throw exception, and update the access time on the cookie.
+	/** Just set the chain id. temporary method, remove after frontend with unified URL is released */
+	void setChainFromHttp(String caller) throws Exception {
+		try {
+			int chainId = m_map.getInt( "chainId");
+			m_chain = m_config.getChain( chainId);			
+		}
+		catch( Exception e) {
+			m_chain = m_config.defaultChain();  // can be removed after frontend always sends chainId
+		}
+	}
+
+	/** Set chain id AND validate cookie/nonce.
+	 * 
+	 *  Validate the cookie or throw exception, and update the access time on the cookie.
 	 *  They could just send the nonce, it's the only part of the cookie we are using
 	 *  @param caller is a string describing the caller used for error msg only
 	 *  @return siwe message, call getSiweMessage() */
-	JsonObject validateCookie(String caller) throws Exception {
+	void validateCookie(String caller) throws Exception {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
-		// we can take cookie from map or header
-		// cookie format is <cookiename=cookievalue> where cookiename is <__Host_authToken><wallet_addr><chainid>
-		String cookie = m_map.get("cookie");
-//		if (cookie == null) {  // we could pull from the cookie header if desired, but then you have to look for the one with the matching address because there could be multiple __Auth cookies
-//			cookie = SiweTransaction.findCookie( m_exchange.getRequestHeaders(), "__Host_authToken");
-//		}
-		require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
 		
-		var siweMsg = SiweTransaction.validateCookie( cookie, m_walletAddr);
-
-		int chainId = siweMsg.getSiweMessage().getChainId();
-		m_chain = m_config.chain( chainId);
-		Util.require( m_chain != null, "invalid chain id %s", chainId);
+		String nonce = m_map.getString( "nonce");
 		
-		return siweMsg;
+		if (S.isNotNull( nonce) ) {  // siwe v2
+			// validate nonce
+			SiweTransaction.validateNonce( m_walletAddr, nonce);
+			out( "nonce validated");
+		}
+		else {
+			// validate cookie  (the old way, can be removed)
+			String cookie = m_map.get("cookie");
+			require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
+			
+			SiweTransaction.validateCookie( cookie, m_walletAddr);
+			out( "cookie validated");
+		}
 	}
 
 	/** return the Chain from the chain id on the cookie;

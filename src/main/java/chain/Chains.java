@@ -2,9 +2,11 @@ package chain;
 
 import java.util.HashMap;
 
-import tw.google.GTable;
+import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
+
 import tw.google.NewSheet;
-import tw.google.NewSheet.Book.Tab;
+import tw.google.NewSheet.Book;
 import tw.util.S;
 
 /** maps chainId to Chain */
@@ -45,32 +47,35 @@ public class Chains extends HashMap<Integer,Chain> {
 	}
 
 	public void readAll() throws Exception {
-		Tab bcTab = NewSheet.getTab( NewSheet.Reflection, "Blockchain");
-		readChain( bcTab, "Polygon");
-		readChain( bcTab, "PulseChain");
-		readChain( bcTab, "Sepolia");
-		readChain( bcTab, "zkSync");
-
-		// pre-fill decimals map to avoid unnecessary queries
-		// really only HookServer needs this because the other apps know how
-		// many decimals there are
-		//NodeInstance.setDecimals( 18, getAllContractsAddresses() );
+		// read entire Blockchain tab
+		Book book = NewSheet.getBook( NewSheet.Reflection);
+		var rows = book.getTab( "Blockchain").queryToJson();
+		
+		readChain( book, rows, "Polygon");
+		readChain( book, rows, "PulseChain");
+		readChain( book, rows, "Sepolia");
+		readChain( book, rows, "zkSync");
 	}
 
 	/** Read one column (one chain) from the Blockchain tab, AND
 	 *  read in all the symbols for that chain as well */
-	private void readChain(Tab bcTab, String chainName) throws Exception {
-		// read the params from one column on the Blockchain tab
-		var params = new GTable( bcTab, "Tag", chainName, true)
-				.toJson()
-				.toRecord( ChainParams.class);
+	private void readChain(Book book, JsonArray rows, String chainName) throws Exception {
+		JsonObject json = new JsonObject();
+		for (var row : rows) {
+			json.put( row.getString( "Tag"), row.getString( chainName) );
+		}
 		
 		// create the Chain and read in the symbols
-		var chain = new Chain( params);
-		chain.readSymbols();
+		var chain = new Chain( json.toRecord( ChainParams.class) );
+		chain.readSymbols( book);
 		
 		// add this new chain to the map
-		put( params.chainId(), chain);
-
+		put( chain.params().chainId(), chain);
+	}
+	
+	public static void main(String[] args) throws Exception {
+		Chains chains = new Chains();
+		chains.readAll();
+		S.out( chains);
 	}
 }

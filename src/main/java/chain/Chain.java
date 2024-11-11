@@ -11,7 +11,7 @@ import org.web3j.protocol.http.HttpService;
 
 import common.Util;
 import refblocks.Refblocks;
-import tw.google.NewSheet;
+import tw.google.NewSheet.Book;
 import tw.util.S;
 import web3.Busd;
 import web3.NodeInstance;
@@ -129,12 +129,12 @@ public class Chain {
 	}
 
 	/** read the symbols and create the stock tokens for this chain */ 
-	public void readSymbols() throws Exception {
+	public void readSymbols(Book book) throws Exception {
 		mapConid.clear();
 		mapAddress.clear();
 		
-		var symbolsTab = NewSheet.getTab(NewSheet.Reflection, params.symbolsTab() );
-		S.out( "reading chain %s from tab %s", params().name(), params.symbolsTab() );
+		var symbolsTab = book.getTab( params.symbolsTab() );
+		S.out( "reading %s stocks from tab %s", params().name(), params.symbolsTab() );
 
 		for (var row : symbolsTab.queryToJson() ) {
 			String address = row.getString( "TokenAddress");
@@ -170,6 +170,10 @@ public class Chain {
 	/** This is called frequently so a map is good */
 	public StockToken getTokenByConid(int conid) {
 		return mapConid.get( conid);
+	}
+	
+	@Override public String toString() {
+		return params.name();
 	}
 }
 // tokensupply on monitor, do a batch query. bc
