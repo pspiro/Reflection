@@ -88,7 +88,8 @@ public abstract class Cookie extends MyTestCase {
 
 		// send siwe/signin
 		client = new MyHttpClient("localhost", port);
-		client.post("/siwe/signin", signedMsgSent.toString() );
+		S.out( "SIGNIN");
+		client.postToJson("/siwe/signin", signedMsgSent.toString() ).display();
 		//assertEquals( 200, cli.getResponseCode() );
 		
 		return client.getHeaders().get("set-cookie");
@@ -103,4 +104,5 @@ public abstract class Cookie extends MyTestCase {
 	public static JsonObject getJson() {
 		return Util.toJson( "cookie", cookie);
 	}
+	
 }
