@@ -61,7 +61,9 @@ public class SiweTransaction extends BaseTransaction {
 	}
 	
 	/** Frontend sends POST msg with siwe message and signature; we should verify
-	 *  The response contains a Set-Cookie header with the SIWE message and signature */
+	 *  The response contains a Set-Cookie header with the SIWE message and signature.
+	 *  
+	 *   No change here for v2, but we no longer need to send the cookie back on the response. */
 	public void handleSiweSignin() {
 		wrap( () -> {
             JsonObject signedMsg = parseToObject();
@@ -69,7 +71,6 @@ public class SiweTransaction extends BaseTransaction {
 			SiweMessage siweMsg = signedMsg.getRequiredObj( "message").getSiweMessage();
 			
 			// set m_wallet so it will appear in log messages
-			String walletAddr = siweMsg.getAddress();  // mixed-case
             out( "  received sign-in for %s", siweMsg.getAddress() );
 			
 			// validate and remove the nonce so it is no longer valid
@@ -122,7 +123,7 @@ public class SiweTransaction extends BaseTransaction {
 					URLEncoder.encode(signedMsg.toString() ) );
 			
 			HashMap<String,String> headers = new HashMap<>();
-			headers.put( "Set-Cookie", cookie);
+			headers.put( "Set-Cookie", cookie);   // obsolete, remove. pas
 		
 			respondFull( Util.toJson( code, "OK"), 200, headers);
 			
@@ -134,24 +135,62 @@ public class SiweTransaction extends BaseTransaction {
 	/** Frontend sends GET request with the cookie from the signin message sent in the header
 	 *  This is a keep-alive; we should verify that the timer has not expired */
 	public void handleSiweMe() {
-		wrap( () -> {
-			out( "received siwe/me from %s", getUserIpAddress() );  // log the ip to see if we get multiple messages from the same user 
-			ArrayList<String> cookies = authCookies();
-			
-			Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
-			
-			if (cookies.size() > 1) {
-				out( "Warning: received /siwe/me with multiple cookies");  // this happens when the user switches wallets from MetaMask
-				cookies.forEach( cookie -> out( "  " + address(cookie) ) ); // don't print whole cookie which gives access to user's wallet
-			}
-			
-			JsonObject siweMsg = validateAnyCookie( cookies);
-
+		wrap( () -> {						
 			JsonObject response = new JsonObject();
-			response.put("loggedIn", true);
-			response.put("message", siweMsg);
+			
+			out( "received siwe/me from %s %s", getUserIpAddress(), response);  // log the ip to see if we get multiple messages from the same user
+
+			if (isPost() ) {  // v2
+				var body = parseToObject();
+
+				boolean loggedIn = isLoggedIn( 
+						body.getString( "address"), 
+						body.getString( "nonce")
+						);
+				
+				response.put( "loggedIn", loggedIn); // we could add a failure reason, if we like. pas
+			}
+			else {  // v1
+				ArrayList<String> cookies = authCookies();
+				
+				Main.require( cookies.size() > 0, RefCode.VALIDATION_FAILED, "Null cookie on /siwe/me");
+				
+				if (cookies.size() > 1) {
+					out( "Warning: received /siwe/me with multiple cookies");  // this happens when the user switches wallets from MetaMask
+					cookies.forEach( cookie -> out( "  " + address(cookie) ) ); // don't print whole cookie which gives access to user's wallet
+				}
+				
+				JsonObject siweMsg = validateAnyCookie( cookies);
+	
+				response.put("loggedIn", true);
+				response.put("message", siweMsg);  // this is not needed in v2
+			}
 			respond(response);
 		});
+	}
+	
+	/** this version is called by me() and returns boolean */
+	public static boolean isLoggedIn( String address, String nonce) {
+		SiweSession session = sessionMap.get( address.toLowerCase() );
+		return 
+			session != null && 
+			session.nonce().equals( nonce) &&
+			System.currentTimeMillis() - session.lastTime() <= sessionTimeout;
+	}
+	
+	/** this version is called by all the different APIs and throws exceptions
+	 *  this should never really fail because the frontend signs in before
+	 *  each operation 
+	 * @throws RefException */
+	public static void validateNonce( String address, String nonce) throws RefException {
+		SiweSession session = sessionMap.get( address.toLowerCase() );
+		require( session != null, "No session found for %s", address);
+		require( session.nonce().equals( nonce), "Session nonce does not match provided nonce");
+		require( System.currentTimeMillis() - session.lastTime() <= sessionTimeout, "Session has expired");
+	}
+
+	private static void require( boolean v, String text, Object... params) throws RefException {
+		Main.require( v, RefCode.VALIDATION_FAILED, text, params);
 	}
 
 	/** Return the Siwe message for the valid cookie; there could be more than one if the user
@@ -238,16 +277,23 @@ public class SiweTransaction extends BaseTransaction {
 	/** Sign out all sign-in users (there should be only one) */
 	public void handleSiweSignout() {
 		wrap( () -> {
-			for (String cookie : authCookies() ) {
-				String address = S.notNull(address(cookie));
+			if (isPost() ) {  // v2
+				String address = parseToObject().getString( "address");
 				if (sessionMap.remove(address.toLowerCase()) != null) {  // alternatively, we could update the session to be false
 					out( "  %s has been signed out", address);
 				}
-				else {
-					out( "  %s was already signed out", address);
-				}
 			}
-			
+			else {  // v1
+				for (String cookie : authCookies() ) {
+					String address = S.notNull(address(cookie));
+					if (sessionMap.remove(address.toLowerCase()) != null) {  // alternatively, we could update the session to be false
+						out( "  %s has been signed out", address);
+					}
+					else {
+						out( "  %s was already signed out", address);
+					}
+				}
+			}				
 			respondOk();
 		});
 	}

@@ -201,7 +201,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
 
 			// obsolete, remove
-			server.createContext("/api/users/wallet-update", exch -> new BackendTransaction(this, exch).handleWalletUpdate() ); // obsolete; called from prod but not paper, remove it after upgrade
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 

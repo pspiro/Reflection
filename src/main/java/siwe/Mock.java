@@ -155,7 +155,7 @@ public class Mock {
 		map.put( "trading-screen-static", tradStatic);
 		map.put( "trading-screen-dynamic", tradDynamic);
 
-		BaseTransaction.setDebug( true);
+		//BaseTransaction.setDebug( true);
 				
 		// start Siwe thread to periodically save siwe cookies
 		SiweTransaction.startThread();
@@ -187,7 +187,7 @@ public class Mock {
 		String val = S.notNull( map.get( key), invalid);
 		
 		if (val == invalid) {
-			S.out( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+			S.out( "Error: no support for " + val);
 		}
 		
 		if (key.equals( "turn-faucet")) {

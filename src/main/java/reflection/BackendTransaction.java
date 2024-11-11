@@ -154,18 +154,6 @@ public class BackendTransaction extends MyTransaction {
 		obj.remove("city");
 	}
 
-	/** obsolete, */
-	public void handleWalletUpdate() {
-		wrap( () -> {
-			parseMsg();
-			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-
-			// look to see what parameters are being passed; at least we should update the time
-			out( "received wallet-update message with params " + m_map);
-			respondOk();
-		});
-	}
-
 	/** Handle the Persona KYC info */
 	public void handleRegister() {
 		wrap( () -> {
@@ -246,7 +234,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookiee("mywallet");
+			setChainFromHttp("mywallet");
 			
 			String url = String.format( "http://localhost:%s/hook/mywallet/%s",
 					chain().params().hookServerPort(), m_walletAddr);
@@ -280,7 +268,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookiee("all-stocks");
+			setChainFromHttp("all-stocks");
 			
 			respond( chain().getAllStocks( m_main.stocks() ) );
 		});
@@ -444,7 +432,7 @@ public class BackendTransaction extends MyTransaction {
 			Util.reqValidAddress(m_walletAddr);
 			
 			parseMsg();
-			validateCookiee( "tradingDynamic");
+			setChainFromHttp( "tradingDynamic");
 			
 			int conid = Integer.parseInt( ar[4]);
 			
@@ -537,7 +525,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookiee("checkIdentity");
+			//validateCookiee("checkIdentity");
 			
 			JsonArray ar = m_config.sqlQuery("select kyc_status from users where wallet_public_key = '%s'",
 					m_walletAddr.toLowerCase() );
@@ -576,8 +564,9 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookiee("fundWallet");
-			
+			validateCookie("fund-wallet");
+			setChainFromHttp( "fund-wallet");
+
 			double amount = m_map.getRequiredDouble("amount");
 			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
 			
@@ -635,7 +624,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			validateCookiee("getfaucet");
+			setChainFromHttp("getfaucet");
 			respond( code, RefCode.OK, "amount", getFaucetAmt() );
 		});
 	}
@@ -667,7 +656,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			validateCookiee("turn-faucet");
+			setChainFromHttp("turn-faucet");
 			
 			// require user profile
 			require(new Profile( getorCreateUser() ).isValid(), 

@@ -46,6 +46,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		wrap( () -> {
 			parseMsg();  // cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() )
 			getWalletFromUri();  // read wallet address into m_walletAddr (last token in URI)
+			setChainFromHttp("redeem");
 			validateCookie("redeem");
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");

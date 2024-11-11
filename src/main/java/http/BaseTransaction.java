@@ -319,5 +319,13 @@ public class BaseTransaction {
 		
 		return Util.substring( m_uri, start, end);
 	}
+	
+	public String getMethod() {
+		return m_exchange.getRequestMethod();
+	}
+	
+	public boolean isPost() {
+		return "POST".equals( getMethod() );
+	}
 
 }

@@ -10,6 +10,7 @@ import org.json.simple.JsonObject;
 import com.moonstoneid.siwe.SiweMessage;
 import com.moonstoneid.siwe.error.SiweException;
 
+import chain.Chains;
 import common.Util;
 import reflection.RefCode;
 import reflection.SiweUtil;
@@ -56,7 +57,7 @@ public class TestSiwe extends MyTestCase {
 			myWalletAddress, 
 			"http://localhost", 
 			"1", 
-			5,      // chainId 
+			Chains.Sepolia,      // chainId 
 			nonce,
 			DateTimeFormatter.ISO_INSTANT.format(time) )
 			.statement("Sign in to Reflection.")
@@ -353,4 +354,39 @@ public class TestSiwe extends MyTestCase {
 		assert200();
 	}
 	
+	// v2
+	public void testSignIn2() throws Exception {
+		// test siwe/init
+		S.out( "sending init");
+		cli().getJson("/siwe/init").display();
+		assert200();
+		String nonce = cli.readJsonObject().getString("nonce");
+		
+		SiweMessage siweMsg = createSiweMsg(nonce, Instant.now() );
+		JsonObject signedMsgSent = new JsonObject();
+		signedMsgSent.put( "signature", signature);  // get a real signature, you can do that, now
+		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
+
+		// test siwe/signin
+		S.out( "signint in");
+		cli().postToJson("/siwe/signin", signedMsgSent.toString() ).display();
+		assert200();
+		assertEquals( RefCode.OK, cli.getRefCode() );
+		
+		// test successful siwe/me
+		S.out( "testing with /me");
+		var me = cli().postToJson("/siwe/me", Util.toJson( "address", myWalletAddress, "nonce", nonce) );
+		assert200();
+		assertEquals( true, me.getBool("loggedIn") );
+		
+		// logout
+		S.out( "sign out");
+		cli().postToJson("/siwe/signout", Util.toJson( "address", myWalletAddress) );
+		assert200();
+		
+		S.out( "testing /me failure");
+		me = cli().postToJson("/siwe/me", Util.toJson( "address", myWalletAddress, "nonce", nonce) );
+		assert200();
+		assertEquals( false, me.getBool("loggedIn") );
+	}	
 }
