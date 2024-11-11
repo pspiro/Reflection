@@ -16,7 +16,6 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import http.MyClient;
-import reflection.Config;
 import tw.util.MyException;
 import tw.util.S;
 import web3.RetVal.NodeRetVal;

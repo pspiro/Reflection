@@ -139,7 +139,7 @@ public class OnrampTransaction extends MyTransaction {
 				
 				var pmtInstructions = data.getObject( "fiatPaymentInstructions");
 				// onramp sandbox does not return payment instructions; add it
-				if (pmtInstructions == null && !m_config.isProduction() && m_map.getBool( "test") ) {
+				if (pmtInstructions == null && !chain().params().isProduction() && m_map.getBool( "test") ) {
 					pmtInstructions = JsonObject.parse( testInstr);
 				}
 				Util.require( pmtInstructions != null, "Error: no fiatPaymentInstructions returned");
