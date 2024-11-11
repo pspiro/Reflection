@@ -99,7 +99,7 @@ public class Main implements ITradeReportHandler {
 		
 		// create log entry
 		jlog( LogType.RESTART, null, null, Util.toJson( 
-				"buildTime", Util.readResource( Main.class, "version.txt") ) );  // log build date/time
+				"buildTime", Util.readResource( Main.class, "version.txt") ), 0 );  // log build date/time
 
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
@@ -154,7 +154,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/validate-email", exch -> new ProfileTransaction(this, exch).validateEmail() );
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc/persona completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
-/*T*/		server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
+			server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
 			
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
@@ -163,24 +163,24 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 
 			// dashboard panels
-/*T*/		server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
-/*T*/		server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
-/*T*/		server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
-/*T*/		server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
-/*T*/		server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
-/*T*/		server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
-/*NO!*/		server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
+			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
+			server.createContext("/api/transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) );
+			server.createContext("/api/mywallet", exch -> new BackendTransaction(this, exch, false).handleMyWallet() );
+			server.createContext("/api/show-faucet", exch -> new BackendTransaction(this, exch).handleShowFaucet() );
+			server.createContext("/api/turn-faucet", exch -> new BackendTransaction(this, exch).handleTurnFaucet() );
+			server.createContext("/api/positions-new", exch -> new PortfolioTransaction(this, exch, false).handleReqPositionsNew() ); // for My Reflection panel
+			server.createContext("/api/redemptions/redeem", exch -> new RedeemTransaction(this, exch).handleRedeem() );
 
 			// get stocks and prices
-/*T*/		server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );  // hot stocks for home page
-/*T*/		server.createContext("/api/get-watch-list", exch -> new BackendTransaction(this, exch, false).handleWatchList() );  // watch list for Dashboard
-/*T*/		server.createContext("/api/get-all-stocks", exch -> new BackendTransaction(this, exch).handleAllStocks() );  // all stocks for dropdown on trade page
-/*T*/		server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
+			server.createContext("/api/hot-stocks", exch -> new BackendTransaction(this, exch, false).handleHotStocks() );  // hot stocks for home page
+			server.createContext("/api/get-watch-list", exch -> new BackendTransaction(this, exch, false).handleWatchList() );  // watch list for Dashboard
+			server.createContext("/api/get-all-stocks", exch -> new BackendTransaction(this, exch).handleAllStocks() );  // all stocks for dropdown on trade page
+			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 			
 			// obsolete, remove
 			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
-/*T*/		server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // from trade page in prod only
+			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // from trade page in prod only
 
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
@@ -335,7 +335,7 @@ public class Main implements ITradeReportHandler {
 
 		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
-			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id) );
+			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id), 0 );
 		}
 
 		@Override public synchronized void onDisconnected() {
@@ -381,19 +381,22 @@ public class Main implements ITradeReportHandler {
 	/** Write to the log file. Don't throw any exception. */
 
 	void log( LogType type, String text) {
-		jlog( type, "-", "-", Util.toJson( "text", text) );
+		jlog( type, "-", "-", Util.toJson( "text", text), 0 );
 	}
 
 	/** Writes entry to log table in database; must not throw exception;
-	 *  @param uid may be null */
-	void jlog( LogType type, String uid, String wallet, JsonObject json) {
+	 * @param uid may be null 
+	 * @param chainId TODO*/
+	void jlog( LogType type, String uid, String wallet, JsonObject json, int chainId) {
 		S.out( "%sLogType.%s %s %s", uid != null ? uid + " " : "", type, wallet, json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,
 				"uid", uid,
 				"wallet_public_key", wallet,
-				"data", json);
+				"data", json,
+				"chain", chainId);
+		
 		queueSql( conn -> conn.insertJson( "log", log) );
 	}
 
@@ -425,7 +428,7 @@ public class Main implements ITradeReportHandler {
 
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
-				null, obj);  
+				null, obj, 0);  
 	}
 
 	/** Ignore this. */
@@ -437,7 +440,7 @@ public class Main implements ITradeReportHandler {
 			jlog( LogType.COMMISSION, null, null, Util.toJson( 
 					"execId", rpt.execId(), 
 					"commission", rpt.commission(), 
-					"tradeKey", tradeKey) );
+					"tradeKey", tradeKey), 0 );
 
 			JsonObject obj = Util.toJson( 
 					"tradekey", tradeKey,

@@ -175,6 +175,10 @@ public class Chain {
 	@Override public String toString() {
 		return params.name();
 	}
+
+	public int chainId() {
+		return params.chainId();
+	}
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

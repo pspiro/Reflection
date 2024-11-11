@@ -122,7 +122,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	}
 
 	/** Just set the chain id. temporary method, remove after frontend with unified URL is released */
-	void setChainFromHttp(String caller) throws Exception {
+	void setChainFromHttp() throws Exception {
 		try {
 			int chainId = m_map.getInt( "chainId");
 			m_chain = m_config.getChain( chainId);			
@@ -183,7 +183,8 @@ public abstract class MyTransaction extends BaseTransaction {
 	}
 
 	@Override protected void jlog(LogType type, JsonObject json) {
-		m_main.jlog(type, m_uid, S.notNull(m_walletAddr).toLowerCase(), json);
+		m_main.jlog(type, m_uid, S.notNull(m_walletAddr).toLowerCase(), json,
+				m_chain != null ? m_chain.chainId() : 0);
 	}
 
 	/** Assumes the wallet address is the last token in the URI

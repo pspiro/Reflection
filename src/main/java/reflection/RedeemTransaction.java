@@ -46,7 +46,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 		wrap( () -> {
 			parseMsg();  // cookie comes in the message payload (could easily be changed to Cookie header, just update validateCookie() )
 			getWalletFromUri();  // read wallet address into m_walletAddr (last token in URI)
-			setChainFromHttp("redeem");
+			setChainFromHttp();
 			validateCookie("redeem");
 						
 			require( m_config.allowRedemptions(), RefCode.REDEMPTIONS_HALTED, "Redemptions are temporarily halted. Please try again in a little while.");
@@ -239,6 +239,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			obj.put( "created_at", new MySqlDate() );  // we want created_at to be updated on updates
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
+			obj.put( "chain", chain().chainId() );
 			obj.put( "stablecoin", busd.name() );
 			obj.put( "amount", rusdPos);
 			obj.put( "status", status);
