@@ -101,6 +101,8 @@ public abstract class Cookie extends MyTestCase {
 	}
 
 	public static JsonObject getJson() {
-		return Util.toJson( "cookie", cookie);
+		return Util.toJson( 
+				"cookie", cookie,
+				"chainId", 1115511);
 	}
 }
