@@ -88,7 +88,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// make sure user is signed in with SIWE and session is not expired
 		// must come before profile and KYC checks
 		validateCookie("order");  // set m_chain for retrieval with chain()
-		setChainFromHttp( "order");
+		setChainFromHttp();
 		
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
@@ -579,29 +579,31 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_progress = 100;
 
 			// really take these out? where did they move to???
-//			jlog( LogType.ORDER_COMPLETED, Util.toJson( "hash", hash) );
-//
-//			m_main.queueSql( sql -> sql.execWithParams( 
-//					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
+			jlog( LogType.ORDER_COMPLETED, Util.toJson( "hash", hash) );
+
+			m_main.queueSql( sql -> sql.execWithParams( 
+					"update transactions set status = '%s' where uid = '%s'", FireblocksStatus.COMPLETED, m_uid) );
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
-			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
-				
-				Util.wrap( () -> {
-					Util.require( Util.isValidEmail(m_email), "Error: invalid email " + m_email); // should never happen 
+			Util.wrap( () -> {
+				if (chain().params().isProduction() && !m_map.getBool("testcase")) {
+					alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
 					
-					// send email to the user
-					String html = S.format( isBuy() ? buyConf : sellConf,
-							m_desiredQuantity,
-							m_stock.symbol(),
-							m_stablecoinAmt,
-							m_stablecoin.name(),
-							m_stockToken.address(),
-							chain().blockchainTx( hash) );
-					m_config.sendEmailSes(m_email, "Order filled on Reflection", html, SmtpSender.Type.Trade);
-				});
-			}
+					Util.wrap( () -> {
+						Util.require( Util.isValidEmail(m_email), "Error: invalid email " + m_email); // should never happen 
+						
+						// send email to the user
+						String html = S.format( isBuy() ? buyConf : sellConf,
+								m_desiredQuantity,
+								m_stock.symbol(),
+								m_stablecoinAmt,
+								m_stablecoin.name(),
+								m_stockToken.address(),
+								chain().blockchainTx( hash) );
+						m_config.sendEmailSes(m_email, "Order filled on Reflection", html, SmtpSender.Type.Trade);
+					});
+				}
+			});
 			
 			if (m_config.sendTelegram() ) {
 				Util.wrap( () -> {
@@ -655,8 +657,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_errorCode = errorCode;
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
-			if (m_config.isProduction() && !m_map.getBool("testcase")) {
-				alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );
+			try {
+				if (!chain().params().isProduction() && !m_map.getBool("testcase")) {
+					alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );
+				}
+			}
+			catch( Exception e) {
+				S.out( "Could not send alert - " + e.getMessage() );
 			}
 		}
 	}	
@@ -668,7 +675,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
-			obj.put("chain", chain().params().chainId() );
+			obj.put("chain", chain().chainId() );
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );

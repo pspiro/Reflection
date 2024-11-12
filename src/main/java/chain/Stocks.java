@@ -13,6 +13,9 @@ import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.util.S;
 
+/* the stocks are read in from the 'Master-symbols' tab. the stock represents a stock
+ * on the exchange or at IB, but has no association with a blockchain;
+ * see also StockToken */ 
 public class Stocks {
 	private JsonArray hotStocks = new JsonArray(); // for hot stocks
 	private JsonArray watchList = new JsonArray(); // for watch list
@@ -62,6 +65,11 @@ public class Stocks {
 		}
 
 		public void setPrices(Prices pricesIn) {
+			// maintain the existing 'last' price if the new prices do not have a valid last
+			if (!pricesIn.validLast() ) {
+				pricesIn.last( prices.last() );
+			}
+			
 			prices = pricesIn;
 			
 			jstock.put( "bid", prices.anyBid() );

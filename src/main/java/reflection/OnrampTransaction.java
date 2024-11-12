@@ -65,6 +65,7 @@ public class OnrampTransaction extends MyTransaction {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("onramp-convert");
+			setChainFromHttp();
 			
 			Util.require( chain().params().isPulseChain(), "On-ramp supported for PulseChain only");
 			
@@ -138,7 +139,7 @@ public class OnrampTransaction extends MyTransaction {
 				
 				var pmtInstructions = data.getObject( "fiatPaymentInstructions");
 				// onramp sandbox does not return payment instructions; add it
-				if (pmtInstructions == null && !m_config.isProduction() && m_map.getBool( "test") ) {
+				if (pmtInstructions == null && !chain().params().isProduction() && m_map.getBool( "test") ) {
 					pmtInstructions = JsonObject.parse( testInstr);
 				}
 				Util.require( pmtInstructions != null, "Error: no fiatPaymentInstructions returned");
@@ -192,6 +193,7 @@ public class OnrampTransaction extends MyTransaction {
 	private void insertOnramp(String transId, double buyAmount, double receiveAmount) throws Exception {
 		JsonObject dbEntry = Util.toJson(
 				"wallet_public_key", m_walletAddr.toLowerCase(),
+				"chain", chain().chainId(),
 				"uid", m_uid,
 				"trans_id", transId, 
 				"fiat_amount", buyAmount,

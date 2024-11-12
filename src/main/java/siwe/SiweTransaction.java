@@ -274,7 +274,8 @@ public class SiweTransaction extends BaseTransaction {
 		return siweMsg;
 	}
 	
-	/** Sign out all sign-in users (there should be only one) */
+	/** Sign out all sign-in users (there should be only one);
+	 *  get cookie from header */
 	public void handleSiweSignout() {
 		wrap( () -> {
 			if (isPost() ) {  // v2

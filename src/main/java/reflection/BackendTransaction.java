@@ -234,7 +234,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			setChainFromHttp("mywallet");
+			setChainFromHttp();
 			
 			String url = String.format( "http://localhost:%s/hook/mywallet/%s",
 					chain().params().hookServerPort(), m_walletAddr);
@@ -268,7 +268,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			setChainFromHttp("all-stocks");
+			setChainFromHttp();
 			
 			respond( chain().getAllStocks( m_main.stocks() ) );
 		});
@@ -432,7 +432,7 @@ public class BackendTransaction extends MyTransaction {
 			Util.reqValidAddress(m_walletAddr);
 			
 			parseMsg();
-			setChainFromHttp( "tradingDynamic");
+			setChainFromHttp();
 			
 			int conid = Integer.parseInt( ar[4]);
 			
@@ -565,7 +565,7 @@ public class BackendTransaction extends MyTransaction {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("fund-wallet");
-			setChainFromHttp( "fund-wallet");
+			setChainFromHttp();
 
 			double amount = m_map.getRequiredDouble("amount");
 			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
@@ -624,7 +624,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			getWalletFromUri();
-			setChainFromHttp("getfaucet");
+			setChainFromHttp();
 			respond( code, RefCode.OK, "amount", getFaucetAmt() );
 		});
 	}
@@ -656,7 +656,7 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
-			setChainFromHttp("turn-faucet");
+			setChainFromHttp();
 			
 			// require user profile
 			require(new Profile( getorCreateUser() ).isValid(), 

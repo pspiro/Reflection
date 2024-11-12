@@ -74,7 +74,7 @@ public class Chains extends HashMap<Integer,Chain> {
 		chain.readSymbols( book);
 		
 		// add this new chain to the map
-		put( chain.params().chainId(), chain);
+		put( chain.chainId(), chain);
 	}
 	
 	public static void main(String[] args) throws Exception {

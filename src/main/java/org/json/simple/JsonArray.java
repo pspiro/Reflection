@@ -254,7 +254,13 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		ArrayList<String> list = new ArrayList<>( keys);
 		Collections.sort( list);
 		return list;
-	}	
+	}
+	
+	public String[] getValues( String key) {
+		HashSet<String> set = new HashSet<>();
+		forEach( item -> set.add( item.getString( key) ) );
+		return set.toArray( new String[0]);
+	}
 
 	public void writeToCsv(String filename, char sep) throws FileNotFoundException {
 		writeToCsv( filename, sep, getKeys().toArray( new String[0]) );

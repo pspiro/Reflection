@@ -24,7 +24,7 @@ public class Prices {
 	
 	private final double m_bid;
 	private final double m_ask;
-	private final double m_last;
+	private double m_last;
 	private final long m_time;  // ms since epoch; time of most recent price, could be bid, ask, or last
 
 	public double bid() { return m_bid; }
@@ -131,6 +131,10 @@ public class Prices {
 				validBid() ? m_bid : 0, 
 				validAsk() ? m_ask : Double.MAX_VALUE
 				) : 0;
+	}
+
+	public void last(double last) {
+		m_last = last;
 	}
 
 //	static DateFormat fmt = new SimpleDateFormat("M/d K:m:s");

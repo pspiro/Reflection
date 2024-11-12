@@ -14,7 +14,6 @@ import chain.Chains;
 import common.Alerts;
 import common.SmtpSender;
 import common.Util;
-import http.MyClient;
 import onramp.Onramp;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
@@ -86,8 +85,6 @@ public abstract class Config {
 	private String baseUrl; // used by Monitor program and RefAPI
 	private String hookNameSuffix;
 	private double autoReward; // automatically send users rewards
-	private String pwUrl; // url of pw server
-	private String pwName; // name passed to pw server
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
@@ -224,8 +221,6 @@ public abstract class Config {
 		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.autoReward = m_tab.getDouble("autoReward");
-		this.pwUrl = m_tab.get("pwUrl");
-		this.pwName = m_tab.get("pwName");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
@@ -266,30 +261,6 @@ public abstract class Config {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
-	}
-	
-	private String fetchPw() throws Exception {
-		if (!isProduction() ) {
-			try {
-				String str = IStream.readLine("name.txt");
-				if (str.length() > 0) return str;
-			} catch (Exception e) {
-			}
-		}
-		
-		// get refblocks pw from pwserver
-		var json = Util.toJson( 
-				"code", "lwjkefdj827",
-				"name", this.pwName);
-		
-		var ret = MyClient.postToJson( pwUrl + "/getpw", json.toString() );
-		String error = ret.getString( "error");
-		Util.require( S.isNull( error), "pw server returned error- " + error);
-		
-		String pw = ret.getString( "pw");
-		Util.require( S.isNotNull( pw), "null pw from pw server");
-		
-		return pw;
 	}
 	
 	protected void require( boolean v, String parameter) throws Exception {

@@ -5,7 +5,6 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import chain.Stocks;
 import common.Alerts;
 import common.Util;
 import http.SimpleTransaction;
