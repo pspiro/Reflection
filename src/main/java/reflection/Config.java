@@ -567,17 +567,19 @@ public abstract class Config {
 		protected final Chains chains = new Chains();
 		private Chain defaultChain; // temporary, for upgrade only; remove after upgrade
 
+		/** read blockchain table from Reflection/Blockchain tab */
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
 			super.readFromSpreadsheet(tab);
 			
-			// read blockchain table from Reflection/Blockchain tab
-			chains.readAll();
+			String[] names = m_tab.getRequiredString( "chains").split( ",");
+			chains.read( names);
 			
 			defaultChain = chains.get( m_tab.getRequiredInt( "defaultChainId") ); // temporary, for upgrade only; remove after upgrade
 			require( defaultChain != null, "defaultChainId");
 		}
 		
-		public Chain defaultChain() {  // temporary
+		/** this chain is returned if the frontend does not pass chainId with the message */
+		public Chain defaultChain() {
 			return defaultChain;
 		}
 		

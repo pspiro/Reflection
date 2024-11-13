@@ -122,12 +122,12 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** Just set the chain id. temporary method, remove after frontend with unified URL is released */
 	void setChainFromHttp() throws Exception {
-		try {
-			int chainId = m_map.getInt( "chainId");
-			m_chain = m_config.getChain( chainId);			
+		int chainId = m_map.getInt( "chainId");
+		if (chainId != 0) {
+			m_chain = m_config.getChain( chainId);
 		}
-		catch( Exception e) {
-			m_chain = m_config.defaultChain();  // can be removed after frontend always sends chainId
+		else {
+			m_chain = m_config.defaultChain();  // can be removed after frontend always sends chainId	
 		}
 	}
 

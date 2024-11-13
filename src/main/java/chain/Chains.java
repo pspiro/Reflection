@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import common.Util;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.util.S;
@@ -47,14 +48,17 @@ public class Chains extends HashMap<Integer,Chain> {
 	}
 
 	public void readAll() throws Exception {
+		read( Util.toArray( "Polygon", "PulseChain", "Sepolia", "zkSync") );
+	}
+
+	public void read(String[] names) throws Exception {
 		// read entire Blockchain tab
 		Book book = NewSheet.getBook( NewSheet.Reflection);
 		var rows = book.getTab( "Blockchain").queryToJson();
 		
-		readChain( book, rows, "Polygon");
-		readChain( book, rows, "PulseChain");
-		readChain( book, rows, "Sepolia");
-		readChain( book, rows, "zkSync");
+		for (String name : names) {
+			readChain( book, rows, name);
+		}
 	}
 
 	/** Read one column (one chain) from the Blockchain tab, AND

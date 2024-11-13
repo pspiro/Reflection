@@ -25,8 +25,6 @@ public class TestBackendMsgs extends MyTestCase {
 		assertNotNull(item.getString("symbol"));
 		assertNotNull(item.getString("type"));
 		assertNotNull(item.getString("conid"));
-		assertTrue(item.getDouble("bid") > 0);
-		assertTrue(item.getDouble("ask") > 0);
 	}
 	
 	public void testGetStockWithPrice() throws Exception {

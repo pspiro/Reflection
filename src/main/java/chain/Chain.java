@@ -96,7 +96,8 @@ public class Chain {
 		return allAddresses;
 	}
 	
-	/** for the get-all-stocks query which is for dropdown on trading page */ 
+	/** for the get-all-stocks query which is for dropdown on trading page;
+	 *  does not return prices */ 
 	public JsonArray getAllStocks(Stocks stocks) throws Exception {
 		JsonArray ar = new JsonArray();
 		
