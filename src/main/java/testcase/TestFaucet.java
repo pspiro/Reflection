@@ -12,7 +12,7 @@ public class TestFaucet extends MyTestCase {
 		S.out( "show faucet success");
 		var json = cli().postToJson("/api/show-faucet/" + Cookie.wallet, Cookie.getJson() );
 		assert200(); 
-		assertEquals( json.getDouble( "amount"), m_config.faucetAmt() );
+		assertEquals( json.getDouble( "amount"), m_config.chain().params().faucetAmt() );
 
 		// fails, no user id
 		S.out( "fail show faucet");
@@ -30,7 +30,7 @@ public class TestFaucet extends MyTestCase {
 		double amount = cli().postToJson("/api/show-faucet/" + Cookie.wallet, Cookie.getJson() )
 				.getDouble( "amount");
 		assert200(); 
-		assertEquals( m_config.faucetAmt(), amount);
+		assertEquals( m_config.chain().params().faucetAmt(), amount);
 		
 		// fund wallet
 		S.out( "turn faucet succeed");

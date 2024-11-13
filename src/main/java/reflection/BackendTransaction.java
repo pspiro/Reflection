@@ -641,12 +641,14 @@ public class BackendTransaction extends MyTransaction {
 				.getDouble( chain().params().name()
 				);
 		
+		double faucetAmt = chain().params().faucetAmt();
+		
 		// let them have the full amount if they have not received the full amount AND
 		// their wallet has less than the full amount
 		return
-				received < m_config.faucetAmt() && 
-				m_config.chains().pulseChain().node().getNativeBalance( m_walletAddr) < m_config.faucetAmt() 
-					? m_config.faucetAmt() 
+				received < faucetAmt && 
+				chain().node().getNativeBalance( m_walletAddr) < faucetAmt 
+					? faucetAmt 
 					: 0;
 	}
 

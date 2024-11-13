@@ -204,7 +204,7 @@ public class CreateTables  {
 			persona_response varchar,
 			pan_number varchar(10),
 			aadhaar varchar(12),
-			locked jsonb,
+			locked jsonb,		-- generic json object
 			ip varchar(15),
 			onramp_id
 		);

@@ -88,7 +88,6 @@ public abstract class Config {
 	private boolean sendTelegram;
 	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
-	private double faucetAmt;
 	private String moralisPlatform;  // lower case
 	private String platformBase;
 	private int fbServerPort;
@@ -224,7 +223,6 @@ public abstract class Config {
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
-		this.faucetAmt = m_tab.getDouble( "faucetAmt");
 				
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
@@ -554,10 +552,6 @@ public abstract class Config {
 				select * from transactions
 				where wallet_public_key = '%s' and status = 'COMPLETED'
 				order by created_at""", wallet.toLowerCase() );
-	}
-	
-	public double faucetAmt() {
-		return faucetAmt;
 	}
 	
 	
