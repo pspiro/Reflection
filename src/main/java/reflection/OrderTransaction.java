@@ -675,7 +675,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			JsonObject obj = new JsonObject();
 			obj.put("uid", m_uid);
 			obj.put("wallet_public_key", m_walletAddr);
-			obj.put("chain", chain().chainId() );
+			obj.put("chainId", chain().chainId() );
 			obj.put("action", m_order.action() ); // enums gets quotes upon insert
 			obj.put("quantity", m_desiredQuantity);
 			obj.put("rounded_quantity", m_order.roundedQty() );

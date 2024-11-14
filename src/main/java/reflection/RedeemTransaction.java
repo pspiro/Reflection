@@ -239,7 +239,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			obj.put( "created_at", new MySqlDate() );  // we want created_at to be updated on updates
 			obj.put( "uid", m_uid);
 			obj.put( "wallet_public_key", m_walletAddr.toLowerCase() );
-			obj.put( "chain", chain().chainId() );
+			obj.put( "chainId", chain().chainId() );
 			obj.put( "stablecoin", busd.name() );
 			obj.put( "amount", rusdPos);
 			obj.put( "status", status);

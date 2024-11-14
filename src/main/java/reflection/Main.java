@@ -395,7 +395,7 @@ public class Main implements ITradeReportHandler {
 				"uid", uid,
 				"wallet_public_key", wallet,
 				"data", json,
-				"chain", chainId);
+				"chainId", chainId);
 		
 		queueSql( conn -> conn.insertJson( "log", log) );
 	}

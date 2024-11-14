@@ -224,19 +224,24 @@ public class CreateTables  {
 // dev=> alter table users add column locked jsonb;
 
 
+/*
+create chainId fields
+ALTER TABLE log ADD COLUMN chainId INT;
+ALTER TABLE onramp ADD COLUMN chainId INT;
+ALTER TABLE orders ADD COLUMN chainId INT;
+ALTER TABLE redemptions ADD COLUMN chainId INT;
+ALTER TABLE transactions ADD COLUMN chainId INT;
 
-//support multi-dbs
-//ALTER TABLE log ADD COLUMN chain INT;
-//CREATE INDEX idx_chain1 ON log (chain);
-//
-//ALTER TABLE onramp ADD COLUMN chain INT;
-//CREATE INDEX idx_chain2 ON onramp (chain);
-//
-//ALTER TABLE orders ADD COLUMN chain INT;
-//CREATE INDEX idx_chain3 ON orders (chain);
-//
-//ALTER TABLE redemptions ADD COLUMN chain INT;
-//CREATE INDEX idx_chain4 ON redemptions (chain);
-//
-//ALTER TABLE transactions ADD COLUMN chain INT;
-//CREATE INDEX idx_chain5 ON transactions (chain);
+// do we need these???
+CREATE INDEX idx_chainId1 ON log (chainId);
+CREATE INDEX idx_chainId2 ON onramp (chainId);
+CREATE INDEX idx_chainId3 ON orders (chainId);
+CREATE INDEX idx_chainId4 ON redemptions (chainId);
+CREATE INDEX idx_chainId5 ON transactions (chainId);
+
+ALTER TABLE log drop COLUMN chain;
+ALTER TABLE onramp drop COLUMN chain;
+ALTER TABLE orders drop COLUMN chain;
+ALTER TABLE redemptions drop COLUMN chain;
+ALTER TABLE transactions drop COLUMN chain;
+*/
