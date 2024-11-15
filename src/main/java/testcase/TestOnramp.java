@@ -6,6 +6,7 @@ import common.Util;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
 import tw.util.S;
+import web3.NodeInstance;
 
 public class TestOnramp extends MyTestCase {
 	static String custId = "customerId";
@@ -52,6 +53,12 @@ public class TestOnramp extends MyTestCase {
 		var json4 = Onramp.devRamp.getKycUrlNext( json.getString( custId), "http://redirect");
 		assertTrue( json4.has( "url", custId));
 		assertEquals( json.getString(custId), json4.getString(custId) );
+	}
+	
+	public void testTransact() throws Exception {		
+		double quote = Onramp.getQuote("EUR", 100);
+		Onramp.devRamp.transact("gLaTN3ROg0_2893", 
+				100, "EUR", NodeInstance.prod, quote).display();
 	}
 
 	public void testRefApi() throws Exception {

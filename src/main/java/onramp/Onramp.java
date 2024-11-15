@@ -83,9 +83,13 @@ public class Onramp {
 			) throws Exception {
 		
 		Util.require( isValidCurrency( currency), "Invalid currency");
+		Util.reqValidAddress( toWalletAddr);
 		
 		String paymentType = paymentMethodMap.getString( currency);
 		Util.require( S.isNotNull( paymentType), "No payment type available for " + currency);
+		
+		Double rate = fiatRateMap.get( currency);
+		Util.require( rate != null && rate > 0, "No rate available; call getQuote() first");
 		
 		var body = Util.toJson(
 				"fromCurrency", currency,
@@ -96,7 +100,7 @@ public class Onramp {
 				"customerId", fromCustomerId,
 				"fromAmount", amount,
 				"toAmount", recAmt,
-				"rate", fiatRateMap.get( currency)
+				"rate", rate
 				);
 		
 		return whiteLab( "/onramp/createTransaction", body);
