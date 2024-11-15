@@ -27,7 +27,7 @@ public class OnrampServer {
 	enum State { Funding, Completed, Error }
 
 	static int poll = 10000;
-	static final long confRequired = 12;  // require 12 confirmations on PulseChain
+	static final long confRequired = 24;  // require 24 confirmations on Polygon, 50% more than the 16 required 
 	static final double maxAuto = 300;
 	static final double tolerance = .01; // max percentage slippage
 	private static final String transactionHash = "transactionHash";
@@ -263,7 +263,7 @@ public class OnrampServer {
 	/** build the map and note transitions */
 	void checkOnrampTransactions() {
 		Util.wrap( () -> { 
-			for (var trans : Onramp.getAllTransactions() ) {
+			for (var trans : Onramp.prodRamp.getAllTransactions() ) {
 				String id = trans.getString( "transactionId");
 				int status = trans.getInt( "status");
 				

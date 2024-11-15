@@ -683,9 +683,9 @@ public class WalletPanel extends MonPanel {
 		
 		void setKyc(ActionEvent e) {
 			wrap( () -> { 
-				Onramp.updateKycStatus( m_id.getText(), (KycStatus)m_kycCombo.getSelected() );
+				Onramp.prodRamp.updateKycStatus( m_id.getText(), (KycStatus)m_kycCombo.getSelected() );
 				
-				m_kycStatus.setText( Onramp.getKycStatus( m_id.getText() ) );
+				m_kycStatus.setText( Onramp.prodRamp.getKycStatus( m_id.getText() ) );
 				
 				Util.inform( this, "Done");
 			});
@@ -723,10 +723,10 @@ public class WalletPanel extends MonPanel {
 					m_id.setText( id);
 					
 					if (S.isNotNull( id) ) {
-						String status = Onramp.getKycStatus( id);
+						String status = Onramp.prodRamp.getKycStatus( id);
 						m_kycStatus.setText( status);
 						
-						var trans = Onramp.getUserTransactions( id);
+						var trans = Onramp.prodRamp.getUserTransactions( id);
 						m_apiModel.setNames( String.join( ",", trans.getKeys() ) );
 						m_apiModel.fireTableStructureChanged();
 	

@@ -10,6 +10,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.http.HttpService;
 
 import common.Util;
+import onramp.Onramp;
 import refblocks.Refblocks;
 import tw.google.NewSheet.Book;
 import tw.util.S;
@@ -179,6 +180,10 @@ public class Chain {
 
 	public int chainId() {
 		return params.chainId();
+	}
+
+	public Onramp onramp() {
+		return params.isProduction() ? Onramp.prodRamp : Onramp.devRamp;
 	}
 }
 // tokensupply on monitor, do a batch query. bc

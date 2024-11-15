@@ -86,7 +86,6 @@ public abstract class Config {
 	private String hookNameSuffix;
 	private double autoReward; // automatically send users rewards
 	private boolean sendTelegram;
-	private String onrampUrl;  // white label url
 	private int maxSummaryEmails;
 	private String moralisPlatform;  // lower case
 	private String platformBase;
@@ -221,7 +220,6 @@ public abstract class Config {
 		this.baseUrl = m_tab.get("baseUrl");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
-		this.onrampUrl = m_tab.get( "onrampUrl");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
 				
 		// siwe config items
@@ -233,12 +231,6 @@ public abstract class Config {
 		
 		// Web3
 		this.platformBase = m_tab.getRequiredString("platformBase");
-		
-
-		// update onramp url?
-		if (S.isNotNull( onrampUrl)) {
-			Onramp.setWhiteLabel( onrampUrl);
-		}
 		
 		// update Moralis chain
 		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
@@ -257,7 +249,6 @@ public abstract class Config {
 		require( timeout >= 1000 && timeout <= 20000, "timeout");
 		require( S.isNotNull( backendConfigTab), "backendConfigTab" );
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
-		require( S.isNull( onrampUrl) || !onrampUrl.endsWith( "/"), "Onramp URL");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
 	
@@ -531,10 +522,6 @@ public abstract class Config {
 	
 	public boolean sendTelegram() {
 		return sendTelegram;
-	}
-	
-	public String onrampUrl() {
-		return onrampUrl;
 	}
 	
 	public void log(JsonObject obj) throws Exception {

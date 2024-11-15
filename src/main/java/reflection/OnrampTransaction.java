@@ -66,9 +66,7 @@ public class OnrampTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("onramp-convert");
 			setChainFromHttp();
-			
-			Util.require( chain().params().isPulseChain(), "On-ramp supported for PulseChain only");
-			
+						
 			var user = getorCreateUser();
 			String onrampId = user.getString( "onramp_id");  // cust id and phone
 
@@ -80,7 +78,7 @@ public class OnrampTransaction extends MyTransaction {
 						"Please update your user profile to include a valid phone number.\n\n"
 						+ "The required format is: '##-########'\n\nwhere the first set of digits is the country code");
 
-				var json = Onramp.getKycUrlFirst( m_walletAddr, format( phone), m_config.baseUrl() );
+				var json = chain().onramp().getKycUrlFirst( m_walletAddr, format( phone), m_config.baseUrl() );
 				String custId = json.getString( "customerId");
 				Util.require( S.isNotNull( custId), "No on-ramp ID was assigned");
 				
@@ -103,7 +101,7 @@ public class OnrampTransaction extends MyTransaction {
 			}
 			
 			// we have ID; KYC already completed?
-			else if (isCompleted( Onramp.getKycStatus( onrampId) ) ) {
+			else if (isCompleted( chain().onramp().getKycStatus( onrampId) ) ) {
 				String currency = m_map.getRequiredString("currency");
 				require( Onramp.isValidCurrency( currency), RefCode.INVALID_REQUEST, "The selected currency is invalid");
 				
@@ -114,7 +112,7 @@ public class OnrampTransaction extends MyTransaction {
 				require( receiveAmt > 0, RefCode.INVALID_REQUEST, "The receive amount is invalid");
 	
 				// submit order to OnRamp
-				var submission = Onramp.transact( 
+				var submission = chain().onramp().transact( 
 						onrampId,
 						buyAmt,
 						currency,
@@ -178,7 +176,7 @@ public class OnrampTransaction extends MyTransaction {
 			
 			// continue with subsequent KYC
 			else {
-				var json = Onramp.getKycUrlNext( onrampId, m_config.baseUrl() );
+				var json = chain().onramp().getKycUrlNext( onrampId, m_config.baseUrl() );
 				Util.require( json.getString( "customerId").equals( onrampId), "The on-ramp ID has changed" );  //onramp id should not change
 
 				respond( json

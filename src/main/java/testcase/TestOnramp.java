@@ -43,18 +43,18 @@ public class TestOnramp extends MyTestCase {
 		
 		// first time
 		S.out( "json1***");
-		JsonObject json = Onramp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
+		JsonObject json = Onramp.devRamp.getKycUrlFirst( Cookie.wallet, phone, "http://redirect");
 		json.display();
 		assertTrue( json.has( "url", custId));
 
 		// second time, pass ID only
 		S.out( "json4***");
-		var json4 = Onramp.getKycUrlNext( json.getString( custId), "http://redirect");
+		var json4 = Onramp.devRamp.getKycUrlNext( json.getString( custId), "http://redirect");
 		assertTrue( json4.has( "url", custId));
 		assertEquals( json.getString(custId), json4.getString(custId) );
 	}
 
-	public void testApi() throws Exception {
+	public void testRefApi() throws Exception {
 		Cookie.setNewFakeAddress(true);
 		
 		// get quote
@@ -68,7 +68,7 @@ public class TestOnramp extends MyTestCase {
 		assertTrue( quote.getDouble( "recAmt") > 0);
 
 		// convert, first time, creates new onramp id
-		S.out( "testapi1");
+		S.out( "convert-1");
 		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
@@ -81,7 +81,7 @@ public class TestOnramp extends MyTestCase {
 		assertNotNull( resp.getString( "url") ); 
 		assertNotNull( resp.getString( "customerId") );
 		
-		S.out( "testapi2");
+		S.out( "convert-2");
 		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
@@ -97,9 +97,9 @@ public class TestOnramp extends MyTestCase {
 		S.out( "url is:\n" + resp.getString( "url") );
 		Util.pause();
 
-		Onramp.updateKycStatus(resp.getString( "customerId"), KycStatus.BASIC_KYC_COMPLETED);
+		Onramp.devRamp.updateKycStatus(resp.getString( "customerId"), KycStatus.BASIC_KYC_COMPLETED);
 
-		S.out( "testapi3");
+		S.out( "convert-3");
 		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
 				"cookie", Cookie.cookie,
@@ -107,7 +107,7 @@ public class TestOnramp extends MyTestCase {
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
 				));
-		assert200();
+		assert200();  // failing 400 - UNKNOWN - Cannot invoke "chain.Chain.params()" because the return value of "chain.Chains.polygon()" is null
 		startsWith( "The transaction has been", cli.getMessage() );
 		assertTrue( resp.has( "createdAt") );
 		assertTrue( resp.has( "bank") );

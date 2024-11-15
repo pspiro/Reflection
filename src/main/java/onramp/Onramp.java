@@ -17,49 +17,6 @@ import web3.Encrypt;
 
 /** this class contains all the static utility functions to access the onramp API */
 public class Onramp {
-	static String apiKey = "WrvBzqWp1QSgXijTi94qJX2YknOv2Y";
-	static String secretKey = "a9j1JxuRmJPJ8kVpdBd8WNJ3u8J260Ls";
-	static String appId = "950410";  // used by Frontend only
-
-	static JsonObject fiatMap;  // map fiat id to fiat name
-	static HashMap<String,Double> fiatRateMap = new HashMap<>();  // map fiat name to rate
-	static JsonObject paymentMethodMap = new JsonObject();  // map fiat name to transfer method
-	
-	static String prod = "https://api.onramp.money/onramp/api/v2/whiteLabel";
-	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
-	static String wlUrl = dev; 
-	static boolean debug = true;
-	
-	public static void useProd() {
-		wlUrl = prod;
-	}
-	
-	// more:
-	// url to add bank accounts https://api.onramp.money/onramp/api/v2/whiteLabel/bank/addFiatAccountUrl
-
-	// other queries, no auth needed
-	// https://api.onramp.money/onramp/api/v3/buy/public/listAllCoins
-	// https://api.onramp.money/onramp/api/v3/buy/public/listAllNetworks
-	// https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType
-	// https://docs.onramp.money/onramp-whitelabel-unlisted/whitelabel-public-endpoints/list-supported-fiat
-
-	public static void setWhiteLabel( String url) {
-		S.out( "Setting onramp white label url to " + url);
-		wlUrl = url;
-	}
-
-	// add this to frontend
-	// const currencies = [ "MXN","ARS","CLP","ZAR","INR","VND","THB","AUD","GHS","GBP","IDR","PHP","TRY","AED","RWF","EUR","COP","USD","MYR","EGP","NGN","PEN","KES","XAF","BRL" ];
-	
-	static {
-		try {
-			buildMaps();
-			S.out( "fiat map: " + fiatMap);
-			S.out( "payment method map: " + paymentMethodMap);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	/** these are the known statuses but there could be others */
 	public enum KycStatus {
@@ -72,14 +29,52 @@ public class Onramp {
 		IN_REVIEW, 
 		COMPLETED;
 	}
-	
 
+	static String apiKey = "WrvBzqWp1QSgXijTi94qJX2YknOv2Y";
+	static String secretKey = "a9j1JxuRmJPJ8kVpdBd8WNJ3u8J260Ls";
+	static String appId = "950410";  // used by Frontend only
+	static String prod = "https://api.onramp.money/onramp/api/v2/whiteLabel";
+	static String dev = "https://api-test.onramp.money/onramp/api/v2/whiteLabel";
+
+	static JsonObject fiatMap;  // map fiat id to fiat name
+	static HashMap<String,Double> fiatRateMap = new HashMap<>();  // map fiat name to rate
+	static JsonObject paymentMethodMap = new JsonObject();  // map fiat name to transfer method
+	static boolean debug = true;
+	
+	public static Onramp prodRamp = new Onramp( prod);
+	public static Onramp devRamp = new Onramp( dev);
+	
+	private String m_whiteUrl;
+	
+	// more:
+	// url to add bank accounts https://api.onramp.money/onramp/api/v2/whiteLabel/bank/addFiatAccountUrl
+
+	// other queries, no auth needed
+	// https://api.onramp.money/onramp/api/v3/buy/public/listAllCoins
+	// https://api.onramp.money/onramp/api/v3/buy/public/listAllNetworks
+	// https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType
+	// https://docs.onramp.money/onramp-whitelabel-unlisted/whitelabel-public-endpoints/list-supported-fiat
+
+	static {
+		try {
+			buildMaps();
+			S.out( "onramp fiat map: " + fiatMap);
+			S.out( "onramp payment method map: " + paymentMethodMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 	}
 	
+	public Onramp( String url) {
+		m_whiteUrl = url;
+	}
+
 	/** @return status, code, data -> transactionId, fiatAmount, fiatPaymentInstructions -> 
 	 * 		type, bank, bankNotes, otp */
-	public static JsonObject transact(
+	public JsonObject transact(
 			String fromCustomerId,
 			double amount,
 			String currency,
@@ -107,7 +102,7 @@ public class Onramp {
 		return whiteLab( "/onramp/createTransaction", body);
 	}
 	
-	public static JsonObject updateKycStatus(String customerId, KycStatus status) throws Exception {
+	public JsonObject updateKycStatus(String customerId, KycStatus status) throws Exception {
 		return whiteLab( "/test/changeKycStatus", Util.toJson(
 				"customerId", customerId,
 				"status", status
@@ -121,18 +116,18 @@ public class Onramp {
 //	14: ON_CHAIN_INITIATED
 //	4, 15: ON_CHAIN_COMPLETED
 	
-	public static int getTransStatus( String customerId, String transactionId) throws Exception {
+	public int getTransStatus( String customerId, String transactionId) throws Exception {
 		return getTransaction( customerId, transactionId).getInt( "status");
 	}
 	
-	public static JsonObject getTransaction( String customerId, String transactionId) throws Exception {
+	public JsonObject getTransaction( String customerId, String transactionId) throws Exception {
 		return whiteLab( "/onramp/transaction", Util.toJson(
 				"customerId", customerId,
 				"transactionId", transactionId
 				) ).getObjectNN("data");
 	}
 	
-	public static JsonObject setTransStatus( String customerId, String transactionId, int status) throws Exception {
+	public JsonObject setTransStatus( String customerId, String transactionId, int status) throws Exception {
 		return whiteLab( "test/changeOnrampStatus", Util.toJson(
 				"customerId", customerId,
 				"transactionId", transactionId,
@@ -140,7 +135,7 @@ public class Onramp {
 				) ); 
 	}
 	
-	public static JsonArray getUserTransactions( String customerId) throws Exception {
+	public JsonArray getUserTransactions( String customerId) throws Exception {
 		return whiteLab( "/onramp/allUserTransaction", Util.toJson(
 				"customerId", customerId,
 				"page", 1,
@@ -149,7 +144,7 @@ public class Onramp {
 	}
 		
 	/** returns only the "data" portion of each transaction */ // should be used by Monitor?
-	public static JsonArray getAllTransactions() throws Exception {
+	public JsonArray getAllTransactions() throws Exception {
 		return whiteLab( "/onramp/allTransaction", Util.toJson(
 				"page", 1,
 				"pageSize", "500") ).getArray( "data");
@@ -158,7 +153,7 @@ public class Onramp {
 	/** why do I need the chain and payment method to get a quote? 
 	 *  are there different prices on different chains and methods? */
 	public static double getQuote( String currency, double fromAmt) throws Exception {
-		var json = whiteLab( "/onramp/quote", Util.toJson( 
+		var json = query( prod + "/onramp/quote", Util.toJson( 
 				"fromCurrency", currency,
 				"toCurrency", "USDT",
 				"fromAmount", "" + fromAmt,
@@ -182,7 +177,7 @@ public class Onramp {
 	 *  fields are url customerId
 	 *  WARNING: if you get 'Please provide a valid phone number string, it may
 	 *  mean that your wallet is already associated with a different phone number */ 
-	public static JsonObject getKycUrlFirst( String wallet, String phone, String redirectUrl) throws Exception {
+	public JsonObject getKycUrlFirst( String wallet, String phone, String redirectUrl) throws Exception {
 		var req = Util.toJson(
 				"clientCustomerId", wallet.toLowerCase(),
 				"phoneNumber", phone,
@@ -193,7 +188,7 @@ public class Onramp {
 
 	/** subsequent call; wallet and phone can change
 	 * fields are url customerId */
-	public static JsonObject getKycUrlNext( String custId, String redirectUrl) throws Exception {
+	public JsonObject getKycUrlNext( String custId, String redirectUrl) throws Exception {
 		var req = Util.toJson(
 				"customerId", custId,
 				"type", "INDIVIDUAL",  			  // individual or business
@@ -202,7 +197,7 @@ public class Onramp {
 	}
 
 	/** all calls */
-	private static JsonObject getKycUrl( JsonObject req) throws Exception {
+	private JsonObject getKycUrl( JsonObject req) throws Exception {
 		var json = whiteLab( "/kyc/url", req);
 		
 		if (json.has( "error")) {
@@ -226,66 +221,19 @@ public class Onramp {
 	}
 
 	/** 'data' could be json containing the status, or a string containing 'LOGIN_REQUIRED' */
-	public static String getKycStatus( String customerId) throws Exception {
+	public String getKycStatus( String customerId) throws Exception {
 		var json = whiteLab( "/kyc/status", Util.toJson( "customerId", customerId) );
 		String data = json.getString( "data");
 		return JsonObject.isObject( data) ? json.getObject( "data").getString( "status") : data;
-	}
-	
-	public static JsonObject queryLimits() throws Exception {
-		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/limits";
-		return query( url, Util.toJson( "type", 1) );  // 1=onramp, 2=offramp, 3=both
-	}
-
-	public static JsonObject getPrices() throws Exception {
-		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/priceTicker";
-		return query( url, Util.toJson( 
-				"type", 1,         // 1=buy  2=sell  3=both
-				"fiatType", 1) );  // 1=INR
-	}
-
-	/** Returns a map of coinid -> chainid -> limit */
-	public static JsonObject coinLimits() throws Exception {
-		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/allCoinLimits";
-		return query( url, Util.toJson( "fiatType", 1) );  // 1=onramp, 2=offramp, 3=both
-	}
-
-	//	public static void query() {
-	//	}
-	//	public static void query() {
-	//	}
-	//	public static void query() {
-	//	}
-	//	public static void query() {
-	//	}
-
-	public static void queryFees() throws Exception {
-		String url = "https://api.onramp.money/onramp/api/v1/public/allGasFee";
-		MyClient.getJson( url).display();
-	}
-	public static void queryHistory() throws Exception {
-
-		String url = "https://api.onramp.money/onramp/api/v1/transaction/merchantHistory";
-
-		JsonObject query = Util.toJson(
-				"page", 1,
-				"pageSize", 50   // Min: 1, Max: 500, Default: 50
-				//				"since", "2022-10-07T22:29:52.000Z"
-				);
-		query( url, query).display();
-	}
-
-	public static boolean isFinal(int status) {
-		return status < 0 || status == 4 || status == 15;
 	}
 
 	/** Wait up to n seconds for order status. If there's an exception,
 	 *  keep waiting */
 	public static int waitForOrderStatus(int orderId, int sec) {
-		int status = Onramp.queryOrderStatus( orderId);
+		int status = queryOrderStatus( orderId);
 		for (int i = 0; i < sec && !Onramp.isFinal( status); i++) {
 			S.sleep(1000);
-			status = Onramp.queryOrderStatus( orderId);
+			status = queryOrderStatus( orderId);
 		}
 		return status;
 	}
@@ -306,6 +254,7 @@ public class Onramp {
 		}
 	}
 	
+	/** is there a different URL to use in onramp dev system? */
 	public static JsonObject queryOrder(int orderId) throws Exception {
 		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/orderStatus";
 
@@ -316,16 +265,14 @@ public class Onramp {
 		return query( url, query);
 	}
 	
-	private static JsonObject whiteLab(String uri, JsonObject json) throws Exception {
+	private JsonObject whiteLab(String uri, JsonObject json) throws Exception {
 		Util.require( uri.startsWith( "/"), "start with /");
-		return query( wlUrl + uri, json);
+		return query( m_whiteUrl + uri, json);
 	}
 	
-	private static JsonObject query( String url) throws Exception {
-		return query( url, new JsonObject() );
-	}
-
-	/** @return an ORDERED json object, so we don't lose the order of the Bank
+	/** sends a signed request
+	 * 
+	 *  @return an ORDERED json object, so we don't lose the order of the Bank
 	 *  section when we send the createTransaction endpoint */
 	private static JsonObject query( String url, JsonObject body) throws Exception {
 		JsonObject payload = Util.toJson( 
@@ -370,7 +317,7 @@ public class Onramp {
 	 * @throws Exception */
 	static JsonObject getCurrencies() throws Exception {
 		return MyClient
-				.getJson( "https://api.onramp.money/onramp/api/v2/whiteLabel/public/listSupportedFiat")
+				.getJson( prod + "/public/listSupportedFiat")
 				.getObject( "data")
 				.getObject( "onramp");
 	}
@@ -379,7 +326,7 @@ public class Onramp {
 	public static void buildMaps() throws Exception {
 		try {
 			// map currency id to currency name
-			fiatMap = MyClient.getJson( "https://api.onramp.money/onramp/api/v2/whiteLabel/public/listSupportedFiat")
+			fiatMap = MyClient.getJson( prod + "/public/listSupportedFiat")
 					.getObjectNN( "data").getObject( "onramp");
 			Util.require( fiatMap != null, "Error: no fiat map returned");
 		}
@@ -413,17 +360,14 @@ public class Onramp {
 		}
 	}
 	
-	/** @param fiat ID
-	 * @return fiat name, e.g. EUR */
-//	private static String fiatName(String fiatId) throws Exception {
-//		Util.require( fiatMap.has( fiatId), "Invalid fiatId " + fiatId);
-//		return fiatMap.getString( fiatId);
-//	}
-	
 	public static boolean isValidCurrency(String currency) {
 		return paymentMethodMap.get( currency) != null;
 	}
-	
+
+	public static boolean isFinal(int status) {
+		return status < 0 || status == 4 || status == 15;
+	}
+
 	private static JsonObject getDefaultPaymentMethodMap() {
 		return Util.toJson(
 			"AED", "AED-BANK-TRANSFER", 
@@ -464,7 +408,59 @@ public class Onramp {
 	public static void debugOff() {
 		debug = false;
 	}
+	
+	
+//	public JsonObject queryLimits() throws Exception {
+//		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/limits";
+//		return query( url, Util.toJson( "type", 1) );  // 1=onramp, 2=offramp, 3=both
+//	}
+
+//	public JsonObject getPrices() throws Exception {
+//		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/priceTicker";
+//		return query( url, Util.toJson( 
+//				"type", 1,         // 1=buy  2=sell  3=both
+//				"fiatType", 1) );  // 1=INR
+//	}
+
+//	/** Returns a map of coinid -> chainid -> limit */
+//	public JsonObject coinLimits() throws Exception {
+//		String url = "https://api.onramp.money/onramp/api/v2/common/transaction/allCoinLimits";
+//		return query( url, Util.toJson( "fiatType", 1) );  // 1=onramp, 2=offramp, 3=both
+//	}
+
+//	/** never called; note that it uses 'v1', not sure if this is right */
+//	public static void queryFees() throws Exception {
+//		String url = "https://api.onramp.money/onramp/api/v1/public/allGasFee";
+//		MyClient.getJson( url).display();
+//	}
+
+	/** never called; note that it uses 'v1', not sure if this is right */
+//	public void queryHistory() throws Exception {
+//
+//		String url = "https://api.onramp.money/onramp/api/v1/transaction/merchantHistory";
+//
+//		JsonObject query = Util.toJson(
+//				"page", 1,
+//				"pageSize", 50   // Min: 1, Max: 500, Default: 50
+//				//				"since", "2022-10-07T22:29:52.000Z"
+//				);
+//		query( url, query).display();
+//	}
+
+//	/** sends a signed request */
+//	private static JsonObject query( String url) throws Exception {
+//		return query( url, new JsonObject() );
+//	}
+	
+	/** @param fiat ID
+	 * @return fiat name, e.g. EUR */
+//	private static String fiatName(String fiatId) throws Exception {
+//		Util.require( fiatMap.has( fiatId), "Invalid fiatId " + fiatId);
+//		return fiatMap.getString( fiatId);
+//	}
+	
 }
+
 
 /*	
  *  ORDER STATUS CODES

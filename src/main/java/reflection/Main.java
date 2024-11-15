@@ -121,7 +121,7 @@ public class Main implements ITradeReportHandler {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 
 			// onramp
-			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );
+			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );  // old code, obsolete, remove
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			

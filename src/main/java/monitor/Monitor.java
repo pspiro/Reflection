@@ -208,7 +208,7 @@ public class Monitor {
 		}
 		
 		@Override protected void refresh() throws Exception {
-			JsonArray apiTrans = Onramp.getAllTransactions();
+			JsonArray apiTrans = Onramp.prodRamp.getAllTransactions();
 			m_apiModel.setNames( String.join( ",", apiTrans.getKeys() ) );
 			m_apiModel.fireTableStructureChanged();
 			m_apiModel.setRows( apiTrans);
