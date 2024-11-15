@@ -55,7 +55,6 @@ public class HookServer {
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
 	
 	static {
-		SingleChainConfig.setSingleChain();
 		m_config = new HookConfig();
 	}
 	

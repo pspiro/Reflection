@@ -16,6 +16,7 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import http.MyClient;
+import refblocks.Refblocks;
 import tw.util.MyException;
 import tw.util.S;
 import web3.RetVal.NodeRetVal;
@@ -166,7 +167,9 @@ public class NodeInstance {
 	}
 	
 	/** Get the n latest blocks and for each return the gas price that covers
-	 *  pct percent of the transactions */
+	 *  pct percent of the transactions
+	 *  
+	 *  Note that some rows can contain zero */
 	public JsonObject getFeeHistory(int blocks, int pct) throws Exception {
 		String body = String.format( """
 			{
@@ -175,6 +178,18 @@ public class NodeInstance {
 			"method": "eth_feeHistory",
 			"params": [ "%s", "latest", [ %s ] ]
 			}""", blocks, pct); 
+		return nodeQuery( body);
+	}
+
+	/** Get the n latest blocks; note that some blocks can contains all zeros */
+	public JsonObject getFullFeeHistory(int blocks) throws Exception {
+		String body = String.format( """
+			{
+			"jsonrpc": "2.0",
+			"id": 1,
+			"method": "eth_feeHistory",
+			"params": [ "%s", "latest", [ 10, 30, 50, 70, 90] ]
+			}""", blocks); 
 		return nodeQuery( body);
 	}
 
@@ -202,7 +217,7 @@ public class NodeInstance {
 	}
 
 	public Fees queryFees() throws Exception {
-		return queryFees( 5, 60);
+		return queryFees( 6, 60);
 	}
 	
 	private Fees queryFees( int blocks, int pct) throws Exception {  // this version for testing only
@@ -214,12 +229,17 @@ public class NodeInstance {
 
 		// take average of median priority fee over last 5 blocks 
 		long sum = 0;
+		double count = 0;
 		ArrayList<ArrayList> reward = json.<ArrayList>getArrayOf( "reward");
 		for ( ArrayList ar : reward) {
-			sum += Util.getLong( ar.get(0).toString() );
+			long val = Util.getLong( ar.get(0).toString() );
+			if (val > 0) {   // on some chains (e.g. amoy), some rows contain all zeros; these rows must be ignored
+				sum += val;
+				count++;
+			}
 		}
 
-		return new Fees( baseFee * 1.2, sum / 5.);
+		return new Fees( baseFee * 1.2, sum / count);
 	}
 	
 	/** show pending and queued transactions to find stuck transactions
@@ -624,10 +644,33 @@ public class NodeInstance {
 			int gasLimit 
 			) throws Exception {
 		
+		return callSigned(
+				privateKey,
+				contractAddr,
+				Param.encodeData(keccak, params),
+				gasLimit);
+	}
+
+	/** works for all chains but not zkSync */
+	public String deploy( String privateKey, String byteCode, String params) throws Exception {
+		Util.require( !params.startsWith( "0x"), "invalid params");
+
+		String hash = callSigned( privateKey, "", byteCode + params, Refblocks.deployGas)
+				.waitForReceipt();
+		
+		var receipt = getReceipt( hash);
+		
+		String address = receipt.getString( "contractAddress");
+		Util.require( S.isNotNull( address), "Error: no contract address returned");
+		
+		return address;
+	}
+	
+	public RetVal callSigned( String privateKey, String contractAddr, String data, long gasLimit) throws Exception {		
 		String callerAddr = Util.getAddress( privateKey);
-		String encodedData = Param.encodeData(keccak, params);
 		
 		var fees = queryFees();
+		//fees.display( BigInteger.valueOf( gasLimit) );
 		
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
 				chainId,
@@ -635,24 +678,24 @@ public class NodeInstance {
 				BigInteger.valueOf( gasLimit),
 				contractAddr,
 				BigInteger.ZERO,  // no ether to send
-				encodedData,
+				data,
 				fees.priorityFee(),
 				fees.totalFee()
 				);
 		
 		Credentials credentials = Credentials.create(privateKey);
-		byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
-		String hex = Numeric.toHexString(signedMessage);
+		byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials);
+		String signedHex = Numeric.toHexString(signedMessage);
 		
 		Req req = new Req("eth_sendRawTransaction", 1);
-		req.put( "params", Util.toArray( hex) );
+		req.put( "params", Util.toArray( signedHex) );
 		
 		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
 		S.out( "  transaction hash: " + hash);
 		
-		return new NodeRetVal( hash, this, callerAddr, contractAddr, encodedData);
+		return new NodeRetVal( hash, this, callerAddr, contractAddr, data);
 	}
-
+	
 	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
 		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
 	}

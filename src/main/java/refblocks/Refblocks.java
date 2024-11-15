@@ -204,7 +204,7 @@ public class Refblocks {
 		BigInteger units = BigInteger.valueOf( unitsIn);
 		
 		Fees fees = node.queryFees();
-		fees.showFees(units);
+		fees.display(units);
 
 		return new StaticEIP1559GasProvider(
 				chainId,
@@ -233,7 +233,7 @@ public class Refblocks {
     		BigInteger gasUnits = BigInteger.valueOf( 200000);  // was 40k, increased to 200k for ZkSync
     		
     		Fees fees = node.queryFees();
-    		fees.showFees( gasUnits);
+    		fees.display( gasUnits);
     		
     		// WATCH OUT for org.web3j.ens.EnsResolutionException exceptions
     		// you may need to resolve first, in a loop, and try several times 

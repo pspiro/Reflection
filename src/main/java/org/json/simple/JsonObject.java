@@ -219,7 +219,10 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new JsonArray(); 
 	}
 
-	/** Call it like this: json.<String>getAnyArray( key) */
+	/** Call it like this: json.<String>getAnyArray( key)
+	 *  Also works for array of lists, like this: json.<ArrayList>getAnyArray( key);
+	 *  In this case, each item in the array will be of the correct json type, e.g.
+	 *  string, int, or object */
 	@SuppressWarnings("unchecked")
 	public <T> ArrayList<T> getArrayOf(String key) {
 		ArrayList<T> array = (ArrayList<T>)get(key);

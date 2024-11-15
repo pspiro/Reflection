@@ -18,7 +18,7 @@ public class SingleChainConfig extends Config {
 
 		m_chainId = m_tab.getRequiredInt( "chainId");
 
-		Chains chains = new Chains();
+		Chains chains = new Chains();  // this is wrong, you should just read required chain. pas
 		chains.readAll();
 
 		m_chain = chains.get( m_chainId);

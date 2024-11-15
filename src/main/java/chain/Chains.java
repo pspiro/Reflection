@@ -48,30 +48,38 @@ public class Chains extends HashMap<Integer,Chain> {
 	}
 
 	public void readAll() throws Exception {
-		read( Util.toArray( "Polygon", "PulseChain", "Sepolia", "zkSync") );
+		read( Util.toArray( "Polygon", "PulseChain", "Sepolia", "zkSync"), true );
 	}
 
-	public void read(String[] names) throws Exception {
+	public Chain readOne( String name, boolean readSymbols) throws Exception {
+		read( Util.toArray( name), readSymbols);
+		return values().iterator().next();
+	}
+
+	public void read(String[] names, boolean readSymbols) throws Exception {
 		// read entire Blockchain tab
 		Book book = NewSheet.getBook( NewSheet.Reflection);
 		var rows = book.getTab( "Blockchain").queryToJson();
 		
 		for (String name : names) {
-			readChain( book, rows, name);
+			readChain( book, rows, name, readSymbols);
 		}
 	}
 
 	/** Read one column (one chain) from the Blockchain tab, AND
 	 *  read in all the symbols for that chain as well */
-	private void readChain(Book book, JsonArray rows, String chainName) throws Exception {
+	private void readChain(Book book, JsonArray rows, String chainName, boolean readSymbols) throws Exception {
 		JsonObject json = new JsonObject();
 		for (var row : rows) {
-			json.put( row.getString( "Tag"), row.getString( chainName) );
+			Util.iff( row.getString( "Tag"), tag -> json.put( tag, row.getString( chainName) ) );
 		}
 		
 		// create the Chain and read in the symbols
 		var chain = new Chain( json.toRecord( ChainParams.class) );
-		chain.readSymbols( book);
+		
+		if (readSymbols) {
+			chain.readSymbols( book);
+		}
 		
 		// add this new chain to the map
 		put( chain.chainId(), chain);

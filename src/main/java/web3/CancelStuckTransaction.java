@@ -7,7 +7,6 @@ import tw.util.S;
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		SingleChainConfig.setSingleChain();
 		SingleChainConfig c = SingleChainConfig.ask();
 		
 		String wallet = c.admin1Addr();  // wallet that is stuck

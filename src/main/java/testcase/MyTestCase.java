@@ -27,7 +27,6 @@ public class MyTestCase extends TestCase {
 	
 	static {
 		try {
-			SingleChainConfig.setSingleChain();
 			m_config = SingleChainConfig.read();  // pull from config.txt
 			assertTrue( !m_config.isProduction() ); // don't even think about it!
 			chain = m_config.chain();

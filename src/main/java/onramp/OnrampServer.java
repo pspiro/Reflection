@@ -6,7 +6,6 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import chain.Chain;
-import chain.Chains;
 import common.Alerts;
 import common.Util;
 import http.SimpleTransaction;

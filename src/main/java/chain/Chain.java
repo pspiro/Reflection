@@ -185,6 +185,14 @@ public class Chain {
 	public Onramp onramp() {
 		return params.isProduction() ? Onramp.prodRamp : Onramp.devRamp;
 	}
+
+	public void setBusdAddress(String busdAddress) {
+		S.out( "BUSD ADDRESS IS " + busdAddress);
+	}
+
+	public void setRusdAddress(String rusdAddress) {
+		S.out( "RUSD ADDRESS IS " + rusdAddress);
+	}
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

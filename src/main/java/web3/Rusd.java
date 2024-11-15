@@ -175,6 +175,8 @@ public class Rusd extends Stablecoin {
 	}
 
 	public String deploy( String ownerKey, String refWallet, String admin1) throws Exception {
+		S.out( "deploying RUSD");
+		
 		return refblocks.Rusd.deploy( 
 				m_chain.web3j(),
 				m_chain.blocks().getWaitingTm( ownerKey),

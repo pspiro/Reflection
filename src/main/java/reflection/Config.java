@@ -14,7 +14,6 @@ import chain.Chains;
 import common.Alerts;
 import common.SmtpSender;
 import common.Util;
-import onramp.Onramp;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import siwe.SiweTransaction;
@@ -31,8 +30,6 @@ import web3.MoralisServer;
 import web3.Rusd;
 
 public abstract class Config {
-	private static boolean singleChain;  // this is for testing and Monitor only
-
 	protected GTable m_tab;
 	
 	public abstract boolean isProduction();
@@ -542,14 +539,6 @@ public abstract class Config {
 	}
 	
 	
-	
-	/** Call this for Monitor and testing, not any production app.
-	 *  If set, we'll pull the chainId from the configuration.
-	 *  If not set, the chainId is required to return the Chain. */
-	public static void setSingleChain() {
-		singleChain = true;
-	}
-	
 	/** Used by RefAPI and OnrampServer */
 	public static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
@@ -560,7 +549,7 @@ public abstract class Config {
 			super.readFromSpreadsheet(tab);
 			
 			String[] names = m_tab.getRequiredString( "chains").split( ",");
-			chains.read( names);
+			chains.read( names, true);
 			
 			defaultChain = chains.get( m_tab.getRequiredInt( "defaultChainId") ); // temporary, for upgrade only; remove after upgrade
 			require( defaultChain != null, "defaultChainId");
