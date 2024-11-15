@@ -785,6 +785,11 @@ public class Util {
 		}
 	}
 
+    // is this good or stupid? never used
+    public static <T> void x( T param, ExConsumer<T> runnable) throws Exception {
+    	runnable.accept( param);
+    }
+
 	/** wrap text like this <tag>text</tag> */
 	public static String wrapHtml( String tag, String text) {
 		return String.format( "<%s>%s</%s>", tag, text, tag);
@@ -1024,4 +1029,7 @@ public class Util {
     	var list2 = ar.toRecord( A.class);
     	S.out( list2);
     }
+    
+    	
+    	
 }

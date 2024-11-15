@@ -15,6 +15,7 @@ import testcase.TestOnramp;
 import tw.util.S;
 import web3.Encrypt;
 
+/** this class contains all the static utility functions to access the onramp API */
 public class Onramp {
 	static String apiKey = "WrvBzqWp1QSgXijTi94qJX2YknOv2Y";
 	static String secretKey = "a9j1JxuRmJPJ8kVpdBd8WNJ3u8J260Ls";
@@ -74,7 +75,6 @@ public class Onramp {
 	
 
 	public static void main(String[] args) throws Exception {
-		S.out( getKycUrlFirst("0x2703161D6DD37301CEd98ff717795E14427a462B", TestOnramp.newPhone(), "https://abc.com") );  
 	}
 	
 	/** @return status, code, data -> transactionId, fiatAmount, fiatPaymentInstructions -> 

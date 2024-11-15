@@ -118,7 +118,7 @@ public class OnrampTransaction extends MyTransaction {
 						onrampId,
 						buyAmt,
 						currency,
-						chain().params().refWalletAddr(),
+						m_config.chains().polygon().params().refWalletAddr(),  // we always receive on polygon, for now; ideally we would receive on the same chain as the user
 						receiveAmt);
 				out( "Submitted onramp order, received: " + submission);
 				

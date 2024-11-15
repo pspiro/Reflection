@@ -5,10 +5,13 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
+import chain.Chain;
+import chain.Chains;
 import common.Alerts;
 import common.Util;
 import http.SimpleTransaction;
-import reflection.SingleChainConfig;
+import reflection.Config.MultiChainConfig;
+import tw.google.NewSheet;
 import tw.util.S;
 import util.LogType;
 import web3.NodeInstance.Transfer;
@@ -18,7 +21,8 @@ insert into onramp (wallet_public_key, trans_id, amount) values ('0xabc', '10603
 update onramp set state = '';
 */
 
-
+/** runs as a separate program. It polls the onramp API and the database every 10 sec.
+ *  looking for unfilled transactions */
 public class OnrampServer {
 	enum State { Funding, Completed, Error }
 
@@ -34,33 +38,34 @@ public class OnrampServer {
 			"-2", "The user has abandoned the transaction",
 			"-1", "The transaction has exceeded the allowable time limit");  
 	
-	private final SingleChainConfig m_polygon;
-	private final SingleChainConfig m_pulsechain;
-	private final HashMap<String, JsonObject> map = new HashMap<>(); // map onramp transId to onramp record
+	private final MultiChainConfig m_config = new MultiChainConfig();;
+	private final HashMap<String, JsonObject> m_onrampMap = new HashMap<>(); // map onramp transId to onramp record
 	private boolean m_testMode;
-
+	
+	void setTestMode() {
+		m_testMode = true;
+	}
+	
 	public static void main(String[] args) throws Exception {
 		Thread.currentThread().setName("OnRamp");
 		
 		// don't allow running twice
 		SimpleTransaction.listen("0.0.0.0", 5003, SimpleTransaction.nullHandler);
 
-		S.out( "Starting onramp server with %s ms polling interval", poll);
-		//Onramp.useProd();
-		Onramp.debugOff();
-		new OnrampServer(true);
-	}
-
-	public OnrampServer() throws Exception {
-		m_polygon = SingleChainConfig.readFrom( "Prod-config");
-		m_pulsechain = SingleChainConfig.readFrom( "Pulse-config");
-		Util.executeEvery(0, poll, this::check);
+		new OnrampServer();
 	}
 	
-	/** test mode, not used because we cannot simulate the hash code */
-	public OnrampServer(boolean test) throws Exception {
-		this();
-		m_testMode = true;
+	public OnrampServer() throws Exception {
+		S.out( "Starting onramp server with %s ms polling interval", poll);
+
+		Onramp.debugOff();
+
+		// read config
+		var book = NewSheet.getBook( NewSheet.Reflection);
+		m_config.readFromSpreadsheet( book, "Prod-config");
+		
+		// poll onramp and database every ten sec
+		Util.executeEvery(0, poll, this::check);
 	}
 	
 	void check() {
@@ -68,7 +73,7 @@ public class OnrampServer {
 			checkOnrampTransactions();
 
 			// look for unfulfilled database transactions
-			JsonArray rows = m_pulsechain.sqlQuery( "select * from onramp where (state is null or state = '')");
+			JsonArray rows = m_config.sqlQuery( "select * from onramp where (state is null or state = '')");
 			for (var dbTrans : rows) {
 				try {
 					processDbTrans( dbTrans);
@@ -79,9 +84,10 @@ public class OnrampServer {
 					// update state so we won't try again; admin must intervene 
 					Util.wrap( () -> updateState( State.Error, "", dbTrans.getString( "trans_id") ) );  
 
-					m_pulsechain.log( Util.toJson(
+					m_config.log( Util.toJson(
 							"type", LogType.ONRAMP,
 							"wallet_public_key", dbTrans.getString( "wallet_public_key"),
+							"chainId", dbTrans.getString( "chainId"),
 							"data", Util.toJson( 
 									"type", "error", 
 									"text", e.getMessage() ) ) );
@@ -102,43 +108,56 @@ public class OnrampServer {
 		
 		String wallet = dbTrans.getString( "wallet_public_key");
 		Util.require( S.isNotNull( wallet), "Error: wallet should not be null");
-
+		
+		int chainId = dbTrans.getInt( "chainId");
+		Util.require( chainId > 0, "Error: chainId is zero");
+		
+		Chain userChain = m_config.chains().get( chainId);  // the chain that the user wants the crypto on
+		Util.require( userChain != null, "Error: chainId is invalid");
+		
+		Chain polygon = m_config.chains().polygon();  // currently, we can only receive from onramp on polygon, but that could change
+		
 		// get onramp transaction
-		var onrampTrans = map.get( id);
+		var onrampTrans = m_onrampMap.get( id);
 		Util.require( onrampTrans != null, "Error: could not find onramp transaction  id=%s  wallet=%s", id, wallet);
 		
 		S.out( "found onramp transaction: " + onrampTrans);
 
 		// negative status implies an error
 		int status = onrampTrans.getInt( "status");
-		Util.require( status >= 0, S.notNull( errCodes.getString( "" + status), "An error occurred with status " + status) );
+		Util.require( status >= 0, S.notNull( 
+				errCodes.getString( "" + status),  // preferred msg
+				"An error occurred with status " + status) );  // default msg
 
 		// get transaction hash of transfer from onramp to RefWallet 
 		String onrampToReflHash = onrampTrans.getString( transactionHash); // <<< ON POLYGON!!!
 		if (S.isNotNull( onrampToReflHash) ) {
-			S.out( "got onramp-to-reflection hash %s", onrampToReflHash);
+			S.out( "got onramp-to-reflection hash %s on chain %s", onrampToReflHash, polygon.params().name() );
 			
 			Util.require( Util.isValidHash( onrampToReflHash), "the hash for trans_id %s is invalid", id); // the hash is always invalid in the OnRamp sandbox
 			
 			// check for required number of confirmations
-			long ago = m_polygon.node().getTransactionAge(onrampToReflHash);  // <<< ON POLYGON!!!
+			long ago = polygon.node().getTransactionAge(onrampToReflHash);  // <<< ON POLYGON!!!
 			if (ago >= confRequired) {
 
 				// get receipt and info about the transfer
-				Transfer received = m_polygon.node().getTransferReceipt( onrampToReflHash, m_polygon.busd().decimals() ); // <<< ON POLYGON!!!
+				Transfer received = polygon.node().getTransferReceipt( onrampToReflHash, polygon.busd().decimals() ); // <<< ON POLYGON!!!
 
 				// confirm correct contract address
-				Util.require( received.contract().equalsIgnoreCase( m_polygon.busdAddr() ), "Error: the blockchain transaction is for the wrong contract  id=%s  wallet=%s  expected=%s  got=%s",
-						id, wallet, m_polygon.busdAddr(), received.contract() );
+				Util.require( received.contract().equalsIgnoreCase( polygon.busd().address() ), 
+						"Error: the blockchain transaction is for the wrong contract  id=%s  wallet=%s  expected=%s  got=%s",
+						id, wallet, polygon.busd().address(), received.contract() );
 
 				// confirm correct receipient address
-				Util.require( received.to().equalsIgnoreCase( m_pulsechain.refWalletAddr() ), "Error: the crypto was sent to the wrong address  id=%s  wallet=%s  expected=%s  got=%s",
-						id, wallet, m_pulsechain.refWalletAddr(), received.to() );
+				Util.require( received.to().equalsIgnoreCase( polygon.params().refWalletAddr() ), 
+						"Error: the crypto was sent to the wrong address  id=%s  wallet=%s  expected=%s  got=%s",
+						id, wallet, polygon.params().refWalletAddr(), received.to() );
 				
 				// confirm correct amount
 				double expected = dbTrans.getDouble( "crypto_amount");
 				double lostPct = (expected - received.amount() ) / expected;
-				Util.require( lostPct <= tolerance, "Error: the received amount is insufficient  id=%s  wallet=%s  expected=%s  got=%s  lossPct=%s",
+				Util.require( lostPct <= tolerance, 
+						"Error: the received amount is insufficient  id=%s  wallet=%s  expected=%s  got=%s  lossPct=%s",
 						id, wallet, expected, received.amount(), lostPct);
 				
 				// update database so we don't double-send
@@ -147,19 +166,24 @@ public class OnrampServer {
 				if (!m_testMode) {
 					// send funds to the user, same as we received
 					S.out( "funding %s with %s", dbTrans, received.amount() );
-					String reflToUserHash = m_pulsechain.rusd().mintRusd(   // pulsechain
+					String reflToUserHash = userChain.rusd().mintRusd(   // pulsechain, e.g.
 							wallet, 
 							received.amount(), 
-							m_pulsechain.chain().getAnyStockToken()
+							userChain.getAnyStockToken()
 							).waitForReceipt();
 					
 					// update database again that it was successful
 					updateState( State.Completed, reflToUserHash, id);
 					
 					// notify user by email
-					sendEmail( wallet, received.amount(), reflToUserHash);
+					sendEmail( 
+							wallet, 
+							received.amount(), 
+							reflToUserHash, 
+							userChain.params().name(), 
+							userChain.blockchainTx(reflToUserHash) );
 				
-					// notify us
+					// notify us  (we also get a copy of the email above)
 					Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);
 				
 					// we should send them an update on the platform here as well. pas
@@ -168,10 +192,11 @@ public class OnrampServer {
 					var log = Util.toJson( 
 							"type", LogType.ONRAMP,
 							"wallet_public_key", wallet,
+							"chainId", userChain.chainId(),
 							"data", Util.toJson(
 									"type", "funded",
 									"amount", received.amount() ) );
-					m_pulsechain.log( log);
+					m_config.log( log);
 				}
 				else {
 					S.out( "test mode: would be funding %s with %s", dbTrans, received.amount() );
@@ -187,7 +212,7 @@ public class OnrampServer {
 	}
 
 	private void updateState(State state, String hash, String id) throws Exception {
-		m_pulsechain.sqlCommand( sql -> sql.execWithParams( 
+		m_config.sqlCommand( sql -> sql.execWithParams( 
 				"update onramp set state='%s', hash='%s' where trans_id = '%s'", 
 				state, hash, id) );
 	}
@@ -199,6 +224,7 @@ public class OnrampServer {
 			<br>
 			<strong>Amount:</strong> #amount#<br>
 			<strong>Wallet:</strong> #wallet#<br>
+			<strong>Blockchain:</strong> #blockchain#<br>
 			<br>
 			You can <a href="#link#">view the transaction in the blockchain explorer.</a><br>
 			<br>
@@ -210,7 +236,7 @@ public class OnrampServer {
 			""";
 	
 	/** Send email to user telling them the transaction is complete */
-	private void sendEmail( String wallet, double amount, String hash) throws Exception {
+	private void sendEmail( String wallet, double amount, String hash, String blockchain, String link) throws Exception {
 		var user = getUser( wallet);
 				
 		String username = String.format( "%s %s", user.getString( "first_name"), user.getString( "last_name") ).trim();
@@ -218,17 +244,18 @@ public class OnrampServer {
 		String html = emailTempl
 				.replace( "#username#", username)
 				.replace( "#wallet#", wallet)
+				.replace( "#blockchain#", blockchain)
 				.replace( "#amount#", S.fmt2( amount) )
-				.replace( "#link#", m_pulsechain.chain().blockchainTx(hash) );
+				.replace( "#link#", link);
 		
-		m_pulsechain.sendEmail( 
+		m_config.sendEmail( 
 				user.getString( "email"), 
 				"Reflection on-ramp transaction completed", 
 				html);
 	}
 
 	private JsonObject getUser(String wallet) throws Exception {
-		var users = m_pulsechain.sqlQuery( "select * from users where wallet_public_key = '%s'", wallet.toLowerCase() );
+		var users = m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", wallet.toLowerCase() );
 		Util.require( users.size() == 1, "Error: no user found for wallet '%s'", wallet);
 		return users.get( 0); 
 	}
@@ -240,11 +267,11 @@ public class OnrampServer {
 				String id = trans.getString( "transactionId");
 				int status = trans.getInt( "status");
 				
-				var old = map.get( id);
+				var old = m_onrampMap.get( id);
 				
 				if (old == null) {
 					S.out( "New onramp transaction detected - " + trans);
-					map.put( id, trans);
+					m_onrampMap.put( id, trans);
 				}
 				else {
 					if (old.getInt( "status") != status) {
@@ -255,7 +282,7 @@ public class OnrampServer {
 						S.out( "Hash was set to %s - %s", trans.getString( "hash"), trans);
 					}
 				}
-				map.put( id, trans);
+				m_onrampMap.put( id, trans);
 			}
 			
 		});

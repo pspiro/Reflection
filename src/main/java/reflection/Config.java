@@ -563,7 +563,8 @@ public abstract class Config {
 		singleChain = true;
 	}
 	
-	static class MultiChainConfig extends Config {
+	/** Used by RefAPI and OnrampServer */
+	public static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
 		private Chain defaultChain; // temporary, for upgrade only; remove after upgrade
 
