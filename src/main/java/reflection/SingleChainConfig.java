@@ -97,4 +97,8 @@ public class SingleChainConfig extends Config {
 	public boolean isProduction() {
 		return chain().params().isProduction();
 	}
+
+	public String nativeTokName() {
+		return chain().params().platformBase();
+	}
 }

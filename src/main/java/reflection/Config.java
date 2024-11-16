@@ -72,7 +72,6 @@ public abstract class Config {
 	private String m_emailUsername;
 	private String m_emailPassword;  // leave this in case we bring back sending email not using google
 	private int threads;
-	private int myWalletRefresh;  // "My Wallet" panel refresh interval
 	private double fbLookback;
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
@@ -80,7 +79,6 @@ public abstract class Config {
 	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private String baseUrl; // used by Monitor program and RefAPI
-	private String hookNameSuffix;
 	private double autoReward; // automatically send users rewards
 	private boolean sendTelegram;
 	private int maxSummaryEmails;
@@ -91,7 +89,6 @@ public abstract class Config {
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
-	public int myWalletRefresh() { return myWalletRefresh; }
 	public int fbPollIingInterval() { return fbPollIingInterval; }
 	
 	public double minOrderSize() { return minOrderSize; }
@@ -208,12 +205,10 @@ public abstract class Config {
 		this.m_emailPassword = m_tab.getRequiredString("emailPassword");
 		this.recentPrice = m_tab.getRequiredInt("recentPrice");
 		this.threads = m_tab.getRequiredInt("threads");
-		this.myWalletRefresh = m_tab.getRequiredInt("myWalletRefresh");
 		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
-		this.hookNameSuffix = m_tab.getRequiredString("hookNameSuffix");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
@@ -398,10 +393,6 @@ public abstract class Config {
 		approveButton,
 	}
 	
-	public String getTooltip(Tooltip tag) {
-		return m_tab.get(tag.toString());
-	}
-
 	public int fbServerPort() {
 		return fbServerPort;
 	}
@@ -496,11 +487,6 @@ public abstract class Config {
 		return maxAutoRedeem;
 	}
 	
-	/** Pull native token from Fireblocks */
-	public String nativeTokName() {
-		return platformBase.split("_")[0];
-	}
-	
 	public String blockchainAddress(String address) {
 		return String.format( "%s/address/%s", blockchainExplorer, address);
 	}
@@ -508,11 +494,7 @@ public abstract class Config {
 	public String baseUrl() {
 		return baseUrl;
 	}
-	
-	public String getHookNameSuffix() {
-		return hookNameSuffix;
-	}
-	
+		
 	public double autoReward() {
 		return autoReward;
 	}

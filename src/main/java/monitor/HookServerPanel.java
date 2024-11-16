@@ -43,19 +43,20 @@ class HookServerPanel extends JsonPanel {
 	
 	private void deleteHooks() {
 		wrap( () -> {
-			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
-				String suffix = Monitor.m_config.getHookNameSuffix();  
-						
-				S.out( "Deleting transfers stream");
-				MoralisStreams.deleteStreamByName( String.format( 
-						"Transfers-%s", suffix) );
-				
-				S.out( "Deleting approvals stream");
-				MoralisStreams.deleteStreamByName( String.format( 
-						"Approvals-%s", suffix) );
-				
-				UI.flash( "Done");
-			}
+			throw new Exception( "disabled");
+//			if (Util.confirm( this, "Are you sure you want to delete the WebHooks?") ) {
+//				String suffix = Monitor.m_config.getHookNameSuffix();  
+//						
+//				S.out( "Deleting transfers stream");
+//				MoralisStreams.deleteStreamByName( String.format( 
+//						"Transfers-%s", suffix) );
+//				
+//				S.out( "Deleting approvals stream");
+//				MoralisStreams.deleteStreamByName( String.format( 
+//						"Approvals-%s", suffix) );
+//				
+//				UI.flash( "Done");
+//			}
 		});
 	}
 	

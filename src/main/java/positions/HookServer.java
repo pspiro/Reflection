@@ -14,14 +14,16 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import chain.Chain;
+import chain.Chains;
 import chain.Stocks;
 import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
 import positions.HookConfig.HookType;
+import positions.HookServer.Trans;
+import reflection.Config;
 import reflection.RefCode;
-import reflection.SingleChainConfig;
 import test.MyTimer;
 import tw.util.S;
 import web3.Erc20;
@@ -43,7 +45,7 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	private static final HookConfig m_config;
+	private final HookConfig m_config = new HookConfig();
 	final Chain m_chain;
 	final Stocks m_stocks = new Stocks();
 	final StreamMgr sm;
@@ -55,11 +57,10 @@ public class HookServer {
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
 	
 	static {
-		m_config = new HookConfig();
 	}
 	
-	static String chain() { 
-		return Util.toHex( m_config.chainId() ); 
+	String chain() { 
+		return Util.toHex( m_chain.chainId() ); 
 	}
 	
 	public static void main(String[] args) {
@@ -74,18 +75,18 @@ public class HookServer {
 			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
-	
+	// chain, hookType (moralis or alchemy), 
 	HookServer(String[] args) throws Exception {
-		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
-		m_node = m_config.node();
-		m_chain = m_config.chain();
+		m_config.readFromSpreadsheet( Config.getTabName( args) );
+		m_chain = new Chains().readOne( m_config.chain(), true);
+		m_node = m_chain.node();
 
 		m_stocks.readFromSheet();
 		
 		Util.require( m_config.hookType() != HookType.None, "Invalid hookType");
 		sm = m_config.hookType() == HookType.Moralis
 				? new MoralisStreamMgr()
-				: new AlchemyStreamMgr( m_config.alchemyChain(), m_config.nativeTokName(), m_config.busdAddr() );
+				: new AlchemyStreamMgr( m_config.alchemyChain(), m_chain.params().platformBase(), m_chain.busd().address() );
 	}
 	
 	void run() throws Exception {
@@ -94,8 +95,8 @@ public class HookServer {
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
 		list.addAll( Arrays.asList( m_chain.getAllContractsAddresses() ) );
-		list.add( m_config.busd().address() );
-		list.add( m_config.rusd().address() );
+		list.add( m_chain.busd().address() );
+		list.add( m_chain.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
 
 		MyServer.listen( m_config.hookServerPort(), 10, server -> {
@@ -146,7 +147,7 @@ public class HookServer {
 			// then it could just work off the user address, same as the transfer stream
 			// listen for RUSD because there are so many BUSD approvals
 			try {
-				sm.createApprovalStream( urlBase, m_config.rusdAddr() );
+				sm.createApprovalStream( urlBase, m_chain.rusd().address() );
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -215,27 +216,27 @@ public class HookServer {
 				// RUSD
 				JsonObject rusd = new JsonObject();
 				rusd.put( "name", "RUSD");
-				rusd.put( "balance", hookWallet.getBalance( m_config.rusdAddr() ) );
-				rusd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.rusdBalance) );
-				rusd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.redeemButton) );
+				rusd.put( "balance", hookWallet.getBalance( m_chain.rusd().address() ) );
+				rusd.put( "tooltip", m_config.getTooltip(Config.Tooltip.rusdBalance) );
+				rusd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.redeemButton) );
 				
-				double approved = hookWallet.getAllowance(m_config.busd(), walletAddr, m_config.rusdAddr() );
+				double approved = hookWallet.getAllowance(m_chain.busd(), walletAddr, m_chain.rusd().address() );
 				approved = Math.min(1000000, approved);  // fix a display issue where some users approved a huge size by mistake
 
 				// BUSD
 				JsonObject busd = new JsonObject();
-				busd.put( "name", m_config.busd().name() );
-				busd.put( "balance", hookWallet.getBalance( m_config.busd().address() ) );
-				busd.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.busdBalance) );
-				busd.put( "buttonTooltip", m_config.getTooltip(SingleChainConfig.Tooltip.approveButton) );
+				busd.put( "name", m_chain.busd().name() );
+				busd.put( "balance", hookWallet.getBalance( m_chain.busd().address() ) );
+				busd.put( "tooltip", m_config.getTooltip(Config.Tooltip.busdBalance) );
+				busd.put( "buttonTooltip", m_config.getTooltip(Config.Tooltip.approveButton) );
 				busd.put( "approvedBalance", approved);
 				busd.put( "stablecoin", true);
 
 				// native token (e.g. MATIC)
 				JsonObject base = new JsonObject();
-				base.put( "name", m_config.nativeTokName() );
+				base.put( "name", m_chain.params().platformBase() );
 				base.put( "balance", hookWallet.getNativeBalance() );
-				base.put( "tooltip", m_config.getTooltip(SingleChainConfig.Tooltip.baseBalance) );
+				base.put( "tooltip", m_config.getTooltip(Config.Tooltip.baseBalance) );
 				
 				JsonArray ar = new JsonArray();
 				ar.add(rusd);
@@ -313,7 +314,7 @@ public class HookServer {
 			HashMap<String, Double> positions = m_node.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
-			double approved = m_config.busd().getAllowance(walletAddr, m_config.rusdAddr() );
+			double approved = m_chain.busd().getAllowance(walletAddr, m_chain.rusd().address() );
 			
 			// query native balance
 			double nativeBal = m_node.getNativeBalance( walletAddr);
@@ -378,7 +379,7 @@ public class HookServer {
 					String to = trans.getString("toAddress").toLowerCase();
 
 					S.out( "MORALIS NATIVE TRANSFER  %s %s was transferred from %s to %s", 
-							amt, m_config.nativeTokName(), from, to);
+							amt, m_chain.params().platformBase(), from, to);
 
 					hookServer.adjustNativeBalance( from, -amt, confirmed);
 					hookServer.adjustNativeBalance( to, amt, confirmed);
@@ -393,7 +394,7 @@ public class HookServer {
 
 				String contract = trans.getString("contract");
 				
-				if (contract.equalsIgnoreCase(m_config.busd().address() ) ) {
+				if (contract.equalsIgnoreCase(m_chain.busd().address() ) ) {
 					String owner = trans.getString("owner");
 					String spender = trans.getString("spender");
 					double amt = trans.getDouble("valueWithDecimals");
@@ -402,7 +403,7 @@ public class HookServer {
 					
 					// sometimes decimal amount is not provided, we have to look it up
 					if (amt == 0 && dec == 0) {
-						dec = m_config.node().getDecimals( contract);  // could send a query
+						dec = m_node.getDecimals( contract);  // could send a query
 						amt = Erc20.fromBlockchain( value, dec);
 						S.out( "  looked up dec val  dec=%s  amt=%s  raw=%s", dec, amt, value);
 					}
