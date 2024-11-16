@@ -14,7 +14,6 @@ public class HookConfig {
 	private String alchemyChain;
 	private String hookServerUrlBase; // webhook url passed to Moralis
 	private boolean noStreams;
-	private int hookServerPort;
 	private String chain;
 	private String hookNameSuffix;
 	private GTable table; 
@@ -40,9 +39,7 @@ public class HookConfig {
 		
 		if (hookType == HookType.Alchemy) {
 			alchemyChain = table.getRequiredString( "alchemyChain");  // not sure where to pull this
-		}
-		
-		this.hookServerPort = table.getRequiredInt( "hookServerPort");
+		}		
 	}		
 
 	String chain() {
@@ -67,10 +64,6 @@ public class HookConfig {
 	
 	public String alchemyChain() {
 		return alchemyChain;
-	}
-
-	public int hookServerPort() {
-		return hookServerPort;
 	}
 
 	public String getHookNameSuffix() {

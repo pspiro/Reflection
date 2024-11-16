@@ -99,7 +99,7 @@ public class HookServer {
 		list.add( m_chain.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
 
-		MyServer.listen( m_config.hookServerPort(), 10, server -> {
+		MyServer.listen( m_chain.params().hookServerPort(), 10, server -> {
 			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
 			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
 			server.createContext("/hook/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );

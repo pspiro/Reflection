@@ -12,7 +12,7 @@ import web3.StockToken;
  * 
  *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	static String hook = "http://localhost:8080/hook";
+	static String hook = "http://localhost:6001/hook";
 	static String newWallet = Util.createFakeAddress();
 
 	static {
