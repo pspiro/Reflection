@@ -45,7 +45,7 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	private final HookConfig m_config = new HookConfig();
+	private final HookConfig2 m_config = new HookConfig2();
 	final Chain m_chain;
 	final Stocks m_stocks = new Stocks();
 	final StreamMgr sm;
@@ -77,8 +77,10 @@ public class HookServer {
 	}
 	// chain, hookType (moralis or alchemy), 
 	HookServer(String[] args) throws Exception {
-		m_config.readFromSpreadsheet( Config.getTabName( args) );
-		m_chain = new Chains().readOne( m_config.chain(), true);
+		Util.require( args.length > 0, "pass in chain name (column header)");
+		//m_config.readFromSpreadsheet( Config.getTabName( args) );
+		m_chain = new Chains().readOne( args[0], true);
+		m_config.chain( m_chain);
 		m_node = m_chain.node();
 
 		m_stocks.readFromSheet();

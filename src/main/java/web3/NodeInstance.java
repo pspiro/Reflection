@@ -641,7 +641,7 @@ public class NodeInstance {
 			String contractAddr, 
 			String keccak, 
 			Param[] params, 
-			int gasLimit 
+			long gasLimit 
 			) throws Exception {
 		
 		return callSigned(

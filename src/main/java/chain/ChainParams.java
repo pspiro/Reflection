@@ -36,7 +36,15 @@ public record ChainParams(
 		String rusdAddr,
 		int rusdDecimals,
 		String symbolsTab,
-		String web3type
+		String web3type,
+		
+		// hook server
+		String hookNameSuffix,
+		String hookServerUrlBase,
+		String hookType,
+		double minTokenPosition,
+		int myWalletRefresh,
+		boolean noStreams
 		)
 {
 		

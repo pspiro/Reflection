@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import chain.Chain;
 import common.Util;
+import refblocks.Refblocks;
 import tw.util.S;
 import web3.Param.Address;
 import web3.Param.BigInt;
@@ -185,7 +186,7 @@ public class Erc20 {
 				m_address,
 				Mint,
 				params,
-				500000); 
+				Refblocks.deployGas); 
 	}
 	
 	public RetVal transfer(String fromKey, String toAddr, double amount) throws Exception {

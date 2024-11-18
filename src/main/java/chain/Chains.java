@@ -71,6 +71,7 @@ public class Chains extends HashMap<Integer,Chain> {
 	private void readChain(Book book, JsonArray rows, String chainName, boolean readSymbols) throws Exception {
 		JsonObject json = new JsonObject();
 		for (var row : rows) {
+			// read tag and CORRECT value and add the pair to json object
 			Util.iff( row.getString( "Tag"), tag -> json.put( tag, row.getString( chainName) ) );
 		}
 		

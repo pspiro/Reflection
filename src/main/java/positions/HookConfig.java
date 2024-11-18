@@ -1,5 +1,6 @@
 package positions;
 
+import chain.Chain;
 import common.Util;
 import reflection.Config;
 import reflection.Config.Tooltip;
