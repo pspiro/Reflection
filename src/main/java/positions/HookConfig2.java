@@ -11,6 +11,10 @@ import tw.google.NewSheet;
 public class HookConfig2 {
 	private GTable table; 
 	private Chain m_chain;
+
+	public void setChain(Chain chain) {
+		m_chain = chain;
+	}
 	
 	protected void readFromSpreadsheet(String tabName) throws Exception {
 		var tab = NewSheet.getTab(NewSheet.Reflection, tabName);
@@ -47,9 +51,5 @@ public class HookConfig2 {
 
 	public int myWalletRefresh() { 
 		return m_chain.params().myWalletRefresh(); 
-	}
-
-	public void chain(Chain chain) {
-		m_chain = chain;
 	}
 }

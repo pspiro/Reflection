@@ -80,7 +80,7 @@ public class HookServer {
 		Util.require( args.length > 0, "pass in chain name (column header)");
 		//m_config.readFromSpreadsheet( Config.getTabName( args) );
 		m_chain = new Chains().readOne( args[0], true);
-		m_config.chain( m_chain);
+		m_config.setChain( m_chain);
 		m_node = m_chain.node();
 
 		m_stocks.readFromSheet();
@@ -126,17 +126,12 @@ public class HookServer {
 				AlchemyStreamMgr.deleteAllForChain( m_config.alchemyChain() ); 
 			}
 
-			String urlBase = m_config.hookServerUrlBase();
-			
-			// special case: are we using ngrok?
-			if (urlBase.equals( "ngrok")) {
-				urlBase = Util.getNgrokUrl();
-				S.out( "HookServer is using ngrok url: %s", urlBase);
-			}
+			String webhookUrl = m_chain.params().getWebhookUrl();
+			S.out( "Webhook URL is %s", webhookUrl);
 			
 			// listen for ERC20 transfers and native transfers
 			try {
-				m_transferStreamId = sm.createTransfersStream( urlBase); 
+				m_transferStreamId = sm.createTransfersStream( webhookUrl); 
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -149,7 +144,7 @@ public class HookServer {
 			// then it could just work off the user address, same as the transfer stream
 			// listen for RUSD because there are so many BUSD approvals
 			try {
-				sm.createApprovalStream( urlBase, m_chain.rusd().address() );
+				sm.createApprovalStream( webhookUrl, m_chain.rusd().address() );
 			}
 			catch( Exception e) {
 				e.printStackTrace();

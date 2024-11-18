@@ -112,6 +112,15 @@ public record ChainParams(
 	public boolean isZksync() {
 		return chainId == Chains.ZkSync;
 	}
-
+	
+	public String getWebhookUrl() throws Exception {
+		String base = hookServerUrlBase;
+		
+		if (hookServerUrlBase.equals( "ngrok")) {
+			base = Util.getNgrokUrl();
+		}
+		
+		return String.format( "%s/%s", base, hookNameSuffix);
+	}
 	
 }
