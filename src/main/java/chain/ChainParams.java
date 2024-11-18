@@ -112,7 +112,8 @@ public record ChainParams(
 	public boolean isZksync() {
 		return chainId == Chains.ZkSync;
 	}
-	
+
+	/** ends not in slash */
 	public String getWebhookUrl() throws Exception {
 		String base = hookServerUrlBase;
 		
@@ -120,7 +121,12 @@ public record ChainParams(
 			base = Util.getNgrokUrl();
 		}
 		
-		return String.format( "%s/%s", base, hookNameSuffix);
+		return base + getWebhookUrlSuffix();
+	}
+	
+	/** begins with / */
+	public String getWebhookUrlSuffix() throws Exception {
+		return "/hook/" + hookNameSuffix;
 	}
 	
 }

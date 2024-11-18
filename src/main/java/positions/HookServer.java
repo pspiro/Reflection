@@ -101,8 +101,10 @@ public class HookServer {
 		list.add( m_chain.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
 
+		String suffix = m_chain.params().getWebhookUrlSuffix();
+		
 		MyServer.listen( m_chain.params().hookServerPort(), 10, server -> {
-			server.createContext("/hook/webhook", exch -> new Trans(exch, false).handleWebhook() );
+			server.createContext(suffix, exch -> new Trans(exch, false).handleWebhook() );
 			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
 			server.createContext("/hook/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );
 			server.createContext("/hook/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
