@@ -76,14 +76,11 @@ public abstract class Config {
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
-	private String blockchainExplorer;
 	private double maxAutoRedeem;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private double autoReward; // automatically send users rewards
 	private boolean sendTelegram;
 	private int maxSummaryEmails;
-	private String moralisPlatform;  // lower case
-	private String platformBase;
 	private int fbServerPort;
 	private int fbPollIingInterval;
 
@@ -221,15 +218,6 @@ public abstract class Config {
 		
 		Alerts.setEmail( this.alertEmail);
 		
-		// Web3
-		this.platformBase = m_tab.getRequiredString("platformBase");
-		
-		// update Moralis chain
-		this.moralisPlatform = m_tab.getRequiredString("moralisPlatform").toLowerCase();
-		MoralisServer.setChain( moralisPlatform);
-		
-		this.blockchainExplorer = m_tab.getRequiredString("blockchainExpl");
-
 		require( buySpread > 0 && buySpread < .05, "buySpread");
 		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
@@ -373,10 +361,6 @@ public abstract class Config {
 		return backendConfigTab;
 	}
 	
-	public String moralisPlatform() {
-		return moralisPlatform;
-	}
-	
 	public double buySpread() {
 		return buySpread;
 	}
@@ -487,10 +471,6 @@ public abstract class Config {
 		return maxAutoRedeem;
 	}
 	
-	public String blockchainAddress(String address) {
-		return String.format( "%s/address/%s", blockchainExplorer, address);
-	}
-
 	public String baseUrl() {
 		return baseUrl;
 	}

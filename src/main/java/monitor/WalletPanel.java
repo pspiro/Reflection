@@ -79,7 +79,7 @@ public class WalletPanel extends MonPanel {
 		top.add( new HtmlButton( "Refresh", ev -> refreshTop() ) );
 		top.horz( 10);
 		top.add( new HtmlButton( "View on Blockchain Explorer", ev -> {
-			Util.browse( config().blockchainAddress( m_wallet) );
+			//Util.browse( config().blockchainAddress( m_wallet) );
 		}));
 
 		m_tabs.addTab( "User Data", dataPanel); 

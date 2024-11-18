@@ -112,8 +112,7 @@ public abstract class MyTransaction extends BaseTransaction {
 	/** don't throw an exception here, it should not disrupt any other process */
 	protected void alert(String subject, String body) {
 		if (m_config.isProduction() ) {
-			String text = String.format( "blockchain: %s\n\n%s", m_config.moralisPlatform(), body);
-			Alerts.alert( "RefAPI", subject, text);
+			Alerts.alert( "RefAPI", subject, body);
 		}
 		else {
 			S.out( "Alert %s - %s", subject, body);
