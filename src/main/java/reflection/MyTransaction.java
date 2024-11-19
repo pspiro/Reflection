@@ -121,13 +121,8 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** Just set the chain id. temporary method, remove after frontend with unified URL is released */
 	void setChainFromHttp() throws Exception {
-		int chainId = m_map.getInt( "chainId");
-		if (chainId != 0) {
-			m_chain = m_config.getChain( chainId);
-		}
-		else {
-			m_chain = m_config.defaultChain();  // can be removed after frontend always sends chainId	
-		}
+		m_chain = m_config.getChain( m_map.getInt( "chainId") );
+		require( m_chain != null, RefCode.INVALID_REQUEST, "chainId (%s) is missing or invalid");
 	}
 
 	/** Set chain id AND validate cookie/nonce.

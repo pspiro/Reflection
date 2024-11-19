@@ -9,27 +9,19 @@ import web3.NodeInstance;
 import web3.RetVal;
 import web3.Rusd;
 
+/** Used by Monitor and test scripts */
 public class SingleChainConfig extends Config {
-	private int m_chainId;
 	private Chain m_chain;
 
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		super.readFromSpreadsheet(tab);
 
-		m_chainId = m_tab.getRequiredInt( "chainId");
-
-		Chains chains = new Chains();  // this is wrong, you should just read required chain. pas
-		chains.readAll();
-
-		m_chain = chains.get( m_chainId);
+		// read params and symbols
+		m_chain = new Chains().readOne( m_tab.getRequiredString( "singleChain"), true);
 	}
 
 	public Chain chain() {
 		return m_chain;
-	}
-
-	public int chainId() {
-		return m_chainId;
 	}
 
 	public Rusd rusd() {

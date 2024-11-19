@@ -504,7 +504,6 @@ public abstract class Config {
 	/** Used by RefAPI and OnrampServer */
 	public static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
-		private Chain defaultChain; // temporary, for upgrade only; remove after upgrade
 
 		/** read blockchain table from Reflection/Blockchain tab */
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
@@ -512,14 +511,6 @@ public abstract class Config {
 			
 			String[] names = m_tab.getRequiredString( "chains").split( ",");
 			chains.read( names, true);
-			
-			defaultChain = chains.get( m_tab.getRequiredInt( "defaultChainId") ); // temporary, for upgrade only; remove after upgrade
-			require( defaultChain != null, "defaultChainId");
-		}
-		
-		/** this chain is returned if the frontend does not pass chainId with the message */
-		public Chain defaultChain() {
-			return defaultChain;
 		}
 		
 		public Chains chains() {
