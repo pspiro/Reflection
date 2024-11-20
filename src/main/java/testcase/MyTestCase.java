@@ -79,13 +79,13 @@ public class MyTestCase extends TestCase {
 	/** for use with messages that return 200 but no RefCode.OK, e.g. get-profile */
 	protected void assert200() throws Exception {
 		if (cli.getResponseCode() != 200) {
-			S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+			S.out( "%s - %s", cli.getResponseCode(), cli.readString() );
 		}
 		assertEquals( 200, cli.getResponseCode() );
 	}
 	
 	protected void assert400() throws Exception {
-		S.out( "%s - %s - %s", cli.getResponseCode(), cli.getRefCode(), cli.getMessage() );
+		S.out( "%s - %s", cli.getResponseCode(), cli.readString() );
 		assertEquals( 400, cli.getResponseCode() );
 	}
 	

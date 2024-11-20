@@ -72,7 +72,7 @@ public class TestTwoAdmins {
 			obj.put( "tokenPrice", price);
 			obj.put( "currency", "RUSD");
 			obj.put( "wallet_public_key", cook.address() );
-			obj.put( "cookie", cook.cookie() );
+			obj.put( "nonce", cook.cookie() );
 			
 			S.out( "Submitting " + obj);
 			MyClient.postToJson( base + "/api/order", obj.toString() ).display();

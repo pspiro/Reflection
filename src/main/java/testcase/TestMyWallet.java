@@ -30,7 +30,7 @@ public class TestMyWallet extends MyTestCase {
 
 	public void testMyWallet() throws Exception {
 		Cookie.setWalletAddr(NodeInstance.prod);
-		var param = Util.toJson( "cookie", Cookie.cookie);
+		var param = Util.toJson( "nonce", Cookie.nonce);
 				
 		JsonObject obj = cli().postToJson("/api/mywallet/" + Cookie.wallet, param);
 		assert200();

@@ -14,7 +14,7 @@ public class TestReward extends MyTestCase {
 		
 		var body = Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"persona_response", pers);
 		
 		// first time with new wallet should get $500

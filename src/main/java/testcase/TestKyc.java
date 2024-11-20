@@ -35,7 +35,7 @@ public class TestKyc extends MyTestCase {
 		// update the kyc info with failed status and check/fail
 		JsonObject data = Util.toJson(
 				"wallet_public_key", Cookie.wallet.toLowerCase(),
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"kyc_status", "blahblah",  // ignored
 				"persona_response", "{\"phone\":\"9143933732\", \"status\": \"failed\" }",
 				"country", "my country",

@@ -38,7 +38,7 @@ public class TestFundWallet extends MyTestCase {
 		assert400(); // second time w/ same wallet fails
 
 		Cookie.setNewFakeAddress(true);
-		var json = getJson().append( "cookie", ""); 
+		var json = getJson().append( "nonce", ""); 
 		cli().postToJson( "/api/fund-wallet", json);
 		assert400(); // fail, no cookie
 		
@@ -68,7 +68,7 @@ public class TestFundWallet extends MyTestCase {
 	JsonObject getJson() {
 		return Util.toJson( 
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"amount", 100);
 	}
 }

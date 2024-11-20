@@ -196,7 +196,7 @@ public class TestRedeem extends MyTestCase {
 
 	private void redeem(double amount) throws Exception {
 		cli().postToJson("/api/redemptions/redeem/" + Cookie.wallet, Util.toJson( 
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"quantity", amount)
 			.toString() )
 		.display();
@@ -237,15 +237,13 @@ public class TestRedeem extends MyTestCase {
 		S.out( "***testFailAddr");
 
 		// invalid address (wrong length)
-		cli().addHeader("Cookie", Cookie.cookie)
-			.post("/api/redemptions/redeem/" + Cookie.wallet + "a", Cookie.getJson() );
+		cli().post("/api/redemptions/redeem/" + Cookie.wallet + "a", Cookie.getJson() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.INVALID_REQUEST, cli.getRefCode() );
 		
 		// wrong address (must match cookie)
 		String wallet = ("0xaaa" + Cookie.wallet).substring(0, 42);
-		cli().addHeader("Cookie", Cookie.cookie)
-			.post("/api/redemptions/redeem/" + wallet, Cookie.getJson() );
+		cli().post("/api/redemptions/redeem/" + wallet, Cookie.getJson() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}

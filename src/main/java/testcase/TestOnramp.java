@@ -78,7 +78,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "convert-1");
 		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"currency", "EUR", 
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt"),
@@ -91,7 +91,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "convert-2");
 		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"currency", "EUR", 
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
@@ -109,7 +109,7 @@ public class TestOnramp extends MyTestCase {
 		S.out( "convert-3");
 		resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"currency", "EUR", 
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt")
@@ -138,7 +138,7 @@ public class TestOnramp extends MyTestCase {
 		// convert, first time, creates new onramp id
 		var resp = cli().postToJson( "/api/onramp-convert", Util.toJson(
 				"wallet_public_key", Cookie.wallet,
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"currency", "EUR", 
 				"buyAmt", 3000,
 				"recAmt", quote.getDouble( "recAmt"),
