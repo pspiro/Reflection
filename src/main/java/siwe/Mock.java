@@ -39,7 +39,14 @@ public class Mock {
 			{ "tds_tooltip_text": "The Indian government requires that we collect 1% TDS on all crypto transactions.", "medium_link": "https://medium.com/@reflectiontradingrusd", "twitter_link": "https://twitter.com/Reflection_toks", "unsupported_country_message": "We're sorry, but Reflection is not yet supported in your area", "support_link": "https://t.me/josh_reflection", "whitepaper_text": "Welcome to Reflection, the only site where you can trade stock tokens that are 100% backed by shares of real stock", "telegram_link": "https://t.me/ReflectionTrading", "whitepaper_link": "https://whitepaper.reflection.trading/", "discord_link": "https://discord.gg/JX4RfPH8fK" }""";
 	
 	String trans = """
-			[ { "symbol": "NVDA (Nvidia)", "country": "NG", "tds": 0, "quantity": 4.2638, "rounded_quantity": 4, "blockchain_hash": "0x8663aad2fd2fdbc6a5e8f7d475f467a62a7f49a53fb768470add11a351491b85", "ref_code": null, "ip_address": "105.112.116.250", "fireblocks_id": null, "uid": "LPPMJVCH", "price": 116.92, "action": "Buy", "wallet_public_key": "0xb42d5513c14151d99d9eb6acdddac9257ad8fbef", "conid": 4815747, "commission": 0.25, "currency": "RUSD", "order_id": null, "status": "COMPLETED", "timestamp": 1726553834 }, { "symbol": "AAPL (Apple)", "country": "PK", "tds": 0, "quantity": 0.0919, "rounded_quantity": 1, "blockchain_hash": "0x1ad59627fadf0e49428d62b5650ecafdb88219cb30c978f754873eb9971d42f2", "ref_code": null, "ip_address": "39.53.217.51", "fireblocks_id": null, "uid": "KYFXASDF", "price": 217.29, "action": "Buy", "wallet_public_key": "0xf595ecdf1b3be287b05b3e20f2e95a471bfb6be4", "conid": 265598, "commission": 0.25, "currency": "RUSD", "order_id": null, "status": "COMPLETED", "timestamp": 1726513868 } ]""";
+			[ { "symbol": "NVDA (Nvidia)", "country": "NG", "tds": 0, "quantity": 4.2638, "rounded_quantity": 4, "blockchain_hash": "0x8663aad2fd2fdbc6a5e8f7d475f467a62a7f49a53fb768470add11a351491b85", "ref_code": null, "ip_address": "105.112.116.250", "fireblocks_id": null, "uid": "LPPMJVCH", "price": 116.92, "action": "Buy", "wallet_public_key": "0xb42d5513c14151d99d9eb6acdddac9257ad8fbef", "conid": 4815747, "commission": 0.25, "currency": "RUSD", "order_id": null, "status": "COMPLETED", "timestamp": 1726553834 }, { "symbol": "AAPL (Apple)", "country": "PK", "tds": 0, 
+			"quantity": 0.0919, 
+			"rounded_quantity": 1, 
+			"chainid": 11155111, 
+			"blockchain_hash": "0x1ad59627fadf0e49428d62b5650ecafdb88219cb30c978f754873eb9971d42f2", 
+			"ref_code": null, 
+			"ip_address": "39.53.217.51", 
+			"fireblocks_id": null, "uid": "KYFXASDF", "price": 217.29, "action": "Buy", "wallet_public_key": "0xf595ecdf1b3be287b05b3e20f2e95a471bfb6be4", "conid": 265598, "commission": 0.25, "currency": "RUSD", "order_id": null, "status": "COMPLETED", "timestamp": 1726513868 } ]""";
 	
 	String pos = """
 			[ { "symbol": "AMD (Advanced Micro Devices)", "quantity": 1, "price": 150.71, "conId": "4391" }, { "symbol": "COIN (Coinbase)", "quantity": 2.0868, "price": 162.62, "conId": "481691285" }, { "symbol": "COST (Costco)", "quantity": 1, "price": 897.39, "conId": "272997" }, { "symbol": "FSLR (First Solar)", "quantity": 1, "price": 240.085, "conId": "41622169" }, { "symbol": "GME (GameStop)", "quantity": 1, "price": 20.19, "conId": "36285627" }, { "symbol": "GOOG (Google)", "quantity": 1.2702, "price": 160.37, "conId": "208813720" } ]""";
@@ -174,13 +181,14 @@ public class Mock {
 			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
 			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
-			
 			server.createContext("/api/prices", Mock.this::handleSseRequest);			
 			
 			server.createContext("/", exch -> dummy( exch) );
 		});
 	}
 
+	boolean blockIp = true;
+	
 	private void dummy(HttpExchange exch) {
 		BaseTransaction t = new BaseTransaction( exch, false);
 		String key = t.getPostApiToken();
@@ -195,9 +203,17 @@ public class Mock {
 		}
 		
 		t.wrap( () -> {
-			t.respond( key.equals( "onramp-convert")  // special case, must be ordered
+			var json = key.equals( "onramp-convert")  // special case, must be ordered
 					? JsonObject.parseOrdered(val)
-					: JSONAware.parse( val) );
+					: JSONAware.parse( val);
+			
+			HashMap<String,String> headers = new HashMap<>();
+			
+			if (blockIp) {
+				headers.put( "X-Block", "1");
+			}
+			
+			t.respondFull( json, 200, headers); 
 		});
 	}
 

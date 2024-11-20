@@ -71,7 +71,7 @@ public class BaseTransaction {
 		return respondFull( response, 200, null);
 	}
 
-	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
+	public synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
 		return respondFull( response, responseCode, headers, "application/json");
 	}
 
@@ -273,17 +273,12 @@ public class BaseTransaction {
 		return ret != null ? ret : new ArrayList<String>();
 	}
 	
-	/** Returns header value or empty string */
-	public String getHeader(String name) throws Exception {
-		List<String> headers = getHeaders(name);
-		return headers.size() > 0 ? headers.get(0) : "";
-	}
-
 	/** called if there is no matching URI */
 	public void respondNotFound() {
 		respondFull( Util.toJson( code, RefCode.NO_SUCH_REQUEST), 400, null);
 	}
 	
+	/** Returns header value or empty string */
 	public String getFirstHeader(String name) throws Exception {
 		List<String> headers = getHeaders(name);
 		return headers != null && headers.size() > 0 ? headers.get(0) : "";
@@ -295,6 +290,11 @@ public class BaseTransaction {
 
 	public HttpExchange exchange() {
 		return m_exchange;
+	}
+	
+	/** Set by NGINX; could be blocked country or VPN */
+	protected boolean isBlockedIP() throws Exception {
+		return getFirstHeader( "X-Block").equals( "1");
 	}
 
 	protected String getCountryCode() throws Exception {

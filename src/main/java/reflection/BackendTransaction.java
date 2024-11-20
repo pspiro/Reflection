@@ -130,6 +130,9 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			
+			// NOTE that chainid can be null in the json even though it is an integer;
+			// Frontend can handle that
 
 			m_main.queueSql( conn -> {
 				wrap( () -> {

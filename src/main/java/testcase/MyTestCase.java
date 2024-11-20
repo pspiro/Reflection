@@ -20,7 +20,6 @@ public class MyTestCase extends TestCase {
 	static protected SingleChainConfig m_config;
 	//static protected Stocks stocks;
 	static protected int port = 8383;
-	static protected int chainId = 11155111;
 	protected static Chain chain;
 
 	protected MyHttpClient cli;  // could probably just change this to static and remove client()	
@@ -33,6 +32,10 @@ public class MyTestCase extends TestCase {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	protected static int chainId() {
+		return chain.chainId();
 	}
 	
 	MyHttpClient cli() throws Exception {

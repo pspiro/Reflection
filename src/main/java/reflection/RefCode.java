@@ -3,6 +3,7 @@ package reflection;
 public enum RefCode {
 	ACCESS_DENIED, 		// the wallet is blacklisted as per the Blacklist tab on the config spreadsheet, but we don't necessarily want the user to know that
 	BLOCKCHAIN_FAILED,
+	BLOCKED_IP,			// blocked country or VPN, set by NGINX
 	CONFIG_ERROR, 
 	DELAYED_REDEMPTION,
 	EXCHANGE_CLOSED,	// for order or checkorder 
