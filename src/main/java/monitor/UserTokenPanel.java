@@ -50,10 +50,10 @@ public class UserTokenPanel extends JsonPanel {
 			if (token != null) {
 				ret = token.name();
 			}
-			else if (tokenAddr.equalsIgnoreCase( Monitor.m_config.rusdAddr() ) ) {
+			else if (tokenAddr.equalsIgnoreCase( Monitor.chain().rusd().address() ) ) {
 				ret = Monitor.m_config.rusd().name();
 			}
-			else if (tokenAddr.equalsIgnoreCase( Monitor.m_config.busd().address() ) ) {
+			else if (tokenAddr.equalsIgnoreCase( Monitor.chain().busd().address() ) ) {
 				ret = Monitor.m_config.busd().name();
 			}
 		}

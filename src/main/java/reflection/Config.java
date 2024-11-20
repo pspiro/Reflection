@@ -29,10 +29,11 @@ import web3.Busd;
 import web3.MoralisServer;
 import web3.Rusd;
 
-public abstract class Config {
+/** Config with no chains */
+public class Config {
 	protected GTable m_tab;
 	
-	public abstract boolean isProduction();
+	public boolean isProduction() { return true; }
 		
 	// user experience parameters
 	private double minOrderSize;  // in dollars
@@ -504,7 +505,7 @@ public abstract class Config {
 	/** Used by RefAPI and OnrampServer */
 	public static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
-		private Chain defaultChain; // temporary, for upgrade only; remove after upgrade
+		private boolean m_isProd;
 
 		/** read blockchain table from Reflection/Blockchain tab */
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
@@ -512,14 +513,16 @@ public abstract class Config {
 			
 			String[] names = m_tab.getRequiredString( "chains").split( ",");
 			chains.read( names, true);
-			
-			defaultChain = chains.get( m_tab.getRequiredInt( "defaultChainId") ); // temporary, for upgrade only; remove after upgrade
-			require( defaultChain != null, "defaultChainId");
+
+			// set m_isProd if any chain is prod
+			for (var chain : chains().values() ) {
+				if (chain.params().isProduction() )
+					m_isProd = true;
+			}
 		}
 		
-		/** this chain is returned if the frontend does not pass chainId with the message */
-		public Chain defaultChain() {
-			return defaultChain;
+		@Override public boolean isProduction() {
+			return m_isProd;
 		}
 		
 		public Chains chains() {
@@ -533,24 +536,11 @@ public abstract class Config {
 			}
 			return chain;
 		}
-		
-		public Rusd rusd( int chainId) throws Exception {
-			return getChain( chainId).rusd();
-		}
-
-		public Busd busd(int chainId) {
-			return getChain( chainId).busd();
-		}
-		
-		public boolean isProduction() {  // probably need a separate setting for this
-			return true;  
-		}
 
 		/* check for stale mkt data in production but not test */ 
 		public boolean checkStaleData() {
 			return chains().size() > 1;
 		}
 	}
-	
 
 }

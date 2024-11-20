@@ -3,6 +3,7 @@ package reflection;
 import chain.Chain;
 import chain.ChainParams;
 import chain.Chains;
+import reflection.Config.MultiChainConfig;
 import tw.google.NewSheet.Book.Tab;
 import web3.Busd;
 import web3.NodeInstance;
@@ -10,26 +11,26 @@ import web3.RetVal;
 import web3.Rusd;
 
 public class SingleChainConfig extends Config {
-	private int m_chainId;
 	private Chain m_chain;
 
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		super.readFromSpreadsheet(tab);
-
-		m_chainId = m_tab.getRequiredInt( "chainId");
-
-		Chains chains = new Chains();  // this is wrong, you should just read required chain. pas
-		chains.readAll();
-
-		m_chain = chains.get( m_chainId);
+		
+		// let chain equal first chain in list of chains specified on tab
+		String[] names = m_tab.getRequiredString( "chains").split( ",");
+		m_chain = new Chains().readOne( names[0], true);
 	}
 
+	public boolean isProduction() {
+		return chain().params().isProduction();
+	}
+	
 	public Chain chain() {
 		return m_chain;
 	}
 
 	public int chainId() {
-		return m_chainId;
+		return m_chain.chainId();
 	}
 
 	public Rusd rusd() {
@@ -51,7 +52,7 @@ public class SingleChainConfig extends Config {
 	}
 
 	public String[] getStablecoinAddresses() throws Exception {
-		return new String[] { rusdAddr(), busdAddr() };
+		return chain().getStablecoinAddresses();
 	}
 
 	public NodeInstance node() throws Exception {
@@ -92,10 +93,6 @@ public class SingleChainConfig extends Config {
 	/** for testing only */
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( ownerKey(), wallet, amt);
-	}
-
-	public boolean isProduction() {
-		return chain().params().isProduction();
 	}
 
 	public String nativeTokName() {

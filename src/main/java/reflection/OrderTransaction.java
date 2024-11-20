@@ -932,7 +932,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						"uid", m_uid,
 						"wallet_public_key", m_walletAddr,
 						"status", FireblocksStatus.DENIED,
-						"ref_code", refCode
+						"ref_code", refCode,
+						"chainid", chainIdIf()
 //						"action", m_order.action() ); // enums gets quotes upon insert
 //						"quantity", m_order.totalQty());
 //						"symbol", m_stock.getSymbol() );

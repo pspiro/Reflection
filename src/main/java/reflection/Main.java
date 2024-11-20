@@ -226,6 +226,8 @@ public class Main implements ITradeReportHandler {
 		if (m_config.isProduction() && m_config.maxSummaryEmails() > 0) {
 			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkSummaries);
 		}
+		
+		Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkHookServers);
 	}
 
 	void shutdown() {
@@ -620,6 +622,17 @@ public class Main implements ITradeReportHandler {
 	 * @return */
 	protected Stocks stocks() {
 		return m_stocks;
+	}
+	
+	private void checkHookServers() {
+		Util.wrap( () -> {
+			for (var chain : m_config.chains().values() ) {
+				var json = MyClient.getJson( chain.params().getWebhookUrl() );
+				if (!json.getString( "code").equals( "OK") ) {
+					Alerts.alert("RefAPI", "WARNING! HookServer not responding!", json.getString( "name") );
+				}
+			}
+		});
 	}
 }
 

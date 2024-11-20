@@ -26,7 +26,7 @@ public record ChainParams(
 		NodeInstance node,
 		String ownerAddr,
 		String ownerRefblocksKey,
-		String platformBase,
+		String platformBase,  // aka native token name
 		String pwName,
 		String pwUrl,
 		String refWalletAddr,

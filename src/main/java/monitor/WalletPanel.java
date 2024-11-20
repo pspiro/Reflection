@@ -54,7 +54,7 @@ public class WalletPanel extends MonPanel {
 	private String m_wallet;  // trimmed, lower case
 	private UserPanel dataPanel = new UserPanel();
 	private BlockchainPanel blockchainPanel = new BlockchainPanel();
-	private TransactionsPanel transPanel = new TransactionsPanel();
+	private TransWalletPanel transPanel = new TransWalletPanel();
 	private CryptoPanel cryptoPanel = new CryptoPanel();
 	private TokPanel tokPanel = new TokPanel();
 	private LogPanel logPanel = new LogPanel();
@@ -218,9 +218,9 @@ public class WalletPanel extends MonPanel {
 		@Override public void activated() {
 			wrap( () -> {
 				walletMap.clear();
-				walletMap.put( m_config.refWalletAddr().toLowerCase(), BlockPanelBase.RefWallet);
-				walletMap.put( m_config.admin1Addr().toLowerCase(), "Admin1");
-				walletMap.put( m_config.ownerAddr().toLowerCase(), "Owner");
+				walletMap.put( m_config.chain().params().refWalletAddr().toLowerCase(), BlockPanelBase.RefWallet);
+				walletMap.put( m_config.chain().params().admin1Addr().toLowerCase(), "Admin1");
+				walletMap.put( m_config.chain().params().ownerAddr().toLowerCase(), "Owner");
 				walletMap.put( NodeInstance.prod, "My prod wallet");
 				walletMap.put( NodeInstance.nullAddr, BlockPanelBase.nullAddr);
 				walletMap.put( m_wallet, BlockPanelBase.Me);
@@ -228,7 +228,7 @@ public class WalletPanel extends MonPanel {
 				// get all relevant transfers
 				var transfers = new Transfers();
 				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, m_config.getStablecoinAddresses() ) );
+				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
 
 				// build new list with substitutions
 				var altered = new Transfers();
@@ -252,10 +252,10 @@ public class WalletPanel extends MonPanel {
 			if (token != null) {
 				contract = token.name();
 			}
-			else if (contract.equals( m_config.rusdAddr() ) ) {
+			else if (contract.equals( m_config.chain().rusd().address() ) ) {
 				contract = m_config.rusd().name();
 			}
-			else if (contract.equals( m_config.busdAddr() ) ) {
+			else if (contract.equals( m_config.chain().busd().address() ) ) {
 				contract = m_config.busd().name();
 			}
 			
@@ -272,11 +272,11 @@ public class WalletPanel extends MonPanel {
 		}
 	}
 
-	class TransactionsPanel extends MiniTab {
+	class TransWalletPanel extends MiniTab {
 		TransPanel transPanel = new TransPanel();
 		RedemptionPanel redemPanel = new RedemptionPanel();
 
-		TransactionsPanel() {
+		TransWalletPanel() {
 			super( new BorderLayout() );
 
 			transPanel.small( "Transactions");
@@ -422,7 +422,7 @@ public class WalletPanel extends MonPanel {
 			vp.add( "RUSD", m_rusd);
 			vp.add( m_config.busd().name(), m_busd);
 			vp.add( "Approved", m_approved);
-			vp.add( m_config.nativeTokName(), m_matic);
+			vp.add( MonitorConfig.nativeTokName(), m_matic);
 			vp.add( "Locked", m_locked);
 
 			vp.addHeader( "Operations");
@@ -438,7 +438,7 @@ public class WalletPanel extends MonPanel {
 					new JLabel( "trades"),
 					new HtmlButton("Go", e -> award() ) ); 
 
-			vp.add( "Give " + m_config.nativeTokName(), new HtmlButton("Transfer .01 " + m_config.nativeTokName() + " from Owner to this wallet", e -> giveMatic() ) );
+			vp.add( "Give " + MonitorConfig.nativeTokName(), new HtmlButton("Transfer .01 " + MonitorConfig.nativeTokName() + " from Owner to this wallet", e -> giveMatic() ) );
 
 			vp.addHeader( "Send Email");
 			vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );

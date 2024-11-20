@@ -193,6 +193,10 @@ public class Chain {
 	public void setRusdAddress(String rusdAddress) {
 		S.out( "RUSD ADDRESS IS " + rusdAddress);
 	}
+
+	public String[] getStablecoinAddresses() throws Exception {
+		return new String[] { params.rusdAddr(), params.busdAddr() };
+	}
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

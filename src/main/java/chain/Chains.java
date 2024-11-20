@@ -69,11 +69,15 @@ public class Chains extends HashMap<Integer,Chain> {
 	/** Read one column (one chain) from the Blockchain tab, AND
 	 *  read in all the symbols for that chain as well */
 	private void readChain(Book book, JsonArray rows, String chainName, boolean readSymbols) throws Exception {
+		S.out( "reading blockchain %s", chainName);
+		
 		JsonObject json = new JsonObject();
 		for (var row : rows) {
 			// read tag and CORRECT value and add the pair to json object
 			Util.iff( row.getString( "Tag"), tag -> json.put( tag, row.getString( chainName) ) );
 		}
+		
+		Util.require( json.getInt( "chainId") > 0, "Error: the chain name '%s' is invalid", chainName);
 		
 		// create the Chain and read in the symbols
 		var chain = new Chain( json.toRecord( ChainParams.class) );
@@ -81,6 +85,8 @@ public class Chains extends HashMap<Integer,Chain> {
 		if (readSymbols) {
 			chain.readSymbols( book);
 		}
+		
+		S.out( "  read %s settings and %s symbols", json.size(), chain.tokens().size() );
 		
 		// add this new chain to the map
 		put( chain.chainId(), chain);

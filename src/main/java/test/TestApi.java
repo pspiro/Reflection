@@ -5,13 +5,16 @@ import com.ib.client.Decimal;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
+import com.ib.client.TickAttrib;
+import com.ib.client.TickType;
 import com.ib.client.Types.Action;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
+import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.ib.controller.ConnectionAdapter;
 
-import reflection.SingleChainConfig;
+import reflection.Config;
 import tw.util.S;
 
 public class TestApi extends ConnectionAdapter {
@@ -27,7 +30,8 @@ public class TestApi extends ConnectionAdapter {
 	}
 	
 	void run(String[] args) throws Exception {
-		SingleChainConfig m_config = SingleChainConfig.ask();
+		Config m_config = new Config();
+		m_config.readFromSpreadsheet("Dev3-config");
 		
 		m_conn.connect( m_config.twsOrderHost(), m_config.twsOrderPort(), 776, "");
 	}
@@ -40,10 +44,29 @@ public class TestApi extends ConnectionAdapter {
 	@Override
 	public void onRecNextValidId(int id) {
 		try {
-			placeOrder(id);
+			reqMd(id);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void reqMd(int id) {
+		m_conn.reqMktDataType(3);
+		
+		var ad = new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "%s %s", tickType, price);
+			}
+		};
+
+		Contract c = new Contract();
+		c.conid( 756733);
+		c.exchange( "SMART");
+		m_conn.reqTopMktData(c, "", false, false, ad); 
+
+		c.conid( 8314);
+		c.exchange( "SMART");
+		m_conn.reqTopMktData(c, "", false, false, ad); 
 	}
 
 	public void placeOrder(int id) throws Exception {

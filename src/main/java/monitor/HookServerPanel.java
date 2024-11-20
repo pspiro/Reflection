@@ -12,7 +12,6 @@ import org.json.simple.JsonObject;
 
 import common.Util;
 import http.MyClient;
-import positions.MoralisStreams;
 import tw.util.HtmlButton;
 import tw.util.HtmlPane;
 import tw.util.S;
@@ -69,21 +68,22 @@ class HookServerPanel extends JsonPanel {
 	
 	private void resetWallet() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/reset/" + m_wallet.getText() );
+			JsonObject json = getJson( "/hook/reset/" + m_wallet.getText() );
 			UI.flash( json.toString() );
 		});
 	}
 
 	private void resetAllWallets() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/resetall");
+			JsonObject json = getJson( "/hook/resetall");
 			UI.flash( json.toString() );
 		});
 	}
 
 	private void getWallet() {
 		wrap( () -> {
-			var positions = query( "/hook/get-wallet/" + m_wallet.getText() ).getArray( "positions");
+			var positions = getJson( "/hook/get-wallet/" + m_wallet.getText() )
+					.getArray( "positions");
 			for (var pos : positions) { 
 				pos.put( "description", Monitor.getDescription( pos.getString( "address") ) );
 			}
@@ -93,21 +93,21 @@ class HookServerPanel extends JsonPanel {
 
 	private void myWallet() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/mywallet/" + m_wallet.getText() );
+			JsonObject json = getJson( "/hook/mywallet/" + m_wallet.getText() );
 			Util.inform( this, json.toHtml() );
 		});
 	}
 
 	private void debugOn() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/debug-on");
+			JsonObject json = getJson( "/hook/debug-on");
 			UI.flash( json.toString() );
 		});
 	}
 
 	private void debugOff() {
 		wrap( () -> {
-			JsonObject json = query( "/hook/debug-off");
+			JsonObject json = getJson( "/hook/debug-off");
 			UI.flash( json.toString() );
 		});
 	}
@@ -127,7 +127,11 @@ class HookServerPanel extends JsonPanel {
 		m_model.fireTableDataChanged();
 	}
 
-	static JsonObject query( String uri) throws Exception {
+	static JsonObject getJson( String uri) throws Exception {
 		return MyClient.getJson( Monitor.m_config.hookBaseUrl() + uri);
 	}
+
+	static JsonObject postToJson( String uri, JsonObject obj) throws Exception {
+		return MyClient.postToJson( Monitor.m_config.hookBaseUrl() + uri, obj.toString() );
 	}
+}
