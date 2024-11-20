@@ -3,7 +3,6 @@ package testcase;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
-import chain.Chains;
 import common.Util;
 import http.MyClient;
 import tw.util.S;

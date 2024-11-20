@@ -21,7 +21,6 @@ import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
 import positions.HookConfig.HookType;
-import positions.HookServer.Trans;
 import reflection.Config;
 import reflection.RefCode;
 import test.MyTimer;

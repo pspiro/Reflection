@@ -25,9 +25,6 @@ import tw.google.NewSheet.Book.Tab;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.IStream;
 import tw.util.S;
-import web3.Busd;
-import web3.MoralisServer;
-import web3.Rusd;
 
 /** Config with no chains */
 public class Config {
