@@ -10,6 +10,7 @@ import web3.NodeInstance;
 import web3.RetVal;
 import web3.Rusd;
 
+/** Used by Monitor and test scripts */
 public class SingleChainConfig extends Config {
 	private Chain m_chain;
 

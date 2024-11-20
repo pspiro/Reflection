@@ -134,7 +134,8 @@ public class HookServer {
 			
 			// listen for ERC20 transfers and native transfers
 			try {
-				m_transferStreamId = sm.createTransfersStream( webhookUrl); 
+				m_transferStreamId = sm.createTransfersStream( webhookUrl);
+				S.out( "  transfer stream created");
 			}
 			catch( Exception e) {
 				e.printStackTrace();
@@ -148,6 +149,7 @@ public class HookServer {
 			// listen for RUSD because there are so many BUSD approvals
 			try {
 				sm.createApprovalStream( webhookUrl, m_chain.rusd().address() );
+				S.out( "  approval stream created");
 			}
 			catch( Exception e) {
 				e.printStackTrace();
