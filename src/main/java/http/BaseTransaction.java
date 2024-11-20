@@ -72,11 +72,12 @@ public class BaseTransaction {
 	}
 
 	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
-		return respondFull( response, responseCode, headers, "application/json");
+		return respondFull( response, responseCode, headers, "application/json");  // json must be specified here for frontend
 	}
 
 	
 	/** Respond with json
+	 * @param acontentType MUST be set to application/json; it causes axios to parse the payload to an object 
 	 * @param responseCode is 200 or 400
 	 * @param headers may be null */
 	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers, String contentType) {
