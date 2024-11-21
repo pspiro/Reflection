@@ -49,7 +49,7 @@ public class CryptoPanel extends MonPanel {
 			wrap( () -> holdersPanel.refresh( config().rusd() ) );
 		});
 
-		m_rusdAddress.setText( config().rusdAddr() );
+		m_rusdAddress.setText( chain().params().rusdAddr() );
 
 		HtmlButton emptyRefWallet = new HtmlButton( "Send to owner", ev -> emptyRefWallet() );
 		HtmlButton sendBusdFromRefWallet = new HtmlButton( "Send", ev -> sendBusdFromRefWallet() );
@@ -69,16 +69,16 @@ public class CryptoPanel extends MonPanel {
 		leftPanel.add( "Address", m_refAddress);
 		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, sendBusdFromRefWallet, emptyRefWallet);
 		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
-		leftPanel.add( "RefWallet " + config().nativeTokName(), m_refWalletMatic, refSendMatic);
+		leftPanel.add( "RefWallet " + MonitorConfig.nativeTokName(), m_refWalletMatic, refSendMatic);
 		
 		leftPanel.addHeader( "Owner Wallet");
 		leftPanel.add( "Address", m_ownerAddress);
 		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		leftPanel.add( "Owner " + config().nativeTokName(), m_ownerMatic, ownerSendMatic);
+		leftPanel.add( "Owner " + MonitorConfig.nativeTokName(), m_ownerMatic, ownerSendMatic);
 		
 		leftPanel.addHeader( "Admin Accounts");
-		leftPanel.add( "Admin1 " + config().nativeTokName(), m_admin1Matic);
-		leftPanel.add( "Admin2 " + config().nativeTokName(), m_admin2Matic);
+		leftPanel.add( "Admin1 " + MonitorConfig.nativeTokName(), m_admin1Matic);
+		leftPanel.add( "Admin2 " + MonitorConfig.nativeTokName(), m_admin2Matic);
 
 		leftPanel.addHeader( "Brokerage (IB)");
 		leftPanel.add( "Cash in brokerage", m_cash);
@@ -99,7 +99,7 @@ public class CryptoPanel extends MonPanel {
 			if (Util.confirm( this, "Are you sure you want to send %s %s from RefWallet to %s",
 					amt, config().busd().name(), to) ) {
 				
-				config().busd().transfer( config().refWalletKey(), to, amt)
+				config().busd().transfer( chain().params().refWalletKey(), to, amt)
 					.waitForReceipt();
 				
 				Util.inform(this, "Done");
@@ -174,7 +174,7 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	private void refSendMatic() {
-		wrap( () -> sendMatic( config().refWalletKey() ) );
+		wrap( () -> sendMatic( chain().params().refWalletKey() ) );
 	}
 
 	private void sendMatic(String senderKey) throws NumberFormatException, Exception {
@@ -193,8 +193,8 @@ public class CryptoPanel extends MonPanel {
 				double amt = Double.parseDouble( m_refWalletBusd.getText() ) - 1; // leave $1 for good luck
 
 				config().busd().transfer(
-						config().refWalletKey(),
-						config().ownerAddr(),
+						chain().params().refWalletKey(),
+						chain().params().ownerAddr(),
 						amt);
 			});
 		}		
@@ -210,23 +210,23 @@ public class CryptoPanel extends MonPanel {
 		double nativeBal = m_config.node().getNativeBalance( config().refWalletAddr() );
 		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
 
-		double ownerMatic = m_config.node().getNativeBalance( config().ownerAddr() );
-		double ownerBusd = config().busd().getPosition( config().ownerAddr() );
+		double ownerMatic = m_config.node().getNativeBalance( chain().params().ownerAddr() );
+		double ownerBusd = config().busd().getPosition( chain().params().ownerAddr() );
 		SwingUtilities.invokeLater( () -> {
-			m_ownerAddress.setText( config().ownerAddr() );
+			m_ownerAddress.setText( chain().params().ownerAddr() );
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
 
-		double admin1Bal = m_config.node().getNativeBalance( config().admin1Addr() );
+		double admin1Bal = m_config.node().getNativeBalance( chain().params().admin1Addr() );
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
 //		double admin2Bal = new Wallet( config().admin2Addr()").getNativeBalance();
 //		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
 		
 		double approved = config().busd().getAllowance(
-				config().refWalletAddr(),
-				config().rusdAddr() );
+				chain().params().refWalletAddr(),
+				chain().params().rusdAddr() );
 		m_approved.setText( S.fmt2( approved) );
 
 		double rusd = config().rusd().queryTotalSupply();

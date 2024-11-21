@@ -15,13 +15,22 @@ public class SingleChainConfig extends Config {
 
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		super.readFromSpreadsheet(tab);
-
-		// read params and symbols
-		m_chain = new Chains().readOne( m_tab.getRequiredString( "singleChain"), true);
+		
+		// let chain equal first chain in list of chains specified on tab
+		String[] names = m_tab.getRequiredString( "chains").split( ",");
+		m_chain = new Chains().readOne( names[0], true);
 	}
 
+	public boolean isProduction() {
+		return chain().params().isProduction();
+	}
+	
 	public Chain chain() {
 		return m_chain;
+	}
+
+	public int chainId() {
+		return m_chain.chainId();
 	}
 
 	public Rusd rusd() {
@@ -43,7 +52,7 @@ public class SingleChainConfig extends Config {
 	}
 
 	public String[] getStablecoinAddresses() throws Exception {
-		return new String[] { rusdAddr(), busdAddr() };
+		return chain().getStablecoinAddresses();
 	}
 
 	public NodeInstance node() throws Exception {
@@ -84,10 +93,6 @@ public class SingleChainConfig extends Config {
 	/** for testing only */
 	public RetVal mintBusd(String wallet, double amt) throws Exception {
 		return busd().mint( ownerKey(), wallet, amt);
-	}
-
-	public boolean isProduction() {
-		return chain().params().isProduction();
 	}
 
 	public String nativeTokName() {

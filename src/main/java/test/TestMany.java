@@ -86,7 +86,7 @@ public class TestMany {
 			obj.put( "tokenPrice", price);
 			obj.put( "currency", "RUSD");
 			obj.put( "wallet_public_key", cook.address() );
-			obj.put( "cookie", cook.cookie() );
+			obj.put( "nonce", cook.cookie() );
 			
 			MyClient.postToJson( base + "/api/order", obj.toString(), json -> S.out( json) );
 			S.out( "Submitted " + obj);

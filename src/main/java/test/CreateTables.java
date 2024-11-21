@@ -12,6 +12,10 @@ import tw.util.S;
  *  zone that was used when setting the value
  *  
  *  APPARENTLY USING INDEX INSIDE CREATE BLOCK WILL NOT WORK
+ *  
+ *  
+ *  NOTE FIELD NAMES CONVERTED TO AND WILL ALWAYS BE READ BACK IN LOWER CASE!
+ *  
  */
 public class CreateTables  {
 	static MySqlConnection con;

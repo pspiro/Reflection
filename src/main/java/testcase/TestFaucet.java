@@ -17,7 +17,7 @@ public class TestFaucet extends MyTestCase {
 		// fails, no user id
 		S.out( "fail show faucet");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"wallet_public_key", Cookie.wallet))
 			.getDouble( "amount");
 		assert400();
@@ -35,7 +35,7 @@ public class TestFaucet extends MyTestCase {
 		// fund wallet
 		S.out( "turn faucet succeed");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"wallet_public_key", Cookie.wallet))
 			.getDouble( "amount");
 		assert200(); // succeed
@@ -45,7 +45,7 @@ public class TestFaucet extends MyTestCase {
 		// fail second time
 		S.out( "fail turn faucet");
 		cli().postToJson("/api/turn-faucet", Util.toJson(
-				"cookie", Cookie.cookie,
+				"nonce", Cookie.nonce,
 				"wallet_public_key", Cookie.wallet))
 			.getDouble( "amount");
 		assert400();

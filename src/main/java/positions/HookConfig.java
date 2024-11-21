@@ -1,12 +1,9 @@
 package positions;
 
-import chain.Chain;
 import common.Util;
-import reflection.Config;
 import reflection.Config.Tooltip;
 import tw.google.GTable;
 import tw.google.NewSheet;
-import tw.google.NewSheet.Book.Tab;
 
 public class HookConfig {
 	public enum HookType { None, Moralis, Alchemy }

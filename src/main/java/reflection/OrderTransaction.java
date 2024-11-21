@@ -90,6 +90,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		validateCookie("order");  // set m_chain for retrieval with chain()
 		setChainFromHttp();
 		
+		require( !isBlockedIP(), RefCode.BLOCKED_IP, "Trading is not supported from your location"); // OR user is connecting through a VPN or Data Center
 		require( m_main.orderController().isConnected(), RefCode.NOT_CONNECTED, "Not connected; please try your order again later");
 		require( m_main.orderConnMgr().ibConnection() , RefCode.NOT_CONNECTED, "No connection to broker; please try your order again later");
 
@@ -112,7 +113,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		double preCommAmt = price * m_desiredQuantity;
 		require( Util.isGtEq(preCommAmt, m_config.minOrderSize()), RefCode.ORDER_TOO_SMALL, "The amount of your order (%s) is below the minimum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.minOrderSize()) ); // displayed to user
 		require( Util.isLtEq(preCommAmt, m_config.maxOrderSize()), RefCode.ORDER_TOO_LARGE, "The amount of your order (%s) exceeds the maximum allowed amount of %s", S.formatPrice( preCommAmt), S.formatPrice( m_config.maxOrderSize()) ); // displayed to user
-		
+				
 		// set m_stablecoin from currency parameter; must be RUSD or non-RUSD
 		String currency = m_map.getRequiredString("currency").toUpperCase();
 		if (currency.equals( chain().rusd().name() ) ) {
@@ -932,7 +933,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 						"uid", m_uid,
 						"wallet_public_key", m_walletAddr,
 						"status", FireblocksStatus.DENIED,
-						"ref_code", refCode
+						"ref_code", refCode,
+						"chainid", chainIdIf()
 //						"action", m_order.action() ); // enums gets quotes upon insert
 //						"quantity", m_order.totalQty());
 //						"symbol", m_stock.getSymbol() );

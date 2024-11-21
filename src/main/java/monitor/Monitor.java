@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -49,7 +50,12 @@ public class Monitor {
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
+	static JComboBox<Chain> box = new JComboBox<>();
 	
+	static Chain chain() {
+		return ((Chain)box.getSelectedItem());
+	}
+
 	static String refApiBaseUrl() { 
 		return m_config.baseUrl();
 	}
@@ -64,9 +70,10 @@ public class Monitor {
 		Util.iff( m_southPanel, pan -> pan.stop() );
 		
 		// read config
-		m_config = MonitorConfig.ask();
+		m_config = MonitorConfig.askk();
 		stocks.readFromSheet();
-		
+		m_config.chains().values().forEach( chain -> box.addItem( chain) );
+
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
 		m_tabs = new NewTabbedPanel(true);
@@ -92,6 +99,8 @@ public class Monitor {
 		butPanel.add(but);
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
+		butPanel.add(Box.createHorizontalStrut(5));
+		butPanel.add( box);
 		
 		num.setText("40");
 
@@ -225,20 +234,16 @@ public class Monitor {
 	
 	/** Or you could let HookServer return the names which might be more user-friendly */
 	public static String getDescription(String address) throws Exception {
-		if (address.equalsIgnoreCase( m_config.rusdAddr())) {
-			return m_config.rusd().name();
+		if (address.equalsIgnoreCase( chain().params().rusdAddr())) {
+			return chain().rusd().name();
 		}
-		if (address.equalsIgnoreCase( m_config.busd().address())) {
-			return m_config.busd().name();
+		if (address.equalsIgnoreCase( chain().params().busdAddr())) {
+			return chain().busd().name();
 		}
 		var token = chain().getTokenByAddress(address);
 		return token != null ? token.name() : "Unknown";
 	}
-	
-	static Chain chain() {
-		return m_config.chain();
-	}
-	
+		
 	static Collection<StockToken> tokens() {
 		return chain().tokens();
 	}

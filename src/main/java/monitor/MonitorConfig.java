@@ -2,11 +2,15 @@ package monitor;
 
 import javax.swing.JOptionPane;
 
-import reflection.SingleChainConfig;
+import chain.Chain;
+import reflection.Config.MultiChainConfig;
 import tw.google.NewSheet.Book.Tab;
 import tw.util.S;
+import web3.Busd;
+import web3.NodeInstance;
+import web3.Rusd;
 
-public class MonitorConfig extends SingleChainConfig {
+public class MonitorConfig extends MultiChainConfig {
 	private String mdBaseUrl;	// does not end with /
 	private String fbBaseUrl;
 	private String hookBaseUrl;
@@ -31,7 +35,7 @@ public class MonitorConfig extends SingleChainConfig {
 		this.hookBaseUrl = m_tab.get("hookBaseUrl");  // used only by Monitor program
 	}
 	
-	public static MonitorConfig ask() throws Exception {
+	public static MonitorConfig askk() throws Exception {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		String tab = JOptionPane.showInputDialog("Enter config tab name prefix");
 		if (S.isNull(tab)) {
@@ -41,5 +45,33 @@ public class MonitorConfig extends SingleChainConfig {
 		MonitorConfig config = new MonitorConfig();
 		config.readFromSpreadsheet(tab + "-config");
 		return config;
+	}
+	
+	public static Chain chain() {
+		return Monitor.chain();
+	}
+
+	public Busd busd() {
+		return chain().busd();
+	}
+
+	public static NodeInstance node() {
+		return chain().node();
+	}
+
+	public static String nativeTokName() {
+		return chain().params().platformBase();
+	}
+
+	public static Rusd rusd() {
+		return chain().rusd();
+	}
+
+	public String refWalletAddr() {
+		return chain().params().refWalletAddr();
+	}
+
+	public String ownerKey() throws Exception {
+		return chain().params().ownerKey();
 	}
 }

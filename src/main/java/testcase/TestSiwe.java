@@ -184,17 +184,16 @@ public class TestSiwe extends MyTestCase {
 			S.sleep(1000);
 
 			// send siwe/me
-			cli().addHeader("Cookie", cookie).get("/siwe/me");
+			cli().post("/siwe/me", Util.toJson( "nonce", nonce, "address", myWalletAddress) );
 			assert200();
 	
 			S.sleep(2500);
 			
 			// fail siwe/me
-			cli().addHeader("Cookie", cookie).get("/siwe/me");
+			cli().post("/siwe/me", Util.toJson( "nonce", nonce, "address", myWalletAddress) );
 			S.out( cli.readJsonObject() );
-			assertEquals( 400, cli.getResponseCode() );
-			assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
-			assertEquals( false, cli.readJsonObject().getBool("loggedIn") );
+			assertEquals( 200, cli.getResponseCode() );
+			assertFalse( cli.readJsonObject().getBool("loggedIn") );
 		});
 	}
 	
@@ -209,17 +208,18 @@ public class TestSiwe extends MyTestCase {
 		signedMsgSent.put( "signature", TestSiwe.signature);
 		signedMsgSent.put( "message", SiweUtil.toJsonObject(siweMsg) );
 
-		// siwe/signin, get cookie
-		String cookie = cli().post("/siwe/signin", signedMsgSent.toString() ).getHeaders().get("set-cookie");
+		// siwe/signin
+		cli().post("/siwe/signin", signedMsgSent.toString() ).getHeaders().get("set-cookie");
 		
 		// test successful siwe/me
-		cli().addHeader("Cookie", cookie).get("/siwe/me").assertResponseCode(200);
+		cli().post("/siwe/me", Cookie.getJson() ).assertResponseCode(200);
 		
 		// sign out
-		cli().addHeader("Cookie", cookie).get("/siwe/signout").assertResponseCode(200);
+		cli().post("/siwe/signout", Cookie.getJson() ).assertResponseCode(200);
 		
 		// test failed siwe/me
-		cli().addHeader("Cookie", cookie).get("/siwe/me").assertResponseCode(400);
+		var re = cli().postToJson("/siwe/me", Cookie.getJson() );
+		assertFalse( re.getBool( "loggedIn") );
 	}
 	
 	public void testSiweSignin() throws Exception {
@@ -238,61 +238,32 @@ public class TestSiwe extends MyTestCase {
 		// test siwe/signin
 		cli().post("/siwe/signin", signedMsgSent.toString() );
 		assert200();
-		String cookie = cli.getHeaders().get("set-cookie");
-		assertTrue( cookie != null && cookie.split("=").length >= 2);
 		
-		// confirm values returned
-		JsonObject signedMsgRec = JsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
-		assertEquals( signature, signedMsgRec.getString("signature") );
-		JsonObject msg3 = signedMsgRec.getObject("message");
-		assertEquals( myWalletAddress, msg3.getString("address"));
-		assertEquals( nonce, msg3.getString("nonce"));
-
 		// test successful siwe/me
-		cli().addHeader("Cookie", "mycookie=abcde; " + cookie)  // add an unrelated cookie for fun
-			.get("/siwe/me");
+		var resp = cli().postToJson("/siwe/me", Util.toJson( 
+				"nonce", nonce,
+				"address", myWalletAddress) );
 		S.out( "me " + cli.readString() );
 		assert200();
-		JsonObject meResponseMsg = cli.readJsonObject();
-		assertTrue( meResponseMsg.getBool("loggedIn") );
-		JsonObject meSiweMsg = meResponseMsg.getObject("message");
-		assertEquals( myWalletAddress, meSiweMsg.getString("address") );
-		assertEquals( nonce, meSiweMsg.getString("nonce"));
-				
-		// test another successful me but include an invalid cookie, which should be okay
-		String badCookie = String.format( "__Host_authToken%s5=abc", TestSiwe.myWalletAddress);
-		cookie = badCookie + "; " + cookie;
-				
-		cli().addHeader("Cookie", cookie)
-			.get("/siwe/me");
-		S.out( "me " + cli.readString() );
-		assert200();
-		meResponseMsg = cli.readJsonObject();
-		assertTrue( meResponseMsg.getBool("loggedIn") );
-		meSiweMsg = meResponseMsg.getObject("message");
-		assertEquals( TestSiwe.myWalletAddress, meSiweMsg.getString("address") );
-		assertEquals( nonce, meSiweMsg.getString("nonce"));
+		assertTrue( resp.getBool("loggedIn") );
 	}
 	
 	/** This is to test that the cookie and nonce can survive a RefAPI restart */
 	public void testRestartRefAPI() throws Exception {
 		Cookie.setNewFakeAddress(false);
 		
-		cli().addHeader( "Cookie", Cookie.cookie)
-			.get("/siwe/me");
+		cli().post("/siwe/me", Cookie.getJson() );
 		assert200();
 
 		S.out( "Restart RefAPI");
 		Util.pause();
 
 		// still works
-		cli().addHeader( "Cookie", Cookie.cookie)
-			.get("/siwe/me");
+		cli().post("/siwe/me", Cookie.getJson() );
 		assert200();
 		
 		// fails with wrong cookie
-		cli().addHeader( "Cookie", Cookie.cookie + "abc")
-			.get("/siwe/me");
+		cli().post("/siwe/me", Util.toJson( "nonce", "abc"));
 		assert400();
 	}
 	
@@ -309,48 +280,15 @@ public class TestSiwe extends MyTestCase {
 
 		// test siwe/signin
 		cli().post("/siwe/signin", signedMsgSent.toString() );
-		String cookie = cli.getHeaders().get("set-cookie");
-		//JsonObject signedMsgRec = JsonObject.parse( URLDecoder.decode(cookie.split("=")[1]) );
-		//JsonObject msg3 = signedMsgRec.getObject("message");
 
 		// test siwe/me w/ no cookie
-		cli().get("/siwe/me");
+		cli().post("/siwe/me", Util.toJson() );
 		assertEquals( 400, cli.getResponseCode() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
-		startsWith( "Null cookie", cli.getMessage() );
 		
-		// test mismatched cookie header and body address
-		JsonObject badSignedObj = JsonObject.parse("""
-				 { "signature": "signature", "message": { "address": "0x0000000000000000000000000000000000000001" } }
-				""");
-		
-		String badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000005=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli().addHeader("cookie", badCookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
-		//startsWith( "Cookie header wallet address", cli.getMessage() );
-
-		// test cookie not found
-		badCookie = String.format( "__Host_authToken0x00000000000000000000000000000000000000015=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli().addHeader("cookie", badCookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
-		//startsWith( "No session object found", cli.getMessage() );
-		
-		// test siwe/me wrong nonce
-		badSignedObj = JsonObject.parse("""
-				 { "signature": "signature", "message": { "address": "0xb016711702D3302ceF6cEb62419abBeF5c44450e", "nonce": "badnonce" } }
-				""");		
-		badCookie = String.format( "__Host_authToken0xb016711702D3302ceF6cEb62419abBeF5c44450e5=%s", URLEncoder.encode(badSignedObj.toString() ) );
-		cli().addHeader("cookie", badCookie).get("/siwe/me");
-		assertEquals( 400, cli.getResponseCode() );
-		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
-		//startsWith( "Cookie nonce", cli.getMessage() );
-
 		// test a successful me
 		S.sleep(500);
-		cli().addHeader("Cookie", cookie)
-			.get("/siwe/me");
+		cli().post("/siwe/me", Cookie.getJson() );
 		assert200();
 	}
 	

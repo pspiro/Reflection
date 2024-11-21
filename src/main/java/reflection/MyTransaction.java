@@ -121,8 +121,9 @@ public abstract class MyTransaction extends BaseTransaction {
 
 	/** Just set the chain id. temporary method, remove after frontend with unified URL is released */
 	void setChainFromHttp() throws Exception {
-		m_chain = m_config.getChain( m_map.getInt( "chainId") );
-		require( m_chain != null, RefCode.INVALID_REQUEST, "chainId (%s) is missing or invalid");
+		int chainId = m_map.getInt( "chainId");
+		m_chain = m_config.getChain( chainId);
+		Main.require( m_chain != null, RefCode.INVALID_REQUEST, "Invalid chain id %s", chainId);
 	}
 
 	/** Set chain id AND validate cookie/nonce.
@@ -135,27 +136,23 @@ public abstract class MyTransaction extends BaseTransaction {
 		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
 		
 		String nonce = m_map.getString( "nonce");
-		
-		if (S.isNotNull( nonce) ) {  // siwe v2
-			// validate nonce
-			SiweTransaction.validateNonce( m_walletAddr, nonce);
-			out( "nonce validated");
-		}
-		else {
-			// validate cookie  (the old way, can be removed)
-			String cookie = m_map.get("cookie");
-			require(cookie != null, RefCode.VALIDATION_FAILED, "Null cookie on %s message from %s", caller, m_walletAddr);
-			
-			SiweTransaction.validateCookie( cookie, m_walletAddr);
-			out( "cookie validated");
-		}
+		require(S.isNotNull( nonce), RefCode.VALIDATION_FAILED, "Message '%s' must contain session key", caller);
+
+		// validate nonce
+		SiweTransaction.validateNonce( m_walletAddr, nonce);
+		out( "  nonce validated");
 	}
 
 	/** return the Chain from the chain id on the cookie;
 	 * 	you must call validateCookie() before calling this method */
 	public Chain chain() throws Exception {
-		Util.require( m_chain != null, "call validateCookie() before chain()");
+		Util.require( m_chain != null, "call setChainFromHttp() before chain()");
 		return m_chain;
+	}
+
+	/** return chain id if we have it; throw no exceptions */
+	protected int chainIdIf() {
+		return m_chain != null ? m_chain.chainId() : 0;
 	}
 
 	/** @return e.g. { "bid": 128.5, "ask": 128.78 } */

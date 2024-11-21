@@ -637,6 +637,10 @@ public class ApiController implements EWrapper {
     	getAndRemoveKey( m_efpMap, handler);
     }
 
+    /** see here: https://interactivebrokers.github.io/tws-api/market_data_type.html
+     *  and here: MarketDataType.java
+     * 
+     * @param mktDataType 3=delayed    */
 	public void reqMktDataType( int mktDataType) {
 		if (!checkConnection())
 			return;

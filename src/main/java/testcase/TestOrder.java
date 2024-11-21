@@ -179,13 +179,10 @@ public class TestOrder extends MyTestCase {
 
 	public void testNullCookie() throws Exception {
 		JsonObject obj = createOrderWithOffset( "BUY", 10, 3);
-		obj.remove("cookie");
+		obj.remove("nonce");
 		
-		MyHttpClient cli = postOrder(obj);
-		JsonObject map = cli.readJsonObject();
-		String text = map.getString("message");
+		postOrder(obj);
 		assertEquals( 400, cli.getResponseCode() );
-		startsWith( "Null cookie", text);
 	}
 	
 	// user must have passed KYC for this to pass
@@ -294,7 +291,8 @@ public class TestOrder extends MyTestCase {
 	
 	static JsonObject createOrder4(String json, String currency) throws Exception {
 		JsonObject obj = JsonObject.parse( Util.easyJson(json) );
-		obj.put("cookie", Cookie.cookie);
+		obj.put("nonce", Cookie.nonce);
+		obj.put("chainId", chainId() );
 		obj.put("currency", currency);
 		obj.put("wallet_public_key", Cookie.wallet);
 		obj.put("testcase", true);
@@ -316,4 +314,5 @@ public class TestOrder extends MyTestCase {
 		
 		return obj;
 	}
+
 }

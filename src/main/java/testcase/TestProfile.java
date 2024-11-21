@@ -18,7 +18,7 @@ public class TestProfile extends MyTestCase {
 		assert200();
 		
 		// get-profile requires cookie
-		json.remove("cookie");
+		json.remove("nonce");
 		cli().post("/api/get-profile/" + Cookie.wallet, json.toString() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 	}
@@ -66,7 +66,7 @@ public class TestProfile extends MyTestCase {
 
 		// missing cookie
 		json = createValidProfile();
-		json.remove("cookie");
+		json.remove("nonce");
 		cli().post("/api/update-profile", json.toString() );
 		assertEquals( RefCode.VALIDATION_FAILED, cli.getRefCode() );
 
@@ -106,7 +106,7 @@ public class TestProfile extends MyTestCase {
 		cli().postToJson("/api/update-profile", json.toString() );
 		
 		JsonObject json2 = new JsonObject();
-		json2.put( "cookie", Cookie.cookie);
+		json2.put( "nonce", Cookie.nonce);
 				
 		JsonObject ret = cli().postToJson("/api/get-profile/" + Cookie.wallet, json2.toString() );
 		ret.display();
@@ -129,7 +129,7 @@ public class TestProfile extends MyTestCase {
 	static JsonObject createValidProfile() {
 		JsonObject json = new JsonObject();
 		json.put( "wallet_public_key", Cookie.wallet.toLowerCase());
-		json.put( "cookie", Cookie.cookie);
+		json.put( "nonce", Cookie.nonce);
 		json.put( "first_name", "jammy");
 		json.put( "last_name", "sprate");
 		json.put( "email", email);
@@ -147,7 +147,7 @@ public class TestProfile extends MyTestCase {
 
 	static JsonObject createProfileNC() {
 		JsonObject json = createValidProfile();
-		json.remove("cookie");
+		json.remove("nonce");
 		return json;
 	}
 }

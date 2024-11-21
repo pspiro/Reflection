@@ -16,7 +16,7 @@ public class TestCheckIdentity extends MyTestCase {
 	public void testVerified() throws Exception {
 		JsonObject json = Util.toJson( 
 				"wallet_public_key", Cookie.wallet.toLowerCase(),
-				"cookie", Cookie.cookie);
+				"nonce", Cookie.nonce);
 		
 		m_config.sqlCommand( sql -> sql.execWithParams( "update users set kyc_status = 'VERIFIED' where wallet_public_key = '%s'",
 				Cookie.wallet.toLowerCase() ) );
@@ -30,7 +30,7 @@ public class TestCheckIdentity extends MyTestCase {
 	public void testNotVerified() throws Exception {
 		JsonObject json = Util.toJson( 
 				"wallet_public_key", Cookie.wallet.toLowerCase(),
-				"cookie", Cookie.cookie);
+				"nonce", Cookie.nonce);
 		
 		m_config.sqlCommand( sql -> sql.execWithParams( "update users set kyc_status = '' where wallet_public_key = '%s'",
 				Cookie.wallet.toLowerCase() ) );

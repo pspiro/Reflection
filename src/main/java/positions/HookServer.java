@@ -21,7 +21,6 @@ import http.BaseTransaction;
 import http.MyClient;
 import http.MyServer;
 import positions.HookConfig.HookType;
-import positions.HookServer.Trans;
 import reflection.Config;
 import reflection.RefCode;
 import test.MyTimer;
@@ -72,6 +71,7 @@ public class HookServer {
 		}
 		catch (Exception e) {
 			e.printStackTrace();
+			S.out( "The application is terminating - " + e.getMessage() );
 			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
@@ -159,6 +159,14 @@ public class HookServer {
 		else { 
 			S.out( "***NOT USING STREAMS");
 		}
+		
+		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
+	}
+	
+	void shutdown() {
+		S.out( "------");
+		S.out( "RECEIVED SHUTDOWN HOOK");
+		S.out( "------");
 	}
 
 	class Trans extends BaseTransaction {
