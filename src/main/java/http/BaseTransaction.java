@@ -71,7 +71,7 @@ public class BaseTransaction {
 		return respondFull( response, 200, null);
 	}
 
-	protected synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
+	public synchronized boolean respondFull( JSONAware response, int responseCode, HashMap<String,String> headers) {
 		return respondFull( response, responseCode, headers, "application/json");  // json must be specified here for frontend
 	}
 
