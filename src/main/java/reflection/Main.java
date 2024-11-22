@@ -125,7 +125,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
-			// SIWE signin
+			// SIWE signin    ALL OBSOLETE, can be removed
 			// or: nonce=init, verify=signin, session=me, signout=signout
 			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 			server.createContext("/siwe/nonce", exch -> new SiweTransaction( exch).handleSiweInit() );
@@ -178,10 +178,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
 			
-			// obsolete, remove
-			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
-			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // from trade page in prod only
-
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
 			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
@@ -201,6 +197,8 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
 
 			// obsolete, remove
+			server.createContext("/api/trading-screen-static", exch -> new BackendTransaction(this, exch).handleTradingStatic() );
+			server.createContext("/api/get-stock-with-price", exch -> new BackendTransaction(this, exch, false).handleGetStockWithPrice() ); // from trade page in prod only
 			server.createContext("/api/users/wallet", exch -> new BackendTransaction(this, exch, false).respondOk() );   // obsolete, remove this
 			server.createContext("/api/system-configurations", exch -> quickResponse(exch, "Query not supported", 400) );
 
