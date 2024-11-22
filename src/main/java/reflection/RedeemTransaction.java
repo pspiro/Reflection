@@ -124,7 +124,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 			// insufficient BUSD in RefWallet or > maxAutoRedeem?
 			double busdPos = chain().busd().getPosition( chain().params().refWalletAddr() );  // sends query
 			double allowance = chain().getApprovedAmt(); // sends query
-			if (m_quantity > busdPos || m_quantity > Main.m_config.maxAutoRedeem() || allowance < m_quantity) {
+			if (m_quantity > busdPos || m_quantity > chain().params().maxAutoRedeem() || allowance < m_quantity) {
 				// write unfilled report to DB
 				insertRedemption( chain().busd(), m_quantity, null, LiveStatus.Delayed);  // stays in this state until the redemption is manually sent by operator
 				
@@ -132,7 +132,7 @@ public class RedeemTransaction extends MyTransaction implements LiveTransaction 
 				String str = String.format( 
 						"Insufficient stablecoin in RefWallet OR maxAutoRedeem amount exceeded for RUSD redemption OR insufficient allowance\n"
 						+ "wallet=%s  requested=%s  have=%s  need=%s  maxAuto=%s  allowance=%s",
-						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos), Main.m_config.maxAutoRedeem(), allowance);
+						m_walletAddr, m_quantity, busdPos, (m_quantity - busdPos), chain().params().maxAutoRedeem(), allowance);
 				alert( "USER SUBMITTED RUSD REDEMPTION REQUEST", str);
 				
 				// report error back to user
