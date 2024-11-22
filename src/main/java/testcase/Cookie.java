@@ -106,7 +106,7 @@ public abstract class Cookie extends MyTestCase {
 		return Util.toJson( 
 				"nonce", nonce,
 				"address", wallet, 
-				"chainId", 1115511);
+				"chainId", 11155111);
 	}
 	
 }

@@ -208,11 +208,11 @@ public class TestRedeem extends MyTestCase {
 
 		// create new wallet with more than the allowed amount of RUSD
 		Cookie.setNewFakeAddress(true);
-		mintRusd( Cookie.wallet, m_config.maxAutoRedeem() + 1);
+		mintRusd( Cookie.wallet, m_config.chain().params().maxAutoRedeem() + 1);
 
 		// fail with INSUFFICIENT_FUNDS due to exceeding maxAutoRedeem value
 		cli().postToJson( "/api/redemptions/redeem/" + Cookie.wallet, Cookie.getJson() ).display();
-		assertEquals( RefCode.OVER_REDEMPTION_LIMIT, cli.getRefCode() );
+		assertEquals( RefCode.DELAYED_REDEMPTION, cli.getRefCode() );
 	}
 	
 	/** can't use waitFor() here because we want to stop when there is any non-null status */
