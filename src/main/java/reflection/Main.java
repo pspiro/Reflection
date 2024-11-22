@@ -125,20 +125,17 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
 			
-			// SIWE signin    ALL OBSOLETE, can be removed
-			// or: nonce=init, verify=signin, session=me, signout=signout
+			// old-style, used by test scripts
 			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
-			server.createContext("/siwe/nonce", exch -> new SiweTransaction( exch).handleSiweInit() );
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
-			server.createContext("/siwe/verify", exch -> new SiweTransaction( exch).handleSiweSignin() );
 			server.createContext("/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
-			server.createContext("/siwe/session", exch -> new SiweTransaction( exch).handleSiweMe() );
 			server.createContext("/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 
-			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
+			// sent by frontend
+			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
-			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
+			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 
 			// orders and live orders
 /*OK*/		server.createContext("/api/order", exch -> new OrderTransaction(this, exch).backendOrder() );

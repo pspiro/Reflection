@@ -216,7 +216,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// any problem in here calls onFail() and the order gets unwound
 		// only two ways out from here: catch in shrinkWrap() or onFireblocksSuccess()
 		shrinkWrap( () -> {
-			walletLiveOrders().add( this);
+			// sync access because items are added and removed by different threads
+			synchronized( walletLiveOrders() ) {
+				walletLiveOrders().add( this);
+			}
 
 			// update the PositionTracker last; if there is a failure after this, we will 
 			// unwind the PositionTracker and unwind the IB order if necessary

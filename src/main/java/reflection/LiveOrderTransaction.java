@@ -2,6 +2,7 @@ package reflection;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Vector;
 
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
@@ -61,10 +62,8 @@ public class LiveOrderTransaction extends MyTransaction {
 
 			List<OrderTransaction> walletOrders = liveOrders.get(m_walletAddr.toLowerCase());
 			if (walletOrders != null) {
-				Iterator<OrderTransaction> iter = walletOrders.iterator();  // get list for this wallet
-				while (iter.hasNext() ) {
-					OrderTransaction liveOrder = iter.next();
-					
+				
+				for (var liveOrder : new Vector<OrderTransaction>( walletOrders) ) {
 					if (liveOrder.status() == LiveOrderStatus.Working) {
 						orders.add( liveOrder.getWorkingOrder() );
 						
@@ -74,7 +73,9 @@ public class LiveOrderTransaction extends MyTransaction {
 						
 						// if the order is completed, display a message and remove it from the list
 						messages.add( liveOrder.getCompletedOrder() );
-						iter.remove();
+						synchronized( walletOrders) {  // sync access because items are added and removed by different threads
+							walletOrders.remove(liveOrder);
+						}
 						
 						// if we just removed the last one, let the empty list stay in the liveOrders map,
 						// it's not hurting anyone
