@@ -74,7 +74,6 @@ public class Config {
 	private String mdsConnection;
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
-	private double maxAutoRedeem;
 	private String baseUrl; // used by Monitor program and RefAPI
 	private double autoReward; // automatically send users rewards
 	private boolean sendTelegram;
@@ -203,7 +202,6 @@ public class Config {
 		this.mdsConnection = m_tab.getRequiredString("mdsConnection");
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
-		this.maxAutoRedeem = m_tab.getRequiredDouble("maxAutoRedeem");
 		this.baseUrl = m_tab.get("baseUrl");
 		this.autoReward = m_tab.getDouble("autoReward");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
@@ -463,10 +461,6 @@ public class Config {
 	
 	public double minPartialFillPct() {
 		return minPartialFillPct;
-	}
-	
-	public double maxAutoRedeem() {
-		return maxAutoRedeem;
 	}
 	
 	public String baseUrl() {

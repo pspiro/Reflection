@@ -3,6 +3,7 @@ package test;
 import org.json.simple.JsonObject;
 
 import http.MyClient;
+import tw.util.S;
 
 public class Curl {
 	/** Usage: curl <url> [tag,val] [tag,val] ... */
@@ -15,6 +16,7 @@ public class Curl {
 			json.put( args[i++], args[i]);
 		}
 		
-		MyClient.postToJson( url, json.toString() ).display();
+		S.out( MyClient.create( url, json.toString() )
+			.queryToAnyJson().toJSONString() );
 	}
 }

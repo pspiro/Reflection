@@ -52,7 +52,7 @@ public class SouthPanel extends JPanel {
 		try {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
-			test( Monitor.m_config.hookBaseUrl() + "/hook/ok", m_hookServer);
+			test( Monitor.chain().params().getWebhookUrl(), m_hookServer);
 			test( Monitor.refApiBaseUrl() + "/onramp/ok", m_onrampServer);
 		}
 		catch( Exception e) {

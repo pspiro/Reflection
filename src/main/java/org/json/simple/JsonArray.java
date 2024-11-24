@@ -156,6 +156,17 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
 		}
 		return null;
 	}
+	
+	/** return true if any object in the list has tag=val;
+	 *  uses .equals()  */
+	public boolean has(String tag, Object val) {
+		for (var item : this) {
+			if (item.get( "id").equals( val) ) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	@SuppressWarnings("unchecked")
 	public void sortJson(String tag, boolean forward) {

@@ -133,10 +133,10 @@ public abstract class MyTransaction extends BaseTransaction {
 	 *  @param caller is a string describing the caller used for error msg only
 	 *  @return siwe message, call getSiweMessage() */
 	void validateCookie(String caller) throws Exception {
-		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "cannot validate cookie without wallet address");
+		require( Util.isValidAddress(m_walletAddr), RefCode.INVALID_REQUEST, "Cannot validate session without wallet address");
 		
 		String nonce = m_map.getString( "nonce");
-		require(S.isNotNull( nonce), RefCode.VALIDATION_FAILED, "Message '%s' must contain session key", caller);
+		require(S.isNotNull( nonce), RefCode.VALIDATION_FAILED, "Message '%s' must contain session key; please sign in", caller);
 
 		// validate nonce
 		SiweTransaction.validateNonce( m_walletAddr, nonce);

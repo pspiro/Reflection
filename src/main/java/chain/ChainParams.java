@@ -37,6 +37,7 @@ public record ChainParams(
 		int rusdDecimals,
 		String symbolsTab,
 		String web3type,
+		double maxAutoRedeem,
 		
 		// hook server
 		String hookNameSuffix,
