@@ -79,6 +79,9 @@ public class Mock {
 	
 	String onrampQuote = """
 			{"recAmt": 67.89}""";
+
+	String fundWallet = """
+			{"code": "OK"}""";
 	
 	String showFaucet = """
 			{ "code": "OK", "amount": 250 }""";
@@ -161,6 +164,7 @@ public class Mock {
 		map.put( "get-watch-list", watchList);
 		map.put( "trading-screen-static", tradStatic);
 		map.put( "trading-screen-dynamic", tradDynamic);
+		map.put( "fund-wallet", fundWallet);
 
 		//BaseTransaction.setDebug( true);
 				
@@ -182,6 +186,7 @@ public class Mock {
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
 			server.createContext("/api/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
 			server.createContext("/api/prices", Mock.this::handleSseRequest);			
+			server.createContext("/api/fundWallet", Mock.this::fundWallet);			
 			
 			server.createContext("/", exch -> dummy( exch) );
 		});
@@ -284,4 +289,13 @@ public class Mock {
         	put( "ask", ask);
         }
     }
+
+	private void fundWallet(HttpExchange exch) {
+		BaseTransaction t = new BaseTransaction( exch, false);
+		t.respondNotFound();
+//		S.out( "received fund wallet");
+//		S.sleep( 2000); // simulate a delay
+//		dummy( exch);
+//		S.out( "returned");
+	}
  }

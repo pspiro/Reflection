@@ -569,12 +569,24 @@ public class BackendTransaction extends MyTransaction {
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
 			validateCookie("fund-wallet");
 			setChainFromHttp();
+			
+			String first = m_map.getRequiredString( "firstName");
+			String last = m_map.getRequiredString( "lastName");
+			String email = m_map.getRequiredString( "email");
 
 			double amount = m_map.getRequiredDouble("amount");
 			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
-			
+
+			// insert user profile only if missing
 			var user = getUser();
-			require( user != null, RefCode.INVALID_REQUEST, "Error: There is no existing user profile for this wallet");
+			if (user == null) {
+				out( "creating user profile");
+				m_config.sqlCommand( sql -> sql.insertJson("users", Util.toJson(
+						"wallet_public_key", m_walletAddr,
+						"first_name", first,
+						"last_name", last,
+						"email", email) ) );
+			}
 			
 			// $500 award requires KYC  
 			require( amount == 100 || Util.equalsIgnore( user.getString("kyc_status"), "VERIFIED", "completed"),
