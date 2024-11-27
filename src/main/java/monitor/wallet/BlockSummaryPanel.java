@@ -5,10 +5,12 @@ import java.util.HashMap;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
+import monitor.Monitor;
 import tw.util.S;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
@@ -17,7 +19,7 @@ import web3.NodeInstance.Transfers;
  *  into a single row */
 public class BlockSummaryPanel extends BlockPanelBase {
 	
-	private JsonModel m_model = new JsonModel( "action,qty,token,amount,stablecoin,block") {
+	private JsonModel m_model = new JsonModel( "timestamp,action,qty,token,amount,stablecoin,block") {
 		protected Object format(String key, Object value) {
 			if ( (key.equals( "qty") || key.equals( "amount") ) && value instanceof Double) {
 				return S.fmt2( (double)value);
@@ -64,8 +66,23 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			}
 		});
 		
-		m_model.ar().sortJson( "time", true);
+		m_model.ar().sortJson( "block", true);
 		m_model.fireTableDataChanged();
+		
+		setTimes( m_model.ar() );
+	}
+
+	/** update 'timestamp' from block number in 'block' field */
+	private void setTimes(JsonArray ar) {
+		Util.execute( () -> {
+			for (var obj : ar) {
+				long block = obj.getLong( "block");
+				if (block > 0) {
+					Util.wrap( () -> obj.put( "timestamp", Monitor.chain().node().getBlockDateTime( block) ) );
+				}
+			}
+			m_model.fireTableDataChanged();
+		});
 	}
 
 	/** single transaction */

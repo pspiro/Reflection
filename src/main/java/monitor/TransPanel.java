@@ -3,12 +3,13 @@ package monitor;
 import org.json.simple.JsonObject;
 
 class TransPanel extends QueryPanel {
-		static String names = "created_at,wallet_public_key,name,uid,chainid,status,ref_code,action,quantity,amount,price,currency,symbol,conid,tds,rounded_quantity,commission,country,ip_address";
+		static String names = "created_at,wallet_public_key,name,phone,uid,chainid,status,ref_code,action,quantity,amount,price,currency,symbol,conid,tds,rounded_quantity,commission,country,ip_address";
 		static String sql = """
 select 
 	transactions.created_at,
 	transactions.wallet_public_key,
 	first_name || ' ' || last_name as name,
+	phone,
 	uid,
 	chainid,
 	status,

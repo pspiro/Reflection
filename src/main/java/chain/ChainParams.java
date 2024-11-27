@@ -9,7 +9,7 @@ import tw.util.S;
 import web3.CreateKey;
 import web3.NodeInstance;
 
-public record ChainParams(
+public record ChainParams( // set new params to optional if needed; remember heather's monitor is fixed
 		String admin1Addr,
 		String admin1RefblocksKey,
 		boolean autoFill,
@@ -38,6 +38,7 @@ public record ChainParams(
 		String symbolsTab,
 		String web3type,
 		double maxAutoRedeem,
+		boolean reportTrades,
 		
 		// hook server
 		String hookNameSuffix,

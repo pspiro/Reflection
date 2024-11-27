@@ -2,6 +2,7 @@ package web3;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -138,17 +139,32 @@ public class NodeInstance {
 				.queryToAnyJson();
 	}
 
+	public String getBlockDateTime( long block) throws Exception {
+		long sec = getBlockByNumber( block).getLong( "timestamp");
+		return Util.yToS.format( new Date( sec * 1000));
+	}
+	
+	public JsonObject getBlockByNumber( long block) throws Exception {
+		return getBlockBy( Util.toHex( block) );
+	}
+
 	/** Gets the entire latest block */
 	public JsonObject getLatestBlock() throws Exception {
-		// the boolean says if it gets the "full" block or not
-		String body = """
+		return getBlockBy( "latest");
+	}
+	
+	/** @param str can be 'latest' or block number in hex */ 
+	public JsonObject getBlockBy( String str) throws Exception {
+		Util.require( str.equals( "latest") || str.startsWith( "0x"), "invalid block number");
+		
+		String body = String.format( """
 			{
 			"jsonrpc": "2.0",
 			"id": 1,
 			"method": "eth_getBlockByNumber",
-			"params": [	"latest", false ]
-			}""";
-		return nodeQuery( body);
+			"params": ["%s", false]
+			}""", str);
+		return nodeQuery( body).getObject( "result"); 
 	}
 
 	/** Gets just the latest block number */

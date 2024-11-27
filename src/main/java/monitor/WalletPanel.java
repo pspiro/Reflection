@@ -3,6 +3,7 @@ package monitor;
 import static monitor.Monitor.m_config;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionEvent;
@@ -252,11 +253,14 @@ public class WalletPanel extends MonPanel {
 			if (token != null) {
 				contract = token.name();
 			}
-			else if (contract.equals( m_config.chain().rusd().address() ) ) {
+			else if (contract.equalsIgnoreCase( m_config.chain().rusd().address() ) ) {
 				contract = m_config.rusd().name();
 			}
-			else if (contract.equals( m_config.chain().busd().address() ) ) {
+			else if (contract.equalsIgnoreCase( m_config.chain().busd().address() ) ) {
 				contract = m_config.busd().name();
+			}
+			if (contract.startsWith( "0xc21")) {
+				S.out( "yes");
 			}
 			
 			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash() );  
@@ -404,7 +408,7 @@ public class WalletPanel extends MonPanel {
 		private UpperField m_rusd = new UpperField( 27);
 		private UpperField m_busd = new UpperField( 27);
 		private UpperField m_approved = new UpperField( 27);
-		private UpperField m_matic = new UpperField( 27);
+		private UpperField m_nativeAmt = new UpperField( 27);
 		private UpperField m_locked = new UpperField( 27);
 		private UpperField m_mintAmt = new UpperField( 27);
 		private UpperField m_burnAmt = new UpperField( 27);
@@ -412,6 +416,7 @@ public class WalletPanel extends MonPanel {
 		private UpperField m_lockFor = new UpperField( 7);
 		private UpperField m_requiredTrades = new UpperField( 5);
 		private JTextField m_subject = new JTextField( 27);
+		private JLabel m_nativeName = new JLabel( "POL");
 		private JTextArea m_emailText = new JTextArea( 10, 50);
 	
 		CryptoPanel() {
@@ -422,7 +427,7 @@ public class WalletPanel extends MonPanel {
 			vp.add( "RUSD", m_rusd);
 			vp.add( m_config.busd().name(), m_busd);
 			vp.add( "Approved", m_approved);
-			vp.add( MonitorConfig.nativeTokName(), m_matic);
+			vp.add( Util.toArray( m_nativeName, m_nativeAmt) );
 			vp.add( "Locked", m_locked);
 
 			vp.addHeader( "Operations");
@@ -448,14 +453,17 @@ public class WalletPanel extends MonPanel {
 		}
 
 		@Override public void activated() {
-			MyClient.getJson(Monitor.refApiBaseUrl() + "/api/mywallet/" + m_wallet, obj -> {
+			MyClient.postToJson(
+					Monitor.refApiBaseUrl() + "/api/mywallet/" + m_wallet,
+					Util.toJson( "chainId", m_config.chain().chainId() ).toString(),
+					obj -> {
 				JsonArray ar = obj.getArray("tokens");
 				Util.require( ar.size() == 3, "Invalid mywallet query results for wallet %s", m_wallet); 
 
 				m_rusd.setText("" + S.formatPrice( ar.get(0).getDouble("balance")));
 				m_busd.setText("" + S.formatPrice( ar.get(1).getDouble("balance")));
 				m_approved.setText("" + S.formatPrice( ar.get(1).getDouble("approvedBalance")));
-				m_matic.setText( S.fmt4( ar.get(2).getDouble("balance")) );			
+				m_nativeAmt.setText( S.fmt4( ar.get(2).getDouble("balance")) );			
 			});
 		}
 
@@ -463,7 +471,7 @@ public class WalletPanel extends MonPanel {
 			m_rusd.setText( null);
 			m_busd.setText( null);
 			m_approved.setText( null);
-			m_matic.setText( null);
+			m_nativeAmt.setText( null);
 			m_locked.setText( null);
 			m_mintAmt.setText( null);
 			m_burnAmt.setText( null);

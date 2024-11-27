@@ -591,7 +591,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			Util.wrap( () -> {
 				if (chain().params().isProduction() && !m_map.getBool("testcase")) {
-					alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
+					
+					if (chain().params().reportTrades() ) {
+						alert( "ORDER COMPLETED", getCompletedOrderText() + " " + m_walletAddr );
+					}
 					
 					Util.wrap( () -> {
 						Util.require( Util.isValidEmail(m_email), "Error: invalid email " + m_email); // should never happen 

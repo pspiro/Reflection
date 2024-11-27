@@ -50,10 +50,10 @@ public class Monitor {
 	static SouthPanel m_southPanel;
 	static JTextField num;
 	static JFrame m_frame;
-	static JComboBox<Chain> box = new JComboBox<>();
+	static JComboBox<Chain> chainBox = new JComboBox<>();
 	
-	static Chain chain() {
-		return ((Chain)box.getSelectedItem());
+	public static Chain chain() {
+		return ((Chain)chainBox.getSelectedItem());
 	}
 
 	static String refApiBaseUrl() { 
@@ -72,7 +72,14 @@ public class Monitor {
 		// read config
 		m_config = MonitorConfig.askk();
 		stocks.readFromSheet();
-		m_config.chains().values().forEach( chain -> box.addItem( chain) );
+		
+		// add all chains to Chain dropdown and select Polygon, if it's there
+		m_config.chains().values().forEach( chain -> {
+			chainBox.addItem( chain);
+			if (chain.params().isPolygon() ) {
+				chainBox.setSelectedItem( chain);
+			}
+		});
 
 		num = new JTextField(4); // number of entries to return in query
 		m_frame = new JFrame();
@@ -100,7 +107,7 @@ public class Monitor {
 		butPanel.add(Box.createHorizontalStrut(5));
 		butPanel.add(num);
 		butPanel.add(Box.createHorizontalStrut(5));
-		butPanel.add( box);
+		butPanel.add( chainBox);
 		
 		num.setText("40");
 

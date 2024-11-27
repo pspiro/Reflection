@@ -9,7 +9,7 @@ import monitor.MonitorConfig;
 import web3.NodeInstance.Transfer;
 
 public class BlockPanelBase extends JPanel {
-	public static final String Me = "This wallet";
+	public static final String Me = "Selected wallet";
 	public static final String RefWallet = "RefWallet";  // remove this. pas
 	public static final String nullAddr = "0x00";
 	static final String address = "address";
