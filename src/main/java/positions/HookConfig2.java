@@ -22,7 +22,7 @@ public class HookConfig2 {
 	}		
 
 	public String getTooltip(Tooltip tag) {
-		return ""; // fix this. pastable.get(tag.toString());
+		return table.get( tag.toString() );
 	}
 
 	public HookType hookType() {
