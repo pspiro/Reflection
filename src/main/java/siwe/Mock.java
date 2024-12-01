@@ -27,6 +27,9 @@ public class Mock {
 	String emptyArray = "[]";
 	
 	String myWallet = """
+			{ "code": "OK" } """;
+
+	String  signup = """
 			{ "refresh": 30000, "tokens": [ { "buttonTooltip": "Click here to exchange your RUSD for BUSD. The BUSD can then be converted to cash on other platforms", "balance": 55.555, "name": "RUSD", "tooltip": "RUSD is the native stablecoin of the Reflection platform. It is what you receive when you sell a stock token, and likewise it can be used to buy more stock tokens. It is backed 1-to-1 with a combination of US dollars and USDC and can be redeemed at no cost for USDC at any time." }, { "buttonTooltip": "Click here to approve your BUSD for use on the Reflection system. You can give approval at the time an order is placed, but approving now makes for a smoother trading experience", "stablecoin": true, "balance": 22.222, "approvedBalance": 33.333, "name": "BUSD", "tooltip": "BUSD is a popular stablecoin that can be used to purchase Reflection stock tokens" }, { "balance": 44.4444, "name": "ETH", "tooltip": "ETH is the native currency of the Goerli network. You will need a little bit (less than $1 worth) to approve your Reflection stock token purchases or to transfer tokens on the Polygon network" } ] }""";
 	
 	String positions = """
@@ -84,7 +87,7 @@ public class Mock {
 			{"code": "OK"}""";
 	
 	String showFaucet = """
-			{ "code": "OK", "amount": 250 }""";
+			{ "code": "OK", "amount": 123 }""";
 	
 	String turnFaucet = """
 			{ "code": "OK", "message": "Your wallet has been funded!" }""";
@@ -147,6 +150,7 @@ public class Mock {
 		map.put( "positions-new", positions);
 		map.put( "system-configurations", sysConfig); 
 		map.put( "configurations", config);
+		map.put( "signup", signup);
 		map.put( "crypto-transactions", trans);
 		map.put( "get-all-stocks", stocks);
 		map.put( "live-orders", liveOrders);
@@ -200,7 +204,7 @@ public class Mock {
 		String val = S.notNull( map.get( key), invalid);
 		
 		if (val == invalid) {
-			S.out( "Error: no support for " + val);
+			S.out( "Error: no support for " + key);
 		}
 		
 		if (key.equals( "turn-faucet")) {

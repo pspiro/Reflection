@@ -289,34 +289,48 @@ public class BackendTransaction extends MyTransaction {
 			String email = m_map.getUnescapedString("email");
 			String referer = m_map.getUnescapedString("referer");
 			
+			Util.require( Util.isValidEmail( email), "invalid email in signup message");
+						
 			// write them all until we get this working
-			if (Util.isValidEmail( email) ) {
-				JsonObject obj = new JsonObject();
-				obj.put( "email", email);
-				obj.putIf( "first", first);
-				obj.putIf( "last", last);
-				obj.putIf( "referer", Util.urlFromUri( referer) );
-				obj.putIf( "country", getCountryCode() );
-				obj.putIf( "ip", getUserIpAddress() );
-				obj.putIf( "utm_source", getUtmVal("utm_source") );
-				obj.putIf( "utm_medium", getUtmVal("utm_medium") );
-				obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
-				obj.putIf( "utm_term", getUtmVal("utm_term") );
-				obj.putIf( "utm_content", getUtmVal("utm_content") );
-				obj.putIf( "user_agent", getUtmVal("user_agent") );  // contains device type, OS, etc
-			
-				out( "Adding to signup table: " + obj.toString() );
-				m_main.queueSql( sql -> {
-					if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) ) {
-						
-						out( "Sending email to %s", email);
-						
-						String text = Util.readResource( this.getClass(), "signup_email.txt")
-								.replaceAll( "\\{name\\}", Util.initialCap( first) );
-						
-						m_config.sendEmail(email, "Welcome to Reflection", text);
-					}
-				});
+			JsonObject obj = new JsonObject();
+			obj.put( "email", email);
+			obj.putIf( "first", first);
+			obj.putIf( "last", last);
+			obj.putIf( "referer", Util.urlFromUri( referer) );
+			obj.putIf( "country", getCountryCode() );
+			obj.putIf( "ip", getUserIpAddress() );
+			obj.putIf( "utm_source", getUtmVal("utm_source") );
+			obj.putIf( "utm_medium", getUtmVal("utm_medium") );
+			obj.putIf( "utm_campaign", getUtmVal("utm_campaign") );
+			obj.putIf( "utm_term", getUtmVal("utm_term") );
+			obj.putIf( "utm_content", getUtmVal("utm_content") );
+			obj.putIf( "user_agent", getUtmVal("user_agent") );  // contains device type, OS, etc
+		
+			out( "Adding to signup table: " + obj.toString() );
+			m_main.queueSql( sql -> {
+				if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) ) {
+					
+					out( "Sending email to %s", email);
+					
+					String text = Util.readResource( this.getClass(), "signup_email.txt")
+							.replaceAll( "\\{name\\}", Util.initialCap( first) );
+					
+					m_config.sendEmail(email, "Welcome to Reflection", text);
+				}
+			});
+
+			// if wallet address was included, it means user has connected their wallet
+			// so insert record into users table to connect wallet to name;
+			// alternatively, we could update signup table with the wallet address
+			m_walletAddr = m_map.getString( "wallet_public_key");
+			if (S.isNotNull( m_walletAddr) && getUser() == null) {
+				out( "Adding to users table: " + obj);
+				JsonObject user = new JsonObject();
+				user.put( "wallet_public_key", m_walletAddr.toLowerCase() );
+				user.put( "email", email);
+				user.putIf( "first_name", first);
+				user.putIf( "last_name", last);
+				m_config.sqlCommand( sql -> sql.insertJson( "users", user) );
 			}
 		});
 	}

@@ -280,7 +280,7 @@ public class BaseTransaction {
 	}
 	
 	/** Returns header value or empty string */
-	public String getFirstHeader(String name) throws Exception {
+	public String getFirstHeader(String name) {
 		List<String> headers = getHeaders(name);
 		return headers != null && headers.size() > 0 ? headers.get(0) : "";
 	}
@@ -294,15 +294,19 @@ public class BaseTransaction {
 	}
 	
 	/** Set by NGINX; could be blocked country or VPN */
-	protected boolean isBlockedIP() throws Exception {
+	protected boolean isBlockedIP() {
 		return getFirstHeader( "X-Block").equals( "1");
 	}
-
-	protected String getCountryCode() throws Exception {
+	
+	protected boolean isNigeria() throws Exception {
+		return getCountryCode().equalsIgnoreCase( "NG");
+	}
+	
+	protected String getCountryCode() {
 		return Util.left( getFirstHeader( "X-Country-Code"), 2);
 	}
 
-	protected String getUserIpAddress() throws Exception {
+	protected String getUserIpAddress() {
 		return Util.left( getFirstHeader( "X-Real-IP"), 15);
 	}
 

@@ -112,7 +112,7 @@ class UsersPanel extends QueryPanel {
 	static class PersonaPanel extends QueryPanel {
 		PersonaPanel() {
 			super( "users", 
-				   "wallet_public_key,first_name,last_name,kyc_status,persona_status,email,persona_name,persona_id,birthdate,country",
+				   "created_at,wallet_public_key,first_name,last_name,kyc_status,persona_status,email,persona_name,persona_id,birthdate,country",
 				   "select * from users $where");
 			where.setText( "where persona_response <> ''");
 		}
