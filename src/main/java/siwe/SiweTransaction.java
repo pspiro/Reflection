@@ -1,14 +1,9 @@
 package siwe;
 
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.StringTokenizer;
 
 import org.json.simple.JsonObject;
 import org.json.simple.STable;

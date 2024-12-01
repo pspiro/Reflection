@@ -44,7 +44,7 @@ public class HookServer {
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
 	static final double small = .0001;    // positions less than this will not be reported
 	
-	private final HookConfig2 m_config = new HookConfig2();
+	private final HookConfig m_config = new HookConfig();
 	final Chain m_chain;
 	final Stocks m_stocks = new Stocks();
 	final StreamMgr sm;
