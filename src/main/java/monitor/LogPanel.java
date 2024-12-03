@@ -6,7 +6,7 @@ import common.Util;
 import tw.util.S;
 
 class LogPanel extends QueryPanel {
-	static String names = "created_at,wallet_public_key,name,uid,type,code,data"; 
+	static String names = "created_at,wallet_public_key,name,uid,type,chainid,code,data"; 
 	static String sql = """
 		select 
 			log.created_at,
@@ -14,6 +14,7 @@ class LogPanel extends QueryPanel {
 			first_name || ' ' || last_name as name,
 			log.uid,
 			type,
+			chainid,
 			data->>'code' as code,
 			data
 		from log

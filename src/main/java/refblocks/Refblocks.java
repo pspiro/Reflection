@@ -139,6 +139,8 @@ public class Refblocks {
 		// create a tm that allows us to specify the nonce
 		StuckTm tm = new StuckTm( web3j, Credentials.create( pk), nonce);
 		
+		
+		
 		// perform the transaction with normal gas and same nonce;
 		// if this doesn't work, try even higher gas
 		TransactionReceipt receipt = new MyTransfer( tm)
@@ -152,8 +154,8 @@ public class Refblocks {
 	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
 	public void showAllNonces(String walletAddr) throws Exception {
-		S.out( "%s nonce  finalized=%s  latest=%s  pending=%s",
-        		walletAddr,
+		S.out( "%s nonces  finalized=%s  latest=%s  pending=%s",
+        		walletAddr.substring( 0, 7),
         		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
         		getNonce( walletAddr, DefaultBlockParameterName.LATEST),
         		getNonce( walletAddr, DefaultBlockParameterName.PENDING)

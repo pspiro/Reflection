@@ -11,9 +11,8 @@ public class TestPostgres {
 		c1.readFromSpreadsheet("prod-config");
 		
 		var poly = c1.chains().polygon();
+		poly.blocks().showAllNonces( poly.params().admin1Addr() );
 		
-		S.out( "nonce=%s", poly.node().getNonce( poly.params().admin1Addr() ) );
-		S.out( "noncePending=%s", poly.node().getNoncePending( poly.params().admin1Addr() ) );
 		
 //		poly.rusd().buyStockWithRusd(
 //				NodeInstance.prod, 

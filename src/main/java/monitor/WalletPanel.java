@@ -629,7 +629,7 @@ public class WalletPanel extends MonPanel {
 	}
 	
 	class LogPanel extends MiniTab {
-		JsonModel model = new JsonModel( "created_at,type,uid,data");
+		JsonModel model = new JsonModel( "created_at,type,chainid,uid,data");
 
 		LogPanel() {
 			super( new BorderLayout() );

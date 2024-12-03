@@ -385,7 +385,12 @@ public class Main implements ITradeReportHandler {
 	 * @param uid may be null 
 	 * @param chainId TODO*/
 	void jlog( LogType type, String uid, String wallet, JsonObject json, int chainId) {
-		S.out( "%sLogType.%s %s %s", uid != null ? uid + " " : "", type, wallet, json);
+		S.out( "%sLogType.%s %s %s %s", 
+				uid != null ? uid + " " : "",
+				type,
+				wallet,
+				chainId,
+				json);
 		
 		JsonObject log = Util.toJson(
 				"type", type,

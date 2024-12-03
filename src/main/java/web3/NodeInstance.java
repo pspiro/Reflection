@@ -267,17 +267,25 @@ public class NodeInstance {
 		JsonObject result = getQueuedTrans();
 
 		S.out( "Pending");
-		show( result.getObject( "pending"), wallet);
+		var pending = result.getObject( "pending");
+		show( pending, wallet);
 		
 		S.out( "");
 		S.out( "Queued");
-		show( result.getObject( "queued"), wallet);
+		var queued = result.getObject( "queued"); 
+		show( queued, wallet);
 	}
 	
 	// I think the issue is that you have pending trans that will never get picked up
 	// and they are blocking next trans; they have to be removed
 	private static void show( JsonObject obj, String addr) throws Exception {
-		obj.getObjectNN( Keys.toChecksumAddress(addr) ).display();
+		var mine = obj.getObjectNN( Keys.toChecksumAddress(addr) );
+		var keys = mine.getKeys();
+		keys.sort( null);
+		for (var key : keys) {
+			S.out( key);
+		}
+		//mine.display();
 	}
 
 	/** note w/ moralis you can also get the token balance by wallet
@@ -742,6 +750,7 @@ public class NodeInstance {
 	
 }
 
+// looking for transferNativeToken()? see RefBlocks.transfer(); we could add it here but it has to be signed
 
 // to get the revert reason, make the same call, with same params, same from, to, data, but add the block number and use eth_call;
 // this simulates the call as if it were executed at the end of the specified block

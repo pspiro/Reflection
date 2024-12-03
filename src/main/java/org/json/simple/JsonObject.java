@@ -549,6 +549,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
         return new ObjectMapper().readValue( toString(), clas);
 	}
 
+	/** or call keySet() */
+	public ArrayList<String> getKeys() {
+		ArrayList<String> ar = new ArrayList<>();
+		keySet().forEach( key -> ar.add( key) );
+		return ar;
+	}
+
 }
 /** NOTE: Timestamp objects are stored as
  *  
