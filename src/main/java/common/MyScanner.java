@@ -20,7 +20,11 @@ public class MyScanner implements Closeable {
 		scanner.close();
 	}
 	
-	public String input( String prompt) {
+	public int getInt( String prompt) {
+		return Integer.parseInt( getString( prompt));
+	}
+
+	public String getString( String prompt) {
 		S.out( prompt);
 		return scanner.nextLine();
 	}

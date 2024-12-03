@@ -35,7 +35,7 @@ public class TestProfile extends MyTestCase {
 //		assertEquals( RefCode.INVALID_USER_PROFILE, cli.getRefCode() );
 		
 		// test correct code
-		String code = scanner.input("Enter code:");
+		String code = scanner.getString("Enter code:");
 		json.put("email_confirmation", code);
 		cli().post("/api/update-profile", json.toString() );
 		assert200();
@@ -101,7 +101,7 @@ public class TestProfile extends MyTestCase {
 		assert200();
 
 		// test correct code
-		String code = scanner.input("Enter big profile code:");
+		String code = scanner.getString("Enter big profile code:");
 		json.put("email_confirmation", code);
 		cli().postToJson("/api/update-profile", json.toString() );
 		

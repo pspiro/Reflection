@@ -2,11 +2,15 @@ package web3;
 
 import chain.Chain;
 import chain.Chains;
+import common.MyScanner;
 
 public class ShowNonces {
 
 	public static void main(String[] args) throws Exception {
-		Chain poly = new Chains().readOne( "Polygon", false);
-		poly.blocks().showAllNonces( poly.params().admin1Addr() );
+		try (MyScanner s = new MyScanner() ) {
+			String chain = s.getString( "enter chain name: (e.g. Polygon)");
+			Chain poly = new Chains().readOne( chain, false);
+			poly.blocks().showAllNonces( poly.params().admin1Addr() );
+		}
 	}
 }
