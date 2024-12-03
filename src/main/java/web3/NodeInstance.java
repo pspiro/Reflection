@@ -267,7 +267,6 @@ public class NodeInstance {
 		S.out( "Transactions");
 
 		JsonObject result = getQueuedTrans();
-		result.display();
 		
 		S.out( "Types: " + result.getKeys() );
 
@@ -283,8 +282,8 @@ public class NodeInstance {
 	
 	// I think the issue is that you have pending trans that will never get picked up
 	// and they are blocking next trans; they have to be removed
-	private static void show( JsonObject obj, String addr) throws Exception {
-		var mine = obj.getObjectNN( Keys.toChecksumAddress(addr) );
+	private static void show( JsonObject obj, String wallet) throws Exception {
+		var mine = obj.getObjectNN( Keys.toChecksumAddress(wallet) );
 		var keys = mine.getKeys();
 		keys.sort( null);
 		for (var key : keys) {

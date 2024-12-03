@@ -1,21 +1,23 @@
 package web3;
 
-import reflection.Config.MultiChainConfig;
+import chain.Chain;
+import chain.Chains;
+import common.MyScanner;
 
 /** Just test that you can connect to the database. */
 public class BuyStock {
 	public static void main(String[] args) throws Exception {
-		MultiChainConfig c1 = new MultiChainConfig();
-		c1.readFromSpreadsheet("prod-config");
-		
-		var poly = c1.chains().polygon();
-		poly.blocks().showAllNonces( poly.params().admin1Addr() );
-				
-		poly.rusd().buyStockWithRusd(
-				NodeInstance.prod, 
-				1, 
-				c1.chains().polygon().getAnyStockToken(), 
-				1).waitForReceipt();
-		
+		try (MyScanner s = new MyScanner() ) {
+			String name = s.getString( "enter chain name: (e.g. Polygon)");
+			Chain chain = new Chains().readOne( name, true);
+
+			chain.blocks().showAllNonces( chain.params().admin1Addr() );
+
+			chain.rusd().buyStockWithRusd(
+					NodeInstance.prod, 
+					1, 
+					chain.getAnyStockToken(), 
+					1).waitForReceipt();
+		}
 	}
 }
