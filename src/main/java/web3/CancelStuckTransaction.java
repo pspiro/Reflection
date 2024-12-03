@@ -1,26 +1,37 @@
 package web3;
 
+import chain.Chain;
+import chain.Chains;
+import common.MyScanner;
 import common.Util;
-import reflection.SingleChainConfig;
 import tw.util.S;
 
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		SingleChainConfig c = SingleChainConfig.ask();
+		Chain poly = new Chains().readOne( "Polygon", false);
 		
-		String wallet = c.admin1Addr();  // wallet that is stuck
+		String wallet = poly.params().admin1Addr();  // wallet that is stuck
 		
 		// show stuck transactions
-		c.node().showTrans( wallet);
-				
-		Util.pause();
-
-		int nonce = 0x383;  // the nonce of the stuck transaction; you can auto-pull it from the stuck transaction json
-
-		c.chain().blocks().cancelStuckTransaction( c.admin1Key(), nonce);
-
-		S.out( c.ownerAddr() );
+		poly.node().showTrans( wallet);
 		
+		S.out( "nonce (latest)=%s", poly.node().getNonce( poly.params().admin1Addr() ) );
+		S.out( "nonce (pending)=%s", poly.node().getNoncePending( poly.params().admin1Addr() ) );
+
+		// you have to cancel the lowest nonce first, but then the others will go through
+		// you might have to replace the others, not wait for a receipt, then cancel the lowest
+						
+		try (MyScanner s = new MyScanner() ) {
+			while( true) {
+				String str = s.input( "enter nonce to cancel: ");
+				if (S.isNull( str) ) {
+					break;
+				}
+				
+				poly.blocks().cancelStuckTransaction( poly.params().admin1Key(), Integer.parseInt( str) );
+			}
+		}
+
 	}
 }

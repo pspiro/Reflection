@@ -477,7 +477,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// note this does not query for the real error message text if it fails;
 		// we could add that later if desired
 		try {
-			out( "waiting for blockchain hash");
+			out( "waiting for blockchain receipt");
 			String hash = retval.waitForReceipt();
 			out( "blockchain transaction completed with hash %s", hash);
 			
