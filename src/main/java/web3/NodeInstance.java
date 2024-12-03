@@ -29,6 +29,7 @@ public class NodeInstance {
 	public static String prod = "0x2703161D6DD37301CEd98ff717795E14427a462B".toLowerCase();
 	public static final String nullAddr = "0x0000000000000000000000000000000000000000";
 	public static final String latest = "latest";
+	public static final String pending = "pending";
 
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
@@ -640,6 +641,12 @@ public class NodeInstance {
 	public BigInteger getNonce(String wallet) throws Exception {
 		var req = new Req("eth_getTransactionCount", 1);
 		req.put( "params", Util.toArray( wallet, latest) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
+	}	
+
+	public BigInteger getNoncePending(String wallet) throws Exception {
+		var req = new Req("eth_getTransactionCount", 1);
+		req.put( "params", Util.toArray( wallet, pending) );
 		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
 	}	
 	

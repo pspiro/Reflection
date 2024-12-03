@@ -10,7 +10,12 @@ public class TestPostgres {
 		MultiChainConfig c1 = new MultiChainConfig();
 		c1.readFromSpreadsheet("prod-config");
 		
-		c1.chains().polygon().rusd().buyStockWithRusd(
+		var poly = c1.chains().polygon();
+		
+		S.out( "nonce=%s", poly.node().getNonce( poly.params().admin1Addr() ) );
+		S.out( "noncePending=%s", poly.node().getNoncePending( poly.params().admin1Addr() ) );
+		
+		poly.rusd().buyStockWithRusd(
 				NodeInstance.prod, 
 				1, 
 				c1.chains().polygon().getAnyStockToken(), 
