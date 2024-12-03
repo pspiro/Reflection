@@ -2,6 +2,8 @@ package chain;
 
 import org.json.simple.JsonObject;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import common.Util;
 import http.MyClient;
 import tw.util.IStream;
@@ -9,6 +11,7 @@ import tw.util.S;
 import web3.CreateKey;
 import web3.NodeInstance;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ChainParams( // set new params to optional if needed; remember heather's monitor is fixed
 		String admin1Addr,
 		String admin1RefblocksKey,
@@ -114,21 +117,33 @@ public record ChainParams( // set new params to optional if needed; remember hea
 	public boolean isZksync() {
 		return chainId == Chains.ZkSync;
 	}
-
-	/** ends not in slash */
-	public String getWebhookUrl() throws Exception {
+	
+	/** e.g. http://localhost:8080/hook/polygon
+	 *  for use by RefAPI to reach HookServer directly on local machine */
+	public String localHook() {
+		return String.format( "http://localhost:%s%s", 
+				hookServerPort(),
+				hookServerSuffix() );
+	}
+	
+	/** begins with /, e.g. '/hook/polygon' */
+	public String hookServerSuffix() {
+		return "/hook/" + hookNameSuffix;
+	}
+	
+	/** e.g. https://reflection.trading/hook/polygon */
+	public String getHookServerUrl() throws Exception {
 		String base = hookServerUrlBase;
 		
 		if (hookServerUrlBase.equals( "ngrok")) {
 			base = Util.getNgrokUrl();
 		}
 		
-		return base + getWebhookUrlSuffix();
+		return base + hookServerSuffix();
 	}
-	
-	/** begins with / */
-	public String getWebhookUrlSuffix() throws Exception {
-		return "/hook/" + hookNameSuffix;
+
+	/** e.g. https://reflection.trading/hook/polygon/webhook */
+	public String getWebhookUrl() throws Exception {
+		return getHookServerUrl() + "/webhook";
 	}
-	
 }

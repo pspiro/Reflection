@@ -12,7 +12,7 @@ import web3.StockToken;
  * 
  *  Requires only that HookServer be running */
 public class TestHookServer extends MyTestCase {
-	static String hook = "http://localhost:6001/hook";
+	static String hook;
 	static String newWallet = Util.createFakeAddress();
 
 	static {
@@ -20,6 +20,7 @@ public class TestHookServer extends MyTestCase {
 
 		// create the wallet first so we know we are getting values from the events
 		try {
+			hook = chain().params().getHookServerUrl();
 			MyClient.getJson( hook + "/get-wallet/" + newWallet);
 		} catch (Exception e) {
 			e.printStackTrace();

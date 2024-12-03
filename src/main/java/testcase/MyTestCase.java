@@ -130,10 +130,6 @@ public class MyTestCase extends TestCase {
 	protected static void waitForBalance(String walletAddr, String tokenAddr, double bal, boolean lt) throws Exception {
 		waitFor( 120, () -> {
 			double balance = node().getBalance( tokenAddr, walletAddr, 0);
-			
-//			double balance = MyClient.getJson( "http://localhost:8484/hook/get-wallet-map/" + walletAddr)
-//					.getObjectNN( "positions")
-//					.getDouble( tokenAddr.toLowerCase() );
 			S.out( "waiting for balance (%s) to be %s %s", balance, lt ? "<=" : ">=", bal);
 			return (lt && balance < bal + .01 || !lt && balance > bal - .01);
 		});

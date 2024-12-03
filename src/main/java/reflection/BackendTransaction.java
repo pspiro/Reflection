@@ -239,8 +239,9 @@ public class BackendTransaction extends MyTransaction {
 			getWalletFromUri();
 			setChainFromHttp();
 			
-			String url = String.format( "http://localhost:%s/hook/mywallet/%s",
-					chain().params().hookServerPort(), m_walletAddr);
+			String url = String.format( "%s/mywallet/%s",
+					chain().params().localHook(),
+					m_walletAddr);
 			
 			JsonObject json = MyClient.getJson( url);
 			
@@ -453,8 +454,8 @@ public class BackendTransaction extends MyTransaction {
 			
 			int conid = Integer.parseInt( ar[4]);
 			
-			String url = String.format( "http://localhost:%s/hook/get-wallet-map/%s", 
-					chain().params().hookServerPort(), 
+			String url = String.format( "%s/get-wallet-map/%s", 
+					chain().params().localHook(),
 					m_walletAddr.toLowerCase() );
 
 			// query for wallet positions (map style)

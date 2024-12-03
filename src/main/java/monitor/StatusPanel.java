@@ -74,7 +74,10 @@ class StatusPanel extends MonPanel {
 			f8.setText( json.getTime("started", Util.yToS) );
 		});
 		
-		MyClient.getJson( Monitor.m_config.hookBaseUrl() + "/hook/status", json -> {
+		MyClient.getJson(
+				Monitor.m_config.hookBaseUrl() + 
+				Monitor.chain().params().hookServerSuffix(), json -> {
+					
 			f16.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 			f21.setText( json.getTime("started", Util.yToS) );
 			setStreamStatus( f17, f18, "transfer-");

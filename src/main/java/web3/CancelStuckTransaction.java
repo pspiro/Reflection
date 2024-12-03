@@ -53,4 +53,7 @@ be to submit dummy transactions to fill the nonce gap, and then to keep
 going to cancel the queued transactions.
 
 I must wonder if I can ever switch back to the main RPC node.
+
+The bad transactions eventually cleared out, after several hours, after
+a 're-indexing', I think
  */

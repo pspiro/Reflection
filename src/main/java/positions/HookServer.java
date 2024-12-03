@@ -101,22 +101,21 @@ public class HookServer {
 		list.add( m_chain.rusd().address() );
 		m_allContracts = list.toArray( new String[list.size()]);
 
-		String suffix = m_chain.params().getWebhookUrlSuffix();
-		
+		String suffix = m_chain.params().hookServerSuffix();  // e.g. "/hook/polygon"
+				
 		MyServer.listen( m_chain.params().hookServerPort(), 10, server -> {
-			server.createContext(suffix, exch -> new Trans(exch, false).handleWebhook() );
-			server.createContext("/hook/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
-			server.createContext("/hook/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );
-			server.createContext("/hook/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
-			server.createContext("/hook/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
-			server.createContext("/api/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
-			server.createContext("/hook/reset", exch -> new Trans(exch, false).handleReset() );
-			server.createContext("/hook/reset-all", exch -> new Trans(exch, false).handleResetAll() );
+			server.createContext(suffix + "/webhook", exch -> new Trans(exch, false).handleWebhook() );
+			server.createContext(suffix + "/get-wallet", exch -> new Trans(exch, false).handleGetWallet() );
+			server.createContext(suffix + "/get-wallet-map", exch -> new Trans(exch, false).handleGetWalletMap() );
+			server.createContext(suffix + "/get-all-wallets", exch -> new Trans(exch, false).handleGetAllWallets() );
+			server.createContext(suffix + "/mywallet", exch -> new Trans(exch, false).handleMyWallet() );
+			server.createContext(suffix + "/reset", exch -> new Trans(exch, false).handleReset() );
+			server.createContext(suffix + "/reset-all", exch -> new Trans(exch, false).handleResetAll() );
 
-			server.createContext("/hook/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
-			server.createContext("/hook/status", exch -> new Trans(exch, false).handleStatus() ); 
-			server.createContext("/hook/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
-			server.createContext("/hook/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
+			server.createContext(suffix + "/ok", exch -> new BaseTransaction(exch, false).respondOk() ); 
+			server.createContext(suffix + "/status", exch -> new Trans(exch, false).handleStatus() ); 
+			server.createContext(suffix + "/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
+			server.createContext(suffix + "/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
 			
 			server.createContext("/", exch -> new Trans(exch, false).respondOk() ); // respond 200 here, I don't want to spook the Moralis client
 		});
@@ -355,7 +354,7 @@ public class HookServer {
 			return MoralisStreams.createStream(
 					MoralisStreams.erc20Transfers, 
 					"transfer-" + m_config.getHookNameSuffix(), 
-					urlBase + "/hook/webhook",
+					urlBase + "/webhook",
 					chain() ); 
 		}
 		
@@ -363,7 +362,7 @@ public class HookServer {
 			return MoralisStreams.createStream(
 					MoralisStreams.approval, 
 					"approval-" + m_config.getHookNameSuffix(), 
-					urlBase + "/hook/webhook", 
+					urlBase + "/webhook", 
 					chain(),
 					address);
 		}

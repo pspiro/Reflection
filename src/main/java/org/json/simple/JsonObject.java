@@ -545,6 +545,8 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return json;
 	}
 
+	/** make sure to add @JsonIgnoreProperties(ignoreUnknown = true) to the record to 
+	 * ignore unknown fields so you can add new fields to the json before updating the record */
 	public <T extends Record> T toRecord(Class<T> clas) throws Exception {
         return new ObjectMapper().readValue( toString(), clas);
 	}
