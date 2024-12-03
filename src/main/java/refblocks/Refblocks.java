@@ -154,11 +154,13 @@ public class Refblocks {
 	/** for debugging, show three types of nonces for one account (wallet address)
 	 * @param pending */
 	public void showAllNonces(String walletAddr) throws Exception {
-		S.out( "%s nonces  finalized=%s  latest=%s  pending=%s",
+		S.out( "%s nonces  finalized=%s  latest=%s  pending=%s  safe=%s  accepted=%s",
         		walletAddr.substring( 0, 7),
         		getNonce( walletAddr, DefaultBlockParameterName.FINALIZED),
         		getNonce( walletAddr, DefaultBlockParameterName.LATEST),
-        		getNonce( walletAddr, DefaultBlockParameterName.PENDING)
+        		getNonce( walletAddr, DefaultBlockParameterName.PENDING),
+        		getNonce( walletAddr, DefaultBlockParameterName.SAFE),
+        		getNonce( walletAddr, DefaultBlockParameterName.ACCEPTED)
         		);
 	}
 	

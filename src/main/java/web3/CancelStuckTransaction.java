@@ -13,11 +13,11 @@ public class CancelStuckTransaction {
 		
 		String wallet = poly.params().admin1Addr();  // wallet that is stuck
 		
-		// show nonces of stuck transactions
-		poly.node().showTrans( wallet);
-		
 		// show current nonces
 		poly.blocks().showAllNonces( poly.params().admin1Addr() );
+
+		// show nonces of stuck transactions
+		poly.node().showTrans( wallet);
 
 		// you have to cancel the lowest nonce first, but then the others will go through
 		// you might have to replace the others, not wait for a receipt, then cancel the lowest
@@ -34,4 +34,6 @@ public class CancelStuckTransaction {
 		}
 
 	}
+	
+	//static void fillTheGap() {
 }

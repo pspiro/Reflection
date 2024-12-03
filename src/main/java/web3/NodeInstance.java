@@ -264,7 +264,12 @@ public class NodeInstance {
 	 *  
 	 *  Goes with CancelStuckTransaction class */
 	public void showTrans( String wallet) throws Exception {
+		S.out( "Transactions");
+
 		JsonObject result = getQueuedTrans();
+		result.display();
+		
+		S.out( "Types: " + result.getKeys() );
 
 		S.out( "Pending");
 		var pending = result.getObject( "pending");

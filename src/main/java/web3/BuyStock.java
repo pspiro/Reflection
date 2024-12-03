@@ -1,11 +1,9 @@
-package test;
+package web3;
 
 import reflection.Config.MultiChainConfig;
-import tw.util.S;
-import web3.NodeInstance;
 
 /** Just test that you can connect to the database. */
-public class TestPostgres {
+public class BuyStock {
 	public static void main(String[] args) throws Exception {
 		MultiChainConfig c1 = new MultiChainConfig();
 		c1.readFromSpreadsheet("prod-config");
