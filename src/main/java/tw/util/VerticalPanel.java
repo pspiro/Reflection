@@ -90,12 +90,13 @@ public class VerticalPanel extends JPanel {
 		}
 	}
 
-	public void add(String str, Component comp, int index) {
-		add( index, new JLabel( str), comp);				
-	}
-	
-	@Override public void add(Component comp, Object constraints) {
-		throw new RuntimeException(); // not valid
+	@Override public void add(Component comp, Object obj) {
+		if (obj instanceof Component comp2) {
+			add( common.Util.toArray( comp, comp2) );
+		}
+		else {
+			throw new RuntimeException(); // not valid
+		}
 	}
 	
 	@Override public void add(Component comp, Object constraints, int index) {

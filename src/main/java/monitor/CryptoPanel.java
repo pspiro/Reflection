@@ -39,6 +39,12 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_ownerAddress = new JTextField(addrSize);
 	private JTextField m_refAddress = new JTextField(addrSize);
 	private JTextField m_rusdAddress = new JTextField(addrSize);
+	
+	private JLabel m_refLabel = new JLabel("???");
+	private JLabel m_ownLabel = new JLabel("???");
+	private JLabel m_ad1Label = new JLabel("???");
+	private JLabel m_ad2Label = new JLabel("???");
+	
 	HoldersPanel holdersPanel = new HoldersPanel();
 	
 
@@ -69,16 +75,16 @@ public class CryptoPanel extends MonPanel {
 		leftPanel.add( "Address", m_refAddress);
 		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, sendBusdFromRefWallet, emptyRefWallet);
 		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
-		leftPanel.add( "RefWallet " + MonitorConfig.nativeTokName(), m_refWalletMatic, refSendMatic);
+		leftPanel.add( m_refLabel, m_refWalletMatic, refSendMatic);
 		
 		leftPanel.addHeader( "Owner Wallet");
 		leftPanel.add( "Address", m_ownerAddress);
 		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		leftPanel.add( "Owner " + MonitorConfig.nativeTokName(), m_ownerMatic, ownerSendMatic);
+		leftPanel.add( m_ownLabel, m_ownerMatic, ownerSendMatic);
 		
 		leftPanel.addHeader( "Admin Accounts");
-		leftPanel.add( "Admin1 " + MonitorConfig.nativeTokName(), m_admin1Matic);
-		leftPanel.add( "Admin2 " + MonitorConfig.nativeTokName(), m_admin2Matic);
+		leftPanel.add( m_ad1Label, m_admin1Matic);
+		leftPanel.add( m_ad2Label, m_admin2Matic);
 
 		leftPanel.addHeader( "Brokerage (IB)");
 		leftPanel.add( "Cash in brokerage", m_cash);
@@ -202,6 +208,11 @@ public class CryptoPanel extends MonPanel {
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
+		m_refLabel.setText( "RefWallet " + MonitorConfig.nativeTokName() );
+		m_ownLabel.setText( "Owner " + MonitorConfig.nativeTokName() );
+		m_ad1Label.setText( "Admin1 " + MonitorConfig.nativeTokName() );
+		m_ad2Label.setText( "Admin2 " + MonitorConfig.nativeTokName() );
+		
 		m_refAddress.setText( config().refWalletAddr() );
 
 		double busd = config().busd().getPosition( config().refWalletAddr() );
