@@ -9,7 +9,7 @@ import web3.NodeInstance;
 import web3.RetVal;
 import web3.Rusd;
 
-/** Used by Monitor and test scripts */
+/** Used by Monitor and test scripts. This should be removed; the chain is not tied to the config. */
 public class SingleChainConfig extends Config {
 	private Chain m_chain;
 

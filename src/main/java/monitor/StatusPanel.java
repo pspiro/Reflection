@@ -75,8 +75,7 @@ class StatusPanel extends MonPanel {
 		});
 		
 		MyClient.getJson(
-				Monitor.m_config.hookBaseUrl() + 
-				Monitor.chain().params().hookServerSuffix(), json -> {
+				Monitor.chain().params().getHookServerUrl(), json -> {
 					
 			f16.setText( S.format( "%s (%s ms)", json.getString("code"), System.currentTimeMillis() - now) );
 			f21.setText( json.getTime("started", Util.yToS) );

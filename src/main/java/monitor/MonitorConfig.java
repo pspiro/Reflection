@@ -13,11 +13,6 @@ import web3.Rusd;
 public class MonitorConfig extends MultiChainConfig {
 	private String mdBaseUrl;	// does not end with /
 	private String fbBaseUrl;
-	private String hookBaseUrl;
-
-	public String hookBaseUrl() {
-		return hookBaseUrl;
-	}
 
 	public String mdBaseUrl() {
 		return mdBaseUrl;
@@ -32,7 +27,6 @@ public class MonitorConfig extends MultiChainConfig {
 		
 		this.mdBaseUrl = m_tab.get("mdBaseUrl");  // used only by Monitor program
 		this.fbBaseUrl = m_tab.get("fbBaseUrl");  // used only by Monitor program
-		this.hookBaseUrl = m_tab.get("hookBaseUrl");  // used only by Monitor program
 	}
 	
 	public static MonitorConfig askk() throws Exception {

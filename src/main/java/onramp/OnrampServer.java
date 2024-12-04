@@ -21,7 +21,9 @@ update onramp set state = '';
 */
 
 /** runs as a separate program. It polls the onramp API and the database every 10 sec.
- *  looking for unfilled transactions */
+ *  looking for unfilled transactions
+ *  
+ *  Has no communication with any of our processes. It responds to the /onramp/ok request */
 public class OnrampServer {
 	enum State { Funding, Completed, Error }
 

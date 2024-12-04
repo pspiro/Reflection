@@ -21,6 +21,7 @@ public class TestHookServer extends MyTestCase {
 		// create the wallet first so we know we are getting values from the events
 		try {
 			hook = chain().params().getHookServerUrl();
+			S.out( "HookServer URL is " + hook);
 			MyClient.getJson( hook + "/get-wallet/" + newWallet);
 		} catch (Exception e) {
 			e.printStackTrace();

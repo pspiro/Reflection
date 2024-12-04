@@ -75,7 +75,7 @@ class HookServerPanel extends JsonPanel {
 
 	private void resetAllWallets() {
 		wrap( () -> {
-			JsonObject json = getJson( "/resetall");
+			JsonObject json = getJson( "/reset-all");
 			UI.flash( json.toString() );
 		});
 	}
@@ -123,16 +123,16 @@ class HookServerPanel extends JsonPanel {
 	
 	@Override protected void refresh() throws Exception {
 		JsonArray ar = MyClient.getArray(
-				Monitor.m_config.hookBaseUrl() + 
-				chain().params().hookServerSuffix() + "/get-all-wallets");
+				chain().params().getHookServerUrl() + 
+				"/get-all-wallets");
 		setRows( ar);
 		m_model.fireTableDataChanged();
 	}
 
+	/** @param uri beings w/ / */
 	static JsonObject getJson( String uri) throws Exception {
 		return MyClient.getJson( 
-				Monitor.m_config.hookBaseUrl() +  // monitor uses localhost
-				chain().params().hookServerSuffix() +  // e.g. /hook/polygon 
+				chain().params().getHookServerUrl() +
 				uri);
 	}
 
