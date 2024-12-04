@@ -122,7 +122,7 @@ public class Stocks {
 		conidMap.clear();
 
 		// read master tab
-		ArrayList<StockRec> list = book.getTab( "M2").queryToRecList( StockRec.class);
+		ArrayList<StockRec> list = book.getTab( "Master").queryToRecList( StockRec.class);
 		list.sort( null);
 
 		// create master lists
