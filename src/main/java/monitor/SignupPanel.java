@@ -15,7 +15,7 @@ class SignupPanel extends JsonPanel {
 	JProgressBar bar = new JProgressBar();
 	
 	SignupPanel() {
-		super( new BorderLayout(), "created_at,email,first,last,country,referer,ip,utm_source,user_agent,jotform,connected,transactions,rusd");
+		super( new BorderLayout(), "created_at,email,first,last,country,referer,ip,utm_source,utm_medium,utm_campaign,utm_term,utm_content,user_agent,user_agent,jotform,connected,transactions,rusd,actions");
 		//add( "Signups", BorderLayout.NORTH);
 		add( bar, BorderLayout.NORTH);
 		add( m_model.createTable() );
@@ -24,6 +24,9 @@ class SignupPanel extends JsonPanel {
 	@Override protected String getTooltip(JsonObject row, String tag) {
 		if (tag.equals("user_agent") ) {
 			return row.getString(tag);
+		}
+		if (tag.equals( "action")) {
+			return row.getArray( tag).toHtml();
 		}
 		return null;
 	}

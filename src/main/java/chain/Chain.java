@@ -77,8 +77,12 @@ public class Chain {
 		return busd().getAllowance( params().refWalletAddr(), params().rusdAddr() );
 	}
 
-	public String blockchainTx(String hash) {
+	public String browseTx(String hash) {
 		return String.format( "%s/tx/%s", params().blockchainExpl(), hash);
+	}
+
+	public String browseAddress(String address) {
+		return String.format( "%s/address/%s", params().blockchainExpl(), address);
 	}
 
 	public StockToken getAnyStockToken() {

@@ -24,7 +24,7 @@ public class TestSignup extends MyTestCase {
 //		assertEquals( 1, json.getInt( "added") );
 //	}
 
-	public void testCheckEmail() throws Exception {
+	public void testWallet() throws Exception {
 		String wallet = Util.createFakeAddress().toLowerCase();
 		String first = wallet.substring( 2, 10);
 		
@@ -35,7 +35,7 @@ public class TestSignup extends MyTestCase {
 				"email", "peteraspiro+2@gmail.com",
 				"utm_source", "test");
 		cli().post("/api/signup", obj.toString() );		
-		assertEquals( 302, cli.getResponseCode() );  // signup returns 302 for legacy support
+		assert200();
 
 		S.sleep( 1000);
 
@@ -45,11 +45,63 @@ public class TestSignup extends MyTestCase {
 		// with wallet, data should be inserted into users table
 		obj.put( "wallet_public_key", wallet);
 		cli().post("/api/signup", obj.toString() );		
-		assertEquals( 302, cli.getResponseCode() );  // signup returns 302 for legacy support
+		assert200();
 		
 		S.sleep( 1000);
 
 		var ar2 = m_config.sqlQuery( "select * from users where wallet_public_key = '%s' and first_name = '%s'", wallet, first);
 		assertEquals( 1, ar2.size() );
+	}
+	
+	public void testInvalid() throws Exception {
+		String wallet = Util.createFakeAddress().toLowerCase();
+		String first = wallet.substring( 2, 10);
+		
+		// without wallet, data should be inserted into signup table
+		JsonObject obj = Util.toJson( 
+				"first", first,
+				"last", "test",
+				"email", "invalid");
+		cli().post("/api/signup", obj.toString() );		
+		assert400();
+	}
+	
+	public void testOnboard() throws Exception {
+		String wallet = Util.createFakeAddress().toLowerCase();
+		String first = wallet.substring( 2, 10);
+		String email = first + "@gmail.com";
+		
+		// without wallet, data should be inserted into signup table
+		S.out( "creating signup entry");
+		JsonObject obj = Util.toJson( 
+				"first", first,
+				"last", "test",
+				"email", email,
+				"utm_source", "test");
+		cli().post("/api/signup", obj.toString() );		
+		assert200();
+
+		S.sleep( 1000);
+
+		S.out( "submitting action");
+		var action = Util.toJson(
+				"origin", "onboard",
+				"email", email,
+				"action", "parked the car");
+		cli().post( "/api/log", action);
+		assert200();
+		
+		S.sleep( 500);
+		
+		S.out( "submitting action");
+		action.put( "wallet", wallet);
+		action.put( "action", "walked the dog");
+		cli().post( "/api/log", action);
+		assert200();
+		
+		var rec = m_config.sqlQueryOne( "select * from signup where email = '%s'", email);
+		assertNotNull( rec);
+		
+		assertEquals( 2, rec.getArray( "actions").size() );
 	}
 }

@@ -346,6 +346,13 @@ public class Config {
 		}
 	}
 
+	/** Use this one to make a single query */
+	public JsonObject sqlQueryOne(String sql, Object... params) throws Exception {
+		try ( MySqlConnection conn = createConnection() ) {
+			return conn.querySingleRecord(sql, params);
+		}
+	}
+
 	/** @deprecated use one of the others */
 	public JsonArray sqlQuery(SqlQuery query) throws Exception {
 		try ( MySqlConnection conn = createConnection() ) {
