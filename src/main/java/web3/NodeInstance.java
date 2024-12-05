@@ -76,6 +76,10 @@ public class NodeInstance {
 	 *  The Moralis node requires auth data 
 	 *  
 	 * note that we sometimes pass rpcUrl with trailing / and sometimes not */
+	private JsonObject nodeQuery(JsonObject json) throws Exception {
+		return nodeQuery( json.toString() );
+	}
+	
 	private JsonObject nodeQuery(String body) throws Exception {
 		JsonObject obj = (JsonObject)nodeQueryToAny( body);
 		
@@ -170,13 +174,7 @@ public class NodeInstance {
 
 	/** Gets just the latest block number */
 	public long getBlockNumber() throws Exception {
-		String body = """
-			{
-			"jsonrpc": "2.0",
-			"id": 1,
-			"method": "eth_blockNumber"
-			}""";
-		
+		var body = new Req( "eth_blockNumber");
 		long block = nodeQuery( body).getLong( "result");
 		Util.require( block > 0, "Error: could not get current block number");
 		
@@ -210,14 +208,13 @@ public class NodeInstance {
 		return nodeQuery( body);
 	}
 
-	/** This takes a long time and returns a lot of data */
+	/** This takes a long time and returns a lot of data.
+	 *  There are two lists returned: Pending and Queued.
+	 *  The Queued is not reliable because it is different for each node
+	 *  and when using an RPC node (aka node aggregator), you never know
+	 *  which node your query is going to go to. */
 	public JsonObject getQueuedTrans() throws Exception {
-		String body = """
-				{
-				"jsonrpc": "2.0",
-				"id": 1,
-				"method": "txpool_content"
-				}""";
+		var body = new Req( "txpool_content");
 		return nodeQuery( body).getObject("result");  // result -> pending and result -> queued
 	}
 
@@ -381,6 +378,10 @@ public class NodeInstance {
     }
 
 	static class Req extends JsonObject {
+		Req( String method) {
+			this( method, 1);
+		}
+		
 		Req( String method, int id) {
 			put( "jsonrpc", "2.0");
 			put( "method", method);
@@ -646,18 +647,18 @@ public class NodeInstance {
 	/** @deprecated use queryFees instead */
 	BigInteger getGasPrice() throws Exception {
 		return Numeric.decodeQuantity(
-				queryHexResult( new Req("eth_gasPrice", 1).toString(), "gas", "n/a", "n/a")
+				queryHexResult( new Req("eth_gasPrice").toString(), "gas", "n/a", "n/a")
 			);
 	}
 	
 	public BigInteger getNonce(String wallet) throws Exception {
-		var req = new Req("eth_getTransactionCount", 1);
+		var req = new Req("eth_getTransactionCount");
 		req.put( "params", Util.toArray( wallet, latest) );
 		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
 	}	
 
 	public BigInteger getNoncePending(String wallet) throws Exception {
-		var req = new Req("eth_getTransactionCount", 1);
+		var req = new Req("eth_getTransactionCount");
 		req.put( "params", Util.toArray( wallet, pending) );
 		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
 	}	
@@ -722,7 +723,7 @@ public class NodeInstance {
 		byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials);
 		String signedHex = Numeric.toHexString(signedMessage);
 		
-		Req req = new Req("eth_sendRawTransaction", 1);
+		Req req = new Req("eth_sendRawTransaction");
 		req.put( "params", Util.toArray( signedHex) );
 		
 		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
@@ -736,7 +737,7 @@ public class NodeInstance {
 	}
 	
 	public void getRevertReason(String from, String to, String data, String blockNumber) throws Exception {
-		Req req = new Req( "eth_call", 1);
+		Req req = new Req( "eth_call");
 
 		var param1 = Util.toJson(
 			"from", from,
