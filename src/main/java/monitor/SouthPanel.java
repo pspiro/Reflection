@@ -53,7 +53,7 @@ public class SouthPanel extends JPanel {
 			test( Monitor.refApiBaseUrl() + "/api/ok", m_refApi);
 			test( Monitor.m_config.mdBaseUrl() + "/mdserver/ok", m_mdServer);
 			test( Monitor.chain().params().getWebhookUrl(), m_hookServer);
-			test( Monitor.refApiBaseUrl() + "/onramp/ok", m_onrampServer);
+			test( "https://paper.reflection.trading/onramp/ok", m_onrampServer); // there's only one onramp server, runs on dev4
 		}
 		catch( Exception e) {
 			e.printStackTrace();

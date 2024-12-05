@@ -453,6 +453,7 @@ public class BackendTransaction extends MyTransaction {
 			setChainFromHttp();
 			
 			int conid = Integer.parseInt( ar[4]);
+			require( conid > 0, RefCode.INVALID_REQUEST, "Invalid conid");
 			
 			String url = String.format( "%s/get-wallet-map/%s", 
 					chain().params().localHook(),
@@ -461,9 +462,13 @@ public class BackendTransaction extends MyTransaction {
 			// query for wallet positions (map style)
 			JsonObject json = MyClient.getJson( url);
 			JsonObject positions = json.getObject( "positions"); // you could improve this and create a special query just for this
+			Util.require(positions != null, "Error: null positions returned from HookServer for wallet %s", m_walletAddr); // this could happen if the HookServer is restarting or not responsive; we could alternatively just return all zeros 
 			
 			String tokenAddr = chain().getTokenByConid( conid).address();
+			
 			Prices prices = m_main.getStock( conid).prices();
+			Util.require( prices != null, "Error: cannot find prices for conid %s", conid);
+			
 			// require(prices.hasAnyPrice(), RefCode.NO_PRICES, "No prices available for conid %s", conid);
 			// Q what to do if there are no prices
 			

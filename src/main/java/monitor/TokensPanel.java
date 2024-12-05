@@ -28,7 +28,7 @@ public class TokensPanel extends JsonPanel {
 	@Override protected void onDouble(String tag, Object val) {
 		if (tag.equals( "smartcontractid")) {
 			try {
-				m_holdersPanel.refresh( config().chain().getTokenByAddress(val.toString() ) );;
+				m_holdersPanel.refresh( MonitorConfig.chain().getTokenByAddress(val.toString() ) );;
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -44,7 +44,8 @@ public class TokensPanel extends JsonPanel {
 		// start with the stocks from the spreadsheet and add each to the map
 		// this shows active stocks only
 		Monitor.tokens().forEach( token -> {
-			var row = Util.toJson( 
+			var row = Util.toJson(
+					"symbol", token.name(),
 					"conid", token.conid(),
 					"address", token.address() );
 			rows().add( row);

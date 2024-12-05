@@ -28,6 +28,7 @@ class HookServerPanel extends JsonPanel {
 		JPanel top = new JPanel(new FlowLayout( FlowLayout.LEFT, 15, 8));
 		top.add( m_wallet);
 		top.add( new HtmlButton( "Get wallet", e -> getWallet() ) );
+		top.add( new HtmlButton( "Get wallet map", e -> getWalletMap() ) );
 		top.add( new HtmlButton( "'MyWallet' query", e -> myWallet() ) );
 		top.add( new HtmlButton( "Reset wallet", e -> resetWallet() ) );
 		top.add( new HtmlButton( "Reset all wallets", e -> resetAllWallets() ) );
@@ -88,6 +89,14 @@ class HookServerPanel extends JsonPanel {
 				pos.put( "description", Monitor.getDescription( pos.getString( "address") ) );
 			}
 			m_htmlPane.setText( positions.toHtml(true) );
+		});
+	}
+
+	private void getWalletMap() {
+		wrap( () -> {
+			var resp = getJson( "/get-wallet-map/" + m_wallet.getText() )
+					.getArray( "positions");
+			Util.inform( this, resp.toString() );
 		});
 	}
 
