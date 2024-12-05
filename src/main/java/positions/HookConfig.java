@@ -5,8 +5,6 @@ import org.json.simple.JsonObject;
 import chain.Chain;
 import common.Util;
 import reflection.Config.Tooltip;
-import tw.google.GTable;
-import tw.google.NewSheet;
 
 /** obsolete, remove. pas */
 public class HookConfig {
