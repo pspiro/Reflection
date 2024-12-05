@@ -395,6 +395,13 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return this;
 	}
 
+	/** add all items in other to this object using putIf;
+	 *  values in other will overwrite these values UNLESS the value in other is null */
+	public JsonObject append( JsonObject other) {
+		forEach( (key,val) -> putIf( key, val) );
+		return this;
+	}
+
 
 	/** Update the value for one specific key;
 	 *  the value passed to the callback will never be null
