@@ -75,7 +75,6 @@ public class Config {
 	private double minPartialFillPct;  // min pct for partial fills
 	private String alertEmail;
 	private String baseUrl; // used by Monitor program and RefAPI
-	private double autoReward; // automatically send users rewards
 	private boolean sendTelegram;
 	private int maxSummaryEmails;
 	private int fbServerPort;
@@ -203,7 +202,6 @@ public class Config {
 		this.minPartialFillPct = m_tab.getRequiredDouble("minPartialFillPct");
 		this.alertEmail = m_tab.getRequiredString("alertEmail");
 		this.baseUrl = m_tab.get("baseUrl");
-		this.autoReward = m_tab.getDouble("autoReward");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
 				
@@ -474,10 +472,6 @@ public class Config {
 		return baseUrl;
 	}
 		
-	public double autoReward() {
-		return autoReward;
-	}
-	
 	public boolean sendTelegram() {
 		return sendTelegram;
 	}

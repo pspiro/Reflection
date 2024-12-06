@@ -14,6 +14,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import chain.Chain;
 import chain.Stocks.Stock;
+import common.Alerts;
 import common.SignupReport;
 import common.Util;
 import http.MyClient;
@@ -377,29 +378,29 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleLog() {
 		wrap( () -> {
-			var obj = parseToObject();
-			out( "received log entry " + obj);
+			var log = parseToObject();
+			out( "received log entry " + log);
 			
-			if (obj.getString( "origin").equals( "onboard") ) {
-				handleOnboard( obj);
+			if (log.getString( "origin").equals( "onboard") ) {
+				handleOnboard( log);
 			}
 			
 			respondOk();
 		});
 	}
 
-	private void handleOnboard(JsonObject action) throws Exception {
-		String email = action.getString( "email").toLowerCase();
+	private void handleOnboard(JsonObject log) throws Exception {
+		String email = log.getString( "email").toLowerCase();
 		Util.require( S.isNotNull( email), "Error: null email when updating signup table");
 		
 		var rec = m_config.sqlQueryOne( "select * from signup where email = '%s'", email);
 		Util.require( rec != null, "Error: no signup record for email " + email);
 		
-		action.remove( "origin");
-		action.remove( "email");
-		action.put( "time", Util.yToS.format( new Date() ) );
+		log.remove( "origin");
+		log.remove( "email");
+		log.put( "time", Util.yToS.format( new Date() ) );
 		
-		rec.getOrAddArray( "actions").add( action);
+		rec.getOrAddArray( "actions").add( log);
 		m_config.sqlCommand( sql -> sql.updateJson("signup", rec, "where email = '%s'", email) );
 	}
 
@@ -651,8 +652,9 @@ public class BackendTransaction extends MyTransaction {
 					"This wallet already collected a prize"); 
 			
 			// no auto-awards?
-			if (m_config.autoReward() < amount) {
+			if (chain().params().autoReward() < amount) {
 				respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
+				Alerts.alert( "RefAPI", "NEEDS FUNDING", "Wallet %s is waiting to be funded " + amount);
 				return;
 			}
 			
@@ -668,7 +670,7 @@ public class BackendTransaction extends MyTransaction {
 			
 			// don't tie up the http thread
 			Util.executeAndWrap( () -> {
-				chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() )
+				chain().rusd().mintRusd(m_walletAddr, amount, chain().getAnyStockToken() )
 					.waitForReceipt();
 				
 				String message = S.format( "$%s RUSD has been minted into your wallet and you are ready for trading!", amount);

@@ -44,6 +44,7 @@ public class HookConfig {
 		return m_chain.params().minTokenPosition();
 	}
 
+	/** obsolete, ignored by Frontend */
 	public int myWalletRefresh() { 
 		return m_chain.params().myWalletRefresh(); 
 	}

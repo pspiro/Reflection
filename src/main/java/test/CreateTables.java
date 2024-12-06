@@ -63,7 +63,8 @@ public class CreateTables  {
  user_agent   | character varying(400)      |
  actions      | jsonb
  
- ALTER TABLE signup add column actions jsonb;   
+ ALTER TABLE signup add column actions jsonb;
+ ALTER TABLE signup drop column id;
 
  */
 

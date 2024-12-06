@@ -10,6 +10,8 @@ import org.json.simple.JsonObject;
 import common.SignupReport;
 import common.Util;
 import tw.util.S;
+import tw.util.UI;
+import tw.util.UI.Hourglass;
 
 class SignupPanel extends JsonPanel {
 	JProgressBar bar = new JProgressBar();
@@ -25,7 +27,7 @@ class SignupPanel extends JsonPanel {
 		if (tag.equals("user_agent") ) {
 			return row.getString(tag);
 		}
-		if (tag.equals( "action")) {
+		if (tag.equals( "actions")) {
 			return row.getArray( tag).toHtml();
 		}
 		return null;
@@ -37,6 +39,7 @@ class SignupPanel extends JsonPanel {
 		
 		Util.execute( () -> {
 			try {
+				Hourglass glass = new Hourglass( Monitor.m_frame);
 				Monitor.m_config.sqlCommand( sql -> {
 					S.out( "creating report");
 					var ar = SignupReport.create( 3, sql, Monitor.m_config.rusd(), () -> {
@@ -48,8 +51,10 @@ class SignupPanel extends JsonPanel {
 					S.out( "  done");
 					setRows( ar);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
+					glass.restore();
 				});
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		});

@@ -42,6 +42,7 @@ public record ChainParams( // set new params to optional if needed; remember hea
 		String web3type,
 		double maxAutoRedeem,
 		boolean reportTrades,
+		double autoReward,
 		
 		// hook server
 		String hookNameSuffix,
