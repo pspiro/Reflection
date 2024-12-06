@@ -67,8 +67,8 @@ public class MySqlConnection implements AutoCloseable {
 	/** Convert Postgres object to json object; note that Users.persona_response is string, not json 
 	 * @throws Exception */
 	private Object getJsonObj(Object obj) throws Exception {
-		return obj instanceof PGobject && ((PGobject)obj).getType().equals("jsonb")
-				? JsonObject.parse( obj.toString() )
+		return obj instanceof PGobject gob && gob.getType().equals("jsonb")
+				? JSONAware.parse( obj.toString() )
 				: obj;
 	}
 

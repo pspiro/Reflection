@@ -25,7 +25,6 @@ public class CreateTables  {
 	public static void main(String[] args) {
 		try {
 //			con = ConfigSingleChain.ask().useExternalDbUrl().createConnection();
-			new CreateTables().createSignupTable();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -46,22 +45,27 @@ public class CreateTables  {
 		con.execute(sql);
 	}
 	
-	void createSignupTable() throws Exception {
-		String sql = "create table signup ("
-			    + "created_at timestamp without time zone default(CURRENT_TIMESTAMP(6) at time zone 'America/New_York'),"
-				+ "first varchar(60),"
-				+ "last varchar(60),"
-				+ "email varchar(60),"
-				+ "referer varchar,"
-				+ "country varchar(2),"
-				+ "ip varchar(15),"
-				+ "utm_source varchar(200)"
-				+ ")";
-		con.execute(sql);
+/*
+ signup table
 
-		// create unique index on lower(email)
-		//con.execute( "create unique index signup_email_key on user (lower(email))");
-	}
+ created_at   | timestamp without time zone |           |          | (CURRENT_TIMESTAMP(6) AT TIME ZONE 'America/New_York'::text)
+ email        | character varying(60)       |           |          |
+ first        | character varying(60)       |           |          |
+ last         | character varying(60)       |           |          |
+ referer      | character varying           |           |          |
+ country      | character varying(2)        |           |          |
+ ip           | character varying(15)       |           |          |
+ utm_source   | character varying(200)      |           |          |
+ utm_medium   | character varying(200)      |           |          |
+ utm_campaign | character varying(200)      |           |          |
+ utm_term     | character varying(200)      |           |          |
+ utm_content  | character varying(200)      |           |          |
+ user_agent   | character varying(400)      |
+ actions      | jsonb
+ 
+ ALTER TABLE signup add column actions jsonb;   
+
+ */
 
 	void createLogTable() throws Exception {
 		String sql = """
@@ -249,3 +253,4 @@ ALTER TABLE orders drop COLUMN chain;
 ALTER TABLE redemptions drop COLUMN chain;
 ALTER TABLE transactions drop COLUMN chain;
 */
+

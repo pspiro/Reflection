@@ -157,7 +157,6 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
 			server.createContext("/api/faqs", exch -> quickResponse(exch, m_faqs, 200) );
-			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 
 			// dashboard panels
 			server.createContext("/api/crypto-transactions", exch -> new BackendTransaction(this, exch, false).handleReqCryptoTransactions(exch) ); // obsolete, have frontend remove this
@@ -190,6 +189,7 @@ public class Main implements ITradeReportHandler {
 
 			// landing page
 			server.createContext("/api/signup", exch -> new BackendTransaction(this, exch).handleSignup() );
+			server.createContext("/api/log", exch -> new BackendTransaction(this, exch).handleLog() );
 			server.createContext("/api/sag", exch -> new BackendTransaction(this, exch).handleSagHtml() );
 			server.createContext("/api/contact", exch -> new BackendTransaction(this, exch).handleContact() );
 

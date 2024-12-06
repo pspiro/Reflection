@@ -609,7 +609,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 								m_stablecoinAmt,
 								m_stablecoin.name(),
 								m_stockToken.address(),
-								chain().blockchainTx( hash) );
+								chain().browseTx( hash) );
 						m_config.sendEmailSes(m_email, "Order filled on Reflection", html, SmtpSender.Type.Trade);
 					});
 				}
@@ -623,7 +623,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 							isBuy() ? "bought" : "sold", 
 							m_desiredQuantity, 
 							m_stock.symbol(), 
-							chain().blockchainTx( hash), 
+							chain().browseTx( hash), 
 							chain().params().name()	);
 					
 					Telegram.postPhoto( str, isBuy() ? Telegram.bought : Telegram.sold);

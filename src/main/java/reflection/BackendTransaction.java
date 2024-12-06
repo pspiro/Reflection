@@ -4,6 +4,7 @@ import static reflection.Main.m_config;
 import static reflection.Main.require;
 
 import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.json.simple.JsonArray;
@@ -282,16 +283,17 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			out( m_map.obj() );
-
-			redirect( m_config.baseUrl() );
 			
 			String first = m_map.getUnescapedString("first");  // it would have been better just to unesc the whole uri
 			String last = m_map.getUnescapedString("last");
-			String email = m_map.getUnescapedString("email");
+			String email = m_map.getUnescapedString("email").toLowerCase();
 			String referer = m_map.getUnescapedString("referer");
 			
 			Util.require( Util.isValidEmail( email), "invalid email in signup message");
 						
+			//redirect( m_config.baseUrl() );
+			respondOk();
+			
 			// write them all until we get this working
 			JsonObject obj = new JsonObject();
 			obj.put( "email", email);
@@ -309,7 +311,7 @@ public class BackendTransaction extends MyTransaction {
 		
 			out( "Adding to signup table: " + obj.toString() );
 			m_main.queueSql( sql -> {
-				if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email.toLowerCase() ) ) {
+				if (sql.insertOrUpdate("signup", obj, "where lower(email) = '%s'", email) ) {
 					
 					out( "Sending email to %s", email);
 					
@@ -375,10 +377,32 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleLog() {
 		wrap( () -> {
-			out( "received log entry " + parseToObject() );
+			var obj = parseToObject();
+			out( "received log entry " + obj);
+			
+			if (obj.getString( "origin").equals( "onboard") ) {
+				handleOnboard( obj);
+			}
+			
 			respondOk();
 		});
 	}
+
+	private void handleOnboard(JsonObject action) throws Exception {
+		String email = action.getString( "email").toLowerCase();
+		Util.require( S.isNotNull( email), "Error: null email when updating signup table");
+		
+		var rec = m_config.sqlQueryOne( "select * from signup where email = '%s'", email);
+		Util.require( rec != null, "Error: no signup record for email " + email);
+		
+		action.remove( "origin");
+		action.remove( "email");
+		action.put( "time", Util.yToS.format( new Date() ) );
+		
+		rec.getOrAddArray( "actions").add( action);
+		m_config.sqlCommand( sql -> sql.updateJson("signup", rec, "where email = '%s'", email) );
+	}
+
 
 	public void handleStatus() {
 		wrap( () -> {

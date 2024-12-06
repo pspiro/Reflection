@@ -170,7 +170,7 @@ public class CryptoPanel extends MonPanel {
 			}
 
 			// copy has to clipboard
-			Util.copyToClipboard( config().chain().blockchainTx( hash) );
+			Util.copyToClipboard( Monitor.chain().browseTx( hash) );
 			Util.inform(this, "Done, hash is copied to clipboard");
 		});
 	}
@@ -184,7 +184,7 @@ public class CryptoPanel extends MonPanel {
 	}
 
 	private void sendMatic(String senderKey) throws NumberFormatException, Exception {
-		config().chain().blocks().transfer( 
+		Monitor.chain().blocks().transfer( 
 				senderKey,
 				Util.ask("Enter dest wallet address"),
 				Double.parseDouble( Util.ask( "Enter amount"))

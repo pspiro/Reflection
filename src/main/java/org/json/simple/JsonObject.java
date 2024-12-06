@@ -219,6 +219,16 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 		return array != null ? array : new JsonArray(); 
 	}
 
+	/** If the key does not exist, it adds a new array to the map */
+	public JsonArray getOrAddArray(String key) {
+		JsonArray array = (JsonArray)get(key);
+		if (array == null) {
+			array = new JsonArray();
+			put( key, array);
+		}
+		return array; 
+	}
+
 	/** Call it like this: json.<String>getAnyArray( key)
 	 *  Also works for array of lists, like this: json.<ArrayList>getAnyArray( key);
 	 *  In this case, each item in the array will be of the correct json type, e.g.

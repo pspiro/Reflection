@@ -182,7 +182,7 @@ public class OnrampServer {
 							received.amount(), 
 							reflToUserHash, 
 							userChain.params().name(), 
-							userChain.blockchainTx(reflToUserHash) );
+							userChain.browseTx(reflToUserHash) );
 				
 					// notify us  (we also get a copy of the email above)
 					Alerts.alert( "OnRamp Server", "Funding user wallet succeeded", reflToUserHash);

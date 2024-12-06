@@ -1,11 +1,10 @@
 package monitor.wallet;
 
-import static monitor.Monitor.m_config;
-
 import org.json.simple.JsonArray;
 
 import common.JsonModel;
 import common.Util;
+import monitor.Monitor;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
 
@@ -22,7 +21,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 		
 		@Override protected void onDoubleClick(String tag, Object val) {
 			if (tag.equals( "transaction_hash") ) {
-				Util.browse( m_config.chain().blockchainTx( val.toString() ) );
+				Util.browse( Monitor.chain().browseTx( val.toString() ) );
 			}				
 		}
 		
@@ -49,11 +48,11 @@ public class BlockDetailPanel extends BlockPanelBase {
 
 			m_model.setRows( JsonArray.toJson( ts) );
 			
-			// adjust timestamp
-			m_model.ar().update( timestamp, val -> val.toString().replace( "T", "  ").replace( "Z", "") );
+//			// adjust timestamp
+//			m_model.ar().update( timestamp, val -> val.toString().replace( "T", "  ").replace( "Z", "") );
 		};
 		
-		m_model.ar().sortJson( timestamp, true);
+		m_model.ar().sortJson( "block", true);
 		m_model.fireTableDataChanged();
 	}
 	

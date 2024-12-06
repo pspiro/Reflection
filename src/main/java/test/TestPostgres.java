@@ -1,6 +1,10 @@
 package test;
 
+import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
+
+import common.Util;
+import reflection.SingleChainConfig;
 
 
 /** Just test that you can connect to the database. */
@@ -8,13 +12,19 @@ public class TestPostgres {
 	
 	public static void main(String[] args) throws Exception {
 		String json = """
-				{
-"approved": 0,
-"wallet": "0x2703161d6dd37301ced98ff717795e14427a462e",
-"native": 0,
-"positions": {}
-}
+[
+{ "time": 1733433909980, "action": "hello" },
+{ "time": 1733433909980, "action": "mamma" }
+]
 				""";
-		JsonObject.parse( json).getObject( "positions").getString( "abc");
+		
+		JsonObject obj = Util.toJson( 
+				"first", "peterrr", 
+				"actions", JsonArray.parse( json) );
+		obj.display();
+		
+		var actions = obj.getArray( "actions");
+		actions.update( "time", val -> Util.yToS.format( val) );
+		obj.display();
 	}
 }
