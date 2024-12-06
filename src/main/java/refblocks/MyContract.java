@@ -73,7 +73,8 @@ public class MyContract extends Contract {
 			
 		// make the actual method call with signature
 		try {
-	        var receipt = method.get().send();  // << m_function gets set here
+	        var receipt = method.get().send();  // << m_function gets set here; receipt could be EmptyTransactionReceipt
+	        S.out( "  trans hash is " + receipt.getTransactionHash() );
 	        return new RbRetVal( receipt, web3j, m_function);
 		}
 		catch( Exception e) {

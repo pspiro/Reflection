@@ -197,6 +197,10 @@ public class Chain {
 	public String[] getStablecoinAddresses() throws Exception {
 		return new String[] { params.rusdAddr(), params.busdAddr() };
 	}
+	
+	public void showAdmin1Nonces() throws Exception {
+		blocks().showAllNonces( params.admin1Addr() );
+	}
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

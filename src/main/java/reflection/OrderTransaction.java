@@ -21,6 +21,7 @@ import com.ib.controller.ApiController.IOrderHandler;
 import com.sun.net.httpserver.HttpExchange;
 
 import chain.Stocks.Stock;
+import common.Alerts;
 import common.SmtpSender;
 import common.Util;
 import common.Util.ExRunnable;
@@ -492,6 +493,8 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		catch( Exception e) {
 			out( "blockchain transaction failed " + e.getMessage() );
 			e.printStackTrace();
+			Alerts.alert("RefAPI", "Error: Blockchain transaction failed", "This may not self-correct and may require admin intervention. If there was no receipt issued, there could be a nonce gap which needs to be filled, or there could be a transaction stuck with low gas.");
+			
 			onUpdateFbStatus( FireblocksStatus.FAILED_WEB3, null); // tries to guess why it failed and then calls onFail()
 		}
 		

@@ -82,4 +82,20 @@ The only thing I'm not sure about is this: I think the India queries were return
 different latest and pending nonces than NY; that shouldn't be possible.
 What could cause that? It eventually cleared up and re-synced.
 
+So, should you use pending or latest when getting the nonce?
+Why would they be different?
+A valid trans was just submitted and hasn't gone in yet; then you want to use the pending nonce.
+A transaction is stuck in the mempool; it needs to be removed OR replaced; use the latest nonce
+
+It seems that for TRANSFERS, it will pick up insuf. gas prior to adding to the mempool,
+but for other ERC20 transactions, it does not.
+
+The only foolproof way to do this is to submit one order at a time and wait for the receipt for each one.
+When the receipt comes, increase the nonce OR query for it; at that point you might as well query
+for it since fasterTM won't be helping you;
+if no receipt comes...it means nonce gap OR gas price too low; you can figure out which one
+by looking for the order in the mempool ('pending' state); if it's there, it's low gas and
+must be fixed or canceled; if it's not there, it's in the queue meaning there is a nonce gap
+either cancel it, or don't, and fill the gap
+
  */

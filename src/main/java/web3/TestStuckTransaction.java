@@ -2,23 +2,35 @@ package web3;
 
 import chain.Chain;
 import chain.Chains;
+import common.Util;
 import tw.util.S;
 
 public class TestStuckTransaction {
 	public static void main(String[] args) throws Exception {
 		Chain chain = new Chains().readOne( "Amoy", true);
 		
-		var addr = chain.params().admin1Addr();
+		String key = Util.createPrivateKey();
+		String wal = Util.getAddress(key);
+		var tok = chain.getAnyStockToken();
 		
-		chain.blocks().showAllNonces( addr);
+		chain.showAdmin1Nonces();
 
-//		Refblocks.skip = true;
-		chain.blocks().transfer( chain.params().admin1Key(), NodeInstance.prod, .0001)
-			.waitForReceipt();
-		;
-		chain.node().showTrans( addr);
-
-		chain.blocks().showAllNonces( addr);
+		S.out( "minting 5 RUSD into " + wal);
+		chain.rusd().mintRusd( wal, 5, tok).waitForReceipt();
+		S.out( "position: " + chain.rusd().getPosition(wal) );
 		
+		Util.wrap( () -> {
+			chain.rusd().transfer(wal, wal, 1000000)
+				.waitForReceipt();
+		});
+		
+		chain.showAdmin1Nonces();
+
+		Util.wrap( () -> {
+			chain.rusd().buyStockWithRusd( wal, 5, tok, 1) 
+				.waitForReceipt();
+		});
+		
+		chain.showAdmin1Nonces();
 	}
 }
