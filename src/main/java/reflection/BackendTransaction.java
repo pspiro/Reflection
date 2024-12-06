@@ -191,47 +191,8 @@ public class BackendTransaction extends MyTransaction {
 			require( status.equals( "completed"),
 					RefCode.INVALID_REQUEST, "KYC failed with status '%s'", status);
 			
-			String message = "";
-			double autoRewarded = 0;
-			
-			// this is turned off for now; there was a case where a wallet got double-funded
-			// in < one second; how is that possible since we create a database entry?
-			
-			// auto-reward the user?
-			if (m_config.autoReward() > 0) {
-				// get existing locked rec, or create
-				var locked = getorCreateUser().getObjectNN( "locked");
-	
-				double rusdBalance = chain().rusd().getPosition( m_walletAddr);
-				out( "  alreadyRewarded=%s  rusdBalance=%s", locked.getBool( "rewarded"), rusdBalance);
-				
-				// check for not rewarded and zero RUSD balance
-				if (!locked.getBool( "rewarded") && rusdBalance == 0) { // sends a query
-					// set rewarded to true in the db
-					locked.put( "rewarded", true);
-					
-					// update users table with locked
-					JsonObject lockRec = Util.toJson(
-							"wallet_public_key", m_walletAddr.toLowerCase(),
-							"locked", locked); 
-					m_config.sqlCommand(sql -> 
-						sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
-					
-					// mint $500 for the user
-					out( "Minting $%s RUSD reward for %s", m_config.autoReward(), m_walletAddr);
-					message = S.format( "$%s RUSD is being minted into your wallet and will appear shortly", (int)m_config.autoReward() );
-					autoRewarded = m_config.autoReward();
-					Util.executeAndWrap( () -> {
-						chain().rusd().mintRusd(m_walletAddr, m_config.autoReward(), chain().getAnyStockToken() );
-					});
-				}
-				else {
-					out( "WARNING: user KYC'ed but not receiving reward, check locked->rewarded and RUSD balance for wallet %s", m_walletAddr);  
-				}
-			}			
-
-			respond( code, RefCode.OK, Message, message);
-			alert("KYC COMPLETED", String.format( "wallet=%s  autoReward=%s", m_walletAddr, autoRewarded) );
+			//respond( code, RefCode.OK, Message, message);
+			respondOk();
 		});
 	}
 
@@ -654,7 +615,8 @@ public class BackendTransaction extends MyTransaction {
 			// no auto-awards?
 			if (chain().params().autoReward() < amount) {
 				respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
-				Alerts.alert( "RefAPI", "NEEDS FUNDING", "Wallet %s is waiting to be funded " + amount);
+				Alerts.alert( "RefAPI", "NEEDS FUNDING",
+					String.format( "wallet %s is waiting to be funded %s", m_walletAddr, amount) );
 				return;
 			}
 			
