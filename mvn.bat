@@ -1,1 +1,1 @@
-"C:\Program Files\apache-maven-3.9.6\bin\mvn" %1
+"C:\Program Files\apache-maven-3.9.8\bin\mvn" %1

@@ -189,11 +189,16 @@ public abstract class MyTransaction extends BaseTransaction {
 	public String walletAddr() {
 		return m_walletAddr;
 	}
-	
+
 	/** return existing User object or null */
 	protected JsonObject getUser() throws Exception {
 		JsonArray ar = m_config.sqlQuery( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
 		return ar.size() == 0 ? null : ar.get( 0);
+	}
+
+	/** return existing User object or null */
+	protected JsonObject getUser(MySqlConnection sql) throws Exception {
+		return sql.querySingleRecord( "select * from users where wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
 	}
 
 	/** create a User object for this */

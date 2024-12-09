@@ -327,6 +327,9 @@ public class Config {
 		conn.connect( postgresUrl, postgresUser, postgresPassword);
 		return conn;
 	}
+	
+	// NOTE: the 'sql' parameter passed in is always MySqlConnection;
+	// the main difference between uses is the return value: array, object, or none
 
 	/** Connect, execute a command, then close the connection.
 	 *  Since executions is delayed, don't use it to update data

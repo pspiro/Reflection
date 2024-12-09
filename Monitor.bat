@@ -1,1 +1,0 @@
-java -cp target\Reflection-0.0.2-jar-with-dependencies.jar monitor.Monitor

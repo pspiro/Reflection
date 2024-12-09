@@ -62,8 +62,10 @@ public class CreateTables  {
  utm_content  | character varying(200)      |           |          |
  user_agent   | character varying(400)      |
  actions      | jsonb
+ got_price    | boolean
  
  ALTER TABLE signup add column actions jsonb;
+ ALTER TABLE signup add column got_prize boolean;
  ALTER TABLE signup drop column id;
 
  */
@@ -183,9 +185,14 @@ public class CreateTables  {
 	
 	/* locked jsonb fields
 	 * 
-	 * faucet {
+	 * faucet: {
 	 *   <blockchain name>: amount
 	 *   }
+	 *   
+	 * amount: 0.00
+	 * lockedUntil: time in ms
+	 * requiredTrades: int
+	 * rewarded: boolean  true if collected some prize
 	 *  
 	 */
 		
@@ -219,9 +226,6 @@ public class CreateTables  {
 		);
 		""";
 		con.execute( sql);
-		
-		// locked field contains these tags:
-		// amount, lockedUntil (ms), required trades, rewarded (bool)
 	}
 }
 

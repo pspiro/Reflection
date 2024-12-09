@@ -15,6 +15,7 @@ public class Profile extends JsonObject {
 		
 		// wallet address must be lower case because this object is inserted into database
 		update( "wallet_public_key", val -> val.toString().toLowerCase() ); // must be lower case because this gets inserted into the db
+		update( "email", val -> val.toString().toLowerCase() ); // email is standardized on lower case
 	}
 	
 	String first() {

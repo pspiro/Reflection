@@ -21,6 +21,7 @@ import http.MyClient;
 import onramp.Onramp;
 import reflection.TradingHours.Session;
 import tw.util.S;
+import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {
@@ -578,58 +579,70 @@ public class BackendTransaction extends MyTransaction {
 			
 			String first = m_map.getRequiredString( "firstName");
 			String last = m_map.getRequiredString( "lastName");
-			String email = m_map.getRequiredString( "email");
+			String email = m_map.getRequiredString( "email").toLowerCase();
 
 			double amount = m_map.getRequiredDouble("amount");
 			require( amount == 100 || amount == 500, RefCode.INVALID_REQUEST, "The award amount is invalid");
-
-			// insert user profile only if missing
-			var user = getUser();
-			if (user == null) {
-				out( "creating user profile");
-				m_config.sqlCommand( sql -> sql.insertJson("users", Util.toJson(
-						"wallet_public_key", m_walletAddr,
-						"first_name", first,
-						"last_name", last,
-						"email", email) ) );
-			}
 			
-			// $500 award requires KYC  
-			require( amount == 100 || Util.equalsIgnore( user.getString("kyc_status"), "VERIFIED", "completed"),
-					RefCode.INVALID_REQUEST,
-					"Error: You must verify your identity before collecting collecting this reward");
-			
-			// get or create existing locked rec
-			var locked = user.getObjectNN( "locked");
-			
-			// wallet has rusd?
-			require( chain().rusd().getPosition( m_walletAddr) < 1, 
-					RefCode.INVALID_REQUEST, 
-					"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
-			
-			// already collected a prize?
-			require( !locked.getBool( "rewarded"), 
-					RefCode.INVALID_REQUEST, 
-					"This wallet already collected a prize"); 
-			
-			// no auto-awards?
-			if (chain().params().autoReward() < amount) {
-				respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
-				Alerts.alert( "RefAPI", "NEEDS FUNDING",
-					String.format( "wallet %s is waiting to be funded %s", m_walletAddr, amount) );
-				return;
-			}
-			
-			// update users table with locked BEFORE we award the RUSD
-			JsonObject lockRec = Util.toJson(
-					"wallet_public_key", m_walletAddr.toLowerCase(),
-					"locked", locked.append("rewarded", true) ); 
-			m_config.sqlCommand(sql -> 
-				sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() ) );
-			
+			m_config.sqlCommand( sql -> {
+				// email has not registered or already rewarded?
+				var signup = sql.querySingleRecord( "select * from signup where email = '%s'", email);
+				require( signup != null, RefCode.INVALID_REQUEST, "This email address has not registered");
+				require( !signup.getBool( "got_prize"), RefCode.INVALID_REQUEST, "This email address has already been awarded a prize.");
+				
+				// insert user profile only if missing
+				var user = getUser( sql);
+				if (user == null) {
+					out( "creating user profile");
+					sql.insertJson("users", Util.toJson(
+							"wallet_public_key", m_walletAddr,
+							"first_name", first,
+							"last_name", last,
+							"email") );
+				}
+				
+				// $500 award requires KYC  
+				require( amount == 100 || Util.equalsIgnore( user.getString("kyc_status"), "VERIFIED", "completed"),
+						RefCode.INVALID_REQUEST,
+						"Error: You must verify your identity before collecting collecting this reward");
+				
+				// get or create existing locked rec
+				var locked = user.getObjectNN( "locked");
+				
+				// wallet has rusd?
+				require( chain().rusd().getPosition( m_walletAddr) < 1, 
+						RefCode.INVALID_REQUEST, 
+						"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
+				
+				// this wallet already collected a prize?
+				require( !locked.getBool( "rewarded"), 
+						RefCode.INVALID_REQUEST, 
+						"This wallet already collected a prize");
+				
+				// this email already collected a prize?
+				
+				// no auto-awards?
+				if (chain().params().autoReward() < amount) {
+					respond( code, RefCode.OK, Message, "Thank you for registering. Your wallet will be funded shortly.");
+					Alerts.alert( "RefAPI", "NEEDS FUNDING",
+						String.format( "wallet %s is waiting to be funded %s", m_walletAddr, amount) );
+					return;
+				}
+				
+				// update users table with locked BEFORE we award the RUSD
+				JsonObject lockRec = Util.toJson(
+						"wallet_public_key", m_walletAddr.toLowerCase(),
+						"locked", locked.append("rewarded", true) ); 
+				sql.updateJson("users", lockRec, "wallet_public_key = '%s'", m_walletAddr.toLowerCase() );
+				
+				// update signup table as well
+				signup.put( "got_prize", true);
+				sql.updateJson( "signup", signup, "email = '%s'", email);
+			});
+		
 			// mint award for the user
 			out( "Minting $%s RUSD reward for %s", amount, m_walletAddr);
-			
+
 			// don't tie up the http thread
 			Util.executeAndWrap( () -> {
 				chain().rusd().mintRusd(m_walletAddr, amount, chain().getAnyStockToken() )
@@ -706,6 +719,11 @@ public class BackendTransaction extends MyTransaction {
 					m_walletAddr.toLowerCase() ) );
 			
 			respond( code, RefCode.OK, Message, "Your wallet has been funded!");
+
+			// log and alert
+			jlog( LogType.FAUCET, Util.toJson( "amount", amount) );
+			Alerts.alert( "RefAPI", "Faucet was turned", 
+					String.format( "wallet=%s  amt=%s", m_walletAddr, amount) );
 		});
 	}
 	

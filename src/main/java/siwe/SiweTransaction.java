@@ -29,6 +29,7 @@ public class SiweTransaction extends BaseTransaction {
 	private static long siweTimeout = Util.MINUTE;		// sign-in must be completed in this timeframe 
 	private static long sessionTimeout = Util.HOUR;  	// user must re-auth after this expires
 	
+	/** called from config loading but should be called from the apps that need it which is just Main and Mock */
 	public static void setTimeouts( long t1, long t2) {
 		siweTimeout = t1; 
 		sessionTimeout = t2;

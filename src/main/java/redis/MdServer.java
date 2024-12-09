@@ -76,7 +76,7 @@ public class MdServer {
 		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
 		
 		timer.next( "Creating http server");
-		MyServer.listen( m_config.mdsPort(), 10, server -> {
+		MyServer.listen( m_config.mdsPort(), 5, server -> {
 			server.createContext("/mdserver/status", exch -> new MdTransaction( exch).onStatus() ); 
 			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction( exch).onDesubscribe() ); 
 			server.createContext("/mdserver/subscribe", exch -> new MdTransaction( exch).onSubscribe() ); 
