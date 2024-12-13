@@ -6,7 +6,9 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.Util;
+import test.MyTimer;
 import tw.util.S;
+import web3.MoralisServer;
 import web3.NodeInstance;
 
 public class TestNode extends MyTestCase {
@@ -54,12 +56,27 @@ public class TestNode extends MyTestCase {
 	}
 	
 	public void testReqPosMap() throws Exception {
-		Map<String, Double> map = node().reqPositionsMap( 
+		S.out( "testing reqPosMap on " + chain().params().name() );
+		
+		MyTimer t = new MyTimer().next( "node");
+
+		Map<String, Double> map1 = node().reqPositionsMap( 
 				NodeInstance.prod,
 				chain.getAllContractsAddresses(),
 				18);
-		new JsonObject( map).display();
-		assertTrue( map.size() > 1);
+
+		t.next( "moralis");
+		MoralisServer.setChain( chain().params().moralisPlatform() );
+		Map<String, Double> map2 = MoralisServer.reqPositionsMap( 
+				NodeInstance.prod,
+				chain.getAllContractsAddresses() );
+		
+		t.done();
+		
+		assertTrue( Util.isEqual( map1, map2));
+
+		new JsonObject( map1).display();
+		assertTrue( map1.size() > 1);
 	}
 	
 	/** fail w/ batch too large 

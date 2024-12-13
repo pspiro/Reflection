@@ -85,7 +85,7 @@ public class Main implements ITradeReportHandler {
 
 	public Main(String[] args) throws Exception {
 		m_tabName = SingleChainConfig.getTabName( args);
-		MyClient.filename = "refapi.http.log";
+		MyClient.restart( "refapi.http.log");
 		
 		MyTimer timer = new MyTimer();
 

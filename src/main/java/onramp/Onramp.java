@@ -65,6 +65,12 @@ public class Onramp {
 	}
 	
 	public static void main(String[] args) throws Exception {
+		prodRamp.getBankDetails(
+				"4Vj3K6XBB4_34730",
+				"1120771",
+				"NGN",
+				"NG-BANK-TRANSFER"
+				).display();
 	}
 	
 	public Onramp( String url) {
@@ -103,6 +109,17 @@ public class Onramp {
 				);
 		
 		return whiteLab( "/onramp/createTransaction", body);
+	}
+	
+	public JsonObject getBankDetails(String customerId, String transactionId, String currency, String paymentType) throws Exception {
+		var json = Util.toJson(
+				"customerId", customerId,
+				"transactionId", transactionId,
+				"fromCurrency", currency,
+				"paymentMethodType", paymentType
+				);
+
+		return whiteLab( "/bank/bankDetails", json); 
 	}
 	
 	public JsonObject updateKycStatus(String customerId, KycStatus status) throws Exception {

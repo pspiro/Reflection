@@ -662,7 +662,8 @@ public class Util {
 		return v1 < v2 ? -1 : v1 > v2 ? 1 : 0;
 	}
 
-	/** Compare two Comparables but allow for one or both to be null */
+	/** Compare two Comparables but allow for one or both to be null;
+	 *  see isEquals( Object,Object) below */
 	@SuppressWarnings("unchecked")
 	public static int compare(Comparable v1, Comparable v2) {
 		return v1 != null && v2 != null
@@ -1030,6 +1031,18 @@ public class Util {
     	S.out( list2);
     }
     
-    	
-    	
+    /** Compare all keys and values in the maps */
+    public static boolean isEqual( Map<?,?> m1, Map<?,?> m2) {
+    	for (var entry : m1.entrySet() ) {
+    		if (!isEqual( entry.getValue(), m2.get( entry.getKey() ) ) ) {
+    			return false;
+    		}
+    	}
+    	return true;
+    }
+    
+    /** consider null object as equal */
+    public static boolean isEqual( Object o1, Object o2) {
+    	return o1 == null ? o2 == null : o1.equals( o2);
+    }
 }

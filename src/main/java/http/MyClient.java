@@ -22,13 +22,18 @@ public class MyClient {
 	private static final long ConnectTimeout = 10;  // default timeout for connections, in seconds
 	private static final long ReadTimeout = 20;  // default timeout for reads, in seconds
 
-	public static String filename = "http.log";
+	private static String filename = "http.log";
 	
 	static HttpClient client = HttpClient.newBuilder()
 			.connectTimeout( Duration.ofSeconds( ConnectTimeout) )
 			.build();
 
 	private Builder m_builder;
+	
+	public static void restart(String name) {
+		filename = name;
+		write( "Restart");
+	}
 	
 	private static void write( String line) {
 		try ( OStream os = new OStream( filename, true) ) {

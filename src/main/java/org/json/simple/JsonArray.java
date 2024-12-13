@@ -43,6 +43,14 @@ public class JsonArray extends ArrayList<JsonObject> implements JSONAware, JSONS
      * @param list
      * @param out
      */
+	public JsonArray() {
+		super();
+	}
+	
+	public JsonArray( JsonArray other) {
+		super( other);
+	}
+	
 	public static void writeJSONString(List list, Writer out) throws IOException{
 		if(list == null){
 			out.write("null");
