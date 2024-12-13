@@ -2626,6 +2626,7 @@ public abstract class EClient {
             b.send(contract.currency());
             b.send(contract.localSymbol());
 
+            S.out( "sending query w/ report type " + reportType);
             b.send(reportType);
             
             if (m_serverVersion >= MIN_SERVER_VER_LINKING) {
