@@ -15,6 +15,7 @@ import refblocks.Refblocks;
 import tw.google.NewSheet.Book;
 import tw.util.S;
 import web3.Busd;
+import web3.MoralisServer;
 import web3.NodeInstance;
 import web3.Rusd;
 import web3.StockToken;
@@ -204,6 +205,17 @@ public class Chain {
 	
 	public void showAdmin1Nonces() throws Exception {
 		blocks().showAllNonces( params.admin1Addr() );
+	}
+
+	/** 
+	 * @param decimals if zero we will look it up from the map or query for it 
+	 * @throws Exception */
+	public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
+		if (params.isPolygon() ) {
+			MoralisServer.setChain( params.moralisPlatform() );  // kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
+			return MoralisServer.reqPositionsMap(walletAddr, contracts);
+		}
+		return node.reqPositionsMap(walletAddr, contracts, decimals);
 	}
 }
 // tokensupply on monitor, do a batch query. bc

@@ -70,6 +70,8 @@ public class Monitor {
 	
 	private static void start() throws Exception {
 		Util.iff( m_southPanel, pan -> pan.stop() );
+
+		MyClient.restart( "monitor.http.log");
 		
 		// read config
 		m_config = MonitorConfig.askk();

@@ -30,6 +30,11 @@ public class MyClient {
 
 	private Builder m_builder;
 	
+	public static void restart(String name) {
+		filename = name;
+		write( "Restart");
+	}
+	
 	private static void write( String line) {
 		try ( OStream os = new OStream( filename, true) ) {
 			os.writeln( S.timeFmt.format( new Date() ) + " " + line);

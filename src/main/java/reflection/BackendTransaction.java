@@ -694,12 +694,13 @@ public class BackendTransaction extends MyTransaction {
 		wrap( () -> {
 			parseMsg();
 			m_walletAddr = m_map.getWalletAddress("wallet_public_key");
+			validateCookie("faucet");
 			setChainFromHttp();
 			
 			// require user profile
-			require(new Profile( getorCreateUser() ).isValid(), 
-					RefCode.INVALID_USER_PROFILE, 
-					"Please update your user profile and try again");
+//			require(new Profile( getorCreateUser() ).isValid(), 
+//					RefCode.INVALID_USER_PROFILE, 
+//					"Please update your user profile and try again");
 			
 			double amount = getFaucetAmt();
 			Util.require( amount > 0, "This account is not eligible for more native token");

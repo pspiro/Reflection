@@ -55,10 +55,7 @@ public class HookServer {
 	/** Map wallet, lower case to HookWallet */ 
 	final Map<String,HookWallet> m_hookMap = new ConcurrentHashMap<>();
 	
-	static {
-	}
-	
-	String chain() { 
+	String hexChainId() { 
 		return Util.toHex( m_chain.chainId() ); 
 	}
 	
@@ -92,7 +89,7 @@ public class HookServer {
 	}
 	
 	void run() throws Exception {
-		MyClient.filename = "hook.http.log";
+		MyClient.restart( m_chain.params().name() + ".hook.http.log");
 		
 		// build list of all contracts that we want to listen for ERC20 transfers
 		ArrayList<String> list = new ArrayList<>();  // keep a list as array for speed
@@ -319,7 +316,7 @@ public class HookServer {
 			t.next( "Creating HookWallet for %s", walletAddr);
 			
 			// query ERC20 position map
-			HashMap<String, Double> positions = m_node.reqPositionsMap( walletAddr, m_allContracts, 0);
+			HashMap<String, Double> positions = m_chain.reqPositionsMap( walletAddr, m_allContracts, 0);
 			
 			// query allowance
 			double approved = m_chain.busd().getAllowance(walletAddr, m_chain.rusd().address() );
@@ -332,7 +329,7 @@ public class HookServer {
 				sm.addAddressToStream( m_transferStreamId, walletAddr);  // watch all transfers for this wallet so we can see the MATIC transfers 
 			}
 			
-			t.done();
+			t.done( "creating HookWallet");
 			
 			return new HookWallet( m_node, walletAddr, positions, approved, nativeBal);
 		});
@@ -355,7 +352,7 @@ public class HookServer {
 					MoralisStreams.erc20Transfers, 
 					"transfer-" + m_config.getHookNameSuffix(), 
 					urlBase + "/webhook",
-					chain() ); 
+					hexChainId() ); 
 		}
 		
 		@Override public String createApprovalStream( String urlBase, String address) throws Exception {
@@ -363,7 +360,7 @@ public class HookServer {
 					MoralisStreams.approval, 
 					"approval-" + m_config.getHookNameSuffix(), 
 					urlBase + "/webhook", 
-					chain(),
+					hexChainId(),
 					address);
 		}
 

@@ -23,6 +23,8 @@ import tw.util.S;
  *  you are here to serve people, to give them the information they need, and to brighten their day, if you can
  *
  */
+
+/** This program send messages from the Telegram tab of the Telegram spreadsheet */
 public class TgServer {
 	static TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
 	static final String ReflectionCommunity = "-1001262398926"; // community chat
@@ -42,6 +44,10 @@ public class TgServer {
 //		String url = String.format( "https://api.telegram.org/%s/getChatMember?chat_id=%s&user_id=%s", 
 //				botKey, communityChatId, peterSpiro);
 //		MyClient.getJson(url).display();
+	}
+	
+	public static String url() {
+		return String.format( "https://api.telegram.org/%s", botKey);
 	}
 	
 	/** Listen for messages sent to my group or to the bot */

@@ -179,16 +179,6 @@ public class Mock {
 		// start Siwe thread to periodically save siwe cookies
 		SiweTransaction.startThread();
 		MyServer.listen( port, 5, server -> {
-			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
-			server.createContext("/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
-			server.createContext("/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
-			server.createContext("/siwe/signout", exch -> new SiweTransaction( exch).handleSiweSignout() );
-
-			// for testing wagmi server
-//			server.createContext("/siwe/nonce", exch -> new SiweTransaction( exch).handleSiweInit() );
-//			server.createContext("/siwe/verify", exch -> new SiweTransaction( exch).handleSiweSignin() );
-//			server.createContext("/siwe/session", exch -> new SiweTransaction( exch).handleSiweMe() );
-
 			server.createContext("/api/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 			server.createContext("/api/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
 			server.createContext("/api/siwe/me", exch -> new SiweTransaction( exch).handleSiweMe() );
@@ -207,8 +197,12 @@ public class Mock {
 		String key = t.getPostApiToken();
 		String val = S.notNull( map.get( key), invalid);
 		
+		if (!key.equals( "myWallet")) {
+			S.out( "----- " + key);
+		}
+		
 		if (val == invalid) {
-			S.out( "Error: no support for " + key);
+			S.out( "  no support for " + key);
 		}
 		
 		if (key.equals( "turn-faucet")) {
