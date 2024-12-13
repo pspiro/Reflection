@@ -262,21 +262,10 @@ public class Main implements ITradeReportHandler {
 		return obj.toString();
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config 
-	 * @param book */ 
+	/** FAQs are returned directly from nginx; this is just a stub */ 
 	void readFaqsFromSheet(Book book) throws Exception {
-		S.out( "Reading FAQs");
-		JsonArray ar = new JsonArray();
-		for (ListEntry row : book.getTab( "FAQ").fetchRows() ) {
-			if (row.getBool("Active") ) {
-				JsonObject obj = new JsonObject();
-				obj.put( "question", row.getString("Question") );
-				obj.put( "answer", row.getString("Answer") );
-				ar.add(obj);
-			}
-		}
-		require( ar.size() > 0, RefCode.CONFIG_ERROR, "You must have at least one active FAQ");
-		m_faqs = ar.toString();
+		m_faqs = """
+				[ { "question": "What is Reflection?", "answer": "Reflection is the only platform where you can buy and sell stock tokens that are 100% backed by shares of real stock." }, { "question": "What are stock tokens?", "answer": "Stock tokens are crypto tokens which represent shares of stock in publically traded companies." } ]""";
 	}
 
 	/** You could shave 300 ms by sharing the same Book as Config 

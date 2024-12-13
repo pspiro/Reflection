@@ -38,8 +38,7 @@ class SignupPanel extends JsonPanel {
 		bar.setMaximum(130);  // estimate
 		
 		Util.execute( () -> {
-			try {
-				Hourglass glass = new Hourglass( Monitor.m_frame);
+			try( Hourglass glass = new Hourglass( Monitor.m_frame) ) {
 				Monitor.m_config.sqlCommand( sql -> {
 					S.out( "creating report");
 					var ar = SignupReport.create( 3, sql, Monitor.m_config.rusd(), () -> {
@@ -51,11 +50,11 @@ class SignupPanel extends JsonPanel {
 					S.out( "  done");
 					setRows( ar);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
-					glass.restore();
 				});
 			}
 			catch (Exception e) {
 				e.printStackTrace();
+				Util.inform( SignupPanel.this, e.getMessage() );
 			}
 		});
 	}

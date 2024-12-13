@@ -148,31 +148,11 @@ public class MoralisServer {
 //				18);
 //	}
 
-//	/** Seems useless; returns e.g.
-//	 * {"nfts":"0","collections":"0","transactions":{"total":"0"},"nft_transfers":{"total":"0"},"token_transfers":{"total":"0"}} */
-//	public static String getWalletStats(String wallet) throws Exception {
-//		String url = String.format( "%s/wallets/%s/stats?chain=%s", moralis, wallet, chain);
-//		return querySync( url);
-//		
-//	}
 
 	/** useless e.g. {"transfers":{"total":"0"}} */
 //	public static String getErc20Stats(String address) throws Exception {
 //		String url = String.format( "%s/erc20/%s/stats?chain=%s", moralis, address, chain);
 //		return querySync( url);
-//	}
-	
-	/** this works for transfer events, which probably catches everything, but not
-	 *  my custom events such as BuyRusd and SellRusd, which don't even appear in
-	 *  the logs on PolyScan
-	 * @param address
-	 * @param topic
-	 * @return
-	 * @throws Exception
-	 */
-//	public static String logs(String address, String topic) throws Exception {
-//		String url = String.format( "%s/%s/logs?chain=%s&topic0=%s", moralis, address, chain, topic);
-//		return querySync(url);
 //	}
 	
 	/** returns one page of transactions for a specific token

@@ -11,6 +11,8 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.Closeable;
+import java.io.IOException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
@@ -134,7 +136,7 @@ public class UI {
 		
 	}
 	
-	public static class Hourglass {
+	public static class Hourglass implements Closeable {
 		private Cursor m_current;
 		private JFrame m_frame;
 
@@ -147,18 +149,17 @@ public class UI {
 		public void restore() {
 			m_frame.setCursor(m_current);
 		}
+
+		@Override public void close() throws IOException {
+			restore();
+		}
 	}
 	
 	/** Display hourglass and propogate exceptions 
 	 * @throws Exception */
 	public static void watch( JFrame frame, ExRunnable runnable) throws Exception {
-		Hourglass glass = new Hourglass( frame);
-		try {
-			S.out( "running hourglass"); // for timing, don't commit
+		try( Hourglass glass = new Hourglass( frame) ) {
 			runnable.run();
-		}
-		finally {
-			glass.restore();
 		}
 	}
 
