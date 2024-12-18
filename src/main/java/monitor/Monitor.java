@@ -53,9 +53,7 @@ public class Monitor {
 	static JComboBox<Chain> chainBox = new JComboBox<>();
 	
 	public static Chain chain() {
-		var chain = ((Chain)chainBox.getSelectedItem());
-		S.out( "using chain " + chain);
-		return chain;
+		return ((Chain)chainBox.getSelectedItem());
 	}
 
 	static String refApiBaseUrl() { 

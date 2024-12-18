@@ -255,7 +255,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 	}
 
 	private void simulateFill(Contract contract) throws Exception {		
-		require( !chain().params().isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
+		//require( !chain().params().isProduction(), RefCode.REJECTED, "Cannot use auto-fill in production" );
 		
 		Random rnd = new Random(System.currentTimeMillis());
 		
@@ -668,7 +668,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 
 			// send alert, but not when testing, and don't throw an exception, it's just reporting
 			try {
-				if (!chain().params().isProduction() && !m_map.getBool("testcase")) {
+				if (!m_map.getBool("testcase")) {
 					alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );
 				}
 			}
@@ -792,11 +792,15 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			
 			// if shares were filled, have to execute an opposing trade
 			else {
+				// recalculate the exchange in case the session has changed since order was placed
+				Session session = m_main.m_tradingHours.getTradingSession( m_stock.rec().is24Hour(), "");
+				require( session != Session.None, RefCode.EXCHANGE_CLOSED, exchangeIsClosed);
+		
 				Contract contract = new Contract();
 				contract.conid( conid);
-				contract.exchange( m_main.getExchange( contract.conid() ) );
+				contract.exchange( session.toString().toUpperCase() );
 			
-				m_order.orderType(OrderType.LMT); // this won't work off-hours
+				m_order.orderType(OrderType.LMT);
 				m_order.flipSide();
 				m_order.orderRef(m_uid + " unwind");
 				m_order.roundedQty(  // use the PositionTracker to determine number of shares to buy or sell; it may be different from the original number if other orders have filled in between 
@@ -817,7 +821,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 					// cancel the order; if it already filled, there's no harm done
 					// we can't wait too long for this to fill because it will prevent us from
 					// placing orders for the same contract on the opposite side
-					Util.executeIn( 5000, () -> m_main.orderController().cancelOrder( m_order.orderId(), "", null) );
+					Util.executeIn( 10000, () -> m_main.orderController().cancelOrder( m_order.orderId(), "", null) );
 					
 					// better would be to monitor the order and only cancel if not filled
 				}
