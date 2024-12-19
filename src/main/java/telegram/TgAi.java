@@ -9,6 +9,7 @@ import java.net.URL;
 
 import org.json.simple.JsonObject;
 
+import common.Util;
 import http.MyClient;
 import tw.util.S;
 
@@ -20,6 +21,8 @@ If it is spam, delete it and write to standard out that the message has been del
 Also, any post that is just a number from 1 to 100, delete that as well. (These are part of the captcha for new members) 
  */
 public class TgAi {
+	// anything with MAJOR in the subject
+	
     private static final String TgUrl = TgServer.url();
     private static final String deleteMessageUrl = TgUrl + "/deleteMessage";
     
@@ -37,10 +40,13 @@ public class TgAi {
 
                 if (updatesJson.getBool("ok")) {
                     for (var update : updatesJson.getArray("result") ) {
+                    	S.out( update);
                         lastUpdateId = update.getLong("update_id");
 
                         if (update.has("message")) {
                             JsonObject message = update.getObject("message");
+                            message.update( "date", date -> Util.yToS.format( (long)date * 1000) );
+                            S.out( message);
                             long chatId = message.getObject("chat").getLong("id");
                             int messageId = message.getInt("message_id");
                             String text = message.getString("text");
@@ -48,14 +54,14 @@ public class TgAi {
                             // Check if the message is spam or a number between 1 and 100
                             if (isSpam(text) || isNumberBetween1And100(text)) {
                                 deleteMessage(chatId, messageId);
-                                S.out("Deleted message: " + text);
+                                S.out("Deleted message: " + update);
                             }
                         }
                     }
                 }
 
                 // Sleep to avoid hitting rate limits
-                Thread.sleep(5000);
+                Thread.sleep(10000);
             } catch (Exception e) {
                 e.printStackTrace();
             }

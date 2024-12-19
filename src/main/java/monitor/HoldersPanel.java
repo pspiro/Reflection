@@ -52,7 +52,7 @@ public class HoldersPanel extends JsonPanel {
 		wrap( () -> {
 			m_title.setText( token.name() );
 			
-			var map = m_config.node().getHolderBalances( token.address(), token.decimals() );
+			var map = token.getAllBalances();  // map address -> balance
 
 			JsonArray ar = new JsonArray();
 			

@@ -5,16 +5,18 @@ import chain.ChainParams;
 import common.Util;
 import refblocks.Refblocks;
 import tw.util.S;
+import web3.Param.Address;
+import web3.Param.BigInt;
 
 /** The Rusd class used by clients. Created by Config which knows which 
  *  type of core to pass in */
 public class Rusd extends Stablecoin {
-	public static final String buyRusdKeccak = "8a854e17";
-	public static final String sellRusdKeccak = "5690cc4f"; 
-	public static final String buyStockKeccak = "58e78a85";
-	public static final String sellStockKeccak = "5948f1f0";
-	public static final String addOrRemoveKeccak = "89fa2c03";
-	public static final String swapKeccak = "62835413";
+	public static final String buyRusdKeccak = "0x8a854e17";
+	public static final String sellRusdKeccak = "0x5690cc4f"; 
+	public static final String buyStockKeccak = "0x58e78a85";
+	public static final String sellStockKeccak = "0x5948f1f0";
+	public static final String addOrRemoveKeccak = "0x89fa2c03";
+	public static final String swapKeccak = "0x62835413";
 
 	
 	private Chain m_chain;
@@ -49,7 +51,25 @@ public class Rusd extends Stablecoin {
 		return buyStockWithRusd(address, 0, stockToken, amt);
 	}
 
-	/** methods to change the smart contract are passed to the core */
+	/** Buying stock with either FBusd OR RUSD; need to test it both ways.
+	 * 
+	 *  IMPORTANT, READ THIS FOR FOR TROUBLE-SHOOTING
+	 *  
+	 *  Whichever one your are buying with, you must have enough in User wallet
+	 *  and you must be approved (if buying with Busd)
+	 *  and you must have enough base coin in the refWallet */
+	public RetVal buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+		return buyStock( 
+				userAddr,
+				this,
+				stablecoinAmt,
+				stockToken,
+				stockTokenAmt
+		);
+	}
+	
+	/** methods to change the smart contract are passed to the core
+	 *  @submit if true, transaction is submitted to blockchain; if false, we are just testing to see if it would succeed */
 	public RetVal buyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		Util.reqValidKey( admin1Key() );
 		Util.reqValidAddress(userAddr);
@@ -61,18 +81,37 @@ public class Rusd extends Stablecoin {
 				stablecoin.name(),
 				userAddr);
 		
-		var contract = load( admin1Key() );
-		return contract.exec( () -> contract.buyStock(
-				userAddr, 
-				stablecoin.address(), 
-				stockToken.address(), 
-				stablecoin.toBlockchain( stablecoinAmt), 
-				stockToken.toBlockchain( stockTokenAmt)
-				) );
-
+		Param[] params = {
+				new Address( userAddr),
+				new Address( stablecoin.address() ),
+				new Address( stockToken.address() ),
+				new BigInt( stablecoin.toBlockchain( stablecoinAmt) ), 
+				new BigInt( stockToken.toBlockchain( stockTokenAmt) )
+		};
+		
+		return m_chain.node().callSigned(
+			admin1Key(),
+			address(),
+			buyStockKeccak,
+			params,
+			500000);
 	}
 
-	/** methods to change the smart contract are passed to the core */
+	public void preBuyStock(String userAddr, Stablecoin stablecoin, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+		Util.reqValidKey( admin1Key() );
+		Util.reqValidAddress(userAddr);
+		
+		Param[] params = {
+				new Address( userAddr),
+				new Address( stablecoin.address() ),
+				new Address( stockToken.address() ),
+				new BigInt( stablecoin.toBlockchain( stablecoinAmt) ), 
+				new BigInt( stockToken.toBlockchain( stockTokenAmt) )
+		};
+		
+		m_chain.node().preCheck( params().admin1Addr(), address(), buyStockKeccak, params, 500000);
+	}
+
 	public RetVal sellStockForRusd(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
 		Util.reqValidKey( admin1Key() );
 		Util.reqValidAddress(userAddr);
@@ -82,19 +121,44 @@ public class Rusd extends Stablecoin {
 				stockToken.name(),
 				rusdAmt,
 				userAddr);
-
-		var contract = load( admin1Key() );
-		return contract.exec( () -> contract.sellStock( 
-				userAddr,
-				address(), 
-				stockToken.address(), 
-				toBlockchain( rusdAmt), 
-				stockToken.toBlockchain( stockTokenAmt)
-				) );
-
+		
+		Param[] params = {
+				new Address( userAddr),
+				new Address( address() ), 
+				new Address( stockToken.address() ), 
+				new BigInt( toBlockchain( rusdAmt) ), 
+				new BigInt( stockToken.toBlockchain( stockTokenAmt) )
+		};
+		
+		return m_chain.node().callSigned(
+				admin1Key(),
+				address(),
+				sellStockKeccak,
+				params,
+				500000);
 	}
 
-	/** methods to change the smart contract are passed to the core */
+	public void preSellStock(final String userAddr, final double rusdAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
+		Util.reqValidKey( admin1Key() );
+		Util.reqValidAddress(userAddr);
+
+		Param[] params = {
+				new Address( userAddr),
+				new Address( address() ), 
+				new Address( stockToken.address() ), 
+				new BigInt( toBlockchain( rusdAmt) ), 
+				new BigInt( stockToken.toBlockchain( stockTokenAmt) )
+		};
+		
+		m_chain.node().preCheck(
+				params().admin1Addr(),
+				address(),
+				sellStockKeccak,
+				params,
+				500000);
+	}
+
+	/** Sell/redeem RUSD for stablecoin */
 	public RetVal sellRusd(String userAddr, Busd busd, double amt) throws Exception {
 		Util.reqValidKey(admin1Key() );
 		Util.reqValidAddress(userAddr);
@@ -105,15 +169,19 @@ public class Rusd extends Stablecoin {
 				busd.name(),
 				userAddr);
 		
-		//S.out( "  the allowance is %s", )
-
-		var contract = load( admin1Key() );
-		return contract.exec( () -> contract.sellRusd(
-				userAddr,
-				busd.address(),
-				busd.toBlockchain( amt),
-				toBlockchain( amt)
-				) );
+		Param[] params = {
+				new Address( userAddr),
+				new Address( busd.address() ),
+				new BigInt( busd.toBlockchain( amt) ), 
+				new BigInt( toBlockchain( amt) )
+		};
+		
+		return m_chain.node().callSigned(
+				admin1Key(),
+				address(),
+				sellRusdKeccak,
+				params,
+				500000);
 	}
 
 	public RetVal addOrRemoveAdmin(String ownerKey, String address, boolean add) throws Exception {
@@ -146,23 +214,6 @@ public class Rusd extends Stablecoin {
 
 	// real methods are implemented here
 
-	/** Buying stock with either FBusd OR RUSD; need to test it both ways.
-	 * 
-	 *  IMPORTANT, READ THIS FOR FOR TROUBLE-SHOOTING
-	 *  
-	 *  Whichever one your are buying with, you must have enough in User wallet
-	 *  and you must be approved (if buying with Busd)
-	 *  and you must have enough base coin in the refWallet */
-	public RetVal buyStockWithRusd(String userAddr, double stablecoinAmt, StockToken stockToken, double stockTokenAmt) throws Exception {
-		return buyStock( 
-				userAddr,
-				this,
-				stablecoinAmt,
-				stockToken,
-				stockTokenAmt
-		);
-	}
-	
 	/** load generated Rusd that we can use to call smart contract methods that write to the blockchain
 	 *  note that we no longer need to have tm passed in because we can get it from Refblocks */
 	public refblocks.Rusd load(String callerKey) throws Exception {

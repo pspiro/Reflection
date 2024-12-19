@@ -432,7 +432,7 @@ public class WalletPanel extends MonPanel {
 			vp.addHeader( "Operations");
 			vp.add( "Set Verified", new HtmlButton( "Set KYC to Verified", ev -> setVerified() ) );
 			vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-			vp.add( "Burn " + m_config.busd().name(), m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
+			vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 			vp.add( "Award", 
 					m_awardAmt, 
 					new JLabel( "RUSD for "),

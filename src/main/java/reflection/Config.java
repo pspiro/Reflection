@@ -426,6 +426,7 @@ public class Config {
 		});
 	}
 	
+	/** send email via AWS SES */
 	public void sendEmailSes(String to, String subject, String html, SmtpSender.Type type) {
 		Util.wrap( () -> {
 			SmtpSender.Ses.send(

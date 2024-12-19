@@ -609,10 +609,10 @@ public class BackendTransaction extends MyTransaction {
 				// get or create existing locked rec
 				var locked = user.getObjectNN( "locked");
 				
-				// wallet has rusd?
-				require( chain().rusd().getPosition( m_walletAddr) < 1, 
-						RefCode.INVALID_REQUEST, 
-						"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
+//				// wallet has rusd?
+//				require( chain().rusd().getPosition( m_walletAddr) < 1, 
+//						RefCode.INVALID_REQUEST, 
+//						"This wallet already has some RUSD in it; please empty out the wallet and try again"); 
 				
 				// this wallet already collected a prize?
 				require( !locked.getBool( "rewarded"), 

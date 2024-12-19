@@ -207,16 +207,18 @@ public class Chain {
 		blocks().showAllNonces( params.admin1Addr() );
 	}
 
-	/** 
+	/**  NOT SAFE, MoralisServer uses static vars
+	 *  
 	 * @param decimals if zero we will look it up from the map or query for it 
 	 * @throws Exception */
 	public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		if (params.isPolygon() ) {
-			MoralisServer.setChain( params.moralisPlatform() );  // kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
+			MoralisServer.setChain( params.moralisPlatform() );  // NOT SAFE kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
 			return MoralisServer.reqPositionsMap(walletAddr, contracts);
 		}
 		return node.reqPositionsMap(walletAddr, contracts, decimals);
 	}
+
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

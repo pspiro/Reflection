@@ -591,18 +591,6 @@ public class NodeInstance {
 		return NodeAux.processResult( json, this::getDecimals);
 	}
 	
-	public HashMap<String,Double> getHolderBalances( String contract, int decimals) throws Exception {
-		HashMap<String,Double> map = new HashMap<>();
-
-		// get all transactions, build the map
-		for (var transfer : getAllTokenTransfers( contract, decimals) ) {
-			Util.inc( map, transfer.from(), -transfer.amount() );
-			Util.inc( map, transfer.to(), transfer.amount() );
-		}
-
-		return map;
-	}
-	
 	int maxBlocks = 50000;
 
     // Function to fetch token holders from an Ethereum RPC node
@@ -670,8 +658,6 @@ public class NodeInstance {
 	
 
 	// Updated method signature to include baseFee, priorityFee, and gasLimit for EIP-1559 transactions
-	/** Not used, but could be;
-	 *  @return hash code */
 	public RetVal callSigned(
 			String privateKey, 
 			String contractAddr, 
@@ -732,6 +718,31 @@ public class NodeInstance {
 		return new NodeRetVal( hash, this, callerAddr, contractAddr, data);
 	}
 	
+	public void preCheck(String from, String to, String keccak, Param[] params, int gasLimit) throws Exception {
+		Util.reqValidAddress(from);
+		Util.reqValidAddress(to);
+		Util.require( keccak.startsWith( "0x"), "Invalid keccak");
+		
+		var fees = queryFees();
+
+		var param1 = Util.toJson(
+			"from", from,
+			"to", to,
+			"data", Param.encodeData(keccak, params),
+			"value", "0x0",
+			"gas", Util.toHex( gasLimit),  // gas limit
+			"maxFeePerGas", Util.toHex( fees.totalFee() ),
+			"maxPriorityFeePerGas", Util.toHex( fees.priorityFee() )
+			);
+		
+		Req req = new Req( "eth_call");
+		req.put( "params", Util.toArray( param1, "latest") );
+
+		var result = nodeQuery( req.toString() ); // throws an exception if it fails 
+		S.out( "Pre-check  from=%s  to=%s  keccak %s  result=%s",
+				from, to, keccak, result);
+	}
+
 	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
 		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
 	}
@@ -744,7 +755,7 @@ public class NodeInstance {
 			"to", to,
 			"data", data,
 			"value", "0x0",
-			"gas", "0x1"
+			"gas", "0x1"  // gasLimit
 			);
 //		"gas": "0x7a120"  // (optional) Gas limit (500,000 in this case)
 		

@@ -283,12 +283,6 @@ public class Main implements ITradeReportHandler {
 		return obj;
 	}
 	
-	// let it fall back to read from a flatfile if this fails. pas
-
-	String getExchange( int conid) throws Exception {
-		return "SMART";
-	}
-
 	Stock getStock( int conid) throws Exception {
 		Stock stock = m_stocks.getStockByConid( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);

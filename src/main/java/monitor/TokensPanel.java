@@ -26,13 +26,9 @@ public class TokensPanel extends JsonPanel {
 	}
 	
 	@Override protected void onDouble(String tag, Object val) {
-		if (tag.equals( "smartcontractid")) {
-			try {
-				m_holdersPanel.refresh( MonitorConfig.chain().getTokenByAddress(val.toString() ) );;
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		wrap( () -> 
+			m_holdersPanel.refresh( MonitorConfig.chain().getTokenByAddress(val.toString() ) ) 
+		);
 	}
 	
 	@Override public void refresh() throws Exception {

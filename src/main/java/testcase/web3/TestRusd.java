@@ -11,7 +11,6 @@ import web3.StockToken;
 public class TestRusd extends MyTestCase {
 	static String someKey = "bdc76b290316a836a01af129884bdf9a1977b81ae5a7a0f1d8b5ded4d9dcee4d";
 	
-	
 	public void testAddOrRemovePass() throws Exception {
 		S.out( "***adding admin to pass");
 		m_config.rusd().addOrRemoveAdmin(

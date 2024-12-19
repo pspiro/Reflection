@@ -184,7 +184,7 @@ public class MoralisServer {
 	
 	/** Query for all the data, one page at a time, and call consumer.accept() with each page 
 	 *  @producer is the method that queries for one page of data
-	 *  @consumer is the method that processes one page of data */
+	 *  @consumer is the method that processes one page of data (stored in 'result' tag) */
 	public static void getAll(Consumer<JsonArray> consumer, Query producer) throws Exception {
 		String cursor = "";
 		

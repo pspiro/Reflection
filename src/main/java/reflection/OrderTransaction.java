@@ -210,6 +210,10 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		// NOTE that this may revise m_stablecoinAmt
 		requireSufficientCrypto( true);
 		
+		// pre-check blockchain transaction; will also pick up insufficient gas
+		// the above check is now redundant but it does give a better error message
+		preCheck();
+		
 		respond( code, RefCode.OK, "id", m_uid); // Frontend will display a message which is hard-coded in Frontend
 		
 		// now it is up to the live order system to report success or failure
@@ -706,6 +710,34 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		catch (Exception e) {
 			elog( LogType.DATABASE_ERROR, e);
 			e.printStackTrace();
+		}
+	}
+	
+	/** test out the blockchain transaction, that it would succeed 
+	 * @throws RefException */ 
+	private void preCheck() throws RefException {
+		try {
+			if (m_order.isBuy() ) {
+				chain().rusd().preBuyStock(
+						m_walletAddr,
+						m_stablecoin,
+						m_stablecoinAmt,
+						m_stockToken, 
+						m_desiredQuantity
+				);
+			}
+			
+			else {
+				chain().rusd().preSellStock(
+						m_walletAddr,
+						m_stablecoinAmt,
+						m_stockToken,
+						m_desiredQuantity
+				);
+			}
+		}
+		catch( Exception e) {
+			throw new RefException( RefCode.PRE_CHECK_FAILED, e.getMessage() ); 
 		}
 	}
 
