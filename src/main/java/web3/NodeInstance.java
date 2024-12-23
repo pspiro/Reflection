@@ -61,7 +61,7 @@ public class NodeInstance {
 	/** Send a query and expect "result" to contain a hex value.
 	 *  A value of '0x' is invalid and will throw an exception */
 	private String queryHexResult( String body, String text, String contractAddr, String walletAddr) throws Exception {
-		S.out( "Querying %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
+		S.out( "NODE %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
 		String result = nodeQuery( body).getString( "result");
 		
 		if (result.equals( "0x") ) {
@@ -539,7 +539,7 @@ public class NodeInstance {
 	}
 	
 	/** This is a receipt for an ERC-20 token transfer */
-	public static record Transfer( String contract, String from, String to, double amount, long block, String hash) {
+	public static record Transfer( String contract, String from, String to, double amount, long block, String hash, String timestamp) {
 	}
 	
 	public static class Transfers extends ArrayList<Transfer> {
@@ -561,7 +561,7 @@ public class NodeInstance {
 	    		// The amount of tokens transferred is stored in the 'data' field (hexadecimal value)
 	    		double amount = Erc20.fromBlockchain( log.getString( "data"), decimals );
 
-				return new Transfer( contract, sender, recipient, amount, log.getLong( "blockNumber"), hash);
+				return new Transfer( contract, sender, recipient, amount, log.getLong( "blockNumber"), hash, "");
 	    	}
 	    }
 	    return null;
@@ -693,10 +693,11 @@ public class NodeInstance {
 		
 		var fees = queryFees();
 		//fees.display( BigInteger.valueOf( gasLimit) );
+		var nonce = getNonce(callerAddr);
 		
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
 				chainId,
-				getNonce(callerAddr),
+				nonce,
 				BigInteger.valueOf( gasLimit),
 				contractAddr,
 				BigInteger.ZERO,  // no ether to send
@@ -712,7 +713,7 @@ public class NodeInstance {
 		Req req = new Req("eth_sendRawTransaction");
 		req.put( "params", Util.toArray( signedHex) );
 		
-		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
+		String hash = queryHexResult(req.toString(), "signedTransaction  nonce=" + nonce, contractAddr, callerAddr);
 		S.out( "  transaction hash: " + hash);
 		
 		return new NodeRetVal( hash, this, callerAddr, contractAddr, data);

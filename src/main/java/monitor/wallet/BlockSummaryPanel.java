@@ -69,7 +69,8 @@ public class BlockSummaryPanel extends BlockPanelBase {
 		m_model.ar().sortJson( "block", true);
 		m_model.fireTableDataChanged();
 		
-		setTimes( m_model.ar() );
+		// this is only needed for non-moralis chains
+		// setTimes( m_model.ar() );
 	}
 
 	/** update 'timestamp' from block number in 'block' field */
@@ -116,6 +117,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 //		obj.put( "amount", );
 //		obj.put( "stablecoin", );
 		obj.put( "block", trans.block() );
+		obj.put( "timestamp", trans.timestamp() );
 		
 		m_model.ar().add( obj);
 	}
@@ -134,7 +136,8 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			obj.put("token", trans1.contract() );
 			obj.put("amount", trans2.amount() );
 			obj.put("stablecoin", trans2.contract() );
-			obj.put( "block", trans1.block() );
+			obj.put("block", trans1.block() );
+			obj.put("timestamp", trans1.timestamp() );
 
 			m_model.ar().add( obj);
 
@@ -167,6 +170,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			obj.put("amount", trans2.amount() );
 			obj.put("stablecoin", trans2.contract() );
 			obj.put( "block", trans1.block() );
+			obj.put( "timestamp", trans1.timestamp() );
 
 			m_model.ar().add( obj);
 
@@ -192,6 +196,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 			obj.put("amount", trans1.amount() );
 			obj.put("stablecoin", trans1.contract() );
 			obj.put( "block", trans1.block() );
+			obj.put( "timestamp", trans1.timestamp() );
 
 			m_model.ar().add( obj);
 

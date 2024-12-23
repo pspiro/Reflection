@@ -36,7 +36,7 @@ public class BlockDetailPanel extends BlockPanelBase {
 	public BlockDetailPanel() {
 		
 		// you can filter on "possible_spam" if desired
-		m_model.justify("lllr");
+		m_model.justify("llrlrlr");
 		
 		add( m_model.createTable() );
 	}

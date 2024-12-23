@@ -33,6 +33,7 @@ public class MoralisServer {
 	/** Send the query; if there is an UnknownHostException, try again as it
 	 *  may resolve the second time */ 
 	public static String querySync(String url) throws Exception {
+		S.out( "MORALIS " + url);
 		return MyClient.create(url)
 				.header("accept", "application/json")
 				.header("X-API-Key", apiKey)

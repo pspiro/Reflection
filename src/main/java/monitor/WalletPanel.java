@@ -226,9 +226,9 @@ public class WalletPanel extends MonPanel {
 				walletMap.put( m_wallet, BlockPanelBase.Me);
 
 				// get all relevant transfers
-				var transfers = new Transfers();
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
+				var transfers = new Transfers(); // must add 'moralis' attrib to blockchain
+//				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
+				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
 
 				// build new list with substitutions
 				var altered = new Transfers();
@@ -262,7 +262,7 @@ public class WalletPanel extends MonPanel {
 				S.out( "yes");
 			}
 			
-			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash() );  
+			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash(), t.timestamp() );  
 		}
 
 		protected void clear() {
