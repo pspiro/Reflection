@@ -8,6 +8,8 @@ import com.ib.client.OrderStatus;
 import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.client.Types.Action;
+import com.ib.client.Types.FundamentalType;
+import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
 import com.ib.controller.ApiController.IOrderHandler;
@@ -18,6 +20,9 @@ import reflection.Config;
 import tw.util.S;
 
 public class TestApi extends ConnectionAdapter {
+	static record ApiParam( String host, int port) {}
+	static ApiParam prod = new ApiParam( "34.100.227.194", 7393);
+	
 	ApiController m_conn = new ApiController( this, null, null);
 	
 	public static void main(String[] args) {
@@ -33,7 +38,8 @@ public class TestApi extends ConnectionAdapter {
 		Config m_config = new Config();
 		m_config.readFromSpreadsheet("Dev3-config");
 		
-		m_conn.connect( m_config.twsOrderHost(), m_config.twsOrderPort(), 776, "");
+		m_conn.connect( prod.host, prod.port, 778, "");
+//		m_conn.connect( m_config.twsOrderHost(), m_config.twsOrderPort(), 776, "");
 	}
 
 	@Override
@@ -61,12 +67,17 @@ public class TestApi extends ConnectionAdapter {
 
 		Contract c = new Contract();
 		c.conid( 756733);
+		c.secType( SecType.STK);
 		c.exchange( "SMART");
-		m_conn.reqTopMktData(c, "", false, false, ad); 
-
-		c.conid( 8314);
+		
+//		for (var type : FundamentalType.values() ) {
+//		m_conn.reqContractDetails(c, list -> {
+//			list.forEach( item -> S.out( item) );
+//		});
+		
+//
 		c.exchange( "SMART");
-		m_conn.reqTopMktData(c, "", false, false, ad); 
+		m_conn.reqTopMktData(c, "232,258", false, false, ad); 
 	}
 
 	public void placeOrder(int id) throws Exception {

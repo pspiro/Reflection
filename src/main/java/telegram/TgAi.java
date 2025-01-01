@@ -25,6 +25,10 @@ public class TgAi {
     
     private static final String CHATGPT_API_KEY = "your-chatgpt-api-key";
     private static final String CHATGPT_API_URL = "https://api.openai.com/v1/chat/completions";
+    
+//    String bad = """
+//    		
+//    		"""
 
     public static void main(String[] args) {
         long lastUpdateId = 0;
@@ -41,14 +45,18 @@ public class TgAi {
 
                         if (update.has("message")) {
                             JsonObject message = update.getObject("message");
-                            long chatId = message.getObject("chat").getLong("id");
-                            int messageId = message.getInt("message_id");
+                            String chatId = message.getObject("chat").getString("id");
+                            String messageId = message.getString("message_id");
                             String text = message.getString("text");
 
                             // Check if the message is spam or a number between 1 and 100
-                            if (isSpam(text) || isNumberBetween1And100(text)) {
-                                deleteMessage(chatId, messageId);
+                            if (isSpam(message) || isNumberBetween1And100(text)) {
+                                Telegram.deleteMessage(chatId, messageId);
                                 S.out("Deleted message: " + text);
+                            }
+                            else {
+                            	S.out( "Received:");
+                            	message.display();
                             }
                         }
                     }
@@ -62,7 +70,13 @@ public class TgAi {
         }
     }
 
-    private static boolean isSpam(String text) throws IOException {
+    private static boolean isSpam(JsonObject message) throws Exception {
+    	if (message
+    			.getObjectNN( "store")
+    			.getObjectNN( "chat")
+    			.getString( "first_name").equals( "TON") ) {
+    		return true;
+    	}
 //        // Prepare payload for ChatGPT
 //        JsonObject payload = new JsonObject();
 //        payload.put("model", "gpt-3.5-turbo");
@@ -95,12 +109,5 @@ public class TgAi {
         } catch (NumberFormatException e) {
             return false;
         }
-    }
-
-    private static void deleteMessage(long chatId, int messageId) throws Exception {
-        JsonObject payload = new JsonObject();
-        payload.put("chat_id", chatId);
-        payload.put("message_id", messageId);
-        MyClient.postToString( deleteMessageUrl, payload.toString() );
     }
 }
