@@ -201,4 +201,17 @@ public class MyTestCase extends TestCase {
 		return m_config.chain().node();
 	}
 	
+	/** fail if there is NOT an exception */
+	public void not( ExRunnable run) {
+		try {
+			run.run();
+			fail();
+		}
+		catch( Exception e) {
+			S.out( "test failed with: " + e.getMessage() );
+			return;
+		}
+	}
+
+	
 }

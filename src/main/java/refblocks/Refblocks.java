@@ -308,7 +308,7 @@ public class Refblocks {
 		 *  b) don't allow two applications to access the same account, e.g. let;
 		 *     RefAPI use admin1 and Monitor use admin2 
 		 */
-		static int Interval = 30000;
+		static int Interval = 500;  // can't really mix-and-match with calls that query for latest nonce
 		
 
 		private String m_key;  // for debugonly

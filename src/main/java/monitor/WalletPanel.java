@@ -226,9 +226,9 @@ public class WalletPanel extends MonPanel {
 				walletMap.put( m_wallet, BlockPanelBase.Me);
 
 				// get all relevant transfers
-				var transfers = new Transfers();
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
-				transfers.addAll( m_config.node().getTokenTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
+				var transfers = new Transfers(); // must add 'moralis' attrib to blockchain
+//				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
+				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
 
 				// build new list with substitutions
 				var altered = new Transfers();
@@ -262,7 +262,7 @@ public class WalletPanel extends MonPanel {
 				S.out( "yes");
 			}
 			
-			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash() );  
+			return new Transfer( contract, from, to, t.amount(), t.block(), t.hash(), t.timestamp() );  
 		}
 
 		protected void clear() {
@@ -432,7 +432,7 @@ public class WalletPanel extends MonPanel {
 			vp.addHeader( "Operations");
 			vp.add( "Set Verified", new HtmlButton( "Set KYC to Verified", ev -> setVerified() ) );
 			vp.add( "Mint RUSD", m_mintAmt, new HtmlButton("Mint", e -> mint() ) ); 
-			vp.add( "Burn " + m_config.busd().name(), m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
+			vp.add( "Burn RUSD", m_burnAmt, new HtmlButton("Burn", e -> burn() ), new HtmlButton("Burn All", e -> burnAllRusd() ) ); 
 			vp.add( "Award", 
 					m_awardAmt, 
 					new JLabel( "RUSD for "),

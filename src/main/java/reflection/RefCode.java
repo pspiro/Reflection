@@ -41,4 +41,5 @@ public enum RefCode {
 	UNKNOWN,			// should never happen
 	VALIDATION_FAILED,
 	ONRAMP_FAILED,
+	PRE_CHECK_FAILED,
 }

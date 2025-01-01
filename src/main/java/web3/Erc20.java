@@ -118,15 +118,26 @@ public class Erc20 {
 	 * @return map wallet address -> token balance */
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
-
-		// get all transactions in batches and build the map
-		MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
-				Util.wrap( () -> {
-					double value = fromBlockchain( obj.getString("value") );
-					Util.inc( map, obj.getString("from_address"), -value);
-					Util.inc( map, obj.getString("to_address"), value);
-				});
-		} ) );
+		
+		if (m_chain.params().isPolygon() ) {
+			
+			// get all transactions in batches and build the map
+			MoralisServer.setChain( m_chain.params().moralisPlatform() ); // NOT SAFE
+			MoralisServer.getAllTokenTransfers(m_address, ar -> ar.forEach( obj -> {
+					Util.wrap( () -> {
+						double value = fromBlockchain( obj.getString("value") );
+						Util.inc( map, obj.getString("from_address"), -value);
+						Util.inc( map, obj.getString("to_address"), value);
+					});
+			} ) );
+		}
+		else {
+			// get all transactions, build the map
+			for (var transfer : m_chain.node().getAllTokenTransfers( m_address, m_decimals) ) {
+				Util.inc( map, transfer.from(), -transfer.amount() );
+				Util.inc( map, transfer.to(), transfer.amount() );
+			}
+		}
 		
 		return map;
 	}

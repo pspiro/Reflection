@@ -61,7 +61,7 @@ public class NodeInstance {
 	/** Send a query and expect "result" to contain a hex value.
 	 *  A value of '0x' is invalid and will throw an exception */
 	private String queryHexResult( String body, String text, String contractAddr, String walletAddr) throws Exception {
-		S.out( "Querying %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
+		S.out( "NODE %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
 		String result = nodeQuery( body).getString( "result");
 		
 		if (result.equals( "0x") ) {
@@ -539,7 +539,7 @@ public class NodeInstance {
 	}
 	
 	/** This is a receipt for an ERC-20 token transfer */
-	public static record Transfer( String contract, String from, String to, double amount, long block, String hash) {
+	public static record Transfer( String contract, String from, String to, double amount, long block, String hash, String timestamp) {
 	}
 	
 	public static class Transfers extends ArrayList<Transfer> {
@@ -561,7 +561,7 @@ public class NodeInstance {
 	    		// The amount of tokens transferred is stored in the 'data' field (hexadecimal value)
 	    		double amount = Erc20.fromBlockchain( log.getString( "data"), decimals );
 
-				return new Transfer( contract, sender, recipient, amount, log.getLong( "blockNumber"), hash);
+				return new Transfer( contract, sender, recipient, amount, log.getLong( "blockNumber"), hash, "");
 	    	}
 	    }
 	    return null;
@@ -589,18 +589,6 @@ public class NodeInstance {
 		S.out( "response: " + json);
 		
 		return NodeAux.processResult( json, this::getDecimals);
-	}
-	
-	public HashMap<String,Double> getHolderBalances( String contract, int decimals) throws Exception {
-		HashMap<String,Double> map = new HashMap<>();
-
-		// get all transactions, build the map
-		for (var transfer : getAllTokenTransfers( contract, decimals) ) {
-			Util.inc( map, transfer.from(), -transfer.amount() );
-			Util.inc( map, transfer.to(), transfer.amount() );
-		}
-
-		return map;
 	}
 	
 	int maxBlocks = 50000;
@@ -670,8 +658,6 @@ public class NodeInstance {
 	
 
 	// Updated method signature to include baseFee, priorityFee, and gasLimit for EIP-1559 transactions
-	/** Not used, but could be;
-	 *  @return hash code */
 	public RetVal callSigned(
 			String privateKey, 
 			String contractAddr, 
@@ -707,10 +693,11 @@ public class NodeInstance {
 		
 		var fees = queryFees();
 		//fees.display( BigInteger.valueOf( gasLimit) );
+		var nonce = getNonce(callerAddr);
 		
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
 				chainId,
-				getNonce(callerAddr),
+				nonce,
 				BigInteger.valueOf( gasLimit),
 				contractAddr,
 				BigInteger.ZERO,  // no ether to send
@@ -726,12 +713,37 @@ public class NodeInstance {
 		Req req = new Req("eth_sendRawTransaction");
 		req.put( "params", Util.toArray( signedHex) );
 		
-		String hash = queryHexResult(req.toString(), "signedTransaction", contractAddr, callerAddr);
+		String hash = queryHexResult(req.toString(), "signedTransaction  nonce=" + nonce, contractAddr, callerAddr);
 		S.out( "  transaction hash: " + hash);
 		
 		return new NodeRetVal( hash, this, callerAddr, contractAddr, data);
 	}
 	
+	public void preCheck(String from, String to, String keccak, Param[] params, int gasLimit) throws Exception {
+		Util.reqValidAddress(from);
+		Util.reqValidAddress(to);
+		Util.require( keccak.startsWith( "0x"), "Invalid keccak");
+		
+		var fees = queryFees();
+
+		var param1 = Util.toJson(
+			"from", from,
+			"to", to,
+			"data", Param.encodeData(keccak, params),
+			"value", "0x0",
+			"gas", Util.toHex( gasLimit),  // gas limit
+			"maxFeePerGas", Util.toHex( fees.totalFee() ),
+			"maxPriorityFeePerGas", Util.toHex( fees.priorityFee() )
+			);
+		
+		Req req = new Req( "eth_call");
+		req.put( "params", Util.toArray( param1, "latest") );
+
+		var result = nodeQuery( req.toString() ); // throws an exception if it fails 
+		S.out( "Pre-check  from=%s  to=%s  keccak %s  result=%s",
+				from, to, keccak, result);
+	}
+
 	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
 		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
 	}
@@ -744,7 +756,7 @@ public class NodeInstance {
 			"to", to,
 			"data", data,
 			"value", "0x0",
-			"gas", "0x1"
+			"gas", "0x1"  // gasLimit
 			);
 //		"gas": "0x7a120"  // (optional) Gas limit (500,000 in this case)
 		

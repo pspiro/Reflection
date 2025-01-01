@@ -33,6 +33,7 @@ public class MoralisServer {
 	/** Send the query; if there is an UnknownHostException, try again as it
 	 *  may resolve the second time */ 
 	public static String querySync(String url) throws Exception {
+		S.out( "MORALIS " + url);
 		return MyClient.create(url)
 				.header("accept", "application/json")
 				.header("X-API-Key", apiKey)
@@ -184,7 +185,7 @@ public class MoralisServer {
 	
 	/** Query for all the data, one page at a time, and call consumer.accept() with each page 
 	 *  @producer is the method that queries for one page of data
-	 *  @consumer is the method that processes one page of data */
+	 *  @consumer is the method that processes one page of data (stored in 'result' tag) */
 	public static void getAll(Consumer<JsonArray> consumer, Query producer) throws Exception {
 		String cursor = "";
 		

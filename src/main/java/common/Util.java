@@ -856,6 +856,10 @@ public class Util {
 		return "0x" + Long.toHexString( val);
 	}
 
+	public static String toHex(BigInteger val) {
+		return "0x" + val.toString( 16);
+	}
+
 	public static long getLong(String str) {
 		return S.isNotNull( str) 
 				? str.startsWith( "0x")

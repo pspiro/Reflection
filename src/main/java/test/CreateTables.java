@@ -1,5 +1,7 @@
 package test;
 
+import org.json.simple.JsonObject;
+
 import common.Util;
 import reflection.MySqlConnection;
 import tw.util.S;
@@ -195,6 +197,32 @@ public class CreateTables  {
 	 * rewarded: boolean  true if collected some prize
 	 *  
 	 */
+	
+	static record User(
+			String created_at,
+			String wallet_public_key,
+			String first_name,
+			String last_name,
+			String email,
+			String phone,
+			String kyc_status,
+			String address, 
+			String address_1, 
+			String address_2, 
+			String city, 
+			String state ,
+			String zip, 
+			String country, 
+			String geo_code ,
+			String telegram, 
+			String persona_response, 
+			String pan_number, 
+			String aadhaar, 
+			JsonObject locked,
+			String ip, 
+			String onramp_id
+			) {		
+	}
 		
 	
 	/** This has never been run and probably doesn't work */

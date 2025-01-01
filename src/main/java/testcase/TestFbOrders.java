@@ -93,7 +93,11 @@ public class TestFbOrders extends MyTestCase {
 		waitFor( 30, () -> m_config.busd().getAllowance( bobAddr, rusd.address() ) > .48);
 		showAmounts("updated amounts");
 		
-		String id = postOrderToObj( TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() ) ).getString("id");
+		S.out( "**submiting .49");
+		String id = postOrderToObj( 
+				TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() ) )
+			.getString("id");
+		
 		assert200();
 		
 		// use this if we change the logic in RefAPI to check allowance before sending 
@@ -152,7 +156,7 @@ public class TestFbOrders extends MyTestCase {
 		waitFor( 120, () -> busd.getAllowance( bobAddr, rusd.address()) > 1999);
 		showAmounts("updated amounts");
 
-		// submit order
+		// submit order to RefAPI
 		JsonObject obj = TestOrder.createOrder3( "BUY", 1, TestOrder.curPrice + 3, busd.name() );
 		S.out( "**Submitting: " + obj);
 		JsonObject map = postOrderToObj(obj);
@@ -280,20 +284,20 @@ public class TestFbOrders extends MyTestCase {
 
 		// mint a little less RUSD than needed
 		S.out( "**minting 100");
-		rusd.mintRusd( Cookie.wallet, amount - .01, chain.getAnyStockToken() ).waitForReceipt();
-		waitForRusdBalance( Cookie.wallet, amount - .01, false);
+		//rusd.mintRusd( Cookie.wallet, amount - .01, chain.getAnyStockToken() ).waitForReceipt();
+		//waitForRusdBalance( Cookie.wallet, amount - .01, false);
 
-		// submit order
+		// submit order; fails with ERC20: burn amount exceeds balance
 		S.out( "**Submitting: " + obj);
 		postOrderToObj(obj);
-		assert200();
+		assert400();
 	}
 	
 	
 	/** The owner wallet must have some gas for this to work */
 	private void gasUpBob() throws Exception {
 		// give bob some gas?
-		if (node().getNativeBalance(bobAddr) < .01) {  // .02 works, what about 1?
+		if (node().getNativeBalance(bobAddr) < .02) {  // .02 works, what about 1?
 			S.out( "gassing up bob");
 			m_config.chain().blocks().transfer( m_config.ownerKey(), bobAddr, .01)
 					.waitForReceipt();

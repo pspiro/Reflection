@@ -43,6 +43,7 @@ public record ChainParams( // set new params to optional if needed; remember hea
 		double maxAutoRedeem,
 		boolean reportTrades,
 		double autoReward,
+		boolean usesMoralis,
 		
 		// hook server
 		String hookNameSuffix,

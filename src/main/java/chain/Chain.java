@@ -1,5 +1,6 @@
 package chain;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,6 +18,8 @@ import tw.util.S;
 import web3.Busd;
 import web3.MoralisServer;
 import web3.NodeInstance;
+import web3.NodeInstance.Transfer;
+import web3.NodeInstance.Transfers;
 import web3.Rusd;
 import web3.StockToken;
 import web3.StockToken.StockTokenRec;
@@ -90,6 +93,7 @@ public class Chain {
 		return tokens().iterator().next();
 	}
 
+	/** returns stocks only; see getAllAddresses */ 
 	public String[] getAllContractsAddresses() {
 		if (allAddresses == null) {
 			allAddresses = new String[mapConid.size()];
@@ -199,24 +203,64 @@ public class Chain {
 		S.out( "RUSD ADDRESS IS " + rusdAddress);
 	}
 
+	/** see also getAllAddresses() */
 	public String[] getStablecoinAddresses() throws Exception {
 		return new String[] { params.rusdAddr(), params.busdAddr() };
+	}
+	
+	public String[] getAllAddresses() throws Exception {
+		ArrayList<String> ar = new ArrayList<>();
+		ar.addAll( Util.toList( getStablecoinAddresses() ) );
+		ar.addAll( Util.toList( getAllContractsAddresses() ) );
+		return ar.toArray( new String[0]);
 	}
 	
 	public void showAdmin1Nonces() throws Exception {
 		blocks().showAllNonces( params.admin1Addr() );
 	}
 
-	/** 
+	/**  NOT SAFE, MoralisServer uses static vars
+	 *  
 	 * @param decimals if zero we will look it up from the map or query for it 
 	 * @throws Exception */
 	public HashMap<String, Double> reqPositionsMap(String walletAddr, String[] contracts, int decimals) throws Exception {
 		if (params.isPolygon() ) {
-			MoralisServer.setChain( params.moralisPlatform() );  // kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
+			MoralisServer.setChain( params.moralisPlatform() );  // NOT SAFE kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
 			return MoralisServer.reqPositionsMap(walletAddr, contracts);
 		}
 		return node.reqPositionsMap(walletAddr, contracts, decimals);
 	}
+
+	/** @param addresses is ignored for Moralis chains */
+	public Transfers getWalletTransfers(String wallet, String[] addresses) throws Exception {
+		if (params.usesMoralis() ) {
+			Transfers transfers = new Transfers();
+			MoralisServer.setChain( params.moralisPlatform() );  // NOT SAFE kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
+			MoralisServer.getAllWalletTransfers(wallet, batch -> {
+				for (var one : batch) {
+					Transfer t = new Transfer(
+							one.getString( "address"),							
+							one.getString( "from_address"),
+							one.getString( "to_address"),
+							one.getDouble( "value_decimal"),
+							one.getLong( "block_number"),
+							one.getString( "transaction_hash"),
+							one.getString( "blockchain_timestamp")
+							);
+					
+					// check to see if it is in list of addresses?
+					
+					transfers.add( t);
+				}
+			});
+			
+			return transfers;
+		}
+		
+		// non-moralis, not used
+		return node.getTokenTransfers(wallet, addresses);  // this is intensive and times out sometimes
+	}
+
 }
 // tokensupply on monitor, do a batch query. bc
 // symbol not displaying on Monitor/Token tab

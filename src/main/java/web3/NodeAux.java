@@ -73,7 +73,8 @@ public class NodeAux {
 					"0x" + topics.get(2).substring(26).toLowerCase(), 
 					Erc20.fromBlockchain( log.getString("data"), decimals),
 					log.getLong( "blockNumber"),
-					log.getString( "transactionHash")
+					log.getString( "transactionHash"),
+					"" // timestamp
 					);
 		}
 		return null;
