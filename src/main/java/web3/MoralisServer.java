@@ -158,9 +158,13 @@ public class MoralisServer {
 	
 	/** returns one page of transactions for a specific token
 	 * 
-	// there's a bug in the Moralis code; the same transaction gets returned twice;
-	// to fix it, look at the transaction_hash field and filter out the dups
-	// see email to Moralis on 6/9/24
+		there's a bug in the Moralis code; the same transaction gets returned twice;
+		to fix it, look at the transaction_hash field and filter out the dups
+		see email to Moralis on 6/9/24
+
+		bug: transaction 0x3eb03773ba29a935e8a28cf21e69c411283f63cecf32460406790eb4b8fb36ef is not returned
+	 * 
+	// 
 
 	 *  @address is ERC20 token address */
 	public static JsonObject getTokenTransfers(String address, String cursor) throws Exception {
@@ -171,6 +175,9 @@ public class MoralisServer {
 	
 	/** returns one page of transactions for a specific wallet
 	 *  relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value
+	 *  
+		bug: transaction 0x3eb03773ba29a935e8a28cf21e69c411283f63cecf32460406790eb4b8fb36ef is not returned
+
 	 *  @address is ERC20 token address */
 	public static JsonObject getWalletTransfers(String wallet, String cursor) throws Exception {
 		Util.require(chain != null, "Set the Moralis chain");
@@ -223,7 +230,7 @@ public class MoralisServer {
 
 	/** returns all transactions for a specific wallet
 	 * relevant fields returned are: from_address, to_address, address, value_decimal, token_decimals, value */
-	public static void getAllWalletTransfers(String wallet, Consumer<JsonArray> consumer) throws Exception {
+	public static void getWalletTransfers(String wallet, Consumer<JsonArray> consumer) throws Exception {
 		getAll( consumer, cursor -> getWalletTransfers(wallet, cursor) );  
 	}
 

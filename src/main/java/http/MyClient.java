@@ -83,6 +83,13 @@ public class MyClient {
 		m_builder = builder;
 	}
 
+	public MyClient timeout(int timeoutSec) {
+		if (timeoutSec > 0) {
+			m_builder.timeout( Duration.ofSeconds( timeoutSec) );
+		}
+		return this;
+	}
+
 	public MyClient header( String tag, String val) {
 		m_builder.header( tag, val);
 		return this;

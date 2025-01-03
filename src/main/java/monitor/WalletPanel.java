@@ -226,9 +226,7 @@ public class WalletPanel extends MonPanel {
 				walletMap.put( m_wallet, BlockPanelBase.Me);
 
 				// get all relevant transfers
-				var transfers = new Transfers(); // must add 'moralis' attrib to blockchain
-//				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getAllContractsAddresses() ) );
-				transfers.addAll( chain().getWalletTransfers( m_wallet, Monitor.chain().getStablecoinAddresses() ) );
+				var transfers = chain().getWalletTransfers( m_wallet, Monitor.chain().getAllAddresses() );
 
 				// build new list with substitutions
 				var altered = new Transfers();

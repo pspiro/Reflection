@@ -34,6 +34,7 @@ public class Chain {
 	private final HashMap<Integer,StockToken> mapConid = new HashMap<>();
 	private final HashMap<String,StockToken> mapAddress = new HashMap<>();  // maps token address (lower case) to StockToken
 	private String[] allAddresses;
+	private boolean readSymbols;
 	
 	Chain( ChainParams chainIn) throws Exception {
 		params = chainIn;
@@ -95,6 +96,8 @@ public class Chain {
 
 	/** returns stocks only; see getAllAddresses */ 
 	public String[] getAllContractsAddresses() {
+		Util.must( readSymbols, "Must read symbols first");
+
 		if (allAddresses == null) {
 			allAddresses = new String[mapConid.size()];
 			
@@ -171,6 +174,8 @@ public class Chain {
 				mapAddress.put( address, token);
 			}
 		}
+		
+		readSymbols = true;
 	}
 
 	/** This is called frequently so a map is good */
@@ -236,7 +241,7 @@ public class Chain {
 		if (params.usesMoralis() ) {
 			Transfers transfers = new Transfers();
 			MoralisServer.setChain( params.moralisPlatform() );  // NOT SAFE kind of dangerous and not good; we should create a MoralisServer instance just like the other ones or pass in the chain name; and we should use polymorphism
-			MoralisServer.getAllWalletTransfers(wallet, batch -> {
+			MoralisServer.getWalletTransfers(wallet, batch -> {
 				for (var one : batch) {
 					Transfer t = new Transfer(
 							one.getString( "address"),							
@@ -258,7 +263,7 @@ public class Chain {
 		}
 		
 		// non-moralis, not used
-		return node.getTokenTransfers(wallet, addresses);  // this is intensive and times out sometimes
+		return node.getWalletTransfers(wallet, addresses);  // this is intensive and times out sometimes
 	}
 
 	/** return name for RUSD, BUSD, or any stock token */

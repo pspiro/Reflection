@@ -22,7 +22,7 @@ public class TokensPanel extends JsonPanel {
 		super( new BorderLayout(), "symbol,conid,address,tokenSupply,position,dif");
 		add( m_model.createTable() );
 		add( m_holdersPanel, BorderLayout.EAST);
-		m_model.justify("lllrr");
+		m_model.justify("lllrrr");
 	}
 	
 	@Override protected void onDouble(String tag, Object val) {
@@ -63,6 +63,8 @@ public class TokensPanel extends JsonPanel {
 		// must iterate of stocks and not m_model.m_ar or you get ConcurModExc
 		// note that if there are stocks for which we have an IB position but are not in the spreadsheet,
 		// we won't query for the blockchain position
+		int[] count = { Monitor.tokens().size() };
+		
 		Util.execute( () -> {
 			Monitor.tokens().forEach( token -> {
 				wrap( () -> {
@@ -71,11 +73,21 @@ public class TokensPanel extends JsonPanel {
 					var row = getOrCreateRow( token.conid() );
 					row.put("tokenSupply", supply);
 					SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
+					if (--count[0] == 0) {
+						calcDiffs();
+					}
 				});
 			});
 		});
 	}
 	
+	private void calcDiffs() {
+		for (var row : rows() ) {
+			row.put( "dif", Math.abs( row.getDouble( "tokenSupply") - row.getDouble( "position")) );
+		}
+		SwingUtilities.invokeLater( () -> m_model.fireTableDataChanged() );
+	}
+
 	private JsonObject getOrCreateRow(int conid) {
 		return Util.getOrCreate(m_map, conid, () -> {
 			JsonObject obj = new JsonObject();

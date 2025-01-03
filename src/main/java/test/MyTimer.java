@@ -13,8 +13,14 @@ public class MyTimer {
 
 	public MyTimer() {
 	}
-	
+
 	/** start here */
+	public MyTimer start() {
+		start = System.currentTimeMillis();
+		return this;
+	}
+	
+	/** or start here */
 	public MyTimer next(String format, Object... params) {
 		if (start > 0) {
 			done();

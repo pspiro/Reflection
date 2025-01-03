@@ -670,7 +670,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 			m_errorText = errorText;
 			m_errorCode = errorCode;
 
-			// send alert, but not when testing, and don't throw an exception, it's just reporting
+			// send alert if production, but not when testing, and don't throw an exception, it's just reporting
 			try {
 				if (!m_map.getBool("testcase")) {
 					alert( "ORDER FAILED", String.format( "uid=%s  text=%s  code=%s  wallet=%s", m_uid, m_errorText, m_errorCode, m_walletAddr) );

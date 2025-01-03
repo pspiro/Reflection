@@ -16,6 +16,7 @@ public class Telegram {
 	// min image height seems to be 80
 	
 	public static void main(String[] args) throws Exception {
+		sendMessage( reflectionChatId, "I am a bot and I am being tested");
 	}
 
 	public static void postPhoto( String message, String photoUrl) {
@@ -61,9 +62,11 @@ public class Telegram {
 	}
 	
 	static void deleteMessage(String chatId, String msgId) throws Exception {
+		S.out( "Deleting TG msg  chatId=%s  msgId=%s", chatId, msgId);
 		String url = String.format( "https://api.telegram.org/%s/deleteMessage?chat_id=%s&message_id=%s",
 				botKey, chatId, msgId);
 		MyClient.getJson( url).display();
+		S.out( "done");
 	}
 	
 	static void queryMessages( String chatId) throws Exception {
@@ -79,7 +82,7 @@ public class Telegram {
 				}
 			}
 
-			S.sleep(10);
+			S.sleep(10000);
 			break;
 		}
 	}
