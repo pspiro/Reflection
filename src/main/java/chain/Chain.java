@@ -32,7 +32,7 @@ public class Chain {
 	private Rusd rusd;
 	private Busd busd;
 	private final HashMap<Integer,StockToken> mapConid = new HashMap<>();
-	private final HashMap<String,StockToken> mapAddress = new HashMap<>();
+	private final HashMap<String,StockToken> mapAddress = new HashMap<>();  // maps token address (lower case) to StockToken
 	private String[] allAddresses;
 	
 	Chain( ChainParams chainIn) throws Exception {
@@ -175,7 +175,7 @@ public class Chain {
 
 	/** This is called frequently so a map is good */
 	public StockToken getTokenByAddress(String address) {
-		return mapAddress.get( address);
+		return mapAddress.get( address.toLowerCase() );
 	}
 
 	/** This is called frequently so a map is good */
@@ -245,7 +245,7 @@ public class Chain {
 							one.getDouble( "value_decimal"),
 							one.getLong( "block_number"),
 							one.getString( "transaction_hash"),
-							one.getString( "blockchain_timestamp")
+							one.getString( "block_timestamp")
 							);
 					
 					// check to see if it is in list of addresses?
@@ -259,6 +259,19 @@ public class Chain {
 		
 		// non-moralis, not used
 		return node.getTokenTransfers(wallet, addresses);  // this is intensive and times out sometimes
+	}
+
+	/** return name for RUSD, BUSD, or any stock token */
+	public String getName(String addr) {
+		if (addr.equalsIgnoreCase( rusd.address() ) ) {
+			return rusd.name();
+		}
+		if (addr.equalsIgnoreCase( busd.address() ) ) {
+			return busd.name();
+		}
+
+		var tok = getTokenByAddress(addr);
+		return tok != null ? tok.name() : "";
 	}
 
 }

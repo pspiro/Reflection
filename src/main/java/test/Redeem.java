@@ -4,43 +4,72 @@ import chain.Chain;
 import chain.Chains;
 import http.MyClient;
 import reflection.Config.MultiChainConfig;
+import reflection.SingleChainConfig;
 import tw.util.S;
 
 /** figure out who should be redeemed and how much */
 public class Redeem {
-	MultiChainConfig config;
 
 	public static void main(String[] args) throws Exception {
 		new Redeem().run();
 	}
 	
-	
 	Chain chain;
+	private SingleChainConfig config;
+	
 	void run() throws Exception {
-		//config = MultiChainConfig.readFrom( "Prod-config");
+		config = MultiChainConfig.readFrom( "Prod-config");
 		
 		chain = new Chains().readOne( "Polygon", true);
 		
-		String wals = "0x1b4d5b59580844c9dc83c0f0c2d919c6348daad5 0x3e3cb35e4b86dafe644039428fe6e823b859b9f9 0x4cbc23a1b54e61a2709f44683f98b69e75bc17fd 0x6ab3231b899f0e4f292a271ad86f3b9d18a9e7ac 0x7707fa7b4f6a34b7f2b4fb3d439a71f8ff8b3760 0x78ecd4d8cb4b1390037f982998b81ac8e31e3878 0x7bd13a703a44d582080606204884b817335380f2 0x92199c0816090b579377207dc630ff71e0e2cb9f 0x9746c30412ac1714c46cd638d3645e915c8756bf 0x9e0fe0130892670edad78bc443bdb18088de116e 0x9e34eddef5f4012b342c9c7ad260241539efeb04 0xaa87366bdb347319cbeb89f3b2a1f91027fc0bc4 0xb61078fbe9bce27b41439e6647cf7bdd33d2d7e8 0xcb64aa2eb22489a60cb0c51b3f6b6d4656b602ee 0xf09430457f4dbd6593d73d02809bf3f0e32dd12a 0xf634b2b27ab469eae243d39e7a863953feea2a33";
+		String wals = "0xa14749d89e1ad2a4de15ca4463cd903842ffc15d,0x288798d619d24ee937d0a88e0c6cd14f67a3eb0c,0x71d85c2fcab3c1e581843eac204aef22eb9e93d7,0xa7e7ebb00ceca94e21413121c09cbfeab74d388b,0x22b61d3035af7e46bb5a6082741dcbf6ff037d09,0x48a8ed47f44d067ccf28be12ba648ea1c2810ce3,0xd1346e10832af0c9da0f0d2adf44c348f225aa6d,0xab24a23206c15b10fe6d908d7ae22593ecfd7b68,0x8cb789689d1f740429875db6393a1ac59553bfed,0xf2264537e817b0fc6f62c22d3cdfdc0ab3d3b2e2,0x96b7e76d2dbc4c211e2c2b65369ab18b46e76628,0x300ad421ced88d841d601c2dcca2f13873666468,0x6e08ac33861020f3c6f665301daff84ca5cc45bf,0x2f5204608b4f11495056a4a99821d7945a118c88,0xc1f8b839c908378a81ef6dfb9ed29d9b4ab54862,0xd540d67fb1de697ca663ea8676c8527ee0963a5e,0xa40641f764540aa1bb9217a4940d9c12547f41e3,0xd1fd45419bcd2f02c2db85fd6dc34357f401ba8c,0x683037c53cefb12215b88e42022f37d7606dce92,0x706e924389e91c8fa37398754c5f76305c652315,0x55e2a56f25e79426e03037145870ba49211c9302,0x8a157b7e93e1ba6321c35b030060b5a9223ff8e3,0xde1d7ed9448ef150deb3e6dd7bc19fdc01b66001,0x504eda4ca097d33981902cdede7f0e55e9092451,0xfa71d8ef4ed81a7f96736e78bfa3dba06fdf6402,0x180aafb2ebbe4bcfd2671a6caa4b47dead77a25e,0xd4c60c3f364e5b3d6ec0f81d76c782905e413f5a,0x25b76dc75f4e4357365c4cb350fefb568f7f42a0";
 		
-		for (String wal : wals.split( " ")) {
+		for (String wal : wals.split( ",")) {
 			process( wal);
 		}
 	}
 
 	private void process(String wal) throws Exception {
-		double pos = chain.rusd().getPosition(wal);
-		S.out( "%s %s", wal, "" + pos);
+		S.out();
+		var obj = config.sqlQueryOne( "select * from users where wallet_public_key = '%s'", wal);
 		
-		if (pos < 100) {
-			chain.rusd().sellRusd(wal, chain.busd(), pos).waitForReceipt();
+		if (obj == null) {
+			S.out( "error: wallet %s not found", wal);
+			return;
+		}
+		
+		S.out( "wallet=%s  first=%s  country=%s  email=%s", wal, obj.getString( "first_name"), obj.getString( "country"), obj.getString( "email") );
+		
+		var resp = MyClient.getJson( "https://reflection.trading/hook/polygon/get-wallet/" + wal);
+		var ar = resp.getArray( "positions");
+		ar.forEach( posPair -> {
+			String addr = posPair.getString( "address");
+			double pos = posPair.getDouble( "position");
+			S.out( "%s %s", chain.getName( addr), pos);
+		});
+		
+		double rusd = chain.rusd().getPosition(wal);
+		
+		// burn 500?
+		if (rusd > 500) {
+			chain.rusd().burnRusd(wal, 500, chain.getAnyStockToken() ).waitForReceipt();
+			rusd -= 500;
+		}
+		// burn 100?
+		else if (rusd > 100) {
+			chain.rusd().burnRusd(wal, 100, chain.getAnyStockToken() ).waitForReceipt();
+			rusd -= 100;
+		}
+		
+		// redeem
+		if (rusd < 200) {
+			chain.rusd().sellRusd(wal, chain.busd(), rusd).waitForReceipt();
+			config.sqlCommand( sql -> sql.execWithParams(
+					"update redemptions set status = 'Completed' where wallet_public_key = '%s'", wal) );
 		}
 
-		// burn 500?
-//		if (pos > 500) {
-//			chain.rusd().burnRusd(wal, 500, chain.getAnyStockToken() ).waitForReceipt();
-//		}
-		
+
+		// close out positions
 //		var json = MyClient.getJson( "https://reflection.trading/hook/polygon/get-wallet/" + wal);
 //		
 //		for (var posi : json.getArray( "positions") ) {
