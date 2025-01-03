@@ -333,6 +333,13 @@ public class Util {
 			throw new Exception( String.format( S.notNull( text), params) );
 		}
 	}
+
+	/** throws a RuntimeException; for unexpected coding errors */
+	public static void must(boolean test, String text, Object... params) {
+		if (!test) {
+			throw new RuntimeException( String.format( S.notNull( text), params) );
+		}
+	}
 	
 	/** confirm test = true, then return obj */
 	public static <T> T checkReturn( T obj, boolean test, String text, Object... params) throws Exception {

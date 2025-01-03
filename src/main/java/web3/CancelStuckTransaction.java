@@ -9,13 +9,15 @@ import tw.util.S;
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
 		try (MyScanner s = new MyScanner() ) {
-			String name = s.getString( "enter chain name: (e.g. Polygon)");
+			String name = s.getString( "enter chain name: [Polygon]");
+			name = S.isNull( name) ? "Polygon" : name;
+			
 			Chain chain = new Chains().readOne( name, false);
 
-			String wallet = chain.params().admin1Addr();  // wallet that is stuck
+			String wallet = chain.params().ownerAddr();// admin1Addr();  // wallet that is stuck
 
 			// show current nonces
-			chain.blocks().showAllNonces( chain.params().admin1Addr() );
+			chain.blocks().showAllNonces( wallet);
 
 			// show nonces of stuck transactions
 			chain.node().showTrans( wallet);

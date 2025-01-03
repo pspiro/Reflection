@@ -50,9 +50,13 @@ public class TgAi {
                         if (update.has("message")) {
                             JsonObject message = update.getObject("message");
                             message.update( "date", date -> Util.yToS.format( (long)date * 1000) );
+                            message.remove( "entities");
+                            message.remove( "caption_entities");
+                            
                             String chatId = message.getObject("chat").getString("id");
                             String messageId = message.getString("message_id");
                             String text = message.getString("text");
+                            
 
                             // Check if the message is spam or a number between 1 and 100
                             if (isSpam(message) || isNumberBetween1And100(text)) {
@@ -70,18 +74,28 @@ public class TgAi {
                 // Sleep to avoid hitting rate limits
                 Thread.sleep(10000);
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+            	S.out( e.getMessage() );
             }
         }
     }
 
     private static boolean isSpam(JsonObject message) throws Exception {
-    	if (message
-    			.getObjectNN( "store")
-    			.getObjectNN( "chat")
-    			.getString( "first_name").equals( "TON") ) {
+        String caption = message.getString( "caption").toUpperCase();
+        String forName = message.getString( "forward_sender_name").toUpperCase();
+
+        if (message.getObject( "story") != null) {
     		return true;
     	}
+        
+        if (Util.equals( forName, "TON SPIN") ) {
+        	return true;
+        }
+        
+        if (caption.contains("AIRDROP") ) {
+        	return true;
+        }
+    	
 //        // Prepare payload for ChatGPT
 //        JsonObject payload = new JsonObject();
 //        payload.put("model", "gpt-3.5-turbo");

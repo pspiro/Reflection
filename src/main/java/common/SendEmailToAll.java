@@ -6,7 +6,7 @@ import tw.util.S;
 
 public class SendEmailToAll {
 	public static void main(String[] args) throws Exception {
-		boolean send = true;
+		boolean send = false;
 		
 		if (send) {
 			sendAll();
@@ -46,7 +46,7 @@ public class SendEmailToAll {
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
 				<tr>
 				<td style="background-color: #8775E6; color: #ffffff; padding: 15px; text-align: left; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-				<img src="https://i.ibb.co/MPTVLX4/Logo-with-bg-icon.png" alt="Reflection Logo" style="width: 50px; height: 50px; display: inline-block; vertical-align: middle; margin-right: 10px;">
+				<img src="https://i.ibb.co/m9F84CY/Logo-with-bg-icon.png" alt="Reflection Logo" style="width: 50px; height: 50px; display: inline-block; vertical-align: middle; margin-right: 10px;">
 				<h1 style="margin: 0; font-size: 24px; display: inline-block; vertical-align: middle; padding: 0;">Reflection</h1>
 				</td>
 				</tr>
@@ -56,11 +56,13 @@ public class SendEmailToAll {
 		<div>
 			Dear #firstname#,<br>
 			<br>
-			The Reflection $500 trading promotion is being concluded. To cash out your reward, you must:<br>
+			The Reflection $500 trading promotion has concluded. This is your last chance to cash out your reward!<br>
+			You must:<br>
 			* Close out all open positions<br>
 			* Submit a Redemption request from the Dashboard<br>
 			<br>
-			Any positions not closed out by the end of the week will be closed out automatically.<br>
+			Remember, you are only entitled to a reward if you earned a profit while trading.<br>
+			If you had a loss--we hope you enjoyed trading, and better luck next time!
 			<br>
 			Thank you for participating in our promotion. We hope to see you back trading on Reflection soon!<br>
 			<br>

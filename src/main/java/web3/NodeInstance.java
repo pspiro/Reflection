@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JsonArray;
@@ -18,6 +17,7 @@ import org.web3j.utils.Numeric;
 import common.Util;
 import http.MyClient;
 import refblocks.Refblocks;
+import test.MyTimer;
 import tw.util.MyException;
 import tw.util.S;
 import web3.RetVal.NodeRetVal;
@@ -81,7 +81,12 @@ public class NodeInstance {
 	}
 	
 	private JsonObject nodeQuery(String body) throws Exception {
-		JsonObject obj = (JsonObject)nodeQueryToAny( body);
+		return nodeQuery( body, 0);
+	}
+
+	/** @param timeout in seconds; pass zero to use default */
+	private JsonObject nodeQuery(String body, int timeoutSec) throws Exception {
+		JsonObject obj = (JsonObject)nodeQueryToAny( body, timeoutSec);
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
@@ -111,7 +116,7 @@ public class NodeInstance {
 
 	/** query size must be <= maxBatchSize */
 	private JsonArray smallBatchQuery( String body) throws Exception {
-		var anyJson = nodeQueryToAny( body);
+		var anyJson = nodeQueryToAny( body, 0);
 		
 		if (anyJson instanceof JsonArray) {
 			var ar = (JsonArray)anyJson;
@@ -134,13 +139,15 @@ public class NodeInstance {
 		throw new MyException( "nodeQuery batch error  code=%s  %s", err.getInt( "code"), err.getString( "message") );
 	}
 	
-	/** result could be JsonObject or JsonArray */
-	private JSONAware nodeQueryToAny(String body) throws Exception {
-		Util.require( rpcUrl != null, "Set the Moralis rpcUrl");
-
+	/** result could be JsonObject or JsonArray 
+		@param timeout in seconds; pass zero to use default */
+	private JSONAware nodeQueryToAny(String body, int timeoutSec) throws Exception {
+		Util.require( rpcUrl != null, "Set the Node RPC URL");
+		
 		return MyClient.create( rpcUrl, body)
 				.header( "accept", "application/json")
 				.header( "content-type", "application/json")
+				.timeout( timeoutSec)
 				.queryToAnyJson();
 	}
 
@@ -214,7 +221,7 @@ public class NodeInstance {
 	 *  and when using an RPC node (aka node aggregator), you never know
 	 *  which node your query is going to go to. */
 	public JsonObject getQueuedTrans() throws Exception {
-		var body = new Req( "txpool_content");
+		var body = new Req( "txpool_content"); // frequently does not work and returns 'panic recovery', no idea why
 		return nodeQuery( body).getObject("result");  // result -> pending and result -> queued
 	}
 
@@ -381,6 +388,11 @@ public class NodeInstance {
 		Req( String method) {
 			this( method, 1);
 		}
+
+		Req( String method, JsonObject param) {
+			this( method, 1);
+			put( "params", Util.toArray( param) ); // must be an arrar
+		}
 		
 		Req( String method, int id) {
 			put( "jsonrpc", "2.0");
@@ -496,7 +508,7 @@ public class NodeInstance {
 	}
 	
 	public String getOwner( String contractAddr) throws Exception {
-		Req req = new Req( "eth_call", 1);
+		Req req = new Req( "eth_call");
 		req.put( "params", Util.toArray( 
 				Util.toJson( "to", contractAddr, "data", "0x8da5cb5b"),
 				"latest")
@@ -568,70 +580,82 @@ public class NodeInstance {
 	}
 
 	/** return all token transfers for the specified wallet and contract addresses */
-	public Transfers getTokenTransfers( String wallet, String[] addresses) throws Exception {
-		// int fromBlock = 20556807;  // def. not good. pas
-		String fromBlock = "earliest";
+	public Transfers getWalletTransfers( String wallet, String[] addresses) throws Exception {
 
 		Transfers trans = new Transfers();
-		trans.addAll( getTransfers( addresses, fromBlock, wallet, null) );
-		trans.addAll( getTransfers( addresses, fromBlock, null, wallet) );
+		trans.addAll( getTransfers( addresses, wallet, null) );
+		trans.addAll( getTransfers( addresses, null, wallet) );
 
 		return trans;
 	}
 	
-	/** return all token transfers for the specified wallet and contract addresses
-	 *  additionally filtered by "from" and "to" wallets */
-	private List<Transfer> getTransfers( String[] addresses, String fromBlock, String from, String to) throws Exception {
-		var query = NodeAux.createReq( addresses, fromBlock, from, to);
-		S.out( "query: " + query);
+    /** return all transfers for the specified token address */
+	public Transfers getTokenTransfers( String address) throws Exception {
+		return getTransfers( Util.toArray( address), null, null);
+	}
+
+	final long chunks = 1;
+	final int chunkTimeoutSec = 45;
+
+	/**
+	 * could break up the query into multiple queries; this works, but it seems that
+	 * increasing the timeout also works and is a simpler solution, so the chunk
+	 * code is not being used presently
+	 * 
+	 * Another way to break it down would be to send a separate query for each address
+	 * 
+	 * This query can return wrong results; if so, try again. You need a paid 'archival'
+	 * node to be more accurate, or to run your own archival node.
+	 * 
+	 * return all token transfers for the specified wallet and contract addresses
+	 *  additionally filtered by "from" and "to" wallets
+	 *  @param from may be null
+	 *  @param to may be null */
+	private Transfers getTransfers( String[] addresses, String from, String to) throws Exception {
+		// set up filtering by to OR from addresses (one or both will be null)
+		var topics = new ArrayList<String>();
+		topics.add( NodeInstance.transferEventSignature);
+		topics.add( NodeAux.pad( from) );
+		topics.add( NodeAux.pad( to) );
+
+		// build params to filter to contract addresses
+		JsonObject params = new JsonObject();
+		params.put("topics", topics);
+		params.put("address", addresses);  // filter by contract addresses
+
+		// break the query into chunks? chunks could be one
+		long num = chunks > 1 ? getBlockNumber() : 1;
+		long chunkSize = num / chunks; 
+		long start = 0;
+		long end = chunkSize;
 		
-		var json = nodeQuery( query.toString() );
-		S.out( "response: " + json);
+		Transfers transactions = new Transfers();
+
+		for (int chunk = 1; chunk <= chunks; chunk++) {
+			// set from/to blocks in parameters
+			params.put("fromBlock", chunk == 1 ? "earliest" : "" + start);
+			params.put("toBlock", chunk == chunks ? "latest" : "" + end);
+			
+			// query for logs for one chunk
+			MyTimer t = new MyTimer().start();
+			JsonObject query = new Req("eth_getLogs", params);
+			S.out( "NODE getTrans  chunk=%s  from=%s  to=%s", chunk, params.getString( "fromBlock"), params.getString( "toBlock") );
+			var results = nodeQuery( query.toString(), chunkTimeoutSec).getArray("result");
+			S.out( "  returned %s logs in %s ms", results.size(), t.time() );
+			
+			// convert result to array of Transfers
+			for (var log : results) {
+				Util.iff( NodeAux.parseLog( log, getDecimals( log.getString("address") ) ), 
+						transfer -> transactions.add( transfer) ); 
+			}
+
+			start = end + 1;
+			end += chunkSize;
+		}
 		
-		return NodeAux.processResult( json, this::getDecimals);
+		return transactions;
 	}
 	
-	int maxBlocks = 50000;
-
-    // Function to fetch token holders from an Ethereum RPC node
-	public Transfers getAllTokenTransfers( String address, int decimals) throws Exception {
-		long latest = getBlockNumber();
-		long first = Math.max( 0, latest - maxBlocks);
-		
-		
-		address = address.toLowerCase();
-		
-		var topics = new ArrayList<String>();
-		topics.add(transferEventSignature);
-
-		JsonObject params = new JsonObject();
-		params.put("fromBlock", "earliest");  // doesn't work on Sepolia, test on others. bc
-		//params.put("fromBlock", Util.toHex( first) );
-		params.put("toBlock", "latest");
-		params.put("address", address);
-		params.put("topics", topics);
-
-		JsonArray paramArray = new JsonArray();
-		paramArray.add(params);
-		
-		// build json request
-		JsonObject jsonRequest = new JsonObject();
-		jsonRequest.put("jsonrpc", "2.0");
-		jsonRequest.put("method", "eth_getLogs");
-		jsonRequest.put("id", 1);
-		jsonRequest.put("params", paramArray);
-		
-		// send query for logs for the specified contract address; could be too huge for popular tokens
-		JsonObject jsonResponse = nodeQuery( jsonRequest.toString() );
-
-		Transfers ts = new Transfers();
-		for (var log : jsonResponse.getArray("result") ) {
-			Util.iff( NodeAux.parseLog( log, decimals), transfer -> ts.add( transfer) );
-		}
-
-		return ts;
-	}
-
 	/** @deprecated use queryFees instead */
 	BigInteger getGasPrice() throws Exception {
 		return Numeric.decodeQuantity(

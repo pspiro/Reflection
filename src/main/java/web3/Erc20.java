@@ -119,7 +119,8 @@ public class Erc20 {
 	public HashMap<String,Double> getAllBalances() throws Exception {
 		HashMap<String,Double> map = new HashMap<>();
 		
-		if (m_chain.params().isPolygon() ) {
+		if (m_chain.params().usesMoralis() ) {
+			// bug: transaction 0x3eb03773ba29a935e8a28cf21e69c411283f63cecf32460406790eb4b8fb36ef is not returned
 			
 			// get all transactions in batches and build the map
 			MoralisServer.setChain( m_chain.params().moralisPlatform() ); // NOT SAFE
@@ -133,7 +134,7 @@ public class Erc20 {
 		}
 		else {
 			// get all transactions, build the map
-			for (var transfer : m_chain.node().getAllTokenTransfers( m_address, m_decimals) ) {
+			for (var transfer : m_chain.node().getTokenTransfers( m_address) ) {
 				Util.inc( map, transfer.from(), -transfer.amount() );
 				Util.inc( map, transfer.to(), transfer.amount() );
 			}
