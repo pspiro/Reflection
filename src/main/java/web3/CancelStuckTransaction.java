@@ -8,13 +8,15 @@ import tw.util.S;
 /** This actually works as of 8/19/24 on pulsechain */
 public class CancelStuckTransaction {
 	public static void main(String[] args) throws Exception {
+		// question: if you skip a nonce and then query for next nonce, does it give you the skipped one or the next after the hanging one? 
+
 		try (MyScanner s = new MyScanner() ) {
 			String name = s.getString( "enter chain name: [Polygon]");
 			name = S.isNull( name) ? "Polygon" : name;
 			
 			Chain chain = new Chains().readOne( name, false);
 
-			String wallet = chain.params().ownerAddr();// admin1Addr();  // wallet that is stuck
+			String wallet = chain.params().admin1Addr();  // wallet that is stuck
 
 			// show current nonces
 			chain.blocks().showAllNonces( wallet);
