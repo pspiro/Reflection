@@ -1,10 +1,12 @@
 package monitor.wallet;
 
 import org.json.simple.JsonArray;
+import org.json.simple.JsonObject;
 
 import common.JsonModel;
 import common.Util;
 import monitor.Monitor;
+import tw.util.S;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
 
@@ -18,11 +20,25 @@ public class BlockDetailPanel extends BlockPanelBase {
 		Model() {
 			super( JsonModel.getAllFields( Transfer.class) );
 		}
+
+		@Override protected void onCtrlClick(JsonObject row, String tag) {
+			Util.wrap( () -> {
+				int num = row.getInt( "block");
+				if (num > 0) {
+					row.put( 
+							"timestamp", 
+							Monitor.chain().node().getBlockDateTime(num) );
+					fireTableDataChanged();
+				}
+			});
+		}
 		
 		@Override protected void onDoubleClick(String tag, Object val) {
-			if (tag.equals( "transaction_hash") ) {
-				Util.browse( Monitor.chain().browseTx( val.toString() ) );
-			}				
+			switch( tag) {
+				case "transaction_hash":
+					Util.browse( Monitor.chain().browseTx( val.toString() ) );
+					break;
+			}
 		}
 		
 //		@Override protected Object format(String key, Object value) {

@@ -5,7 +5,6 @@ import java.time.DayOfWeek;
 import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import com.ib.client.CommissionReport;

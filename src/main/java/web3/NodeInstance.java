@@ -62,9 +62,11 @@ public class NodeInstance {
 	 *  A value of '0x' is invalid and will throw an exception */
 	private String queryHexResult( String body, String text, String contractAddr, String walletAddr) throws Exception {
 		S.out( "NODE %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
-		String result = nodeQuery( body).getString( "result");
+		var json = nodeQuery( body);
+		String result = json.getString( "result");
 		
 		if (result.equals( "0x") ) {
+			json.display();
 			throw new MyException( "Could not get %s; contractAddr '%s' may be invalid", text, contractAddr);
 		}
 
@@ -151,11 +153,13 @@ public class NodeInstance {
 				.queryToAnyJson();
 	}
 
+	/** see also getLatestByNumber */
 	public String getBlockDateTime( long block) throws Exception {
 		long sec = getBlockByNumber( block).getLong( "timestamp");
 		return Util.yToS.format( new Date( sec * 1000));
 	}
 	
+	/** see also getLatestBlock and getBlockDateTime */
 	public JsonObject getBlockByNumber( long block) throws Exception {
 		return getBlockBy( Util.toHex( block) );
 	}
@@ -740,7 +744,7 @@ public class NodeInstance {
 		String hash = queryHexResult(req.toString(), "signedTransaction  nonce=" + nonce, contractAddr, callerAddr);
 		S.out( "  transaction hash: " + hash);
 		
-		return new NodeRetVal( hash, this, callerAddr, contractAddr, data);
+		return new NodeRetVal( hash, this, callerAddr, contractAddr, data, gasLimit);
 	}
 	
 	public void preCheck(String from, String to, String keccak, Param[] params, int gasLimit) throws Exception {
@@ -768,11 +772,11 @@ public class NodeInstance {
 				from, to, keccak, result);
 	}
 
-	public void getRevertReason( String from, String to, String keccak, Param[] params) throws Exception {
-		getRevertReason( from, to, Param.encodeData( keccak, params), "latest");
+	public void getRevertReason( String from, String to, String keccak, Param[] params, long gasLimit) throws Exception {
+		getRevertReason( from, to, Param.encodeData( keccak, params), gasLimit, "latest");
 	}
 	
-	public void getRevertReason(String from, String to, String data, String blockNumber) throws Exception {
+	public void getRevertReason(String from, String to, String data, long gasLimit, String blockNumber) throws Exception {
 		Req req = new Req( "eth_call");
 
 		var param1 = Util.toJson(
@@ -780,9 +784,8 @@ public class NodeInstance {
 			"to", to,
 			"data", data,
 			"value", "0x0",
-			"gas", "0x1"  // gasLimit
+			"gas", Util.toHex( gasLimit)
 			);
-//		"gas": "0x7a120"  // (optional) Gas limit (500,000 in this case)
 		
 		req.put( "params", Util.toArray( param1, blockNumber) );
 		S.out( "revert reason is ");

@@ -8,7 +8,6 @@ import com.ib.client.OrderStatus;
 import com.ib.client.TickAttrib;
 import com.ib.client.TickType;
 import com.ib.client.Types.Action;
-import com.ib.client.Types.FundamentalType;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;

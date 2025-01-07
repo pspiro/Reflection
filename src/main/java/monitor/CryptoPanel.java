@@ -208,10 +208,10 @@ public class CryptoPanel extends MonPanel {
 
 	@Override public void refresh() throws Exception {
 		S.out( "Refreshing Crypto panel");
-		m_refLabel.setText( "RefWallet " + MonitorConfig.nativeTokName() );
-		m_ownLabel.setText( "Owner " + MonitorConfig.nativeTokName() );
-		m_ad1Label.setText( "Admin1 " + MonitorConfig.nativeTokName() );
-		m_ad2Label.setText( "Admin2 " + MonitorConfig.nativeTokName() );
+		m_refLabel.setText( "RefWallet " + config().nativeTokName() );
+		m_ownLabel.setText( "Owner " + config().nativeTokName() );
+		m_ad1Label.setText( "Admin1 " + config().nativeTokName() );
+		m_ad2Label.setText( "Admin2 " + config().nativeTokName() );
 		
 		m_refAddress.setText( config().refWalletAddr() );
 

@@ -91,6 +91,7 @@ public class Chain {
 	}
 
 	public StockToken getAnyStockToken() {
+		Util.must( readSymbols, "Must read symbols first");
 		return tokens().iterator().next();
 	}
 
@@ -112,6 +113,8 @@ public class Chain {
 	/** for the get-all-stocks query which is for dropdown on trading page;
 	 *  does not return prices */ 
 	public JsonArray getAllStocks(Stocks stocks) throws Exception {
+		Util.must( readSymbols, "Must read symbols first");
+		
 		JsonArray ar = new JsonArray();
 		
 		for (var token : mapConid.values() ) {
@@ -140,6 +143,14 @@ public class Chain {
 		});
 		
 		return ar;
+	}
+	
+	public ArrayList<StockToken> getAllStockTokens() {
+		Util.must( readSymbols, "Must read symbols first");
+
+		ArrayList<StockToken> list = new ArrayList<>();
+		mapConid.values().forEach( stock -> list.add( stock) );
+		return list; 
 	}
 
 	/** read the symbols and create the stock tokens for this chain */ 

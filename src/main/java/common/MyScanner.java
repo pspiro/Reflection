@@ -24,6 +24,12 @@ public class MyScanner implements Closeable {
 		return Integer.parseInt( getString( prompt));
 	}
 
+	public String getString( String prompt, String def) {
+		S.out( prompt);
+		String str = scanner.nextLine();
+		return S.isNull( str) ? def : str;
+	}
+	
 	public String getString( String prompt) {
 		S.out( prompt);
 		return scanner.nextLine();

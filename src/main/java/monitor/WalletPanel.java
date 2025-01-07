@@ -40,9 +40,11 @@ import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
 import util.LogType;
+import web3.Busd;
 import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
+import web3.Rusd;
 import web3.StockToken;
 
 public class WalletPanel extends MonPanel {
@@ -205,7 +207,7 @@ public class WalletPanel extends MonPanel {
 		BlockchainPanel() {
 			super( new BorderLayout() );
 
-			m_allTransPanel.setBorder( new TitledBorder( "All Transactions"));
+			m_allTransPanel.setBorder( new TitledBorder( "All Transactions (Ctrl+click on 'Block' to see timestamp)"));
 			m_sumPanel.setBorder( new TitledBorder( "Consolidated Transactions"));
 
 			DualPanel dualPanel = new DualPanel();
@@ -440,13 +442,66 @@ public class WalletPanel extends MonPanel {
 					new JLabel( "trades"),
 					new HtmlButton("Go", e -> award() ) ); 
 
-			vp.add( "Give " + MonitorConfig.nativeTokName(), new HtmlButton("Transfer .01 " + MonitorConfig.nativeTokName() + " from Owner to this wallet", e -> giveMatic() ) );
+			vp.add( "Give " + config().nativeTokName(), new HtmlButton("Transfer .01 " + config().nativeTokName() + " from Owner to this wallet", e -> giveMatic() ) );
+			vp.add( "Redeem RUSD", new HtmlButton( "Redeem all RUSD", ev -> redeemAll() ) );
 
 			vp.addHeader( "Send Email");
 			vp.add( "Subject", m_subject, new HtmlButton("Send", e -> sendEmail() ) );
 			vp.add( "Text", new JScrollPane( m_emailText, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER) );
 
 			add( vp);
+		}
+
+		private void redeemAll() {
+			wrap( () -> {
+				Rusd rusd = Monitor.m_config.rusd();
+				Busd busd = Monitor.m_config.busd();
+	
+				// nothing to redeem?
+				double rusdPos = rusd.getPosition(m_wallet);  // make sure that rounded amt is not slightly more or less
+				if (rusdPos < .005) {
+					Util.inform(this, "User has no RUSD to redeem");
+					return;
+				}
+	
+				// insufficient stablecoin in RefWallet?
+				double ourStablePos = busd.getPosition( Monitor.m_config.refWalletAddr() );
+				if (ourStablePos < rusdPos) {
+					String str = String.format( 
+							"Insufficient stablecoin in RefWallet for RUSD redemption  \nwallet=%s  requested=%s  have=%s  need=%s",
+							m_wallet, rusdPos, ourStablePos, (rusdPos - ourStablePos) );
+					Util.inform( this, str);
+					return;
+				}
+	
+				// confirm
+				if (!Util.confirm(
+						this, 
+						String.format("Are you sure you want to redeem %s RUSD for %s?",
+								RedemptionPanel.six.format(rusdPos), m_wallet) ) ) {
+					return;
+				}
+	
+				// don't tie up the UI thread
+				Util.executeAndWrap( () -> {
+					String hash = rusd.sellRusd(m_wallet, busd, rusdPos)
+							.waitForReceipt();
+	
+					// insert into redemptions table in DB and screen
+					JsonObject obj = Util.toJson( 
+							"uid", Util.uid(8),
+							"wallet_public_key", m_wallet.toLowerCase(),
+							 "blockchain_hash", hash,
+							 "status", "Completed",
+							 "stablecoin", chain().busd().name(),
+							 "amount", rusdPos,
+							 "chainid", chain().chainId() );  
+							
+					Monitor.m_config.sqlCommand( conn -> conn.insertJson( "redemptions",  obj) );
+	
+					Util.inform( this, "Completed");
+				});
+			});
 		}
 
 		@Override public void activated() {

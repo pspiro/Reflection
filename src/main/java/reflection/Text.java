@@ -28,7 +28,7 @@ public class Text {
 			<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse;">
 				<tr>
 					<td style="background-color: #8775E6; color: #ffffff; padding: 15px; text-align: left; border-top-left-radius: 8px; border-top-right-radius: 8px;">
-						<img src="https://i.ibb.co/MPTVLX4/Logo-with-bg-icon.png" alt="Reflection Logo" style="width: 50px; height: 50px; display: inline-block; vertical-align: middle; margin-right: 10px;">
+						<img src="https://i.ibb.co/m9F84CY/Logo-with-bg-icon.png" alt="Reflection Logo" style="width: 50px; height: 50px; display: inline-block; vertical-align: middle; margin-right: 10px;">
 						<h1 style="margin: 0; font-size: 24px; display: inline-block; vertical-align: middle; padding: 0;">Your Daily Reflection</h1>
 					</td>
 				</tr>

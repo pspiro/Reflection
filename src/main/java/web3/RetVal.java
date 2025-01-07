@@ -21,14 +21,17 @@ public abstract class RetVal {
 		private String m_from; // don't need this, can get it from the receipt when it comes
 		private String m_to; // don't need this, can get it from the receipt when it comes
 		private String m_data;
+		private long m_gasLimit;
 
-		/** you could remove 'from' and 'to' as params and get them from the receipt */
-		public NodeRetVal(String hash, NodeInstance node, String from, String to, String data) {
+		/** you could remove 'from' and 'to' as params and get them from the receipt 
+		 * @param gasLimit */
+		public NodeRetVal(String hash, NodeInstance node, String from, String to, String data, long gasLimit) {
 			m_hash = hash;
 			m_node = node;
 			m_from = from;
 			m_to = to;
 			m_data = data;
+			m_gasLimit = gasLimit;
 		}
 
 		@Override public String hash() {
@@ -53,6 +56,7 @@ public abstract class RetVal {
 			}
 			
 			if (receipt == null) {
+				// this could mean duplicate nonce, skipped nonce, or low gas on this or prior transaction
 				throw new Exception( "Timed out while waiting for receipt for " + m_hash);
 			}
 			else {
@@ -62,7 +66,7 @@ public abstract class RetVal {
 					return m_hash;
 				}
 				
-				m_node.getRevertReason( m_from, m_to, m_data, receipt.getString( "blockNumber") );
+				m_node.getRevertReason( m_from, m_to, m_data, m_gasLimit, receipt.getString( "blockNumber") );
 				
 				S.out( "could not get revert reason");
 				throw new Exception();

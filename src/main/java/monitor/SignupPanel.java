@@ -10,7 +10,6 @@ import org.json.simple.JsonObject;
 import common.SignupReport;
 import common.Util;
 import tw.util.S;
-import tw.util.UI;
 import tw.util.UI.Hourglass;
 
 class SignupPanel extends JsonPanel {

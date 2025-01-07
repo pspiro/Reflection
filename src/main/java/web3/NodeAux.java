@@ -4,9 +4,7 @@ import java.util.ArrayList;
 
 import org.json.simple.JsonObject;
 
-import common.Util.ExFunction;
 import web3.NodeInstance.Transfer;
-import web3.NodeInstance.Transfers;
 
 public class NodeAux {
 	private static final String RPC_URL = "YOUR_NODE_RPC_URL";  // Replace with your node's RPC URL

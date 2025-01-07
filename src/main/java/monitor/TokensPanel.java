@@ -27,7 +27,7 @@ public class TokensPanel extends JsonPanel {
 	
 	@Override protected void onDouble(String tag, Object val) {
 		wrap( () -> 
-			m_holdersPanel.refresh( MonitorConfig.chain().getTokenByAddress(val.toString() ) ) 
+			m_holdersPanel.refresh( config().chain().getTokenByAddress(val.toString() ) ) 
 		);
 	}
 	

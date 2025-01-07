@@ -41,7 +41,7 @@ public class MonitorConfig extends MultiChainConfig {
 		return config;
 	}
 	
-	public static Chain chain() {
+	public Chain chain() {
 		return Monitor.chain();
 	}
 
@@ -49,15 +49,15 @@ public class MonitorConfig extends MultiChainConfig {
 		return chain().busd();
 	}
 
-	public static NodeInstance node() {
+	public NodeInstance node() {
 		return chain().node();
 	}
 
-	public static String nativeTokName() {
+	public String nativeTokName() {
 		return chain().params().platformBase();
 	}
 
-	public static Rusd rusd() {
+	public Rusd rusd() {
 		return chain().rusd();
 	}
 
