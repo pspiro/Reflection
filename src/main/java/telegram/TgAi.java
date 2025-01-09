@@ -88,6 +88,10 @@ public class TgAi {
         if (caption.contains("AIRDROP") ) {
         	return true;
         }
+
+        if (caption.contains("TEA PROTOCOL") ) {
+        	return true;
+        }
     	
 //        // Prepare payload for ChatGPT
 //        JsonObject payload = new JsonObject();

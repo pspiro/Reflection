@@ -23,7 +23,7 @@ public class CloseAllPositions {
 			
 			chain = new Chains().readOne( name, true);
 			
-			for (var stock : chain.getAllStockTokens() ) {
+			for (var stock : chain.getTokensList() ) {
 				close( stock);
 			}
 		}

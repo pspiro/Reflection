@@ -128,7 +128,7 @@ public class Statements {
 		boolean missedOne = false;
 
 		// add stocks
-		for ( var token : m_chain.tokens() ) {
+		for ( var token : m_chain.getTokens() ) {
 			var stock = m_stocks.getStockByConid( token.conid() );
 			var balance = positionsMap.get( token.address().toLowerCase() );
 			if (stock != null && balance != null && balance > 0) {

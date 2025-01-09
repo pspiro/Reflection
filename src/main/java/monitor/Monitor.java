@@ -254,7 +254,7 @@ public class Monitor {
 	}
 		
 	static Collection<StockToken> tokens() {
-		return chain().tokens();
+		return chain().getTokens();
 	}
 	
 	static Collection<Stock> stocks() {

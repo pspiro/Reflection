@@ -6,7 +6,7 @@ import web3.StockToken;
 public class TestSwap extends MyTestCase {
 	
 	public void testSwap() throws Exception {
-		var iter = chain.tokens().iterator();
+		var iter = chain.getTokens().iterator();
 		
 		// get two stock tokens
 		StockToken stock1 = iter.next();

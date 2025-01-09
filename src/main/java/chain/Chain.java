@@ -74,8 +74,16 @@ public class Chain {
 		return blocks;
 	}
 
-	public Collection<StockToken> tokens() {
+	public Collection<StockToken> getTokens() {
 		return mapConid.values();
+	}
+	
+	public ArrayList<StockToken> getTokensList() {
+		Util.must( readSymbols, "Must read symbols first");
+
+		ArrayList<StockToken> list = new ArrayList<>();
+		mapConid.values().forEach( stock -> list.add( stock) );
+		return list; 
 	}
 	
 	public double getApprovedAmt() throws Exception {
@@ -92,7 +100,7 @@ public class Chain {
 
 	public StockToken getAnyStockToken() {
 		Util.must( readSymbols, "Must read symbols first");
-		return tokens().iterator().next();
+		return getTokens().iterator().next();
 	}
 
 	/** returns stocks only; see getAllAddresses */ 
@@ -144,14 +152,6 @@ public class Chain {
 		
 		return ar;
 	}
-	
-	public ArrayList<StockToken> getAllStockTokens() {
-		Util.must( readSymbols, "Must read symbols first");
-
-		ArrayList<StockToken> list = new ArrayList<>();
-		mapConid.values().forEach( stock -> list.add( stock) );
-		return list; 
-	}
 
 	/** read the symbols and create the stock tokens for this chain */ 
 	public void readSymbols(Book book) throws Exception {
@@ -164,7 +164,7 @@ public class Chain {
 		for (var row : symbolsTab.queryToJson() ) {
 			String address = row.getString( "TokenAddress");
 			
-			if (row.getInt( "Conid") > 0 && S.isNotNull( address) ) {
+			if (row.getInt( "Conid") > 0 && S.isNotNull( address) && row.getBool( "Active") ) {
 				StockTokenRec rec = new StockTokenRec(
 						row.getInt( "Conid"),
 						row.getString( "StartDate"),

@@ -19,17 +19,19 @@ import tw.util.S;
 public class Stocks {
 	private JsonArray hotStocks = new JsonArray(); // for hot stocks
 	private JsonArray watchList = new JsonArray(); // for watch list
+	private JsonArray tdxList = new JsonArray(); // for TDX platform
 	private HashMap<Integer,Stock> conidMap = new HashMap<>(); // map conid to Stock, all stocks
 
-	/** json stock with conid, symbol, put and call, for sending to frontend */
+	/** json stock with conid, symbol, bid, ask, for sending to frontend */
 	static class MiniStock extends JsonObject { }
 
-	/** Holds the parameters from the spreadsheet */
+	/** Holds the parameters from the spreadsheet */   // rename to StockParams. pas
 	public static record StockRec(
 			int conid,
 			boolean active,
 			boolean isHot,
-			boolean is24Hour, 
+			boolean is24Hour,
+			boolean tdx,
 			String symbol, 
 			String description, 
 			String type,
@@ -55,7 +57,7 @@ public class Stocks {
 
 	/** top-level stock w/ no blockchain info */
 	public static class Stock {
-		private StockRec rec;
+		private StockRec rec; // rename to params. pas
 		private Prices prices = Prices.NULL;
 		private final MiniStock jstock; // sent to frontend for hot stocks and watch list
 
@@ -105,6 +107,7 @@ public class Stocks {
 		public double markPrice() {
 			return prices.markPrice();
 		}
+		
 	}
 
 	public void readFromSheet() throws Exception {
@@ -119,6 +122,7 @@ public class Stocks {
 		// clear out exist data; this is needed in case refreshConfig() is being called
 		hotStocks.clear();
 		watchList.clear();
+		tdxList.clear();
 		conidMap.clear();
 
 		// read master tab
@@ -136,6 +140,12 @@ public class Stocks {
 	
 				if (rec.isHot() ) {
 					hotStocks.add( jstock);
+				}
+				
+				if (rec.tdx() ) {
+					tdxList.add( jstock);
+					jstock.put( "bid", "22.23");  // for testing only
+					jstock.put( "ask", "22.25");
 				}
 				
 				Stock stock = new Stock( rec, jstock);
@@ -182,5 +192,18 @@ public class Stocks {
 			time = Math.max( time, stock.prices().time() );
 		}
 		return time;
+	}
+
+	public JsonArray getTdxList() {
+		return tdxList;
+//		JsonArray ar = new JsonArray();
+//		
+//		for (var stock : conidMap.values() ) {
+//			if (stock.rec().tdx() ) {
+//				ar.add( stock.getForTdxList() );
+//			}
+//		}
+//		
+//		return ar;
 	}
 }

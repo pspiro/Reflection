@@ -727,5 +727,12 @@ public class BackendTransaction extends MyTransaction {
 					String.format( "wallet=%s  amt=%s", m_walletAddr, amount) );
 		});
 	}
+
+	public void handleGetTdxStocks() {
+		wrap( () -> {
+			parseMsg();
+			respond( m_main.stocks().getTdxList() );
+		});
+	}
 	
 }

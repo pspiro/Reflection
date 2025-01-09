@@ -118,6 +118,8 @@ public class Main implements ITradeReportHandler {
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
+			
+			server.createContext("/tdxrefl/get-stocks", exch -> new BackendTransaction(this, exch, true).handleGetTdxStocks() );  // old code, obsolete, remove
 
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );  // old code, obsolete, remove

@@ -86,7 +86,7 @@ public class Chains extends HashMap<Integer,Chain> {
 			chain.readSymbols( book);
 		}
 		
-		S.out( "  read %s settings and %s symbols", json.size(), chain.tokens().size() );
+		S.out( "  read %s settings and %s symbols", json.size(), chain.getTokens().size() );
 		
 		// add this new chain to the map
 		put( chain.chainId(), chain);
