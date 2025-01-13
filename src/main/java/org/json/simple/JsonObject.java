@@ -365,7 +365,7 @@ public class JsonObject extends HashMap<String,Object> implements JSONAware, JSO
 	}
 
 	public boolean getBool(String key) {
-		return Boolean.parseBoolean( getString(key) );
+		return Util.equalsIgnore( getString(key), "true", "y");
 	}
 
 	public SiweMessage getSiweMessage() throws Exception {
