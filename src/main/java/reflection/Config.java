@@ -79,6 +79,7 @@ public class Config {
 	private int maxSummaryEmails;
 	private int fbServerPort;
 	private int fbPollIingInterval;
+	private String aboutReflection;
 
 	public long recentPrice() { return recentPrice; }
 	public Allow allowTrading() { return allowTrading; }
@@ -204,6 +205,7 @@ public class Config {
 		this.baseUrl = m_tab.get("baseUrl");
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
+		this.aboutReflection = m_tab.getRequiredString( "aboutReflection");
 				
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
@@ -537,6 +539,10 @@ public class Config {
 		public boolean checkStaleData() {
 			return chains().size() > 1;
 		}
+	}
+	
+	public String aboutReflection() {
+		return aboutReflection;
 	}
 
 }

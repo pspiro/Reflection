@@ -120,6 +120,7 @@ public class Main implements ITradeReportHandler {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
 			
 			server.createContext("/tdxrefl/get-stocks", exch -> new BackendTransaction(this, exch, true).handleGetTdxStocks() );  // old code, obsolete, remove
+			server.createContext("/tdxrefl/stock-details", exch -> new BackendTransaction(this, exch, true).handleTdxStockDetails() );  // old code, obsolete, remove
 
 			// onramp
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );  // old code, obsolete, remove
@@ -309,19 +310,19 @@ public class Main implements ITradeReportHandler {
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
 			super.onConnected();  // stop the connection timer
-			log( LogType.TWS_CONNECTION, "connected");
+			S.out( "TWS_CONNECTION: connected");
 			
 			m_tradingHours.startQuery();
 		}
 
 		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
-			jlog( LogType.TWS_CONNECTION, "-", "-", Util.toJson( "validId", id), 0 );
+			S.out( "TWS_CONNECTION: recNextValidId " + id);
 		}
 
 		@Override public synchronized void onDisconnected() {
 			if (m_timer == null) {
-				log( LogType.TWS_CONNECTION, "dicconnected");
+				S.out( "TWS_CONNECTION: disconnected");
 				startTimer();
 			}
 		}

@@ -123,7 +123,8 @@ public class TradingHours {
 	/** Check if we are inside trading hours. For ETF's, check smart; if that fails,
 	 *  check IBEOS and change the exchange on the contract passed in to IBEOS;
 	 *  Exact duplicate of the below.
-	 *  @param run gets executed if we want to swtich to IBEOS */
+	 *  @param run gets executed if we want to swtich to IBEOS
+	 *  @param simTime can be null */
 	Session getTradingSession( boolean is24Hour, String simTime) throws Exception {
 		// if auto-fill is on, always return true, UNLESS simtime is passed
 		// which means this is called by a test script

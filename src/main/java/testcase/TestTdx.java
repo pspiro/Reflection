@@ -3,7 +3,7 @@ package testcase;
 import tw.util.S;
 
 public class TestTdx extends MyTestCase {
-	public void test() throws Exception {
+	public void testGetStocks() throws Exception {
 		cli().get( "/tdxrefl/get-stocks");
 		var list = cli.readJsonArray();
 		list.display();
@@ -14,6 +14,15 @@ public class TestTdx extends MyTestCase {
 		assertTrue( S.isNotNull( item.getString( "conid") ) );
 		assertTrue( S.isNotNull( item.getString( "bid") ) );
 		assertTrue( S.isNotNull( item.getString( "ask") ) );
+	}
+
+	public void testStockDetails() throws Exception {
+		var json = cli().getJson( "/tdxrefl/stock-details/265598");
+		json.display();
+		assertTrue( S.isNotNull( json.getString( "description") ) );
+		assertTrue( S.isNotNull( json.getString( "tradingView") ) );
+		assertTrue( S.isNotNull( json.getString( "aboutReflection") ) );
+		assertTrue( S.isNotNull( json.getString( "exchangeStatus") ) );
 	}
 
 }

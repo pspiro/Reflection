@@ -107,6 +107,12 @@ public class Stocks {
 		public double markPrice() {
 			return prices.markPrice();
 		}
+
+		public JsonObject getTdxDetails() {
+			return Util.toJson(
+					"tradingView", rec.tradingView(), 
+					"description", rec.description() ); 
+		}
 		
 	}
 

@@ -53,6 +53,7 @@ public class Onramp {
 	// https://api.onramp.money/onramp/api/v3/buy/public/listAllNetworks
 	// https://api.onramp.money/onramp/api/v2/common/public/fetchPaymentMethodType
 	// https://docs.onramp.money/onramp-whitelabel-unlisted/whitelabel-public-endpoints/list-supported-fiat
+	// https://api-test.onramp.money/onramp/api/v2/whiteLabel/test/changeKycStatus
 
 	static {
 		try {
@@ -65,12 +66,10 @@ public class Onramp {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		prodRamp.getBankDetails(
-				"4Vj3K6XBB4_34730",
-				"1120771",
-				"NGN",
-				"NG-BANK-TRANSFER"
-				).display();
+		String custId = "bBnOtasy5R_36989";
+		var body = Util.toJson( "customerId", custId);
+		
+		prodRamp.whiteLab( "/kyc/status", body).display();
 	}
 	
 	public Onramp( String url) {

@@ -730,8 +730,23 @@ public class BackendTransaction extends MyTransaction {
 
 	public void handleGetTdxStocks() {
 		wrap( () -> {
-			parseMsg();
+			parseMsg(); // not needed, no params passed
 			respond( m_main.stocks().getTdxList() );
+		});
+	}
+
+	public void handleTdxStockDetails() {
+		wrap( () -> {
+			int conid = Integer.parseInt( getLastToken() );
+			var stock = m_main.stocks().getStockByConid( conid);
+			Main.require( stock != null, RefCode.INVALID_REQUEST, "Error: conid is invalid");
+			
+			Session session = m_main.m_tradingHours.getTradingSession( stock.rec().is24Hour(), null);
+			
+			respond( stock.getTdxDetails()
+					.append( "aboutReflection", m_config.aboutReflection() )
+					.append( "exchangeStatus", session == Session.None ? "Closed" : "Open")
+					); 
 		});
 	}
 	
