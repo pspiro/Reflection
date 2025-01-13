@@ -18,11 +18,11 @@ public class CreateKey {
 	static SecureRandom rnd = new SecureRandom();
 	
 	public static void main(String[] args) throws Exception {
-//		createWalletsFromKey();
+//		createWalletsFromKey(); // if you know the private key already
 //		decrypt();
-//		createSystemWallets();
+		createSystemWallets();
 //		verifyKey();
-		showPks();
+//		showPks();
 	}
 	
 	private static void showPks() throws Exception {
@@ -76,6 +76,7 @@ public class CreateKey {
 		}
 	}
 
+	/** use this if you know the private key already */
 	public static void createWalletsFromKey() throws Exception {
 		try( Scanner scanner = new Scanner( System.in) ) {
 			String pw1 = input( scanner, "Enter password: ");

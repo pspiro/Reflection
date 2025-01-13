@@ -16,6 +16,11 @@ import testcase.web3.TestSendEth;
 	// blockchain stuff
 	
 	
+	TestOrder.class,
+	TestOrderNoAutoFill.class,
+	TestFbOrders.class,
+	TestUnwindOrder.class,
+
 	TestAlchemy.class,
 	TestApprove.class,
 	TestBackendMsgs.class,
@@ -24,7 +29,6 @@ import testcase.web3.TestSendEth;
 	TestErrors.class,
 	TestFaqs.class,
 	TestFaucet.class,
-	TestFbOrders.class,
 	TestFundWallet.class,
 	TestGetCryptoTrans.class,
 	TestPositionsNew.class,
@@ -36,8 +40,6 @@ import testcase.web3.TestSendEth;
 	TestMktDataServer.class,
 	TestNode.class,
 	TestOnramp.class,
-	TestOrder.class,
-	TestOrderNoAutoFill.class,
 	TestOutsideHours.class,
 	TestPanic.class,
 	TestPartialFill.class,
@@ -53,7 +55,7 @@ import testcase.web3.TestSendEth;
 	TestSplitDates.class,
 	TestSql.class,
 	TestSwap.class,
-	TestUnwindOrder.class,
+	TestTdx.class,
 	TestUserTokMgr.class,
 	TestMyWallet.class,
 	

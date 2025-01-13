@@ -29,7 +29,7 @@ public class ZkDeploy {
 		
 		String params = Param.encodeParameters(
 				Util.toArray( "address", "address"),
-				Util.toArray( config.refWalletAddr(), config.admin1Addr() ) );
+				Util.toArray( config.refWalletAddr(), config.chain().params().admin1Addr() ) );
 
 		Wallet wallet = new Wallet(web3j, zkSync, credentials);
 

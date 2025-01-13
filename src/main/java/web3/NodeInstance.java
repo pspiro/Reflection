@@ -788,8 +788,12 @@ public class NodeInstance {
 			);
 		
 		req.put( "params", Util.toArray( param1, blockNumber) );
-		S.out( "revert reason is ");
-		nodeQuery( req.toString() ).display();
+		
+		// will throw an exception if revert reason is returned
+		nodeQuery( req.toString() );
+
+		// could not get reason
+		throw new Exception( "Could not get revert reason");
 	}
 	
 }

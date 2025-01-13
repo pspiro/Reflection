@@ -13,8 +13,10 @@ import web3.NodeInstance;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ChainParams( // set new params to optional if needed; remember heather's monitor is fixed
-		String admin1Addr,
+		String admin1Addr,					// used by RefAPI to place customer orders
 		String admin1RefblocksKey,
+		String sysAdminAddr,				// used by Monitor and any system processes, not RefAPI
+		String sysAdminRefblocksKey,
 		boolean autoFill,
 		String alchemyChain,
 		String blockchainExpl,

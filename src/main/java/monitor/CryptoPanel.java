@@ -31,7 +31,7 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_ownerBusd = new JTextField(10);
 	private JTextField m_refWalletMatic = new JTextField(10);
 	private JTextField m_admin1Matic = new JTextField(10);
-	private JTextField m_admin2Matic = new JTextField(10);
+	private JTextField m_sysAdminMatic = new JTextField(10);
 	private JTextField m_ownerMatic = new JTextField(10);
 	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
@@ -84,7 +84,7 @@ public class CryptoPanel extends MonPanel {
 		
 		leftPanel.addHeader( "Admin Accounts");
 		leftPanel.add( m_ad1Label, m_admin1Matic);
-		leftPanel.add( m_ad2Label, m_admin2Matic);
+		leftPanel.add( m_ad2Label, m_sysAdminMatic);
 
 		leftPanel.addHeader( "Brokerage (IB)");
 		leftPanel.add( "Cash in brokerage", m_cash);
@@ -211,7 +211,7 @@ public class CryptoPanel extends MonPanel {
 		m_refLabel.setText( "RefWallet " + config().nativeTokName() );
 		m_ownLabel.setText( "Owner " + config().nativeTokName() );
 		m_ad1Label.setText( "Admin1 " + config().nativeTokName() );
-		m_ad2Label.setText( "Admin2 " + config().nativeTokName() );
+		m_ad2Label.setText( "Sys Admin " + config().nativeTokName() );
 		
 		m_refAddress.setText( config().refWalletAddr() );
 
@@ -232,8 +232,8 @@ public class CryptoPanel extends MonPanel {
 		double admin1Bal = m_config.node().getNativeBalance( chain().params().admin1Addr() );
 		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
 
-//		double admin2Bal = new Wallet( config().admin2Addr()").getNativeBalance();
-//		SwingUtilities.invokeLater( () -> m_admin2Matic.setText( S.fmt2(admin2Bal) ) );
+		double sysAdminBal = m_config.node().getNativeBalance( chain().params().sysAdminAddr() );
+		SwingUtilities.invokeLater( () -> m_sysAdminMatic.setText( S.fmt2(sysAdminBal) ) );
 		
 		double approved = config().busd().getAllowance(
 				chain().params().refWalletAddr(),

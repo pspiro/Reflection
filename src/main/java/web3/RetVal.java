@@ -65,11 +65,10 @@ public abstract class RetVal {
 				if (receipt.getString( "status").equals( "0x1") ) {
 					return m_hash;
 				}
-				
+
+				// is guaranteed to throw an exception
 				m_node.getRevertReason( m_from, m_to, m_data, m_gasLimit, receipt.getString( "blockNumber") );
-				
-				S.out( "could not get revert reason");
-				throw new Exception();
+				throw new Exception(); // never comes here
 			}						
 		}
 	}

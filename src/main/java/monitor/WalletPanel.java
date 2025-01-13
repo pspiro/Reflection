@@ -222,6 +222,7 @@ public class WalletPanel extends MonPanel {
 				walletMap.clear();
 				walletMap.put( m_config.chain().params().refWalletAddr().toLowerCase(), BlockPanelBase.RefWallet);
 				walletMap.put( m_config.chain().params().admin1Addr().toLowerCase(), "Admin1");
+				walletMap.put( m_config.chain().params().sysAdminAddr().toLowerCase(), "Sys Admin");
 				walletMap.put( m_config.chain().params().ownerAddr().toLowerCase(), "Owner");
 				walletMap.put( NodeInstance.prod, "My prod wallet");
 				walletMap.put( NodeInstance.nullAddr, BlockPanelBase.nullAddr);

@@ -14,10 +14,10 @@ public class TestTransferFrom extends MyTestCase {
 //			.waitForReceipt();
 				
 		// let owner approve admin to send money
-		m_config.busd().approve( m_config.ownerKey(), m_config.admin1Addr(), 200)
+		m_config.busd().approve( m_config.ownerKey(), chain().params().sysAdminAddr(), 200)
 			.waitForReceipt();
 		
-		double al = m_config.busd().getAllowance( m_config.ownerAddr(), m_config.admin1Addr() );
+		double al = m_config.busd().getAllowance( m_config.ownerAddr(), chain().params().sysAdminAddr() );
 
 		S.out( "old balance: " + m_config.busd().getPosition(m_config.ownerAddr()));
 		S.out( "old allowance: " + al);
@@ -28,7 +28,7 @@ public class TestTransferFrom extends MyTestCase {
 		
 		S.out( "transfer completed");
 		
-		al = m_config.busd().getAllowance( m_config.ownerAddr(), m_config.admin1Addr() );
+		al = m_config.busd().getAllowance( m_config.ownerAddr(), chain().params().sysAdminAddr() );
 		S.out( "new balance: " + m_config.busd().getPosition(m_config.ownerAddr() ) );
 		S.out( "new allowance: " + al);
 		

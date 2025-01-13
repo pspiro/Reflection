@@ -63,10 +63,6 @@ public class SingleChainConfig extends Config {
 		return chain().params();
 	}
 
-	public String admin1Addr() {
-		return params().admin1Addr();
-	}
-
 	public String refWalletAddr() {
 		return params().refWalletAddr();
 	}
