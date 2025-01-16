@@ -9,7 +9,7 @@ public class FillTheGap {
 		try (MyScanner s = new MyScanner() ) {
 			String name = s.getString( "enter chain name: (e.g. Polygon)");
 
-			Chain chain = new Chains().readOne( name, false);
+			Chain chain = Chains.readOne( name, false);
 			chain.blocks().showAllNonces( chain.params().admin1Addr() );
 
 			int num = s.getInt( "enter number of transactions)");

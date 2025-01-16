@@ -1,5 +1,7 @@
 package web3;
 
+import java.math.BigInteger;
+
 import chain.Chain;
 import chain.Chains;
 import common.MyScanner;
@@ -14,9 +16,9 @@ public class CancelStuckTransaction {
 			String name = s.getString( "enter chain name: [Polygon]");
 			name = S.isNull( name) ? "Polygon" : name;
 			
-			Chain chain = new Chains().readOne( name, false);
+			Chain chain = Chains.readOne( name, false);
 
-			String wallet = chain.params().admin1Addr();  // wallet that is stuck
+			String wallet = "0x2f8ee6b4783196416794b3c9bae347302b1dc48d"; //chain.params().admin1Addr();  // wallet that is stuck
 
 			// show current nonces
 			chain.blocks().showAllNonces( wallet);
@@ -32,8 +34,9 @@ public class CancelStuckTransaction {
 				if (S.isNull( str) ) {
 					break;
 				}
-
-				chain.blocks().cancelStuckTransaction( chain.params().admin1Key(), Integer.parseInt( str) );
+				
+				BigInteger nonce = new BigInteger( str);
+				// chain.node().cancelTransaction( nonce);
 			}
 		}
 

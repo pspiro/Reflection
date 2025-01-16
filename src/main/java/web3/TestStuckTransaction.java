@@ -7,7 +7,7 @@ import tw.util.S;
 
 public class TestStuckTransaction {
 	public static void main(String[] args) throws Exception {
-		Chain chain = new Chains().readOne( "Amoy", true);
+		Chain chain = Chains.readOne( "Amoy", true);
 		
 		String key = Util.createPrivateKey();
 		String wal = Util.getAddress(key);

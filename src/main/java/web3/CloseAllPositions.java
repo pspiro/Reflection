@@ -21,7 +21,7 @@ public class CloseAllPositions {
 		try (MyScanner s = new MyScanner() ) {
 			String name = s.getString( "enter chain name: [Polygon]", "Polygon");
 			
-			chain = new Chains().readOne( name, true);
+			chain = Chains.readOne( name, true);
 			
 			for (var stock : chain.getTokensList() ) {
 				close( stock);

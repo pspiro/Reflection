@@ -12,12 +12,12 @@ import org.web3j.protocol.http.HttpService;
 
 import common.Util;
 import onramp.Onramp;
-import refblocks.Refblocks;
 import tw.google.NewSheet.Book;
 import tw.util.S;
 import web3.Busd;
 import web3.MoralisServer;
 import web3.NodeInstance;
+import web3.Refblocks;
 import web3.NodeInstance.Transfer;
 import web3.NodeInstance.Transfers;
 import web3.Rusd;
@@ -79,7 +79,7 @@ public class Chain {
 	}
 	
 	public ArrayList<StockToken> getTokensList() {
-		Util.must( readSymbols, "Must read symbols first");
+		Util.must( readSymbols, "Error: must read symbols first");
 
 		ArrayList<StockToken> list = new ArrayList<>();
 		mapConid.values().forEach( stock -> list.add( stock) );
@@ -99,13 +99,13 @@ public class Chain {
 	}
 
 	public StockToken getAnyStockToken() {
-		Util.must( readSymbols, "Must read symbols first");
+		Util.must( readSymbols, "Error: must read symbols first");
 		return getTokens().iterator().next();
 	}
 
 	/** returns stocks only; see getAllAddresses */ 
 	public String[] getAllContractsAddresses() {
-		Util.must( readSymbols, "Must read symbols first");
+		Util.must( readSymbols, "Error: must read symbols first");
 
 		if (allAddresses == null) {
 			allAddresses = new String[mapConid.size()];
@@ -121,7 +121,7 @@ public class Chain {
 	/** for the get-all-stocks query which is for dropdown on trading page;
 	 *  does not return prices */ 
 	public JsonArray getAllStocks(Stocks stocks) throws Exception {
-		Util.must( readSymbols, "Must read symbols first");
+		Util.must( readSymbols, "Error: must read symbols first");
 		
 		JsonArray ar = new JsonArray();
 		
@@ -211,12 +211,18 @@ public class Chain {
 		return params.isProduction() ? Onramp.prodRamp : Onramp.devRamp;
 	}
 
-	public void setBusdAddress(String busdAddress) {
-		S.out( "BUSD ADDRESS IS " + busdAddress);
+	/** WARNING: spreadsheet and params.busdAddress() are not updated 
+	 * @throws Exception */
+	public void setBusdAddress(String busdAddress) throws Exception {
+		S.out( "BUSD ADDRESS IS %s; update spreadsheet", busdAddress);
+		busd = new Busd( busdAddress, busd.decimals(), busd.name(), this); 
 	}
 
-	public void setRusdAddress(String rusdAddress) {
-		S.out( "RUSD ADDRESS IS " + rusdAddress);
+	/** WARNING: spreadsheet and params.rusdAddress() are not updated 
+	 * @throws Exception */
+	public void setRusdAddress(String rusdAddress) throws Exception {
+		S.out( "RUSD ADDRESS IS %s; update spreadsheet", rusdAddress);
+		rusd = new Rusd( rusdAddress, rusd.decimals(), this);
 	}
 
 	/** see also getAllAddresses() */
@@ -288,6 +294,19 @@ public class Chain {
 
 		var tok = getTokenByAddress(addr);
 		return tok != null ? tok.name() : "";
+	}
+
+	public String getAdminKey(String addr) throws Exception {
+		return 
+			addr.equalsIgnoreCase( params.admin1Addr() ) ? params.admin1Key() :
+			addr.equalsIgnoreCase( params.sysAdminAddr() ) ? params.sysAdminKey() : null;
+	}
+
+	/** check if admin1 wallet is running out of gas */ 
+	public void checkAdminBalance() throws Exception {
+		if (node.getNativeBalance( params.admin1Addr() ) < params.faucetAmt() * 100) {
+			throw new Exception( "Admin1 wallet is running out of gas on " + params.name() );
+		}
 	}
 
 }

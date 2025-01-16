@@ -16,7 +16,6 @@ import org.web3j.utils.Numeric;
 
 import common.Util;
 import http.MyClient;
-import refblocks.Refblocks;
 import test.MyTimer;
 import tw.util.MyException;
 import tw.util.S;
@@ -30,6 +29,8 @@ public class NodeInstance {
 	public static final String nullAddr = "0x0000000000000000000000000000000000000000";
 	public static final String latest = "latest";
 	public static final String pending = "pending";
+	public static final long deployGas = 2000000;
+	public static final long PollingInterval = 5000;  // polling interval for transaction receipt
 
 	static String pulseRpc = "https://rpc.pulsechain.com/";
 
@@ -45,6 +46,7 @@ public class NodeInstance {
 	/** you could make this a member var */
 	private String rpcUrl;  // with or without trailing /; note you can get your very own rpc url from Moralis for more bandwidth
 	private int chainId;
+	private HashMap<String,Nonce> m_nonceMap = new HashMap<>();
 	
 	/** note that we sometimes pass rpcUrl with trailing / and sometimes not */
 	public NodeInstance( String rpcUrlIn, int chainIdIn, int maxBatchSizeIn) throws Exception {
@@ -59,9 +61,12 @@ public class NodeInstance {
 	}
 	
 	/** Send a query and expect "result" to contain a hex value.
-	 *  A value of '0x' is invalid and will throw an exception */
+	 *  A value of '0x' is invalid and will throw an exception
+	 *  @param text pass null to suppress output */
 	private String queryHexResult( String body, String text, String contractAddr, String walletAddr) throws Exception {
-		S.out( "NODE %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
+		if (text != null) {
+			S.out( "NODE %s  contract='%s'  wallet='%s'", text, contractAddr, walletAddr);
+		}
 		var json = nodeQuery( body);
 		String result = json.getString( "result");
 		
@@ -70,6 +75,9 @@ public class NodeInstance {
 			throw new MyException( "Could not get %s; contractAddr '%s' may be invalid", text, contractAddr);
 		}
 
+		if (text != null) {
+			S.out( "  hex result: " + result);
+		}
 		return result;
 	}
 
@@ -92,7 +100,7 @@ public class NodeInstance {
 		
 		JsonObject err = obj.getObject( "error");
 		if (err != null) {
-			throw new MyException( "nodeQuery error  code=%s  chain=%s  %s", 
+			throw new MyException( "NODE Error  code=%s  chain=%s  %s", 
 					err.getInt( "code"), chainId, err.getString( "message") );
 		}
 		return obj;
@@ -278,13 +286,14 @@ public class NodeInstance {
 		
 		S.out( "Types: " + result.getKeys() );
 
-		S.out( "Pending");
+		S.out( "pending");
 		var pending = result.getObject( "pending");
 		show( pending, wallet);
 		
 		S.out( "");
-		S.out( "Queued");
-		var queued = result.getObject( "queued"); 
+		S.out( "queued");
+		var queued = result.getObject( "queued");
+		queued.display();
 		show( queued, wallet);
 	}
 	
@@ -667,16 +676,16 @@ public class NodeInstance {
 			);
 	}
 	
-	public BigInteger getNonce(String wallet) throws Exception {
+	public BigInteger getNonceLatest(String wallet) throws Exception {
 		var req = new Req("eth_getTransactionCount");
 		req.put( "params", Util.toArray( wallet, latest) );
-		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), null, null, null) );
 	}	
 
 	public BigInteger getNoncePending(String wallet) throws Exception {
 		var req = new Req("eth_getTransactionCount");
 		req.put( "params", Util.toArray( wallet, pending) );
-		return Erc20.decodeQuantity( queryHexResult( req.toString(), "nonce", "n/a", wallet) );
+		return Erc20.decodeQuantity( queryHexResult( req.toString(), null, null, null) );
 	}	
 	
 	// to get the reason you have to call again with the "defaultBlockParameter" set to 
@@ -697,15 +706,19 @@ public class NodeInstance {
 		return callSigned(
 				privateKey,
 				contractAddr,
+				BigInteger.ZERO,
 				Param.encodeData(keccak, params),
 				gasLimit);
 	}
 
+	public RetVal transfer( String privateKey, String contractAddr, double amount) throws Exception {
+		S.out( "NODE Transfer %s native token from %s to %s", S.fmt4( amount), Util.getAddress(privateKey), contractAddr);
+		return callSigned( privateKey, contractAddr, Erc20.toBlockchain( amount, 18), "", 40000);
+	}
+
 	/** works for all chains but not zkSync */
 	public String deploy( String privateKey, String byteCode, String params) throws Exception {
-		Util.require( !params.startsWith( "0x"), "invalid params");
-
-		String hash = callSigned( privateKey, "", byteCode + params, Refblocks.deployGas)
+		String hash = callSigned( privateKey, "", BigInteger.ZERO, byteCode + params, deployGas)
 				.waitForReceipt();
 		
 		var receipt = getReceipt( hash);
@@ -716,19 +729,55 @@ public class NodeInstance {
 		return address;
 	}
 	
-	public RetVal callSigned( String privateKey, String contractAddr, String data, long gasLimit) throws Exception {		
-		String callerAddr = Util.getAddress( privateKey);
+	/** Get nonce and call signed */ 
+	private RetVal callSigned( String privateKey, String contractAddr, BigInteger amtToSend, String data, long gasLimit) throws Exception {
+		String walletAddr = Util.getAddress( privateKey).toLowerCase();
 		
+		// we can't just fetch the nonce because the Nonce object needs to know if
+		// an exception was thrown by callSigned()
+		return Util.getOrCreate( m_nonceMap, walletAddr, () -> new Nonce( walletAddr) )
+				.callSigned( this, privateKey, contractAddr, amtToSend, data, gasLimit);
+	}
+
+	/** replace the stuck transaction with a transfer of zero native tokens to the null address */
+	public void cancelStuck( String privateKey, BigInteger nonce) throws Exception {
+		var fees = queryFees();  // we may need to increase the fees, must be 10% higher than stuck transaction
+
+		callSigned( 
+				privateKey, 
+				nullAddr, 
+				BigInteger.ZERO, 
+				"", 
+				40000, 
+				nonce,
+				fees)
+			.waitForReceipt();
+	}
+
+	/** Called only by Nonce object */ 
+	RetVal callSigned( String privateKey, String contractAddr, BigInteger amtToSend, String data, long gasLimit, BigInteger nonce) throws Exception {
 		var fees = queryFees();
-		//fees.display( BigInteger.valueOf( gasLimit) );
-		var nonce = getNonce(callerAddr);
-		
+		return callSigned( privateKey, contractAddr, amtToSend, data, gasLimit, nonce, fees);
+	}
+	
+	/** The actual call to the blockchain. Could be smart contract call,
+	 *  contract deployment, or native token transfer.
+	 *  
+	 * @param amtToSend could be zero (e.g. for any smart contract call
+	 * @param data could be empty string (e.g. for transfers)
+	 */
+	private RetVal callSigned( String privateKey, String contractAddr, BigInteger amtToSend, String data, long gasLimit, BigInteger nonce, Fees fees) throws Exception {		
+		String walletAddr = Util.getAddress( privateKey);
+
+		S.out( "NODE signedTransaction"); // header for gas fees
+		fees.display( gasLimit);
+				
 		RawTransaction rawTransaction = RawTransaction.createTransaction(
 				chainId,
 				nonce,
 				BigInteger.valueOf( gasLimit),
 				contractAddr,
-				BigInteger.ZERO,  // no ether to send
+				amtToSend,
 				data,
 				fees.priorityFee(),
 				fees.totalFee()
@@ -741,10 +790,11 @@ public class NodeInstance {
 		Req req = new Req("eth_sendRawTransaction");
 		req.put( "params", Util.toArray( signedHex) );
 		
-		String hash = queryHexResult(req.toString(), "signedTransaction  nonce=" + nonce, contractAddr, callerAddr);
+		// this can fail with 'nonce too low'
+		String hash = queryHexResult(req.toString(), "signedTransaction  nonce=" + nonce, contractAddr, walletAddr);
 		S.out( "  transaction hash: " + hash);
 		
-		return new NodeRetVal( hash, this, callerAddr, contractAddr, data, gasLimit);
+		return new NodeRetVal( hash, this, walletAddr, contractAddr, amtToSend, data, gasLimit, nonce);
 	}
 	
 	public void preCheck(String from, String to, String keccak, Param[] params, int gasLimit) throws Exception {
@@ -773,17 +823,17 @@ public class NodeInstance {
 	}
 
 	public void getRevertReason( String from, String to, String keccak, Param[] params, long gasLimit) throws Exception {
-		getRevertReason( from, to, Param.encodeData( keccak, params), gasLimit, "latest");
+		getRevertReason( from, to, BigInteger.ZERO, Param.encodeData( keccak, params), gasLimit, "latest");
 	}
 	
-	public void getRevertReason(String from, String to, String data, long gasLimit, String blockNumber) throws Exception {
+	public void getRevertReason(String from, String to, BigInteger amtToSend, String data, long gasLimit, String blockNumber) throws Exception {
 		Req req = new Req( "eth_call");
 
 		var param1 = Util.toJson(
 			"from", from,
 			"to", to,
 			"data", data,
-			"value", "0x0",
+			"value", Util.toHex( amtToSend),
 			"gas", Util.toHex( gasLimit)
 			);
 		
@@ -796,6 +846,9 @@ public class NodeInstance {
 		throw new Exception( "Could not get revert reason");
 	}
 	
+	public int chainId() {
+		return chainId;
+	}
 }
 
 // looking for transferNativeToken()? see RefBlocks.transfer(); we could add it here but it has to be signed

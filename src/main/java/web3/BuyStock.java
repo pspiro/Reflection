@@ -9,7 +9,7 @@ public class BuyStock {
 	public static void main(String[] args) throws Exception {
 		try (MyScanner s = new MyScanner() ) {
 			String name = s.getString( "enter chain name: (e.g. Polygon)");
-			Chain chain = new Chains().readOne( name, true);
+			Chain chain = Chains.readOne( name, true);
 
 			chain.blocks().showAllNonces( chain.params().admin1Addr() );
 

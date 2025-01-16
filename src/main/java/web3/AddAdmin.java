@@ -10,12 +10,11 @@ import chain.Chains;
  *  it will always be wrong */
 public class AddAdmin {
 	public static void main(String[] args) throws Exception {
-		addAdmin( "Sepolia");
-		addAdmin( "Amoy");
+		addAdmin( "Polygon");
 	}
 
 	public static void addAdmin( String chain) throws Exception {
-		Chain fb = new Chains().readOne( chain, false);
+		Chain fb = Chains.readOne( chain, false);
 		
 		fb.rusd().addOrRemoveAdmin(fb.params().ownerKey(), fb.params().sysAdminAddr(), true)
 			.waitForReceipt();

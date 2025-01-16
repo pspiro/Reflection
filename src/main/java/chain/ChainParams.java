@@ -24,7 +24,7 @@ public record ChainParams( // set new params to optional if needed; remember hea
 		int busdDecimals,
 		String busdName,
 		int chainId,
-		double faucetAmt,
+		double faucetAmt, // roughly the amount for one transfer; used for faucet and checking admin balance
 		int hookServerPort,
 		String moralisPlatform,
 		String name,
@@ -63,6 +63,10 @@ public record ChainParams( // set new params to optional if needed; remember hea
 	
 	public String admin1Key() throws Exception {
 		return getKey( admin1RefblocksKey);
+	}
+
+	public String sysAdminKey() throws Exception {
+		return getKey( sysAdminRefblocksKey);
 	}
 
 	public String refWalletKey() throws Exception {

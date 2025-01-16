@@ -4,6 +4,9 @@ import java.math.BigInteger;
 
 import tw.util.S;
 
+/** Here's how it works: first, the base fee, which is calculated by the system,
+ *  is paid out of the total. Then, the remainder goes towards the tip, but not
+ *  more than the priority fee. */
 public class Fees {
 	public static double billion = Math.pow( 10, 9);
 	public static double ten18 = Math.pow( 10, 18);
@@ -14,6 +17,8 @@ public class Fees {
 	private BigInteger priorityFee;
 
 	Fees( double base, double priority) {
+//		baseFee = BigInteger.ONE;
+//		priorityFee = BigInteger.ONE;
 		baseFee = BigInteger.valueOf( (long)base);
 		priorityFee = BigInteger.valueOf( (long)priority);
 	}
@@ -36,21 +41,25 @@ public class Fees {
 	}
 
 	public void display() {
-		display( BigInteger.valueOf( 21000) );
+		display( 21000);
 	}
 	
-	public void display(BigInteger gasUnits) {
-		S.out( "  baseGas=%s wei  priority=%s wei  effectiveGas=%s wei  maxCost=%s native tokens",  
+	public void display(long gasUnits) {
+		display( BigInteger.valueOf( gasUnits), BigInteger.ZERO);
+	}
+	
+	/** @param xferAmt is weiValue of transfer */
+	public void display(BigInteger gasUnits, BigInteger xferAmt) {
+		S.out( "  baseGas=%s wei  priority=%s wei  effectiveGas=%s wei  xferAmt=%s wei  maxCost=%s native tokens",  
 				baseFee.doubleValue(),
 				priorityFee.doubleValue(),
 				baseFee.add( priorityFee).doubleValue(),
-				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
+				xferAmt,
+				maxCost( gasUnits, xferAmt)
+				);
 	}
-//	public void showFees(BigInteger gasUnits) {
-//		S.out( "  baseGas=%s gw  priority=%s gw  effectiveGas=%s  maxCost=$%s",  
-//				baseFee.doubleValue() / billion,
-//				priorityFee.doubleValue() / billion,
-//				baseFee.add( priorityFee).doubleValue() / billion,
-//				S.fmt4( totalFee().multiply( gasUnits).doubleValue() / ten18 ) );
-//	}
+
+	public double maxCost(BigInteger gasUnits, BigInteger xferAmt) {
+		return totalFee().multiply( gasUnits).add( xferAmt).doubleValue() / ten18;
+	}
 }

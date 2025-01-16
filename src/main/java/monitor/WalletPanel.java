@@ -321,6 +321,8 @@ public class WalletPanel extends MonPanel {
 		private static final double minBalance = .0001;
 		private final JsonModel posModel = new PosModel();
 		UpperField m_rusd = new UpperField();
+		UpperField m_busd = new UpperField();
+		UpperField m_busdAppr = new UpperField();
 		UpperField m_stock = new UpperField();
 		UpperField m_total = new UpperField();
 		
@@ -329,6 +331,8 @@ public class WalletPanel extends MonPanel {
 			
 			VerticalPanel p = new VerticalPanel();
 			p.add( "RUSD balance", m_rusd);
+			p.add( chain().busd().name() + " balance", m_busd);
+			p.add( chain().busd().name() + " approved", m_busdAppr);
 			p.add( "Stock value", m_stock);
 			p.addVSpace( 10);
 			p.add( "Total", m_total);
@@ -355,6 +359,15 @@ public class WalletPanel extends MonPanel {
 
 		@Override public void activated() {
 			wrap( () -> {
+				double rusdBal = m_config.rusd().getPosition( m_wallet);
+				m_rusd.setText( fmt( rusdBal) );
+
+				m_busd.setText( fmt( 
+						m_config.busd().getPosition( m_wallet) ) );
+				
+				m_busdAppr.setText( fmt( 
+						m_config.busd().getAllowance( m_wallet, m_config.rusd().address() ) ) );
+				
 				var prices = MyClient.getArray( m_config.mdBaseUrl() + "/mdserver/get-ref-prices");
 				
 				HashMap<String, Double> posMap = m_config.node().reqPositionsMap(m_wallet, Monitor.chain().getAllContractsAddresses(), StockToken.stockTokenDecimals);
@@ -383,8 +396,6 @@ public class WalletPanel extends MonPanel {
 				}
 				posModel.fireTableDataChanged();
 				
-				double rusdBal = m_config.rusd().getPosition( m_wallet);
-				m_rusd.setText( fmt( rusdBal) );
 				m_stock.setText( fmt( stockBal) );
 				m_total.setText( fmt( rusdBal + stockBal) );
 			});

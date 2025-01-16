@@ -18,7 +18,7 @@ public class SingleChainConfig extends Config {
 		
 		// let chain equal first chain in list of chains specified on tab
 		String[] names = m_tab.getRequiredString( "chains").split( ",");
-		m_chain = new Chains().readOne( names[0], true);
+		m_chain = Chains.readOne( names[0], true);
 	}
 
 	public boolean isProduction() {
@@ -59,7 +59,7 @@ public class SingleChainConfig extends Config {
 		return chain().node();
 	}
 
-	private ChainParams params() {
+	public ChainParams params() {
 		return chain().params();
 	}
 

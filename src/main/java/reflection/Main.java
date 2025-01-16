@@ -225,6 +225,7 @@ public class Main implements ITradeReportHandler {
 		}
 		
 		Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkHookServers);
+		Util.executeEvery( Util.DAY, Util.DAY, this::checkAdminBalance);
 	}
 
 	void shutdown() {
@@ -236,6 +237,7 @@ public class Main implements ITradeReportHandler {
 		
 		// read RefAPI config
 		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
+		m_config.chains().useAdmin1();
 		m_stocks.readFromSheet( book);
 
 		// read Backend config (used by Frontend)
@@ -618,6 +620,17 @@ public class Main implements ITradeReportHandler {
 				}
 			}
 		});
+	}
+
+	/** send an alert if admin wallet is running out of gas; it's really bad if that happens */
+	private void checkAdminBalance() {
+		try {
+			m_config.chains().checkAdminBalance();
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			Alerts.alert( "RefAPI", "WARNING: ADMIN WALLET IS RUNNING OUT OF GAS", e.getMessage() );
+		}
 	}
 }
 

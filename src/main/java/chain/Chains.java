@@ -51,9 +51,10 @@ public class Chains extends HashMap<Integer,Chain> {
 		read( Util.toArray( "Polygon", "PulseChain", "Sepolia", "zkSync"), true );
 	}
 
-	public Chain readOne( String name, boolean readSymbols) throws Exception {
-		read( Util.toArray( name), readSymbols);
-		return values().iterator().next();
+	public static Chain readOne( String name, boolean readSymbols) throws Exception {
+		Chains chains = new Chains();
+		chains.read( Util.toArray( name), readSymbols);
+		return chains.values().iterator().next();
 	}
 
 	public void read(String[] names, boolean readSymbols) throws Exception {
@@ -96,5 +97,18 @@ public class Chains extends HashMap<Integer,Chain> {
 		Chains chains = new Chains();
 		chains.readAll();
 		S.out( chains);
+	}
+
+	/** Called by RefAPI; all other use sysAdmin */
+	public void useAdmin1() {
+		values().forEach( chain -> chain.rusd().useAdmin1() );
+	}
+
+	/** make sure admin1 wallet is not running out of gas 
+	 * @throws Exception */
+	public void checkAdminBalance() throws Exception {
+		for (var chain : values() ) {
+			chain.checkAdminBalance();
+		}
 	}
 }

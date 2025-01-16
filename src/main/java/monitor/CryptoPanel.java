@@ -6,12 +6,15 @@ import java.awt.BorderLayout;
 import java.util.Date;
 
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.json.simple.JsonObject;
 import org.json.simple.OrderedJson;
 
+import common.JsonModel;
 import common.Util;
 import http.MyClient;
 import tw.google.GTable;
@@ -20,6 +23,7 @@ import tw.google.NewSheet.Book.Tab;
 import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
 import tw.util.S;
+import tw.util.UI;
 import tw.util.VerticalPanel;
 
 /** Not a json panel */
@@ -30,8 +34,6 @@ public class CryptoPanel extends MonPanel {
 	private JTextField m_refWalletBusd = new JTextField(10);
 	private JTextField m_ownerBusd = new JTextField(10);
 	private JTextField m_refWalletMatic = new JTextField(10);
-	private JTextField m_admin1Matic = new JTextField(10);
-	private JTextField m_sysAdminMatic = new JTextField(10);
 	private JTextField m_ownerMatic = new JTextField(10);
 	private JTextField m_approved = new JTextField(10);
 	private JTextField m_cash = new JTextField(10);
@@ -42,8 +44,12 @@ public class CryptoPanel extends MonPanel {
 	
 	private JLabel m_refLabel = new JLabel("???");
 	private JLabel m_ownLabel = new JLabel("???");
-	private JLabel m_ad1Label = new JLabel("???");
-	private JLabel m_ad2Label = new JLabel("???");
+	
+	private JsonModel m_adminModel = new JsonModel("name,address,nativeBalance,latestNonce,pendingNonce") {
+		protected void buildMenu(JPopupMenu menu, JsonObject record, String tag, Object val) {
+			menu.add( JsonModel.menuItem("Send To", ev -> sendNativeFrom( record) ) );
+		}
+	};
 	
 	HoldersPanel holdersPanel = new HoldersPanel();
 	
@@ -63,33 +69,33 @@ public class CryptoPanel extends MonPanel {
 		HtmlButton ownerSendBusd = new HtmlButton( "Send to other", ev -> ownerSendToOther() );
 		HtmlButton ownerSendMatic = new HtmlButton( "Send", ev -> ownerSendMatic() );
 		HtmlButton refSendMatic = new HtmlButton( "Send", ev -> refSendMatic() );
-
-		VerticalPanel leftPanel = new VerticalPanel();
-		leftPanel.addHeader( "RUSD");
-		leftPanel.add( "Address", m_rusdAddress);
-		leftPanel.add( "RUSD Outstanding", m_rusdOutstanding, button);
+		
+		VerticalPanel topLeft = new VerticalPanel();
+		topLeft.addHeader( "RUSD");
+		topLeft.add( "Address", m_rusdAddress);
+		topLeft.add( "RUSD Outstanding", m_rusdOutstanding, button);
 		
 		String busd = config().busd().name();
 		
-		leftPanel.addHeader( "RefWallet");
-		leftPanel.add( "Address", m_refAddress);
-		leftPanel.add( "RefWallet " + busd, m_refWalletBusd, sendBusdFromRefWallet, emptyRefWallet);
-		leftPanel.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"));
-		leftPanel.add( m_refLabel, m_refWalletMatic, refSendMatic);
+		topLeft.addHeader( "RefWallet");
+		topLeft.add( "Address", m_refAddress);
+		topLeft.add( "RefWallet " + busd, m_refWalletBusd, sendBusdFromRefWallet, emptyRefWallet);
+		topLeft.add( "RefWallet " + busd + " approved", m_approved, new JLabel( " for spending by RUSD"), new HtmlButton( "Approve", ev -> approve() ) );
+		topLeft.add( m_refLabel, m_refWalletMatic, refSendMatic);
 		
-		leftPanel.addHeader( "Owner Wallet");
-		leftPanel.add( "Address", m_ownerAddress);
-		leftPanel.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
-		leftPanel.add( m_ownLabel, m_ownerMatic, ownerSendMatic);
+		topLeft.addHeader( "Owner Wallet");
+		topLeft.add( "Address", m_ownerAddress);
+		topLeft.add( "Owner " + busd, m_ownerBusd, sendToRefWallet, ownerSendBusd);
+		topLeft.add( m_ownLabel, m_ownerMatic, ownerSendMatic);
 		
-		leftPanel.addHeader( "Admin Accounts");
-		leftPanel.add( m_ad1Label, m_admin1Matic);
-		leftPanel.add( m_ad2Label, m_sysAdminMatic);
+		topLeft.addHeader( "Brokerage (IB)");
+		topLeft.add( "Cash in brokerage", m_cash);
+		topLeft.add( "Net liq in brokerage", m_netLiq);
 
-		leftPanel.addHeader( "Brokerage (IB)");
-		leftPanel.add( "Cash in brokerage", m_cash);
-		leftPanel.add( "Net liq in brokerage", m_netLiq);
-		
+		JPanel leftPanel = new JPanel( new BorderLayout() );
+		leftPanel.add( topLeft, BorderLayout.NORTH);
+		leftPanel.add( m_adminModel.createTable( "Admin Accounts") );
+
 		HorzDualPanel dualPanel = new HorzDualPanel();
 		dualPanel.add( leftPanel, "1");
 		dualPanel.add( holdersPanel, "2");
@@ -210,8 +216,6 @@ public class CryptoPanel extends MonPanel {
 		S.out( "Refreshing Crypto panel");
 		m_refLabel.setText( "RefWallet " + config().nativeTokName() );
 		m_ownLabel.setText( "Owner " + config().nativeTokName() );
-		m_ad1Label.setText( "Admin1 " + config().nativeTokName() );
-		m_ad2Label.setText( "Sys Admin " + config().nativeTokName() );
 		
 		m_refAddress.setText( config().refWalletAddr() );
 
@@ -228,12 +232,8 @@ public class CryptoPanel extends MonPanel {
 			m_ownerBusd.setText( S.fmt2(ownerBusd) );
 			m_ownerMatic.setText( S.fmt2(ownerMatic) );
 		});
-
-		double admin1Bal = m_config.node().getNativeBalance( chain().params().admin1Addr() );
-		SwingUtilities.invokeLater( () -> m_admin1Matic.setText( S.fmt2(admin1Bal) ) );
-
-		double sysAdminBal = m_config.node().getNativeBalance( chain().params().sysAdminAddr() );
-		SwingUtilities.invokeLater( () -> m_sysAdminMatic.setText( S.fmt2(sysAdminBal) ) );
+		
+		refreshAdminTable();
 		
 		double approved = config().busd().getAllowance(
 				chain().params().refWalletAddr(),
@@ -251,6 +251,51 @@ public class CryptoPanel extends MonPanel {
 				m_cash.setText( S.fmt2(cashBal) );
 				m_netLiq.setText( S.fmt2(netLiq) );
 			});
+		});
+	}
+
+	private void refreshAdminTable() throws Exception {
+		m_adminModel.ar().clear();
+		m_adminModel.ar().add( createAdminRow( "Admin1", chain().params().admin1Addr() ) );
+		m_adminModel.ar().add( createAdminRow( "SysAdmin", chain().params().sysAdminAddr() ) );
+		m_adminModel.fireTableDataChanged();
+	}
+	
+	private JsonObject createAdminRow( String name, String address) throws Exception {
+		Util.reqValidAddress(address);
+		
+		return Util.toJson(
+				"name", name,
+				"address", address,
+				"nativeBalance", m_config.node().getNativeBalance( address),
+				"latestNonce", chain().node().getNonceLatest( address),
+				"pendingNonce", chain().node().getNoncePending( address)
+				);
+	}
+
+	private void sendNativeFrom(JsonObject record) {
+		wrap( () -> {
+			String to = Util.ask( "Enter destination address");
+			double amt = Util.askForVal( "Enter amount");
+			if (S.isNotNull( to) && amt > 0) {
+				chain().blocks().transfer(
+						chain().getAdminKey( record.getString( "address") ),
+						to,
+						amt)
+					.waitForReceipt();
+				UI.flash( "Done");
+			}
+		});
+	}
+	
+	private void approve() {
+		wrap( () -> {
+			double val = Util.askForVal( "Enter amount to approve, -1 to cancel");
+			if (val > 0) {
+				chain().busd().approve( chain().params().refWalletKey(), chain().rusd().address(), val)
+					.waitForReceipt();
+				UI.flash( "Done");
+			}
 		});
 	}
 }

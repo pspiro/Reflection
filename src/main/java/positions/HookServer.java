@@ -76,7 +76,7 @@ public class HookServer {
 	HookServer(String[] args) throws Exception {
 		Util.require( args.length > 0, "pass in chain name (column header)");
 		//m_config.readFromSpreadsheet( Config.getTabName( args) );
-		m_chain = new Chains().readOne( args[0], true);
+		m_chain = Chains.readOne( args[0], true);
 		m_config.setChain( m_chain);
 		m_node = m_chain.node();
 

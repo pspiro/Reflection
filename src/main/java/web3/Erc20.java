@@ -6,13 +6,13 @@ import java.util.HashMap;
 
 import chain.Chain;
 import common.Util;
-import refblocks.Refblocks;
 import tw.util.S;
 import web3.Param.Address;
 import web3.Param.BigInt;
 
 /** Base class for the generic tokens AND ALSO the platform-specific tokens */
 public class Erc20 {
+	public static final long deployGas = 2000000;
 	protected static final BigDecimal ten = new BigDecimal(10);
 	private static final String totalSupplyAbi = Util.easyJson( "{'abi': [{'inputs': [],'name': 'totalSupply','outputs': [{'internalType': 'uint256','name': '','type': 'uint256'}],'stateMutability': 'view','type': 'function'}],'params': {}}");
 	
@@ -167,6 +167,7 @@ public class Erc20 {
 				500000); 
 	}
 	
+	/** not used in production */
 	public RetVal approve( String ownerKey, String spender, double amount) throws Exception {
 		Param[] params = {
 				new Address( spender),
@@ -198,7 +199,7 @@ public class Erc20 {
 				m_address,
 				Mint,
 				params,
-				Refblocks.deployGas); 
+				deployGas); 
 	}
 	
 	public RetVal transfer(String fromKey, String toAddr, double amount) throws Exception {

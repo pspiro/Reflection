@@ -27,10 +27,16 @@ public class Param {
 		}
 	}
 	
+	
+	/** @param keccak for deployment, this is the bytecode */
 	public static String encodeData(String keccak, Param[] params) throws Exception {
-		Util.require( keccak.startsWith( "0x"), "invalid keccak");
-		
-		StringBuilder data = new StringBuilder(keccak);  // Start with the Keccak hash of the method signature
+		return keccak + encodeParams( params);
+	}
+
+	
+	/** @param keccak for deployment, this is the bytecode */
+	public static String encodeParams( Param[] params) throws Exception {
+		StringBuilder data = new StringBuilder();  // Start with the Keccak hash of the method signature
 
 		for (Param param : params) {
 			if (param instanceof Address address) {

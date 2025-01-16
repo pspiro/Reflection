@@ -27,7 +27,7 @@ public class MyTestCase extends TestCase {
 	static {
 		try {
 			m_config = SingleChainConfig.readFrom("Dev3-config");
-			assertTrue( !m_config.isProduction() ); // don't even think about it!
+			Util.require( !m_config.isProduction(), "NO PROD"); // don't even think about it!
 			chain = m_config.chain();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -176,6 +176,7 @@ public class MyTestCase extends TestCase {
 	}
 
 	public static void mintBusd(String wallet, double amt) throws Exception {
+		S.out( "Minting %s BUSD into %s", amt, wallet);
 		m_config.mintBusd( wallet, amt)
 				.waitForReceipt();
 		waitForBalance(wallet, m_config.busd().address(), amt, false); // make sure the new balance will register with the RefAPI
@@ -185,9 +186,8 @@ public class MyTestCase extends TestCase {
 		if (m_config.rusd().getPosition(wallet) < amt) {
 			S.out( "Minting %s RUSD into %s", amt, wallet);
 	
-			m_config.rusd()
-					.sellStockForRusd( wallet, amt, chain.getAnyStockToken(), 0)
-					.waitForReceipt();
+			m_config.rusd().mintRusd(wallet, amt, chain.getAnyStockToken() )
+				.waitForReceipt();
 			
 			waitForRusdBalance(wallet, amt - .1, false); // make sure the new balance will register with the RefAPI
 		}

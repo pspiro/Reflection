@@ -15,7 +15,8 @@ public class TestRusd extends MyTestCase {
 		S.out( "***adding admin to pass");
 		m_config.rusd().addOrRemoveAdmin(
 				m_config.ownerKey(),
-				Util.createFakeAddress(),
+				//Util.createFakeAddress(),
+				chain().params().sysAdminAddr(),
 				true).waitForReceipt();
 	}
 
@@ -34,98 +35,45 @@ public class TestRusd extends MyTestCase {
 		}
 	}
 	
-	/** This executes in 8s to 13s as-is vs 33s if you wait for each transaction */
-	public void testAdmin() throws Exception {
+	/** This test is working on Sepolia as of 1/16/25 */
+	public void testBuySellRedeem() throws Exception {
+		String userKey = Util.createPrivateKey();
+		String user = Util.getAddress( userKey);
+
 		MyTimer t = new MyTimer();
-		t.next("start");
+		t.next("starting with user " + user);
 		
-		String user = Util.createFakeAddress();
-		
-		// for Refblocks, you don't need the waitForHash or waitForCompleted or anything
-		// for Fireblocks, you have to wait
-		
-		// mint 100 rusd
-		S.out( "***minting rusd");
+		// buy 10 stock for $20 RUSD, bal $80
+		StockToken stock = chain.getAnyStockToken();
+		t.next( "***buying 10 stock with $20 RUSD", stock.address() );
 		mintRusd( user, 100);
-		
-		// buy stock
-		StockToken stock = chain.getAnyStockToken();
-		S.out( "***buying stock %s", stock.address() );
-		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				.waitForReceipt();
-		
-		// sell stock
-		S.out( "***selling stock");  // failing with same nonce
-		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
-				.waitForReceipt();
-		
-		// mint busd into refwallet so user can redeem (anyone can call this, 
-		// must have matic)
-		S.out( "***minting busd");
+		m_config.rusd().buyStockWithRusd( user, 20, stock, 10);
 
-		// user has 90 redeem 80, left with 10
-		S.out( "***redeeming rusd");
-		m_config.rusd().sellRusd( user, m_config.busd(), 80)  
+		// buy 10 stock for $20 BUSD, bal $80
+		t.next( "***buying 10 stock with $20 BUSD", stock.address() );
+		mintBusd( user, 100);
+		chain().node().transfer( chain().params().admin1Key(), user, .005).waitForReceipt(); // give some gas so the approve will go through
+		chain().busd().approve( userKey, chain.rusd().address(), 100).waitForReceipt();
+		m_config.rusd().buyStock(user, chain().busd(), 20, stock, 10);
+		
+		// sell 5 stock for $10 RUSD, bal $90
+		t.next( "***selling 5 stock for $10 RUSD");
+		m_config.rusd().sellStockForRusd( user, 10, stock, 5);
+
+		// user has 90 RUSD, redeem 60, left with 30
+		t.next( "***redeeming rusd");
+		mintBusd( m_config.refWalletAddr(), 100);
+		S.out( "RUSD balance user: " + m_config.rusd().getPosition(user));
+		S.out( "BUSD balance refWallet: " + m_config.busd().getPosition(chain().params().refWalletAddr()));
+		S.out( "BUSD allowance refWallet: " + m_config.busd().getAllowance(m_config.params().refWalletAddr(), m_config.rusd().address() ) );
+		m_config.rusd().sellRusd( user, m_config.busd(), 60)
 				.waitForReceipt(); // if fails, check for insuf. allowance
-		
-		t.next("***checkpoint");
-		
-		// for refblocks, the balance is there; for fireblocks, you need 
-		// to wait for the positions
-		waitForBalance(user, stock.address(), 5, false);
-		waitForBalance(user, m_config.rusdAddr(), 10, false);
-		
 		t.done();
-	}
-	
-	public void testTrouble() throws Exception {
-		String user = "0xd60b716d9b511d21087ee02351a6b4e9ec90dcda"; //Util.createFakeAddress();
-		
-		// mint 100 rusd
-		S.out( "***minting rusd");
-		m_config.rusd().mintRusd( user, 100, chain.getAnyStockToken() )
-				; //.waitForHash();
 
-		S.out( "  rusd balance = " + m_config.rusd().getPosition( user) );
-		
-		
-		// buy stock
-		StockToken stock = chain.getAnyStockToken();
-		S.out( "***buying stock %s", stock.address() );
-		m_config.rusd().buyStockWithRusd( user, 20, stock, 10)
-				.waitForReceipt();
-		S.out( "  stock balance = " + stock.getPosition( user) );
-		
-
-//		
-//		// sell stock
-//		S.out( "***selling stock");  // failing with same nonce
-//		m_config.rusd().sellStockForRusd( user, 10, stock, 5)
-//				; //.waitForHash();
-//		
-//		// mint busd into refwallet so user can redeem (anyone can call this, must have matic)
-//		S.out( "***minting busd");
-//		m_config.busd().mint( m_config.refWalletAddr(), 80)
-//				; //.waitForHash();
-//
-//		// user has 90 redeem 80, left with 10
-//		S.out( "***redeeming rusd");
-//		m_config.rusd().sellRusd( user, m_config.busd(), 80)  // failed insuf. allowance
-//				.waitForHash();
-//		
-//		t.next("***checkpoint");
-//		
-//		Wallet wallet = new Wallet( user);
-//		S.out( "balance is %s", wallet.getBalance( stock.address() ) );
-//		assertEquals( 5.0, wallet.getBalance( stock.address() ) );
-//		assertEquals( 10.0, wallet.getBalance( m_config.rusd().address() ) );
-//		
-//		t.done();
+		// check balances
+		waitForRusdBalance(user, 30, true);
+		waitForBalance(user, stock.address(), 15, true);
 	}
-		// buy a stock token - fail
-//		rusd.buyStockWithRusd(dead, 1, st, 1)
-//			.waitForStatus("FAILED");
-		
 }
 // this is a mystery: how can I call buyStock and pass the address of a
 // non-existent stock token, it the transaction succeeds

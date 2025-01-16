@@ -20,7 +20,7 @@ public class BurnAll {
 	public static void main(String[] args) throws Exception {
 		try (MyScanner s = new MyScanner() ) {
 			String name = s.getString( "enter chain name: [Polygon]", "Polygon");
-			chain = new Chains().readOne( name, true);
+			chain = Chains.readOne( name, true);
 		}
 		
 		for (String wallet : str.split( ",") ) {

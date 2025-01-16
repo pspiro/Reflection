@@ -26,11 +26,9 @@ public class CreateKey {
 	}
 	
 	private static void showPks() throws Exception {
-		;
 
 		try(	Scanner scanner = new Scanner( System.in);
-				IStream is = new IStream( "c:/temp/f.t") 
-				) {
+				IStream is = new IStream( "c:/temp/f.t") ) {
 			
 			String pw = input( scanner, "Enter password: ");
 			
