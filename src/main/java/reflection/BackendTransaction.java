@@ -379,13 +379,6 @@ public class BackendTransaction extends MyTransaction {
 		});
 	}
 
-	/** Return PositionTracker data to Monitor; used for debugging only */
-	public void handleGetPositionTracker() {
-		wrap( () -> {
-			respond( OrderTransaction.dumpPositionTracker() );
-		});
-	}
-	
 	/** Return IP address and country code passed from nginx; you could change it to
 	 *  return all headers; note that it returns an array of values for each. */
 	public void handleMyIp() {

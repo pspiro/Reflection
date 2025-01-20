@@ -1000,10 +1000,13 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		}
 	}
 
-	static JsonArray dumpPositionTracker() {
-		return positionTracker.dump();
+	/** send to Monitor for debugging */
+	public void getPositionTracker() {
+		wrap( () -> {
+			respond( positionTracker.getJsonArray() );
+		});
 	}
-
+	
 	private static final String buyConf = """
 		<html>
 		Your order on Reflection was filled!<p>
@@ -1044,6 +1047,7 @@ public class OrderTransaction extends MyTransaction implements IOrderHandler, Li
 		<p>
 		-The Reflection Team
 		</html>""";
+
 }
 // look at all the catch blocks, save message or stack trace
 // you have to not log the cookie

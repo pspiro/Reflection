@@ -1,6 +1,7 @@
 package testcase;
 
 import reflection.PositionTracker;
+import tw.util.S;
 
 public class TestPositionTracker extends MyTestCase {
 	int conid = 8314;
@@ -31,26 +32,18 @@ public class TestPositionTracker extends MyTestCase {
 
 		// test undo buy - undo is called when an order was not filled
 		PositionTracker t3 = new PositionTracker();
-		t3.buyOrSell(conid, true, .3);
-		assertEquals( 0, t3.buyOrSell(conid, true, .1) );
-		t3.undo(conid, true, .1, 0);
-		assertEquals( 0, t3.buyOrSell(conid, true, .1) );
-		t3.undo(conid, true, .1, 0);
-		assertEquals( 1, t3.buyOrSell(conid, true, .2) );
-		t3.undo(conid, true, .2, 1);
-		assertEquals( 1, t3.buyOrSell(conid, true, .2) );
+		t3.buyOrSell(conid, true, 3.3);
+		var r1 = t3.buyOrSell(conid, true, 3.4);
+		t3.undo(conid, true, 3.4, r1);
+		assertEquals( 4, t3.buyOrSell(conid, true, 3.4) );
 		
 		// test undo sell
 		PositionTracker t4 = new PositionTracker();
-		t3.buyOrSell(conid, true, 1); // buy
-		t4.buyOrSell(conid, false, .35);
-		assertEquals( 0, t4.buyOrSell(conid, false, .1) );
-		t4.undo(conid, false, .1, 0);
-		assertEquals( 0, t4.buyOrSell(conid, false, .1) );
-		t4.undo(conid, false, .1, 0);
-		assertEquals( 1, t4.buyOrSell(conid, false, .2) );
-		t4.undo(conid, false, .2, 1);
-		assertEquals( 1, t4.buyOrSell(conid, false, .2) );
+		t4.buyOrSell(conid, false, 10);
+		t4.buyOrSell(conid, false, 3.3);
+		var r2 = t4.buyOrSell(conid, false, 3.4);
+		t4.undo(conid, false, 3.4, r2);
+		assertEquals( 4, t4.buyOrSell(conid, false, 3.4) );
 		
 //		S.out( t.buy( 8314, .5) );
 //		S.out( t.sell( 8314, .5) );

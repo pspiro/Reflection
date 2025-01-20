@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import chain.Chain;
 import chain.Chains;
 import common.MyScanner;
+import common.Util;
 import tw.util.S;
 
 /** This actually works as of 8/19/24 on pulsechain */
@@ -18,25 +19,25 @@ public class CancelStuckTransaction {
 			
 			Chain chain = Chains.readOne( name, false);
 
-			String wallet = "0x2f8ee6b4783196416794b3c9bae347302b1dc48d"; //chain.params().admin1Addr();  // wallet that is stuck
+			String key = s.getString( "Enter private key: [admin1]:");
+			key = S.isNull( key) ? chain.params().admin1Key() : key;
+			key = chain.params().sysAdminKey();
+			
+			String wallet = Util.getAddress(key);
 
-			// show current nonces
-			chain.blocks().showAllNonces( wallet);
-
-			// show nonces of stuck transactions
-			chain.node().showTrans( wallet);
-
-			// you have to cancel the lowest nonce first, but then the others will go through
-			// you might have to replace the others, not wait for a receipt, then cancel the lowest
-
-			while( true) {
-				String str = s.getString( "enter nonce to cancel: ");
-				if (S.isNull( str) ) {
-					break;
-				}
+			// you could put this in a loop if desired
+			var latest = chain.node().getNonceLatest(wallet);
+			var pending = chain.node().getNoncePending(wallet);
+			
+			S.out( "latest=%s  pending=%s", latest, pending);
+			
+			if (latest.equals( pending) ) {
+				S.out( "Nonces match, there seems to be no stuck transaction");
+			}
+			else {
+				chain.node().cancelStuck( key, latest); // cancel and wait
 				
-				BigInteger nonce = new BigInteger( str);
-				// chain.node().cancelTransaction( nonce);
+				chain.blocks().showAllNonces(wallet);
 			}
 		}
 

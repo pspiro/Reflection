@@ -179,12 +179,12 @@ public class Main implements ITradeReportHandler {
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
 			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
+			server.createContext("/api/get-position-tracker", exch -> new OrderTransaction(this, exch).getPositionTracker() ); // used by Monitor for debugging
 			server.createContext("/api/debug-on", exch -> new BackendTransaction(this, exch).handleDebug(true) );
 			server.createContext("/api/debug-off", exch -> new BackendTransaction(this, exch).handleDebug(false) );
 			server.createContext("/api/about", exch -> new BackendTransaction(this, exch).about() ); // report build date/time; combine this with status
 			server.createContext("/api/status", exch -> new BackendTransaction(this, exch).handleStatus() );
 			server.createContext("/api/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // this is sent every couple of seconds by Monitor
-			server.createContext("/api/dumppositiontracker", exch -> new BackendTransaction(this, exch).handleGetPositionTracker() );
 			server.createContext("/api/myip", exch -> new BackendTransaction(this, exch).handleMyIp() );
 			server.createContext("/api", exch -> new OldStyleTransaction(this, exch).handle() );
 			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );

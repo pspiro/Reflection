@@ -5,15 +5,23 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 
 import common.Util;
+import tw.util.S;
 
 /** Track the fractional shares of each contract. Ultimately we should populate
  *  this with the current value at startup, but that would entail querying for
  *  the outstanding blockchain position for each stock */
 public class PositionTracker {
-	private HashMap<Integer,Pos> m_map = new HashMap<>();
+	private HashMap<Integer,Pos> m_map = new HashMap<>(); // map conid to Pos
 	
 	private static final double Small = .0000001;
-	
+
+	// for testing
+//	public int buyOrSell_( int conid, boolean buy, double qty) {
+//		var ret = buyOrSell( conid, buy, qty);
+//		S.out( "%s %s %s %s", (buy ? "buy" : "sell"), qty, ret, getJsonArray() );
+//		return ret;
+//	}
+
 	public int buyOrSell( int conid, boolean buy, double qty) {
 		return Util.getOrCreate(m_map, conid, () -> new Pos() ).buyOrSell(buy, qty);  
 	}
@@ -42,9 +50,11 @@ public class PositionTracker {
 			}
 		}
 
+		/** increment m_desired by decimal part;
+		 *  increment m_actual if m_desired, with the new decimal part
+		 *  is now past the next .5 mark */
 		private int buy( double qty) {
-			double dec = dec(qty);
-			m_desired += dec;
+			m_desired += dec(qty);
 			
 			if (m_desired - m_actual >= (.5 - Small) ) {
 				m_actual++;
@@ -54,8 +64,7 @@ public class PositionTracker {
 		}
 
 		private int sell(double qty) {
-			double dec = dec(qty);
-			m_desired -= dec;
+			m_desired -= dec(qty);
 			
 			if (m_actual - m_desired > .5 + Small ) {
 				m_actual--;
@@ -66,8 +75,8 @@ public class PositionTracker {
 		}
 		
 		/** This is used to undo a transaction that was never filled */
-		private void undoBuy(double qty, int rounded) {			
-			m_desired -= qty;
+		private void undoBuy(double qty, int rounded) {
+			m_desired -= dec(qty);
 			if (rounded > roundDown(qty) ) {
 				m_actual --;
 			}
@@ -75,7 +84,7 @@ public class PositionTracker {
 
 		/** This is used to undo a transaction that was never filled */
 		private void undoSell(double qty, int rounded) {
-			m_desired += qty;
+			m_desired += dec(qty);
 			if (rounded > roundDown(qty) ) {
 				m_actual++;
 			}
@@ -97,7 +106,7 @@ public class PositionTracker {
 		return (int)Math.floor(qty + Small);
 	}
 
-	public JsonArray dump() {
+	public JsonArray getJsonArray() {
 		JsonArray ar = new JsonArray();
 		m_map.entrySet().forEach( entry -> ar.add( Util.toJson(
 				"conid", entry.getKey(),

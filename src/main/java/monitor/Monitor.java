@@ -130,6 +130,7 @@ public class Monitor {
 		m_tabs.addTab( "Live orders", new LiveOrdersPanel() );
 		m_tabs.addTab( "HookServer", new HookServerPanel() );
 		m_tabs.addTab( "UserTokenMgr", new UserTokenPanel() );
+		m_tabs.addTab( "PositionTracker", new PosTrackerPanel() );
 		m_tabs.addTab( "Query", new AnyQueryPanel() );
 		m_tabs.addTab( "Hot Stocks", new HotStocksPanel() );
 		m_tabs.addTab( "Email", new EmailPanel() );
@@ -238,6 +239,18 @@ public class Monitor {
 			m_dbModel.setRows( dbTrans);
 			m_dbModel.fireTableDataChanged();
 			
+		}
+	}
+	
+	public static class PosTrackerPanel extends JsonPanel {
+		PosTrackerPanel() {
+			super(new BorderLayout(), "conid,desired,actual");
+		}
+
+		@Override protected void refresh() throws Exception {
+			JsonArray ar = MyClient.getArray(Monitor.m_config.baseUrl() + "/api/get-position-tracker");
+			 m_model.setRows( ar);
+			 m_model.fireTableDataChanged();
 		}
 	}
 	

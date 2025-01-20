@@ -172,13 +172,16 @@ public class TestNonce extends MyTestCase {
 	 *  same nonce; if the transaction is the same, you will get 'already known'
 	 *  if next transaction is different but still not priced properly, you will
 	 *  get 'replacement transaction underpriced'
+	 *  
+	 *  To run this, hard-code fees to 1 in Fees
+	 *  
 	 * @throws Exception
 	 */
 	public void testLowGasPrice() throws Exception {
 		startShowNonces( chain().params().admin1Addr() );
 
 		try {
-			chain().rusd().mintRusd(NodeInstance.prod, 1, chain().getAnyStockToken() )
+			chain().rusd().buyStockWithRusd(NodeInstance.prod, 1, chain().getAnyStockToken(), 1)
 				.waitForReceipt();
 		}
 		catch( Exception e) {
@@ -399,7 +402,7 @@ public class TestNonce extends MyTestCase {
 		Util.executeAndWrap( () -> {
 			while (true) {
 				chain().blocks().showAllNonces(adminAddr);
-				S.sleep( 300);
+				S.sleep( 1000);
 			}
 		});
 	}

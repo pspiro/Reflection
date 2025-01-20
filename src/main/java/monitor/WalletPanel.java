@@ -416,14 +416,16 @@ public class WalletPanel extends MonPanel {
 	}
 
 	class CryptoPanel extends MiniTab {
-		private UpperField m_rusd = new UpperField( 27);
-		private UpperField m_busd = new UpperField( 27);
-		private UpperField m_approved = new UpperField( 27);
-		private UpperField m_nativeAmt = new UpperField( 27);
-		private UpperField m_locked = new UpperField( 27);
-		private UpperField m_mintAmt = new UpperField( 27);
-		private UpperField m_burnAmt = new UpperField( 27);
-		private UpperField m_awardAmt = new UpperField( 27);
+		final int wid = 10; 
+
+		private UpperField m_rusd = new UpperField( wid);
+		private UpperField m_busd = new UpperField( wid);
+		private UpperField m_approved = new UpperField( wid);
+		private UpperField m_nativeAmt = new UpperField( wid);
+		private UpperField m_locked = new UpperField( wid);
+		private UpperField m_mintAmt = new UpperField( wid);
+		private UpperField m_burnAmt = new UpperField( wid);
+		private UpperField m_awardAmt = new UpperField( wid);
 		private UpperField m_lockFor = new UpperField( 7);
 		private UpperField m_requiredTrades = new UpperField( 5);
 		private JTextField m_subject = new JTextField( 27);
@@ -432,6 +434,7 @@ public class WalletPanel extends MonPanel {
 	
 		CryptoPanel() {
 			super( new BorderLayout() );
+			
 
 			VerticalPanel vp = new VerticalPanel();
 			vp.addHeader( "Crypto");
