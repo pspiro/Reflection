@@ -717,7 +717,7 @@ public class BackendTransaction extends MyTransaction {
 			// log and alert
 			jlog( LogType.FAUCET, Util.toJson( "amount", amount) );
 			Alerts.alert( "RefAPI", "Faucet was turned", 
-					String.format( "wallet=%s  amt=%s", m_walletAddr, amount) );
+					String.format( "wallet=%s  amt=%s  chain=%s", m_walletAddr, amount, chain().params().name() ) );
 		});
 	}
 
