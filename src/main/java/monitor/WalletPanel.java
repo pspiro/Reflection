@@ -83,6 +83,7 @@ public class WalletPanel extends MonPanel {
 		top.add( new HtmlButton( "View on Blockchain Explorer", ev -> {
 			Util.browse( chain().browseAddress( m_wallet) );
 		}));
+		top.add( new HtmlButton( "Spiro wallet", ev -> m_walField.setText( NodeInstance.prod) ) );
 
 		m_tabs.addTab( "User Data", dataPanel); 
 		m_tabs.addTab( "Blockchain", blockchainPanel); 

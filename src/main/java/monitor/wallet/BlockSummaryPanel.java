@@ -22,7 +22,7 @@ public class BlockSummaryPanel extends BlockPanelBase {
 	private JsonModel m_model = new JsonModel( "timestamp,action,qty,token,amount,stablecoin,block") {
 		protected Object format(String key, Object value) {
 			if ( (key.equals( "qty") || key.equals( "amount") ) && value instanceof Double) {
-				return S.fmt2( (double)value);
+				return S.fmt4( (double)value);
 			}
 			return value;
 		}

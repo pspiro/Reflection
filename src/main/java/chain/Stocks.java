@@ -150,8 +150,8 @@ public class Stocks {
 				
 				if (rec.tdx() ) {
 					tdxList.add( jstock);
-					jstock.put( "bid", "22.23");  // for testing only
-					jstock.put( "ask", "22.25");
+//					jstock.put( "bid", "22.23");  // for testing only
+//					jstock.put( "ask", "22.25");
 				}
 				
 				Stock stock = new Stock( rec, jstock);
