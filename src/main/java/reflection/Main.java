@@ -213,19 +213,21 @@ public class Main implements ITradeReportHandler {
 		
 		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
 		
+		// start a bunch of timers to check for various situations, staggared
+		Util.executeEvery( 30 * Util.SECOND, Util.MINUTE, this::checkHookServers);
+		Util.executeEvery( 40 * Util.SECOND, Util.DAY, this::checkAdminBalance);
+		Util.executeEvery( 50 * Util.SECOND, Util.DAY, this::checkForSplits);
+		
 		// check market data every minute (production only)
 		if (!Main.m_config.checkStaleData() ) {
 			S.out( "checking for stale mkt data every minute");
-			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkMktData);
+			Util.executeEvery( 60 * Util.SECOND, Util.MINUTE, this::checkMktData);
 		}
 
 		// send out daily account summaries
 		if (m_config.isProduction() && m_config.maxSummaryEmails() > 0) {
-			Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkSummaries);
+			Util.executeEvery( 70 * Util.SECOND, Util.MINUTE, this::checkSummaries);
 		}
-		
-		Util.executeEvery( Util.MINUTE, Util.MINUTE, this::checkHookServers);
-		Util.executeEvery( Util.DAY, Util.DAY, this::checkAdminBalance);
 	}
 
 	void shutdown() {
@@ -632,6 +634,33 @@ public class Main implements ITradeReportHandler {
 			Alerts.alert( "RefAPI", "WARNING: ADMIN WALLET IS RUNNING OUT OF GAS", e.getMessage() );
 		}
 	}
+
+	/** check for stock splits once per day */
+	private void checkForSplits() {
+		try {
+			MyTimer t = new MyTimer().next( "Checking for stock splits");
+			
+			String data = MyClient
+					.create("https://www.tipranks.com/calendars/stock-splits/upcoming")
+					.header("Accept", "*/*")
+					.header("User-Agent", "curl/8.9.1")
+					.queryToString();
+			
+			for (var stock : m_stocks.stocks() ) {
+				String search = String.format( ">%s<", stock.eSymbol() );
+				if (data.indexOf( search) != -1) {
+					Alerts.alert( "RefAPI", "WARNING: " + stock.symbol() + " is splitting!", "");
+				}
+			}
+			
+			t.done("checking stock splits");
+		}
+		catch( Exception e) {
+			e.printStackTrace();
+			Alerts.alert( "RefAPI", "WARNING: could not check stock splits " + e.getMessage(), "");
+		}
+	}
+		
 }
 
 

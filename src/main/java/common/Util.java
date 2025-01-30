@@ -51,9 +51,10 @@ import web3.CreateKey;
 
 /** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class Util {
-	public static final int MINUTE = 60 * 1000;
+	public static final int SECOND = 1000;
+	public static final int MINUTE = 60 * SECOND;
 	public static final int HOUR = 60 * MINUTE;
-	public static final int DAY = HOUR * 24;
+	public static final int DAY = 24 * HOUR;
 	
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00

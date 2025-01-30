@@ -88,8 +88,14 @@ public class Stocks {
 			return rec.conid();
 		}
 
+		/** symbol and name, e.g. 'MSFT (Microsoft)' */
 		public String symbol() {
 			return rec.symbol();
+		}
+		
+		/** stock exchange symbol, e.g. 'IBM' */
+		public String eSymbol() {
+			return rec.symbol().split( " ")[0];
 		}
 		
 		public StockRec rec() {
@@ -112,6 +118,10 @@ public class Stocks {
 			return Util.toJson(
 					"tradingView", rec.tradingView(), 
 					"description", rec.description() ); 
+		}
+
+		public void validate() throws Exception {
+			Util.require( rec.tradingView.split( ":")[1].equals( eSymbol() ), "Stock symbol and Trading View symbol must match");
 		}
 		
 	}
@@ -155,6 +165,7 @@ public class Stocks {
 				}
 				
 				Stock stock = new Stock( rec, jstock);
+				stock.validate();
 				conidMap.put( rec.conid(), stock);
 			}
 		}

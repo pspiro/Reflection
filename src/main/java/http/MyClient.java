@@ -99,6 +99,10 @@ public class MyClient {
 		return JsonObject.parse( query().body() );
 	}
 	
+	public String queryToString() throws Exception {
+		return query().body();
+	}
+	
 	public JSONAware queryToAnyJson () throws Exception {
 		return JSONAware.parse( query().body() );
 	}

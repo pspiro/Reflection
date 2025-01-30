@@ -763,6 +763,8 @@ public class NodeInstance {
 	/** The actual call to the blockchain. Could be smart contract call,
 	 *  contract deployment, or native token transfer.
 	 *  
+	 *  'INTERNAL_ERROR: insufficient funds' could mean not enough gas
+	 *  
 	 * @param amtToSend could be zero (e.g. for any smart contract call
 	 * @param data could be empty string (e.g. for transfers)
 	 */
