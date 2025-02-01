@@ -304,7 +304,8 @@ public class Chain {
 
 	/** check if admin1 wallet is running out of gas */ 
 	public void checkAdminBalance() throws Exception {
-		if (node.getNativeBalance( params.admin1Addr() ) < params.faucetAmt() * 100) {
+		int mult = params.isProduction() ? 100 : 10;
+		if (node.getNativeBalance( params.admin1Addr() ) < params.faucetAmt() * mult) {
 			throw new Exception( "Admin1 wallet is running out of gas on " + params.name() );
 		}
 	}
