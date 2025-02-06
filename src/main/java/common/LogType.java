@@ -1,4 +1,4 @@
-package util;
+package common;
 
 /** Max length is 32 as per postgres log table */
 public enum LogType {

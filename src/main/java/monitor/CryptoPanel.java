@@ -220,17 +220,17 @@ public class CryptoPanel extends MonPanel {
 		m_refAddress.setText( config().refWalletAddr() );
 
 		double busd = config().busd().getPosition( config().refWalletAddr() );
-		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2(busd) ) );
+		SwingUtilities.invokeLater( () -> m_refWalletBusd.setText( S.fmt2c(busd) ) );
 
 		double nativeBal = m_config.node().getNativeBalance( config().refWalletAddr() );
-		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2(nativeBal) ) );
+		SwingUtilities.invokeLater( () -> m_refWalletMatic.setText( S.fmt2c(nativeBal) ) );
 
 		double ownerMatic = m_config.node().getNativeBalance( chain().params().ownerAddr() );
 		double ownerBusd = config().busd().getPosition( chain().params().ownerAddr() );
 		SwingUtilities.invokeLater( () -> {
 			m_ownerAddress.setText( chain().params().ownerAddr() );
-			m_ownerBusd.setText( S.fmt2(ownerBusd) );
-			m_ownerMatic.setText( S.fmt2(ownerMatic) );
+			m_ownerBusd.setText( S.fmt2c(ownerBusd) );
+			m_ownerMatic.setText( S.fmt2c(ownerMatic) );
 		});
 		
 		refreshAdminTable();
@@ -238,18 +238,18 @@ public class CryptoPanel extends MonPanel {
 		double approved = config().busd().getAllowance(
 				chain().params().refWalletAddr(),
 				chain().params().rusdAddr() );
-		m_approved.setText( S.fmt2( approved) );
+		m_approved.setText( S.fmt2c( approved) );
 
 		double rusd = config().rusd().queryTotalSupply();
-		m_rusdOutstanding.setText( S.fmt2(rusd) );
+		m_rusdOutstanding.setText( S.fmt2c(rusd) );
 		
 		MyClient.getJson( Monitor.refApiBaseUrl() + "/api/?msg=getCashBal", obj -> {
 			double cashBal = obj.getDouble("TotalCashValue");
 			double netLiq = obj.getDouble("NetLiquidation");
 			obj.display();
 			SwingUtilities.invokeLater( () -> {
-				m_cash.setText( S.fmt2(cashBal) );
-				m_netLiq.setText( S.fmt2(netLiq) );
+				m_cash.setText( S.fmt2c(cashBal) );
+				m_netLiq.setText( S.fmt2c(netLiq) );
 			});
 		});
 	}

@@ -13,13 +13,13 @@ import com.moonstoneid.siwe.util.Utils;
 import com.sun.net.httpserver.HttpExchange;
 
 import chain.Chains;
+import common.LogType;
 import common.Util;
 import http.BaseTransaction;
 import reflection.Main;
 import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
-import util.LogType;
 
 /** note use Keys.toChecksumAddress() to get EIP55 mixed case address */
 public class SiweTransaction extends BaseTransaction {

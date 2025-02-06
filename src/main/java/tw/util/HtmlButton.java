@@ -11,7 +11,6 @@ import java.awt.event.MouseEvent;
 import java.util.HashSet;
 
 import javax.swing.JLabel;
-import javax.swing.border.TitledBorder;
 
 public class HtmlButton extends JLabel {
 	static Color light = new Color( 220, 220, 220);
@@ -58,7 +57,8 @@ public class HtmlButton extends JLabel {
 		addMouseMotionListener(a);
 		setFont( getFont().deriveFont( Font.PLAIN) );
 		
-		setBorder( new TitledBorder("") );
+//		setBorder( new TitledBorder("") ); 
+//		setBorder( new LineBorder( new Color(184,207,229), 1, true) );
 	}
 	
 	protected void onEntered(MouseEvent e) {
@@ -124,12 +124,20 @@ public class HtmlButton extends JLabel {
 		private HashSet<HtmlRadioButton> m_group;
 
 		public HtmlRadioButton( String text, HashSet<HtmlRadioButton> group) {
+			this( text, group, null);
+		}
+		
+		public HtmlRadioButton( String text, HashSet<HtmlRadioButton> group, ActionListener listener) {
 			super( text);
 			m_group = group;
 			group.add( this);
+			
+			if (listener != null) {
+				addActionListener( listener);
+			}
 		}
 		
-		@Override protected void takeAction() {
+		@Override final protected void takeAction() {
 			for( HtmlRadioButton but : m_group) {
 				but.setSelected( false);
 			}
@@ -157,5 +165,9 @@ public class HtmlButton extends JLabel {
 	
 	static String bold( String str) {
 		return String.format( "<html><b>%s</html>", str);
+	}
+
+	static String boldUnderline( String str) {
+		return String.format( "<html><b><u>%s</html>", str);
 	}
 }

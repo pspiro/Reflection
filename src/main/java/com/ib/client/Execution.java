@@ -3,6 +3,8 @@
 
 package com.ib.client;
 
+import org.json.simple.JsonObject;
+
 enum Liquidities {
     None,
     Added("Added Liquidity"),
@@ -152,4 +154,21 @@ public class Execution {
         // Since equals() uses m_execId only, the hashCode should do as well.
         return m_execId != null ? m_execId.hashCode() : 0;
     }
+    
+    public JsonObject getJson() {
+		var exec = this;
+		JsonObject obj = new JsonObject();
+		obj.putIf( "time", exec.time() );         
+		obj.putIf( "order_id", exec.orderId() );    
+		obj.putIf( "perm_id", exec.permId() );    
+		obj.putIf( "side", exec.side() );
+		obj.putIf( "quantity", exec.shares().toDouble() ); 
+		obj.putIf( "price", exec.price() );
+		obj.putIf( "cumfill", exec.cumQty().toDouble() );
+		obj.putIf( "exchange", exec.exchange() );
+		obj.putIf( "avgprice", exec.avgPrice() );
+		obj.putIf( "orderref", exec.orderRef() ); // this is the uid
+		return obj;
+    }
+
 }

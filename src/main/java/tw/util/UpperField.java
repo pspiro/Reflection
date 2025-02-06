@@ -3,12 +3,14 @@
 
 package tw.util;
 
+import java.awt.Color;
+
 import javax.swing.JTextField;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
-/** Sets all text to upper case and can retrieve numbers */
+/** Sets all text to upper case and can retrieve numbers, trims values entered by user */
 public class UpperField extends JTextField {
 	public UpperField() {
 		this( null);
@@ -32,6 +34,10 @@ public class UpperField extends JTextField {
 		});
 		
 		setText( s);
+	}
+	
+	@Override public String getText() {
+		return super.getText().trim();
 	}
 	
 	@Override public void setText(String t) {
@@ -62,6 +68,44 @@ public class UpperField extends JTextField {
 		catch( Exception e) {
 			return 0;
 		}
+	}
+	
+	public double getPercent() {
+		return getDouble() / 100;
+	}
+	
+	public String getString() {
+		return super.getText();
+	}
+
+	public void setString(Object value) {
+		setText( value.toString() );
+	}
+
+	public void setPercent(double pct) {
+		setText( String.valueOf( pct * 100) );
+	}
+
+	/** Format with 2 decimals and comma */
+	public void set2c(double amount) {
+		setText( S.fmt2c( amount) );
+	}
+
+	/** Format with 2 decimals, no comma */
+	public void set2d(double amount) {
+		setText( S.fmt2d( amount) );
+	}
+	
+	public UpperField readOnly() {
+		setEditable( false);
+		setBackground( Color.white); //LIGHT_GRAY);
+//		setEnabled( false);
+		return this;
+	}
+	
+	public UpperField right() {
+		setHorizontalAlignment( JTextField.RIGHT);
+		return this;
 	}
 
 }

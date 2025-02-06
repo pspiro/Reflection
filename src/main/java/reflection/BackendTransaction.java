@@ -15,13 +15,13 @@ import com.sun.net.httpserver.HttpExchange;
 import chain.Chain;
 import chain.Stocks.Stock;
 import common.Alerts;
+import common.LogType;
 import common.SignupReport;
 import common.Util;
 import http.MyClient;
 import onramp.Onramp;
 import reflection.TradingHours.Session;
 import tw.util.S;
-import util.LogType;
 
 /** This class handles events from the Frontend, simulating the Backend */
 public class BackendTransaction extends MyTransaction {

@@ -7,12 +7,12 @@ import org.json.simple.JsonObject;
 
 import chain.Chain;
 import common.Alerts;
+import common.LogType;
 import common.Util;
 import http.SimpleTransaction;
 import reflection.Config.MultiChainConfig;
 import tw.google.NewSheet;
 import tw.util.S;
-import util.LogType;
 import web3.NodeInstance.Transfer;
 
 /* use this transaction id for a transfer of 12.04: 1060395
@@ -246,7 +246,7 @@ public class OnrampServer {
 				.replace( "#username#", username)
 				.replace( "#wallet#", wallet)
 				.replace( "#blockchain#", blockchain)
-				.replace( "#amount#", S.fmt2( amount) )
+				.replace( "#amount#", S.fmt2c( amount) )
 				.replace( "#link#", link);
 		
 		m_config.sendEmail( 

@@ -4,6 +4,7 @@
 package com.ib.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.json.simple.JsonObject;
@@ -228,6 +229,7 @@ public class Order {
     private double  m_midOffsetAtWhole;
     private double  m_midOffsetAtHalf;
 	private OrderStatus m_status = OrderStatus.Unknown;
+	private Date m_placedAt;
 	
 	// getters
     public Action  action()                         { return m_action; }
@@ -581,6 +583,9 @@ public class Order {
         m_competeAgainstBestOffset = Double.MAX_VALUE;
         m_midOffsetAtWhole = Double.MAX_VALUE;
         m_midOffsetAtHalf = Double.MAX_VALUE;
+        
+        // custom fields
+        m_placedAt = new Date();
     }
 
     public List<TagValue> algoParams() {
@@ -634,5 +639,8 @@ public class Order {
 	public OrderStatus status() {
 		return m_status;
 	}
-
+	public Date placedAt() {
+		return m_placedAt;
+	}
+	
 }

@@ -1,7 +1,5 @@
 package web3;
 
-import java.math.BigInteger;
-
 import chain.Chain;
 import chain.Chains;
 import common.MyScanner;

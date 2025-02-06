@@ -15,3 +15,6 @@ StoredCredential
 /config.txt
 /name.txt
 /build.out
+/config.json
+/*.bars
+

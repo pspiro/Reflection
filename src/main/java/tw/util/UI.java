@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import javax.swing.AbstractAction;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -123,9 +124,9 @@ public class UI {
 		d.setVisible( true);
 		d.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		Hourglass g = new Hourglass(d);
-		S.sleep(2000);
-		g.restore();
+		try (Hourglass g = new Hourglass(d) ) {
+			S.sleep(2000);
+		}
 		
 //		final JDialog d = new JDialog(parent, ModalityType.MODELESS);
 //		d.setUndecorated(true);
@@ -186,5 +187,9 @@ public class UI {
 			setWrapStyleWord(true);
 			setLineWrap(true);			
 		}
+	}
+
+	public static JButton button(String text, ActionListener listener) {
+		return Util.tweak( new JButton(text), button -> button.addActionListener( listener) );
 	}
 }

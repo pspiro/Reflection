@@ -22,6 +22,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import chain.Stocks.Stock;
 import common.Alerts;
+import common.LogType;
 import common.SmtpSender;
 import common.Util;
 import common.Util.ExRunnable;
@@ -29,7 +30,6 @@ import reflection.TradingHours.Session;
 import reflection.UserTokenMgr.UserToken;
 import telegram.Telegram;
 import tw.util.S;
-import util.LogType;
 import web3.Erc20;
 import web3.RetVal;
 import web3.Stablecoin;

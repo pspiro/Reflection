@@ -21,12 +21,12 @@ import com.sun.net.httpserver.HttpExchange;
 
 import chain.Chain;
 import common.Alerts;
+import common.LogType;
 import common.Util;
 import common.Util.ExRunnable;
 import http.BaseTransaction;
 import siwe.SiweTransaction;
 import tw.util.S;
-import util.LogType;
 
 /** Base class for all classes which handle http requests */
 public abstract class MyTransaction extends BaseTransaction {

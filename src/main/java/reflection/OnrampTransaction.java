@@ -7,11 +7,11 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.LogType;
 import common.Util;
 import common.Util.ExRunnable;
 import onramp.Onramp;
 import tw.util.S;
-import util.LogType;
 
 public class OnrampTransaction extends MyTransaction {
 	OnrampTransaction(Main main, HttpExchange exchange) {
@@ -211,7 +211,7 @@ public class OnrampTransaction extends MyTransaction {
 		String html = emailTemplate
 				.replace( "#username#", String.format( "%s %s", profile.first(), profile.last() ) )
 				.replace( "#instructions#", bankInstr)
-				.replace( "#amount#", S.fmt2( response.getDouble( "amount") ) )
+				.replace( "#amount#", S.fmt2c( response.getDouble( "amount") ) )
 				.replace( "#date#", response.getString( "createdAt") );
 				
 		Main.m_config.sendEmail( profile.email(), "Reflection Fiat Onramp Transaction", html);

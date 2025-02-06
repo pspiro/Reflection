@@ -176,7 +176,7 @@ public class CsServer {
 		
 		@Override protected Object format(String key, Object value) {
 			if (key.equals(ordPrice) || key.equals(orderQty) ) {
-				return S.fmt2( (Double)value);
+				return S.fmt2c( (Double)value);
 			}
 			return value;
 		}

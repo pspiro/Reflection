@@ -1,7 +1,7 @@
 package testcase.web3;
 
+import common.MyTimer;
 import common.Util;
-import test.MyTimer;
 import testcase.MyTestCase;
 import tw.util.S;
 import web3.RetVal;

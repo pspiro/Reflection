@@ -9,10 +9,10 @@ import org.json.simple.JsonObject;
 import com.ib.client.Types.Action;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.LogType;
 import common.Util;
 import reflection.MySqlConnection.MySqlDate;
 import tw.util.S;
-import util.LogType;
 import web3.Busd;
 
 public class RedeemTransaction extends MyTransaction implements LiveTransaction {

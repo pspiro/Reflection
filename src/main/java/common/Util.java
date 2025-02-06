@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
@@ -61,13 +62,16 @@ public class Util {
 	// kk  // 24 hr, midnight is 24
 	public static Random rnd = new Random();
 	public static SimpleDateFormat hhmmss = new SimpleDateFormat("HH:mm:ss");
+	public static SimpleDateFormat hhmm = new SimpleDateFormat("HH:mm");
 	public static SimpleDateFormat yToS = new SimpleDateFormat( "yyyy-MM-dd HH:mm:ss");  // 24 hr clock
+	public static SimpleDateFormat yToD = new SimpleDateFormat( "yyyy-MM-dd");  // 24 hr clock
 	// there are more formats in S class
 
 	static {
-		TimeZone zone = TimeZone.getTimeZone( "America/New_York" );
+		TimeZone zone = TimeZone.getTimeZone( "America/New_York" );  // note: us/eastern is deprecated
 		hhmmss.setTimeZone( zone);
 		yToS.setTimeZone( zone);
+		yToD.setTimeZone( zone);
 	}		
 		
 	/** Use this to return values from asynchronous methods */
@@ -301,12 +305,39 @@ public class Util {
 		
 		TimerTask task = new TimerTask() {
 			@Override public void run() {
-				runnable.run();
+				try {
+					runnable.run();
+				}
+				catch( Throwable t) { // we need this or the timer will be canceled
+					t.printStackTrace();
+				}
 			}
 		};
 		
 		m_timer.schedule( task, wait, period);
 	}
+	
+	/** Create a new timer and return it so it can be canceled */
+//	public static Timer createTimer( int wait, int period, Runnable runnable) {
+		
+//		 ScheduledExecutorService (Better Than Timer)
+//		 ✅ Recommended Alternative
+//
+//		 Supports multiple threads (unlike Timer, which uses a single thread).
+//		 Handles exceptions properly (unlike Timer, which stops executing after an exception).
+//		 Provides flexible scheduling options (fixed-rate and fixed-delay).
+		 
+//		TimerTask task = new TimerTask() {
+//			@Override public void run() {
+//				runnable.run();
+//			}
+//		};
+//		
+//		Timer timer = new Timer();
+//		timer.schedule( task, wait, period);
+//		return timer;
+//	}
+
 
 	public static String getenv(String env) throws Exception {
 		String str = System.getenv(env);
@@ -381,6 +412,12 @@ public class Util {
 	
 	public static boolean isValidAddress( String str) {
 		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
+	}
+	
+	public static boolean isValidIpAddress( String str) {
+		return str != null && (
+				str.equalsIgnoreCase( "localhost") ||
+				Pattern.matches("^([0-9]{1,3}\\.){3}[0-9]{1,3}$", str) );
 	}
 	
 	public static boolean isValidHash( String str) {
@@ -466,7 +503,8 @@ public class Util {
 		return S.isNull(text) ? defVal : getEnum(text, values);
 	}
 
-	/** Lookup enum by ordinal. Use Enum.valueOf() to lookup by string. */
+	/** Lookup enum by string CASE INSENSITIVE! so cannot necessarily be replaced
+	 *  with Enum.valueOf() */
 	public static <T extends Enum<T>> T getEnum(String text, T[] values) throws IllegalArgumentException {
 		for (T val : values) {
 			if (val.toString().equalsIgnoreCase(text) ) {
@@ -790,6 +828,13 @@ public class Util {
 	/** "if not null"; execute block if object is not null and not empty string
 	 *  DOES NOT return a value */
 	public static <T> void iff( T obj, ExConsumer<T> consumer) throws Exception {
+		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
+			consumer.accept( obj);
+		}
+	}
+
+	/** this should be iff, and the above should be ifEx */
+	public static <T> void ifff( T obj, Consumer<T> consumer) {
 		if (obj instanceof String ? S.isNotNull((String)obj) : obj != null) {
 			consumer.accept( obj);
 		}

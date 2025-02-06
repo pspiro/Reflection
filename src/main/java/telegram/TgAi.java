@@ -76,6 +76,7 @@ public class TgAi {
     private static boolean isSpam(JsonObject message) throws Exception {
         String caption = message.getString( "caption").toUpperCase();
         String forName = message.getString( "forward_sender_name").toUpperCase();
+        String text = message.getString( "text").toUpperCase();
 
         if (message.getObject( "story") != null) {
     		return true;
@@ -90,6 +91,10 @@ public class TgAi {
         }
 
         if (caption.contains("TEA PROTOCOL") ) {
+        	return true;
+        }
+        
+        if (text.contains( "AIRDROP")) {
         	return true;
         }
     	

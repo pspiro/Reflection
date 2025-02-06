@@ -63,4 +63,42 @@ public abstract class MyTableModel extends AbstractTableModel {
 	protected String getTooltip(int row, int col) {
 		return null;
 	}
+	
+	/** you can set the easily set the column names and lef/right justification
+	 *  by setting two strings in the subclass constructor */
+	public static abstract class SimpleTableModel extends MyTableModel {
+		// set these two in the subclass constructor
+		protected String[] columnNames;
+		protected String justification;  // string of 'l' (letter el) and 'r'
+		
+		// better would be a single string or array of alternating names and justification. pas
+
+		@Override public final int getColumnCount() {
+			return columnNames.length;
+		}
+		@Override public final String getColumnName(int col) {
+			return col < columnNames.length ? columnNames[col] : "";
+		}
+		@Override public TableCellRenderer getRenderer(int row, int col) {
+			return col < justification.length() && justification.charAt( col) == 'r' ? RIGHT_RENDERER : DEFAULT;
+		}
+
+		/** catch exceptions so subclass doesn't have to, and don't display stack
+		 *  trace for index out of bounds which can happen when rows are deleted */
+		@Override public final Object getValueAt(int rowIndex, int columnIndex) {
+			try {
+				return getValueAt_( rowIndex, columnIndex);
+			}
+			catch( IndexOutOfBoundsException e) {
+				S.out( "Error - " + e);
+			}
+			catch( Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+
+		public abstract Object getValueAt_(int row, int col) throws Exception;
+	}
+
 }

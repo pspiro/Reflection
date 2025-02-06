@@ -22,6 +22,13 @@ public class OrderState {
     private String m_warningText;
     private String m_completedTime;
     private String m_completedStatus;
+    private double m_trailStopPrice;
+    
+    @Override
+    public String toString() {
+    	return String.format( "status=%s  warning=%s  compTime=%s  compStat=%s",
+    			m_status, m_warningText, m_completedTime, m_completedStatus);
+    }
 
     // Get
     public double commission()           { return m_commission; }
@@ -42,6 +49,7 @@ public class OrderState {
     public String warningText()          { return m_warningText; }
     public String completedTime()        { return m_completedTime; }
     public String completedStatus()      { return m_completedStatus; }
+    public double trailStopPrice()		 { return m_trailStopPrice; } 
 
     // Set
     public void commission(double v)           { m_commission = v; }
@@ -62,6 +70,7 @@ public class OrderState {
     public void warningText(String v)          { m_warningText = v; }
     public void completedTime(String v)        { m_completedTime = v; }
     public void completedStatus(String v)      { m_completedStatus = v; }
+    public void trailStopPrice(double v)	   { m_trailStopPrice = v; }
     
 	OrderState() {
 		this (null, null, null, null, null, null, null, null, null, null, 0.0, 0.0, 0.0, null, null, null, null);

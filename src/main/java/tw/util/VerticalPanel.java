@@ -49,6 +49,19 @@ public class VerticalPanel extends JPanel {
 		setLayout( new BoxLayout( this, BoxLayout.Y_AXIS));
 	}
 
+	/** Add a horizontal space between the choices */
+	public void addChoices(String str, Component... choices) {
+		Component[] comps = new Component[choices.length * 2 - 1];
+		int ci = 0;
+		for (int i = 0; i < choices.length; i++) {
+			if (i > 0) {
+				comps[ci++] = Box.createHorizontalStrut(10);
+			}
+			comps[ci++] = choices[i];
+		}
+		add( str, comps);
+	}
+
 	@Override public Component add(Component comp) {
 		add( new Component[] { comp } );
 		return comp;
@@ -164,7 +177,7 @@ public class VerticalPanel extends JPanel {
 	
 	public static class Header extends JLabel {
 		public Header(String text) {
-			super( HtmlButton.underline(text) );
+			super( HtmlButton.boldUnderline(text) ); //??? or both?
 			setBorder( new EmptyBorder(10, 0, 0, 0) );
 		}
 	}

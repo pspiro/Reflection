@@ -53,6 +53,7 @@ public class NewTabbedPanel extends JPanel {
 		this( false);
 	}
 	
+	/** @param underline pass true to draw a horizontal line all the way across */
 	public NewTabbedPanel( boolean underline) {
 		m_underline = underline;
 

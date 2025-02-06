@@ -38,7 +38,7 @@ public abstract class JsonPanel extends MonPanel {
 
 	/** Format doubles with comma and two decimals */
 	protected Object format(String key, Object value) {
-		return value instanceof Double ? S.fmt2((double)value) : value; 
+		return value instanceof Double ? S.fmt2c((double)value) : value; 
 	}
 
 	protected void delete(int row, int col) {

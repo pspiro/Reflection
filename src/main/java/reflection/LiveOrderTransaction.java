@@ -8,10 +8,10 @@ import org.json.simple.JsonObject;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import common.LogType;
 import common.Util;
 import reflection.OrderTransaction.LiveOrderStatus;
 import tw.util.S;
-import util.LogType;
 
 /** The client will query the live order status every couple of seconds. This should be changed
  *  to use WebSockets and push the change to the client w/ no query */

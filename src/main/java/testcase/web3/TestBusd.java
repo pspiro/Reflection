@@ -1,6 +1,5 @@
 package testcase.web3;
 
-import common.Util;
 import testcase.MyTestCase;
 import tw.util.S;
 

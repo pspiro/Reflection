@@ -5,7 +5,6 @@ import java.util.HashMap;
 import org.json.simple.JsonArray;
 
 import common.Util;
-import tw.util.S;
 
 /** Track the fractional shares of each contract. Ultimately we should populate
  *  this with the current value at startup, but that would entail querying for

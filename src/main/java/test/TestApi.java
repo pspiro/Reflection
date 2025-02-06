@@ -2,6 +2,7 @@ package test;
 
 import com.ib.client.Contract;
 import com.ib.client.Decimal;
+import com.ib.client.MarketDataType;
 import com.ib.client.Order;
 import com.ib.client.OrderState;
 import com.ib.client.OrderStatus;
@@ -11,16 +12,27 @@ import com.ib.client.Types.Action;
 import com.ib.client.Types.SecType;
 import com.ib.client.Types.TimeInForce;
 import com.ib.controller.ApiController;
+import com.ib.controller.ApiController.ApiParams;
 import com.ib.controller.ApiController.IOrderHandler;
 import com.ib.controller.ApiController.TopMktDataAdapter;
 import com.ib.controller.ConnectionAdapter;
 
-import reflection.Config;
+import common.Util;
 import tw.util.S;
 
+/*
+ * 
+ * chart project is in 'Other' at home
+ * 
+ * 
+*/
+
 public class TestApi extends ConnectionAdapter {
-	static record ApiParam( String host, int port) {}
-	static ApiParam prod = new ApiParam( "34.100.227.194", 7393);
+	static int clientId = 44;
+	static ApiParams prod = new ApiParams( "34.100.227.194", 7393, clientId);
+	static ApiParams dev = new ApiParams( "34.125.65.70", 7498, clientId);
+	static ApiParams local = new ApiParams( "localhost", 7498, clientId);
+	static ApiParams localProd = new ApiParams( "localhost", 9395, clientId);
 	
 	ApiController m_conn = new ApiController( this, null, null);
 	
@@ -28,55 +40,47 @@ public class TestApi extends ConnectionAdapter {
 		try {
 			new TestApi().run(args);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	
 	void run(String[] args) throws Exception {
-		Config m_config = new Config();
-		m_config.readFromSpreadsheet("Dev3-config");
-		
-		m_conn.connect( prod.host, prod.port, 778, "");
-//		m_conn.connect( m_config.twsOrderHost(), m_config.twsOrderPort(), 776, "");
+		m_conn.connect( dev, "");
 	}
 
-	@Override
-	public void onConnected() {
+	@Override public void onConnected() {
 		S.out( "onConnected()");
 	}
 	
-	@Override
-	public void onRecNextValidId(int id) {
-		try {
-			reqMd(id);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void reqMd(int id) {
-		m_conn.reqMktDataType(3);
-		
-		var ad = new TopMktDataAdapter() {
-			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
-				S.out( "%s %s", tickType, price);
-			}
-		};
+	@Override public void onRecNextValidId(int id) {
+		Util.execute( () -> {
+		m_conn.reqMktDataType(MarketDataType.DELAYED);
 
 		Contract c = new Contract();
-		c.conid( 756733);
+		//c.conid( 756733);
 		c.secType( SecType.STK);
+		c.currency( "USD");
+		c.symbol( "IBM");
 		c.exchange( "SMART");
 		
-//		for (var type : FundamentalType.values() ) {
-//		m_conn.reqContractDetails(c, list -> {
-//			list.forEach( item -> S.out( item) );
+		m_conn.reqTopMktData(c, "", false, false, new TopMktDataAdapter() {
+			@Override public void tickPrice(TickType tickType, double price, TickAttrib attribs) {
+				S.out( "ticked %s %s", tickType, price);
+			}
+		});
+		});
+//		m_conn.reqHistoricalData(c, new Date(), 1, DurationUnit.WEEK, BarSize._1_min, WhatToShow.TRADES, false, false, new IHistoricalDataHandler() {
+//			
+//			@Override
+//			public void historicalDataEnd() {
+//				S.out( "end");
+//			}
+//			
+//			@Override
+//			public void historicalData(Bar bar) {
+//				S.out( bar);
+//			}
 //		});
-		
-//
-		c.exchange( "SMART");
-		m_conn.reqTopMktData(c, "232,258", false, false, ad); 
 	}
 
 	public void placeOrder(int id) throws Exception {
@@ -94,20 +98,17 @@ public class TestApi extends ConnectionAdapter {
 		o.tif( TimeInForce.DAY);
 		m_conn.placeOrder( c,  o,  new IOrderHandler() {
 			
-			@Override
-			public void orderState(OrderState orderState) {
+			@Override public void orderState(OrderState orderState) {
 				S.out( "order state %s", orderState);
 			}
 			
-			@Override
-			public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
+			@Override public void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId,
 					int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice) {
 				S.out( "order status %s", status);
 				
 			}
 			
-			@Override
-			public void onRecOrderError(int errorCode, String errorMsg) {
+			@Override public void onRecOrderError(int errorCode, String errorMsg) {
 				S.out( "order err %s %s", errorCode, errorMsg);
 			}
 		});
@@ -126,13 +127,13 @@ public class TestApi extends ConnectionAdapter {
 
 	@Override
 	public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
-		S.out(errorMsg);
+		S.out("message: " + errorMsg);
 		
 	}
 
 	@Override
 	public void show(String string) {
-		S.out(string);
+		S.out("showing: " + string);
 		
 	}
 }

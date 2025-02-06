@@ -182,7 +182,7 @@ public class Decimal implements Comparable<Decimal>{
         return isValid() ? m_value.longValue() : Long.MAX_VALUE;
     }
     
-    public Double toDouble() {
+    public Double toDouble() {  // this is bad, really inefficient. pas
     	return Double.valueOf( m_value.toString() );
     }
 }

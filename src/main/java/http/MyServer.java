@@ -1,6 +1,5 @@
 package http;
 
-import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
@@ -10,9 +9,10 @@ import com.sun.net.httpserver.HttpServer;
 
 import tw.util.S;
 
-/** See also SimpleTransaction.listen() */
+/** User this one to create multipe endpoints or no endpoints.
+ * See also SimpleTransaction.listen() */
 public class MyServer {
-	public static void listen(int port, int threads, Consumer<HttpServer> adder) throws IOException {
+	public static void listen(int port, int threads, Consumer<HttpServer> adder) {
 		try {
 			S.out( "Listening on 0.0.0.0:%s  (%s threads)", port, threads);
 			HttpServer server = HttpServer.create(new InetSocketAddress("0.0.0.0", port), 0);

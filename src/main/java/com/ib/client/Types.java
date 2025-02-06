@@ -257,15 +257,14 @@ public class Types {
 		_1_week("1 week"),
 		_1_month("1 month");
 
-		private final String description;
+		private final String apiString;
 
-		BarSize(final String description) {
-			this.description = description;
+		BarSize(final String apiString) {
+			this.apiString = apiString;
 		}
 
-		@Override
-        public String toString() {
-			return description;
+		public String apiString() {
+			return apiString;
 		}
 	}
 

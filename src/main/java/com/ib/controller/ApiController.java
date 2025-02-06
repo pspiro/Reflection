@@ -4,8 +4,10 @@
 package com.ib.controller;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TimeZone;
+import java.util.function.Consumer;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -61,6 +65,8 @@ import common.Util;
 import tw.util.S;
 
 public class ApiController implements EWrapper {
+	public static record ApiParams( String host, int port, int clientId) {}
+
 	private ApiConnection m_client;
 	private final ILogger m_outLogger;
 	private final ILogger m_inLogger;
@@ -155,8 +161,13 @@ public class ApiController implements EWrapper {
         });
 	}
 
-	public boolean connect( String host, int port, int clientId, String connectionOpts ) {
-		if (m_client.eConnect(host, port, clientId, false) ) {
+	/** @deprecated */
+	public void connect(String host, int port, int clientId, String connectionOpts) {
+		connect( new ApiParams( host, port, clientId), connectionOpts);
+	}
+
+	public boolean connect( ApiParams params, String connectionOpts ) {
+		if (m_client.eConnect(params.host(), params.port(), params.clientId(), false) ) {
 			startMsgProcessingThread();  // seems wrong, we start thread even if already connected
 	        sendEOM();
 	        return true;
@@ -572,15 +583,19 @@ public class ApiController implements EWrapper {
 		}
 	}
 	
-    public void reqTopMktData(Contract contract, String genericTickList, boolean snapshot, boolean regulatorySnapshot, ITopMktDataHandler handler) {
+    public int reqTopMktData(Contract contract, String genericTickList, boolean snapshot, boolean regulatorySnapshot, ITopMktDataHandler handler) {
 		if (!checkConnection())
-			return;
+			return 0;
 
     	int reqId = m_reqId++;
-		S.out( "Requesting mkt data %s on %s reqId %s", contract.conid(), contract.exchange(), reqId);
+		
+    	S.out( "Requesting mkt data  conid=%s  symbol=%s  exch=%s  reqId=%s", 
+				contract.conid(), contract.symbol(), contract.exchange(), reqId);
+		
     	m_topMktDataMap.put( reqId, handler);
     	m_client.reqMktData( reqId, contract, genericTickList, snapshot, regulatorySnapshot, Collections.emptyList() );
 		sendEOM();
+		return reqId;
     }
 
     public void reqOptionMktData(Contract contract, String genericTickList, boolean snapshot, boolean regulatorySnapshot, IOptHandler handler) {
@@ -937,7 +952,8 @@ public class ApiController implements EWrapper {
 
 	// ---------------------------------------- Trading and Option Exercise ----------------------------------------
 	/** This interface is for receiving events for a specific order placed from the API.
-	 *  Compare to ILiveOrderHandler. */
+	 *  Compare to ILiveOrderHandler.
+	 *  Note that both order and orderState contains the updated trailing stop price */
 	public interface IOrderHandler {
 		void orderState(OrderState orderState);
 		void onRecOrderStatus(OrderStatus status, Decimal filled, Decimal remaining, double avgFillPrice, int permId, int parentId, double lastFillPrice, int clientId, String whyHeld, double mktCapPrice);
@@ -966,6 +982,13 @@ public class ApiController implements EWrapper {
 			m_orderHandlers.put( order.orderId(), handler);
 		}
 
+		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
+		sendEOM();
+	}
+
+	public synchronized void modifyOrder(Contract contract, final Order order) throws Exception {
+		if (!checkConnection())
+			return;
 		m_client.placeOrder( contract, order);    // must be in the same sync block as setting order id
 		sendEOM();
 	}
@@ -1047,6 +1070,7 @@ public class ApiController implements EWrapper {
 		m_liveOrderHandlers.remove( handler);
 	}
 
+	/** note that both order and orderState contains the updated trailing stop price */
 	@Override public void openOrder(int orderId, Contract contract, Order order, OrderState orderState) {
 		IOrderHandler handler = m_orderHandlers.get( orderId);
 		if (handler != null) {
@@ -1152,17 +1176,47 @@ public class ApiController implements EWrapper {
 		void historicalData(Bar bar);
 		void historicalDataEnd();
 	}
+	
+	
+    public void reqHistoricalData(Contract contract, Date endDate, int duration, DurationUnit durationUnit, BarSize barSize, WhatToShow whatToShow, boolean rthOnly, boolean keepUpToDate, Consumer<ArrayList<Bar>> handler) {
+    	ArrayList<Bar> list = new ArrayList<>();
+    	
+    	reqHistoricalData( contract, endDate, duration, durationUnit, barSize, whatToShow, rthOnly, keepUpToDate, new IHistoricalDataHandler() {
+			@Override public void historicalDataEnd() {
+				S.out( "received end of bars");
+				handler.accept( list);
+			}
+			
+			@Override public void historicalData(Bar bar) {
+				list.add( bar);
+			}
+		}); 
+    }
 
-	/** @param endDateTime format is YYYYMMDD HH:MM:SS [TMZ]
+
+	/** @param endDateTime format is YYYYMMDD HH:MM:SS [tm/zone]
+	 *         date and time zone ARE OPTIONAL
+	 *         e.g. 20250130 13:30:00 US/Eastern
 	 *  @param duration is number of durationUnits */
-    public void reqHistoricalData(Contract contract, String endDateTime, int duration, DurationUnit durationUnit, BarSize barSize, WhatToShow whatToShow, boolean rthOnly, boolean keepUpToDate, IHistoricalDataHandler handler) {
+    public void reqHistoricalData(Contract contract, Date endDate, int duration, DurationUnit durationUnit, BarSize barSize, WhatToShow whatToShow, boolean rthOnly, boolean keepUpToDate, IHistoricalDataHandler handler) {
 		if (!checkConnection())
 			return;
+		
+		String zoneName = "America/New_York";
+		TimeZone zone = TimeZone.getTimeZone( zoneName);  // note: us/eastern is deprecated
+		
+		SimpleDateFormat fmt = new SimpleDateFormat( "yyyyMMdd HH:mm:ss");  // 24 hr clock
+		fmt.setTimeZone( zone);
+
+		String endDateTime = fmt.format( endDate) + " " + zoneName;
+		
+		S.out( "Requesting historical data conid=%s  symbol=%s  end=%s  duration=%s  unit=%s  barSize=%s  what=%s  rthOnly=%s  keepUpToDate=%s",
+				contract.conid(), contract.symbol(), endDateTime, duration, durationUnit, barSize, whatToShow, rthOnly, keepUpToDate);
 
     	int reqId = m_reqId++;
     	m_historicalDataMap.put( reqId, handler);
     	String durationStr = duration + " " + durationUnit.toString().charAt( 0);
-    	m_client.reqHistoricalData(reqId, contract, endDateTime, durationStr, barSize.toString(), whatToShow.toString(), rthOnly ? 1 : 0, 2, keepUpToDate, Collections.emptyList());
+    	m_client.reqHistoricalData(reqId, contract, endDateTime, durationStr, barSize.apiString(), whatToShow.toString(), rthOnly ? 1 : 0, 2, keepUpToDate, Collections.emptyList());
 		sendEOM();
     }
 
@@ -1263,9 +1317,10 @@ public class ApiController implements EWrapper {
 
 	// ---------------------------------------- Time handling ----------------------------------------
 	public interface ITimeHandler {
-		void currentTime(long time);
+		void currentTime(long time); // time in in seconds */
 	}
 
+	/** time comes in seconds */
 	public void reqCurrentTime( ITimeHandler handler) {
 		if (!checkConnection())
 			return;
@@ -1275,6 +1330,7 @@ public class ApiController implements EWrapper {
 		sendEOM();
 	}
 
+	/** this should really throw an exception. pas */
 	protected boolean checkConnection() {
 		if (!isConnected()) {
 			error(EClientErrors.NO_VALID_ID, EClientErrors.NOT_CONNECTED.code(), EClientErrors.NOT_CONNECTED.msg(), null);
@@ -2206,5 +2262,14 @@ public class ApiController implements EWrapper {
 
 	public int mdCount() {
 		return m_topMktDataMap.size();
+	}
+
+	public void tick(int reqId, double price) {
+		Util.ifff( m_topMktDataMap.get( reqId), handler -> handler.tickPrice( TickType.LAST, price, null) ); 
+	}
+
+	/** simulate a file; this needs to be improved to have correct price and size */
+	public void simFill(int orderId, double filled, double remaining, double avgPrice) {
+		orderStatus(orderId, "Filled", Decimal.get( filled), Decimal.get( remaining), avgPrice, 0, 0, 0, 0, "", 0);
 	}
 }

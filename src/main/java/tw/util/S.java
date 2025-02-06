@@ -126,7 +126,7 @@ public class S {
 		
 		for (int i = 0; i < params.length; i++) {
 			if (params[i] instanceof Double) {
-				params[i] = fmt2( ((Double)params[i]).doubleValue() );
+				params[i] = fmt2c( ((Double)params[i]).doubleValue() );
 			}
 			else if (params[i] instanceof Integer && ((int)params[i]) == Integer.MAX_VALUE) {
 				params[i] = NONE;
@@ -341,7 +341,7 @@ public class S {
 		StringBuffer buf = new StringBuffer();
 		for( Object obj : objs) {
 			if( obj instanceof Double) {
-				buf.append( fmt2( (Double)obj) );
+				buf.append( fmt2c( (Double)obj) );
 			}
 			else {
 				buf.append( obj);
@@ -361,12 +361,17 @@ public class S {
 	
 	/** take string with , format with , and two decimals */
 	public static String fmt( String v) {
-		return v != null ? fmt2( Double.parseDouble( v.replaceAll( ",", "") ) ) : null;
+		return v != null ? fmt2c( Double.parseDouble( v.replaceAll( ",", "") ) ) : null;
 	}
 
 	/** Format with comma and two decimals. */
-	public static String fmt2( double v) { 
+	public static String fmt2c( double v) { 
 		return v == Double.MAX_VALUE ? NONE : FMT2DC.format( v); 
+	}
+	
+	/** Format with two decimals, no comma. */
+	public static String fmt2d( double v) { 
+		return FMT2D.format( v); 
 	}
 	
 	/** Format with 1-3 decimals, no comma */
@@ -382,11 +387,6 @@ public class S {
 	/** Format with 1-6 decimals, no comma */
 	public static String fmt6( double v) { 
 		return FMT6.format( v);   // faster than String.format("%.3f")
-	}
-	
-	/** Format with two decimals, no comma. */
-	public static String fmt2d( double v) { 
-		return FMT2D.format( v); 
 	}
 	
 	/** Format with comma. */

@@ -14,13 +14,13 @@ import org.json.simple.JsonObject;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 
+import common.LogType;
+import common.MyTimer;
 import common.Util;
 import common.Util.ExRunnable;
 import reflection.RefCode;
 import reflection.RefException;
-import test.MyTimer;
 import tw.util.S;
-import util.LogType;
 
 /** Base class for all classes which handle http requests */
 public class BaseTransaction {

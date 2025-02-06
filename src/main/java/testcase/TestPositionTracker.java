@@ -1,7 +1,6 @@
 package testcase;
 
 import reflection.PositionTracker;
-import tw.util.S;
 
 public class TestPositionTracker extends MyTestCase {
 	int conid = 8314;

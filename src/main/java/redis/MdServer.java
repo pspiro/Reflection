@@ -16,6 +16,9 @@ import com.sun.net.httpserver.HttpExchange;
 import chain.Stocks;
 import chain.Stocks.Stock;
 import common.ConnectionMgrBase;
+import common.DateLogFile;
+import common.LogType;
+import common.MyTimer;
 import common.Util;
 import common.Util.ExRunnable;
 import http.BaseTransaction;
@@ -26,10 +29,7 @@ import reflection.Main;
 import reflection.SingleChainConfig;
 import reflection.TradingHours;
 import reflection.TradingHours.Session;
-import test.MyTimer;
 import tw.util.S;
-import util.DateLogFile;
-import util.LogType;
 
 /** Puts bid, ask, last, and last time to redis; pulls bid/ask from either smart or ibeos,
  *  depending on which session we are in. Last always comes from... */

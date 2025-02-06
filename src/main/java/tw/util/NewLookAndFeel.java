@@ -16,7 +16,6 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.Timer;
@@ -73,19 +72,70 @@ public class NewLookAndFeel extends MetalLookAndFeel {
 		}
 	}
 	
+	/* the flow is like this:
+	 *  JComponent.paintComponent() -> 
+	 *  	UI.update -> 
+	 *  		paints background, then calls UI.paintSafely() 
+	 */
 	
-	public static class NewTextFieldUI extends BasicTextFieldUI {
-	    public static ComponentUI createUI(JComponent c) {
-	        return new NewTextFieldUI();
-	    }
+    /**
+     * A custom UI delegate for JTextField that paints a rounded rectangle background
+     * and clips the text rendering to the same shape.
+     */
+    static class NewTextFieldUI extends BasicTextFieldUI {
+        private final int arcWidth = 10;
+        private final int arcHeight = 10;
 
 		@Override public Dimension getPreferredSize(JComponent c) {
 			Dimension d = super.getPreferredSize(c);
-			d.height = 25;
+			d.height = 24;
 			return d;
 		}
-	}
+		
+//		// this didn't work
+//        @Override
+//        public void update(Graphics g, JComponent c) {
+//            // Create a Graphics2D copy and enable antialiasing for smooth edges.
+//            Graphics2D g2 = (Graphics2D) g.create();
+//            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+//                    RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//            // Paint the background as a rounded rectangle.
+//            g2.setColor(c.getBackground());
+//            g2.fillRoundRect(0, 0, c.getWidth(), c.getHeight(), arcWidth, arcHeight);
+//            g2.dispose();
+//
+//            // Now let the UI delegate paint the rest (the text, caret, etc.)
+//            paint(g, c);
+//        }
+//
+//        /**
+//         * Override paintSafely to set a clipping region so that the text
+//         * doesn’t paint outside the rounded bounds.
+//         */
+//        @Override
+//        protected void paintSafely(Graphics g) {
+//            JTextComponent comp = getComponent();
+//            if (comp == null) {
+//                return;
+//            }
+//            Graphics2D g2 = (Graphics2D) g.create();
+//            // Save the old clipping region.
+//            Shape oldClip = g2.getClip();
+//            // Set the clip to our rounded rectangle.
+//            RoundRectangle2D roundedClip = new RoundRectangle2D.Float(
+//                    0, 0, comp.getWidth(), comp.getHeight(), arcWidth, arcHeight);
+//            g2.clip(roundedClip);
+//
+//            // Let the superclass do its text painting.
+//            super.paintSafely(g2);
+//            // Restore the old clip.
+//            g2.setClip(oldClip);
+//            g2.dispose();
+//        }
+    }
 	
+    /** labels are non-bold */
 	public static class NewLabelUI extends MetalLabelUI {
 	    private static final NewLabelUI UI = new NewLabelUI();
 
@@ -201,42 +251,13 @@ public class NewLookAndFeel extends MetalLookAndFeel {
 	
 	public static void main(String[] args) {
 		NewLookAndFeel.register();
-		MyTableModel m = new MyTableModel() {
-			@Override	public boolean isCellEditable(int rowIndex, int columnIndex) {
-				return true;
-			}
-
-			@Override	public int getRowCount() {
-				// TODO Auto-generated method stub
-				return 10;
-			}
-
-			@Override	public int getColumnCount() {
-				// TODO Auto-generated method stub
-				return 3;
-			}
-
-			@Override	public Object getValueAt(int rowIndex, int columnIndex) {
-				// TODO Auto-generated method stub
-				return "hello";
-			}
-			
-		};
-		
-		MyTable t = new MyTable(m);
-		//t.setBackground( Color.gray);
-		t.setRowSelectionInterval(1,  1);
-		t.getColumnModel().setColumnMargin(20);
 
 		JPanel p = new JPanel();
 		p.add( new JTextField( 20));
 		p.add( new JLabel("lkjsdf") );
 		
-		JScrollPane sp = new JScrollPane( t);
-		
 		JFrame f = new JFrame();
 		f.add( p, BorderLayout.NORTH);
-		f.add( sp);
 		f.setSize( 600, 600);
 		f.setVisible(true);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

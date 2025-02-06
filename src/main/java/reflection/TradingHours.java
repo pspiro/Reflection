@@ -14,11 +14,11 @@ import com.ib.client.ContractDetails;
 import com.ib.controller.ApiController;
 
 import chain.Stocks.Stock;
+import common.LogType;
 import common.Util;
 import redis.MdServer;
 import reflection.Config.MultiChainConfig;
 import tw.util.S;
-import util.LogType;
 
 public class TradingHours {
 	public enum Session { Smart, Overnight, None }

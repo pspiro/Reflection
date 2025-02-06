@@ -1,7 +1,6 @@
 package web3;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 
 import common.Util;
 

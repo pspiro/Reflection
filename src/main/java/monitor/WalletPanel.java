@@ -20,6 +20,8 @@ import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
 import common.JsonModel;
+import common.LogType;
+import common.MyTimer;
 import common.Util;
 import http.MyClient;
 import monitor.AnyQueryPanel.MyComboBox;
@@ -28,7 +30,6 @@ import monitor.wallet.BlockPanelBase;
 import monitor.wallet.BlockSummaryPanel;
 import onramp.Onramp;
 import onramp.Onramp.KycStatus;
-import test.MyTimer;
 import tw.util.DualPanel;
 import tw.util.HorzDualPanel;
 import tw.util.HtmlButton;
@@ -39,7 +40,6 @@ import tw.util.S;
 import tw.util.UI;
 import tw.util.UpperField;
 import tw.util.VerticalPanel;
-import util.LogType;
 import web3.Busd;
 import web3.NodeInstance;
 import web3.NodeInstance.Transfer;
@@ -403,7 +403,7 @@ public class WalletPanel extends MonPanel {
 		}
 
 		private String fmt(double d) {
-			return S.fmt2( d);
+			return S.fmt2c( d);
 		}
 	}
 	

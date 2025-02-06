@@ -162,10 +162,10 @@ public class Statements {
 			if (value >= .01 || pos.price() == 0. && pos.quantity > .001) {
 				String item = Text.portRow
 						.replace( "#token#", pos.name() )
-						.replace( "#quantity#", S.fmt2( pos.quantity() ) )
-						.replace( "#price#", S.fmt2( pos.price() ) )
-						.replace( "#value#", S.fmt2( value) )
-						.replace( "#pnl#", S.fmt2( pos.unreal() ) )
+						.replace( "#quantity#", S.fmt2c( pos.quantity() ) )
+						.replace( "#price#", S.fmt2c( pos.price() ) )
+						.replace( "#value#", S.fmt2c( value) )
+						.replace( "#pnl#", S.fmt2c( pos.unreal() ) )
 						;
 				posRows.append( item); 
 				total += value;		
@@ -187,12 +187,12 @@ public class Statements {
 			double amount =  quantity * price + (buy ? comm : -comm);
 
 			String description = String.format( "%s %s %s at %s",
-					action, S.fmt2( quantity), trans.getString( "symbol"), S.fmt2( price) );
+					action, S.fmt2c( quantity), trans.getString( "symbol"), S.fmt2c( price) );
 
 			String actRow = Text.actRow
 					.replace( "#date#", date)
 					.replace( "#description#", description)
-					.replace( "#amount#", S.fmt2( amount) );
+					.replace( "#amount#", S.fmt2c( amount) );
 
 			actRows.append( actRow);
 		}
@@ -201,7 +201,7 @@ public class Statements {
 		if (posRows.length() > 0 || actRows.length() > 0) {
 			String name = Util.combine( userRec.getString( "first_name"), userRec.getString( "last_name")).trim();  
 
-			String totalStr = missedOne ? "" : S.fmt2( total);  // don't display total if we were missing prices as it won't be accurate
+			String totalStr = missedOne ? "" : S.fmt2c( total);  // don't display total if we were missing prices as it won't be accurate
 			
 			String html = Text.email
 					.replace( "#name#", name)

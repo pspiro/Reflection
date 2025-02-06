@@ -1,7 +1,7 @@
+package web3;
 import chain.Chain;
 import chain.Chains;
 import common.MyScanner;
-import tw.util.S;
 
 public class BurnAll {
 

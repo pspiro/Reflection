@@ -451,6 +451,7 @@ class EDecoder implements ObjectInput {
             	break;
             	
             case HISTORICAL_DATA_UPDATE:
+            	S.out( "received hist data update");
                 processHistoricalDataUpdateMsg();
                 break;
 

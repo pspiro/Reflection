@@ -348,6 +348,7 @@ public class EOrderDecoder {
     public void readTrailParams() throws IOException {
         if (m_version >= 13) {
             m_order.trailStopPrice(m_eDecoder.readDoubleMax());
+            m_orderState.trailStopPrice( m_order.trailStopPrice() );
         }
 
         if (m_version >= 30) {

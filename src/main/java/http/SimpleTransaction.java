@@ -22,7 +22,8 @@ import reflection.RefCode;
 import reflection.RefException;
 import tw.util.S;
 
-/** see also MyServer.listen */
+/** Use this one if you will listen only on "/";
+ *  see also MyServer.listen */
 public class SimpleTransaction {
 	public interface MyHttpHandler {
 		void handle( SimpleTransaction trans);

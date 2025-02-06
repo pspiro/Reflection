@@ -17,8 +17,9 @@ public class SqlReport {
 		var users = c.sqlQuery( "select first_name,last_name,email,phone,wallet_public_key,kyc_status,country,geo_code from users where wallet_public_key in ('%s')", list);
 		users.print();
 
-		OStream os = new OStream( "c:/temp/users.t");
-		os.write( users.toHtml(true) );
+		try( OStream os = new OStream( "c:/temp/users.t") ) {
+			os.write( users.toHtml(true) );
+		}
 		
 	}
 }

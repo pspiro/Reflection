@@ -21,6 +21,8 @@ import chain.Stocks;
 import chain.Stocks.Stock;
 import common.Alerts;
 import common.ConnectionMgrBase;
+import common.LogType;
+import common.MyTimer;
 import common.Util;
 import http.BaseTransaction;
 import http.MyClient;
@@ -29,13 +31,11 @@ import reflection.Config.MultiChainConfig;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.TradingHours.Session;
 import siwe.SiweTransaction;
-import test.MyTimer;
 import tw.google.GTable;
 import tw.google.NewSheet;
 import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
-import util.LogType;
 
 public class Main implements ITradeReportHandler {
 	// constants
@@ -392,31 +392,15 @@ public class Main implements ITradeReportHandler {
 	}
 
 	@Override public void tradeReport(String tradeKey, Contract contract, Execution exec) {
-		JsonObject obj = new JsonObject();
-		obj.putIf( "time", exec.time() );         
-		obj.putIf( "order_id", exec.orderId() );    
-		obj.putIf( "perm_id", exec.permId() );    
-		obj.putIf( "side", exec.side() );
-		obj.putIf( "quantity", exec.shares().toDouble() ); 
+		JsonObject obj = exec.getJson();
 		obj.putIf( "symbol", contract.symbol() );
-		obj.putIf( "price", exec.price() );
-		obj.putIf( "cumfill", exec.cumQty().toDouble() );
 		obj.putIf( "conid", contract.conid() );
-		obj.putIf( "exchange", exec.exchange() );
-		obj.putIf( "avgprice", exec.avgPrice() );
-		obj.putIf( "orderref", exec.orderRef() ); // this is the uid
 		obj.putIf( "tradekey", tradeKey);
 
 		// insert trade into trades and log tables; it's not urgent, this
 		// table is never read, we can delay it
 		queueSql( conn -> conn.insertJson( "trades", obj) );
 		
-//		try {
-//			m_config.sqlCommand( conn -> conn.insertJson( "trades", obj) );
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-
 		jlog( LogType.TRADE, 
 				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
 				null, obj, 0);  
