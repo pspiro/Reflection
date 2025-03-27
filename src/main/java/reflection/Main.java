@@ -216,7 +216,7 @@ public class Main implements ITradeReportHandler {
 		// start a bunch of timers to check for various situations, staggared
 		Util.executeEvery( 30 * Util.SECOND, Util.MINUTE, this::checkHookServers);
 		Util.executeEvery( 40 * Util.SECOND, Util.DAY, this::checkAdminBalance);
-		Util.executeEvery( 50 * Util.SECOND, Util.DAY, this::checkForSplits);
+//		Util.executeEvery( 50 * Util.SECOND, Util.DAY, this::checkForSplits); // this doesn't work
 		
 		// check market data every minute (production only)
 		if (!Main.m_config.checkStaleData() ) {
@@ -611,7 +611,9 @@ public class Main implements ITradeReportHandler {
 	/** send an alert if admin wallet is running out of gas; it's really bad if that happens */
 	private void checkAdminBalance() {
 		try {
-			m_config.chains().checkAdminBalance();
+			if (m_config.isProduction() ) {
+				m_config.chains().checkAdminBalance();
+			}
 		}
 		catch( Exception e) {
 			e.printStackTrace();
