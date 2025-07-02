@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonObject;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -38,7 +37,6 @@ import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
-@SpringBootApplication
 public class Main implements ITradeReportHandler {
 	// constants
 	enum Status { Connected, Disconnected };
@@ -72,31 +70,20 @@ public class Main implements ITradeReportHandler {
     private final Stocks m_stocks = new Stocks();
 
 	public static void main(String[] args) {
-		S.out( "args %s", args.length);
-//		SpringApplication.run( Main.class);
 		try {
-			new Main();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			Thread.currentThread().setName("RefAPI");
+			S.out( "Starting RefAPI - log times are NY time");
+
+			new Main( args);
+		}
+		catch (Exception e) {
 			e.printStackTrace();
+			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
-//	public static void main(String[] args) {
-//		try {
-//			Thread.currentThread().setName("RefAPI");
-//			S.out( "Starting RefAPI - log times are NY time");
-//
-//			new Main( args);
-//		}
-//		catch (Exception e) {
-//			e.printStackTrace();
-//			System.exit(2);  // we need this because listening on the port will keep the app alive
-//		}
-//	}
-//
-	public Main() throws Exception {
-		m_tabName = SingleChainConfig.getTabName( new String[0]);
+	public Main(String[] args) throws Exception {
+		m_tabName = SingleChainConfig.getTabName( args);
 		MyClient.restart( "refapi.http.log");
 
 		MyTimer timer = new MyTimer();
