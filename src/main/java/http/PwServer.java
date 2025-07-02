@@ -5,7 +5,8 @@ import org.json.simple.JsonObject;
 import common.Util;
 import tw.util.S;
 
-/** This program runs in a google cloud run and retrieves the password from a google secret */
+/** This program runs in a google cloud run and retrieves the password from a google secret.
+ *  The password is to read the blockchain private keys */
 public class PwServer {
 	public static void main(String[] args) throws Exception {
 		// make sure it will parse w/ no error but don't keep it in memory
@@ -19,7 +20,7 @@ public class PwServer {
 			server.createContext("/getpw", exch -> handleGetPw( new BaseTransaction(exch, true) ) );
 		});
 	}
-	
+
 	private static void handleCatchAll(BaseTransaction trans) {
 		trans.respond( Util.toJson( "error", "No such endpoint") );
 	}
@@ -40,7 +41,7 @@ public class PwServer {
 			// validate source IP address
 			String sourceIp = trans.exchange().getRemoteAddress().getAddress().getHostAddress();
 			Util.require( S.isNotNull( sourceIp), "Could not get source IP address");
-			Util.require( isValid( sourceIp, pack.getString( "ips") ), "Invalid source IP '%s'", sourceIp); 
+			Util.require( isValid( sourceIp, pack.getString( "ips") ), "Invalid source IP '%s'", sourceIp);
 
 			// respond with password
 			trans.respond( Util.toJson( "pw", pack.getString( "pw")) );

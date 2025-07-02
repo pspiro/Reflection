@@ -1,8 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>Reflection</groupId>
-  <artifactId>Reflection</artifactId>
-  <version>3</version>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>Reflection</groupId>
+	<artifactId>Reflection</artifactId>
+	<version>3</version>
+	
+	<!-- spring boot -->
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.2.5</version>
+		<relativePath/> <!-- optional -->
+	</parent>
 
 	<build>
 		<resources>
@@ -95,9 +103,15 @@
 						</goals>
 					</execution>
 				</executions>
-						</plugin>			
+			</plugin>
+			
+			<!-- spring boot-->			
+			<plugin>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>									
 
-						</plugins>
+		</plugins>
 	</build>  
 
 	<properties>
@@ -203,6 +217,53 @@
 		    <artifactId>zksync2</artifactId>
 		    <version>0.3.0</version>
 		</dependency>
+		
+		<!-- spring boot -->
+		<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+	
+		<!-- spring boot WebSocket server support -->
+		<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+		
+		<!-- stand-alone Kafka support
+	    <dependency>
+        <groupId>org.apache.kafka</groupId>
+        <artifactId>kafka-clients</artifactId>
+        <version>3.6.0</version>
+	    </dependency>  -->
+
+		<!-- spring boot Kafka support -->
+		<dependency>
+		<groupId>org.springframework.kafka</groupId>
+		<artifactId>spring-kafka</artifactId>
+		</dependency>
+		
+		<!-- silence kafka logs, no-op; doesn't work with spring' 
+		<dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-nop</artifactId>
+		</dependency-->
+
+	
+		<!-- lombok; needed, or included with spring? -->
+		<dependency>
+		<groupId>org.projectlombok</groupId>
+		<artifactId>lombok</artifactId>
+		<scope>provided</scope>
+		</dependency>
+
+	
+		<!-- spring boot Optional: for testing >
+		<dependency>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-test</artifactId>
+		<scope>test</scope>
+		</dependency-->
   
 		</dependencies>
 	

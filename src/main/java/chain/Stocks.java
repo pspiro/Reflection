@@ -15,12 +15,12 @@ import tw.util.S;
 
 /* the stocks are read in from the 'Master-symbols' tab. the stock represents a stock
  * on the exchange or at IB, but has no association with a blockchain;
- * see also StockToken */ 
+ * see also StockToken */
 public class Stocks {
-	private JsonArray hotStocks = new JsonArray(); // for hot stocks
-	private JsonArray watchList = new JsonArray(); // for watch list
-	private JsonArray tdxList = new JsonArray(); // for TDX platform
-	private HashMap<Integer,Stock> conidMap = new HashMap<>(); // map conid to Stock, all stocks
+	private final JsonArray hotStocks = new JsonArray(); // for hot stocks
+	private final JsonArray watchList = new JsonArray(); // for watch list
+	private final JsonArray tdxList = new JsonArray(); // for TDX platform
+	private final HashMap<Integer,Stock> conidMap = new HashMap<>(); // map conid to Stock, all stocks
 
 	/** json stock with conid, symbol, bid, ask, for sending to frontend */
 	static class MiniStock extends JsonObject { }
@@ -32,8 +32,8 @@ public class Stocks {
 			boolean isHot,
 			boolean is24Hour,
 			boolean tdx,
-			String symbol, 
-			String description, 
+			String symbol,
+			String description,
 			String type,
 			// String exchange,  not needed by frontend
 			String tradingView,
@@ -57,7 +57,7 @@ public class Stocks {
 
 	/** top-level stock w/ no blockchain info */
 	public static class Stock {
-		private StockRec rec; // rename to params. pas
+		private final StockRec rec; // rename to params. pas
 		private Prices prices = Prices.NULL;
 		private final MiniStock jstock; // sent to frontend for hot stocks and watch list
 
@@ -66,24 +66,29 @@ public class Stocks {
 			jstock = jstockIn;
 		}
 
+		/** debug only */
+		@Override public String toString() {
+			return symbol();
+		}
+
 		public void setPrices(Prices pricesIn) {
 			// maintain the existing 'last' price if the new prices do not have a valid last
 			if (!pricesIn.validLast() ) {
 				pricesIn.last( prices.last() );
 			}
-			
+
 			prices = pricesIn;
-			
+
 			jstock.put( "bid", prices.anyBid() );
 			jstock.put( "ask", prices.anyAsk() );
-			
+
 			// we never delete a valid last price
 //			if (prices.last() > 0) {
-//				jstock.put( "last", prices.); // I think it's wrong and Frontend doesn't use this pas
+//				jstock.put( "last", prices.);
 //			}
 
 		}
-		
+
 		public int conid() {
 			return rec.conid();
 		}
@@ -92,12 +97,12 @@ public class Stocks {
 		public String symbol() {
 			return rec.symbol();
 		}
-		
+
 		/** stock exchange symbol, e.g. 'IBM' */
 		public String eSymbol() {
 			return rec.symbol().split( " ")[0];
 		}
-		
+
 		public StockRec rec() {
 			return rec;
 		}
@@ -116,14 +121,14 @@ public class Stocks {
 
 		public JsonObject getTdxDetails() {
 			return Util.toJson(
-					"tradingView", rec.tradingView(), 
-					"description", rec.description() ); 
+					"tradingView", rec.tradingView(),
+					"description", rec.description() );
 		}
 
 		public void validate() throws Exception {
 			Util.require( rec.tradingView.split( ":")[1].equals( eSymbol() ), "Stock symbol and Trading View symbol must match");
 		}
-		
+
 	}
 
 	public void readFromSheet() throws Exception {
@@ -149,28 +154,28 @@ public class Stocks {
 		for (var rec : list) {
 			if (rec.active() ) {
 				MiniStock jstock = new MiniStock();
-				jstock.put( "conid", "" + rec.conid() );  
-				jstock.put( "symbol", rec.symbol() );  
-	
+				jstock.put( "conid", "" + rec.conid() );
+				jstock.put( "symbol", rec.symbol() );
+
 				watchList.add( jstock);
-	
+
 				if (rec.isHot() ) {
 					hotStocks.add( jstock);
 				}
-				
+
 				if (rec.tdx() ) {
 					tdxList.add( jstock);
 //					jstock.put( "bid", "22.23");  // for testing only
 //					jstock.put( "ask", "22.25");
 				}
-				
+
 				Stock stock = new Stock( rec, jstock);
 				stock.validate();
 				conidMap.put( rec.conid(), stock);
 			}
 		}
 	}
-	
+
 	public Collection<Stock> stocks() {
 		return conidMap.values();
 	}
@@ -184,7 +189,7 @@ public class Stocks {
 	public JsonArray watchList() {
 		return watchList;
 	}
-	
+
 	public JsonArray hotStocks() {
 		return hotStocks;
 	}
@@ -192,7 +197,7 @@ public class Stocks {
 	public Stock getStockByConid( int conid) {
 		return conidMap.get( conid);
 	}
-	
+
 	public void show() {
 		S.out( "---- hot list");
 		S.out( JsonArray.toJSONString( hotStocks) );
@@ -214,13 +219,13 @@ public class Stocks {
 	public JsonArray getTdxList() {
 		return tdxList;
 //		JsonArray ar = new JsonArray();
-//		
+//
 //		for (var stock : conidMap.values() ) {
 //			if (stock.rec().tdx() ) {
 //				ar.add( stock.getForTdxList() );
 //			}
 //		}
-//		
+//
 //		return ar;
 	}
 }

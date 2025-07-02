@@ -11,11 +11,11 @@ import tw.util.S;
 
 class DualPrices {
 	static Prices NullPrices = new Prices(0);  // used when all sessions are closed; bid/ask is -2, so we know where it came from
-	
-	private Stock m_stock;
+
+	private final Stock m_stock;
 	private final Prices m_smart;
 	private final Prices m_overnight;
-	
+
 	static {
 		NullPrices.m_bid = -2;  // this value is not used anywhere but it shows up in Monitor and means there is no session
 		NullPrices.m_ask = -2;
@@ -27,19 +27,31 @@ class DualPrices {
 		m_smart = new Prices(m_stock.conid());
 		m_overnight = new Prices(m_stock.conid());
 	}
-	
+
+	double bid() {
+		return m_smart.bid();
+	}
+
+	double ask() {
+		return m_smart.ask();
+	}
+
+	double last() {
+		return m_smart.last();
+	}
+
 	Prices smart() {
 		return m_smart;
 	}
-	
+
 	Stock stock() {
 		return m_stock;
 	}
-	
+
 	@Override public String toString() {
 		return String.format( "smart: %s  ibeos: %s", m_smart, m_overnight);
 	}
-	
+
 	boolean is24() {
 		return m_stock.rec().is24Hour();
 	}
@@ -51,14 +63,14 @@ class DualPrices {
 	public void tickIbeos(MyTickType tickType, double price) {
 		tick( m_overnight, tickType, price, "overnight");
 	}
-	
+
 	private void tick( Prices prices, MyTickType tickType, double price, String lastExchange) {
 		prices.tick( tickType, price, lastExchange);
 	}
 
 	static public class Prices {
 //		private static SimpleDateFormat timeFmt = new SimpleDateFormat( "MM/dd HH:mm:ss");
-		
+
 		private double m_bid;
 		private double m_ask;
 		private double m_last;
@@ -68,21 +80,21 @@ class DualPrices {
 		private long m_askTime;
 		private long m_lastTime;
 		private boolean m_changed;
-		private String m_conid;  // not used anymore, good for de
+		private final String m_conid;  // not used anymore, good for de
 		private String m_from;
-		
+
 		Prices(int conid) {
 			m_conid = String.valueOf( conid);
 		}
-		
+
 		double bid() {
 			return m_bid;
 		}
-		
+
 		double ask() {
 			return m_ask;
 		}
-		
+
 		@Override public String toString() {
 			return S.format( "conid=%s  bid=%s  ask=%s  last=%s  changed=%s  from=%s",
 					m_conid, m_bid, m_ask, m_last, m_changed, m_from);
@@ -121,9 +133,9 @@ class DualPrices {
 
 		public JsonObject getJsonPrices() {
 			return Util.toJson(
-					"bid", m_bid, 
+					"bid", m_bid,
 					"ask", m_ask,
-					"bidSize", m_bidSize, 
+					"bidSize", m_bidSize,
 					"askSize", m_askSize,
 					"last", m_last,
 					"bid time", m_bidTime,
@@ -180,7 +192,7 @@ class DualPrices {
 	}
 
 	/** Update stockPrices with last price for the correct session
-	 * 
+	 *
 	 *  NOTE it seems that in the paper system, smart prices do not
 	 *  get updated during the overnight session, so if you want
 	 *  prices during overnight session in live system, you will
@@ -190,13 +202,13 @@ class DualPrices {
 		getPrices(Session.Smart).update(stockPrices);
 
 		// we used to take the prices from the correct session depending on what time it is
-//		getPrices(session).update(stockPrices); 
-//		
+//		getPrices(session).update(stockPrices);
+//
 //		// if all sessions are closed, or we are in overnight and there
 //		// is no last there, use last from smart
 //		if (session == Session.None ||
 //			session == Session.Overnight && m_overnight.last() <= 0) {
-//			
+//
 //			stockPrices.put( "last", smart().last() );
 //		}
 	}

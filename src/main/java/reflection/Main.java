@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.json.simple.JsonObject;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import com.ib.client.CommissionReport;
 import com.ib.client.Contract;
@@ -37,6 +38,7 @@ import tw.google.NewSheet.Book;
 import tw.google.NewSheet.Book.Tab.ListEntry;
 import tw.util.S;
 
+@SpringBootApplication
 public class Main implements ITradeReportHandler {
 	// constants
 	enum Status { Connected, Disconnected };
@@ -45,8 +47,8 @@ public class Main implements ITradeReportHandler {
 	public static final int DB_PAUSE = 50; // pause n ms before writing to db
 
 	// no ticks in this time and we have a problem
-	private static final long SmartInterval = Util.MINUTE * 2; 
-	private static final long OvernightInterval = Util.MINUTE * 15; 
+	private static final long SmartInterval = Util.MINUTE * 2;
+	private static final long OvernightInterval = Util.MINUTE * 15;
 
 	// static
 	private static final Random rnd = new Random( System.currentTimeMillis() );
@@ -59,51 +61,62 @@ public class Main implements ITradeReportHandler {
 	private final ConnectionMgr m_orderConnMgr; // we assume that TWS is connected to IB at first but that could be wrong; is there some way to find out?
 	private final String m_tabName;
 	private String m_faqs;
-	private String m_type1Config; 
+	private String m_type1Config;
 	private JsonObject m_type2Config;
-	final TradingHours m_tradingHours; 
+	final TradingHours m_tradingHours;
 	private GTable m_blacklist;  // wallet is key, case insensitive
-	private DbQueue m_dbQueue = new DbQueue();
+	private final DbQueue m_dbQueue = new DbQueue();
 	private String m_mdsUrl;  // the full query to get the prices from MdServer
 	boolean m_staleMktData; // if true, we have likely stopped receiving market data from mdserver
     private Time m_timeWas = Time.Unknown;  // used for sending daily summary emails
     private final Stocks m_stocks = new Stocks();
 
 	public static void main(String[] args) {
+		S.out( "args %s", args.length);
+//		SpringApplication.run( Main.class);
 		try {
-			Thread.currentThread().setName("RefAPI");
-			S.out( "Starting RefAPI - log times are NY time");
-			
-			new Main( args);
-		}
-		catch (Exception e) {
+			new Main();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			System.exit(2);  // we need this because listening on the port will keep the app alive
 		}
 	}
 
-	public Main(String[] args) throws Exception {
-		m_tabName = SingleChainConfig.getTabName( args);
+//	public static void main(String[] args) {
+//		try {
+//			Thread.currentThread().setName("RefAPI");
+//			S.out( "Starting RefAPI - log times are NY time");
+//
+//			new Main( args);
+//		}
+//		catch (Exception e) {
+//			e.printStackTrace();
+//			System.exit(2);  // we need this because listening on the port will keep the app alive
+//		}
+//	}
+//
+	public Main() throws Exception {
+		m_tabName = SingleChainConfig.getTabName( new String[0]);
 		MyClient.restart( "refapi.http.log");
-		
+
 		MyTimer timer = new MyTimer();
 
 		// read config settings from google sheet; this must go first since other items depend on it
 		timer.next("Reading from google spreadsheet %s", m_tabName, NewSheet.Reflection);
 		readSpreadsheet(true);
 		timer.done();
-		
+
 		// must come after reading config and before writing to log
 		Util.execute( "DBQ", () -> m_dbQueue.runDbQueue() );
-		
+
 		// create log entry
-		jlog( LogType.RESTART, null, null, Util.toJson( 
+		jlog( LogType.RESTART, null, null, Util.toJson(
 				"buildTime", Util.readResource( Main.class, "version.txt") ), 0 );  // log build date/time
 
 		// check database connection to make sure it's there
 		timer.next( "Connecting to database %s with user %s", m_config.postgresUrl(), m_config.postgresUser() );
 		m_config.sqlCommand( conn -> {} );
-		
+
 		// confirm we can access private keys
 		timer.next( "Checking access to keys");
 		m_config.chains().checkKeys();
@@ -111,14 +124,20 @@ public class Main implements ITradeReportHandler {
 		// start price query thread
 		timer.next( "Starting stock price query thread every n ms");
 		Util.executeEvery( 0, m_config.mdQueryInterval(), () -> queryAllPrices() );
-		
+
 		// start Siwe thread to periodically save siwe cookies
 		SiweTransaction.startThread();
-		
+
 		timer.next( "Creating http server");
+
+//		MyServer.listen( 6001, m_config.threads(), server -> { // very strange and annoying, port 6000 does not work
+//			server.createContext("/", exch -> new BaseTransaction(exch, true).respondOk() );
+//		});
+
+
 		MyServer.listen( m_config.refApiPort(), m_config.threads(), server -> {
 			//server.createContext("/favicon", exch -> quickResponse(exch, "", 200) ); // respond w/ empty response
-			
+
 			server.createContext("/tdxrefl/get-stocks", exch -> new BackendTransaction(this, exch, true).handleGetTdxStocks() );  // old code, obsolete, remove
 			server.createContext("/tdxrefl/stock-details", exch -> new BackendTransaction(this, exch, true).handleTdxStockDetails() );  // old code, obsolete, remove
 
@@ -126,7 +145,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/onramp", exch -> new BackendTransaction(this, exch, true).handleOnramp() );  // old code, obsolete, remove
 			server.createContext("/api/onramp-get-quote", exch -> new OnrampTransaction( this, exch).handleGetQuote() );
 			server.createContext("/api/onramp-convert", exch -> new OnrampTransaction( this, exch).handleConvert() );
-			
+
 			// old-style, used by test scripts
 			server.createContext("/siwe/init", exch -> new SiweTransaction( exch).handleSiweInit() );
 			server.createContext("/siwe/signin", exch -> new SiweTransaction( exch).handleSiweSignin() );
@@ -154,7 +173,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/users/register", exch -> new BackendTransaction(this, exch).handleRegister() ); // kyc/persona completed
 			server.createContext("/api/check-identity", exch -> new BackendTransaction(this, exch).checkIdentity() );
 			server.createContext("/api/fund-wallet", exch -> new BackendTransaction(this, exch).handleFundWallet() );
-			
+
 			// get/set config
 			server.createContext("/api/system-configurations/last", exch -> quickResponse(exch, m_type1Config, 200) );// we can do a quick response because we already have the json; requested every 30 sec per client; could be moved to nginx if desired
 			server.createContext("/api/configurations", exch -> new BackendTransaction(this, exch, false).handleGetType2Config() );
@@ -175,7 +194,7 @@ public class Main implements ITradeReportHandler {
 			server.createContext("/api/get-all-stocks", exch -> new BackendTransaction(this, exch).handleAllStocks() );  // all stocks for dropdown on trade page
 			server.createContext("/api/get-price", exch -> new BackendTransaction(this, exch, false).handleGetPrice() );  // Frontend calls this, I think for price on Trading screen
 			server.createContext("/api/trading-screen-dynamic", exch -> new BackendTransaction(this, exch).handleTradingDynamic() );
-			
+
 			// status
 			server.createContext("/api/user-token-mgr", exch -> new BackendTransaction(this, exch).handleUserTokenMgr() ); // used by Monitor only
 			server.createContext("/api/reset-user-token-mgr", exch -> new BackendTransaction(this, exch).resetUserTokenMgr() );
@@ -204,20 +223,20 @@ public class Main implements ITradeReportHandler {
 		});
 
 		m_orderConnMgr = new ConnectionMgr( m_config.twsOrderHost(), m_config.twsOrderPort(), m_config.twsOrderClientId() );
-		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr 
+		m_tradingHours = new TradingHours(orderController(), m_config); // must come after ConnectionMgr
 
 		// connect to TWS
 		timer.next( "Connecting to TWS on %s:%s", m_config.twsOrderHost(), m_config.twsOrderPort() );
 		m_orderConnMgr.startTimer();  // ideally we would set a timer to make sure we get the nextId message
 		timer.done();
-		
+
 		Runtime.getRuntime().addShutdownHook(new Thread( this::shutdown) );
-		
+
 		// start a bunch of timers to check for various situations, staggared
 		Util.executeEvery( 30 * Util.SECOND, Util.MINUTE, this::checkHookServers);
 		Util.executeEvery( 40 * Util.SECOND, Util.DAY, this::checkAdminBalance);
 //		Util.executeEvery( 50 * Util.SECOND, Util.DAY, this::checkForSplits); // this doesn't work
-		
+
 		// check market data every minute (production only)
 		if (!Main.m_config.checkStaleData() ) {
 			S.out( "checking for stale mkt data every minute");
@@ -236,7 +255,7 @@ public class Main implements ITradeReportHandler {
 
 	void readSpreadsheet(boolean readStocks) throws Exception {
 		Book book = NewSheet.getBook(NewSheet.Reflection);
-		
+
 		// read RefAPI config
 		m_config.readFromSpreadsheet( book, m_tabName );  // must go first
 		m_config.chains().useAdmin1();
@@ -251,7 +270,7 @@ public class Main implements ITradeReportHandler {
 		m_failCodes = S.isNotNull( m_config.errorCodesTab() )
 			? new GTable( book.getTab(m_config.errorCodesTab()), "Code", "Fail", true)
 			: null;
-		
+
 		m_blacklist = new GTable( book.getTab("Blacklist"), "Wallet Address", "Allow", false);
 		m_mdsUrl = String.format( "%s/mdserver/get-ref-prices", m_config.mdsConnection() );
 
@@ -259,7 +278,7 @@ public class Main implements ITradeReportHandler {
 
 	/** as of 5/10/24 Frontend no longer needs buy_spread and sell_spread; the spreads
 	 *  are now incorporated into the prices we send on the dynamic trading page query;
-	 *  these tags can/should be removed after frontend is promoted to prod */ 
+	 *  these tags can/should be removed after frontend is promoted to prod */
 	private String readType1Config(Book book) throws Exception {
 		JsonObject obj = new JsonObject();
 		for (String key : "min_order_size,max_order_size,non_kyc_max_order_size,price_refresh_interval,commission,buy_spread,sell_spread".split(",") ) {
@@ -268,27 +287,27 @@ public class Main implements ITradeReportHandler {
 		return obj.toString();
 	}
 
-	/** FAQs are returned directly from nginx; this is just a stub */ 
+	/** FAQs are returned directly from nginx; this is just a stub */
 	void readFaqsFromSheet(Book book) throws Exception {
 		m_faqs = """
 				[ { "question": "What is Reflection?", "answer": "Reflection is the only platform where you can buy and sell stock tokens that are 100% backed by shares of real stock." }, { "question": "What are stock tokens?", "answer": "Stock tokens are crypto tokens which represent shares of stock in publically traded companies." } ]""";
 	}
 
-	/** You could shave 300 ms by sharing the same Book as Config 
-	 * @param book */ 
+	/** You could shave 300 ms by sharing the same Book as Config
+	 * @param book */
 	JsonObject readConfig(Book book, int type) throws Exception {   // remove the type parameter after 9/9/23 and read all entries and delete type-1 entries from Jitin-config
 		JsonObject obj = new JsonObject();
 		for (ListEntry row : book.getTab( m_config.backendConfigTab() ).fetchRows() ) {
 			if (row.getInt("Type") == type) {
-				obj.put( 
-						row.getString("Tag"),  // type-1 entries are all double 
+				obj.put(
+						row.getString("Tag"),  // type-1 entries are all double
 						type == 1 ? row.getDouble("Value") : row.getString("Value") );  // type-2 are all string
 			}
 		}
 		require( obj.size() > 0, RefCode.CONFIG_ERROR, "Type-%s config settings are missing", type);
 		return obj;
 	}
-	
+
 	Stock getStock( int conid) throws Exception {
 		Stock stock = m_stocks.getStockByConid( conid);
 		require(stock != null, RefCode.NO_SUCH_STOCK, "Unknown conid %s", conid);
@@ -299,14 +318,14 @@ public class Main implements ITradeReportHandler {
 	/** Manage the connection from this client to TWS. */
 	class ConnectionMgr extends ConnectionMgrBase {
 		private static int clientId(int clientId) {
-			return clientId == 0 
+			return clientId == 0
 					? rnd.nextInt( Integer.MAX_VALUE) + 1
 					: clientId;
 		}
 
 		/** If clientId is zero, pick a random one */
 		ConnectionMgr(String host, int port, int clientId) {
-			super( host, port, clientId( clientId), m_config.reconnectInterval() ); 
+			super( host, port, clientId( clientId), m_config.reconnectInterval() );
 
 			m_controller.handleExecutions( Main.this);
 		}
@@ -315,7 +334,7 @@ public class Main implements ITradeReportHandler {
 		@Override public void onConnected() {
 			super.onConnected();  // stop the connection timer
 			S.out( "TWS_CONNECTION: connected");
-			
+
 			m_tradingHours.startQuery();
 		}
 
@@ -333,9 +352,9 @@ public class Main implements ITradeReportHandler {
 
 		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 			super.message( id, errorCode, errorMsg, advancedOrderRejectJson);
-			
+
 			if (
-					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)   
+					errorCode != 2104 &&	// Market data farm connection is OK  (we don't care about about market data in RefAPI)
 					errorCode != 2106		// HMDS data farm connection is OK:ushmds
 			) {
 				S.out( "Received API message  id=%s  errCode=%s  %s", id, errorCode, errorMsg);
@@ -371,23 +390,23 @@ public class Main implements ITradeReportHandler {
 	}
 
 	/** Writes entry to log table in database; must not throw exception;
-	 * @param uid may be null 
+	 * @param uid may be null
 	 * @param chainId TODO*/
 	void jlog( LogType type, String uid, String wallet, JsonObject json, int chainId) {
-		S.out( "%sLogType.%s %s %s %s", 
+		S.out( "%sLogType.%s %s %s %s",
 				uid != null ? uid + " " : "",
 				type,
 				wallet,
 				chainId,
 				json);
-		
+
 		JsonObject log = Util.toJson(
 				"type", type,
 				"uid", uid,
 				"wallet_public_key", wallet,
 				"data", json,
 				"chainId", chainId);
-		
+
 		queueSql( conn -> conn.insertJson( "log", log) );
 	}
 
@@ -400,10 +419,10 @@ public class Main implements ITradeReportHandler {
 		// insert trade into trades and log tables; it's not urgent, this
 		// table is never read, we can delay it
 		queueSql( conn -> conn.insertJson( "trades", obj) );
-		
-		jlog( LogType.TRADE, 
-				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind" 
-				null, obj, 0);  
+
+		jlog( LogType.TRADE,
+				Util.left( exec.orderRef(), 8),  // order ref might hold more than 8 chars, e.g. "ABCDABCD unwind"
+				null, obj, 0);
 	}
 
 	/** Ignore this. */
@@ -412,12 +431,12 @@ public class Main implements ITradeReportHandler {
 
 	@Override public void commissionReport(String tradeKey, CommissionReport rpt) {
 		try {
-			jlog( LogType.COMMISSION, null, null, Util.toJson( 
-					"execId", rpt.execId(), 
-					"commission", rpt.commission(), 
+			jlog( LogType.COMMISSION, null, null, Util.toJson(
+					"execId", rpt.execId(),
+					"commission", rpt.commission(),
 					"tradeKey", tradeKey), 0 );
 
-			JsonObject obj = Util.toJson( 
+			JsonObject obj = Util.toJson(
 					"tradekey", tradeKey,
 					"comm_paid", rpt.commission() );
 
@@ -443,7 +462,7 @@ public class Main implements ITradeReportHandler {
 	void dump() throws Exception {
 		S.out( "-----Dumping Stocks-----");
 		m_stocks.show();
-		
+
 		S.out( "Dumping config");
 		m_config.dump();
 	}
@@ -451,7 +470,7 @@ public class Main implements ITradeReportHandler {
 	/** query price from mdserver */
 	public void queryAllPrices() {  // might want to move this into a separate microservice
 		try {
-			for (var prices : MyClient.getArray( m_mdsUrl) ) {				
+			for (var prices : MyClient.getArray( m_mdsUrl) ) {
 				Stock stock = stocks().getStockByConid( prices.getInt("conid") );
 				if (stock != null) {
 					stock.setPrices( new Prices(prices) );
@@ -467,7 +486,7 @@ public class Main implements ITradeReportHandler {
 	 *  @param data must be in json format */
 	private void quickResponse(HttpExchange exch, String data, int code) {
 		//new BaseTransaction(exch, true); // don't print out uri
-		
+
 		try (OutputStream outputStream = exch.getResponseBody() ) {
 			exch.getResponseHeaders().add( "Content-Type", "application/json");
 			exch.sendResponseHeaders( code, data.length() );
@@ -483,7 +502,7 @@ public class Main implements ITradeReportHandler {
 	public static double round(double val) {
 		return Math.round( val * 100) / 100.;
 	}
-	
+
 	JsonObject type2Config() {
 		return m_type2Config;
 	}
@@ -499,14 +518,14 @@ public class Main implements ITradeReportHandler {
 		Util.wrap( () -> {
 			if (stale() != m_staleMktData) {
 				m_staleMktData = !m_staleMktData;
-				
+
 				Alerts.alert("RefAPI", "STALE MARKET DATA: " + m_staleMktData, "");
 			}
 		});
 	}
 
-	/** return true if all stocks are stale, indicating lack of market data 
-	 * @throws Exception */ 
+	/** return true if all stocks are stale, indicating lack of market data
+	 * @throws Exception */
 	boolean stale() throws Exception {
 		long latest = m_stocks.getLatest();
 		long interval = System.currentTimeMillis() - latest ;
@@ -520,12 +539,12 @@ public class Main implements ITradeReportHandler {
 	 *  to hold up other threads. It waits for the first query and then processes
 	 *  as many as possible, then waits again. */
 	class DbQueue {
-		private LinkedBlockingQueue<SqlCommand> m_queue = new LinkedBlockingQueue<>();
+		private final LinkedBlockingQueue<SqlCommand> m_queue = new LinkedBlockingQueue<>();
 
 		void add(SqlCommand command) {
 			m_queue.add(command);
 		}
-		
+
 		// if this is still too slow, you can keep a connection open, like for redis
 
 		/** Runs in a separate thread to execute database commands without holding
@@ -553,7 +572,7 @@ public class Main implements ITradeReportHandler {
 							}
 							com = next();
 						}
-					} 
+					}
 					catch (Exception e) {
 						S.err( "Error while connecting to database", e);
 						e.printStackTrace();  // this could be an error connecting to the database; ideally we would put the command, which didn't execute, back in the queue
@@ -565,7 +584,7 @@ public class Main implements ITradeReportHandler {
 				e.printStackTrace();
 			}
 		}
-		
+
 		private SqlCommand next() {
 			return m_queue.isEmpty() ? null : m_queue.remove();
 		}
@@ -586,17 +605,17 @@ public class Main implements ITradeReportHandler {
             			.generateSummaries( m_config.maxSummaryEmails() ) );
         	}
         }
-		
+
 		m_timeWas = nowAfter ? Time.After : Time.Before;
 	}
 
-	
-	/** you can use this for anything price-related, but not blockchain related 
+
+	/** you can use this for anything price-related, but not blockchain related
 	 * @return */
 	protected Stocks stocks() {
 		return m_stocks;
 	}
-	
+
 	private void checkHookServers() {
 		Util.wrap( () -> {
 			for (var chain : m_config.chains().values() ) {
@@ -625,20 +644,20 @@ public class Main implements ITradeReportHandler {
 	private void checkForSplits() {
 		try {
 			MyTimer t = new MyTimer().next( "Checking for stock splits");
-			
+
 			String data = MyClient
 					.create("https://www.tipranks.com/calendars/stock-splits/upcoming")
 					.header("Accept", "*/*")
 					.header("User-Agent", "curl/8.9.1")
 					.queryToString();
-			
+
 			for (var stock : m_stocks.stocks() ) {
 				String search = String.format( ">%s<", stock.eSymbol() );
 				if (data.indexOf( search) != -1) {
 					Alerts.alert( "RefAPI", "WARNING: " + stock.symbol() + " is splitting!", "");
 				}
 			}
-			
+
 			t.done("checking stock splits");
 		}
 		catch( Exception e) {
@@ -646,7 +665,7 @@ public class Main implements ITradeReportHandler {
 			Alerts.alert( "RefAPI", "WARNING: could not check stock splits " + e.getMessage(), "");
 		}
 	}
-		
+
 }
 
 

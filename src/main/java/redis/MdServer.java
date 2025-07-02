@@ -1,7 +1,12 @@
 package redis;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Properties;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.json.simple.JsonArray;
 import org.json.simple.JsonObject;
 
@@ -19,6 +24,7 @@ import common.ConnectionMgrBase;
 import common.DateLogFile;
 import common.LogType;
 import common.MyTimer;
+import common.Pacer;
 import common.Util;
 import common.Util.ExRunnable;
 import http.BaseTransaction;
@@ -37,17 +43,18 @@ public class MdServer {
 	//enum Status { Connected, Disconnected };
 	enum MyTickType { Bid, Ask, Last, Close, BidSize, AskSize };
 
-	public static final String Overnight = "OVERNIGHT"; 
-	public static final String Smart = "SMART"; 
+	public static final String Overnight = "OVERNIGHT";
+	public static final String Smart = "SMART";
 	static final long m_started = System.currentTimeMillis(); // timestamp that app was started
-	
+
 	private final Stocks m_stocks = new Stocks(); // all Active stocks as per the Symbols tab of the google sheet; array of JSONObject
 	        final MdConnectionMgr m_mdConnMgr;
 	private final MdConfig m_config = new MdConfig();
 	private final DateLogFile m_log = new DateLogFile("mktdata"); // log file for requests and responses
-	private final TradingHours m_tradingHours; 
-	private final ArrayList<DualPrices> m_list = new ArrayList<>();
-	
+	private final TradingHours m_tradingHours;
+	private final HashSet<DualPrices> m_list = new HashSet<>();
+	private final Properties kafkaProps = new Properties();
+
 	public static void main(String[] args) {
 		try {
 			Thread.currentThread().setName("MDS");
@@ -68,37 +75,46 @@ public class MdServer {
 			BaseTransaction.setDebug(true);
 			log( "debug mode=true");
 		}
-		
+
+		// set kafka properties
+        kafkaProps.put("bootstrap.servers", "localhost:9092");
+        kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+
+//        Logger.getLogger("org.apache.kafka").setLevel(Level.WARNING);
+
+
 		MyTimer timer = new MyTimer();
 
-		// read config settings from google sheet 
+		// read config settings from google sheet
 		timer.next("Reading configuration");
 		m_config.readFromSpreadsheet( SingleChainConfig.getTabName( args) );
-		
+
 		timer.next( "Creating http server");
 		MyServer.listen( m_config.mdsPort(), 5, server -> {
-			server.createContext("/mdserver/status", exch -> new MdTransaction( exch).onStatus() ); 
-			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction( exch).onDesubscribe() ); 
-			server.createContext("/mdserver/subscribe", exch -> new MdTransaction( exch).onSubscribe() ); 
-			server.createContext("/mdserver/disconnect", exch -> new MdTransaction( exch).onDisconnect() ); 
-			server.createContext("/mdserver/refresh", exch -> new MdTransaction( exch).onRefresh() ); 
-			server.createContext("/mdserver/get-prices", exch -> new MdTransaction( exch).onGetAllPrices() ); 
-			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch, false).onGetRefPrices() ); 
-			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() ); 
+			server.createContext("/mdserver/status", exch -> new MdTransaction( exch).onStatus() );
+			server.createContext("/mdserver/desubscribe", exch -> new MdTransaction( exch).onDesubscribe() );
+			server.createContext("/mdserver/subscribe", exch -> new MdTransaction( exch).onSubscribe() );
+			server.createContext("/mdserver/disconnect", exch -> new MdTransaction( exch).onDisconnect() );
+			server.createContext("/mdserver/refresh", exch -> new MdTransaction( exch).onRefresh() );
+			server.createContext("/mdserver/get-prices", exch -> new MdTransaction( exch).onGetAllPrices() );
+			server.createContext("/mdserver/get-ref-prices", exch -> new MdTransaction( exch, false).onGetRefPrices() );
+			server.createContext("/mdserver/get-stock-price", exch -> new MdTransaction( exch).onGetStockPrice() );
 
 			// generic messages
 			server.createContext("/mdserver/ok", exch -> new BaseTransaction(exch, false).respondOk() ); // called every few seconds by Monitor
-			server.createContext("/mdserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) ); 
+			server.createContext("/mdserver/debug-on", exch -> new BaseTransaction(exch, true).handleDebug(true) );
 			server.createContext("/mdserver/debug-off", exch -> new BaseTransaction(exch, true).handleDebug(false) );
-			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() ); 
+			server.createContext("/", exch -> new BaseTransaction(exch, true).respondNotFound() );
 		});
-		
+
 		timer.next( "Reading stock list from google sheet");
 		m_stocks.readFromSheet();
 
 		m_mdConnMgr = new MdConnectionMgr( m_config.twsMdHost(), m_config.twsMdPort(), m_config.twsMdClientId(), m_config.reconnectInterval() );
 		m_tradingHours = new TradingHours(m_mdConnMgr.controller(), null); // must come after ConnectionMgr
-		
+
 		// connect to TWS
 		m_mdConnMgr.startTimer();
 
@@ -113,20 +129,20 @@ public class MdServer {
 		MdConnectionMgr( String host, int port, int clientId, long reconnectInterval) {
 			super( host, port, clientId, reconnectInterval);
 		}
-		
+
 		/** Called when we receive server version. We don't always receive nextValidId. */
 		@Override public void onConnected() {
 			super.onConnected();  // stop the connection time
 			log( "Connected to TWS");
 			m_tradingHours.startQuery();
 		}
-		
+
 		/** Ready to start sending messages. */
 		@Override public synchronized void onRecNextValidId(int id) {
 			S.out( "Received next valid id %s ***", id);
 			wrap( () -> requestPrices() );
 		}
-		
+
 		@Override public synchronized void onDisconnected() {
 			if (m_timer == null) {
 				log( "Disconnected from TWS");
@@ -136,15 +152,15 @@ public class MdServer {
 
 		@Override public void message(int id, int errorCode, String errorMsg, String advancedOrderRejectJson) {
 			super.message( id, errorCode, errorMsg, advancedOrderRejectJson);
-			
+
 			log( "Received from TWS %s %s %s", id, errorCode, errorMsg);
-		}		
+		}
 	}
 
 	/** Might need to sync this with other API calls.  */
 	private void requestPrices() throws Exception {
 		log( "Requesting prices");
-		
+
 		// clear out any existing prices
 		m_list.clear();
 
@@ -156,7 +172,7 @@ public class MdServer {
 		for (Stock stock : m_stocks.stocks() ) {
 			final Contract contract = new Contract();
 			contract.conid( stock.conid() );
-			
+
 			DualPrices dual = new DualPrices( stock);
 			m_list.add( dual);
 
@@ -168,10 +184,14 @@ public class MdServer {
 					if (myTickType != null) {
 						if (BaseTransaction.debug()) S.out( "Ticking smart %s %s %s", stock.conid(), myTickType, price);
 						dual.tickSmart(myTickType, price);
+
+						if (stock.rec().isHot() ) {
+							tickKafka( stock.symbol(), dual);
+						}
 					}
 				}
 			});
-			
+
 			// request price on IBEOS
 			if (stock.rec().is24Hour() ) {
 				contract.exchange( Overnight);
@@ -187,7 +207,43 @@ public class MdServer {
 			}
 		}
 	}
-	
+
+//	class KafkaRec( double bid, double ask, double last)
+
+	ArrayList<DualPrices> list= new ArrayList<>();
+	Pacer pacer = new Pacer( 100, this::sendKafka);
+
+	private synchronized void tickKafka(String symbol, DualPrices dual) {
+		list.add( dual);
+		pacer.start();
+	}
+
+	private synchronized void sendKafka() {
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaProps)) {
+    		JsonArray ar = new JsonArray();
+
+        	for (var dual : list) {
+	        	var json = Util.toJson(
+//			        "symbol", dual.stock().symbol(), // change it to conid
+	        		"conid", dual.conid(),
+					"bid", dual.bid(),
+					"ask", dual.ask(),
+					"last", dual.last()
+					);
+	        	ar.add( json);
+        	}
+
+			ProducerRecord<String, String> record = new ProducerRecord<>("market-data", "key", ar.toString() );
+			RecordMetadata metadata = producer.send(record).get();
+			System.out.printf("Sent: %s to partition %d, offset %d%n", ar, metadata.partition(), metadata.offset());
+
+			list.clear();
+        }
+        catch( Exception e) {
+        	e.printStackTrace();
+        }
+	}
+
 	@SuppressWarnings("incomplete-switch")
 	static private MyTickType getTickType(TickType tickType) {
 		MyTickType type = null;
@@ -246,7 +302,7 @@ public class MdServer {
 		catch( JedisConnectionException e) {
 			// this happens when writing to redis, e.g. when calling pipeline.hdel( conid, type)
 			// we don't know how to recover from this
-			
+
 			log(e);
 			System.exit(0);
 		}
@@ -254,7 +310,7 @@ public class MdServer {
 			log(e);
 		}
 	}
-	
+
 	/** Change this to a map when we start having more stocks */
 	DualPrices getDualPrices(int conid) throws Exception {
 		for (DualPrices dual : m_list) {
@@ -269,11 +325,11 @@ public class MdServer {
 		MdTransaction(HttpExchange exchange) {
 			this( exchange, true);
 		}
-		
+
 		MdTransaction(HttpExchange exchange, boolean debug) {
 			super(exchange, debug);
 		}
-		
+
 		public void onStatus() {
 			wrap( () -> {
 				JsonObject obj = Util.toJson(
@@ -287,7 +343,7 @@ public class MdServer {
 			});
 		}
 
-		/** Refresh list of stocks and re-request market data. */ 
+		/** Refresh list of stocks and re-request market data. */
 		public void onRefresh() {
 			wrap( () -> {
 				S.out( "Refreshing list of stock tokens from spreadsheet");
@@ -341,28 +397,28 @@ public class MdServer {
 
 				Prices prices = dual.getPrices( m_tradingHours.getSession( dual.stock() ) );
 
-				double last = prices.last() > 0 
+				double last = prices.last() > 0
 						? prices.last()
-						: dual.getAnyLast(); 
-				
-				respond( Util.toJson( 
-						"bid", prices.bid(), 
+						: dual.getAnyLast();
+
+				respond( Util.toJson(
+						"bid", prices.bid(),
 						"ask", prices.ask(),
-						"last", last) ); 
+						"last", last) );
 			});
 		}
 
 		/** Called by RefAPI. Returns the prices for the current session.
-		 * 
+		 *
 		 *  YOU COULD build a static array that doesn't change and just update
 		 *  the prices within the array, and always return the same array
-		 *  
+		 *
 		 * @throws Exception */
 		public void onGetRefPrices() {
 			wrap( () -> {
 				Session session = null;
 				JsonArray ret = new JsonArray();
-				
+
 				for (DualPrices dual : m_list) {
 					if (session == null) {  // assume the same session for all stocks
 						session = m_tradingHours.getSession( dual.stock() );
@@ -371,7 +427,7 @@ public class MdServer {
 					JsonObject stockPrices = new JsonObject();
 					stockPrices.put( "conid", dual.stock().conid() );
 					dual.update(stockPrices, session);
-					
+
 					if (m_config.simulateBidAsk() ) {
 						double last = stockPrices.getDouble( "last");
 						stockPrices.put( "bid", last - .05);
@@ -384,5 +440,5 @@ public class MdServer {
 			});
 		}
 	}
-	
+
 }

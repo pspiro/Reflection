@@ -14,6 +14,8 @@ import chain.Chains;
 import common.Alerts;
 import common.SmtpSender;
 import common.Util;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import reflection.MySqlConnection.SqlCommand;
 import reflection.MySqlConnection.SqlQuery;
 import siwe.SiweTransaction;
@@ -27,11 +29,12 @@ import tw.util.IStream;
 import tw.util.S;
 
 /** Config with no chains */
+@Getter @Accessors(fluent = true)
 public class Config {
 	protected GTable m_tab;
-	
+
 	public boolean isProduction() { return true; }
-		
+
 	// user experience parameters
 	private double minOrderSize;  // in dollars
 	private double maxOrderSize; // max buy amt in dollars
@@ -49,7 +52,7 @@ public class Config {
 	private int twsOrderClientId;  // connect to TWS w/ this client ID; must be the same each time so we get the right orders
 	private int refApiPort;  // port for RefAPI to listen on
 	private long orderTimeout = 7000;  // order timeout in ms
-	private long timeout = 7000;  // all other messages timeout 
+	private long timeout = 7000;  // all other messages timeout
 	private long reconnectInterval = 5000;  // when we lost connection with TWS
 	private long recentPrice;
 	private String postgresUrl;
@@ -81,36 +84,28 @@ public class Config {
 	private int fbPollIingInterval;
 	private String aboutReflection;
 
-	public long recentPrice() { return recentPrice; }
-	public Allow allowTrading() { return allowTrading; }
-	public int fbPollIingInterval() { return fbPollIingInterval; }
-	
-	public double minOrderSize() { return minOrderSize; }
-	public double maxOrderSize() { return maxOrderSize; }
-	
-	public double minSellSpread() { return minSellSpread; }
-	public double minBuySpread() { return minBuySpread; }
-	
-	public String postgresUser() { return postgresUser; }
-	public String postgresUrl() { return postgresUrl; }
+//	public long recentPrice() { return recentPrice; }
+//	public Allow allowTrading() { return allowTrading; }
+//	public int fbPollIingInterval() { return fbPollIingInterval; }
+//	public double minOrderSize() { return minOrderSize; }
+//	public double maxOrderSize() { return maxOrderSize; }
+//	public double minSellSpread() { return minSellSpread; }
+//	public double minBuySpread() { return minBuySpread; }
+//	public String postgresUser() { return postgresUser; }
+//	public String postgresUrl() { return postgresUrl; }
+//	public long timeout() {  return timeout;  }
+//	public long orderTimeout() { return orderTimeout; }
+//	public long reconnectInterval() { return reconnectInterval; }
+//	public String twsOrderHost() { return twsOrderHost; }
+//	public int twsOrderPort() { return twsOrderPort; }
+//	public int twsOrderClientId() { return twsOrderClientId; }
+//	public int refApiPort() { return refApiPort; }
+//	public double commission() { return commission; }
+//	public double minTokenPosition() { return minTokenPosition; }
+//	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
+//	public TimeInForce tif() { return tif; }
+//	public String fbAdmins() { return fbAdmins; }
 
-	public long timeout() {  return timeout;  }
-	public long orderTimeout() { return orderTimeout; }
-	public long reconnectInterval() { return reconnectInterval; }
-
-	public String twsOrderHost() { return twsOrderHost; }
-	public int twsOrderPort() { return twsOrderPort; }
-	public int twsOrderClientId() { return twsOrderClientId; }
-
-	//public String refApiHost() { return refApiHost; }
-	public int refApiPort() { return refApiPort; }
-	public double commission() { return commission; }
-	
-	public double minTokenPosition() { return minTokenPosition; }
-	public String errorCodesTab() { return errorCodesTab; }  // yes, no, random
-	public TimeInForce tif() { return tif; }
-	public String fbAdmins() { return fbAdmins; }
-	
 	/** try first from args and then from config.txt file in resources folder */
 	public static SingleChainConfig read( String[] args) throws Exception {
 		return readFrom( getTabName( args) );
@@ -140,8 +135,8 @@ public class Config {
 
 	/** get tab name from args or config.txt file */
 	public static String getTabName(String[] args) throws Exception {
-		return args.length > 0 
-				? args[0] 
+		return args.length > 0
+				? args[0]
 				: IStream.readLine( "config.txt");
 	}
 
@@ -153,11 +148,11 @@ public class Config {
 		S.out( "Using config tab %s", tabName);
 		readFromSpreadsheet( NewSheet.getTab(NewSheet.Reflection, tabName) );
 	}
-	
+
 	/** Override this version */
 	protected void readFromSpreadsheet(Tab tab) throws Exception {
 		m_tab = new GTable( tab, "Tag", "Value", true);
-		
+
 		// user experience parameters
 		this.buySpread = m_tab.getRequiredDouble( "buy_spread");
 		this.sellSpread = m_tab.getRequiredDouble( "sell_spread");
@@ -181,7 +176,7 @@ public class Config {
 		// listen here
 		//this.refApiHost = m_tab.getRequiredString( "refApiHost");
 		this.refApiPort = m_tab.getRequiredInt( "refApiPort");
-		
+
 		// database
 		this.postgresUrl = m_tab.get( "postgresUrl");
 		this.postgresExtUrl = m_tab.get( "postgresExtUrl");
@@ -206,16 +201,16 @@ public class Config {
 		this.sendTelegram = m_tab.getBoolean( "sendTelegram");
 		this.maxSummaryEmails = m_tab.getInt( "maxSummaryEmails");
 		this.aboutReflection = m_tab.getRequiredString( "aboutReflection");
-				
+
 		// siwe config items
 		this.siweTimeout = m_tab.getRequiredInt("siweTimeout");
 		this.sessionTimeout = m_tab.getRequiredInt("sessionTimeout");
 		SiweTransaction.setTimeouts( siweTimeout, sessionTimeout);
-		
+
 		Alerts.setEmail( this.alertEmail);
-		
+
 		require( buySpread > 0 && buySpread < .05, "buySpread");
-		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper 
+		require( sellSpread > 0 && sellSpread <= .021, "sellSpread");  // stated max sell spread of 2% in the White Paper
 		require( minBuySpread > 0 && minBuySpread < .05 && minBuySpread < buySpread, "minBuySpread");
 		require( minSellSpread > 0 && minSellSpread < .05 && minSellSpread < sellSpread, "minSellSpread");
 		require( minOrderSize > 0 && minOrderSize <= 100, "minOrderSize");
@@ -227,7 +222,7 @@ public class Config {
 		require( tif == TimeInForce.DAY || tif == TimeInForce.IOC, "TIF");
 		//require( !isPulseChain() || faucetAmt > 0, "faucetAmt");
 	}
-	
+
 	protected void require( boolean v, String parameter) throws Exception {
 		if (!v) {
 			throw new Exception( String.format( "Config parameter %s is missing or invalid", parameter) );
@@ -237,7 +232,7 @@ public class Config {
 	/** Populate google sheet from database. */
 	void pullBackendConfig(MySqlConnection database) throws Exception {
 		Main.require( S.isNotNull( backendConfigTab), RefCode.UNKNOWN, "'backendConfigTab' setting missing from Reflection configuration");
-		
+
 		// read from google sheet
 		Tab tab = NewSheet.getTab( NewSheet.Reflection, backendConfigTab);
 
@@ -245,19 +240,19 @@ public class Config {
 		for (int i = 1; i <= res.getMetaData().getColumnCount(); i++) {
 			insertOrUpdate( tab, res.getMetaData().getColumnLabel(i), res.getString(i), "", "1");
 		}
-		
+
 		ResultSet res2 = database.query( "select * from configurations");
 		while (res2.next() ) {
 			String tag = res2.getString("key");
 			String value = res2.getString("value");
 			String description = res2.getString("description");
-			
+
 			insertOrUpdate( tab, tag, value, description, "2");
 		}
 
 		//validateBackendConfig( table);
 	}
-	
+
 	private void insertOrUpdate(Tab tab, String tag, String value, String description, String type) throws Exception {
 		ListEntry row = tab.findRow( "Tag", tag);
 		if (row == null) {
@@ -276,21 +271,17 @@ public class Config {
 		}
 	}
 
-	public int threads() {
-		return threads;
-	}
-
 	public void pullFaq(MySqlConnection database) throws Exception {
 		//Tab tab = NewSheet.getTab( NewSheet.Reflection, "FAQ");
 		//ResultSet res = database.query( "select * from frequently_asked_questions");
-		
+
 		GTable table = new GTable( NewSheet.Reflection, "FAQ", "Question", "Answer");
 
 		ResultSet res = database.query( "select * from frequently_asked_questions");
-		
+
 		while (res.next() ) {
-			table.put( 
-					res.getString("question"), 
+			table.put(
+					res.getString("question"),
 					res.getString("answer")
 			);
 		}
@@ -300,12 +291,12 @@ public class Config {
 	public int mdQueryInterval() {
 		return redisQueryInterval;
 	}
-	
+
 	/** Update spreadsheet */
 	public void setRusdAddress(String address) throws Exception {
 		m_tab.put( "rusdAddr", address);
 	}
-	
+
 	/** Update spreadsheet */
 	public void setBusdAddress(String address) {
 		m_tab.put( "busdAddr", address);
@@ -316,20 +307,12 @@ public class Config {
 		S.out( m_tab);
 	}
 
-	public int siweTimeout() {
-		return siweTimeout;
-	}
-
-	public long sessionTimeout() {
-		return sessionTimeout;
-	}
-
 	public MySqlConnection createConnection() throws SQLException {
 		MySqlConnection conn = new MySqlConnection();
 		conn.connect( postgresUrl, postgresUser, postgresPassword);
 		return conn;
 	}
-	
+
 	// NOTE: the 'sql' parameter passed in is always MySqlConnection;
 	// the main difference between uses is the return value: array, object, or none
 
@@ -362,18 +345,6 @@ public class Config {
 			return query.run(conn);
 		}
 	}
-	
-	public String backendConfigTab() {
-		return backendConfigTab;
-	}
-	
-	public double buySpread() {
-		return buySpread;
-	}
-
-	public double sellSpread() {
-		return sellSpread;
-	}
 
 	public enum Tooltip {
 		rusdBalance,
@@ -382,19 +353,7 @@ public class Config {
 		redeemButton,
 		approveButton,
 	}
-	
-	public int fbServerPort() {
-		return fbServerPort;
-	}
-	
-	public boolean allowRedemptions() {
-		return allowRedemptions;		
-	}
-	
-	public double nonKycMaxOrderSize() {
-		return nonKycMaxOrderSize;
-	}
-	
+
 	double getRequiredDouble(String key) throws Exception {
 		return m_tab.getRequiredDouble(key);
 	}
@@ -404,12 +363,12 @@ public class Config {
 		<div style="margin: 0px; padding: 6px; background-color: #d3caee; font-family: Arial, sans-serif; border-radius: 6px;">
 		<div style="margin: 0px auto; padding: 10px; background-color: #ffff; border-radius: 6px; max-width: 600px; min-height: 200px">
 		<div style="text-align: center;"><img src="https://www.jotform.com/uploads/peter_peter662/form_files/Logo%201.6644b6589be269.57034100.png" alt="" width="253" height="60" /></div>
-		<div style="margin:10px; font-size:16px">		
+		<div style="margin:10px; font-size:16px">
 		%text
 		</div>
 		</div>
 		</div>
-		"""; 
+		""";
 
 // footer with horz line and address; good for marketing email but not regular comm.
 //	<hr />
@@ -419,33 +378,33 @@ public class Config {
 	public void sendEmail(String to, String subject, String html) {
 		Util.wrap( () -> {
 			Auth.auth().getMail().send(
-					"Reflection", 
-					m_emailUsername,  // must be a valid "from" address in gmail; display name is supported 
-					to, 
-					subject, 
-					template.replace( "%text", html), 
+					"Reflection",
+					m_emailUsername,  // must be a valid "from" address in gmail; display name is supported
+					to,
+					subject,
+					template.replace( "%text", html),
 					true);
 		});
 	}
-	
+
 	/** send email via AWS SES */
 	public void sendEmailSes(String to, String subject, String html, SmtpSender.Type type) {
 		Util.wrap( () -> {
 			SmtpSender.Ses.send(
 					"Reflection",
-					"josh@reflection.trading", 
-					to, 
-					subject, 
-					template.replace( "%text", html), 
+					"josh@reflection.trading",
+					to,
+					subject,
+					template.replace( "%text", html),
 					type);
 		});
 	}
-	
+
 	/** Used by test cases */
 	public String getSetting(String key) {
 		return m_tab.get(key);
 	}
-	
+
 	/** Used by test cases */
 	public void setSetting(String key, String val) {
 		m_tab.put(key, val);
@@ -455,60 +414,37 @@ public class Config {
 		return m_tab.tabName();
 	}
 
-	/** RefAPI uses internal url; Monitor and java programs use external url 
-	 * @throws Exception */ 
+	/** RefAPI uses internal url; Monitor and java programs use external url
+	 * @throws Exception */
 	public void useExternalDbUrl() throws Exception {
 		require( S.isNotNull(postgresExtUrl), "No external URL set");
 		postgresUrl = postgresExtUrl;
 	}
 
-	public double fbLookback() {
-		return fbLookback;
-	}
-
-	public String mdsConnection() {
-		return mdsConnection;
-	}
-	
-	public double minPartialFillPct() {
-		return minPartialFillPct;
-	}
-	
-	public String baseUrl() {
-		return baseUrl;
-	}
-		
-	public boolean sendTelegram() {
-		return sendTelegram;
-	}
-	
 	public void log(JsonObject obj) throws Exception {
 		sqlCommand( conn -> conn.insertJson( "log", obj) );
 	}
-	
-	public int maxSummaryEmails() {
-		return maxSummaryEmails;
-	}
-	
-	/** return completed transactions from the database for a single wallet 
+
+	/** return completed transactions from the database for a single wallet
 	 * @throws Exception */
 	public JsonArray getCompletedTransactions(String wallet) throws Exception {
-		return sqlQuery( """ 
+		return sqlQuery( """
 				select * from transactions
 				where wallet_public_key = '%s' and status = 'COMPLETED'
 				order by created_at""", wallet.toLowerCase() );
 	}
-	
-	
+
+
 	/** Used by RefAPI and OnrampServer */
 	public static class MultiChainConfig extends Config {
 		protected final Chains chains = new Chains();
 		private boolean m_isProd;
 
 		/** read blockchain table from Reflection/Blockchain tab */
+		@Override
 		protected void readFromSpreadsheet(Tab tab) throws Exception {
 			super.readFromSpreadsheet(tab);
-			
+
 			String[] names = m_tab.getRequiredString( "chains").split( ",");
 			chains.read( names, true);
 
@@ -518,15 +454,15 @@ public class Config {
 					m_isProd = true;
 			}
 		}
-		
+
 		@Override public boolean isProduction() {
 			return m_isProd;
 		}
-		
+
 		public Chains chains() {
 			return chains;
 		}
-		
+
 		public Chain getChain( int id) {
 			Chain chain = chains.get( id);
 			if (chain == null) {
@@ -535,14 +471,10 @@ public class Config {
 			return chain;
 		}
 
-		/* check for stale mkt data in production but not test */ 
+		/* check for stale mkt data in production but not test */
 		public boolean checkStaleData() {
 			return chains().size() > 1;
 		}
-	}
-	
-	public String aboutReflection() {
-		return aboutReflection;
 	}
 
 }

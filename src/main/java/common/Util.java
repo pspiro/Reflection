@@ -56,7 +56,7 @@ public class Util {
 	public static final int MINUTE = 60 * SECOND;
 	public static final int HOUR = 60 * MINUTE;
 	public static final int DAY = 24 * HOUR;
-	
+
 	// hh  // 12 hr, useless, use w/ am/pm
 	// HH  // 24 hr, midnight is 00
 	// kk  // 24 hr, midnight is 24
@@ -72,13 +72,13 @@ public class Util {
 		hhmmss.setTimeZone( zone);
 		yToS.setTimeZone( zone);
 		yToD.setTimeZone( zone);
-	}		
-		
+	}
+
 	/** Use this to return values from asynchronous methods */
 	public static class ObjectHolder<T> {
 		public T val;
 	}
-	
+
 	/** Runnable, returns void, throws Exception */
 	public interface ExRunnable {
 		void run() throws Exception;
@@ -88,7 +88,7 @@ public class Util {
 	public interface ExConsumer<T> {
 		void accept(T t) throws Exception;
 	}
-	
+
 	// use Supplier if you need to return a value, or BiConsumer for two args
 
 	/** Do a decimal compare down to six digits */
@@ -110,7 +110,7 @@ public class Util {
 		20220807:CLOSED
 		20220808:0930-20220808:1600
 		20220809:0930-20220809:1600
-		@return true if we are currently inside of the hours. 
+		@return true if we are currently inside of the hours.
 	 * @throws RefException */
 
 	/** These are broken out to facilitate testing. */
@@ -126,67 +126,67 @@ public class Util {
 			yyyymmdd.setTimeZone(zone);
 
 			SimpleDateFormat hhmm = new SimpleDateFormat( "kkmm");
-			hhmm.setTimeZone( zone);			
-			
+			hhmm.setTimeZone( zone);
+
 			// put current date/time in same format and time zone as received from server
 			// Date now = new Date();
-			String curDateTime = String.format( "%s:%s", yyyymmdd.format( now), hhmm.format( now) );  
-			
+			String curDateTime = String.format( "%s:%s", yyyymmdd.format( now), hhmm.format( now) );
+
 			String[] sessions = hours.split( ";");
 			for (String session : sessions) {
 				// protect against strings starting with ; (which I saw once) or having ;; or ; ;
 				if (session == null || S.isNull(session.trim()) ) {
 					continue;
 				}
-				
+
 				String[] sessionSpan = session.split( "-");
 				String sessionStart = sessionSpan[0];
-				
+
 				// skip closed sessions, we don't care
 				if (sessionStart.toLowerCase().endsWith( "closed") ) {
 					continue;
 				}
-				
+
 				String sessionEnd = sessionSpan[1];
-				
+
 				if (curDateTime.compareTo( sessionStart) >= 0 &&
 					curDateTime.compareTo( sessionEnd) < 0) {
-					
+
 					return true;
 				}
 			}
-			
+
 			return false;
 		}
 		catch( Exception e) {
 			throw new RefException( RefCode.UNKNOWN, "Invalid trading hours for conid %s: %s", conid, hours);
 		}
 	}
-	
-	
+
+
 //	static boolean between(String today, String nowTime, String sessionStart, String sessionEnd) {
 //		String[] startToks = sessionStart.split( ":");
 //		String startDate = startToks[0];
 //		String startTime = startToks[1];
-//		
+//
 //		String[] endToks = sessionStart.split( ":");
 //		String endDate = startToks[0];
 //		String endTime = startToks[1];
-//		
+//
 //		return compare( today, nowTime, startDate, startTime) >= 0 &&
 //			   compare( today)
 //		return today.compareTo( startDate) >= 0 &&
-//		
-//		return 
-//		
+//
+//		return
+//
 //			String closeDate = openClose[1].split( ":")[0];  // if close date is tomorrow we should always return true, but this is only needed for ES and such
 //			String closeTime = openClose[1].split( ":")[1];
-//			
-//			return nowTime.compareTo( openTime) >= 0 && 
+//
+//			return nowTime.compareTo( openTime) >= 0 &&
 //				   nowTime.compareTo( closeTime) <= 0;
 //		}
 //	}
-//	
+//
 
 	//static String CRLF = "\r\n";
 	public static String formatStr = "\"%s\": \"%s\"";
@@ -198,7 +198,7 @@ public class Util {
 	 *  @param strs tag/value pairs */
 	public static JsonObject toJson( Object... strs) {
 		JsonObject obj = new JsonObject();
-		
+
 		Object tag = null;
 		for (Object val : strs) {
 			if (tag == null) {
@@ -217,29 +217,29 @@ public class Util {
 		String flat = str.replaceAll( "\r\n", " ").replaceAll( "\n", " ");
 		return flat;
 	}
-	
+
 	public static double difference(Decimal v1, Decimal v2) {
 		return Math.abs( v1.toDouble() - v2.toDouble() );
 	}
 
 	/** Round to two decimals. */
 	public static double round(double price) {
-		return Math.round( price * 100) / 100.0;		
+		return Math.round( price * 100) / 100.0;
 	}
 
 	/** Currently has a limitation of 5k; increase it if necessary */
 	public static String readResource(Class cls, String filename) throws Exception {
 		int max = 5*1024;
-		
+
         byte[] data = new byte[max];
         int len = cls.getClassLoader()
         		.getResourceAsStream(filename)
         		.read(data, 0, data.length);
-        require( len < max, "readResource buffer too small"); 
-        
+        require( len < max, "readResource buffer too small");
+
         return new String( data, 0, len);
 	}
-	
+
 	/** Convert hex to integer to decimal and then apply # of decimal digits.
 	 *  Could be used to read the transaction size from the logs.
 	 *  @param hexVal can start with 0x or not */
@@ -248,7 +248,7 @@ public class Util {
 		if (startsWith( hexVal, "0x") ) {
 			hexVal = hexVal.substring( 2);
 		}
-		
+
 		BigInteger tot = new BigInteger(hexVal, 16);
         BigInteger div = new BigInteger("10").pow( decDigits);
         BigDecimal ans = new BigDecimal( tot).divide( new BigDecimal( div) );
@@ -259,7 +259,7 @@ public class Util {
 	public static boolean startsWith(String str, String str2) {
 		return str != null && str.toLowerCase().startsWith( str2.toLowerCase() );
 	}
-	
+
 	public static String tab(int level) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < level * 3; i++) {
@@ -267,26 +267,26 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	/** Execute the runnable in a new thread aka invokeLater.
 	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	static int threadCounter = 1;
 	public static void execute( String name, Runnable runnable) {
 		new Thread(runnable, String.format( "%s-%s", name, threadCounter++) ).start();
 	}
-	
+
 	/** Execute the runnable in a new thread aka invokeLater.
 	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	public static void executeAndWrap( ExRunnable runnable) {
 		execute( () -> wrap( () -> runnable.run() ) );
 	}
-	
+
 	/** Execute the runnable in a new thread aka invokeLater.
 	 *  Consider using ThreadQueue if you want all to execute in the same thread */
 	public static void execute( Runnable runnable) {
 		new Thread(runnable).start();
 	}
-	
+
 	/** Execute the runnable in a new thread after waiting ms. */
 	public static void executeIn( int ms, Runnable runnable) {
 		new Thread( () -> {
@@ -296,13 +296,13 @@ public class Util {
 	}
 
 	static Timer m_timer;
-	
+
 	/** Execute the runnable in a new thread now and every period ms forever. */
 	public static synchronized void executeEvery( int wait, int period, Runnable runnable) {
 		if (m_timer == null) {
 			m_timer = new Timer();
 		}
-		
+
 		TimerTask task = new TimerTask() {
 			@Override public void run() {
 				try {
@@ -313,26 +313,26 @@ public class Util {
 				}
 			}
 		};
-		
+
 		m_timer.schedule( task, wait, period);
 	}
-	
+
 	/** Create a new timer and return it so it can be canceled */
 //	public static Timer createTimer( int wait, int period, Runnable runnable) {
-		
+
 //		 ScheduledExecutorService (Better Than Timer)
 //		 ✅ Recommended Alternative
 //
 //		 Supports multiple threads (unlike Timer, which uses a single thread).
 //		 Handles exceptions properly (unlike Timer, which stops executing after an exception).
 //		 Provides flexible scheduling options (fixed-rate and fixed-delay).
-		 
+
 //		TimerTask task = new TimerTask() {
 //			@Override public void run() {
 //				runnable.run();
 //			}
 //		};
-//		
+//
 //		Timer timer = new Timer();
 //		timer.schedule( task, wait, period);
 //		return timer;
@@ -344,7 +344,7 @@ public class Util {
 		require( S.isNotNull( str), "Missing environment variable %s", env);
 		return str;
 	}
-	
+
 	public static String padLeft( String str, int n, char c) {
 		StringBuilder sb = new StringBuilder(str);
 		while (sb.length() < n) {
@@ -352,7 +352,7 @@ public class Util {
 		}
 		return sb.toString();
 	}
-	
+
 	public static String padRight( String str, int n, char c) {
 		StringBuilder sb = new StringBuilder(str);
 		while (sb.length() < n) {
@@ -373,7 +373,7 @@ public class Util {
 			throw new RuntimeException( String.format( S.notNull( text), params) );
 		}
 	}
-	
+
 	/** confirm test = true, then return obj */
 	public static <T> T checkReturn( T obj, boolean test, String text, Object... params) throws Exception {
 		require( test, text, params);
@@ -395,7 +395,7 @@ public class Util {
 	/** Replace single-quotes with double-single-quotes.
 	 *  This is needed when inserting or updating SQL records. */
 	public static String dblQ(String sql) {
-		return sql.replaceAll( "'", "''");  
+		return sql.replaceAll( "'", "''");
 	}
 
 	public static class Ex extends Exception {
@@ -409,26 +409,26 @@ public class Util {
 	public static String easyJson(String format, Object... params) {
 		return String.format(format, params).replaceAll( "\\'", "\"");
 	}
-	
+
 	public static boolean isValidAddress( String str) {
-		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x"); 
+		return str != null && str.length() == 42 && str.toLowerCase().startsWith("0x");
 	}
-	
+
 	public static boolean isValidIpAddress( String str) {
 		return str != null && (
 				str.equalsIgnoreCase( "localhost") ||
 				Pattern.matches("^([0-9]{1,3}\\.){3}[0-9]{1,3}$", str) );
 	}
-	
+
 	public static boolean isValidHash( String str) {
-		return str != null && str.length() == 66 && str.startsWith("0x"); 
+		return str != null && str.length() == 66 && str.startsWith("0x");
 	}
-	
+
 	public static String reqValidAddress(String str) throws Exception {
 		require( isValidAddress(str), "Invalid address: %s", str);
 		return str;
 	}
-	
+
 	public static String getLastToken(String str, String sep) {
 		String[] ar = str.split(sep);
 		return ar[ar.length-1];
@@ -446,7 +446,7 @@ public class Util {
 //	public static boolean isNumeric(Object val) {
 //		return val instanceof Integer || val instanceof Double || val instanceof Long || val instanceof Float;
 //	}
-	
+
 	static boolean isDouble(String str) {
 		try {
 			Double.valueOf( str);
@@ -467,12 +467,12 @@ public class Util {
 		}
 	}
 
-	
-	
+
+
 //	public static String toLowerCase(String address) {
 //		return notNull(address).toLowerCase();
 //	}
-	
+
 	/** Clip the bounds, don't throw exception, handle null string */
 	public static String left( String str, int max) {
 		str = S.notNull(str);
@@ -489,7 +489,7 @@ public class Util {
 	public static String substring(String str, int start) {
 		return substring( str, start, Integer.MAX_VALUE);
 	}
-	
+
 	/** Clip the bounds, don't throw exception, handle null string */
 	public static String substring(String str, int start, int end) {
 		str = S.notNull(str);
@@ -497,8 +497,8 @@ public class Util {
 				Math.min(start, str.length() ),
 				Math.min(end, str.length() ) );
 	}
-	
-	/** Default value is used for null input only */ 
+
+	/** Default value is used for null input only */
 	public static <T extends Enum<T>> T getEnum(String text, T[] values, T defVal) throws IllegalArgumentException {
 		return S.isNull(text) ? defVal : getEnum(text, values);
 	}
@@ -514,7 +514,7 @@ public class Util {
 		String str = String.format( "'%s' is not a valid value for enum %s", text, values[0].getClass().getName() );
 		throw new IllegalArgumentException( str);
 	}
-		
+
 	public static String allEnumValues(Object[] values) {
 		return Arrays.asList(values).toString();
 	}
@@ -522,7 +522,7 @@ public class Util {
 	/** Return an id of n chars where each char is between a and z */
 	public static String uid(int n) {
 		StringBuilder b = new StringBuilder();
-		for (int i = 0; i < n; i++) 
+		for (int i = 0; i < n; i++)
 			b.append( (char)('A' + rnd.nextInt(26) ) );
 		return b.toString();
 	}
@@ -530,7 +530,7 @@ public class Util {
 	/** Return an id of n chars where each char is between 0 and 9 */
 	public static String uin(int n) {  //note that it could begin with a zero
 		StringBuilder b = new StringBuilder();
-		for (int i = 0; i < n; i++) 
+		for (int i = 0; i < n; i++)
 			b.append( (char)('0' + rnd.nextInt(10) ) );
 		return b.toString();
 	}
@@ -546,7 +546,7 @@ public class Util {
 			return val;
 		}
 	}
-	
+
 	public interface ExSupplier<T> {
 	    T get() throws Exception;
 	}
@@ -566,11 +566,11 @@ public class Util {
 			return val;
 		}
 	}
-	
+
 	/** Put if absent and return the value currently stored in the map;
 	 *  use this on synchronized maps */
 	// not used
-//	public static <Tag,Val> Val putIfAbsent( Map<Tag,Val> map, Tag tag, Val newVal) { 
+//	public static <Tag,Val> Val putIfAbsent( Map<Tag,Val> map, Tag tag, Val newVal) {
 //		Val oldVal = map.putIfAbsent(tag, newVal);
 //		return oldVal != null ? oldVal : newVal;
 //	}
@@ -602,8 +602,8 @@ public class Util {
 		int i = email.indexOf("@");
 		return i >= 1 && email.lastIndexOf(".") > i + 1 && email.length() >= 5;
 	}
-	
-	/** My version of forEach that propogates up an exception */ 
+
+	/** My version of forEach that propogates up an exception */
 	public static <T> void forEach(Iterable<T> iter, ExConsumer<? super T> action) throws Exception {
         Objects.requireNonNull(action);
         for (T t : iter) {
@@ -614,32 +614,32 @@ public class Util {
 	public interface ExBiConsumer<K,V> {
 	    void accept(K k, V v) throws Exception;
 	}
-			
-	/** My version of forEach that propogates up an exception */ 
+
+	/** My version of forEach that propogates up an exception */
 	public static <T,V> void forEach(Map<T,V> map, ExBiConsumer<T,V> consumer) throws Exception {
         Objects.requireNonNull(consumer);
 		for (Entry<T,V> entry : map.entrySet() ) {
         	consumer.accept( entry.getKey(), entry.getValue() );
         }
 	}
-	
+
 	/** Wait for user to press enter */
 	public static void pause() {
 		try(Scanner s = new Scanner(System.in)) {
 			s.nextLine();
 		}
 	}
-	
+
 	/** Send email from google */
-//	public static void sendEmail(String username, String password, 
+//	public static void sendEmail(String username, String password,
 //			String fromName, String to, String subject, String text, boolean isHtml) throws Exception {
 //
 //		Auth.auth().getMail().send(
-//				fromName, 
-//				username, 
-//				to, 
-//				subject, 
-//				text, 
+//				fromName,
+//				username,
+//				to,
+//				subject,
+//				text,
 //				isHtml);
 //	}
 //
@@ -650,7 +650,7 @@ public class Util {
 //		props.put("mail.smtp.tlsv1.2.enable", "true");  // tls also works but not starttls
 //		props.put("mail.smtp.host", "smtp.openxchange.eu");  // put any smpt server here
 //		props.put("mail.smtp.port", "587");
-//		
+//
 //		Session session = Session.getInstance( props,
 //				new javax.mail.Authenticator() {
 //					protected PasswordAuthentication getPasswordAuthentication() {
@@ -668,7 +668,7 @@ public class Util {
 //		S.out( "Sent email '%s' to %s", subject, to);
 //	}
 //
-//	
+//
 //	/** Return email address in this format: "Peter Spiro <peteraspiro@gmail.com>" */
 //	private static Address toEmail(String name, String email) throws AddressException {
 //		return new InternetAddress( String.format( "%s <%s>", name, email) );
@@ -679,22 +679,22 @@ public class Util {
 		return e instanceof Exception ? (Exception)e : new Exception(e);
 	}
 
-	/** Pop up a dialog, beep, and get user input */ 
+	/** Pop up a dialog, beep, and get user input */
 	public static String ask(String prompt, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
 		return JOptionPane.showInputDialog( String.format( prompt, params) );
 	}
 
-	/** Pop up a dialog, beep, and get user input (double) */ 
+	/** Pop up a dialog, beep, and get user input (double) */
 	public static double askForVal(String prompt) {
 		String val = ask(prompt);
 		return S.isNull(val) ? 0 : Double.parseDouble(val);
 	}
-	
+
 	/** Show message, beep, and wait for user input */
 	public static boolean confirm(Component parent, String format, Object... params) {
 		java.awt.Toolkit.getDefaultToolkit().beep();
-		return JOptionPane.showConfirmDialog( 
+		return JOptionPane.showConfirmDialog(
 				parent, String.format(format,params), "Confirm", JOptionPane.YES_NO_OPTION) == 0;
 	}
 
@@ -727,7 +727,7 @@ public class Util {
 	}
 
 	public static String toMsg(Throwable e) {
-		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString(); 
+		return S.isNotNull( e.getMessage() ) ? e.getMessage() : e.toString();
 	}
 
 	/** aka openUrl() openLink() */
@@ -751,17 +751,17 @@ public class Util {
 			}
 		}
 	}
-	
+
 	/** Convert vararg to array */
 	@SafeVarargs public static <T> T[] toArray( T... ts) {
 		return ts;
 	}
-	
+
 	/** @deprecated call set.toArray() */
 	public static <T> T[] toArray( Set<T> set) {
-		throw new Error(); 
+		throw new Error();
 	}
-	
+
 	/** convert to decimal; accepts null */
 	public static double toDouble( Double v) {
 		return v == null ? 0 : v;
@@ -779,34 +779,34 @@ public class Util {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
         		new StringSelection( toString(obj) ), null);
 	}
-	
+
 	/** return fake EIP-55 address; don't send crypto here, it can never be recovered */
 	public static String createFakeAddress() {
 		StringBuilder sb = new StringBuilder("0x");
 		for (int i = 0; i < 40; i++) {
 			sb.append( String.format( "%x", rnd.nextInt(16) ) );
 		}
-		return sb.toString();  // change to EIP-55 address 
+		return sb.toString();  // change to EIP-55 address
 	}
 
 	/** return a wallet private key */
 	public static String createPrivateKey() {
 		return CreateKey.createPrivateKey();
 	}
-	
+
 	public static String getAddress( String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
 	}
 
-	
+
 	/** Use this when you want to create an object or retrieve a value and
 	 *  then take some action on a single line
 	 *
 	 *  e.g.
 	 *  tweak( new JLabel(text), lab -> lab.set);
-	 *  
+	 *
 	 *  doAnd( map.lookup(key), val -> process(val) );
-	 *  
+	 *
 	 *  instead of:
 	 *    JLabel lab = new JLabel( text);
 	 *    lab.setHorizontalAlignment( SwingConstants.CENTER);
@@ -817,7 +817,7 @@ public class Util {
 	}
 
 	/** Execute block AND RETURN THE VALUE if not null; similar to iff.
-	 *  Never used in the intended way, remove and replace with iff() */ 
+	 *  Never used in the intended way, remove and replace with iff() */
 	public static <T> T lookup( T obj, ExConsumer<T> consumer) throws Exception {
 		if (obj != null) {
 			consumer.accept( obj);
@@ -854,7 +854,7 @@ public class Util {
 	public static void wrapHtml( StringBuilder sb, String tag, String body) {
 		sb.append( wrapHtml( tag, body.toString() ) );
 	}
-	
+
 	/** append <tag> and </tag> and let consumer add the body text */
 	public static void appendHtml( StringBuilder sb, String tag, Runnable consumer) {
 		sb.append( String.format( "<%s>", tag) );
@@ -870,7 +870,7 @@ public class Util {
 	public static boolean isValidPan(String pan) {
 		return pan.toUpperCase().matches("^[A-Z]{5}[0-9]{4}[A-Z]$");
 	}
-	
+
 	public static SimpleDateFormat getDateFormatter( String format, TimeZone zone) {
 		SimpleDateFormat fmt = new SimpleDateFormat( format);
 		fmt.setTimeZone( zone);
@@ -880,7 +880,7 @@ public class Util {
 	public static String initialCap(String name) {
 		return left( name, 1).toUpperCase() + substring(name, 1).toLowerCase();
 	}
-	
+
 	/** @param useBr controls %0a */
 	public static String unescHtml(String html, boolean useBr) {
 		return html
@@ -905,7 +905,7 @@ public class Util {
 	public static void reqValidKey(String privateKey) throws Exception {
 		require( isValidKey( privateKey), "%s is not a valid private key", privateKey);
 	}
-	
+
 	public static String toHex( long val) {
 		return "0x" + Long.toHexString( val);
 	}
@@ -915,13 +915,13 @@ public class Util {
 	}
 
 	public static long getLong(String str) {
-		return S.isNotNull( str) 
+		return S.isNotNull( str)
 				? str.startsWith( "0x")
 						? Long.parseLong( str.substring( 2), 16)
 						: Long.parseLong( str)
 				: 0;
 	}
-		
+
 	/** Return portion up to first ? */
 	public static String urlFromUri( String str) {
 		return S.isNull( str) ? "" : str.split("\\?")[0];
@@ -973,13 +973,13 @@ public class Util {
 	//	<T> T[] toArray( ArrayList<T> list) {
 	//		return (T[])list.toArray();
 	//	}
-	
+
 	public static <T> ArrayList<T> toList( T[] ar) {
 		ArrayList<T> list = new ArrayList<T>();
 		Collections.addAll(list, ar);
 		return list;
 	}
-	
+
 	/** Works with or without 0x at start */
 	public static String getPublicKey( String privateKey) {
 		return Credentials.create( privateKey ).getAddress();
@@ -991,20 +991,20 @@ public class Util {
 				.getArray( "tunnels").get( 0)
 				.getString( "public_url");
 	}
-	
-	/** return the two strings separated by a space if they are both not null */ 
+
+	/** return the two strings separated by a space if they are both not null */
 	public static String combine( String str1, String str2) {
 		return S.isNotNull( str1) && S.isNotNull( str2)
 				? String.format( "%s %s", str1, str2)
 				: str1 + str2;
 	}
-	
+
 	/** @return value if not null, or default if null */
 	public static String valOr( String value, String def) {
 		return S.isNotNull(value) ? value : def;
 	}
 
-	/** returns object if not null or a new object created by supplier */ 
+	/** returns object if not null or a new object created by supplier */
 	public static <T> T notNull( T obj, Supplier<T> supplier) {
 		return obj != null ? obj : supplier.get();
 	}
@@ -1031,15 +1031,15 @@ public class Util {
 	public static String shorten( String wallet) {
 		return wallet != null ? String.format( "%s...%s", Util.left( wallet, 7), Util.right( wallet, 4) ) : "";
 	}
-	
+
 	/** returns null if they cancel out */
 	public static String input( Component parent, String prompt, Object defVal) {
 		return JOptionPane.showInputDialog(parent, prompt, defVal);
 	}
-	
+
 	public static String notNullMsg( Exception e) {
-		return S.isNotNull( e.getMessage() ) 
-				? e.getMessage() : 
+		return S.isNotNull( e.getMessage() )
+				? e.getMessage() :
 				S.isNotNull( e.toString() ) ? e.toString() : e.getClass().toString();
 	}
 
@@ -1049,46 +1049,46 @@ public class Util {
                 .map(Field::getName)
                 .toArray(String[]::new);
     }
-    
+
     /** This is like javascript map function; turn one array into another. Use it everywhere */
     public static <P,R> ArrayList<R> map( ArrayList<P> list, Function<P,R> func) {
  	   ArrayList<R> ret = new ArrayList<R>();
- 	   
+
  	   for (var item : list) {
  		   ret.add( func.apply(item) );
  	   }
- 	   
+
  	   return ret;
     }
-    
-    /** This is like javascript map function; turn one array into another. Use it everywhere 
+
+    /** This is like javascript map function; turn one array into another. Use it everywhere
      * @throws Exception */
     public static <P,R> ArrayList<R> mapEx( ArrayList<P> list, ExFunction<P,R> func) throws Exception {
  	   ArrayList<R> ret = new ArrayList<R>();
- 	   
+
  	   for (var item : list) {
  		   ret.add( func.apply(item) );
  	   }
- 	   
+
  	   return ret;
     }
-    
+
     record A( String name) {}
-    
+
     public static void main(String[] args) throws Exception {
     	ArrayList<A> list = new ArrayList<>();
     	list.add( new A( "bob"));
     	list.add( new A( "sam"));
     	list.add( new A( "ken"));
     	S.out( list);
-    	
+
     	JsonArray ar = JsonArray.toJson( list);
     	S.out( ar);
-    	
+
     	var list2 = ar.toRecord( A.class);
     	S.out( list2);
     }
-    
+
     /** Compare all keys and values in the maps */
     public static boolean isEqual( Map<?,?> m1, Map<?,?> m2) {
     	for (var entry : m1.entrySet() ) {
@@ -1098,7 +1098,7 @@ public class Util {
     	}
     	return true;
     }
-    
+
     /** consider null object as equal */
     public static boolean isEqual( Object o1, Object o2) {
     	return o1 == null ? o2 == null : o1.equals( o2);
