@@ -24,12 +24,12 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
  *  Also, initial response should not contain so much data, I think */
 @SpringBootApplication
 @EnableScheduling
-public class KafkaMain {
+public class MyKakfa {
 
 	public static void main(String[] args) {
 		System.out.println("SLF4J in use: " + LoggerFactory.getILoggerFactory().getClass());
 
-		SpringApplication.run(KafkaMain.class, args);
+		SpringApplication.run(MyKakfa.class, args);
 	}
 
 

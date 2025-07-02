@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import kafk.KafkaMain.SessionManager;
+import kafk.MyKakfa.SessionManager;
 import tw.util.S;
 
 /** Read data from kafka and write it to all Websocket clients */
